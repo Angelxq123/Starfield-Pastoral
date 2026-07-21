@@ -25,6 +25,7 @@ public final class ClientContentSyncService {
         MailIndexSyncPayload mailSnapshot = MailIndexSyncPayload.current();
         FestivalAvailabilitySyncPayload festivalSnapshot = FestivalAvailabilitySyncPayload.current();
         List<ServerPlayer> recipients = event.getRelevantPlayers().toList();
+        int registryEncodedBytes = registrySnapshot.estimatedEncodedBytes();
 
         ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_RECIPIENTS, recipients.size());
 
@@ -32,7 +33,7 @@ public final class ClientContentSyncService {
             PacketDistributor.sendToPlayer(player, registrySnapshot);
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES,
-                    registrySnapshot.estimatedEncodedBytes());
+                    registryEncodedBytes);
             PacketDistributor.sendToPlayer(player, mailSnapshot);
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
             PacketDistributor.sendToPlayer(player, festivalSnapshot);

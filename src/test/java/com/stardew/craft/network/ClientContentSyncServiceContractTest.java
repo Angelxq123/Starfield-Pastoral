@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,7 +22,7 @@ class ClientContentSyncServiceContractTest {
                 "PacketDistributor.sendToPlayer(player,registrySnapshot);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES,"
-                        + "registrySnapshot.estimatedEncodedBytes());",
+                        + "registryEncodedBytes);",
                 "PacketDistributor.sendToPlayer(player,mailSnapshot);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);",
                 "PacketDistributor.sendToPlayer(player,festivalSnapshot);",
@@ -30,6 +31,19 @@ class ClientContentSyncServiceContractTest {
                 "ServerPerformanceRecorder.increment(PerformanceCounter.JEI_CATALOG_ENTRIES,",
                 "PacketDistributor.sendToPlayer(player,jeiSnapshot);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);");
+    }
+
+    @Test
+    void registryEncodedSizeIsComputedOnceBeforeRecipientLoop() throws IOException {
+        String source = normalizedSource();
+        int recipients = source.indexOf("List<ServerPlayer>recipients=");
+        int encodedSize = source.indexOf(
+                "intregistryEncodedBytes=registrySnapshot.estimatedEncodedBytes();");
+        int loopStart = source.indexOf("for(ServerPlayerplayer:recipients)");
+
+        assertTrue(recipients >= 0 && encodedSize > recipients && loopStart > encodedSize,
+                "registry encoded size must be cached after recipients are available and before the loop");
+        assertEquals(1, occurrences(source, "registrySnapshot.estimatedEncodedBytes()"));
     }
 
     @Test
@@ -62,5 +76,15 @@ class ClientContentSyncServiceContractTest {
             assertTrue(operationIndex >= cursor, () -> "missing or out-of-order operation: " + operation);
             cursor = operationIndex + operation.length();
         }
+    }
+
+    private static int occurrences(String source, String value) {
+        int count = 0;
+        int cursor = 0;
+        while ((cursor = source.indexOf(value, cursor)) >= 0) {
+            count++;
+            cursor += value.length();
+        }
+        return count;
     }
 }

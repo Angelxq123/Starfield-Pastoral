@@ -1,8 +1,11 @@
 package com.stardew.craft.server.performance;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,7 +46,6 @@ class ServerPerformanceRecorderTest {
     void snapshotContainsEveryTimingAndCounter() {
         PerformanceSnapshot snapshot = ServerPerformanceRecorder.snapshot();
 
-        assertEquals(1_200, ServerPerformanceRecorder.TIMING_WINDOW_SIZE);
         assertEquals(PerformanceTiming.values().length, snapshot.timings().size());
         assertEquals(PerformanceCounter.values().length, snapshot.counters().size());
         for (PerformanceTiming timing : PerformanceTiming.values()) {
@@ -51,6 +54,23 @@ class ServerPerformanceRecorderTest {
         for (PerformanceCounter counter : PerformanceCounter.values()) {
             assertEquals(0L, snapshot.counters().get(counter));
         }
+    }
+
+    @Test
+    void usesPrivateWindowSizeAndPrimitiveCounterStorage() throws NoSuchFieldException {
+        Field windowSize = ServerPerformanceRecorder.class.getDeclaredField("TIMING_WINDOW_SIZE");
+        Field counters = ServerPerformanceRecorder.class.getDeclaredField("COUNTERS");
+
+        assertTrue(Modifier.isPrivate(windowSize.getModifiers()));
+        assertEquals(long[].class, counters.getType());
+
+        for (int sample = 0; sample < 1_201; sample++) {
+            ServerPerformanceRecorder.record(PerformanceTiming.SERVER_TICK, sample);
+        }
+        assertEquals(
+            1_200L,
+            ServerPerformanceRecorder.snapshot().timings().get(PerformanceTiming.SERVER_TICK).sampleCount()
+        );
     }
 
     @Test
@@ -97,6 +117,26 @@ class ServerPerformanceRecorderTest {
     }
 
     @Test
+    void runnableMeasurePropagatesExceptionAndStillRecordsTiming() {
+        IllegalArgumentException failure = new IllegalArgumentException("failed");
+        Runnable operation = () -> {
+            throw failure;
+        };
+
+        IllegalArgumentException thrown = assertThrows(
+            IllegalArgumentException.class,
+            () -> ServerPerformanceRecorder.measure(PerformanceTiming.JEI_CATALOG_BUILD, operation)
+        );
+
+        assertSame(failure, thrown);
+        assertEquals(
+            1L,
+            ServerPerformanceRecorder.snapshot().timings()
+                .get(PerformanceTiming.JEI_CATALOG_BUILD).sampleCount()
+        );
+    }
+
+    @Test
     void resetClearsTimingsAndZerosEveryCounter() {
         for (PerformanceTiming timing : PerformanceTiming.values()) {
             ServerPerformanceRecorder.record(timing, 1_000_000L);
@@ -126,6 +166,103 @@ class ServerPerformanceRecorderTest {
             5L,
             ServerPerformanceRecorder.snapshot().counters()
                 .get(PerformanceCounter.CONTENT_REGISTRY_BYTES)
+        );
+    }
+
+    @Test
+    void counterAdditionSaturatesAtLongMaximum() {
+        ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES, Long.MAX_VALUE);
+        ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES, 1L);
+
+        assertEquals(
+            Long.MAX_VALUE,
+            ServerPerformanceRecorder.snapshot().counters()
+                .get(PerformanceCounter.CONTENT_REGISTRY_BYTES)
+        );
+    }
+
+    @Test
+    void recordRejectsNullTiming() {
+        NullPointerException thrown = assertThrows(
+            NullPointerException.class,
+            () -> ServerPerformanceRecorder.record(null, 1L)
+        );
+
+        assertEquals("timing", thrown.getMessage());
+    }
+
+    @Test
+    void incrementRejectsNullCounterEvenForIgnoredAmount() {
+        NullPointerException thrown = assertThrows(
+            NullPointerException.class,
+            () -> ServerPerformanceRecorder.increment(null, 0L)
+        );
+
+        assertEquals("counter", thrown.getMessage());
+    }
+
+    @Test
+    void supplierMeasureRejectsNullTimingBeforeRunningOperation() {
+        AtomicBoolean executed = new AtomicBoolean();
+        Supplier<String> operation = () -> {
+            executed.set(true);
+            return "value";
+        };
+
+        NullPointerException thrown = assertThrows(
+            NullPointerException.class,
+            () -> ServerPerformanceRecorder.measure(null, operation)
+        );
+
+        assertEquals("timing", thrown.getMessage());
+        assertFalse(executed.get());
+    }
+
+    @Test
+    void supplierMeasureRejectsNullOperationWithoutRecording() {
+        Supplier<String> operation = null;
+
+        NullPointerException thrown = assertThrows(
+            NullPointerException.class,
+            () -> ServerPerformanceRecorder.measure(PerformanceTiming.CONTENT_SNAPSHOT_BUILD, operation)
+        );
+
+        assertEquals("operation", thrown.getMessage());
+        assertEquals(
+            0L,
+            ServerPerformanceRecorder.snapshot().timings()
+                .get(PerformanceTiming.CONTENT_SNAPSHOT_BUILD).sampleCount()
+        );
+    }
+
+    @Test
+    void runnableMeasureRejectsNullTimingBeforeRunningOperation() {
+        AtomicBoolean executed = new AtomicBoolean();
+        Runnable operation = () -> executed.set(true);
+
+        NullPointerException thrown = assertThrows(
+            NullPointerException.class,
+            () -> ServerPerformanceRecorder.measure(null, operation)
+        );
+
+        assertEquals("timing", thrown.getMessage());
+        assertFalse(executed.get());
+    }
+
+    @Test
+    void runnableMeasureRejectsNullOperationWithoutRecording() {
+        Runnable operation = null;
+
+        NullPointerException thrown = assertThrows(
+            NullPointerException.class,
+            () -> ServerPerformanceRecorder.measure(PerformanceTiming.JEI_CATALOG_BUILD, operation)
+        );
+
+        assertEquals("operation", thrown.getMessage());
+        assertEquals(
+            0L,
+            ServerPerformanceRecorder.snapshot().timings()
+                .get(PerformanceTiming.JEI_CATALOG_BUILD).sampleCount()
         );
     }
 

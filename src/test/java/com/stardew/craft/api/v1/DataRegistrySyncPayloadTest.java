@@ -11,6 +11,10 @@ import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,6 +51,35 @@ class DataRegistrySyncPayloadTest {
                 "{}", "{}", "{}", "{}", "{}", "{}");
 
         assertEquals(36, payload.estimatedEncodedBytes());
+    }
+
+    @Test
+    void estimatedBytesMatchCodecForUnicodeAndMalformedSurrogates() {
+        assertEstimatedBytesMatchCodec("\u00E9\u4E2D");
+        assertEstimatedBytesMatchCodec("\uD83D\uDE00");
+        assertEstimatedBytesMatchCodec("\uD800");
+        assertEstimatedBytesMatchCodec("\uDC00");
+        assertEstimatedBytesMatchCodec("\uD800x\uDC00");
+    }
+
+    @Test
+    void estimatedBytesMatchCodecAtVarIntBoundaries() {
+        for (int length : new int[] {127, 128, 16_383, 16_384}) {
+            assertEstimatedBytesMatchCodec("a".repeat(length));
+        }
+    }
+
+    @Test
+    void encodedSizeEstimationDoesNotMaterializeUtf8ByteArrays() throws IOException {
+        Path sourcePath = Path.of(System.getProperty("stardewcraft.projectDir", "."))
+                .resolve("src/main/java/com/stardew/craft/network/DataRegistrySyncPayload.java");
+        String source = Files.readString(sourcePath);
+        int methodStart = source.indexOf("private static int encodedStringBytes");
+        int methodEnd = source.indexOf("private static int varIntBytes", methodStart);
+
+        assertTrue(methodStart >= 0 && methodEnd > methodStart, "encodedStringBytes helper is missing");
+        assertFalse(source.substring(methodStart, methodEnd).contains("getBytes("),
+                "encodedStringBytes must not allocate a UTF-8 byte array");
     }
 
     @Test
@@ -160,5 +193,16 @@ class DataRegistrySyncPayloadTest {
         return new DataRegistrySyncPayload(
                 artisan, cooking, crafting, preserves,
                 "{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}");
+    }
+
+    private static void assertEstimatedBytesMatchCodec(String document) {
+        DataRegistrySyncPayload payload = payloadWithArtisanDocuments(document, "{}", "{}", "{}");
+        ByteBuf buffer = Unpooled.buffer();
+        try {
+            DataRegistrySyncPayload.STREAM_CODEC.encode(buffer, payload);
+            assertEquals(buffer.readableBytes(), payload.estimatedEncodedBytes());
+        } finally {
+            buffer.release();
+        }
     }
 }

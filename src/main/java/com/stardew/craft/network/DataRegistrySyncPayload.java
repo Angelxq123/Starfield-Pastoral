@@ -146,7 +146,26 @@ public record DataRegistrySyncPayload(
     }
 
     private static int encodedStringBytes(String value) {
-        int utf8Bytes = value.getBytes(StandardCharsets.UTF_8).length;
+        int utf8Bytes = 0;
+        for (int index = 0; index < value.length(); index++) {
+            char current = value.charAt(index);
+            if (current <= 0x7F) {
+                utf8Bytes++;
+            } else if (current <= 0x7FF) {
+                utf8Bytes += 2;
+            } else if (Character.isHighSurrogate(current)) {
+                if (index + 1 < value.length() && Character.isLowSurrogate(value.charAt(index + 1))) {
+                    utf8Bytes += 4;
+                    index++;
+                } else {
+                    utf8Bytes++;
+                }
+            } else if (Character.isLowSurrogate(current)) {
+                utf8Bytes++;
+            } else {
+                utf8Bytes += 3;
+            }
+        }
         return varIntBytes(utf8Bytes) + utf8Bytes;
     }
 

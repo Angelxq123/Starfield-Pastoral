@@ -27,21 +27,24 @@ public final class ClientContentSyncService {
         List<ServerPlayer> recipients = event.getRelevantPlayers().toList();
 
         ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_RECIPIENTS, recipients.size());
-        ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, recipients.size() * 4L);
-        ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES,
-                recipients.size() * (long) registrySnapshot.estimatedEncodedBytes());
 
         for (ServerPlayer player : recipients) {
+            PacketDistributor.sendToPlayer(player, registrySnapshot);
+            ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
+            ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES,
+                    registrySnapshot.estimatedEncodedBytes());
+            PacketDistributor.sendToPlayer(player, mailSnapshot);
+            ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
+            PacketDistributor.sendToPlayer(player, festivalSnapshot);
+            ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
             JeiCatalogSyncPayload jeiSnapshot = ServerPerformanceRecorder.measure(
                     PerformanceTiming.JEI_CATALOG_BUILD, () -> JeiCatalogSyncPayload.current(player));
             ServerPerformanceRecorder.increment(PerformanceCounter.JEI_CATALOG_ENTRIES,
                     (long) jeiSnapshot.shops().size()
                             + jeiSnapshot.geodes().size()
                             + jeiSnapshot.fishPonds().size());
-            PacketDistributor.sendToPlayer(player, registrySnapshot);
-            PacketDistributor.sendToPlayer(player, mailSnapshot);
-            PacketDistributor.sendToPlayer(player, festivalSnapshot);
             PacketDistributor.sendToPlayer(player, jeiSnapshot);
+            ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
         }
 
         StardewCraft.LOGGER.info("[DATA-SYNC] Sent client content snapshot to {} player(s) ({} mail entries)",

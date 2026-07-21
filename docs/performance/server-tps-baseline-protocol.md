@@ -15,18 +15,25 @@ baseline has been captured because 30-50 test clients are not available here.
 
 - Spark profiler installed on the test server
 - Operator access to `/stardew perf`
-- The exact tested StardewCraft commit recorded with `git rev-parse HEAD`
+- Each tested StardewCraft commit recorded with `git rev-parse HEAD`
 
 ## Run Manifest
 
 Choose one exact target player count from 30 through 50. Use that count for
-both the baseline and optimized runs. Retain these values for every run:
+both the baseline and optimized runs. Record these build-under-test identities
+separately for the baseline and optimized runs:
+
+- StardewCraft commit
+- Tested StardewCraft mod JAR SHA-256
+
+Retain these common values for every run:
 
 - Minecraft, Java, and Spark versions
 - Server loader and distribution with versions, including NeoForge or Youer as
   applicable
-- StardewCraft commit and mod JAR SHA-256
-- Complete modpack identity, version, and hash
+- Dependency or modpack identity, version, and hash computed without the
+  StardewCraft JAR; alternatively, a complete mod manifest in which only the
+  StardewCraft entry may differ
 - Hash of all relevant server and mod configuration
 - Complete JVM arguments, server hardware, view distance, and simulation
   distance
@@ -54,9 +61,11 @@ optimized run:
    `/spark profiler stop`. Record the end timestamp and Spark report URL, then
    record the complete `/stardew perf status` output.
 
-A comparison is valid only when the baseline and optimized runs use the same
-world snapshot, manifest values, warm-up, target count, and scenario script.
-Rerun any trial that departs from the script or player-count requirements.
+A comparison is valid only when all environmental, runtime, dependency,
+configuration, world, and scenario values are identical, including the
+warm-up and target count. The build-under-test commit, its JAR SHA-256, and any
+aggregate hash that includes that JAR are excluded from this rule. Rerun any
+trial that departs from the shared controls or player-count requirements.
 
 ## Scenario A: Steady Multiplayer
 

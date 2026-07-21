@@ -8,8 +8,10 @@ final class ClientContentSnapshotCache<K, V> {
     private K owner;
     private Entry<V> entry;
     private long generation;
+    private boolean building;
 
     Entry<V> getOrBuild(K owner, LongFunction<V> builder) {
+        rejectReentrantBuild();
         Objects.requireNonNull(owner, "owner");
         Objects.requireNonNull(builder, "builder");
         if (this.owner == owner && entry != null) {
@@ -19,17 +21,23 @@ final class ClientContentSnapshotCache<K, V> {
     }
 
     Entry<V> rebuild(K owner, LongFunction<V> builder) {
+        rejectReentrantBuild();
         Objects.requireNonNull(owner, "owner");
         Objects.requireNonNull(builder, "builder");
         this.owner = null;
         entry = null;
 
-        long nextGeneration = Math.addExact(generation, 1L);
-        Entry<V> rebuilt = new Entry<>(nextGeneration, builder.apply(nextGeneration));
-        this.owner = owner;
-        entry = rebuilt;
-        generation = nextGeneration;
-        return rebuilt;
+        building = true;
+        try {
+            long nextGeneration = Math.addExact(generation, 1L);
+            Entry<V> rebuilt = new Entry<>(nextGeneration, builder.apply(nextGeneration));
+            this.owner = owner;
+            entry = rebuilt;
+            generation = nextGeneration;
+            return rebuilt;
+        } finally {
+            building = false;
+        }
     }
 
     void clear(K owner) {
@@ -37,6 +45,12 @@ final class ClientContentSnapshotCache<K, V> {
         if (this.owner == owner) {
             this.owner = null;
             entry = null;
+        }
+    }
+
+    private void rejectReentrantBuild() {
+        if (building) {
+            throw new IllegalStateException("content snapshot build already in progress");
         }
     }
 

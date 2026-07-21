@@ -85,6 +85,80 @@ class ClientContentSnapshotCacheTest {
     }
 
     @Test
+    void recursiveGetOrBuildIsRejectedWithoutPublishingAndRetryUsesSameGeneration() {
+        ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
+        Object owner = new Object();
+        AtomicInteger nestedBuilds = new AtomicInteger();
+
+        IllegalStateException thrown = assertThrows(
+            IllegalStateException.class,
+            () -> cache.getOrBuild(owner, generation -> {
+                assertEquals(1L, generation);
+                return cache.getOrBuild(owner, nestedGeneration -> {
+                    nestedBuilds.incrementAndGet();
+                    return "nested-" + nestedGeneration;
+                }).value();
+            })
+        );
+        ClientContentSnapshotCache.Entry<String> retried = cache.getOrBuild(
+            owner, generation -> "retry-" + generation);
+
+        assertEquals("content snapshot build already in progress", thrown.getMessage());
+        assertEquals(0, nestedBuilds.get());
+        assertEquals(1L, retried.generation());
+        assertEquals("retry-1", retried.value());
+    }
+
+    @Test
+    void outerBuilderCanCatchRejectedRecursiveRebuildWithoutNestedPublication() {
+        ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
+        Object owner = new Object();
+        AtomicInteger nestedBuilds = new AtomicInteger();
+
+        ClientContentSnapshotCache.Entry<String> outer = cache.getOrBuild(owner, generation -> {
+            IllegalStateException thrown = assertThrows(
+                IllegalStateException.class,
+                () -> cache.rebuild(owner, nestedGeneration -> {
+                    nestedBuilds.incrementAndGet();
+                    return "nested-" + nestedGeneration;
+                })
+            );
+            assertEquals("content snapshot build already in progress", thrown.getMessage());
+            return "outer-" + generation;
+        });
+
+        assertEquals(0, nestedBuilds.get());
+        assertEquals(1L, outer.generation());
+        assertEquals("outer-1", outer.value());
+        assertSame(outer, cache.getOrBuild(owner, generation -> "unexpected"));
+    }
+
+    @Test
+    void rethrownRecursiveRebuildPublishesNothingAndRetryUsesSameGeneration() {
+        ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
+        Object owner = new Object();
+        AtomicInteger nestedBuilds = new AtomicInteger();
+
+        IllegalStateException thrown = assertThrows(
+            IllegalStateException.class,
+            () -> cache.getOrBuild(owner, generation -> cache.rebuild(
+                owner,
+                nestedGeneration -> {
+                    nestedBuilds.incrementAndGet();
+                    return "nested-" + nestedGeneration;
+                }
+            ).value())
+        );
+        ClientContentSnapshotCache.Entry<String> retried = cache.getOrBuild(
+            owner, generation -> "retry-" + generation);
+
+        assertEquals("content snapshot build already in progress", thrown.getMessage());
+        assertEquals(0, nestedBuilds.get());
+        assertEquals(1L, retried.generation());
+        assertEquals("retry-1", retried.value());
+    }
+
+    @Test
     void failedBuildRemovesStaleEntryAndRetryReusesGeneration() {
         ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
         Object firstOwner = new Object();

@@ -14,6 +14,7 @@ import com.stardew.craft.command.AnimalDebugCommand;
 import com.stardew.craft.command.ActorCommand;
 import com.stardew.craft.command.DecorationDebugCommand;
 import com.stardew.craft.command.PlayerDataCommand;
+import com.stardew.craft.command.PerformanceCommand;
 import com.stardew.craft.command.QuestDebugCommand;
 import com.stardew.craft.command.SecretNoteDebugCommand;
 import com.stardew.craft.command.StardewPayCommand;
@@ -41,6 +42,7 @@ public class CommandEventHandler {
         FarmJoinCommand.register(event.getDispatcher());
         StardewTeleportCommand.register(event.getDispatcher());
         StardewTimeCommand.register(event.getDispatcher());
+        PerformanceCommand.register(event.getDispatcher());
         StardewPayCommand.register(event.getDispatcher());
         PlayerDataCommand.register(event.getDispatcher());
         QuestDebugCommand.register(event.getDispatcher());

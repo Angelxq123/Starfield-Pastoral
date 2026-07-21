@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RollingTimingWindowTest {
 
@@ -24,6 +25,49 @@ class RollingTimingWindowTest {
         assertEquals(5.0D, summary.maxMillis());
         assertEquals(5.0D, summary.p95Millis());
         assertEquals(5.0D, summary.p99Millis());
+    }
+
+    @Test
+    void calculatesNearestRankPercentilesFromUnsortedSamples() {
+        RollingTimingWindow window = new RollingTimingWindow(100);
+        for (int index = 0; index < 100; index++) {
+            long millis = (index * 37L) % 100L + 1L;
+            window.record(millis * 1_000_000L);
+        }
+
+        TimingSummary summary = window.snapshot();
+
+        assertEquals(95.0D, summary.p95Millis());
+        assertEquals(99.0D, summary.p99Millis());
+    }
+
+    @Test
+    void averagesMaximumLongSamplesWithoutOverflow() {
+        RollingTimingWindow window = new RollingTimingWindow(2);
+        window.record(Long.MAX_VALUE);
+        window.record(Long.MAX_VALUE);
+
+        double averageMillis = window.snapshot().averageMillis();
+        double expectedMillis = Long.MAX_VALUE / 1_000_000.0D;
+
+        assertTrue(Double.isFinite(averageMillis));
+        assertEquals(expectedMillis, averageMillis, Math.ulp(expectedMillis));
+    }
+
+    @Test
+    void retainsNewestSamplesAfterMultipleWraps() {
+        RollingTimingWindow window = new RollingTimingWindow(3);
+        for (long millis = 1L; millis <= 10L; millis++) {
+            window.record(millis * 1_000_000L);
+        }
+
+        TimingSummary summary = window.snapshot();
+
+        assertEquals(3L, summary.sampleCount());
+        assertEquals(9.0D, summary.averageMillis());
+        assertEquals(10.0D, summary.maxMillis());
+        assertEquals(10.0D, summary.p95Millis());
+        assertEquals(10.0D, summary.p99Millis());
     }
 
     @Test

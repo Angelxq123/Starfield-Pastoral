@@ -1,6 +1,9 @@
 package com.stardew.craft.farm;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.server.performance.PerformanceCounter;
+import com.stardew.craft.server.performance.PerformanceTiming;
+import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -112,7 +115,10 @@ public class FarmChunkManager {
                     newlyForced.add(chunk);
                 }
                 // 强加载只添加票据；日结算在当前 tick 就要读方块，因此同步取到区块。
-                level.getChunk(chunk.x, chunk.z);
+                ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
+                ServerPerformanceRecorder.measure(
+                        PerformanceTiming.FARM_SYNC_CHUNK_LOAD,
+                        () -> level.getChunk(chunk.x, chunk.z));
             }
         } catch (RuntimeException exception) {
             temporaryFarmLoads.remove(slotIndex, load);

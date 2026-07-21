@@ -1,6 +1,9 @@
 package com.stardew.craft.farm;
 
 import com.stardew.craft.core.FarmAreaResolver;
+import com.stardew.craft.server.performance.PerformanceCounter;
+import com.stardew.craft.server.performance.PerformanceTiming;
+import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -124,7 +127,10 @@ public final class FarmDailyProcessHelper {
             level.setChunkForced(chunkX, chunkZ, true);
             cachedNewlyForcedChunks.add(new ChunkPos(chunkX, chunkZ));
         }
-        level.getChunk(chunkX, chunkZ);
+        ServerPerformanceRecorder.increment(PerformanceCounter.DAILY_SYNC_CHUNK_LOADS, 1L);
+        ServerPerformanceRecorder.measure(
+                PerformanceTiming.DAILY_SYNC_CHUNK_LOAD,
+                () -> level.getChunk(chunkX, chunkZ));
     }
 
     /** 为可能跨区块生成结构的树木等对象补齐周边区块。 */

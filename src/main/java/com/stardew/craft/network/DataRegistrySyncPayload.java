@@ -145,6 +145,35 @@ public record DataRegistrySyncPayload(
         return json == null || json.isBlank() ? "{}" : json;
     }
 
+    private static int encodedStringBytes(String value) {
+        int utf8Bytes = value.getBytes(StandardCharsets.UTF_8).length;
+        return varIntBytes(utf8Bytes) + utf8Bytes;
+    }
+
+    private static int varIntBytes(int value) {
+        int bytes = 1;
+        while ((value & ~0x7F) != 0) {
+            value >>>= 7;
+            bytes++;
+        }
+        return bytes;
+    }
+
+    public int estimatedEncodedBytes() {
+        return encodedStringBytes(artisanJson)
+                + encodedStringBytes(cookingJson)
+                + encodedStringBytes(craftingJson)
+                + encodedStringBytes(preservesJson)
+                + encodedStringBytes(fishingJson)
+                + encodedStringBytes(npcEventsJson)
+                + encodedStringBytes(unlockSourcesJson)
+                + encodedStringBytes(festivalsJson)
+                + encodedStringBytes(masteryRewardsJson)
+                + encodedStringBytes(locationsJson)
+                + encodedStringBytes(professionsJson)
+                + encodedStringBytes(secretNotesJson);
+    }
+
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return TYPE;

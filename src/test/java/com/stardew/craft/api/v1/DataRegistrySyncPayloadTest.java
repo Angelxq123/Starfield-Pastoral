@@ -41,6 +41,15 @@ class DataRegistrySyncPayloadTest {
     }
 
     @Test
+    void estimatesEncodedRegistryDocumentBytes() {
+        DataRegistrySyncPayload payload = new DataRegistrySyncPayload(
+                "{}", "{}", "{}", "{}", "{}", "{}",
+                "{}", "{}", "{}", "{}", "{}", "{}");
+
+        assertEquals(36, payload.estimatedEncodedBytes());
+    }
+
+    @Test
     void rejectsAnOversizedDocumentBeforeAllocatingItsBody() {
         ByteBuf buffer = Unpooled.buffer();
         try {

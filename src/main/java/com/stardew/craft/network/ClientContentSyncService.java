@@ -4,42 +4,50 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.server.performance.PerformanceCounter;
 import com.stardew.craft.server.performance.PerformanceTiming;
 import com.stardew.craft.server.performance.ServerPerformanceRecorder;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
+import java.util.Objects;
 
 /** Sends the client-safe datapack snapshot on both login and {@code /reload}. */
 @EventBusSubscriber(modid = StardewCraft.MODID)
 public final class ClientContentSyncService {
+    private static final ClientContentSnapshotCache<MinecraftServer, SharedSnapshot> SHARED_CONTENT =
+            new ClientContentSnapshotCache<>();
+
     private ClientContentSyncService() {
     }
 
     @SubscribeEvent
     public static void onDatapackSync(OnDatapackSyncEvent event) {
-        DataRegistrySyncPayload registrySnapshot = ServerPerformanceRecorder.measure(
-                PerformanceTiming.CONTENT_SNAPSHOT_BUILD, DataRegistrySyncPayload::current);
-        MailIndexSyncPayload mailSnapshot = MailIndexSyncPayload.current();
+        MinecraftServer server = event.getPlayerList().getServer();
+        ClientContentSnapshotCache.Entry<SharedSnapshot> cached = event.getPlayer() == null
+                ? SHARED_CONTENT.rebuild(server, ClientContentSyncService::buildSharedSnapshot)
+                : SHARED_CONTENT.getOrBuild(server, ClientContentSyncService::buildSharedSnapshot);
+        SharedSnapshot shared = cached.value();
         FestivalAvailabilitySyncPayload festivalSnapshot = FestivalAvailabilitySyncPayload.current();
         List<ServerPlayer> recipients = event.getRelevantPlayers().toList();
-        int registryEncodedBytes = registrySnapshot.estimatedEncodedBytes();
 
         ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_RECIPIENTS, recipients.size());
 
         for (ServerPlayer player : recipients) {
-            PacketDistributor.sendToPlayer(player, registrySnapshot);
+            PacketDistributor.sendToPlayer(player, shared.registry());
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES,
-                    registryEncodedBytes);
-            PacketDistributor.sendToPlayer(player, mailSnapshot);
+                    shared.registryEncodedBytes());
+            PacketDistributor.sendToPlayer(player, shared.mail());
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
             PacketDistributor.sendToPlayer(player, festivalSnapshot);
             ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
             JeiCatalogSyncPayload jeiSnapshot = ServerPerformanceRecorder.measure(
-                    PerformanceTiming.JEI_CATALOG_BUILD, () -> JeiCatalogSyncPayload.current(player));
+                    PerformanceTiming.JEI_CATALOG_BUILD,
+                    () -> JeiCatalogSyncPayload.current(player, shared.jeiCatalog()));
             ServerPerformanceRecorder.increment(PerformanceCounter.JEI_CATALOG_ENTRIES,
                     (long) jeiSnapshot.shops().size()
                             + jeiSnapshot.geodes().size()
@@ -49,6 +57,38 @@ public final class ClientContentSyncService {
         }
 
         StardewCraft.LOGGER.info("[DATA-SYNC] Sent client content snapshot to {} player(s) ({} mail entries)",
-                recipients.size(), mailSnapshot.entries().size());
+                recipients.size(), shared.mail().entries().size());
+    }
+
+    private static SharedSnapshot buildSharedSnapshot(long generation) {
+        return ServerPerformanceRecorder.measure(PerformanceTiming.CONTENT_SNAPSHOT_BUILD, () -> {
+            DataRegistrySyncPayload registry = DataRegistrySyncPayload.current();
+            return new SharedSnapshot(
+                    registry,
+                    registry.estimatedEncodedBytes(),
+                    MailIndexSyncPayload.current(),
+                    JeiCatalogSyncPayload.currentSharedCatalog());
+        });
+    }
+
+    private record SharedSnapshot(
+            DataRegistrySyncPayload registry,
+            int registryEncodedBytes,
+            MailIndexSyncPayload mail,
+            JeiCatalogSyncPayload.SharedCatalog jeiCatalog
+    ) {
+        private SharedSnapshot {
+            Objects.requireNonNull(registry, "registry");
+            if (registryEncodedBytes < 0) {
+                throw new IllegalArgumentException("registryEncodedBytes must be nonnegative");
+            }
+            Objects.requireNonNull(mail, "mail");
+            Objects.requireNonNull(jeiCatalog, "jeiCatalog");
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        SHARED_CONTENT.clear(event.getServer());
     }
 }

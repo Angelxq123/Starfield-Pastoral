@@ -291,18 +291,12 @@ public class PlayerDataEventHandler {
             // such as Flower Dance partners must survive reconnect.
             com.stardew.craft.festival.ActiveFestivalHandlers.onPlayerLogout(player);
 
-            // 多人农场：更新最后在线天数 + 卸载农场区块
+            // 多人农场：卸载农场区块
             {
                 com.stardew.craft.farm.FarmInstanceRegistry registry =
                         com.stardew.craft.farm.FarmInstanceRegistry.get();
                 com.stardew.craft.farm.FarmInstance farm = registry.getFarmForPlayer(player.getUUID());
                 if (farm != null) {
-                    int absDay = com.stardew.craft.farm.OfflineFarmCatchUp.computeAbsoluteDay();
-                    com.stardew.craft.time.StardewTimeManager tm = com.stardew.craft.time.StardewTimeManager.get();
-                    farm.setLastOnlineDay(absDay);
-                    farm.setLastOnlineSeason(tm.getCurrentSeason());
-                    registry.setDirty();
-
                     // 通知 FarmChunkManager 玩家离开农场
                     net.minecraft.server.level.ServerLevel stardewLevel =
                             player.server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);

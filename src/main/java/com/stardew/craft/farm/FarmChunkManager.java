@@ -27,8 +27,8 @@ public class FarmChunkManager {
 
     private static final FarmChunkManager INSTANCE = new FarmChunkManager();
 
-    /** 每个农场当前在场玩家数（供其他系统查询） */
-    private final Map<Integer, Integer> playerCounts = new HashMap<>();
+    /** 玩家当前所在农场及每个农场的在场人数（供其他系统查询）。 */
+    private final FarmOccupancyTracker<UUID> occupancy = new FarmOccupancyTracker<>();
 
     /** 兼容旧 API 的农场级租约引用，按维度对象 identity 与 slot 隔离。 */
     private final IdentityHashMap<ServerLevel, Map<Integer, TemporaryFarmLoad>> temporaryFarmLoads =
@@ -80,25 +80,30 @@ public class FarmChunkManager {
      */
     public void onPlayerEnterFarm(ServerLevel level, ServerPlayer player, FarmInstance farm) {
         int slot = farm.getSlotIndex();
-        playerCounts.merge(slot, 1, Integer::sum);
+        FarmOccupancyTracker.Transition transition = occupancy.enter(player.getUUID(), slot);
 
         StardewCraft.LOGGER.debug("[FARM_CHUNK] Player {} entered farm slot {}, players={}",
-                player.getName().getString(), slot, playerCounts.getOrDefault(slot, 0));
+                player.getName().getString(), transition.slot(), transition.count());
     }
 
     /**
      * 玩家离开农场时调用。
      * 仅减少玩家计数。
      */
+    public void onPlayerLeaveFarm(ServerLevel level, ServerPlayer player) {
+        occupancy.leave(player.getUUID()).ifPresent(transition -> {
+            if (transition.count() == 0) {
+                StardewCraft.LOGGER.debug("[FARM_CHUNK] No players in farm slot {}", transition.slot());
+            } else {
+                StardewCraft.LOGGER.debug("[FARM_CHUNK] Player {} left farm slot {}, players={}",
+                        player.getName().getString(), transition.slot(), transition.count());
+            }
+        });
+    }
+
+    /** 兼容旧调用方；离开状态始终以 tracker 中记录的实际 slot 为准。 */
     public void onPlayerLeaveFarm(ServerLevel level, ServerPlayer player, FarmInstance farm) {
-        int slot = farm.getSlotIndex();
-        int count = playerCounts.getOrDefault(slot, 1) - 1;
-        if (count <= 0) {
-            playerCounts.remove(slot);
-            StardewCraft.LOGGER.debug("[FARM_CHUNK] No players in farm slot {}", slot);
-        } else {
-            playerCounts.put(slot, count);
-        }
+        onPlayerLeaveFarm(level, player);
     }
 
     /**
@@ -187,27 +192,22 @@ public class FarmChunkManager {
     /**
      * 玩家下线时清理计数。
      */
-    public void onPlayerLogout(ServerLevel level, ServerPlayer player) {
-        FarmInstance farm = FarmInstanceRegistry.get().getFarmForPlayer(player.getUUID());
-        if (farm == null) return;
-        int slot = farm.getSlotIndex();
-        if (playerCounts.containsKey(slot)) {
-            onPlayerLeaveFarm(level, player, farm);
-        }
+    public void onPlayerLogout(ServerPlayer player) {
+        onPlayerLeaveFarm(player.serverLevel(), player);
     }
 
     /**
      * 判断某个农场当前是否有玩家在场。
      */
     public boolean isFarmLoaded(int slotIndex) {
-        return playerCounts.containsKey(slotIndex);
+        return occupancy.isOccupied(slotIndex);
     }
 
     /**
      * 获取农场在场玩家数。
      */
     public int getPlayerCount(int slotIndex) {
-        return playerCounts.getOrDefault(slotIndex, 0);
+        return occupancy.count(slotIndex);
     }
 
     /**
@@ -225,7 +225,7 @@ public class FarmChunkManager {
             try {
                 temporaryChunkLeases.closeAll(level);
             } finally {
-                playerCounts.clear();
+                occupancy.clear();
             }
         }
         StardewCraft.LOGGER.info("[FARM_CHUNK] Cleanup on server stop");

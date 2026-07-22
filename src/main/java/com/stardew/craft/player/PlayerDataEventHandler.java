@@ -291,21 +291,8 @@ public class PlayerDataEventHandler {
             // such as Flower Dance partners must survive reconnect.
             com.stardew.craft.festival.ActiveFestivalHandlers.onPlayerLogout(player);
 
-            // 多人农场：卸载农场区块
-            {
-                com.stardew.craft.farm.FarmInstanceRegistry registry =
-                        com.stardew.craft.farm.FarmInstanceRegistry.get();
-                com.stardew.craft.farm.FarmInstance farm = registry.getFarmForPlayer(player.getUUID());
-                if (farm != null) {
-                    // 通知 FarmChunkManager 玩家离开农场
-                    net.minecraft.server.level.ServerLevel stardewLevel =
-                            player.server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
-                    if (stardewLevel != null) {
-                        com.stardew.craft.farm.FarmChunkManager.get().onPlayerLeaveFarm(
-                                stardewLevel, player, farm);
-                    }
-                }
-            }
+            // 多人农场：清理 tracker 中记录的实际访客状态。
+            com.stardew.craft.farm.FarmChunkManager.get().onPlayerLogout(player);
 
             // 睡眠投票：玩家登出后如果剩余人全部已投票，推进日期
             if (com.stardew.craft.event.SleepVoteTracker.hasAnyVotes()) {

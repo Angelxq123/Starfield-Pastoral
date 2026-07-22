@@ -1,11 +1,9 @@
 package com.stardew.craft.farm;
 
-import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.util.JavacTask;
-import com.sun.source.util.TreeScanner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.Test;
@@ -18,9 +16,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.tools.Diagnostic;
@@ -92,15 +88,14 @@ class FarmCursorLifecycleTest {
     void logoutFarmBlockOnlyNotifiesChunkManager() throws IOException {
         MethodTree logout = parseMethod(
                 PLAYER_HANDLER_SOURCE, "PlayerDataEventHandler", "onPlayerLogout", 1);
-        String farmBlock = normalized(smallestBlockContaining(
-                logout, "FarmInstanceRegistry.get()", "onPlayerLeaveFarm"));
+        String logoutSource = normalized(logout);
 
-        assertTrue(farmBlock.contains("onPlayerLeaveFarm"));
-        assertFalse(farmBlock.contains("OfflineFarmCatchUp.computeAbsoluteDay"));
-        assertFalse(farmBlock.contains("StardewTimeManager"));
-        assertFalse(farmBlock.contains("setLastOnlineDay"));
-        assertFalse(farmBlock.contains("setLastOnlineSeason"));
-        assertFalse(farmBlock.contains("registry.setDirty()"));
+        assertTrue(logoutSource.contains("FarmChunkManager.get().onPlayerLogout(player);"));
+        assertFalse(logoutSource.contains("OfflineFarmCatchUp.computeAbsoluteDay"));
+        assertFalse(logoutSource.contains("StardewTimeManager"));
+        assertFalse(logoutSource.contains("setLastOnlineDay"));
+        assertFalse(logoutSource.contains("setLastOnlineSeason"));
+        assertFalse(logoutSource.contains("registry.setDirty()"));
     }
 
     @Test
@@ -153,24 +148,6 @@ class FarmCursorLifecycleTest {
             fail("createFarmAtDate threw an exception", exception.getCause());
         }
         throw new AssertionError("unreachable");
-    }
-
-    private static BlockTree smallestBlockContaining(MethodTree method, String... fragments) {
-        List<BlockTree> matches = new ArrayList<>();
-        method.accept(new TreeScanner<Void, Void>() {
-            @Override
-            public Void visitBlock(BlockTree block, Void unused) {
-                String source = normalized(block);
-                if (Set.of(fragments).stream().allMatch(source::contains)) {
-                    matches.add(block);
-                }
-                return super.visitBlock(block, unused);
-            }
-        }, null);
-        return matches.stream()
-                .min(java.util.Comparator.comparingInt(block -> normalized(block).length()))
-                .orElseThrow(() -> new AssertionError(
-                        "missing block containing " + String.join(", ", fragments)));
     }
 
     private static MethodTree parseMethod(

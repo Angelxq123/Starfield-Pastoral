@@ -620,12 +620,8 @@ public class InteriorPortalInteractionEvents {
         if (now - last < PORTAL_COOLDOWN_TICKS) return;
         player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
 
-        com.stardew.craft.farm.FarmInstance farm = com.stardew.craft.farm.FarmInstanceRegistry.get()
-                .getFarmForPlayer(player.getUUID());
-        if (farm != null) {
-            com.stardew.craft.farm.FarmChunkManager.get().onPlayerLeaveFarm(
-                    player.serverLevel(), player, farm);
-        }
+        com.stardew.craft.farm.FarmChunkManager.get().onPlayerLeaveFarm(
+                player.serverLevel(), player);
 
         net.minecraft.core.BlockPos target = switch (exitId) {
             case "farm_exit_south" -> PUBLIC_NORTH_FARM_TARGET;

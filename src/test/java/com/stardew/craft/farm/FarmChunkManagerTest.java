@@ -104,7 +104,7 @@ class FarmChunkManagerTest {
         assertTrue(source.contains("temporaryFarmLoads.remove(level)"));
         assertTrue(source.contains("temporaryChunkLeases.closeAll(level)"));
         assertFalse(source.contains("temporaryFarmLoads.clear()"));
-        assertTrue(source.contains("playerCounts.clear()"));
+        assertTrue(source.contains("occupancy.clear()"));
     }
 
     @Test
@@ -112,11 +112,11 @@ class FarmChunkManagerTest {
         String source = managerSource();
         Pattern nestedCleanup = Pattern.compile(
             "finally\\s*\\{\\s*try\\s*\\{\\s*temporaryChunkLeases\\.closeAll\\(level\\);\\s*}"
-                + "\\s*finally\\s*\\{\\s*playerCounts\\.clear\\(\\);\\s*}\\s*}",
+                + "\\s*finally\\s*\\{\\s*occupancy\\.clear\\(\\);\\s*}\\s*}",
             Pattern.DOTALL);
 
         assertTrue(nestedCleanup.matcher(source).find(),
-            "playerCounts.clear() must run in a nested finally after tracker cleanup");
+            "occupancy.clear() must run in a nested finally after tracker cleanup");
     }
 
     private static void assertPublicVoidMethod(String name) throws Exception {

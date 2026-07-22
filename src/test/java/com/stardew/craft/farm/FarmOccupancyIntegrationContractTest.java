@@ -89,6 +89,32 @@ class FarmOccupancyIntegrationContractTest {
             Pattern.DOTALL).matcher(stop).find());
     }
 
+    @Test
+    void subscribedServerStopAlwaysDelegatesFarmCleanup() throws IOException {
+        String body = methodBody(source(
+            "src/main/java/com/stardew/craft/player/PlayerDataEventHandler.java"),
+            "public static void onServerStopping(ServerStoppingEvent event)");
+        var cleanup = Pattern.compile(
+            "try\\s*\\{(?<caches>.*?)\\}\\s*finally\\s*\\{(?<farm>.*?)\\}",
+            Pattern.DOTALL).matcher(body);
+
+        assertTrue(cleanup.find(), "Static server-stop cleanup must guarantee farm cleanup with finally");
+        assertTrue(cleanup.group("caches").contains("InteriorSubspaceManager.clearPortalRegistry()"));
+        assertTrue(cleanup.group("farm").contains(
+            "event.getServer().getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY)"));
+        assertTrue(cleanup.group("farm").contains(
+            "FarmChunkManager.get().onServerStopping(stardewLevel)"));
+    }
+
+    @Test
+    void legacyLogoutOverloadDelegatesToTrackedLogout() throws IOException {
+        String body = methodBody(source(
+            "src/main/java/com/stardew/craft/farm/FarmChunkManager.java"),
+            "public void onPlayerLogout(ServerLevel level, ServerPlayer player)");
+
+        assertEquals("onPlayerLogout(player);", body.trim());
+    }
+
     private static String source(String relativePath) throws IOException {
         Path projectDir = Path.of(System.getProperty("stardewcraft.projectDir"));
         return Files.readString(projectDir.resolve(relativePath));

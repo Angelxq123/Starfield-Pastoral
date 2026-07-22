@@ -836,9 +836,17 @@ public class PlayerDataEventHandler {
         }
 
         // 释放服务端静态缓存，防止内存泄漏
-        com.stardew.craft.interior.InteriorSubspaceManager.clearPortalRegistry();
-        com.stardew.craft.block.shape.ModelVoxelShapeCache.clearAll();
-        com.stardew.craft.npc.data.NpcContentFilter.clearCache();
+        try {
+            com.stardew.craft.interior.InteriorSubspaceManager.clearPortalRegistry();
+            com.stardew.craft.block.shape.ModelVoxelShapeCache.clearAll();
+            com.stardew.craft.npc.data.NpcContentFilter.clearCache();
+        } finally {
+            net.minecraft.server.level.ServerLevel stardewLevel =
+                    event.getServer().getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+            if (stardewLevel != null) {
+                com.stardew.craft.farm.FarmChunkManager.get().onServerStopping(stardewLevel);
+            }
+        }
     }
     
     /**

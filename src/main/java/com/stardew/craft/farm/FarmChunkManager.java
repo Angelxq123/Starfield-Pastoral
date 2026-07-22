@@ -196,6 +196,11 @@ public class FarmChunkManager {
         onPlayerLeaveFarm(player.serverLevel(), player);
     }
 
+    /** 兼容旧调用方；level 不用于推断玩家所属农场。 */
+    public void onPlayerLogout(ServerLevel level, ServerPlayer player) {
+        onPlayerLogout(player);
+    }
+
     /**
      * 判断某个农场当前是否有玩家在场。
      */

@@ -66,7 +66,7 @@ public final class WarpEffects {
             tz = spawn.getZ() + 0.5;
         }
 
-        player.teleportTo(targetLevel, tx, ty, tz, 180.0f, 0.0f);
+        ModTeleport.to(player, targetLevel, tx, ty, tz, 180.0f, 0.0f);
         player.setDeltaMovement(0, 0, 0);
         player.fallDistance = 0;
         player.hurtMarked = true;

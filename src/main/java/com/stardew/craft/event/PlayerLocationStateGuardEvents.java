@@ -65,6 +65,7 @@ public final class PlayerLocationStateGuardEvents {
     }
 
     public static void reconcileLocationState(ServerPlayer player, boolean justTeleported) {
+        com.stardew.craft.farm.FarmChunkManager.get().reconcilePlayerOccupancy(player);
         ResourceKey<Level> dimension = player.serverLevel().dimension();
 
         if (!ModMiningDimensions.STARDEW_MINING.equals(dimension)) {

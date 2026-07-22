@@ -1,6 +1,7 @@
 package com.stardew.craft.farm;
 
 import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
@@ -14,6 +15,7 @@ import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.SwitchTree;
 import com.sun.source.tree.TryTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.JavacTask;
@@ -50,6 +52,9 @@ class FarmOccupancyIntegrationContractTest {
     private static final Path ENTRY_PAYLOAD_SOURCE = sourcePath("network/payload/FarmEntryRequestPayload.java");
     private static final Path PORTAL_HANDLER_SOURCE = sourcePath("event/InteriorPortalInteractionEvents.java");
     private static final Path MOD_TELEPORT_SOURCE = sourcePath("warp/ModTeleport.java");
+    private static final Path LOCATION_GUARD_SOURCE = sourcePath("event/PlayerLocationStateGuardEvents.java");
+    private static final Path FARM_ADMIN_SOURCE = sourcePath("network/payload/FarmAdminPayload.java");
+    private static final Path WARP_EFFECTS_SOURCE = sourcePath("warp/WarpEffects.java");
 
     @Test
     void entryHandlerTracksTheFarmSelectedByTargetOwner() throws IOException {
@@ -67,23 +72,70 @@ class FarmOccupancyIntegrationContractTest {
     }
 
     @Test
-    void modTeleportReconcilesOccupancyAtThePostTeleportPosition() throws IOException {
+    void locationGuardReconcilesOccupancyBeforeAnyEarlyReturn() throws IOException {
+        MethodTree reconcile = parseMethod(
+                LOCATION_GUARD_SOURCE, "PlayerLocationStateGuardEvents", "reconcileLocationState", 2);
+        BlockTree body = reconcile.getBody();
+        int occupancyIndex = directInvocationIndex(body,
+                "com.stardew.craft.farm.FarmChunkManager.get()",
+                "reconcilePlayerOccupancy", "player");
+        int firstEarlyReturnOwner = statementIndex(body,
+                FarmOccupancyIntegrationContractTest::hasReturn);
+
+        assertTrue(occupancyIndex >= 0, "location guard must directly reconcile farm occupancy");
+        assertTrue(occupancyIndex < firstEarlyReturnOwner,
+                "farm occupancy must reconcile before interior-state early returns");
+    }
+
+    @Test
+    void modTeleportInvokesLocationGuardAfterTeleportWithoutDuplicateOccupancyCall() throws IOException {
         MethodTree teleport = parseMethod(MOD_TELEPORT_SOURCE, "ModTeleport", "to", 7);
         BlockTree body = teleport.getBody();
         int teleportIndex = directInvocationIndex(
                 body, "player", "teleportTo", "target", "x", "y", "z", "yaw", "pitch");
-        int locationIndex = directInvocationIndex(body,
+        int guardIndex = directInvocationIndex(body,
                 "com.stardew.craft.event.PlayerLocationStateGuardEvents",
                 "reconcileLocationState", "player", "true");
-        int occupancyIndex = directInvocationIndex(body,
-                "com.stardew.craft.farm.FarmChunkManager.get()",
-                "reconcilePlayerOccupancy", "player");
 
         assertTrue(teleportIndex >= 0, "teleportTo must remain a direct statement");
-        assertEquals(teleportIndex + 1, locationIndex,
-                "location state must reconcile immediately after teleportTo");
-        assertEquals(locationIndex + 1, occupancyIndex,
-                "occupancy must reconcile immediately after post-teleport location state");
+        assertTrue(guardIndex > teleportIndex,
+                "location state guard must reconcile after teleportTo");
+        assertFalse(hasDirectInvocation(body,
+                "com.stardew.craft.farm.FarmChunkManager.get()",
+                "reconcilePlayerOccupancy", "player"),
+                "ModTeleport must delegate occupancy to the location guard");
+    }
+
+    @Test
+    void farmChangingRawTeleportPathsUseModTeleport() throws IOException {
+        MethodTree admin = parseMethod(FARM_ADMIN_SOURCE, "FarmAdminPayload", "handle", 2);
+        BlockTree adminWork = lambdaBlockOfDirectInvocation(admin.getBody(), "context", "enqueueWork");
+        SwitchTree actionSwitch = adminWork.getStatements().stream()
+                .filter(SwitchTree.class::isInstance)
+                .map(SwitchTree.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("farm admin action switch is missing"));
+        CaseTree teleportCase = actionSwitch.getCases().stream()
+                .filter(candidate -> candidate.getLabels().stream()
+                        .anyMatch(label -> normalized(label).equals("3")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("farm admin teleport case is missing"));
+        assertTrue(teleportCase.getBody() instanceof BlockTree, "expected block case body");
+        IfTree farmFound = findDirectIf((BlockTree) teleportCase.getBody(),
+                condition -> normalized(unwrapped(condition)).equals("farm!=null"));
+        BlockTree farmFoundBody = asBlock(farmFound.getThenStatement());
+
+        assertDirectInvocation(farmFoundBody, "com.stardew.craft.warp.ModTeleport",
+                "to", "player", "player.serverLevel()",
+                "tp.getX()+0.5", "tp.getY()", "tp.getZ()+0.5", "0", "0");
+        assertFalse(hasDirectInvocation(farmFoundBody, "player", "teleportTo",
+                "player.serverLevel()", "tp.getX()+0.5", "tp.getY()", "tp.getZ()+0.5", "0", "0"));
+
+        MethodTree wand = parseMethod(WARP_EFFECTS_SOURCE, "WarpEffects", "teleport", 2);
+        assertDirectInvocation(wand.getBody(), "ModTeleport", "to",
+                "player", "targetLevel", "tx", "ty", "tz", "180.0F", "0.0F");
+        assertFalse(hasDirectInvocation(wand.getBody(), "player", "teleportTo",
+                "targetLevel", "tx", "ty", "tz", "180.0F", "0.0F"));
     }
 
     @Test
@@ -145,7 +197,6 @@ class FarmOccupancyIntegrationContractTest {
 
         assertInvocation(farm.getInitializer(), "FarmInstanceRegistry.get()", "getAllFarms");
         assertInvocation(farm.getInitializer(), null, "blockPosition");
-        assertInvocation(find, "farm", "contains", "position");
         assertFalse(hasInvocation(update, null, "getFarmForPlayer"));
         assertFalse(hasInvocation(update, null, "getOwnerForPlayer"));
         assertDirectInvocation(asBlock(outsideValley.getThenStatement()),
@@ -218,27 +269,38 @@ class FarmOccupancyIntegrationContractTest {
         assertTrue(stop.getParameters().getFirst().getModifiers().getAnnotations().stream()
                 .anyMatch(annotation -> annotation.getAnnotationType().toString().equals("Nullable")));
 
-        List<TryTree> outerCandidates = directTries(stop.getBody()).stream()
-                .filter(candidate -> candidate.getFinallyBlock() != null)
-                .filter(candidate -> hasInvocation(candidate.getFinallyBlock(), "occupancy", "clear"))
-                .toList();
-        assertEquals(1, outerCandidates.size());
-        TryTree outer = outerCandidates.getFirst();
+        assertEquals(1, directTries(stop.getBody()).size());
+        TryTree outer = directTries(stop.getBody()).getFirst();
+        IfTree wrapperLevelGuard = findDirectIf(outer.getBlock(), condition ->
+                normalized(unwrapped(condition)).equals("level!=null"));
+        BlockTree wrapperLevelBody = asBlock(wrapperLevelGuard.getThenStatement());
+        VariableTree loads = directVariables(wrapperLevelBody).stream()
+                .filter(variable -> variable.getName().contentEquals("loadsForLevel"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("level wrapper removal is missing"));
+        assertTrue(isInvocation(loads.getInitializer(),
+                "temporaryFarmLoads", "remove", "level"));
+        IfTree loadsPresent = findDirectIf(wrapperLevelBody, condition ->
+                normalized(unwrapped(condition)).equals("loadsForLevel!=null"));
+        EnhancedForLoopTree wrapperCloseLoop = asBlock(loadsPresent.getThenStatement()).getStatements().stream()
+                .filter(EnhancedForLoopTree.class::isInstance)
+                .map(EnhancedForLoopTree.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("wrapper lease close loop is missing"));
+        assertDirectInvocation(asBlock(wrapperCloseLoop.getStatement()),
+                "load.lease", "close");
+
         assertNotNull(outer.getFinallyBlock());
         BlockTree outerFinally = outer.getFinallyBlock();
-        List<TryTree> leaseCandidates = outerFinally.getStatements().stream()
-                .filter(TryTree.class::isInstance)
-                .map(TryTree.class::cast)
-                .filter(candidate -> candidate.getFinallyBlock() != null)
-                .filter(candidate -> hasInvocation(candidate.getFinallyBlock(), "occupancy", "clear"))
-                .toList();
-        assertEquals(1, leaseCandidates.size());
-        TryTree leaseCleanup = leaseCandidates.getFirst();
+        assertEquals(1, directTries(outerFinally).size());
+        TryTree leaseCleanup = directTries(outerFinally).getFirst();
+        IfTree trackerLevelGuard = findDirectIf(leaseCleanup.getBlock(), condition ->
+                normalized(unwrapped(condition)).equals("level!=null"));
+        assertDirectInvocation(asBlock(trackerLevelGuard.getThenStatement()),
+                "temporaryChunkLeases", "closeAll", "level");
         assertNotNull(leaseCleanup.getFinallyBlock());
         BlockTree occupancyFinally = leaseCleanup.getFinallyBlock();
 
-        assertInvocation(outer.getBlock(), "temporaryFarmLoads", "remove", "level");
-        assertInvocation(leaseCleanup.getBlock(), "temporaryChunkLeases", "closeAll", "level");
         assertDirectInvocation(occupancyFinally, "occupancy", "clear");
     }
 
@@ -266,17 +328,31 @@ class FarmOccupancyIntegrationContractTest {
     @Test
     void entryLoggingIgnoresDuplicatesAndReportsSwitches() throws IOException {
         MethodTree enter = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "onPlayerEnterFarm", 3);
+        BlockTree body = enter.getBody();
         IfTree unchanged = findDirectIf(enter.getBody(), condition ->
                 normalized(unwrapped(condition)).equals("!transition.changed()"));
+        int unchangedIndex = body.getStatements().indexOf(unchanged);
 
         assertTrue(asBlock(unchanged.getThenStatement()).getStatements().getFirst() instanceof ReturnTree);
-        assertInvocation(enter, "transition", "previous");
-        assertTrue(invocations(enter).stream().anyMatch(invocation ->
-                invocation.getMethodSelect() instanceof MemberSelectTree select
-                        && normalized(select.getExpression()).equals("transition.previous()")
-                        && select.getIdentifier().contentEquals("ifPresent")
-                        && invocation.getArguments().size() == 1
-                        && invocation.getArguments().getFirst() instanceof LambdaExpressionTree));
+        StatementTree switchLog = body.getStatements().get(unchangedIndex + 1);
+        assertTrue(switchLog instanceof ExpressionStatementTree,
+                "switch logging must directly follow the duplicate guard");
+        ExpressionTree switchLogExpression = ((ExpressionStatementTree) switchLog).getExpression();
+        assertTrue(switchLogExpression instanceof MethodInvocationTree,
+                "switch logging must directly invoke transition.previous().ifPresent");
+        MethodInvocationTree ifPresent = (MethodInvocationTree) switchLogExpression;
+        assertTrue(ifPresent.getMethodSelect() instanceof MemberSelectTree select
+                && normalized(select.getExpression()).equals("transition.previous()")
+                && select.getIdentifier().contentEquals("ifPresent"));
+        assertEquals(1, ifPresent.getArguments().size());
+        assertTrue(ifPresent.getArguments().getFirst() instanceof LambdaExpressionTree);
+        LambdaExpressionTree previousLog = (LambdaExpressionTree) ifPresent.getArguments().getFirst();
+        assertTrue(previousLog.getBody() instanceof MethodInvocationTree,
+                "previous-slot logger must be the lambda body");
+        MethodInvocationTree debug = (MethodInvocationTree) previousLog.getBody();
+        assertTrue(isInvocation(debug, "StardewCraft.LOGGER", "debug",
+                "\"[FARM_CHUNK] Player {} left farm slot {}, players={}\"",
+                "player.getName().getString()", "previous.slot()", "previous.count()"));
     }
 
     private static Path sourcePath(String relativePath) {
@@ -465,6 +541,18 @@ class FarmOccupancyIntegrationContractTest {
             }
         }
         return -1;
+    }
+
+    private static boolean hasReturn(StatementTree statement) {
+        final boolean[] found = {false};
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitReturn(ReturnTree node, Void unused) {
+                found[0] = true;
+                return null;
+            }
+        }.scan(statement, null);
+        return found[0];
     }
 
     private static BlockTree asBlock(StatementTree statement) {

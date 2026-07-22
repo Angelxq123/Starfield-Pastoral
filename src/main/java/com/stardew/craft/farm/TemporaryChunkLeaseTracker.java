@@ -56,10 +56,14 @@ final class TemporaryChunkLeaseTracker<L> {
                     entry = new Entry<>(level, chunk, backend.acquire(level, chunk));
                     levelEntries.put(chunk, entry);
                     acquisitions.add(new Acquisition<>(entry, true));
-                    backend.load(level, chunk);
                 } else {
+                    int previousReferences = entry.references;
                     entry.references++;
-                    acquisitions.add(new Acquisition<>(entry, false));
+                    acquisitions.add(new Acquisition<>(entry, previousReferences == 0));
+                }
+                if (!entry.loaded) {
+                    backend.load(level, chunk);
+                    entry.loaded = true;
                 }
             }
         } catch (RuntimeException exception) {
@@ -94,7 +98,7 @@ final class TemporaryChunkLeaseTracker<L> {
             Acquisition<L> acquisition = acquisitions.get(index);
             Entry<L> entry = acquisition.entry;
             entry.references--;
-            if (acquisition.created && entry.references == 0) {
+            if (acquisition.releaseWhenUnusedOnRollback && entry.references == 0) {
                 releaseUnused(entry, failure);
             }
         }
@@ -162,11 +166,11 @@ final class TemporaryChunkLeaseTracker<L> {
 
     private static final class Acquisition<L> {
         private final Entry<L> entry;
-        private final boolean created;
+        private final boolean releaseWhenUnusedOnRollback;
 
-        private Acquisition(Entry<L> entry, boolean created) {
+        private Acquisition(Entry<L> entry, boolean releaseWhenUnusedOnRollback) {
             this.entry = entry;
-            this.created = created;
+            this.releaseWhenUnusedOnRollback = releaseWhenUnusedOnRollback;
         }
     }
 
@@ -186,6 +190,7 @@ final class TemporaryChunkLeaseTracker<L> {
         private final boolean owned;
         private int references = 1;
         private boolean active = true;
+        private boolean loaded;
         private long epoch;
 
         private Entry(L level, ChunkPos chunk, boolean owned) {

@@ -257,6 +257,49 @@ class TemporaryChunkLeaseTrackerTest {
     }
 
     @Test
+    void incompletePendingEntryRetriesLoadWithoutReacquiringTicket() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.failLoadOn = A;
+        backend.releaseFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+        assertThrows(RuntimeException.class, () -> tracker.acquire(level, List.of(A)));
+
+        backend.failLoadOn = null;
+        TemporaryChunkLeaseTracker.Lease lease = tracker.acquire(level, List.of(A));
+
+        assertEquals(1, backend.acquireCount(A));
+        assertEquals(2, backend.loadCount(A));
+
+        lease.close();
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void incompletePendingEntryStillFailsWhenRetriedLoadFails() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.failLoadOn = A;
+        backend.releaseFailuresRemaining = 2;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+        assertThrows(RuntimeException.class, () -> tracker.acquire(level, List.of(A)));
+
+        RuntimeException retryFailure = assertThrows(RuntimeException.class,
+            () -> tracker.acquire(level, List.of(A)));
+
+        assertEquals("load failed 1,2", retryFailure.getMessage());
+        assertEquals(1, retryFailure.getSuppressed().length);
+        assertEquals("release failed 1,2", retryFailure.getSuppressed()[0].getMessage());
+        assertEquals(1, backend.acquireCount(A));
+        assertEquals(2, backend.loadCount(A));
+        assertEquals(2, backend.releaseCount(A));
+
+        backend.failLoadOn = null;
+        tracker.closeAll(level);
+        assertEquals(3, backend.releaseCount(A));
+    }
+
+    @Test
     void pendingEntryIsReusedWithoutAcquireOrLoadAndRejectsOldEpochHandle() {
         RecordingBackend backend = new RecordingBackend();
         backend.releaseFailuresRemaining = 1;

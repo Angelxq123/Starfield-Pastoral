@@ -8,7 +8,17 @@ import java.util.OptionalInt;
 
 final class FarmOccupancyTracker<P> {
 
-    record Transition(int slot, int count, boolean changed) {}
+    record SlotCount(int slot, int count) {}
+
+    record Transition(SlotCount current, Optional<SlotCount> previous, boolean changed) {
+        int slot() {
+            return current.slot();
+        }
+
+        int count() {
+            return current.count();
+        }
+    }
 
     private final Map<P, Integer> playerSlots = new HashMap<>();
     private final Map<Integer, Integer> slotCounts = new HashMap<>();
@@ -19,25 +29,30 @@ final class FarmOccupancyTracker<P> {
 
         Integer previousSlot = playerSlots.get(player);
         if (previousSlot != null && previousSlot == slot) {
-            return new Transition(slot, count(slot), false);
+            return new Transition(new SlotCount(slot, count(slot)), Optional.empty(), false);
         }
+
+        Optional<SlotCount> previous = Optional.empty();
         if (previousSlot != null) {
-            decrement(previousSlot);
+            previous = Optional.of(new SlotCount(previousSlot, decrement(previousSlot)));
         }
 
         playerSlots.put(player, slot);
         int count = slotCounts.merge(slot, 1, Integer::sum);
-        return new Transition(slot, count, true);
+        return new Transition(new SlotCount(slot, count), previous, true);
     }
 
     Optional<Transition> leave(P player) {
         Objects.requireNonNull(player, "player");
 
-        Integer slot = playerSlots.remove(player);
+        Integer slot = playerSlots.get(player);
         if (slot == null) {
             return Optional.empty();
         }
-        return Optional.of(new Transition(slot, decrement(slot), true));
+        int count = decrement(slot);
+        playerSlots.remove(player);
+        return Optional.of(new Transition(
+            new SlotCount(slot, count), Optional.empty(), true));
     }
 
     int count(int slot) {
@@ -62,8 +77,13 @@ final class FarmOccupancyTracker<P> {
     }
 
     private int decrement(int slot) {
-        int count = slotCounts.getOrDefault(slot, 1) - 1;
-        if (count <= 0) {
+        Integer current = slotCounts.get(slot);
+        if (current == null || current <= 0) {
+            throw new IllegalStateException("Missing positive occupancy count for slot " + slot);
+        }
+
+        int count = current - 1;
+        if (count == 0) {
             slotCounts.remove(slot);
             return 0;
         }

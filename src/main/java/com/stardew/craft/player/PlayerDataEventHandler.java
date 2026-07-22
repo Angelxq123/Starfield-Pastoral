@@ -154,6 +154,8 @@ public class PlayerDataEventHandler {
             // 如果玩家登录时已在星露谷维度，复用维度进入时的分帧初始化队列。
             // （PlayerChangedDimensionEvent 在这种情况下不会触发）
             if (player.serverLevel().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
+                com.stardew.craft.farm.FarmChunkManager.get()
+                        .updatePlayerFarmOccupancy(player.serverLevel(), player);
                 com.stardew.craft.event.DimensionEventHandler.scheduleDeferredInit(player.serverLevel());
             }
 
@@ -257,6 +259,8 @@ public class PlayerDataEventHandler {
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            com.stardew.craft.farm.FarmChunkManager.get().onPlayerLogout(player);
+
             // Settle cursor-held shop purchases before the player inventory is saved.
             com.stardew.craft.network.payload.ShopPickupPayload.deliverAllPending(player);
 
@@ -290,9 +294,6 @@ public class PlayerDataEventHandler {
             // Let active festivals clear only per-connection state; durable same-day choices
             // such as Flower Dance partners must survive reconnect.
             com.stardew.craft.festival.ActiveFestivalHandlers.onPlayerLogout(player);
-
-            // 多人农场：清理 tracker 中记录的实际访客状态。
-            com.stardew.craft.farm.FarmChunkManager.get().onPlayerLogout(player);
 
             // 睡眠投票：玩家登出后如果剩余人全部已投票，推进日期
             if (com.stardew.craft.event.SleepVoteTracker.hasAnyVotes()) {
@@ -843,9 +844,7 @@ public class PlayerDataEventHandler {
         } finally {
             net.minecraft.server.level.ServerLevel stardewLevel =
                     event.getServer().getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
-            if (stardewLevel != null) {
-                com.stardew.craft.farm.FarmChunkManager.get().onServerStopping(stardewLevel);
-            }
+            com.stardew.craft.farm.FarmChunkManager.get().onServerStopping(stardewLevel);
         }
     }
     

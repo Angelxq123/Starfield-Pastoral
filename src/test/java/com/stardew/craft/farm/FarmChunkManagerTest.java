@@ -111,7 +111,8 @@ class FarmChunkManagerTest {
     void serverStoppingAlwaysClearsPlayerCountsWhenTrackerCleanupFails() throws IOException {
         String source = managerSource();
         Pattern nestedCleanup = Pattern.compile(
-            "finally\\s*\\{\\s*try\\s*\\{\\s*temporaryChunkLeases\\.closeAll\\(level\\);\\s*}"
+            "finally\\s*\\{\\s*try\\s*\\{\\s*if\\s*\\(level != null\\)\\s*\\{"
+                + "\\s*temporaryChunkLeases\\.closeAll\\(level\\);\\s*}\\s*}"
                 + "\\s*finally\\s*\\{\\s*occupancy\\.clear\\(\\);\\s*}\\s*}",
             Pattern.DOTALL);
 

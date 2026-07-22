@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -82,8 +83,26 @@ public class FarmChunkManager {
         int slot = farm.getSlotIndex();
         FarmOccupancyTracker.Transition transition = occupancy.enter(player.getUUID(), slot);
 
+        if (!transition.changed()) {
+            return;
+        }
+        transition.previous().ifPresent(previous ->
+            StardewCraft.LOGGER.debug("[FARM_CHUNK] Player {} left farm slot {}, players={}",
+                player.getName().getString(), previous.slot(), previous.count()));
+
         StardewCraft.LOGGER.debug("[FARM_CHUNK] Player {} entered farm slot {}, players={}",
                 player.getName().getString(), transition.slot(), transition.count());
+    }
+
+    /** Reconcile tracked occupancy with the farm that physically contains the player. */
+    public void updatePlayerFarmOccupancy(ServerLevel level, ServerPlayer player) {
+        FarmInstance farm = findContainingFarm(
+            FarmInstanceRegistry.get().getAllFarms(), player.blockPosition());
+        if (farm == null) {
+            onPlayerLeaveFarm(level, player);
+            return;
+        }
+        onPlayerEnterFarm(level, player, farm);
     }
 
     /**
@@ -185,6 +204,17 @@ public class FarmChunkManager {
         return chunks;
     }
 
+    static FarmInstance findContainingFarm(Collection<FarmInstance> farms, BlockPos position) {
+        Objects.requireNonNull(farms, "farms");
+        Objects.requireNonNull(position, "position");
+        for (FarmInstance farm : farms) {
+            if (farm.contains(position)) {
+                return farm;
+            }
+        }
+        return null;
+    }
+
     // ══════════════════════════════════════════
     //  查询 & 清理
     // ══════════════════════════════════════════
@@ -218,17 +248,21 @@ public class FarmChunkManager {
     /**
      * 服务器关闭时释放所有临时 forceLoad。
      */
-    public void onServerStopping(ServerLevel level) {
-        Map<Integer, TemporaryFarmLoad> loadsForLevel = temporaryFarmLoads.remove(level);
+    public void onServerStopping(@Nullable ServerLevel level) {
         try {
-            if (loadsForLevel != null) {
-                for (TemporaryFarmLoad load : loadsForLevel.values()) {
-                    load.lease.close();
+            if (level != null) {
+                Map<Integer, TemporaryFarmLoad> loadsForLevel = temporaryFarmLoads.remove(level);
+                if (loadsForLevel != null) {
+                    for (TemporaryFarmLoad load : loadsForLevel.values()) {
+                        load.lease.close();
+                    }
                 }
             }
         } finally {
             try {
-                temporaryChunkLeases.closeAll(level);
+                if (level != null) {
+                    temporaryChunkLeases.closeAll(level);
+                }
             } finally {
                 occupancy.clear();
             }

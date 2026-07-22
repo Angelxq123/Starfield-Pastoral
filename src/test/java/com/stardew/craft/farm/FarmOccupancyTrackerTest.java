@@ -2,6 +2,8 @@ package com.stardew.craft.farm;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +22,7 @@ class FarmOccupancyTrackerTest {
         assertTrue(transition.changed());
         assertEquals(4, transition.slot());
         assertEquals(1, transition.count());
+        assertTrue(transition.previous().isEmpty());
         assertEquals(OptionalInt.of(4), tracker.slotOf("player-a"));
         assertEquals(1, tracker.count(4));
         assertTrue(tracker.isOccupied(4));
@@ -34,6 +37,7 @@ class FarmOccupancyTrackerTest {
         assertFalse(transition.changed());
         assertEquals(4, transition.slot());
         assertEquals(1, transition.count());
+        assertTrue(transition.previous().isEmpty());
         assertEquals(1, tracker.count(4));
     }
 
@@ -46,6 +50,9 @@ class FarmOccupancyTrackerTest {
         assertTrue(transition.changed());
         assertEquals(9, transition.slot());
         assertEquals(1, transition.count());
+        FarmOccupancyTracker.SlotCount previous = transition.previous().orElseThrow();
+        assertEquals(4, previous.slot());
+        assertEquals(0, previous.count());
         assertEquals(0, tracker.count(4));
         assertFalse(tracker.isOccupied(4));
         assertEquals(1, tracker.count(9));
@@ -85,6 +92,20 @@ class FarmOccupancyTrackerTest {
     }
 
     @Test
+    void switchingOneOfTwoPlayersReportsRemainingOldCount() {
+        tracker.enter("player-a", 4);
+        tracker.enter("player-b", 4);
+
+        FarmOccupancyTracker.Transition transition = tracker.enter("player-a", 9);
+
+        FarmOccupancyTracker.SlotCount previous = transition.previous().orElseThrow();
+        assertEquals(4, previous.slot());
+        assertEquals(1, previous.count());
+        assertEquals(1, tracker.count(4));
+        assertEquals(1, tracker.count(9));
+    }
+
+    @Test
     void clearRemovesPlayersAndCounts() {
         tracker.enter("player-a", 4);
         tracker.enter("player-b", 9);
@@ -109,5 +130,30 @@ class FarmOccupancyTrackerTest {
         assertThrows(IllegalArgumentException.class, () -> tracker.enter("player-a", -1));
         assertThrows(IllegalArgumentException.class, () -> tracker.count(-1));
         assertThrows(IllegalArgumentException.class, () -> tracker.isOccupied(-1));
+    }
+
+    @Test
+    void missingCountForAssignedPlayerSurfacesInvariantViolation() throws Exception {
+        tracker.enter("player-a", 4);
+        slotCounts().remove(4);
+
+        assertThrows(IllegalStateException.class, () -> tracker.leave("player-a"));
+    }
+
+    @Test
+    void nonPositiveCountForAssignedPlayerSurfacesInvariantViolation() throws Exception {
+        tracker.enter("player-a", 4);
+
+        for (int corruptedCount : new int[]{0, -1}) {
+            slotCounts().put(4, corruptedCount);
+            assertThrows(IllegalStateException.class, () -> tracker.leave("player-a"));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Integer, Integer> slotCounts() throws Exception {
+        Field field = FarmOccupancyTracker.class.getDeclaredField("slotCounts");
+        field.setAccessible(true);
+        return (Map<Integer, Integer>) field.get(tracker);
     }
 }

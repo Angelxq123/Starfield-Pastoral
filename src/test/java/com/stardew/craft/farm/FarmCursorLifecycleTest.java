@@ -6,6 +6,8 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreeScanner;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -102,20 +104,27 @@ class FarmCursorLifecycleTest {
     }
 
     @Test
-    void transferAndLoadContinuePreservingExistingCursor() throws IOException {
+    void transferFarmContinuesCopyingExistingCursor() throws IOException {
         String transfer = normalized(parseMethod(
                 REGISTRY_SOURCE, "FarmInstanceRegistry", "transferFarm", 3));
         assertTrue(transfer.contains(
                 "transferred.setLastOnlineDay(farm.getLastOnlineDay());"));
         assertTrue(transfer.contains(
                 "transferred.setLastOnlineSeason(farm.getLastOnlineSeason());"));
+    }
 
-        String load = normalized(parseMethod(
-                REGISTRY_SOURCE, "FarmInstanceRegistry", "load", 2));
-        assertOrdered(load,
-                "FarmInstanceinstance=FarmInstance.load(list.getCompound(i));",
-                "registry.instances.put(instance.getOwnerUUID(),instance);",
-                "registry.slotToOwner.put(instance.getSlotIndex(),instance.getOwnerUUID());");
+    @Test
+    void farmInstanceNbtRoundTripPreservesCursor() {
+        FarmInstance original = new FarmInstance(
+                UUID.randomUUID(), "Penny", "River", 7, new BlockPos(128, 64, -96), FarmType.STANDARD);
+        original.setLastOnlineDay(73);
+        original.setLastOnlineSeason(3);
+
+        CompoundTag tag = original.save();
+        FarmInstance restored = FarmInstance.load(tag);
+
+        assertEquals(73, restored.getLastOnlineDay());
+        assertEquals(3, restored.getLastOnlineSeason());
     }
 
     private static FarmInstance createFarmAtDate(

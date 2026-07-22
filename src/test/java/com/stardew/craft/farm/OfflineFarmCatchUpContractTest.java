@@ -1,5 +1,11 @@
 package com.stardew.craft.farm;
 
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.TryTree;
+import com.sun.source.util.JavacTask;
 import com.stardew.craft.manager.CropGrowthManager;
 import com.stardew.craft.manager.TreeGrowthManager;
 import net.minecraft.core.GlobalPos;
@@ -9,18 +15,55 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OfflineFarmCatchUpContractTest {
     private static final Path SOURCE = Path.of(System.getProperty("stardewcraft.projectDir", "."))
             .resolve("src/main/java/com/stardew/craft/farm/OfflineFarmCatchUp.java");
+
+    @Test
+    void astMethodExtractionKeepsTopLevelTryWholeAfterNestedBlocks() throws IOException {
+        MethodTree method = parseMethod("""
+                class Example {
+                    void catchUp() {
+                        if (ready()) {
+                            nested();
+                        }
+                        try (var ignored = resource()) {
+                            first();
+                            second();
+                        }
+                        advance();
+                    }
+                }
+                """, "Example", "catchUp");
+
+        List<? extends StatementTree> statements = method.getBody().getStatements();
+        assertEquals(3, statements.size());
+        assertTrue(statements.get(1) instanceof TryTree);
+        TryTree targetTry = (TryTree) statements.get(1);
+        assertEquals(List.of("first();", "second();"),
+                targetTry.getBlock().getStatements().stream().map(Object::toString).toList());
+        assertEquals("advance();", statements.get(2).toString());
+    }
 
     @Test
     void helpersAcceptPlannedPositionsAndOnlyTheManagersTheyNeed() throws ReflectiveOperationException {
@@ -78,31 +121,37 @@ class OfflineFarmCatchUpContractTest {
 
     @Test
     void targetedLeaseOwnsOnlyProcessingAndCursorAdvancesAfterClose() throws IOException {
-        String catchUp = catchUpMethod(normalizedSource());
-        String leaseHeader = "try(TemporaryChunkLeaseTracker.Leaseignored="
-                + "FarmChunkManager.get().acquireTemporaryChunks(level,plan.requiredChunks())){";
-        int leaseBodyStart = catchUp.indexOf(leaseHeader) + leaseHeader.length();
-        int leaseBodyEnd = catchUp.indexOf("}", leaseBodyStart);
-        assertTrue(leaseBodyStart >= leaseHeader.length() && leaseBodyEnd > leaseBodyStart,
-                "targeted lease block is missing");
-        String leaseBody = catchUp.substring(leaseBodyStart, leaseBodyEnd);
-        String afterLease = catchUp.substring(leaseBodyEnd + 1);
+        String source = Files.readString(SOURCE);
+        String catchUpSource = catchUpMethod(source.replaceAll("\\s+", ""));
+        MethodTree catchUp = parseMethod(source, "OfflineFarmCatchUp", "catchUp");
+        List<? extends StatementTree> topLevelStatements = catchUp.getBody().getStatements();
+        List<TryTree> targetedTries = topLevelStatements.stream()
+                .filter(TryTree.class::isInstance)
+                .map(TryTree.class::cast)
+                .filter(candidate -> normalized(candidate.getResources()).contains(
+                        "acquireTemporaryChunks(level,plan.requiredChunks())"))
+                .toList();
 
-        assertOrdered(leaseBody,
+        assertEquals(1, targetedTries.size(), "catchUp must have one targeted temporary chunk lease");
+        TryTree targetedTry = targetedTries.getFirst();
+        assertTrue(normalized(targetedTry.getResources()).contains(
+                "FarmChunkManager.get().acquireTemporaryChunks(level,plan.requiredChunks())"));
+        assertEquals(List.of(
                 "catchUpCrops(level,cropMgr,plan.crops(),daysMissed);",
                 "catchUpTrees(level,treeMgr,plan.trees(),daysMissed);",
-                "catchUpSprinklers(level,plan.sprinklers());");
-        assertFalse(leaseBody.contains("farm.setLastOnlineDay"));
-        assertFalse(leaseBody.contains("farm.setLastOnlineSeason"));
-        assertFalse(leaseBody.contains("registry.setDirty"));
-        assertOrdered(afterLease,
+                "catchUpSprinklers(level,plan.sprinklers());"),
+                normalizedStatements(targetedTry.getBlock().getStatements()));
+
+        int targetedTryIndex = topLevelStatements.indexOf(targetedTry);
+        assertEquals(List.of(
                 "farm.setLastOnlineDay(currentAbsDay);",
                 "farm.setLastOnlineSeason(currentSeason);",
                 "registry.setDirty();",
-                "StardewCraft.LOGGER.info(\"[FARM-CATCHUP]Catch-upcompleteforplayer{}\"");
-        assertFalse(catchUp.contains("acquireTemporaryFarmChunks"));
-        assertFalse(catchUp.contains("releaseTemporaryFarmChunks"));
-        assertFalse(catchUp.contains("catch("));
+                "StardewCraft.LOGGER.info(\"[FARM-CATCHUP]Catch-upcompleteforplayer{}\",playerUUID);"),
+                normalizedStatements(topLevelStatements.subList(targetedTryIndex + 1, topLevelStatements.size())));
+        assertFalse(catchUpSource.contains("acquireTemporaryFarmChunks"));
+        assertFalse(catchUpSource.contains("releaseTemporaryFarmChunks"));
+        assertFalse(catchUpSource.contains("catch("));
     }
 
     @Test
@@ -133,6 +182,53 @@ class OfflineFarmCatchUpContractTest {
         assertEquals(List.class, type.getRawType());
         assertArrayEquals(new java.lang.reflect.Type[]{GlobalPos.class}, type.getActualTypeArguments());
         return type;
+    }
+
+    private static MethodTree parseMethod(String source, String className, String methodName) throws IOException {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assertNotNull(compiler, "tests require a JDK compiler");
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        JavaFileObject sourceFile = new SimpleJavaFileObject(
+                URI.create("string:///" + className + JavaFileObject.Kind.SOURCE.extension),
+                JavaFileObject.Kind.SOURCE) {
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+                return source;
+            }
+        };
+
+        try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+                diagnostics, null, StandardCharsets.UTF_8)) {
+            JavacTask task = (JavacTask) compiler.getTask(
+                    null, fileManager, diagnostics, List.of("-proc:none"), null, List.of(sourceFile));
+            CompilationUnitTree unit = task.parse().iterator().next();
+            List<String> parseErrors = diagnostics.getDiagnostics().stream()
+                    .filter(diagnostic -> diagnostic.getKind() == Diagnostic.Kind.ERROR)
+                    .map(Object::toString)
+                    .toList();
+            assertTrue(parseErrors.isEmpty(), () -> "source did not parse: " + String.join("; ", parseErrors));
+
+            ClassTree targetClass = unit.getTypeDecls().stream()
+                    .filter(ClassTree.class::isInstance)
+                    .map(ClassTree.class::cast)
+                    .filter(candidate -> candidate.getSimpleName().contentEquals(className))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("class is missing: " + className));
+            return targetClass.getMembers().stream()
+                    .filter(MethodTree.class::isInstance)
+                    .map(MethodTree.class::cast)
+                    .filter(candidate -> candidate.getName().contentEquals(methodName))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("method is missing: " + methodName));
+        }
+    }
+
+    private static List<String> normalizedStatements(List<? extends StatementTree> statements) {
+        return statements.stream().map(OfflineFarmCatchUpContractTest::normalized).toList();
+    }
+
+    private static String normalized(Object syntaxTree) {
+        return syntaxTree.toString().replaceAll("\\s+", "");
     }
 
     private static void assertPrivateStaticVoid(Method method) {

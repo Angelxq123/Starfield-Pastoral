@@ -265,17 +265,14 @@ class BudgetedWorkRunnerTest {
     }
 
     @Test
-    void drainResetsFailuresAfterAnAtomicSuccess() throws Exception {
-        AtomicInteger attempts = new AtomicInteger();
-        DailySettlementWorkUnit unit = DailySettlementWorkUnits.atomic("atomic", () -> {
-            if (attempts.incrementAndGet() < 3) {
-                throw new Exception("retry");
-            }
-        }, () -> {});
+    void drainResetsFailuresAfterEachSuccessfulItem() {
+        PerItemRetryWorkUnit unit = new PerItemRetryWorkUnit();
 
         DailySettlementWorkUnits.drain(unit);
 
-        assertEquals(3, attempts.get());
+        assertEquals(List.of("A", "B"), unit.processedItems);
+        assertTrue(unit.skippedItems.isEmpty());
+        assertEquals(List.of(3, 3), List.of(unit.attempts[0], unit.attempts[1]));
         assertTrue(unit.isComplete());
     }
 
@@ -370,6 +367,49 @@ class BudgetedWorkRunnerTest {
 
         private String identity() {
             return identity;
+        }
+    }
+
+    private static final class PerItemRetryWorkUnit implements DailySettlementWorkUnit {
+        private final List<String> entries = List.of("A", "B");
+        private final int[] attempts = new int[entries.size()];
+        private final List<String> processedItems = new ArrayList<>();
+        private final List<String> skippedItems = new ArrayList<>();
+        private int cursor;
+
+        @Override
+        public String name() {
+            return "per-item-retries";
+        }
+
+        @Override
+        public String currentItemIdentity() {
+            return entries.get(cursor);
+        }
+
+        @Override
+        public boolean isComplete() {
+            return cursor >= entries.size();
+        }
+
+        @Override
+        public void runNext() throws Exception {
+            if (++attempts[cursor] <= 2) {
+                throw new Exception("retry " + entries.get(cursor));
+            }
+            processedItems.add(entries.get(cursor));
+            cursor++;
+        }
+
+        @Override
+        public void skipFailedItem() {
+            skippedItems.add(entries.get(cursor));
+            cursor++;
+        }
+
+        @Override
+        public int maxRetries() {
+            return 2;
         }
     }
 }

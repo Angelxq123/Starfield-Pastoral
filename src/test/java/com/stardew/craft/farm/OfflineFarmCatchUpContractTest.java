@@ -77,21 +77,29 @@ class OfflineFarmCatchUpContractTest {
     }
 
     @Test
-    void targetedLeaseOwnsProcessingAndCursorUpdates() throws IOException {
+    void targetedLeaseOwnsOnlyProcessingAndCursorAdvancesAfterClose() throws IOException {
         String catchUp = catchUpMethod(normalizedSource());
-        String leaseBody = substringBetween(
-                catchUp,
-                "try(TemporaryChunkLeaseTracker.Leaseignored="
-                        + "FarmChunkManager.get().acquireTemporaryChunks(level,plan.requiredChunks())){",
-                "}StardewCraft.LOGGER.info(\"[FARM-CATCHUP]Catch-upcompleteforplayer{}\"");
+        String leaseHeader = "try(TemporaryChunkLeaseTracker.Leaseignored="
+                + "FarmChunkManager.get().acquireTemporaryChunks(level,plan.requiredChunks())){";
+        int leaseBodyStart = catchUp.indexOf(leaseHeader) + leaseHeader.length();
+        int leaseBodyEnd = catchUp.indexOf("}", leaseBodyStart);
+        assertTrue(leaseBodyStart >= leaseHeader.length() && leaseBodyEnd > leaseBodyStart,
+                "targeted lease block is missing");
+        String leaseBody = catchUp.substring(leaseBodyStart, leaseBodyEnd);
+        String afterLease = catchUp.substring(leaseBodyEnd + 1);
 
         assertOrdered(leaseBody,
                 "catchUpCrops(level,cropMgr,plan.crops(),daysMissed);",
                 "catchUpTrees(level,treeMgr,plan.trees(),daysMissed);",
-                "catchUpSprinklers(level,plan.sprinklers());",
+                "catchUpSprinklers(level,plan.sprinklers());");
+        assertFalse(leaseBody.contains("farm.setLastOnlineDay"));
+        assertFalse(leaseBody.contains("farm.setLastOnlineSeason"));
+        assertFalse(leaseBody.contains("registry.setDirty"));
+        assertOrdered(afterLease,
                 "farm.setLastOnlineDay(currentAbsDay);",
                 "farm.setLastOnlineSeason(currentSeason);",
-                "registry.setDirty();");
+                "registry.setDirty();",
+                "StardewCraft.LOGGER.info(\"[FARM-CATCHUP]Catch-upcompleteforplayer{}\"");
         assertFalse(catchUp.contains("acquireTemporaryFarmChunks"));
         assertFalse(catchUp.contains("releaseTemporaryFarmChunks"));
         assertFalse(catchUp.contains("catch("));

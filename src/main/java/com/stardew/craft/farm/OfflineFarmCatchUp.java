@@ -107,12 +107,12 @@ public final class OfflineFarmCatchUp {
 
             // 3. 洒水器浇水（标记为已浇水状态）
             catchUpSprinklers(level, plan.sprinklers());
-
-            // 更新最后在线信息
-            farm.setLastOnlineDay(currentAbsDay);
-            farm.setLastOnlineSeason(currentSeason);
-            registry.setDirty();
         }
+
+        // 更新最后在线信息
+        farm.setLastOnlineDay(currentAbsDay);
+        farm.setLastOnlineSeason(currentSeason);
+        registry.setDirty();
 
         StardewCraft.LOGGER.info("[FARM-CATCHUP] Catch-up complete for player {}", playerUUID);
     }

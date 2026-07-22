@@ -10,9 +10,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -74,16 +76,25 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void targetedBackendMeasuresLoadsAndRollsBackOwnedTicketOnFailure() throws IOException {
+    void targetedBackendSeparatesOwnershipLoadingAndRelease() throws IOException {
         String source = managerSource();
+        Set<String> backendMethods = Arrays.stream(TemporaryChunkLeaseTracker.Backend.class.getDeclaredMethods())
+            .map(Method::getName)
+            .collect(Collectors.toSet());
+        var loadMethod = Pattern.compile(
+            "public void load\\(ServerLevel level, ChunkPos chunk\\)\\s*\\{(?<body>.*?)\\n\\s*}",
+            Pattern.DOTALL).matcher(source);
 
-        assertTrue(source.contains("if (!level.getForcedChunks().contains(chunkKey))"));
-        assertTrue(source.contains("level.setChunkForced(chunk.x, chunk.z, true)"));
-        assertTrue(source.contains("PerformanceCounter.FARM_SYNC_CHUNK_LOADS"));
-        assertTrue(source.contains("PerformanceTiming.FARM_SYNC_CHUNK_LOAD"));
-        assertTrue(source.contains("level.getChunk(chunk.x, chunk.z)"));
-        assertTrue(source.contains("if (owned)"));
+        assertEquals(Set.of("acquire", "load", "release"), backendMethods);
+        assertTrue(source.contains("if (level.getForcedChunks().contains(chunkKey))"));
+        assertTrue(source.contains("return false;"));
+        assertTrue(source.contains("return level.setChunkForced(chunk.x, chunk.z, true)"));
+        assertTrue(loadMethod.find());
+        assertTrue(loadMethod.group("body").contains("PerformanceCounter.FARM_SYNC_CHUNK_LOADS"));
+        assertTrue(loadMethod.group("body").contains("PerformanceTiming.FARM_SYNC_CHUNK_LOAD"));
+        assertTrue(loadMethod.group("body").contains("level.getChunk(chunk.x, chunk.z)"));
         assertTrue(source.contains("level.setChunkForced(chunk.x, chunk.z, false)"));
+        assertFalse(source.contains("catch (RuntimeException exception)"));
     }
 
     @Test

@@ -38,7 +38,19 @@ public class FarmChunkManager {
             new TemporaryChunkLeaseTracker<>(new TemporaryChunkLeaseTracker.Backend<>() {
                 @Override
                 public boolean acquire(ServerLevel level, ChunkPos chunk) {
-                    return acquireTemporaryChunk(level, chunk);
+                    long chunkKey = chunk.toLong();
+                    if (level.getForcedChunks().contains(chunkKey)) {
+                        return false;
+                    }
+                    return level.setChunkForced(chunk.x, chunk.z, true);
+                }
+
+                @Override
+                public void load(ServerLevel level, ChunkPos chunk) {
+                    ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
+                    ServerPerformanceRecorder.measure(
+                            PerformanceTiming.FARM_SYNC_CHUNK_LOAD,
+                            () -> level.getChunk(chunk.x, chunk.z));
                 }
 
                 @Override
@@ -102,32 +114,6 @@ public class FarmChunkManager {
 
     TemporaryChunkLeaseTracker.Lease acquireTemporaryChunks(ServerLevel level, Collection<ChunkPos> chunks) {
         return temporaryChunkLeases.acquire(level, chunks);
-    }
-
-    private boolean acquireTemporaryChunk(ServerLevel level, ChunkPos chunk) {
-        long chunkKey = chunk.toLong();
-        boolean owned = false;
-        if (!level.getForcedChunks().contains(chunkKey)) {
-            level.setChunkForced(chunk.x, chunk.z, true);
-            owned = true;
-        }
-
-        try {
-            ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
-            ServerPerformanceRecorder.measure(
-                    PerformanceTiming.FARM_SYNC_CHUNK_LOAD,
-                    () -> level.getChunk(chunk.x, chunk.z));
-            return owned;
-        } catch (RuntimeException exception) {
-            if (owned) {
-                try {
-                    level.setChunkForced(chunk.x, chunk.z, false);
-                } catch (RuntimeException releaseFailure) {
-                    exception.addSuppressed(releaseFailure);
-                }
-            }
-            throw exception;
-        }
     }
 
     /** 获取一份临时农场区块租约，供离线追赶和每日结算使用。 */

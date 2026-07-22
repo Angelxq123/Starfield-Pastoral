@@ -120,7 +120,7 @@ class TemporaryChunkLeaseTrackerTest {
     @Test
     void failedAcquireRollsBackMixedEntriesInReverseOrder() {
         RecordingBackend backend = new RecordingBackend();
-        backend.failOn = D;
+        backend.failAcquireOn = D;
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
         TestLevel level = new TestLevel("level");
         TemporaryChunkLeaseTracker.Lease existing = tracker.acquire(level, List.of(A));
@@ -131,7 +131,7 @@ class TemporaryChunkLeaseTrackerTest {
         assertEquals("failed 7,8", failure.getMessage());
         assertEquals(List.of(C, B), backend.releasedChunks());
 
-        backend.failOn = null;
+        backend.failAcquireOn = null;
         tracker.acquire(level, List.of(B)).close();
         assertEquals(2, backend.acquireCount(B));
 
@@ -143,7 +143,7 @@ class TemporaryChunkLeaseTrackerTest {
     void rollbackDoesNotReleaseNewUnownedEntries() {
         RecordingBackend backend = new RecordingBackend();
         backend.unowned.add(B);
-        backend.failOn = C;
+        backend.failAcquireOn = C;
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
 
         assertThrows(RuntimeException.class,
@@ -205,6 +205,77 @@ class TemporaryChunkLeaseTrackerTest {
         assertEquals(2, backend.releases.size());
     }
 
+    @Test
+    void finalCloseReleaseFailureCanBeRetriedByCloseAll() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.releaseFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+        TemporaryChunkLeaseTracker.Lease lease = tracker.acquire(level, List.of(A));
+
+        RuntimeException failure = assertThrows(RuntimeException.class, lease::close);
+        assertEquals("release failed 1,2", failure.getMessage());
+
+        tracker.closeAll(level);
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void closeAllReleaseFailureKeepsEntryForRetryAndInvalidatesOldHandle() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.releaseFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+        TemporaryChunkLeaseTracker.Lease stale = tracker.acquire(level, List.of(A));
+
+        assertThrows(RuntimeException.class, () -> tracker.closeAll(level));
+        stale.close();
+        assertEquals(1, backend.releaseCount(A));
+
+        tracker.closeAll(level);
+        stale.close();
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void loadAndRollbackReleaseFailuresRemainRetryable() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.failLoadOn = A;
+        backend.releaseFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+
+        RuntimeException failure = assertThrows(RuntimeException.class,
+            () -> tracker.acquire(level, List.of(A)));
+
+        assertEquals("load failed 1,2", failure.getMessage());
+        assertEquals(1, failure.getSuppressed().length);
+        assertEquals("release failed 1,2", failure.getSuppressed()[0].getMessage());
+
+        tracker.closeAll(level);
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void pendingEntryIsReusedWithoutAcquireOrLoadAndRejectsOldEpochHandle() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.releaseFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+        TemporaryChunkLeaseTracker.Lease stale = tracker.acquire(level, List.of(A));
+        assertThrows(RuntimeException.class, () -> tracker.closeAll(level));
+
+        TemporaryChunkLeaseTracker.Lease current = tracker.acquire(level, List.of(A));
+        stale.close();
+
+        assertEquals(1, backend.acquireCount(A));
+        assertEquals(1, backend.loadCount(A));
+        assertEquals(1, backend.releaseCount(A));
+
+        current.close();
+        assertEquals(2, backend.releaseCount(A));
+    }
+
     private static Collection<ChunkPos> collectionWithNull() {
         List<ChunkPos> chunks = new ArrayList<>();
         chunks.add(A);
@@ -234,22 +305,37 @@ class TemporaryChunkLeaseTrackerTest {
 
     private static final class RecordingBackend implements TemporaryChunkLeaseTracker.Backend<TestLevel> {
         private final List<Call> acquires = new ArrayList<>();
+        private final List<Call> loads = new ArrayList<>();
         private final List<Call> releases = new ArrayList<>();
         private final Set<ChunkPos> unowned = new HashSet<>();
-        private ChunkPos failOn;
+        private ChunkPos failAcquireOn;
+        private ChunkPos failLoadOn;
+        private int releaseFailuresRemaining;
 
         @Override
         public boolean acquire(TestLevel level, ChunkPos chunk) {
             acquires.add(new Call(level, chunk));
-            if (chunk.equals(failOn)) {
+            if (chunk.equals(failAcquireOn)) {
                 throw new RuntimeException("failed " + chunk.x + "," + chunk.z);
             }
             return !unowned.contains(chunk);
         }
 
         @Override
+        public void load(TestLevel level, ChunkPos chunk) {
+            loads.add(new Call(level, chunk));
+            if (chunk.equals(failLoadOn)) {
+                throw new RuntimeException("load failed " + chunk.x + "," + chunk.z);
+            }
+        }
+
+        @Override
         public void release(TestLevel level, ChunkPos chunk) {
             releases.add(new Call(level, chunk));
+            if (releaseFailuresRemaining > 0) {
+                releaseFailuresRemaining--;
+                throw new RuntimeException("release failed " + chunk.x + "," + chunk.z);
+            }
         }
 
         private List<ChunkPos> acquiredChunks() {
@@ -262,6 +348,14 @@ class TemporaryChunkLeaseTrackerTest {
 
         private long acquireCount(ChunkPos chunk) {
             return acquiredChunks().stream().filter(chunk::equals).count();
+        }
+
+        private long loadCount(ChunkPos chunk) {
+            return loads.stream().map(Call::chunk).filter(chunk::equals).count();
+        }
+
+        private long releaseCount(ChunkPos chunk) {
+            return releasedChunks().stream().filter(chunk::equals).count();
         }
     }
 }

@@ -1,12 +1,20 @@
 package com.stardew.craft.farm;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FarmChunkManagerTest {
@@ -34,5 +42,68 @@ class FarmChunkManagerTest {
             new ChunkPos(0, 0), new ChunkPos(0, 1),
             new ChunkPos(1, 0), new ChunkPos(1, 1)
         ), chunks);
+    }
+
+    @Test
+    void exposesPackagePrivateTargetedLeaseApiWithoutCheckedClose() throws Exception {
+        Method method = FarmChunkManager.class.getDeclaredMethod(
+            "acquireTemporaryChunks", ServerLevel.class, Collection.class);
+
+        assertEquals(TemporaryChunkLeaseTracker.Lease.class, method.getReturnType());
+        assertFalse(Modifier.isPublic(method.getModifiers()));
+        assertEquals(0, TemporaryChunkLeaseTracker.Lease.class.getMethod("close").getExceptionTypes().length);
+    }
+
+    @Test
+    void retainsLegacyTemporaryFarmChunkMethods() throws Exception {
+        assertPublicVoidMethod("acquireTemporaryFarmChunks");
+        assertPublicVoidMethod("releaseTemporaryFarmChunks");
+        assertPublicVoidMethod("forceLoadFarmChunksForCatchUp");
+        assertPublicVoidMethod("releaseTempChunks");
+    }
+
+    @Test
+    void wrapperStateUsesServerLevelIdentityAndSlot() throws IOException {
+        String source = managerSource();
+
+        assertTrue(source.contains(
+            "IdentityHashMap<ServerLevel, Map<Integer, TemporaryFarmLoad>> temporaryFarmLoads"));
+        assertTrue(source.contains("temporaryFarmLoads.computeIfAbsent(level"));
+        assertTrue(source.contains("temporaryFarmLoads.get(level)"));
+    }
+
+    @Test
+    void targetedBackendMeasuresLoadsAndRollsBackOwnedTicketOnFailure() throws IOException {
+        String source = managerSource();
+
+        assertTrue(source.contains("if (!level.getForcedChunks().contains(chunkKey))"));
+        assertTrue(source.contains("level.setChunkForced(chunk.x, chunk.z, true)"));
+        assertTrue(source.contains("PerformanceCounter.FARM_SYNC_CHUNK_LOADS"));
+        assertTrue(source.contains("PerformanceTiming.FARM_SYNC_CHUNK_LOAD"));
+        assertTrue(source.contains("level.getChunk(chunk.x, chunk.z)"));
+        assertTrue(source.contains("if (owned)"));
+        assertTrue(source.contains("level.setChunkForced(chunk.x, chunk.z, false)"));
+    }
+
+    @Test
+    void serverStoppingOnlyClosesWrappersAndTrackerForProvidedLevel() throws IOException {
+        String source = managerSource();
+
+        assertTrue(source.contains("temporaryFarmLoads.remove(level)"));
+        assertTrue(source.contains("temporaryChunkLeases.closeAll(level)"));
+        assertFalse(source.contains("temporaryFarmLoads.clear()"));
+        assertTrue(source.contains("playerCounts.clear()"));
+    }
+
+    private static void assertPublicVoidMethod(String name) throws Exception {
+        Method method = FarmChunkManager.class.getDeclaredMethod(name, ServerLevel.class, int.class);
+        assertTrue(Modifier.isPublic(method.getModifiers()));
+        assertEquals(void.class, method.getReturnType());
+    }
+
+    private static String managerSource() throws IOException {
+        Path projectDir = Path.of(System.getProperty("stardewcraft.projectDir"));
+        return Files.readString(projectDir.resolve(
+            "src/main/java/com/stardew/craft/farm/FarmChunkManager.java"));
     }
 }

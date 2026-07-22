@@ -5,6 +5,7 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.EnhancedForLoopTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
@@ -48,49 +49,80 @@ class FarmOccupancyIntegrationContractTest {
     private static final Path DIMENSION_HANDLER_SOURCE = sourcePath("event/DimensionEventHandler.java");
     private static final Path ENTRY_PAYLOAD_SOURCE = sourcePath("network/payload/FarmEntryRequestPayload.java");
     private static final Path PORTAL_HANDLER_SOURCE = sourcePath("event/InteriorPortalInteractionEvents.java");
+    private static final Path MOD_TELEPORT_SOURCE = sourcePath("warp/ModTeleport.java");
 
     @Test
     void entryHandlerTracksTheFarmSelectedByTargetOwner() throws IOException {
         MethodTree handle = parseMethod(ENTRY_PAYLOAD_SOURCE, "FarmEntryRequestPayload", "handle", 2);
-        List<VariableTree> farms = variables(handle).stream()
+        BlockTree work = lambdaBlockOfDirectInvocation(handle.getBody(), "context", "enqueueWork");
+        List<VariableTree> farms = directVariables(work).stream()
                 .filter(variable -> variable.getName().contentEquals("farm"))
                 .toList();
 
         assertEquals(1, farms.size());
-        assertInvocation(farms.getFirst().getInitializer(), "registry", "getFarm", "payload.targetOwner");
-        assertInvocation(handle, "FarmChunkManager.get()", "onPlayerEnterFarm",
+        assertTrue(isInvocation(farms.getFirst().getInitializer(),
+                "registry", "getFarm", "payload.targetOwner"));
+        assertDirectInvocation(work, "FarmChunkManager.get()", "onPlayerEnterFarm",
                 "stardewLevel", "player", "farm");
+    }
+
+    @Test
+    void modTeleportReconcilesOccupancyAtThePostTeleportPosition() throws IOException {
+        MethodTree teleport = parseMethod(MOD_TELEPORT_SOURCE, "ModTeleport", "to", 7);
+        BlockTree body = teleport.getBody();
+        int teleportIndex = directInvocationIndex(
+                body, "player", "teleportTo", "target", "x", "y", "z", "yaw", "pitch");
+        int locationIndex = directInvocationIndex(body,
+                "com.stardew.craft.event.PlayerLocationStateGuardEvents",
+                "reconcileLocationState", "player", "true");
+        int occupancyIndex = directInvocationIndex(body,
+                "com.stardew.craft.farm.FarmChunkManager.get()",
+                "reconcilePlayerOccupancy", "player");
+
+        assertTrue(teleportIndex >= 0, "teleportTo must remain a direct statement");
+        assertEquals(teleportIndex + 1, locationIndex,
+                "location state must reconcile immediately after teleportTo");
+        assertEquals(locationIndex + 1, occupancyIndex,
+                "occupancy must reconcile immediately after post-teleport location state");
     }
 
     @Test
     void loginInValleyReconcilesOccupancyFromCurrentPosition() throws IOException {
         MethodTree login = parseMethod(PLAYER_HANDLER_SOURCE, "PlayerDataEventHandler", "onPlayerLogin", 1);
-        IfTree valleyLogin = findIf(login, condition -> normalized(unwrapped(condition)).equals(
+        IfTree serverPlayer = findDirectIf(login.getBody(), condition -> normalized(unwrapped(condition)).equals(
+                "event.getEntity()instanceofServerPlayerplayer"));
+        IfTree valleyLogin = findDirectIf(asBlock(serverPlayer.getThenStatement()),
+                condition -> normalized(unwrapped(condition)).equals(
                 "player.serverLevel().dimension()==com.stardew.craft.core.ModDimensions.STARDEW_VALLEY"));
         BlockTree body = asBlock(valleyLogin.getThenStatement());
 
         assertDirectInvocation(body, "com.stardew.craft.farm.FarmChunkManager.get()",
-                "updatePlayerFarmOccupancy", "player.serverLevel()", "player");
+                "reconcilePlayerOccupancy", "player");
     }
 
     @Test
     void dimensionLifecycleLeavesAndReconcilesAfterOptionalAutoRouting() throws IOException {
         MethodTree changed = parseMethod(
                 DIMENSION_HANDLER_SOURCE, "DimensionEventHandler", "onPlayerChangeDimension", 1);
-        IfTree leaveValley = findIf(changed, condition -> isInvocation(
+        IfTree leaveValley = findDirectIf(changed.getBody(), condition -> isInvocation(
                 condition, "ModDimensions.STARDEW_VALLEY", "equals", "event.getFrom()"));
         assertDirectInvocation(asBlock(leaveValley.getThenStatement()),
                 "com.stardew.craft.farm.FarmChunkManager.get()", "onPlayerLeaveFarm",
                 "player.serverLevel()", "player");
 
-        IfTree enterValley = findIf(changed, condition -> isInvocation(
-                condition, "ModDimensions.STARDEW_VALLEY", "equals", "event.getTo()"));
+        IfTree stardewTimeBranch = findDirectIf(changed.getBody(), condition ->
+                normalized(unwrapped(condition)).equals(
+                        "ModDimensions.STARDEW_VALLEY.equals(event.getTo())"
+                                + "||ModMiningDimensions.STARDEW_MINING.equals(event.getTo())"));
+        IfTree enterValley = findDirectIf(asBlock(stardewTimeBranch.getThenStatement()),
+                condition -> isInvocation(
+                        condition, "ModDimensions.STARDEW_VALLEY", "equals", "event.getTo()"));
         BlockTree valleyBody = asBlock(enterValley.getThenStatement());
         int autoRoute = statementIndex(valleyBody, statement -> statement instanceof IfTree candidate
                 && hasInvocation(candidate.getCondition(), null, "consumeSkipAutoTeleport", "player.getUUID()"));
         int reconcile = statementIndex(valleyBody, statement -> isDirectInvocation(
                 statement, "com.stardew.craft.farm.FarmChunkManager.get()",
-                "updatePlayerFarmOccupancy", "level", "player"));
+                "reconcilePlayerOccupancy", "player"));
 
         assertTrue(autoRoute >= 0, "Stardew entry must retain optional auto-routing");
         assertTrue(reconcile > autoRoute,
@@ -99,16 +131,37 @@ class FarmOccupancyIntegrationContractTest {
 
     @Test
     void currentPositionLookupScansFarmBoundsWithoutMembershipResolution() throws IOException {
-        MethodTree update = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "updatePlayerFarmOccupancy", 2);
+        MethodTree update = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "reconcilePlayerOccupancy", 1);
         MethodTree find = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "findContainingFarm", 2);
+        BlockTree updateBody = update.getBody();
+        IfTree outsideValley = findDirectIf(updateBody, condition -> normalized(unwrapped(condition)).equals(
+                "!ModDimensions.STARDEW_VALLEY.equals(level.dimension())"));
+        IfTree outsideFarm = findDirectIf(updateBody, condition -> normalized(unwrapped(condition)).equals(
+                "farm==null"));
+        VariableTree farm = directVariables(updateBody).stream()
+                .filter(variable -> variable.getName().contentEquals("farm"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("direct farm lookup is missing"));
 
-        assertInvocation(update, "FarmInstanceRegistry.get()", "getAllFarms");
-        assertInvocation(update, null, "blockPosition");
+        assertInvocation(farm.getInitializer(), "FarmInstanceRegistry.get()", "getAllFarms");
+        assertInvocation(farm.getInitializer(), null, "blockPosition");
         assertInvocation(find, "farm", "contains", "position");
         assertFalse(hasInvocation(update, null, "getFarmForPlayer"));
         assertFalse(hasInvocation(update, null, "getOwnerForPlayer"));
-        assertInvocation(update, null, "onPlayerEnterFarm", "level", "player", "farm");
-        assertInvocation(update, null, "onPlayerLeaveFarm", "level", "player");
+        assertDirectInvocation(asBlock(outsideValley.getThenStatement()),
+                null, "onPlayerLeaveFarm", "level", "player");
+        assertDirectInvocation(asBlock(outsideFarm.getThenStatement()),
+                null, "onPlayerLeaveFarm", "level", "player");
+        assertDirectInvocation(updateBody, null, "onPlayerEnterFarm", "level", "player", "farm");
+
+        EnhancedForLoopTree farmLoop = find.getBody().getStatements().stream()
+                .filter(EnhancedForLoopTree.class::isInstance)
+                .map(EnhancedForLoopTree.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("farm bounds loop is missing"));
+        IfTree contains = findDirectIf(asBlock(farmLoop.getStatement()),
+                condition -> isInvocation(condition, "farm", "contains", "position"));
+        assertTrue(asBlock(contains.getThenStatement()).getStatements().getFirst() instanceof ReturnTree);
     }
 
     @Test
@@ -117,7 +170,8 @@ class FarmOccupancyIntegrationContractTest {
                 PORTAL_HANDLER_SOURCE, "InteriorPortalInteractionEvents", "handleFarmExit", 2);
 
         assertFalse(hasInvocation(exit, null, "getFarmForPlayer"));
-        assertInvocation(exit, "com.stardew.craft.farm.FarmChunkManager.get()", "onPlayerLeaveFarm",
+        assertDirectInvocation(exit.getBody(),
+                "com.stardew.craft.farm.FarmChunkManager.get()", "onPlayerLeaveFarm",
                 "player.serverLevel()", "player");
     }
 
@@ -125,8 +179,8 @@ class FarmOccupancyIntegrationContractTest {
     void logoutCleanupIsTheFirstPlayerSpecificOperation() throws IOException {
         MethodTree logout = parseMethod(
                 PLAYER_HANDLER_SOURCE, "PlayerDataEventHandler", "onPlayerLogout", 1);
-        assertEquals(1, logout.getBody().getStatements().size());
-        IfTree serverPlayer = (IfTree) logout.getBody().getStatements().getFirst();
+        IfTree serverPlayer = findDirectIf(logout.getBody(), condition -> normalized(unwrapped(condition)).equals(
+                "event.getEntity()instanceofServerPlayerplayer"));
         BlockTree body = asBlock(serverPlayer.getThenStatement());
 
         assertTrue(isDirectInvocation(body.getStatements().getFirst(),
@@ -141,7 +195,8 @@ class FarmOccupancyIntegrationContractTest {
 
         assertFalse(hasInvocation(leave, null, "getFarmForPlayer"));
         assertFalse(hasInvocation(logout, null, "getFarmForPlayer"));
-        assertInvocation(logout, null, "onPlayerLeaveFarm", "player.serverLevel()", "player");
+        assertDirectInvocation(logout.getBody(),
+                null, "onPlayerLeaveFarm", "player.serverLevel()", "player");
     }
 
     @Test
@@ -163,7 +218,7 @@ class FarmOccupancyIntegrationContractTest {
         assertTrue(stop.getParameters().getFirst().getModifiers().getAnnotations().stream()
                 .anyMatch(annotation -> annotation.getAnnotationType().toString().equals("Nullable")));
 
-        List<TryTree> outerCandidates = topLevelTries(stop).stream()
+        List<TryTree> outerCandidates = directTries(stop.getBody()).stream()
                 .filter(candidate -> candidate.getFinallyBlock() != null)
                 .filter(candidate -> hasInvocation(candidate.getFinallyBlock(), "occupancy", "clear"))
                 .toList();
@@ -191,11 +246,11 @@ class FarmOccupancyIntegrationContractTest {
     void subscribedServerStopDelegatesFarmCleanupUnconditionally() throws IOException {
         MethodTree stop = parseMethod(
                 PLAYER_HANDLER_SOURCE, "PlayerDataEventHandler", "onServerStopping", 1);
-        List<TryTree> cleanupCandidates = topLevelTries(stop).stream()
+        List<TryTree> cleanupCandidates = directTries(stop.getBody()).stream()
                 .filter(candidate -> candidate.getFinallyBlock() != null)
-                .filter(candidate -> hasInvocation(candidate.getFinallyBlock(),
-                        "com.stardew.craft.farm.FarmChunkManager.get()",
-                        "onServerStopping", "stardewLevel"))
+                .filter(candidate -> hasDirectInvocation(candidate.getBlock(),
+                        "com.stardew.craft.interior.InteriorSubspaceManager",
+                        "clearPortalRegistry"))
                 .toList();
         assertEquals(1, cleanupCandidates.size());
         TryTree cacheCleanup = cleanupCandidates.getFirst();
@@ -211,12 +266,9 @@ class FarmOccupancyIntegrationContractTest {
     @Test
     void entryLoggingIgnoresDuplicatesAndReportsSwitches() throws IOException {
         MethodTree enter = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "onPlayerEnterFarm", 3);
-        List<? extends StatementTree> statements = enter.getBody().getStatements();
-        assertTrue(statements.get(2) instanceof IfTree,
-                "entry logging must be guarded by Transition.changed()");
-        IfTree unchanged = (IfTree) statements.get(2);
+        IfTree unchanged = findDirectIf(enter.getBody(), condition ->
+                normalized(unwrapped(condition)).equals("!transition.changed()"));
 
-        assertTrue(normalized(unwrapped(unchanged.getCondition())).equals("!transition.changed()"));
         assertTrue(asBlock(unchanged.getThenStatement()).getStatements().getFirst() instanceof ReturnTree);
         assertInvocation(enter, "transition", "previous");
         assertTrue(invocations(enter).stream().anyMatch(invocation ->
@@ -274,38 +326,43 @@ class FarmOccupancyIntegrationContractTest {
         }
     }
 
-    private static IfTree findIf(com.sun.source.tree.Tree tree, Predicate<ExpressionTree> condition) {
+    private static IfTree findDirectIf(BlockTree block, Predicate<ExpressionTree> condition) {
         List<IfTree> matches = new ArrayList<>();
-        new TreeScanner<Void, Void>() {
-            @Override
-            public Void visitIf(IfTree candidate, Void unused) {
-                if (condition.test(candidate.getCondition())) {
-                    matches.add(candidate);
-                }
-                return super.visitIf(candidate, unused);
-            }
-        }.scan(tree, null);
+        block.getStatements().stream()
+                .filter(IfTree.class::isInstance)
+                .map(IfTree.class::cast)
+                .filter(candidate -> condition.test(candidate.getCondition()))
+                .forEach(matches::add);
         assertEquals(1, matches.size(), "expected exactly one matching if statement");
         return matches.getFirst();
     }
 
-    private static List<VariableTree> variables(com.sun.source.tree.Tree tree) {
-        List<VariableTree> variables = new ArrayList<>();
-        new TreeScanner<Void, Void>() {
-            @Override
-            public Void visitVariable(VariableTree variable, Void unused) {
-                variables.add(variable);
-                return super.visitVariable(variable, unused);
-            }
-        }.scan(tree, null);
-        return variables;
+    private static List<VariableTree> directVariables(BlockTree block) {
+        return block.getStatements().stream()
+                .filter(VariableTree.class::isInstance)
+                .map(VariableTree.class::cast)
+                .toList();
     }
 
-    private static List<TryTree> topLevelTries(MethodTree method) {
-        return method.getBody().getStatements().stream()
+    private static List<TryTree> directTries(BlockTree block) {
+        return block.getStatements().stream()
                 .filter(TryTree.class::isInstance)
                 .map(TryTree.class::cast)
                 .toList();
+    }
+
+    private static BlockTree lambdaBlockOfDirectInvocation(
+            BlockTree block, String receiver, String methodName) {
+        MethodInvocationTree invocation = directInvocations(block).stream()
+                .filter(candidate -> isInvocation(candidate, receiver, methodName,
+                        candidate.getArguments().stream().map(Object::toString).toArray(String[]::new)))
+                .filter(candidate -> candidate.getArguments().size() == 1)
+                .filter(candidate -> candidate.getArguments().getFirst() instanceof LambdaExpressionTree)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("direct lambda invocation is missing: " + methodName));
+        LambdaExpressionTree lambda = (LambdaExpressionTree) invocation.getArguments().getFirst();
+        assertTrue(lambda.getBody() instanceof BlockTree, "expected block lambda");
+        return (BlockTree) lambda.getBody();
     }
 
     private static List<MethodInvocationTree> invocations(com.sun.source.tree.Tree tree) {
@@ -371,6 +428,28 @@ class FarmOccupancyIntegrationContractTest {
         assertTrue(block.getStatements().stream()
                         .anyMatch(statement -> isDirectInvocation(statement, receiver, methodName, arguments)),
                 () -> "missing direct invocation: " + invocationDescription(receiver, methodName, arguments));
+    }
+
+    private static boolean hasDirectInvocation(
+            BlockTree block, String receiver, String methodName, String... arguments) {
+        return block.getStatements().stream()
+                .anyMatch(statement -> isDirectInvocation(statement, receiver, methodName, arguments));
+    }
+
+    private static List<MethodInvocationTree> directInvocations(BlockTree block) {
+        return block.getStatements().stream()
+                .filter(ExpressionStatementTree.class::isInstance)
+                .map(ExpressionStatementTree.class::cast)
+                .map(ExpressionStatementTree::getExpression)
+                .filter(MethodInvocationTree.class::isInstance)
+                .map(MethodInvocationTree.class::cast)
+                .toList();
+    }
+
+    private static int directInvocationIndex(
+            BlockTree block, String receiver, String methodName, String... arguments) {
+        return statementIndex(block,
+                statement -> isDirectInvocation(statement, receiver, methodName, arguments));
     }
 
     private static boolean isDirectInvocation(

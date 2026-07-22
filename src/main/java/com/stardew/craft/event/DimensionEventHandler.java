@@ -370,7 +370,7 @@ public class DimensionEventHandler {
                 }
 
                 com.stardew.craft.farm.FarmChunkManager.get()
-                        .updatePlayerFarmOccupancy(level, player);
+                        .reconcilePlayerOccupancy(player);
 
                 // 把各 ensurePlaced() 分散到后续 tick 执行，防止同帧堆叠触发 watchdog。
                 // 每个任务本身有 SavedData 版本检查，已完成的会立即跳过（< 1ms）。

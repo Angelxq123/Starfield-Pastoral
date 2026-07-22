@@ -1,6 +1,7 @@
 package com.stardew.craft.farm;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.server.performance.PerformanceCounter;
 import com.stardew.craft.server.performance.PerformanceTiming;
 import com.stardew.craft.server.performance.ServerPerformanceRecorder;
@@ -94,8 +95,14 @@ public class FarmChunkManager {
                 player.getName().getString(), transition.slot(), transition.count());
     }
 
-    /** Reconcile tracked occupancy with the farm that physically contains the player. */
-    public void updatePlayerFarmOccupancy(ServerLevel level, ServerPlayer player) {
+    /** Reconcile tracked occupancy from the player's actual dimension and position. */
+    public void reconcilePlayerOccupancy(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if (!ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
+            onPlayerLeaveFarm(level, player);
+            return;
+        }
+
         FarmInstance farm = findContainingFarm(
             FarmInstanceRegistry.get().getAllFarms(), player.blockPosition());
         if (farm == null) {

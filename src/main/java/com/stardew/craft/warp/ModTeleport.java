@@ -27,6 +27,7 @@ public final class ModTeleport {
         }
         player.teleportTo(target, x, y, z, yaw, pitch);
         com.stardew.craft.event.PlayerLocationStateGuardEvents.reconcileLocationState(player, true);
+        com.stardew.craft.farm.FarmChunkManager.get().reconcilePlayerOccupancy(player);
     }
 
     public static void to(ServerPlayer player, ServerLevel target, BlockPos pos,

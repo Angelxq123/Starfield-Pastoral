@@ -155,7 +155,7 @@ public class PlayerDataEventHandler {
             // （PlayerChangedDimensionEvent 在这种情况下不会触发）
             if (player.serverLevel().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
                 com.stardew.craft.farm.FarmChunkManager.get()
-                        .updatePlayerFarmOccupancy(player.serverLevel(), player);
+                        .reconcilePlayerOccupancy(player);
                 com.stardew.craft.event.DimensionEventHandler.scheduleDeferredInit(player.serverLevel());
             }
 

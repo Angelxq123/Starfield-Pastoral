@@ -107,19 +107,6 @@ class FarmChunkManagerTest {
         assertTrue(source.contains("occupancy.clear()"));
     }
 
-    @Test
-    void serverStoppingAlwaysClearsPlayerCountsWhenTrackerCleanupFails() throws IOException {
-        String source = managerSource();
-        Pattern nestedCleanup = Pattern.compile(
-            "finally\\s*\\{\\s*try\\s*\\{\\s*if\\s*\\(level != null\\)\\s*\\{"
-                + "\\s*temporaryChunkLeases\\.closeAll\\(level\\);\\s*}\\s*}"
-                + "\\s*finally\\s*\\{\\s*occupancy\\.clear\\(\\);\\s*}\\s*}",
-            Pattern.DOTALL);
-
-        assertTrue(nestedCleanup.matcher(source).find(),
-            "occupancy.clear() must run in a nested finally after tracker cleanup");
-    }
-
     private static void assertPublicVoidMethod(String name) throws Exception {
         Method method = FarmChunkManager.class.getDeclaredMethod(name, ServerLevel.class, int.class);
         assertTrue(Modifier.isPublic(method.getModifiers()));

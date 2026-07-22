@@ -236,8 +236,11 @@ public class FarmChunkManager {
                 }
             }
         } finally {
-            temporaryChunkLeases.closeAll(level);
-            playerCounts.clear();
+            try {
+                temporaryChunkLeases.closeAll(level);
+            } finally {
+                playerCounts.clear();
+            }
         }
         StardewCraft.LOGGER.info("[FARM_CHUNK] Cleanup on server stop");
     }

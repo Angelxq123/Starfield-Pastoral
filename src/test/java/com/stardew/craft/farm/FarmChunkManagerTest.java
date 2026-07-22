@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -93,6 +94,18 @@ class FarmChunkManagerTest {
         assertTrue(source.contains("temporaryChunkLeases.closeAll(level)"));
         assertFalse(source.contains("temporaryFarmLoads.clear()"));
         assertTrue(source.contains("playerCounts.clear()"));
+    }
+
+    @Test
+    void serverStoppingAlwaysClearsPlayerCountsWhenTrackerCleanupFails() throws IOException {
+        String source = managerSource();
+        Pattern nestedCleanup = Pattern.compile(
+            "finally\\s*\\{\\s*try\\s*\\{\\s*temporaryChunkLeases\\.closeAll\\(level\\);\\s*}"
+                + "\\s*finally\\s*\\{\\s*playerCounts\\.clear\\(\\);\\s*}\\s*}",
+            Pattern.DOTALL);
+
+        assertTrue(nestedCleanup.matcher(source).find(),
+            "playerCounts.clear() must run in a nested finally after tracker cleanup");
     }
 
     private static void assertPublicVoidMethod(String name) throws Exception {

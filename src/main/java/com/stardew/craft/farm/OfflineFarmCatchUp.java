@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -87,27 +86,33 @@ public final class OfflineFarmCatchUp {
             }
         }
 
-        // 临时加载农场区块（追赶完成后立即释放）
-        FarmChunkManager.get().acquireTemporaryFarmChunks(level, farm.getSlotIndex());
+        CropGrowthManager cropMgr = CropGrowthManager.get(level);
+        TreeGrowthManager treeMgr = TreeGrowthManager.get(level);
+        SprinklerManager sprMgr = SprinklerManager.get(level);
+        OfflineFarmCatchUpPlan plan = OfflineFarmCatchUpPlan.create(
+                level.dimension(),
+                farm.getFarmBoundsMin(),
+                farm.getFarmBoundsMax(),
+                cropMgr.getAllCropPositions(),
+                treeMgr.getAllSaplingPositions(),
+                sprMgr.getAllSprinklerPositions());
 
-        try {
+        try (TemporaryChunkLeaseTracker.Lease ignored =
+                     FarmChunkManager.get().acquireTemporaryChunks(level, plan.requiredChunks())) {
             // 1. 批量推进作物生长
-            catchUpCrops(level, farm, daysMissed);
+            catchUpCrops(level, cropMgr, plan.crops(), daysMissed);
 
             // 2. 批量推进树苗生长
-            catchUpTrees(level, farm, daysMissed);
+            catchUpTrees(level, treeMgr, plan.trees(), daysMissed);
 
             // 3. 洒水器浇水（标记为已浇水状态）
-            catchUpSprinklers(level, farm);
-        } finally {
-            // 释放临时加载的区块
-            FarmChunkManager.get().releaseTemporaryFarmChunks(level, farm.getSlotIndex());
-        }
+            catchUpSprinklers(level, plan.sprinklers());
 
-        // 更新最后在线信息
-        farm.setLastOnlineDay(currentAbsDay);
-        farm.setLastOnlineSeason(currentSeason);
-        registry.setDirty();
+            // 更新最后在线信息
+            farm.setLastOnlineDay(currentAbsDay);
+            farm.setLastOnlineSeason(currentSeason);
+            registry.setDirty();
+        }
 
         StardewCraft.LOGGER.info("[FARM-CATCHUP] Catch-up complete for player {}", playerUUID);
     }
@@ -116,22 +121,11 @@ public final class OfflineFarmCatchUp {
      * 批量推进作物生长 N 天。
      * 假设洒水器每天都浇水（离线期间）。
      */
-    private static void catchUpCrops(ServerLevel level, FarmInstance farm, int daysMissed) {
-        CropGrowthManager cropMgr = CropGrowthManager.get(level);
-        BlockPos boundsMin = farm.getFarmBoundsMin();
-        BlockPos boundsMax = farm.getFarmBoundsMax();
-
-        // 收集此农场范围内的所有已注册作物
-        List<GlobalPos> farmCrops = new ArrayList<>();
-        for (GlobalPos gp : cropMgr.getAllCropPositions()) {
-            if (gp.dimension() != level.dimension()) continue;
-            BlockPos pos = gp.pos();
-            if (pos.getX() >= boundsMin.getX() && pos.getX() <= boundsMax.getX()
-                    && pos.getZ() >= boundsMin.getZ() && pos.getZ() <= boundsMax.getZ()) {
-                farmCrops.add(gp);
-            }
-        }
-
+    private static void catchUpCrops(
+            ServerLevel level,
+            CropGrowthManager cropMgr,
+            List<GlobalPos> farmCrops,
+            int daysMissed) {
         if (farmCrops.isEmpty()) return;
 
         StardewCraft.LOGGER.info("[FARM-CATCHUP] Processing {} crops for {} days",
@@ -160,21 +154,11 @@ public final class OfflineFarmCatchUp {
      * 批量推进树苗生长。
      * 直接增加 daysGrown 计数器并检查成熟。
      */
-    private static void catchUpTrees(ServerLevel level, FarmInstance farm, int daysMissed) {
-        TreeGrowthManager treeMgr = TreeGrowthManager.get(level);
-        BlockPos boundsMin = farm.getFarmBoundsMin();
-        BlockPos boundsMax = farm.getFarmBoundsMax();
-
-        List<GlobalPos> farmTrees = new ArrayList<>();
-        for (GlobalPos gp : treeMgr.getAllSaplingPositions()) {
-            if (gp.dimension() != level.dimension()) continue;
-            BlockPos pos = gp.pos();
-            if (pos.getX() >= boundsMin.getX() && pos.getX() <= boundsMax.getX()
-                    && pos.getZ() >= boundsMin.getZ() && pos.getZ() <= boundsMax.getZ()) {
-                farmTrees.add(gp);
-            }
-        }
-
+    private static void catchUpTrees(
+            ServerLevel level,
+            TreeGrowthManager treeMgr,
+            List<GlobalPos> farmTrees,
+            int daysMissed) {
         if (farmTrees.isEmpty()) return;
 
         StardewCraft.LOGGER.info("[FARM-CATCHUP] Processing {} tree saplings for {} days",
@@ -196,21 +180,7 @@ public final class OfflineFarmCatchUp {
     /**
      * 对洒水器覆盖范围重新浇水。
      */
-    private static void catchUpSprinklers(ServerLevel level, FarmInstance farm) {
-        SprinklerManager sprMgr = SprinklerManager.get(level);
-        BlockPos boundsMin = farm.getFarmBoundsMin();
-        BlockPos boundsMax = farm.getFarmBoundsMax();
-
-        List<GlobalPos> farmSprinklers = new ArrayList<>();
-        for (GlobalPos gp : sprMgr.getAllSprinklerPositions()) {
-            if (gp.dimension() != level.dimension()) continue;
-            BlockPos pos = gp.pos();
-            if (pos.getX() >= boundsMin.getX() && pos.getX() <= boundsMax.getX()
-                    && pos.getZ() >= boundsMin.getZ() && pos.getZ() <= boundsMax.getZ()) {
-                farmSprinklers.add(gp);
-            }
-        }
-
+    private static void catchUpSprinklers(ServerLevel level, List<GlobalPos> farmSprinklers) {
         if (farmSprinklers.isEmpty()) return;
 
         for (GlobalPos gp : farmSprinklers) {

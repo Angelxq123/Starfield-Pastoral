@@ -1,23 +1,28 @@
 package com.stardew.craft.farm;
 
 import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.AssignmentTree;
+import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.EnhancedForLoopTree;
+import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.SwitchTree;
 import com.sun.source.tree.TryTree;
 import com.sun.source.tree.VariableTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreeScanner;
 import org.junit.jupiter.api.Test;
@@ -85,6 +90,73 @@ class FarmOccupancyIntegrationContractTest {
         assertTrue(occupancyIndex >= 0, "location guard must directly reconcile farm occupancy");
         assertTrue(occupancyIndex < firstEarlyReturnOwner,
                 "farm occupancy must reconcile before interior-state early returns");
+    }
+
+    @Test
+    void deferredTeleportReconciliationRequiresTheSameConnectedPlayer() throws IOException {
+        MethodTree teleport = parseMethod(
+                LOCATION_GUARD_SOURCE, "PlayerLocationStateGuardEvents", "onEntityTeleport", 1);
+        boolean lowestPriority = teleport.getModifiers().getAnnotations().stream()
+                .filter(annotation -> annotation.getAnnotationType().toString().equals("SubscribeEvent"))
+                .flatMap(annotation -> annotation.getArguments().stream())
+                .filter(AssignmentTree.class::isInstance)
+                .map(AssignmentTree.class::cast)
+                .anyMatch(argument -> argument.getVariable().toString().equals("priority")
+                        && argument.getExpression().toString().equals("EventPriority.LOWEST"));
+        assertTrue(lowestPriority, "teleport guard must remain subscribed at LOWEST priority");
+
+        IfTree canceledOrNonPlayer = findDirectIf(teleport.getBody(), condition ->
+                hasInvocation(condition, "event", "isCanceled"));
+        assertTrue(asBlock(canceledOrNonPlayer.getThenStatement())
+                .getStatements().getFirst() instanceof ReturnTree);
+
+        List<VariableTree> serverCaptures = directVariables(teleport.getBody()).stream()
+                .filter(variable -> isMemberSelect(variable.getInitializer(), "player", "server"))
+                .toList();
+        assertEquals(1, serverCaptures.size(), "teleport callback must capture the player's server");
+        String serverLocal = serverCaptures.getFirst().getName().toString();
+        List<VariableTree> playerIdCaptures = directVariables(teleport.getBody()).stream()
+                .filter(variable -> isInvocation(variable.getInitializer(), "player", "getUUID"))
+                .toList();
+        assertEquals(1, playerIdCaptures.size(), "teleport callback must capture the player's UUID");
+        String playerIdLocal = playerIdCaptures.getFirst().getName().toString();
+
+        MethodInvocationTree tell = directInvocations(teleport.getBody()).stream()
+                .filter(invocation -> invocation.getMethodSelect() instanceof MemberSelectTree select
+                        && select.getExpression() instanceof IdentifierTree identifier
+                        && identifier.getName().contentEquals(serverLocal)
+                        && select.getIdentifier().contentEquals("tell"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("direct server tell scheduling is missing"));
+        assertEquals(1, tell.getArguments().size());
+        assertTrue(tell.getArguments().getFirst() instanceof NewClassTree,
+                "server.tell must directly schedule a TickTask");
+        NewClassTree tickTask = (NewClassTree) tell.getArguments().getFirst();
+        assertEquals("net.minecraft.server.TickTask", tickTask.getIdentifier().toString());
+        assertEquals(2, tickTask.getArguments().size());
+        assertTrue(tickTask.getArguments().get(1) instanceof LambdaExpressionTree);
+        LambdaExpressionTree callback = (LambdaExpressionTree) tickTask.getArguments().get(1);
+        assertTrue(callback.getBody() instanceof BlockTree, "teleport callback must be a block lambda");
+        BlockTree callbackBody = (BlockTree) callback.getBody();
+
+        IfTree stalePlayer = findDirectIf(callbackBody, condition -> {
+            ExpressionTree expression = unwrapped(condition);
+            if (!(expression instanceof BinaryTree identity)
+                    || identity.getKind() != Tree.Kind.NOT_EQUAL_TO) {
+                return false;
+            }
+            return isInvocation(identity.getLeftOperand(),
+                    serverLocal + ".getPlayerList()", "getPlayer", playerIdLocal)
+                    && identity.getRightOperand() instanceof IdentifierTree identifier
+                    && identifier.getName().contentEquals("player");
+        });
+        assertTrue(asBlock(stalePlayer.getThenStatement())
+                .getStatements().getFirst() instanceof ReturnTree);
+        int identityIndex = callbackBody.getStatements().indexOf(stalePlayer);
+        int reconcileIndex = directInvocationIndex(callbackBody,
+                null, "reconcileLocationState", "player", "true");
+        assertTrue(reconcileIndex > identityIndex,
+                "callback must verify the exact connected player before reconciliation");
     }
 
     @Test
@@ -480,6 +552,17 @@ class FarmOccupancyIntegrationContractTest {
             current = parenthesized.getExpression();
         }
         return current;
+    }
+
+    private static boolean isMemberSelect(
+            Tree tree, String expectedReceiver, String expectedMember) {
+        if (!(tree instanceof ExpressionTree expression)
+                || !(unwrapped(expression) instanceof MemberSelectTree select)
+                || !(select.getExpression() instanceof IdentifierTree identifier)) {
+            return false;
+        }
+        return identifier.getName().contentEquals(expectedReceiver)
+                && select.getIdentifier().contentEquals(expectedMember);
     }
 
     private static boolean isInvocation(

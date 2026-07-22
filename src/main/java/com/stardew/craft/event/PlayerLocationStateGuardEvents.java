@@ -52,9 +52,16 @@ public final class PlayerLocationStateGuardEvents {
             return;
         }
 
-        player.server.tell(new net.minecraft.server.TickTask(
-            player.server.getTickCount() + 1,
-            () -> reconcileLocationState(player, true)));
+        var server = player.server;
+        UUID playerId = player.getUUID();
+        server.tell(new net.minecraft.server.TickTask(
+            server.getTickCount() + 1,
+            () -> {
+                if (server.getPlayerList().getPlayer(playerId) != player) {
+                    return;
+                }
+                reconcileLocationState(player, true);
+            }));
     }
 
     @SubscribeEvent

@@ -1,9 +1,24 @@
 package com.stardew.craft.farm;
 
+import com.sun.source.tree.BindingPatternTree;
+import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.ExpressionStatementTree;
+import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.IfTree;
+import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.InstanceOfTree;
+import com.sun.source.tree.MemberSelectTree;
+import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.ParenthesizedTree;
+import com.sun.source.tree.ReturnTree;
+import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.tree.VariableTree;
 import com.sun.source.util.JavacTask;
+import com.sun.source.util.TreeScanner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.Test;
@@ -16,7 +31,10 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.tools.Diagnostic;
@@ -68,44 +86,110 @@ class FarmCursorLifecycleTest {
     }
 
     @Test
-    void publicCreateFarmReadsOneTimeManagerAndDelegatesBothCursorValues() throws Exception {
+    void publicCreateFarmReadsOneTimeManagerAndDirectlyDelegatesCursorValues() throws Exception {
         Method api = FarmInstanceRegistry.class.getDeclaredMethod(
                 "createFarm", UUID.class, String.class, String.class, FarmType.class);
         assertTrue(Modifier.isPublic(api.getModifiers()));
 
-        String source = normalized(parseMethod(
-                REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarm", 4));
-        assertEquals(1, occurrences(source, "StardewTimeManager.get()"));
-        assertEquals(1, occurrences(source, "tm.getAbsoluteDay()"));
-        assertEquals(1, occurrences(source, "tm.getCurrentSeason()"));
-        assertOrdered(source,
-                "StardewTimeManagertm=StardewTimeManager.get();",
-                "returncreateFarmAtDate(playerUUID,playerName,farmName,farmType,"
-                        + "tm.getAbsoluteDay(),tm.getCurrentSeason());");
+        MethodTree create = parseMethod(REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarm", 4);
+        List<VariableTree> timeManagers = directVariables(create.getBody()).stream()
+                .filter(variable -> isInvocation(
+                        variable.getInitializer(), "StardewTimeManager", "get"))
+                .toList();
+        assertEquals(1, timeManagers.size());
+        assertEquals(1, invocations(create).stream()
+                .filter(invocation -> isInvocation(
+                        invocation, "StardewTimeManager", "get"))
+                .count());
+        String managerName = timeManagers.getFirst().getName().toString();
+
+        List<ReturnTree> returns = create.getBody().getStatements().stream()
+                .filter(ReturnTree.class::isInstance)
+                .map(ReturnTree.class::cast)
+                .toList();
+        assertEquals(1, returns.size());
+        assertTrue(returns.getFirst().getExpression() instanceof MethodInvocationTree);
+        MethodInvocationTree delegation = (MethodInvocationTree) returns.getFirst().getExpression();
+        assertTrue(isInvocationNamed(delegation, null, "createFarmAtDate"));
+        assertEquals(6, delegation.getArguments().size());
+        assertTrue(isInvocation(delegation.getArguments().get(4),
+                managerName, "getAbsoluteDay"));
+        assertTrue(isInvocation(delegation.getArguments().get(5),
+                managerName, "getCurrentSeason"));
     }
 
     @Test
-    void logoutFarmBlockOnlyNotifiesChunkManager() throws IOException {
+    void explicitCreationInitializesBothCursorsBeforePublication() throws IOException {
+        MethodTree create = parseMethod(
+                REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarmAtDate", 6);
+        BlockTree body = create.getBody();
+        int daySetter = directInvocationIndex(
+                body, "instance", "setLastOnlineDay", "absoluteDay");
+        int seasonSetter = directInvocationIndex(
+                body, "instance", "setLastOnlineSeason", "season");
+        int publication = directInvocationIndex(
+                body, "instances", "put", "playerUUID", "instance");
+
+        assertTrue(daySetter >= 0, "explicit creation must set the day cursor directly");
+        assertTrue(seasonSetter >= 0, "explicit creation must set the season cursor directly");
+        assertTrue(publication > daySetter, "day cursor must be set before publication");
+        assertTrue(publication > seasonSetter, "season cursor must be set before publication");
+    }
+
+    @Test
+    void logoutDirectlyNotifiesOnlyTheOccupancyManagerForFarmSessionState() throws IOException {
         MethodTree logout = parseMethod(
                 PLAYER_HANDLER_SOURCE, "PlayerDataEventHandler", "onPlayerLogout", 1);
-        String logoutSource = normalized(logout);
+        IfTree serverPlayer = logout.getBody().getStatements().stream()
+                .filter(IfTree.class::isInstance)
+                .map(IfTree.class::cast)
+                .filter(candidate -> bindsServerPlayer(candidate.getCondition()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("server-player logout branch is missing"));
+        BlockTree playerBody = asBlock(serverPlayer.getThenStatement());
 
-        assertTrue(logoutSource.contains("FarmChunkManager.get().onPlayerLogout(player);"));
-        assertFalse(logoutSource.contains("OfflineFarmCatchUp.computeAbsoluteDay"));
-        assertFalse(logoutSource.contains("StardewTimeManager"));
-        assertFalse(logoutSource.contains("setLastOnlineDay"));
-        assertFalse(logoutSource.contains("setLastOnlineSeason"));
-        assertFalse(logoutSource.contains("registry.setDirty()"));
+        assertTrue(isDirectInvocation(playerBody.getStatements().getFirst(),
+                "com.stardew.craft.farm.FarmChunkManager.get()", "onPlayerLogout", "player"));
+        assertEquals(1, invocations(playerBody).stream()
+                .filter(invocation -> isInvocation(invocation,
+                        "com.stardew.craft.farm.FarmChunkManager.get()",
+                        "onPlayerLogout", "player"))
+                .count());
+
+        List<MethodInvocationTree> calls = invocations(logout);
+        assertFalse(calls.stream().anyMatch(invocation ->
+                isInvocationNamed(invocation, "OfflineFarmCatchUp", "computeAbsoluteDay")));
+        assertFalse(calls.stream().anyMatch(invocation ->
+                Objects.equals(receiver(invocation), "StardewTimeManager")
+                        || Objects.equals(receiver(invocation),
+                                "com.stardew.craft.time.StardewTimeManager")));
+        assertFalse(calls.stream().anyMatch(invocation ->
+                methodName(invocation).equals("setLastOnlineDay")
+                        || methodName(invocation).equals("setLastOnlineSeason")));
+
+        List<String> registryLocals = variables(logout).stream()
+                .filter(variable -> isFarmRegistryGet(variable.getInitializer()))
+                .map(variable -> variable.getName().toString())
+                .toList();
+        assertFalse(calls.stream().anyMatch(invocation ->
+                isFarmRegistryDirtyInvocation(invocation, registryLocals)));
     }
 
     @Test
-    void transferFarmContinuesCopyingExistingCursor() throws IOException {
-        String transfer = normalized(parseMethod(
-                REGISTRY_SOURCE, "FarmInstanceRegistry", "transferFarm", 3));
-        assertTrue(transfer.contains(
-                "transferred.setLastOnlineDay(farm.getLastOnlineDay());"));
-        assertTrue(transfer.contains(
-                "transferred.setLastOnlineSeason(farm.getLastOnlineSeason());"));
+    void transferFarmDirectlyCopiesBothExistingCursorValues() throws IOException {
+        MethodTree transfer = parseMethod(REGISTRY_SOURCE, "FarmInstanceRegistry", "transferFarm", 3);
+        List<MethodInvocationTree> directCalls = directInvocations(transfer.getBody());
+        MethodInvocationTree daySetter = singleInvocation(
+                directCalls, "transferred", "setLastOnlineDay");
+        MethodInvocationTree seasonSetter = singleInvocation(
+                directCalls, "transferred", "setLastOnlineSeason");
+
+        assertEquals(1, daySetter.getArguments().size());
+        assertTrue(isInvocation(daySetter.getArguments().getFirst(),
+                "farm", "getLastOnlineDay"));
+        assertEquals(1, seasonSetter.getArguments().size());
+        assertTrue(isInvocation(seasonSetter.getArguments().getFirst(),
+                "farm", "getLastOnlineSeason"));
     }
 
     @Test
@@ -193,26 +277,144 @@ class FarmCursorLifecycleTest {
         }
     }
 
-    private static String normalized(Object syntaxTree) {
-        return syntaxTree.toString().replaceAll("\\s+", "");
+    private static List<VariableTree> directVariables(BlockTree block) {
+        return block.getStatements().stream()
+                .filter(VariableTree.class::isInstance)
+                .map(VariableTree.class::cast)
+                .toList();
     }
 
-    private static void assertOrdered(String source, String... operations) {
-        int cursor = 0;
-        for (String operation : operations) {
-            int operationIndex = source.indexOf(operation, cursor);
-            assertTrue(operationIndex >= cursor, () -> "missing or out-of-order operation: " + operation);
-            cursor = operationIndex + operation.length();
-        }
+    private static List<MethodInvocationTree> directInvocations(BlockTree block) {
+        return block.getStatements().stream()
+                .filter(ExpressionStatementTree.class::isInstance)
+                .map(ExpressionStatementTree.class::cast)
+                .map(ExpressionStatementTree::getExpression)
+                .filter(MethodInvocationTree.class::isInstance)
+                .map(MethodInvocationTree.class::cast)
+                .toList();
     }
 
-    private static int occurrences(String source, String value) {
-        int count = 0;
-        int cursor = 0;
-        while ((cursor = source.indexOf(value, cursor)) >= 0) {
-            count++;
-            cursor += value.length();
+    private static List<MethodInvocationTree> invocations(Tree tree) {
+        List<MethodInvocationTree> calls = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitMethodInvocation(MethodInvocationTree invocation, Void unused) {
+                calls.add(invocation);
+                return super.visitMethodInvocation(invocation, unused);
+            }
+        }.scan(tree, null);
+        return calls;
+    }
+
+    private static List<VariableTree> variables(Tree tree) {
+        List<VariableTree> variables = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitVariable(VariableTree variable, Void unused) {
+                variables.add(variable);
+                return super.visitVariable(variable, unused);
+            }
+        }.scan(tree, null);
+        return variables;
+    }
+
+    private static boolean isFarmRegistryDirtyInvocation(
+            MethodInvocationTree invocation, List<String> registryLocals) {
+        if (!methodName(invocation).equals("setDirty")
+                || !(invocation.getMethodSelect() instanceof MemberSelectTree select)) {
+            return false;
         }
-        return count;
+        ExpressionTree target = unwrapped(select.getExpression());
+        if (target instanceof IdentifierTree identifier) {
+            return registryLocals.stream()
+                    .anyMatch(identifier.getName()::contentEquals);
+        }
+        return isFarmRegistryGet(target);
+    }
+
+    private static boolean isFarmRegistryGet(Tree tree) {
+        return isInvocation(tree, "FarmInstanceRegistry", "get")
+                || isInvocation(tree, "com.stardew.craft.farm.FarmInstanceRegistry", "get");
+    }
+
+    private static MethodInvocationTree singleInvocation(
+            List<MethodInvocationTree> calls, String expectedReceiver, String expectedMethod) {
+        List<MethodInvocationTree> matches = calls.stream()
+                .filter(invocation -> isInvocationNamed(
+                        invocation, expectedReceiver, expectedMethod))
+                .toList();
+        assertEquals(1, matches.size());
+        return matches.getFirst();
+    }
+
+    private static int directInvocationIndex(
+            BlockTree block, String expectedReceiver, String expectedMethod, String... arguments) {
+        for (int index = 0; index < block.getStatements().size(); index++) {
+            if (isDirectInvocation(
+                    block.getStatements().get(index), expectedReceiver, expectedMethod, arguments)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isDirectInvocation(
+            StatementTree statement, String expectedReceiver, String expectedMethod, String... arguments) {
+        return statement instanceof ExpressionStatementTree expression
+                && isInvocation(expression.getExpression(), expectedReceiver, expectedMethod, arguments);
+    }
+
+    private static boolean isInvocation(
+            Tree tree, String expectedReceiver, String expectedMethod, String... arguments) {
+        Tree candidate = tree instanceof ExpressionTree expression ? unwrapped(expression) : tree;
+        if (!(candidate instanceof MethodInvocationTree invocation)
+                || !isInvocationNamed(invocation, expectedReceiver, expectedMethod)) {
+            return false;
+        }
+        List<String> actualArguments = invocation.getArguments().stream()
+                .map(Object::toString)
+                .toList();
+        return actualArguments.equals(Arrays.asList(arguments));
+    }
+
+    private static boolean isInvocationNamed(
+            MethodInvocationTree invocation, String expectedReceiver, String expectedMethod) {
+        return Objects.equals(expectedReceiver, receiver(invocation))
+                && methodName(invocation).equals(expectedMethod);
+    }
+
+    private static String receiver(MethodInvocationTree invocation) {
+        return invocation.getMethodSelect() instanceof MemberSelectTree select
+                ? select.getExpression().toString()
+                : null;
+    }
+
+    private static String methodName(MethodInvocationTree invocation) {
+        return invocation.getMethodSelect() instanceof MemberSelectTree select
+                ? select.getIdentifier().toString()
+                : invocation.getMethodSelect().toString();
+    }
+
+    private static ExpressionTree unwrapped(ExpressionTree expression) {
+        ExpressionTree current = expression;
+        while (current instanceof ParenthesizedTree parenthesized) {
+            current = parenthesized.getExpression();
+        }
+        return current;
+    }
+
+    private static boolean bindsServerPlayer(ExpressionTree condition) {
+        ExpressionTree expression = unwrapped(condition);
+        if (!(expression instanceof InstanceOfTree instanceOf)
+                || !(instanceOf.getPattern() instanceof BindingPatternTree binding)) {
+            return false;
+        }
+        return binding.getVariable().getType().toString().equals("ServerPlayer")
+                && binding.getVariable().getName().contentEquals("player");
+    }
+
+    private static BlockTree asBlock(StatementTree statement) {
+        assertTrue(statement instanceof BlockTree, "expected block statement");
+        return (BlockTree) statement;
     }
 }

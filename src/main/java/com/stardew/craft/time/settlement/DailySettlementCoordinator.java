@@ -89,7 +89,9 @@ public final class DailySettlementCoordinator {
             return;
         }
         if (phase == DailySettlementPhase.READY) {
-            notifyReady();
+            if (notifyReady()) {
+                resetToIdle();
+            }
             return;
         }
 
@@ -113,7 +115,7 @@ public final class DailySettlementCoordinator {
         int effectiveItemLimit = consecutiveFailures > 0
                 ? Math.min(tickItemLimit, 1)
                 : tickItemLimit;
-        GuardedWorkUnit guardedUnit = new GuardedWorkUnit(unit);
+        GuardedWorkUnit guardedUnit = new GuardedWorkUnit(unit, context);
         BudgetedWorkRunner.TickResult result;
         try {
             result = runGuarded(guardedUnit, tickBudget, effectiveItemLimit);
@@ -132,7 +134,13 @@ public final class DailySettlementCoordinator {
     }
 
     public void drain() {
-        while (phase != DailySettlementPhase.IDLE && phase != DailySettlementPhase.READY) {
+        while (phase != DailySettlementPhase.IDLE) {
+            if (phase == DailySettlementPhase.READY) {
+                if (notifyReady()) {
+                    resetToIdle();
+                }
+                continue;
+            }
             DailySettlementWorkUnit unit = advanceToWork();
             if (unit == null) {
                 continue;
@@ -143,7 +151,7 @@ public final class DailySettlementCoordinator {
             }
 
             try {
-                unit.runNext();
+                DailySettlementDateView.run(context, unit::runNext);
             } catch (Exception failure) {
                 handleItemFailure(unit);
                 continue;
@@ -243,7 +251,9 @@ public final class DailySettlementCoordinator {
         consecutiveFailures = 0;
         safePhaseChanged();
         if (phase == DailySettlementPhase.READY) {
-            notifyReady();
+            if (notifyReady()) {
+                resetToIdle();
+            }
         }
     }
 
@@ -254,14 +264,16 @@ public final class DailySettlementCoordinator {
         }
     }
 
-    private void notifyReady() {
+    private boolean notifyReady() {
         if (readyNotified) {
-            return;
+            return true;
         }
         try {
             listener.ready(context);
             readyNotified = true;
+            return true;
         } catch (RuntimeException | Error ignored) {
+            return false;
         }
     }
 
@@ -374,10 +386,13 @@ public final class DailySettlementCoordinator {
 
     private static final class GuardedWorkUnit implements DailySettlementWorkUnit {
         private final DailySettlementWorkUnit delegate;
+        private final DailySettlementContext context;
         private int successfulRuns;
 
-        private GuardedWorkUnit(DailySettlementWorkUnit delegate) {
+        private GuardedWorkUnit(
+                DailySettlementWorkUnit delegate, DailySettlementContext context) {
             this.delegate = delegate;
+            this.context = context;
         }
 
         @Override
@@ -398,7 +413,7 @@ public final class DailySettlementCoordinator {
         @Override
         public void runNext() throws WorkItemExecutionException {
             try {
-                delegate.runNext();
+                DailySettlementDateView.run(context, delegate::runNext);
                 successfulRuns++;
             } catch (Exception failure) {
                 throw new WorkItemExecutionException(failure);

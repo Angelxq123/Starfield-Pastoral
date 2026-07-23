@@ -1,36 +1,16 @@
 package com.stardew.craft.time.settlement;
 
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
-import net.minecraft.server.MinecraftServer;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class DailySettlementBarrier {
-    private static final Map<MinecraftServer, DailySettlementBarrier> REGISTRY = new WeakHashMap<>();
-
     private final Map<UUID, Integer> locks = new HashMap<>();
     private final Map<UUID, ReadyResult> ready = new HashMap<>();
-
-    public static synchronized DailySettlementBarrier get(MinecraftServer server) {
-        Objects.requireNonNull(server, "server");
-        return REGISTRY.computeIfAbsent(server, ignored -> new DailySettlementBarrier());
-    }
-
-    public static synchronized DailySettlementBarrier find(MinecraftServer server) {
-        return server == null ? null : REGISTRY.get(server);
-    }
-
-    public static synchronized void remove(MinecraftServer server) {
-        if (server != null) {
-            REGISTRY.remove(server);
-        }
-    }
 
     public void lockAll(int absoluteDay, Collection<UUID> playerIds) {
         if (absoluteDay <= 0) {

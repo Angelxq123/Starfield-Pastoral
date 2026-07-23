@@ -300,7 +300,7 @@ class DailySettlementChunkLeaseTest {
         ParsedClass helper = parse(
                 PROJECT.resolve("src/main/java/com/stardew/craft/farm/FarmDailyProcessHelper.java"),
                 "FarmDailyProcessHelper");
-        MethodTree begin = helper.method("beginDailyProcess", 1);
+        MethodTree begin = helper.method("beginDailyProcess", 2);
         MethodTree end = helper.method("endDailyProcess", 1);
         assertTrue(invocations(begin).stream().anyMatch(call ->
                 methodName(call).equals("beginDailySettlementChunkLeaseScope")));
@@ -309,10 +309,14 @@ class DailySettlementChunkLeaseTest {
 
         String timeSource = Files.readString(
                 PROJECT.resolve("src/main/java/com/stardew/craft/time/StardewTimeManager.java"));
+        String planSource = Files.readString(
+                PROJECT.resolve("src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java"));
         assertFalse(timeSource.contains("setInteriorChunksForced(stardewLevel, true, \"daily_settlement\")"));
         assertFalse(timeSource.contains("setInteriorChunksForced(stardewLevel, false, \"daily_settlement_done\")"));
-        assertTrue(timeSource.contains("FarmDailyProcessHelper.beginDailyProcess(stardewLevel)"));
-        assertTrue(timeSource.contains("FarmDailyProcessHelper.endDailyProcess(stardewLevel)"));
+        assertFalse(timeSource.contains("FarmDailyProcessHelper.beginDailyProcess"));
+        assertFalse(timeSource.contains("FarmDailyProcessHelper.endDailyProcess"));
+        assertTrue(planSource.contains("FarmDailyProcessHelper.beginDailyProcess"));
+        assertTrue(planSource.contains("FarmDailyProcessHelper.endDailyProcess"));
     }
 
     private static void assertPositionLease(

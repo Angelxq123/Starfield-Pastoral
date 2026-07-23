@@ -54,6 +54,7 @@ class OvernightBarrierIntegrationContractTest {
     private static final Path BARRIER_PAYLOAD = source("network/overnight/OvernightBarrierPayload.java");
     private static final Path PACKETS = source("network/PacketHandler.java");
     private static final Path BARRIER = source("time/settlement/DailySettlementBarrier.java");
+    private static final Path SERVICES = source("time/settlement/DailySettlementServices.java");
 
     @Test
     void waitingScreenRoutesAllInputThroughTheBarrierGate() throws IOException {
@@ -216,11 +217,12 @@ class OvernightBarrierIntegrationContractTest {
         MethodTree handle = method(CANCEL, "SleepCancelPayload", "handle", 2);
         BlockTree work = enqueueBlock(handle);
         int guard = directIfIndex(work, "isLocked");
+        int find = invocationIndex(work, "find");
         int stopSleeping = invocationIndex(work, "stopSleeping");
         int revoke = invocationIndex(work, "revokeVoteAndBroadcast");
 
         assertTrue(guard >= 0);
-        assertTrue(hasInvocation(work.getStatements().get(guard), "find"));
+        assertTrue(find >= 0 && find < guard);
         assertTrue(hasReturn(work.getStatements().get(guard)));
         assertTrue(guard < stopSleeping);
         assertTrue(guard < revoke);
@@ -305,13 +307,14 @@ class OvernightBarrierIntegrationContractTest {
     }
 
     @Test
-    void barrierRegistryUsesWeakServerKeysAndHasNoCoordinatorDependency() throws IOException {
-        ClassTree barrier = classTree(BARRIER, "DailySettlementBarrier");
-        assertTrue(newClasses(barrier).contains("WeakHashMap<>"));
-        assertNotNull(method(barrier, "get", 1));
-        assertNotNull(method(barrier, "find", 1));
-        assertNotNull(method(barrier, "remove", 1));
-        assertFalse(hasIdentifier(barrier, "DailySettlementCoordinator"));
+    void servicesRegistryUsesWeakServerKeysAndOwnsTheCoordinatorAndBarrier() throws IOException {
+        ClassTree services = classTree(SERVICES, "DailySettlementServices");
+        assertTrue(newClasses(services).contains("WeakHashMap<>"));
+        assertNotNull(method(services, "get", 1));
+        assertNotNull(method(services, "find", 1));
+        assertNotNull(method(services, "remove", 1));
+        assertTrue(hasIdentifier(services, "DailySettlementCoordinator"));
+        assertTrue(hasIdentifier(services, "DailySettlementBarrier"));
     }
 
     private static Path source(String relative) {

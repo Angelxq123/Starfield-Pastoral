@@ -149,7 +149,12 @@ class FarmCursorLifecycleTest {
         BlockTree playerBody = asBlock(serverPlayer.getThenStatement());
 
         assertTrue(isDirectInvocation(playerBody.getStatements().getFirst(),
-                "com.stardew.craft.farm.FarmChunkManager.get()", "onPlayerLogout", "player"));
+                "com.stardew.craft.time.settlement.DailySettlementEvents",
+                "onPlayerLogout", "player"));
+        assertTrue(playerBody.getStatements().stream().anyMatch(statement ->
+                isDirectInvocation(statement,
+                        "com.stardew.craft.farm.FarmChunkManager.get()",
+                        "onPlayerLogout", "player")));
         assertEquals(1, invocations(playerBody).stream()
                 .filter(invocation -> isInvocation(invocation,
                         "com.stardew.craft.farm.FarmChunkManager.get()",

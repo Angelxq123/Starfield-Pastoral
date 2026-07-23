@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +39,16 @@ public final class FarmDailyProcessHelper {
      * 日结算开始前调用，预计算在线玩家集合。
      */
     public static void beginDailyProcess(ServerLevel level) {
+        Set<UUID> onlinePlayers = new HashSet<>();
+        for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
+            onlinePlayers.add(player.getUUID());
+        }
+        beginDailyProcess(level, onlinePlayers);
+    }
+
+    public static void beginDailyProcess(ServerLevel level, Collection<UUID> playerIds) {
         Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(playerIds, "playerIds");
         if (dailySettlementLeaseScope != null) {
             throw new IllegalStateException("Daily settlement process is already active");
         }
@@ -47,10 +57,7 @@ public final class FarmDailyProcessHelper {
         dailySettlementLeaseScope = FarmChunkManager.get()
                 .beginDailySettlementChunkLeaseScope(level);
         try {
-            cachedOnlinePlayers = new HashSet<>();
-            for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
-                cachedOnlinePlayers.add(player.getUUID());
-            }
+            cachedOnlinePlayers = Set.copyOf(playerIds);
             // 递减在线玩家农场的跨季宽限倒计时
             tickGracePeriods(level);
         } catch (RuntimeException | Error exception) {
@@ -67,6 +74,10 @@ public final class FarmDailyProcessHelper {
      * 日结算结束后调用，释放缓存。
      */
     public static void endDailyProcess(ServerLevel level) {
+        Objects.requireNonNull(level, "level");
+        if (dailySettlementLeaseScope != null && dailySettlementLevel != level) {
+            throw new IllegalStateException("A different level owns the daily settlement process");
+        }
         FarmChunkManager.DailySettlementChunkLeaseScope<ServerLevel> scope =
                 dailySettlementLeaseScope;
         try {

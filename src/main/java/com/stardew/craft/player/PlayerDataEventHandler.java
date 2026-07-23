@@ -50,6 +50,7 @@ public class PlayerDataEventHandler {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            com.stardew.craft.time.settlement.DailySettlementEvents.onPlayerLogin(player);
             // Recover shop purchases that were paid for but not placed before disconnect/restart.
             com.stardew.craft.network.payload.ShopPickupPayload.deliverAllPending(player);
 
@@ -80,12 +81,17 @@ public class PlayerDataEventHandler {
             CosmeticAppearanceSync.broadcast(player, data);
             JoinAnnouncementService.schedule(player);
 
-            try {
-                com.stardew.craft.network.overnight.OvernightSettlementPayload pendingShipping =
-                    com.stardew.craft.network.overnight.OvernightSettlementTracker.consumePayload(player);
-                com.stardew.craft.player.PlayerStardewDataAPI.recordOvernightShippedItems(player, pendingShipping.shippedItems());
-            } catch (Exception ex) {
-                StardewCraft.LOGGER.warn("Failed to settle pending offline shipping on login: {}", ex.getMessage());
+            com.stardew.craft.time.settlement.DailySettlementServices.Services settlementServices =
+                    com.stardew.craft.time.settlement.DailySettlementServices.find(player.server);
+            if (settlementServices == null
+                    || !settlementServices.barrier().isLocked(player.getUUID())) {
+                try {
+                    com.stardew.craft.network.overnight.OvernightSettlementPayload pendingShipping =
+                        com.stardew.craft.network.overnight.OvernightSettlementTracker.consumePayload(player);
+                    com.stardew.craft.player.PlayerStardewDataAPI.recordOvernightShippedItems(player, pendingShipping.shippedItems());
+                } catch (Exception ex) {
+                    StardewCraft.LOGGER.warn("Failed to settle pending offline shipping on login: {}", ex.getMessage());
+                }
             }
 
             // 同步星露谷时间到客户端。原本 TimeSyncPacket 只在切维度/睡觉时发，
@@ -259,6 +265,7 @@ public class PlayerDataEventHandler {
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            com.stardew.craft.time.settlement.DailySettlementEvents.onPlayerLogout(player);
             com.stardew.craft.farm.FarmChunkManager.get().onPlayerLogout(player);
 
             // Settle cursor-held shop purchases before the player inventory is saved.
@@ -828,6 +835,7 @@ public class PlayerDataEventHandler {
      */
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
+        com.stardew.craft.time.settlement.DailySettlementServices.remove(event.getServer());
         try {
             PlayerDataManager manager = PlayerDataManager.get();
             manager.setDirty();

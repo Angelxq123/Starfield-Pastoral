@@ -2,6 +2,7 @@ package com.stardew.craft.network.overnight;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.time.settlement.DailySettlementBarrier;
+import com.stardew.craft.time.settlement.DailySettlementServices;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -29,9 +30,9 @@ public record OvernightReadyAckPayload(int absoluteDay) implements CustomPacketP
             if (!(context.player() instanceof ServerPlayer player)) {
                 return;
             }
-            DailySettlementBarrier barrier = DailySettlementBarrier.find(player.server);
-            if (barrier != null) {
-                barrier.acknowledge(player.getUUID(), payload.absoluteDay());
+            DailySettlementServices.Services services = DailySettlementServices.find(player.server);
+            if (services != null) {
+                services.barrier().acknowledge(player.getUUID(), payload.absoluteDay());
             }
         });
     }

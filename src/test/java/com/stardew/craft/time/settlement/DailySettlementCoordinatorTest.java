@@ -149,7 +149,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(List.of("good"), processed);
         assertEquals(1, closes.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -179,7 +179,7 @@ class DailySettlementCoordinatorTest {
         assertEquals(3, attempts.get());
         assertTrue(atomic.isComplete());
         assertEquals(1, closes.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertEquals(new Failure("atomic", "atomic", 3, true), listener.failures.get(2));
     }
 
@@ -191,7 +191,7 @@ class DailySettlementCoordinatorTest {
                 ignored -> planWithPrepare(unit), listener, DEFAULT_BUDGET, 10);
         coordinator.start(context());
 
-        while (coordinator.phase() != DailySettlementPhase.READY) {
+        while (coordinator.isActive()) {
             coordinator.tick();
         }
 
@@ -220,7 +220,7 @@ class DailySettlementCoordinatorTest {
         coordinator.tick();
         coordinator.tick();
 
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertEquals(1, successfulCloses.get());
         assertEquals(1, failedCloses.get());
     }
@@ -249,7 +249,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(List.of("prepare", "player", "commit"), processed);
         assertEquals(3, closes.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertEquals(List.of(
                 new Failure("close-failure", "<close>", 1, true)), listener.failures);
     }
@@ -275,7 +275,7 @@ class DailySettlementCoordinatorTest {
         coordinator.drain();
         coordinator.drain();
 
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertEquals(2, closes.get());
         assertEquals(List.of(new Failure("cursor", "bad", 1, true)), listener.failures);
         assertEquals(List.of(context()), listener.readyContexts);
@@ -414,7 +414,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(2, attempts.get());
         assertEquals(0, skips.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -472,7 +472,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(1, processed.get());
         assertEquals(0, skips.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -507,7 +507,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(2, unit.attemptsFor("B"));
         assertEquals(0, unit.skips());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -538,7 +538,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(2, unit.attemptsFor("B"));
         assertEquals(0, unit.skips());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -560,11 +560,11 @@ class DailySettlementCoordinatorTest {
         coordinator.tick();
 
         assertEquals(2, unit.attemptsFor("B"));
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
-    void finishReadyReturnsToIdleWhileListenerRetainsReadyContext() {
+    void successfulReadyPublicationReturnsToIdleWhileListenerRetainsContext() {
         RecordingListener listener = new RecordingListener();
         DailySettlementCoordinator coordinator = coordinator(ignored -> emptyPlan(), listener);
 
@@ -573,12 +573,11 @@ class DailySettlementCoordinatorTest {
         coordinator.drain();
         DailySettlementContext retained = listener.readyContexts.getFirst();
 
-        coordinator.finishReady();
-
         assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertTrue(coordinator.context().isEmpty());
         assertFalse(coordinator.isActive());
         assertEquals(context(), retained);
+        assertThrows(IllegalStateException.class, coordinator::finishReady);
     }
 
     @Test
@@ -613,7 +612,7 @@ class DailySettlementCoordinatorTest {
 
         coordinator.tick();
 
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertEquals(List.of(
                 "phase:PREPARE", "phase:WORLD_BATCHES", "phase:PLAYER_BATCHES",
                 "phase:COMMIT", "commit", "close", "phase:READY", "ready"), events);
@@ -663,7 +662,7 @@ class DailySettlementCoordinatorTest {
 
         assertTrue(failed.isComplete());
         assertEquals(1, closes.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -698,7 +697,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(5, phaseCalls.get());
         assertEquals(1, readyCalls.get());
-        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -735,7 +734,6 @@ class DailySettlementCoordinatorTest {
         assertThrows(IllegalStateException.class, coordinator::finishReady);
 
         coordinator.tick();
-        coordinator.finishReady();
 
         assertEquals(2, readyCalls.get());
         assertEquals(DailySettlementPhase.IDLE, coordinator.phase());

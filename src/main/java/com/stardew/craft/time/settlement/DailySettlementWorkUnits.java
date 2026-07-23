@@ -36,10 +36,22 @@ public final class DailySettlementWorkUnits {
             String name,
             ThrowingRunnable action,
             Runnable onClose) {
+        return atomic(name, action, onClose, 2);
+    }
+
+    public static DailySettlementWorkUnit atomic(
+            String name,
+            ThrowingRunnable action,
+            Runnable onClose,
+            int maxRetries) {
+        if (maxRetries < 0) {
+            throw new IllegalArgumentException("maxRetries must not be negative");
+        }
         return new AtomicWorkUnit(
                 Objects.requireNonNull(name, "name"),
                 Objects.requireNonNull(action, "action"),
-                Objects.requireNonNull(onClose, "onClose"));
+                Objects.requireNonNull(onClose, "onClose"),
+                maxRetries);
     }
 
     public static DailySettlementWorkUnit sequence(
@@ -159,13 +171,16 @@ public final class DailySettlementWorkUnits {
         private final String name;
         private final ThrowingRunnable action;
         private final Runnable onClose;
+        private final int maxRetries;
         private boolean complete;
         private boolean closed;
 
-        private AtomicWorkUnit(String name, ThrowingRunnable action, Runnable onClose) {
+        private AtomicWorkUnit(
+                String name, ThrowingRunnable action, Runnable onClose, int maxRetries) {
             this.name = name;
             this.action = action;
             this.onClose = onClose;
+            this.maxRetries = maxRetries;
         }
 
         @Override
@@ -199,7 +214,7 @@ public final class DailySettlementWorkUnits {
 
         @Override
         public int maxRetries() {
-            return 2;
+            return maxRetries;
         }
 
         @Override

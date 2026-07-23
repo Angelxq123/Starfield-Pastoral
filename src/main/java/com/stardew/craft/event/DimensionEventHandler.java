@@ -81,41 +81,15 @@ public class DimensionEventHandler {
             var server = sourceLevel.getServer();
             StardewTimeManager timeManager = StardewTimeManager.get();
 
-            // === 通过 offset 推进虚拟 dayTime，不修改主世界 ===
-            long currentVirtual = timeManager.getVirtualDayTime();
-            long currentDay = currentVirtual / 24000;
-            long newDayTime = (currentDay + 1) * 24000;
-            timeManager.setVirtualDayTime(newDayTime);
-
-            // === 只发时间包给星露谷维度玩家 ===
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                ServerLevel playerLevel = player.serverLevel();
-                if (isStardewDimension(playerLevel)) {
-                    player.connection.send(new ClientboundSetTimePacket(
-                        playerLevel.getGameTime(),
-                        newDayTime,
-                        true // 星露谷始终有昼夜循环
-                    ));
-                }
-            }
-
             // 日结算逻辑（作物生长、天气、玩家恢复等）
             try {
                 timeManager.advanceDayWithSleepTime(sleepMinute);
             } catch (Exception e) {
                 StardewCraft.LOGGER.error("Error during advanceDayWithSleepTime (day still advanced to prevent freeze)", e);
             }
-            wakeSleepingStardewPlayers(server);
-
-            PacketDistributor.sendToAllPlayers(TimeSyncPacket.fromTimeManager(timeManager));
-            lastAnimalTenMinuteDayKey = Integer.MIN_VALUE;
-            lastAnimalTenMinuteSlot = Integer.MIN_VALUE;
-
-            // 重置深夜警告标记（新的一天）
-            midnightWarned = false;
-            oneAMWarned = false;
-            twoAMWarned = false;
-            StardewCraft.LOGGER.info("Stardew day advanced to next morning by {} (sleepMinute={})", reason, sleepMinute);
+            StardewCraft.LOGGER.info(
+                    "Stardew daily settlement started by {} (sleepMinute={})",
+                    reason, sleepMinute);
         } finally {
             dayAdvancing = false;
         }
@@ -471,6 +445,10 @@ public class DimensionEventHandler {
         }
 
         var server = serverLevel.getServer();
+        com.stardew.craft.time.settlement.DailySettlementServices.Services settlementServices =
+                com.stardew.craft.time.settlement.DailySettlementServices.find(server);
+        boolean settlementActive = settlementServices != null
+                && settlementServices.coordinator().isActive();
         boolean simulationPaused = com.stardew.craft.time.StardewTimePauseService.isPaused(server);
         boolean clockPaused = com.stardew.craft.time.StardewTimePauseService.isClockPaused(server);
 
@@ -482,7 +460,7 @@ public class DimensionEventHandler {
         // 此处强制对齐，使所有原版代码路径读到的都是正确的虚拟时间。
         StardewTimeManager timeManager = StardewTimeManager.get();
         // 星露谷时钟只由自己的暂停/节日状态控制，完全不读取主世界昼夜规则。
-        if (!clockPaused
+        if (!settlementActive && !clockPaused
                 && !com.stardew.craft.festival.ActiveFestivalHandlers.isAnyTimeFreezeActive()) {
             timeManager.advanceIndependentDayTime(com.stardew.craft.Config.TIME_SPEED_MULTIPLIER.get());
         }
@@ -493,7 +471,7 @@ public class DimensionEventHandler {
             miningLevel.setDayTime(virtualDayTime);
         }
 
-        if (simulationPaused) {
+        if (simulationPaused || settlementActive) {
             return;
         }
 
@@ -631,6 +609,33 @@ public class DimensionEventHandler {
             SleepVoteTracker.clearVotes();
             advanceToNextMorning(level, timeManager.getCurrentTime(), "vanilla_sleep_finished");
         }
+    }
+
+    public static void onSettlementDatePublished(
+            net.minecraft.server.MinecraftServer server,
+            StardewTimeManager timeManager) {
+        long currentVirtual = timeManager.getVirtualDayTime();
+        long newDayTime = (currentVirtual / 24000L + 1L) * 24000L;
+        timeManager.setVirtualDayTime(newDayTime);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            ServerLevel playerLevel = player.serverLevel();
+            if (isStardewDimension(playerLevel)) {
+                player.connection.send(new ClientboundSetTimePacket(
+                        playerLevel.getGameTime(), newDayTime, true));
+            }
+        }
+        wakeSleepingStardewPlayers(server);
+        PacketDistributor.sendToAllPlayers(TimeSyncPacket.fromTimeManager(timeManager));
+        lastAnimalTenMinuteDayKey = Integer.MIN_VALUE;
+        lastAnimalTenMinuteSlot = Integer.MIN_VALUE;
+        midnightWarned = false;
+        oneAMWarned = false;
+        twoAMWarned = false;
+        StardewCraft.LOGGER.info(
+                "Stardew day published: year={} season={} day={}",
+                timeManager.getCurrentYear(),
+                timeManager.getCurrentSeason(),
+                timeManager.getCurrentDay());
     }
 
     /**

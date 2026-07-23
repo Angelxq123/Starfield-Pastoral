@@ -1,19 +1,12 @@
 package com.stardew.craft.time;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.core.ModDimensions;
-import com.stardew.craft.core.ModMiningDimensions;
-import com.stardew.craft.network.overnight.OvernightSettlementPayload;
-import com.stardew.craft.network.overnight.OvernightSettlementTracker;
-import com.stardew.craft.player.PlayerStardewData;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementDateView;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
-import net.neoforged.neoforge.network.PacketDistributor;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -263,213 +256,32 @@ public class StardewTimeManager extends SavedData {
      * 进入下一天（可指定结算时的入睡时间）
      */
     public void advanceDayWithSleepTime(int sleepMinute) {
-        int timeWentToSleepMinutes = sleepMinute;
-        boolean seasonChanged = false;
-
-        currentDay++;
-        
-        // 检查是否需要换季（每季28天）
-        if (currentDay > 28) {
-            currentDay = 1;
-            currentSeason++;
-            seasonChanged = true;
-            
-            // 检查是否需要换年
-            if (currentSeason > 3) {
-                currentSeason = 0;
-                currentYear++;
-            }
-        }
-        
-        // 重置时间为早上6:00
-        currentTime = MORNING_START;
-        
-        // 重置事件标记
-        resetEventFlags();
-        
-        StardewCraft.LOGGER.info("New day: Year {} - {} Day {}", 
-            currentYear, getSeasonName(), currentDay);
-        
-        // 触发每日作物生长
         var server = ServerLifecycleHooks.getCurrentServer();
-        if (server != null) {
-            int absDay = (currentYear - 1) * (28 * 4) + currentSeason * 28 + currentDay;
-            int totalDaysPlayed = absDay;
-            
-            // 需要在星露谷维度触发，而不是主世界
-            @SuppressWarnings("null")
-            ServerLevel stardewLevel = server.getLevel(ModDimensions.STARDEW_VALLEY);
-            if (stardewLevel != null) {
-                com.stardew.craft.festival.FestivalService.onNewDay(stardewLevel);
-                if (seasonChanged) {
-                    // 先恢复公共区域被砍的杂草，再刷新季节外观
-                    com.stardew.craft.farm.PublicAreaBlockTracker.get().restoreAll(stardewLevel);
-                    com.stardew.craft.block.nature.WildWeedsBlock.refreshLoadedWeedsForSeason(stardewLevel, currentSeason);
-                    com.stardew.craft.manager.JunimoGreenhouseRuneManager.get(stardewLevel).removeExpiredRunes(stardewLevel, currentSeason);
-                }
-
-                // 对齐 Stardew 的日结算语义：先确定“今天”的天气，再结算昨夜生长。
-                com.stardew.craft.weather.WeatherManager.applyWeatherForNewDay(stardewLevel, currentDay, getSeasonName(), totalDaysPlayed);
-                com.stardew.craft.npc.runtime.NpcSpawnManager.resetScheduledNpcsForNewDay(stardewLevel);
-                try {
-                    com.stardew.craft.farm.FarmDailyProcessHelper.beginDailyProcess(stardewLevel);
-                    runWorldDailyStep("crops", () -> com.stardew.craft.manager.CropGrowthManager.get(stardewLevel).growDaily(stardewLevel));
-                    runWorldDailyStep("trees", () -> com.stardew.craft.manager.TreeGrowthManager.get(stardewLevel).growDaily(stardewLevel));
-                    runWorldDailyStep("fruit_trees", () -> com.stardew.craft.manager.FruitTreeGrowthManager.get(stardewLevel).growDaily(stardewLevel));
-                    runWorldDailyStep("wild_tree_seeds", () -> com.stardew.craft.manager.WildTreeSeedManager.get(stardewLevel).onNewDay(stardewLevel, absDay));
-                    runWorldDailyStep("sprinklers", () -> com.stardew.craft.manager.SprinklerManager.get(stardewLevel).waterDaily(stardewLevel));
-                    runWorldDailyStep("pasture_grass", () -> com.stardew.craft.manager.PastureGrassGrowthManager.get(stardewLevel).growDaily(stardewLevel));
-                    runWorldDailyStep("animals", () -> com.stardew.craft.manager.AnimalGrowthManager.get(stardewLevel).growDaily(stardewLevel));
-                    runWorldDailyStep("fish_ponds", () -> com.stardew.craft.fishpond.service.FishPondDailyUpdateService.onNewDay(stardewLevel));
-                    runWorldDailyStep("forage", () -> com.stardew.craft.manager.ForageSpawnService.onNewDay(stardewLevel, currentSeason));
-                    runWorldDailyStep("forest_farm_forage", () -> com.stardew.craft.manager.ForageSpawnService.onNewDayForestFarms(stardewLevel, currentSeason));
-                    runWorldDailyStep("artifact_spots", () -> com.stardew.craft.manager.ArtifactSpotSpawnService.onNewDay(stardewLevel, currentSeason));
-                    runWorldDailyStep("quarry", () -> com.stardew.craft.manager.QuarrySpawnService.onNewDay(stardewLevel, getCurrentYear()));
-                    runWorldDailyStep("coal_forest", () -> com.stardew.craft.manager.CoalForestClumpSpawnService.onNewDay(stardewLevel));
-                    runWorldDailyStep("secret_woods", () -> com.stardew.craft.manager.SecretWoodsAccessManager.ensureEntranceReady(stardewLevel));
-                    runWorldDailyStep("farm_cave", () -> com.stardew.craft.manager.FarmCaveDailyService.onNewDay(stardewLevel));
-                } catch (Exception e) {
-                    StardewCraft.LOGGER.error(
-                        "[DAILY] World settlement lifecycle failed; continuing player settlement",
-                        e
-                    );
-                } finally {
-                    com.stardew.craft.farm.FarmDailyProcessHelper.endDailyProcess(stardewLevel);
-                }
-                
-                // 多人农场：更新所有在线玩家的 lastOnlineDay
-                {
-                    com.stardew.craft.farm.FarmInstanceRegistry farmReg =
-                            com.stardew.craft.farm.FarmInstanceRegistry.get();
-                    for (net.minecraft.server.level.ServerPlayer sp : server.getPlayerList().getPlayers()) {
-                        com.stardew.craft.farm.FarmInstance fi = farmReg.getFarmForPlayer(sp.getUUID());
-                        if (fi != null) {
-                            fi.setLastOnlineDay(absDay);
-                            fi.setLastOnlineSeason(currentSeason);
-                        }
-                    }
-                    farmReg.setDirty();
-                }
-
-                // 预测明天的天气
-                com.stardew.craft.weather.WeatherManager.updateWeatherForNewDay(
-                    stardewLevel, currentDay, getSeasonName(), totalDaysPlayed
-                );
-            }
-
-            // 次日恢复：生命回满；能量按 SV 原版 dayupdate 规则恢复（疲惫则减半）。
-            // SDV parity: 结算前先将所有出货箱 buffer 里剩余的物品记录到出货追踪器
-            com.stardew.craft.blockentity.ShippingBinBlockEntity.flushAllForOvernight();
-            com.stardew.craft.farm.FarmInstanceRegistry overnightFarmRegistry =
+        if (server == null) {
+            return;
+        }
+        com.stardew.craft.time.settlement.DailySettlementServices.Services services =
+                com.stardew.craft.time.settlement.DailySettlementServices.get(server);
+        java.util.List<java.util.UUID> participants = server.getPlayerList().getPlayers().stream()
+                .filter(services.players()::participates)
+                .map(net.minecraft.server.level.ServerPlayer::getUUID)
+                .toList();
+        com.stardew.craft.farm.FarmInstanceRegistry farms =
                 com.stardew.craft.farm.FarmInstanceRegistry.get();
-            for (var player : server.getPlayerList().getPlayers()) {
-                if (player.level().dimension() != ModDimensions.STARDEW_VALLEY
-                    && player.level().dimension() != ModMiningDimensions.STARDEW_MINING) {
-                    continue;
-                }
-                // 新玩家（尚未创建/加入农场）豁免一切夜间结算：不扣体力、不发结算画面、不投递邮件流程
-                if (!overnightFarmRegistry.hasFarm(player.getUUID())) {
-                    com.stardew.craft.network.overnight.OvernightSettlementTracker.consumePayload(player);
-                    com.stardew.craft.player.PassOutService.consumePassOutResult(player.getUUID());
-                    continue;
-                }
-
-                if (player.isCreative()) {
-                    com.stardew.craft.player.PlayerStardewDataAPI.cureExhaustion(player);
-                    com.stardew.craft.player.PlayerStardewDataAPI.restoreEnergy(player, com.stardew.craft.player.PlayerStardewDataAPI.getMaxEnergy(player));
-                    com.stardew.craft.mastery.MasteryBuffLifecycle.clearAllDailyMasteryBuffs(player);
-                } else {
-                    com.stardew.craft.player.PlayerStardewDataAPI.sleep(player, timeWentToSleepMinutes);
-                    // 战斗死亡次日体力压到2
-                    com.stardew.craft.player.PassOutService.applyCombatDeathEnergyPenalty(player);
-                }
-                com.stardew.craft.player.PlayerStardewDataAPI.setHealth(player, com.stardew.craft.player.PlayerStardewDataAPI.getMaxHealth(player));
-
-                // SDV parity: Farmer.dayupdate → daysLeftForToolUpgrade--
-                com.stardew.craft.shop.BlacksmithService.onNewDay(player);
-                com.stardew.craft.shop.BlacksmithService.showToolUpgradeNotification(player);
-
-                OvernightSettlementPayload settlementPayload = OvernightSettlementTracker.consumePayload(player);
-                com.stardew.craft.player.PlayerStardewDataAPI.recordOvernightShippedItems(player, settlementPayload.shippedItems());
-                List<PlayerStardewData.SkillLevelUp> appliedLevelUps = com.stardew.craft.player.PlayerStardewDataAPI.applyPendingSkillLevelUps(player);
-                com.stardew.craft.player.PlayerStardewDataAPI.applySkillLevelRecipeUnlocks(player, appliedLevelUps);
-
-                // SDV parity: getLevelPerk — 升级后回满体力和生命值
-                if (!appliedLevelUps.isEmpty()) {
-                    com.stardew.craft.player.PlayerStardewDataAPI.restoreEnergy(player, com.stardew.craft.player.PlayerStardewDataAPI.getMaxEnergy(player));
-                    com.stardew.craft.player.PlayerStardewDataAPI.setHealth(player, com.stardew.craft.player.PlayerStardewDataAPI.getMaxHealth(player));
-                }
-
-                // 同步到客户端（HUD 依赖客户端缓存）
-                com.stardew.craft.player.PlayerDataEventHandler.syncPlayerData(player, com.stardew.craft.player.PlayerDataManager.getPlayerData(player));
-
-                // Quest: day started
-                com.stardew.craft.quest.StardewQuestEvents.fireDayStarted(player, absDay);
-
-                // 精通系统：5×Lv10 首次达成 → 早上推送 MasteryHint
-                com.stardew.craft.mastery.MasteryOnboardingService.checkOnMorning(player);
-
-                List<OvernightSettlementPayload.LevelUpData> overnightLevelUps = new ArrayList<>(settlementPayload.levelUps());
-                for (PlayerStardewData.SkillLevelUp levelUp : appliedLevelUps) {
-                    overnightLevelUps.add(new OvernightSettlementPayload.LevelUpData(levelUp.skill().getId(), levelUp.newLevel()));
-                }
-
-                // 消费该玩家的 2AM 晕倒结果（如果有的话）合并进结算包
-                com.stardew.craft.player.PassOutService.PassOutResult passOutResult =
-                    com.stardew.craft.player.PassOutService.consumePassOutResult(player.getUUID(), absDay);
-                int passOutType = passOutResult != null ? passOutResult.type().getId() : -1;
-                int passOutMoneyLost = passOutResult != null ? passOutResult.moneyLost() : 0;
-                java.util.List<net.minecraft.world.item.ItemStack> passOutLostItems =
-                    passOutResult != null ? passOutResult.lostItems() : java.util.List.of();
-
-                OvernightSettlementPayload finalPayload = new OvernightSettlementPayload(
-                    settlementPayload.shippedItems(),
-                    List.copyOf(overnightLevelUps),
-                    passOutType,
-                    passOutMoneyLost,
-                    passOutLostItems
-                );
-
-                // 始终发送结算包，即使没有出货/升级，以便客户端显示夜间结算过渡画面
-                PacketDistributor.sendToPlayer(player, finalPayload);
-
-                // 扫描并排队所有 wake_up 剧情，等客户端关闭结算画面后按序播放
-                com.stardew.craft.cutscene.server.WakeUpEventScheduler.enqueueAtNightSettlement(player);
-            }
-
-            if (stardewLevel != null) {
-                java.util.List<net.minecraft.server.level.ServerPlayer> stardewPlayers = server.getPlayerList().getPlayers().stream()
-                    .filter(player -> player.level().dimension() == ModDimensions.STARDEW_VALLEY)
-                    .toList();
-                com.stardew.craft.specialorder.SpecialOrderManager.onNewDay(stardewLevel, stardewPlayers);
-                com.stardew.craft.lostandfound.LostAndFoundService.onNewDay(stardewLevel);
-                com.stardew.craft.book.BooksellerSchedule.onNewDay(stardewLevel, stardewPlayers);
-                com.stardew.craft.shop.BooksellerEvents.forceCheckNow(stardewLevel);
+        java.util.Set<java.util.UUID> owners = new java.util.HashSet<>();
+        for (java.util.UUID playerId : participants) {
+            java.util.UUID ownerId = farms.getOwnerForPlayer(playerId);
+            if (ownerId != null) {
+                owners.add(ownerId);
             }
         }
-
-        // Reset per-player shop stock for the new day (SDV: SynchronizedShopStock parity)
-        com.stardew.craft.shop.ShopStockTracker.resetForNewDay();
-
-        // 邮件系统：将 mailForTomorrow 队列投递到 mailbox
-        if (server != null) {
-            com.stardew.craft.mail.MailService.deliverAllTomorrowMail(server);
-
-            // SDV 日期触发邮件
-            for (net.minecraft.server.level.ServerPlayer sp : server.getPlayerList().getPlayers()) {
-                scheduleMailByDate(sp, currentSeason, currentDay);
-            }
-        }
-
-        setDirty();
-    }
-
-    private static void runWorldDailyStep(String name, Runnable step) {
-        try {
-            step.run();
-        } catch (Exception exception) {
-            StardewCraft.LOGGER.error("[DAILY] Step '{}' failed; continuing remaining settlement steps", name, exception);
-        }
+        DailySettlementContext context =
+                com.stardew.craft.time.settlement.DailySettlementContextFactory.captureNextDay(
+                        this,
+                        sleepMinute,
+                        java.util.List.copyOf(participants),
+                        java.util.Set.copyOf(owners));
+        services.coordinator().start(context);
     }
 
     /**
@@ -478,9 +290,14 @@ public class StardewTimeManager extends SavedData {
      * 同时处理里程碑邮件（父母信等按天数触发的邮件）。
      */
     private void scheduleMailByDate(net.minecraft.server.level.ServerPlayer player, int season, int day) {
-        int globalDays = (currentYear - 1) * (28 * 4) + currentSeason * 28 + currentDay;
+        int globalDays = (getCurrentYear() - 1) * (28 * 4) + season * 28 + day;
         schedulePersonalMailForAbsoluteDay(player, globalDays);
         scheduleGlobalCalendarMail(player, season, day);
+    }
+
+    public void scheduleDateTriggeredMail(
+            net.minecraft.server.level.ServerPlayer player, int season, int day) {
+        scheduleMailByDate(player, season, day);
     }
 
     private void schedulePersonalMailForAbsoluteDay(net.minecraft.server.level.ServerPlayer player, int globalDays) {
@@ -644,14 +461,14 @@ public class StardewTimeManager extends SavedData {
      * 获取当前小时（0-25）
      */
     public int getHour() {
-        return currentTime / MINUTES_PER_HOUR;
+        return getCurrentTime() / MINUTES_PER_HOUR;
     }
     
     /**
      * 获取当前分钟（0-59）
      */
     public int getMinute() {
-        return currentTime % MINUTES_PER_HOUR;
+        return getCurrentTime() % MINUTES_PER_HOUR;
     }
 
     /**
@@ -691,7 +508,7 @@ public class StardewTimeManager extends SavedData {
      * 获取季节名称
      */
     public String getSeasonName() {
-        return switch (currentSeason) {
+        return switch (getCurrentSeason()) {
             case 0 -> "Spring";
             case 1 -> "Summer";
             case 2 -> "Fall";
@@ -701,14 +518,41 @@ public class StardewTimeManager extends SavedData {
     }
     
     // Getters
-    public int getCurrentTime() { return currentTime; }
-    public int getCurrentDay() { return currentDay; }
-    public int getCurrentSeason() { return currentSeason; }
-    public int getCurrentYear() { return currentYear; }
+    public int getCurrentTime() {
+        return DailySettlementDateView.current()
+                .map(ignored -> MORNING_START)
+                .orElse(currentTime);
+    }
+    public int getCurrentDay() {
+        return DailySettlementDateView.current()
+                .map(DailySettlementContext::day)
+                .orElse(currentDay);
+    }
+    public int getCurrentSeason() {
+        return DailySettlementDateView.current()
+                .map(DailySettlementContext::season)
+                .orElse(currentSeason);
+    }
+    public int getCurrentYear() {
+        return DailySettlementDateView.current()
+                .map(DailySettlementContext::year)
+                .orElse(currentYear);
+    }
 
     /** 绝对游戏日（year/season/day 合成，用于跨年单调递增的天数键）。 */
     public int getAbsoluteDay() {
-        return (currentYear - 1) * (28 * 4) + currentSeason * 28 + currentDay;
+        return (getCurrentYear() - 1) * (28 * 4)
+                + getCurrentSeason() * 28 + getCurrentDay();
+    }
+
+    public void publishSettlementDate(DailySettlementContext context) {
+        java.util.Objects.requireNonNull(context, "context");
+        currentYear = context.year();
+        currentSeason = context.season();
+        currentDay = context.day();
+        currentTime = MORNING_START;
+        resetEventFlags();
+        setDirty();
     }
     
     // Setters (用于调试或特殊情况)

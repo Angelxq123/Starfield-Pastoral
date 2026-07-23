@@ -55,7 +55,15 @@ public final class OvernightSettlementTracker extends SavedData {
         if (player == null) {
             return new OvernightSettlementPayload(List.of(), List.of());
         }
-        return get(player.server).consumeAvailable(player.getUUID(), currentAbsoluteDay());
+        return consumePayload(player.server, player.getUUID(), currentAbsoluteDay());
+    }
+
+    public static OvernightSettlementPayload consumePayload(
+            MinecraftServer server, UUID playerId, int absoluteDay) {
+        if (server == null || playerId == null) {
+            return new OvernightSettlementPayload(List.of(), List.of());
+        }
+        return get(server).consumeAvailable(playerId, absoluteDay);
     }
 
     private OvernightSettlementPayload consumeAvailable(UUID playerId, int currentDay) {

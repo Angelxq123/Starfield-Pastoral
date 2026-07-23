@@ -81,7 +81,7 @@ public final class CoalForestClumpSpawnService {
     }
 
     private static void processClearColumn(ServerLevel level, int x, int z) {
-        if (!level.hasChunk(x >> 4, z >> 4)) return;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return;
         for (int y = CoalForestArea.MIN_Y; y <= CLEAR_MAX_Y; y++) {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState state = level.getBlockState(pos);
@@ -201,7 +201,8 @@ public final class CoalForestClumpSpawnService {
             return false;
         }
 
-        if (!level.hasChunk(mainPos.getX() >> 4, mainPos.getZ() >> 4)) {
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(
+                level, mainPos.getX(), mainPos.getZ())) {
             return false;
         }
 
@@ -223,7 +224,8 @@ public final class CoalForestClumpSpawnService {
                 if (!CoalForestArea.containsColumn(lowerPos)) {
                     return false;
                 }
-                if (!level.hasChunk(lowerPos.getX() >> 4, lowerPos.getZ() >> 4)) {
+                if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(
+                        level, lowerPos.getX(), lowerPos.getZ())) {
                     return false;
                 }
                 if (!level.getBlockState(supportPos).isFaceSturdy(level, supportPos, Direction.UP)) {

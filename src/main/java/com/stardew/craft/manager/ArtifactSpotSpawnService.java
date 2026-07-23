@@ -304,7 +304,7 @@ public final class ArtifactSpotSpawnService {
                                 "artifact_sand_chance_" + zone.name,
                                 new BlockPos(x, 0, z));
                         if (random.nextDouble() >= chance) return false;
-                        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+                        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return false;
                         if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) return false;
                         if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
                             placed.incrementAndGet();
@@ -327,7 +327,7 @@ public final class ArtifactSpotSpawnService {
                     "artifact_sand_fallback_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
                     (x, z) -> {
-                        if (!level.hasChunk(x >> 4, z >> 4)) return;
+                        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return;
                         if (!canSpawnArtifactSpot(level, x, z, zone.surface)) return;
                         long score = DailySettlementRandom.forPosition(
                                 worldSeed,
@@ -349,6 +349,8 @@ public final class ArtifactSpotSpawnService {
                 () -> {
                     BlockPos chosen = fallback.get();
                     if (placed.get() == 0 && existing == 0 && chosen != null
+                            && PublicAreaDailyWorkUnits.isChunkLoadedNow(
+                                    level, chosen.getX(), chosen.getZ())
                             && tryPlaceArtifactSpot(level, chosen.getX(), chosen.getZ(), zone.surface)) {
                         placed.incrementAndGet();
                     }
@@ -370,7 +372,7 @@ public final class ArtifactSpotSpawnService {
             long worldSeed,
             int absoluteDay,
             String randomSubsystem) {
-        if (!level.hasChunk(x >> 4, z >> 4)) return 0;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return 0;
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
         BlockPos pos = new BlockPos(x, surfaceY, z);
         if (revertFarmland
@@ -397,7 +399,7 @@ public final class ArtifactSpotSpawnService {
         ZoneRect rect = zone.rects[random.nextInt(zone.rects.length)];
         int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
         int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-        if (!level.hasChunk(x >> 4, z >> 4)) return;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return;
         tryPlaceArtifactSpot(level, x, z, zone.surface);
     }
 
@@ -405,7 +407,7 @@ public final class ArtifactSpotSpawnService {
             ServerLevel level, ZoneRect rect, RandomSource random) {
         int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
         int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-        if (!level.hasChunk(x >> 4, z >> 4)) return;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return;
         if (!canSpawnArtifactSpotInRect(level, x, z, SurfaceKind.YELLOW_DIRT, rect)) return;
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
         BlockPos pos = new BlockPos(x, surfaceY, z);

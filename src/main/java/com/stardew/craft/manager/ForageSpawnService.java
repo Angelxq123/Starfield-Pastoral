@@ -230,7 +230,7 @@ public final class ForageSpawnService {
         ZoneRect rect = pickRandomRect(zone, random);
         int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
         int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return false;
 
         int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
         BlockPos surfacePos = new BlockPos(x, surfaceY, z);
@@ -368,7 +368,7 @@ public final class ForageSpawnService {
     }
 
     private static int countForageColumn(ServerLevel level, ZoneRect rect, int x, int z) {
-        if (!level.hasChunk(x >> 4, z >> 4)) return 0;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return 0;
         int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
         if (!rect.containsSurfaceY(surfaceY)) return 0;
         return countForageAtColumn(level, x, z);
@@ -535,7 +535,7 @@ public final class ForageSpawnService {
                 "forest_farm_forage_count_" + farm.ownerId(),
                 farm.minX(), farm.minZ(), farm.maxX(), farm.maxZ(),
                 (x, z) -> {
-                    if (level.hasChunk(x >> 4, z >> 4)) {
+                    if (PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) {
                         existing.addAndGet(countForageAtColumn(level, x, z));
                     }
                 },
@@ -596,7 +596,7 @@ public final class ForageSpawnService {
             RandomSource random) {
         int x = farm.minX() + random.nextInt(farm.maxX() - farm.minX() + 1);
         int z = farm.minZ() + random.nextInt(farm.maxZ() - farm.minZ() + 1);
-        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return false;
         int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
         BlockPos surfacePos = new BlockPos(x, surfaceY, z);
         BlockState surfaceState = level.getBlockState(surfacePos);

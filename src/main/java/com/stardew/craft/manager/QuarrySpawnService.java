@@ -190,7 +190,7 @@ public final class QuarrySpawnService {
     }
 
     private static boolean trySpawnAt(ServerLevel level, RandomSource r, int x, int z) {
-        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return false;
         BlockPos floor = findQuarryFloor(level, x, z);
         if (floor == null) return false;
         BlockPos above = floor.above();

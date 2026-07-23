@@ -245,6 +245,75 @@ class PublicAreaDailyWorkUnitTest {
     }
 
     @Test
+    void forageSkipAdvancesAttemptThenSlotAndEventuallyCompletes() throws Exception {
+        DailySettlementWorkUnit unit = forageAttempts(
+                2, 2, (slot, attempt) -> false, () -> {});
+
+        assertEquals("test_forage:0:0", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertEquals("test_forage:0:1", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertEquals("test_forage:1:0", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertEquals("test_forage:1:1", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertTrue(unit.isComplete());
+        assertEquals("test_forage", unit.currentItemIdentity());
+        unit.close();
+    }
+
+    @Test
+    void cappedRectangleSkipMovesCursorWithoutConsumingPlacementCap() throws Exception {
+        AtomicInteger placements = new AtomicInteger();
+        DailySettlementWorkUnit unit = cappedRectangle(
+                4, 8, 6, 8, 1,
+                (x, z) -> {
+                    placements.incrementAndGet();
+                    return true;
+                },
+                () -> {});
+
+        assertEquals("test_artifact_cap:4,8", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertFalse(unit.isComplete(), "skip must not consume the placement cap");
+        assertEquals("test_artifact_cap:5,8", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertEquals("test_artifact_cap:6,8", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertTrue(unit.isComplete());
+        assertEquals(0, placements.get(), "skip must not invoke or count placement");
+        unit.close();
+    }
+
+    @Test
+    void decayingAttemptSkipAdvancesIdentityAndAppliesWinterDecay() throws Exception {
+        List<String> observations = new ArrayList<>();
+        DailySettlementWorkUnit unit = decayingAttempts(
+                true,
+                (cursor, chance) -> {
+                    observations.add(cursor + ":" + chance);
+                    return cursor == 1;
+                },
+                () -> {});
+
+        assertEquals("test_decay:0", unit.currentItemIdentity());
+        unit.skipFailedItem();
+        assertEquals("test_decay:1", unit.currentItemIdentity());
+        unit.runNext();
+        assertEquals("test_decay:2", unit.currentItemIdentity());
+        unit.runNext();
+
+        assertTrue(unit.isComplete());
+        assertEquals("test_decay", unit.currentItemIdentity());
+        assertEquals(2, observations.size());
+        assertEquals(1, Integer.parseInt(observations.get(0).split(":")[0]));
+        assertEquals(0.85D, Double.parseDouble(observations.get(0).split(":")[1]), 0.0000001D);
+        assertEquals(2, Integer.parseInt(observations.get(1).split(":")[0]));
+        assertEquals(0.7375D, Double.parseDouble(observations.get(1).split(":")[1]), 0.0000001D);
+        unit.close();
+    }
+
+    @Test
     void forageAndArtifactCallTheTestedProductionStateFactories() throws IOException {
         assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "forageAttempts");
         assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "forageAttempts");
@@ -372,6 +441,32 @@ class PublicAreaDailyWorkUnitTest {
                             .noneMatch(call -> methodName(call).equals("getChunk")
                                     || methodName(call).equals("setChunkForced")),
                     contract[0] + " daily graph must not synchronously acquire chunks");
+        }
+    }
+
+    @Test
+    void allDailyWorldAccessUsesTheNonblockingChunkNowGate() throws IOException {
+        ParsedClass helper = parse("PublicAreaDailyWorkUnits.java", "PublicAreaDailyWorkUnits");
+        MethodTree gate = helper.method("isChunkLoadedNow", 3);
+        assertEquals(1, invocationsNamed(gate, "getChunkNow").size());
+        assertTrue(invocationsNamed(gate, "hasChunk").isEmpty());
+
+        for (String[] contract : List.of(
+                new String[]{"ForageSpawnService", "createDailyWorkUnit"},
+                new String[]{"ForageSpawnService", "createForestFarmDailyWorkUnit"},
+                new String[]{"ArtifactSpotSpawnService", "createDailyWorkUnit"},
+                new String[]{"QuarrySpawnService", "createDailyWorkUnit"},
+                new String[]{"CoalForestClumpSpawnService", "createDailyWorkUnit"},
+                new String[]{"FarmCaveDailyService", "createDailyWorkUnit"})) {
+            ParsedClass parsed = parse(contract[0] + ".java", contract[0]);
+            Set<MethodTree> graph = reachableMethods(parsed, parsed.method(contract[1], 2));
+            List<MethodInvocationTree> calls = graph.stream()
+                    .flatMap(method -> invocations(method).stream())
+                    .toList();
+            assertTrue(calls.stream().noneMatch(call -> methodName(call).equals("hasChunk")),
+                    contract[0] + " daily graph must not use the potentially-blocking hasChunk gate");
+            assertTrue(calls.stream().anyMatch(call -> methodName(call).equals("isChunkLoadedNow")),
+                    contract[0] + " daily graph must guard world access with getChunkNow");
         }
     }
 
@@ -526,6 +621,28 @@ class PublicAreaDailyWorkUnitTest {
                 cap,
                 operationProxy,
                 onClose);
+    }
+
+    private static DailySettlementWorkUnit decayingAttempts(
+            boolean winter,
+            DecayingProbe operation,
+            Runnable onClose) throws Exception {
+        Class<?> helper = productionHelper();
+        Class<?> operationType = nestedType(helper, "DecayingAttempt");
+        Object operationProxy = Proxy.newProxyInstance(
+                helper.getClassLoader(),
+                new Class<?>[]{operationType},
+                (proxy, method, arguments) -> method.getName().equals("tryRun")
+                        ? operation.tryRun((int) arguments[0], (double) arguments[1])
+                        : null);
+        Method factory = helper.getMethod(
+                "decayingAttempts",
+                String.class,
+                boolean.class,
+                operationType,
+                Runnable.class);
+        return (DailySettlementWorkUnit) factory.invoke(
+                null, "test_decay", winter, operationProxy, onClose);
     }
 
     private static Class<?> productionHelper() {
@@ -768,6 +885,11 @@ class PublicAreaDailyWorkUnitTest {
     @FunctionalInterface
     private interface PlacementAttempt {
         boolean tryPlace(int x, int z);
+    }
+
+    @FunctionalInterface
+    private interface DecayingProbe {
+        boolean tryRun(int cursor, double chance);
     }
 
     private record AttemptRun(List<String> identities, List<String> outputs) {

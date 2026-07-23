@@ -147,6 +147,9 @@ public final class FarmCaveDailyService {
             int absoluteDay,
             AtomicInteger fruitCount,
             AtomicInteger mushroomCount) {
+        if (!isFarmCaveLoadedNow(level, entry.caveOrigin())) {
+            return;
+        }
         RandomSource random = DailySettlementRandom.forId(
                 worldSeed, absoluteDay, "farm_cave", stableUuid(entry.ownerId()));
         if (entry.choice() == FarmCaveChoice.FRUIT_BATS) {
@@ -154,6 +157,22 @@ public final class FarmCaveDailyService {
         } else if (entry.choice() == FarmCaveChoice.MUSHROOMS) {
             mushroomCount.addAndGet(processMushrooms(level, entry.caveOrigin(), random));
         }
+    }
+
+    private static boolean isFarmCaveLoadedNow(ServerLevel level, BlockPos caveOrigin) {
+        int minChunkX = caveOrigin.getX() >> 4;
+        int maxChunkX = (caveOrigin.getX() + InteriorSubspaceManager.FARM_CAVE_SCHEM_W - 1) >> 4;
+        int minChunkZ = caveOrigin.getZ() >> 4;
+        int maxChunkZ = (caveOrigin.getZ() + InteriorSubspaceManager.FARM_CAVE_SCHEM_L - 1) >> 4;
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(
+                        level, chunkX << 4, chunkZ << 4)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     // ── Fruit Bats ──

@@ -1,12 +1,17 @@
 package com.stardew.craft.manager;
 
 import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 public final class PublicAreaDailyWorkUnits {
     private PublicAreaDailyWorkUnits() {
+    }
+
+    static boolean isChunkLoadedNow(ServerLevel level, int blockX, int blockZ) {
+        return level.getChunkSource().getChunkNow(blockX >> 4, blockZ >> 4) != null;
     }
 
     public static DailySettlementWorkUnit rectangle(

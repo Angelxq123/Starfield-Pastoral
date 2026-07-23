@@ -23,6 +23,7 @@ public final class DailySettlementCoordinator {
     private SettlementPlan plan;
     private int unitCursor;
     private int consecutiveFailures;
+    private boolean readyNotified;
 
     public DailySettlementCoordinator(
             BudgetedWorkRunner runner,
@@ -60,29 +61,35 @@ public final class DailySettlementCoordinator {
                             + " is active; cannot start day " + newContext.absoluteDay());
         }
 
-        SettlementPlan createdPlan = null;
+        closedUnits.clear();
+        SettlementPlanBuilder builder = new SettlementPlanBuilder();
+        SettlementPlan createdPlan;
         try {
-            createdPlan = Objects.requireNonNull(
-                    planFactory.create(newContext), "planFactory result");
-            context = newContext;
-            plan = createdPlan;
-            unitCursor = 0;
-            consecutiveFailures = 0;
-            closedUnits.clear();
-            phase = DailySettlementPhase.PREPARE;
-            listener.phaseChanged(context, phase);
-            return true;
+            planFactory.build(newContext, builder);
+            createdPlan = builder.freeze();
         } catch (RuntimeException | Error failure) {
-            if (createdPlan != null) {
-                closePlanUnits(createdPlan, failure);
-            }
+            builder.seal();
+            closeUnits(builder.registeredUnits(), failure);
             resetToIdle();
             throw failure;
         }
+
+        context = newContext;
+        plan = createdPlan;
+        unitCursor = 0;
+        consecutiveFailures = 0;
+        readyNotified = false;
+        phase = DailySettlementPhase.PREPARE;
+        safePhaseChanged();
+        return true;
     }
 
     public void tick() {
-        if (phase == DailySettlementPhase.IDLE || phase == DailySettlementPhase.READY) {
+        if (phase == DailySettlementPhase.IDLE) {
+            return;
+        }
+        if (phase == DailySettlementPhase.READY) {
+            notifyReady();
             return;
         }
 
@@ -108,8 +115,8 @@ public final class DailySettlementCoordinator {
                 : tickItemLimit;
         BudgetedWorkRunner.TickResult result;
         try {
-            result = runner.run(unit, tickBudget, effectiveItemLimit);
-        } catch (Exception failure) {
+            result = runGuarded(unit, tickBudget, effectiveItemLimit);
+        } catch (WorkItemExecutionException failure) {
             handleItemFailure(unit);
             return;
         }
@@ -146,10 +153,26 @@ public final class DailySettlementCoordinator {
     }
 
     public void finishReady() {
-        if (phase != DailySettlementPhase.READY) {
-            throw new IllegalStateException("Settlement is not ready");
+        if (phase != DailySettlementPhase.READY || !readyNotified) {
+            throw new IllegalStateException("Settlement is not ready for completion");
         }
         resetToIdle();
+    }
+
+    private BudgetedWorkRunner.TickResult runGuarded(
+            DailySettlementWorkUnit unit, long tickBudget, int effectiveItemLimit)
+            throws WorkItemExecutionException {
+        try {
+            return runner.run(
+                    new GuardedWorkUnit(unit), tickBudget, effectiveItemLimit);
+        } catch (WorkItemExecutionException failure) {
+            throw failure;
+        } catch (RuntimeException | Error failure) {
+            throw failure;
+        } catch (Exception failure) {
+            throw new IllegalStateException(
+                    "Budgeted runner produced an unexpected checked exception", failure);
+        }
     }
 
     private DailySettlementWorkUnit advanceToWork() {
@@ -164,18 +187,20 @@ public final class DailySettlementCoordinator {
     }
 
     private void completeCurrentUnit(DailySettlementWorkUnit unit) {
-        closeUnit(unit);
         unitCursor++;
         consecutiveFailures = 0;
+        safeClose(unit);
         advanceToWork();
     }
 
     private void handleItemFailure(DailySettlementWorkUnit unit) {
         String itemIdentity = unit.currentItemIdentity();
-        int attempt = ++consecutiveFailures;
-        boolean permanent = attempt > unit.maxRetries();
-        listener.itemFailure(
-                context, unit.name(), itemIdentity, attempt, permanent);
+        String unitName = unit.name();
+        int maxRetries = unit.maxRetries();
+        int attempt = consecutiveFailures + 1;
+        boolean permanent = attempt > maxRetries;
+        consecutiveFailures = attempt;
+        safeItemFailure(unitName, itemIdentity, attempt, permanent);
         if (!permanent) {
             return;
         }
@@ -208,9 +233,27 @@ public final class DailySettlementCoordinator {
         };
         unitCursor = 0;
         consecutiveFailures = 0;
-        listener.phaseChanged(context, phase);
+        safePhaseChanged();
         if (phase == DailySettlementPhase.READY) {
+            notifyReady();
+        }
+    }
+
+    private void safePhaseChanged() {
+        try {
+            listener.phaseChanged(context, phase);
+        } catch (RuntimeException | Error ignored) {
+        }
+    }
+
+    private void notifyReady() {
+        if (readyNotified) {
+            return;
+        }
+        try {
             listener.ready(context);
+            readyNotified = true;
+        } catch (RuntimeException | Error ignored) {
         }
     }
 
@@ -220,12 +263,35 @@ public final class DailySettlementCoordinator {
         }
     }
 
-    private void closePlanUnits(SettlementPlan settlementPlan, Throwable primaryFailure) {
-        for (DailySettlementWorkUnit unit : settlementPlan.allUnits()) {
+    private void safeClose(DailySettlementWorkUnit unit) {
+        try {
+            closeUnit(unit);
+        } catch (RuntimeException | Error closeFailure) {
+            try {
+                safeItemFailure(unit.name(), "<close>", 1, true);
+            } catch (RuntimeException | Error ignored) {
+            }
+        }
+    }
+
+    private void safeItemFailure(
+            String unitName, String itemIdentity, int attempt, boolean permanent) {
+        try {
+            listener.itemFailure(
+                    context, unitName, itemIdentity, attempt, permanent);
+        } catch (RuntimeException | Error ignored) {
+        }
+    }
+
+    private void closeUnits(
+            List<DailySettlementWorkUnit> units, Throwable primaryFailure) {
+        for (DailySettlementWorkUnit unit : units) {
             try {
                 closeUnit(unit);
             } catch (RuntimeException | Error closeFailure) {
-                primaryFailure.addSuppressed(closeFailure);
+                if (closeFailure != primaryFailure) {
+                    primaryFailure.addSuppressed(closeFailure);
+                }
             }
         }
     }
@@ -236,12 +302,114 @@ public final class DailySettlementCoordinator {
         plan = null;
         unitCursor = 0;
         consecutiveFailures = 0;
+        readyNotified = false;
         closedUnits.clear();
     }
 
     @FunctionalInterface
     public interface PlanFactory {
-        SettlementPlan create(DailySettlementContext context);
+        void build(DailySettlementContext context, SettlementPlanBuilder builder);
+    }
+
+    public static final class SettlementPlanBuilder {
+        private final List<DailySettlementWorkUnit> prepare = new java.util.ArrayList<>();
+        private final List<DailySettlementWorkUnit> world = new java.util.ArrayList<>();
+        private final List<DailySettlementWorkUnit> players = new java.util.ArrayList<>();
+        private final List<DailySettlementWorkUnit> commit = new java.util.ArrayList<>();
+        private final List<DailySettlementWorkUnit> registeredUnits = new java.util.ArrayList<>();
+        private boolean frozen;
+
+        private SettlementPlanBuilder() {
+        }
+
+        public SettlementPlanBuilder addPrepare(DailySettlementWorkUnit unit) {
+            return add(prepare, unit);
+        }
+
+        public SettlementPlanBuilder addWorld(DailySettlementWorkUnit unit) {
+            return add(world, unit);
+        }
+
+        public SettlementPlanBuilder addPlayer(DailySettlementWorkUnit unit) {
+            return add(players, unit);
+        }
+
+        public SettlementPlanBuilder addCommit(DailySettlementWorkUnit unit) {
+            return add(commit, unit);
+        }
+
+        private SettlementPlanBuilder add(
+                List<DailySettlementWorkUnit> phaseUnits,
+                DailySettlementWorkUnit unit) {
+            if (frozen) {
+                throw new IllegalStateException("Settlement plan is already frozen");
+            }
+            DailySettlementWorkUnit registered = Objects.requireNonNull(unit, "unit");
+            phaseUnits.add(registered);
+            registeredUnits.add(registered);
+            return this;
+        }
+
+        private SettlementPlan freeze() {
+            seal();
+            return new SettlementPlan(prepare, world, players, commit);
+        }
+
+        private void seal() {
+            frozen = true;
+        }
+
+        private List<DailySettlementWorkUnit> registeredUnits() {
+            return registeredUnits;
+        }
+    }
+
+    private static final class GuardedWorkUnit implements DailySettlementWorkUnit {
+        private final DailySettlementWorkUnit delegate;
+
+        private GuardedWorkUnit(DailySettlementWorkUnit delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String name() {
+            return delegate.name();
+        }
+
+        @Override
+        public String currentItemIdentity() {
+            return delegate.currentItemIdentity();
+        }
+
+        @Override
+        public boolean isComplete() {
+            return delegate.isComplete();
+        }
+
+        @Override
+        public void runNext() throws WorkItemExecutionException {
+            try {
+                delegate.runNext();
+            } catch (Exception failure) {
+                throw new WorkItemExecutionException(failure);
+            }
+        }
+
+        @Override
+        public void skipFailedItem() {
+            delegate.skipFailedItem();
+        }
+
+        @Override
+        public int maxRetries() {
+            return delegate.maxRetries();
+        }
+    }
+
+    private static final class WorkItemExecutionException extends Exception {
+        private WorkItemExecutionException(Exception cause) {
+            super(cause);
+        }
     }
 
     public record SettlementPlan(
@@ -255,12 +423,6 @@ public final class DailySettlementCoordinator {
             world = List.copyOf(Objects.requireNonNull(world, "world"));
             players = List.copyOf(Objects.requireNonNull(players, "players"));
             commit = List.copyOf(Objects.requireNonNull(commit, "commit"));
-        }
-
-        private List<DailySettlementWorkUnit> allUnits() {
-            return java.util.stream.Stream.of(prepare, world, players, commit)
-                    .flatMap(List::stream)
-                    .toList();
         }
     }
 

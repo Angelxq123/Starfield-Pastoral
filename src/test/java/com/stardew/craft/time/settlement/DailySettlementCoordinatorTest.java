@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 
@@ -225,28 +226,32 @@ class DailySettlementCoordinatorTest {
     }
 
     @Test
-    void closeExceptionIsNotReportedAsItemFailureOrRetried() {
+    void drainContinuesThroughCommitWhenAnEarlierCloseFails() {
         AtomicInteger closes = new AtomicInteger();
+        List<String> processed = new ArrayList<>();
         RecordingListener listener = new RecordingListener();
-        DailySettlementWorkUnit unit = DailySettlementWorkUnits.atomic(
-                "close-failure", () -> {}, () -> {
+        DailySettlementWorkUnit closeFailure = DailySettlementWorkUnits.atomic(
+                "close-failure", () -> processed.add("prepare"), () -> {
                     closes.incrementAndGet();
                     throw new IllegalStateException("close failed");
                 });
+        DailySettlementWorkUnit player = DailySettlementWorkUnits.atomic(
+                "player", () -> processed.add("player"), closes::incrementAndGet);
+        DailySettlementWorkUnit commit = DailySettlementWorkUnits.atomic(
+                "commit", () -> processed.add("commit"), closes::incrementAndGet);
         DailySettlementCoordinator coordinator = coordinator(
-                ignored -> planWithPrepare(unit), listener);
+                ignored -> new DailySettlementCoordinator.SettlementPlan(
+                        List.of(closeFailure), List.of(), List.of(player), List.of(commit)),
+                listener);
         coordinator.start(context());
 
-        assertThrows(IllegalStateException.class, coordinator::tick);
+        coordinator.drain();
 
-        assertTrue(listener.failures.isEmpty());
-        assertEquals(1, closes.get());
-        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
-
-        coordinator.tick();
-
-        assertEquals(1, closes.get());
+        assertEquals(List.of("prepare", "player", "commit"), processed);
+        assertEquals(3, closes.get());
         assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(List.of(
+                new Failure("close-failure", "<close>", 1, true)), listener.failures);
     }
 
     @Test
@@ -263,8 +268,8 @@ class DailySettlementCoordinatorTest {
         RecordingListener listener = new RecordingListener();
         DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
                 new BudgetedWorkRunner(() -> 0L), forbiddenBudget, forbiddenLimit,
-                ignored -> new DailySettlementCoordinator.SettlementPlan(
-                        List.of(cursor), List.of(), List.of(), List.of(atomic)), listener);
+                planFactory(ignored -> new DailySettlementCoordinator.SettlementPlan(
+                        List.of(cursor), List.of(), List.of(), List.of(atomic))), listener);
         coordinator.start(context());
 
         coordinator.drain();
@@ -288,7 +293,8 @@ class DailySettlementCoordinatorTest {
                 new BudgetedWorkRunner(new StepClock(2L)),
                 () -> { budgetReads.incrementAndGet(); return 4L; },
                 () -> { limitReads.incrementAndGet(); return 10; },
-                ignored -> planWithPrepare(budgetUnit), DailySettlementCoordinator.LifecycleListener.NOOP);
+                planFactory(ignored -> planWithPrepare(budgetUnit)),
+                DailySettlementCoordinator.LifecycleListener.NOOP);
         budgetCoordinator.start(context());
 
         budgetCoordinator.tick();
@@ -303,7 +309,8 @@ class DailySettlementCoordinatorTest {
                 limitProcessed::add, () -> {});
         DailySettlementCoordinator limitCoordinator = new DailySettlementCoordinator(
                 new BudgetedWorkRunner(new StepClock(1L)), () -> 1_000L, () -> 1,
-                ignored -> planWithPrepare(limitUnit), DailySettlementCoordinator.LifecycleListener.NOOP);
+                planFactory(ignored -> planWithPrepare(limitUnit)),
+                DailySettlementCoordinator.LifecycleListener.NOOP);
         limitCoordinator.start(context());
 
         limitCoordinator.tick();
@@ -334,6 +341,138 @@ class DailySettlementCoordinatorTest {
         assertThrows(IllegalArgumentException.class, limitCoordinator::tick);
         assertTrue(limitListener.failures.isEmpty());
         assertFalse(limitUnit.isComplete());
+    }
+
+    @Test
+    void clockFailureBeforeItemExecutionDoesNotRetryOrSkipTheItem() {
+        RecoverableClock clock = new RecoverableClock();
+        AtomicInteger attempts = new AtomicInteger();
+        AtomicInteger skips = new AtomicInteger();
+        RecordingListener listener = new RecordingListener();
+        DailySettlementWorkUnit unit = new DailySettlementWorkUnit() {
+            private boolean complete;
+
+            @Override
+            public String name() {
+                return "clock-sensitive";
+            }
+
+            @Override
+            public String currentItemIdentity() {
+                return "item";
+            }
+
+            @Override
+            public boolean isComplete() {
+                return complete;
+            }
+
+            @Override
+            public void runNext() throws Exception {
+                if (attempts.incrementAndGet() == 1) {
+                    throw new Exception("item failed");
+                }
+                complete = true;
+            }
+
+            @Override
+            public void skipFailedItem() {
+                skips.incrementAndGet();
+                complete = true;
+            }
+
+            @Override
+            public int maxRetries() {
+                return 1;
+            }
+        };
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(clock),
+                () -> DEFAULT_BUDGET,
+                () -> DEFAULT_ITEM_LIMIT,
+                planFactory(ignored -> planWithPrepare(unit)),
+                listener);
+        coordinator.start(context());
+
+        assertThrows(IllegalStateException.class, coordinator::tick);
+
+        assertEquals(0, attempts.get());
+        assertEquals(0, skips.get());
+        assertTrue(listener.failures.isEmpty());
+        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
+
+        clock.recover();
+        coordinator.tick();
+
+        assertEquals(1, attempts.get());
+        assertEquals(0, skips.get());
+        assertEquals(List.of(
+                new Failure("clock-sensitive", "item", 1, false)), listener.failures);
+        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
+
+        coordinator.tick();
+
+        assertEquals(2, attempts.get());
+        assertEquals(0, skips.get());
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+    }
+
+    @Test
+    void isCompleteFailureIsNotReportedOrSkippedAsAnItemFailure() {
+        AtomicInteger processed = new AtomicInteger();
+        AtomicInteger skips = new AtomicInteger();
+        AtomicReference<Boolean> failCompletionCheck = new AtomicReference<>(true);
+        RecordingListener listener = new RecordingListener();
+        DailySettlementWorkUnit unit = new DailySettlementWorkUnit() {
+            private boolean complete;
+
+            @Override
+            public String name() {
+                return "completion-sensitive";
+            }
+
+            @Override
+            public String currentItemIdentity() {
+                return "item";
+            }
+
+            @Override
+            public boolean isComplete() {
+                if (failCompletionCheck.get()) {
+                    throw new IllegalStateException("completion check failed");
+                }
+                return complete;
+            }
+
+            @Override
+            public void runNext() {
+                processed.incrementAndGet();
+                complete = true;
+            }
+
+            @Override
+            public void skipFailedItem() {
+                skips.incrementAndGet();
+                complete = true;
+            }
+        };
+        DailySettlementCoordinator coordinator = coordinator(
+                ignored -> planWithPrepare(unit), listener);
+        coordinator.start(context());
+
+        assertThrows(IllegalStateException.class, coordinator::tick);
+
+        assertEquals(0, processed.get());
+        assertEquals(0, skips.get());
+        assertTrue(listener.failures.isEmpty());
+        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
+
+        failCompletionCheck.set(false);
+        coordinator.tick();
+
+        assertEquals(1, processed.get());
+        assertEquals(0, skips.get());
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
     }
 
     @Test
@@ -393,7 +532,7 @@ class DailySettlementCoordinatorTest {
     }
 
     @Test
-    void failedStartStaysIdleAndClosesPlanUnitsAlreadyCreated() {
+    void factoryFailureKeepsCoordinatorIdle() {
         DailySettlementCoordinator createFailure = coordinator(ignored -> {
             throw new IllegalStateException("create failed");
         });
@@ -401,16 +540,53 @@ class DailySettlementCoordinatorTest {
         assertThrows(IllegalStateException.class, () -> createFailure.start(context()));
         assertEquals(DailySettlementPhase.IDLE, createFailure.phase());
         assertTrue(createFailure.context().isEmpty());
+    }
 
+    @Test
+    void itemFailureListenerExceptionDoesNotPreventPermanentSkip() {
         AtomicInteger closes = new AtomicInteger();
-        DailySettlementWorkUnit first = DailySettlementWorkUnits.atomic(
-                "first", () -> {}, closes::incrementAndGet);
-        DailySettlementWorkUnit second = DailySettlementWorkUnits.atomic(
-                "second", () -> {}, closes::incrementAndGet);
-        DailySettlementCoordinator.LifecycleListener failingListener = new DailySettlementCoordinator.LifecycleListener() {
+        DailySettlementWorkUnit failed = DailySettlementWorkUnits.cursor(
+                "failed", List.of("bad"), value -> value,
+                value -> { throw new Exception("item failed"); }, closes::incrementAndGet);
+        DailySettlementCoordinator.LifecycleListener listener = new DailySettlementCoordinator.LifecycleListener() {
             @Override
             public void phaseChanged(DailySettlementContext context, DailySettlementPhase phase) {
+            }
+
+            @Override
+            public void itemFailure(
+                    DailySettlementContext context,
+                    String unitName,
+                    String itemIdentity,
+                    int attempt,
+                    boolean permanent) {
                 throw new IllegalStateException("listener failed");
+            }
+
+            @Override
+            public void ready(DailySettlementContext context) {
+            }
+        };
+        DailySettlementCoordinator coordinator = coordinator(
+                ignored -> planWithPrepare(failed), listener);
+
+        coordinator.start(context());
+        coordinator.tick();
+
+        assertTrue(failed.isComplete());
+        assertEquals(1, closes.get());
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+    }
+
+    @Test
+    void phaseListenerExceptionsIncludingReadyDoNotBlockReadyCallback() {
+        AtomicInteger phaseCalls = new AtomicInteger();
+        AtomicInteger readyCalls = new AtomicInteger();
+        DailySettlementCoordinator.LifecycleListener listener = new DailySettlementCoordinator.LifecycleListener() {
+            @Override
+            public void phaseChanged(DailySettlementContext context, DailySettlementPhase phase) {
+                phaseCalls.incrementAndGet();
+                throw new IllegalStateException("phase listener failed");
             }
 
             @Override
@@ -424,16 +600,111 @@ class DailySettlementCoordinatorTest {
 
             @Override
             public void ready(DailySettlementContext context) {
+                readyCalls.incrementAndGet();
             }
         };
-        DailySettlementCoordinator listenerFailure = coordinator(
-                ignored -> new DailySettlementCoordinator.SettlementPlan(
-                        List.of(first), List.of(), List.of(), List.of(second)), failingListener);
+        DailySettlementCoordinator coordinator = coordinator(ignored -> emptyPlan(), listener);
 
-        assertThrows(IllegalStateException.class, () -> listenerFailure.start(context()));
-        assertEquals(DailySettlementPhase.IDLE, listenerFailure.phase());
-        assertTrue(listenerFailure.context().isEmpty());
+        coordinator.start(context());
+        coordinator.tick();
+
+        assertEquals(5, phaseCalls.get());
+        assertEquals(1, readyCalls.get());
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+    }
+
+    @Test
+    void readyNotificationRetriesOnLaterTickBeforeFinishIsAllowed() {
+        AtomicInteger readyCalls = new AtomicInteger();
+        DailySettlementCoordinator.LifecycleListener listener = new DailySettlementCoordinator.LifecycleListener() {
+            @Override
+            public void phaseChanged(DailySettlementContext context, DailySettlementPhase phase) {
+            }
+
+            @Override
+            public void itemFailure(
+                    DailySettlementContext context,
+                    String unitName,
+                    String itemIdentity,
+                    int attempt,
+                    boolean permanent) {
+            }
+
+            @Override
+            public void ready(DailySettlementContext context) {
+                if (readyCalls.incrementAndGet() == 1) {
+                    throw new IllegalStateException("ready listener failed");
+                }
+            }
+        };
+        DailySettlementCoordinator coordinator = coordinator(ignored -> emptyPlan(), listener);
+
+        coordinator.start(context());
+        coordinator.tick();
+
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+        assertEquals(1, readyCalls.get());
+        assertThrows(IllegalStateException.class, coordinator::finishReady);
+
+        coordinator.tick();
+        coordinator.finishReady();
+
+        assertEquals(2, readyCalls.get());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
+    }
+
+    @Test
+    void factoryFailureClosesEveryRegisteredUnitAndSuppressesCloseErrors() {
+        AtomicInteger closes = new AtomicInteger();
+        DailySettlementWorkUnit closeFailure = DailySettlementWorkUnits.atomic(
+                "close-failure", () -> {}, () -> {
+                    closes.incrementAndGet();
+                    throw new IllegalStateException("close failed");
+                });
+        DailySettlementWorkUnit normal = DailySettlementWorkUnits.atomic(
+                "normal", () -> {}, closes::incrementAndGet);
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> DEFAULT_BUDGET,
+                () -> DEFAULT_ITEM_LIMIT,
+                (context, builder) -> {
+                    builder.addPrepare(closeFailure);
+                    builder.addCommit(normal);
+                    throw new IllegalStateException("build failed");
+                },
+                DailySettlementCoordinator.LifecycleListener.NOOP);
+
+        IllegalStateException failure = assertThrows(
+                IllegalStateException.class, () -> coordinator.start(context()));
+
+        assertEquals("build failed", failure.getMessage());
+        assertEquals(1, failure.getSuppressed().length);
+        assertEquals("close failed", failure.getSuppressed()[0].getMessage());
         assertEquals(2, closes.get());
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
+        assertTrue(coordinator.context().isEmpty());
+    }
+
+    @Test
+    void builderRejectsNullUnitsAndFreezesAfterStart() {
+        assertBuilderRejectsNull((context, builder) -> builder.addPrepare(null));
+        assertBuilderRejectsNull((context, builder) -> builder.addWorld(null));
+        assertBuilderRejectsNull((context, builder) -> builder.addPlayer(null));
+        assertBuilderRejectsNull((context, builder) -> builder.addCommit(null));
+
+        AtomicReference<DailySettlementCoordinator.SettlementPlanBuilder> captured =
+                new AtomicReference<>();
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> DEFAULT_BUDGET,
+                () -> DEFAULT_ITEM_LIMIT,
+                (context, builder) -> captured.set(builder),
+                DailySettlementCoordinator.LifecycleListener.NOOP);
+
+        coordinator.start(context());
+
+        assertThrows(IllegalStateException.class,
+                () -> captured.get().addPrepare(atomic("late")));
     }
 
     @Test
@@ -507,6 +778,25 @@ class DailySettlementCoordinatorTest {
     }
 
     @Test
+    void nextDayFactoryRejectsInvalidSourceDatesBeforeRollover() {
+        assertThrows(IllegalArgumentException.class,
+                () -> DailySettlementContextFactory.captureNextDay(
+                        timeAt(0, 0, 1, 600), 1560, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> DailySettlementContextFactory.captureNextDay(
+                        timeAt(1, -1, 1, 600), 1560, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> DailySettlementContextFactory.captureNextDay(
+                        timeAt(1, 4, 1, 600), 1560, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> DailySettlementContextFactory.captureNextDay(
+                        timeAt(1, 0, 0, 600), 1560, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> DailySettlementContextFactory.captureNextDay(
+                        timeAt(1, 0, 29, 600), 1560, List.of(), List.of()));
+    }
+
+    @Test
     void factoryAndCoordinatorValueObjectsRejectNulls() {
         StardewTimeManager time = timeAt(1, 0, 1, 600);
         assertThrows(NullPointerException.class,
@@ -520,19 +810,22 @@ class DailySettlementCoordinatorTest {
 
         assertThrows(NullPointerException.class,
                 () -> new DailySettlementCoordinator(null, () -> 1L, () -> 1,
-                        ignored -> emptyPlan(), DailySettlementCoordinator.LifecycleListener.NOOP));
+                        planFactory(ignored -> emptyPlan()),
+                        DailySettlementCoordinator.LifecycleListener.NOOP));
         assertThrows(NullPointerException.class,
                 () -> new DailySettlementCoordinator(new BudgetedWorkRunner(() -> 0L), null, () -> 1,
-                        ignored -> emptyPlan(), DailySettlementCoordinator.LifecycleListener.NOOP));
+                        planFactory(ignored -> emptyPlan()),
+                        DailySettlementCoordinator.LifecycleListener.NOOP));
         assertThrows(NullPointerException.class,
                 () -> new DailySettlementCoordinator(new BudgetedWorkRunner(() -> 0L), () -> 1L, null,
-                        ignored -> emptyPlan(), DailySettlementCoordinator.LifecycleListener.NOOP));
+                        planFactory(ignored -> emptyPlan()),
+                        DailySettlementCoordinator.LifecycleListener.NOOP));
         assertThrows(NullPointerException.class,
                 () -> new DailySettlementCoordinator(new BudgetedWorkRunner(() -> 0L), () -> 1L, () -> 1,
                         null, DailySettlementCoordinator.LifecycleListener.NOOP));
         assertThrows(NullPointerException.class,
                 () -> new DailySettlementCoordinator(new BudgetedWorkRunner(() -> 0L), () -> 1L, () -> 1,
-                        ignored -> emptyPlan(), null));
+                        planFactory(ignored -> emptyPlan()), null));
 
         assertThrows(NullPointerException.class,
                 () -> new DailySettlementCoordinator.SettlementPlan(null, List.of(), List.of(), List.of()));
@@ -545,18 +838,18 @@ class DailySettlementCoordinatorTest {
     }
 
     private static DailySettlementCoordinator coordinator(
-            DailySettlementCoordinator.PlanFactory planFactory) {
+            Function<DailySettlementContext, DailySettlementCoordinator.SettlementPlan> planFactory) {
         return coordinator(planFactory, DailySettlementCoordinator.LifecycleListener.NOOP);
     }
 
     private static DailySettlementCoordinator coordinator(
-            DailySettlementCoordinator.PlanFactory planFactory,
+            Function<DailySettlementContext, DailySettlementCoordinator.SettlementPlan> planFactory,
             DailySettlementCoordinator.LifecycleListener listener) {
         return coordinator(planFactory, listener, DEFAULT_BUDGET, DEFAULT_ITEM_LIMIT);
     }
 
     private static DailySettlementCoordinator coordinator(
-            DailySettlementCoordinator.PlanFactory planFactory,
+            Function<DailySettlementContext, DailySettlementCoordinator.SettlementPlan> planFactory,
             DailySettlementCoordinator.LifecycleListener listener,
             long budget,
             int itemLimit) {
@@ -564,8 +857,35 @@ class DailySettlementCoordinatorTest {
                 new BudgetedWorkRunner(new StepClock(1L)),
                 () -> budget,
                 () -> itemLimit,
-                planFactory,
+                planFactory(planFactory),
                 listener);
+    }
+
+    private static DailySettlementCoordinator.PlanFactory planFactory(
+            Function<DailySettlementContext, DailySettlementCoordinator.SettlementPlan> factory) {
+        return (context, builder) -> register(builder, factory.apply(context));
+    }
+
+    private static void register(
+            DailySettlementCoordinator.SettlementPlanBuilder builder,
+            DailySettlementCoordinator.SettlementPlan plan) {
+        plan.prepare().forEach(builder::addPrepare);
+        plan.world().forEach(builder::addWorld);
+        plan.players().forEach(builder::addPlayer);
+        plan.commit().forEach(builder::addCommit);
+    }
+
+    private static void assertBuilderRejectsNull(
+            DailySettlementCoordinator.PlanFactory planFactory) {
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> DEFAULT_BUDGET,
+                () -> DEFAULT_ITEM_LIMIT,
+                planFactory,
+                DailySettlementCoordinator.LifecycleListener.NOOP);
+
+        assertThrows(NullPointerException.class, () -> coordinator.start(context()));
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     private static DailySettlementCoordinator.SettlementPlan emptyPlan() {
@@ -652,6 +972,23 @@ class DailySettlementCoordinatorTest {
         public long nanoTime() {
             now += step;
             return now;
+        }
+    }
+
+    private static final class RecoverableClock implements BudgetedWorkRunner.NanoClock {
+        private boolean failed = true;
+        private long now;
+
+        @Override
+        public long nanoTime() {
+            if (failed) {
+                throw new IllegalStateException("clock failed");
+            }
+            return ++now;
+        }
+
+        private void recover() {
+            failed = false;
         }
     }
 

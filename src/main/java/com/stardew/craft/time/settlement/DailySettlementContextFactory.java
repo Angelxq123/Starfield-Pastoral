@@ -51,13 +51,16 @@ public final class DailySettlementContextFactory {
     }
 
     private static TargetDate after(int year, int season, int day) {
-        if (day < 28) {
-            return new TargetDate(year, season, day + 1, false);
+        TargetDate current = new TargetDate(year, season, day, false);
+        if (current.day() < 28) {
+            return new TargetDate(
+                    current.year(), current.season(), current.day() + 1, false);
         }
-        if (season < 3) {
-            return new TargetDate(year, season + 1, 1, true);
+        if (current.season() < 3) {
+            return new TargetDate(
+                    current.year(), current.season() + 1, 1, true);
         }
-        return new TargetDate(year + 1, 0, 1, true);
+        return new TargetDate(current.year() + 1, 0, 1, true);
     }
 
     private static int absoluteDay(int year, int season, int day) {
@@ -65,5 +68,16 @@ public final class DailySettlementContextFactory {
     }
 
     private record TargetDate(int year, int season, int day, boolean seasonChanged) {
+        private TargetDate {
+            if (year < 1) {
+                throw new IllegalArgumentException("year must be at least 1");
+            }
+            if (season < 0 || season > 3) {
+                throw new IllegalArgumentException("season must be between 0 and 3");
+            }
+            if (day < 1 || day > 28) {
+                throw new IllegalArgumentException("day must be between 1 and 28");
+            }
+        }
     }
 }

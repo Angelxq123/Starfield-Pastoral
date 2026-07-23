@@ -5,7 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -124,7 +127,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "farm_cursor" -> atomic(name, () -> updateFarmCursor(context));
                 case "special_orders" -> atomic(name, () ->
                         com.stardew.craft.specialorder.SpecialOrderManager.onNewDay(
-                                level(), onlineValleyPlayers(context)));
+                                level(), onlineValleyPlayers()));
                 case "lost_and_found" -> atomic(name, () ->
                         com.stardew.craft.lostandfound.LostAndFoundService.onNewDay(level()));
                 case "bookseller" -> atomic(name, () -> bookseller(context));
@@ -134,7 +137,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "dirty_mark" -> atomic(name, () ->
                         com.stardew.craft.farm.FarmInstanceRegistry.get().setDirty());
                 case "daily_process_cleanup" -> requiredAtomic(name, this::cleanupDailyProcess);
-                case "date_publication" -> requiredAtomic(name, () -> publishDate(context));
+                case "date_publication" -> publication(context);
                 default -> throw new IllegalArgumentException("Unknown settlement work unit: " + name);
             };
         }
@@ -177,8 +180,11 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
 
         private void beginDailyProcess(DailySettlementContext context) {
             ServerLevel level = level();
+            Set<UUID> onlinePlayerIds = dailyScopeAudience(
+                    server().getPlayerList().getPlayers(),
+                    net.minecraft.server.level.ServerPlayer::getUUID);
             com.stardew.craft.farm.FarmDailyProcessHelper.beginDailyProcess(
-                    level, context.playerIds());
+                    level, onlinePlayerIds);
             activeLevel = level;
             dailyProcessActive = true;
             try {
@@ -294,7 +300,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         private void bookseller(DailySettlementContext context) {
-            List<net.minecraft.server.level.ServerPlayer> online = onlineValleyPlayers(context);
+            List<net.minecraft.server.level.ServerPlayer> online = onlineValleyPlayers();
             com.stardew.craft.book.BooksellerSchedule.onNewDay(level(), online);
             com.stardew.craft.shop.BooksellerEvents.forceCheckNow(level());
         }
@@ -303,32 +309,30 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             com.stardew.craft.mail.MailService.deliverAllTomorrowMail(server());
             com.stardew.craft.time.StardewTimeManager time =
                     com.stardew.craft.time.StardewTimeManager.get();
-            for (UUID playerId : context.playerIds()) {
-                net.minecraft.server.level.ServerPlayer player = server().getPlayerList().getPlayer(playerId);
-                if (player != null) {
-                    time.scheduleDateTriggeredMail(player, context.season(), context.day());
-                }
+            for (net.minecraft.server.level.ServerPlayer player
+                    : mailAudience(server().getPlayerList().getPlayers())) {
+                time.scheduleDateTriggeredMail(player, context.season(), context.day());
             }
         }
 
-        private void publishDate(DailySettlementContext context) {
+        private DailySettlementWorkUnit publication(DailySettlementContext context) {
             com.stardew.craft.time.StardewTimeManager time =
                     com.stardew.craft.time.StardewTimeManager.get();
-            time.publishSettlementDate(context);
-            com.stardew.craft.event.DimensionEventHandler.onSettlementDatePublished(server(), time);
+            return publishDate(
+                    context,
+                    time,
+                    () -> com.stardew.craft.event.DimensionEventHandler
+                            .publishSettlementVirtualTime(
+                                    time, context.absoluteDay()),
+                    () -> com.stardew.craft.event.DimensionEventHandler
+                            .onSettlementDatePublished(server(), time));
         }
 
-        private List<net.minecraft.server.level.ServerPlayer> onlineValleyPlayers(
-                DailySettlementContext context) {
-            List<net.minecraft.server.level.ServerPlayer> result = new java.util.ArrayList<>();
-            for (UUID playerId : context.playerIds()) {
-                net.minecraft.server.level.ServerPlayer player = server().getPlayerList().getPlayer(playerId);
-                if (player != null
-                        && player.level().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
-                    result.add(player);
-                }
-            }
-            return List.copyOf(result);
+        private List<net.minecraft.server.level.ServerPlayer> onlineValleyPlayers() {
+            return valleyAudience(
+                    server().getPlayerList().getPlayers(),
+                    player -> player.level().dimension()
+                            == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
         }
 
         private synchronized void cleanupDailyProcess() {
@@ -390,5 +394,50 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 default -> throw new IllegalArgumentException("Invalid season: " + season);
             };
         }
+    }
+
+    static DailySettlementWorkUnit publishDate(
+            DailySettlementContext context,
+            com.stardew.craft.time.StardewTimeManager time,
+            DailySettlementWorkUnits.ThrowingRunnable publishVirtualTime,
+            DailySettlementWorkUnits.ThrowingRunnable runPublicationHooks) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(time, "time");
+        Objects.requireNonNull(publishVirtualTime, "publishVirtualTime");
+        Objects.requireNonNull(runPublicationHooks, "runPublicationHooks");
+        return DailySettlementWorkUnits.sequence(
+                "date_publication",
+                List.of(
+                        DailySettlementWorkUnits.atomic(
+                                "backing_date", () -> time.publishSettlementDate(context),
+                                () -> {}, Integer.MAX_VALUE),
+                        DailySettlementWorkUnits.atomic(
+                                "virtual_day", publishVirtualTime,
+                                () -> {}, Integer.MAX_VALUE),
+                        DailySettlementWorkUnits.atomic(
+                                "publication_hooks", runPublicationHooks,
+                                () -> {}, Integer.MAX_VALUE)),
+                () -> {});
+    }
+
+    static <T> List<T> mailAudience(List<T> onlinePlayers) {
+        return List.copyOf(Objects.requireNonNull(onlinePlayers, "onlinePlayers"));
+    }
+
+    static <T> List<T> valleyAudience(
+            List<T> onlinePlayers, Predicate<? super T> isValleyPlayer) {
+        Objects.requireNonNull(onlinePlayers, "onlinePlayers");
+        Objects.requireNonNull(isValleyPlayer, "isValleyPlayer");
+        return onlinePlayers.stream().filter(isValleyPlayer).toList();
+    }
+
+    static <T> Set<UUID> dailyScopeAudience(
+            List<T> onlinePlayers, Function<? super T, UUID> playerId) {
+        Objects.requireNonNull(onlinePlayers, "onlinePlayers");
+        Objects.requireNonNull(playerId, "playerId");
+        return onlinePlayers.stream()
+                .map(playerId)
+                .map(id -> Objects.requireNonNull(id, "playerId"))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 }

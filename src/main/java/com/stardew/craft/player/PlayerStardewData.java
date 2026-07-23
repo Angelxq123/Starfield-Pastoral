@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -88,6 +90,8 @@ public class PlayerStardewData {
     // ============ 其他数据 ============
     private long lastSyncTime;       // 最后一次同步时间
     private boolean dirty;           // 数据是否需要保存
+    @Nullable
+    private PendingDailySettlement pendingDailySettlement;
 
     // ============ 运气系统 ============
     // 每日运气（per-player），按星露谷日期刷新（由 PlayerStardewDataAPI 惰性刷新）
@@ -411,6 +415,16 @@ public class PlayerStardewData {
         
         // 元数据
         data.lastSyncTime = tag.getLong("LastSyncTime");
+        if (tag.contains("PendingDailySettlement", 10)) {
+            CompoundTag pending = tag.getCompound("PendingDailySettlement");
+            data.pendingDailySettlement = new PendingDailySettlement(
+                    pending.getInt("AbsoluteDay"),
+                    pending.getInt("Year"),
+                    pending.getInt("Season"),
+                    pending.getInt("Day"),
+                    pending.getInt("SleepMinute"),
+                    pending.getBoolean("SeasonChanged"));
+        }
 
         // 精通系统
         data.masteryExp = tag.contains("MasteryExp") ? tag.getLong("MasteryExp") : 0L;
@@ -848,6 +862,16 @@ public class PlayerStardewData {
         
         // 元数据
         tag.putLong("LastSyncTime", lastSyncTime);
+        if (pendingDailySettlement != null) {
+            CompoundTag pending = new CompoundTag();
+            pending.putInt("AbsoluteDay", pendingDailySettlement.absoluteDay());
+            pending.putInt("Year", pendingDailySettlement.year());
+            pending.putInt("Season", pendingDailySettlement.season());
+            pending.putInt("Day", pendingDailySettlement.day());
+            pending.putInt("SleepMinute", pendingDailySettlement.sleepMinute());
+            pending.putBoolean("SeasonChanged", pendingDailySettlement.seasonChanged());
+            tag.put("PendingDailySettlement", pending);
+        }
 
         // 精通系统
         tag.putLong("MasteryExp", masteryExp);
@@ -2969,6 +2993,51 @@ public class PlayerStardewData {
             markDirty();
         }
         return changed;
+    }
+
+    public Optional<PendingDailySettlement> getPendingDailySettlement() {
+        return Optional.ofNullable(pendingDailySettlement);
+    }
+
+    public boolean schedulePendingDailySettlement(PendingDailySettlement pending) {
+        Objects.requireNonNull(pending, "pending");
+        if (pendingDailySettlement != null) {
+            if (pendingDailySettlement.equals(pending)) {
+                return false;
+            }
+            throw new IllegalStateException(
+                    "A different daily settlement is already pending for " + playerUUID);
+        }
+        pendingDailySettlement = pending;
+        markDirty();
+        return true;
+    }
+
+    public boolean clearPendingDailySettlement(int absoluteDay) {
+        if (pendingDailySettlement == null
+                || pendingDailySettlement.absoluteDay() != absoluteDay) {
+            return false;
+        }
+        pendingDailySettlement = null;
+        markDirty();
+        return true;
+    }
+
+    public record PendingDailySettlement(
+            int absoluteDay,
+            int year,
+            int season,
+            int day,
+            int sleepMinute,
+            boolean seasonChanged) {
+
+        public PendingDailySettlement {
+            long expected = (year - 1L) * 112L + season * 28L + day;
+            if (year < 1 || season < 0 || season > 3 || day < 1 || day > 28
+                    || absoluteDay != expected) {
+                throw new IllegalArgumentException("Invalid pending daily settlement date");
+            }
+        }
     }
     
     public void markDirty() {

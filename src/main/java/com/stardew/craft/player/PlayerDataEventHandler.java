@@ -83,8 +83,8 @@ public class PlayerDataEventHandler {
 
             com.stardew.craft.time.settlement.DailySettlementServices.Services settlementServices =
                     com.stardew.craft.time.settlement.DailySettlementServices.find(player.server);
-            if (settlementServices == null
-                    || !settlementServices.barrier().isLocked(player.getUUID())) {
+            if (!com.stardew.craft.time.settlement.DailySettlementServices.ownsSettlement(
+                    settlementServices, player.getUUID())) {
                 try {
                     com.stardew.craft.network.overnight.OvernightSettlementPayload pendingShipping =
                         com.stardew.craft.network.overnight.OvernightSettlementTracker.consumePayload(player);

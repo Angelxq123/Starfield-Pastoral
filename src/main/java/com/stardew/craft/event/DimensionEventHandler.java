@@ -614,9 +614,7 @@ public class DimensionEventHandler {
     public static void onSettlementDatePublished(
             net.minecraft.server.MinecraftServer server,
             StardewTimeManager timeManager) {
-        long currentVirtual = timeManager.getVirtualDayTime();
-        long newDayTime = (currentVirtual / 24000L + 1L) * 24000L;
-        timeManager.setVirtualDayTime(newDayTime);
+        long newDayTime = timeManager.getVirtualDayTime();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerLevel playerLevel = player.serverLevel();
             if (isStardewDimension(playerLevel)) {
@@ -636,6 +634,16 @@ public class DimensionEventHandler {
                 timeManager.getCurrentYear(),
                 timeManager.getCurrentSeason(),
                 timeManager.getCurrentDay());
+    }
+
+    public static void publishSettlementVirtualTime(
+            StardewTimeManager timeManager,
+            int absoluteDay) {
+        java.util.Objects.requireNonNull(timeManager, "timeManager");
+        if (absoluteDay <= 0) {
+            throw new IllegalArgumentException("absoluteDay must be positive");
+        }
+        timeManager.setVirtualDayTime((absoluteDay - 1L) * 24000L);
     }
 
     /**

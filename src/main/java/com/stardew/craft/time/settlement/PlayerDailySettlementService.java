@@ -15,16 +15,29 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public final class PlayerDailySettlementService {
-    private final WeakReference<MinecraftServer> server;
+    private final SettlementBackend backend;
+    private final PendingStore pending;
     private final Map<UUID, DailySettlementBarrier.ReadyResult> readyResults =
             new ConcurrentHashMap<>();
 
     public PlayerDailySettlementService(MinecraftServer server) {
-        this.server = new WeakReference<>(Objects.requireNonNull(server, "server"));
+        Objects.requireNonNull(server, "server");
+        this.backend = new ProductionSettlementBackend(server);
+        this.pending = new PlayerDataPendingStore(
+                com.stardew.craft.player.PlayerDataManager::getPlayerData,
+                () -> com.stardew.craft.player.PlayerDataManager.get().setDirty());
+    }
+
+    PlayerDailySettlementService(SettlementBackend backend, PendingStore pending) {
+        this.backend = Objects.requireNonNull(backend, "backend");
+        this.pending = Objects.requireNonNull(pending, "pending");
     }
 
     public boolean participates(ServerPlayer player) {
@@ -45,18 +58,32 @@ public final class PlayerDailySettlementService {
     }
 
     void settlePlayer(DailySettlementContext context, UUID playerId) {
-        ServerPlayer player = server().getPlayerList().getPlayer(playerId);
-        OvernightSettlementPayload payload;
-        if (player == null) {
-            payload = settleDisconnectedPlayer(context, playerId);
-        } else {
-            payload = settleOnlinePlayer(context, player);
+        Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
+        if (payload.isEmpty()) {
+            pending.save(context, playerId);
+            readyResults.putIfAbsent(playerId, pendingReadyResult(context));
+            return;
         }
         readyResults.put(playerId,
-                new DailySettlementBarrier.ReadyResult(context.absoluteDay(), payload));
+                new DailySettlementBarrier.ReadyResult(context.absoluteDay(), payload.orElseThrow()));
     }
 
-    OvernightSettlementPayload settleOnlinePlayer(
+    private Optional<OvernightSettlementPayload> settleIfOnline(
+            DailySettlementContext context, UUID playerId) {
+        @SuppressWarnings("unchecked")
+        Optional<OvernightSettlementPayload>[] result = new Optional[] {Optional.empty()};
+        try {
+            DailySettlementDateView.run(
+                    context, () -> result[0] = backend.settleIfOnline(context, playerId));
+        } catch (RuntimeException | Error failure) {
+            throw failure;
+        } catch (Exception failure) {
+            throw new IllegalStateException("Unable to settle player " + playerId, failure);
+        }
+        return result[0];
+    }
+
+    private static OvernightSettlementPayload settleOnlinePlayer(
             DailySettlementContext context, ServerPlayer player) {
         if (player.isCreative()) {
             PlayerStardewDataAPI.cureExhaustion(player);
@@ -88,14 +115,7 @@ public final class PlayerDailySettlementService {
         return buildPayload(context, player.getUUID(), settlementPayload, appliedLevelUps);
     }
 
-    private OvernightSettlementPayload settleDisconnectedPlayer(
-            DailySettlementContext context, UUID playerId) {
-        OvernightSettlementPayload settlementPayload = OvernightSettlementTracker.consumePayload(
-                server(), playerId, context.absoluteDay());
-        return buildPayload(context, playerId, settlementPayload, List.of());
-    }
-
-    private OvernightSettlementPayload buildPayload(
+    private static OvernightSettlementPayload buildPayload(
             DailySettlementContext context,
             UUID playerId,
             OvernightSettlementPayload settlementPayload,
@@ -134,15 +154,37 @@ public final class PlayerDailySettlementService {
         if (result != null) {
             return result;
         }
-        OvernightSettlementPayload payload = settleDisconnectedPlayer(context, playerId);
-        DailySettlementBarrier.ReadyResult fallback =
-                new DailySettlementBarrier.ReadyResult(context.absoluteDay(), payload);
+        pending.save(context, playerId);
+        DailySettlementBarrier.ReadyResult fallback = pendingReadyResult(context);
         readyResults.put(playerId, fallback);
         return fallback;
     }
 
-    public void onLogin(UUID playerId) {
+    Optional<DailySettlementBarrier.ReadyResult> onLogin(
+            UUID playerId, DailySettlementBarrier barrier) {
         Objects.requireNonNull(playerId, "playerId");
+        Optional<PendingSettlement> scheduled = pending.find(playerId);
+        if (scheduled.isEmpty()) {
+            return Optional.empty();
+        }
+        DailySettlementContext context = scheduled.orElseThrow().context(playerId);
+        Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
+        if (payload.isEmpty()) {
+            return Optional.empty();
+        }
+        DailySettlementBarrier.ReadyResult result = new DailySettlementBarrier.ReadyResult(
+                context.absoluteDay(), payload.orElseThrow());
+        readyResults.put(playerId, result);
+        if (barrier != null) {
+            DailySettlementBarrier.ReadyResult retained =
+                    barrier.readyResult(playerId, context.absoluteDay());
+            if (retained != null && !barrier.replaceReady(playerId, result)) {
+                throw new IllegalStateException(
+                        "Unable to replace retained settlement result for " + playerId);
+            }
+        }
+        pending.clear(playerId, context.absoluteDay());
+        return Optional.of(result);
     }
 
     public void onLogout(UUID playerId) {
@@ -153,11 +195,114 @@ public final class PlayerDailySettlementService {
         readyResults.clear();
     }
 
-    private MinecraftServer server() {
-        MinecraftServer current = server.get();
-        if (current == null) {
-            throw new IllegalStateException("Daily settlement server is no longer available");
+    Optional<PendingSettlement> pendingSettlement(UUID playerId) {
+        return pending.find(playerId);
+    }
+
+    static Optional<DailySettlementBarrier.ReadyResult> recoverPending(ServerPlayer player) {
+        Objects.requireNonNull(player, "player");
+        return new PlayerDailySettlementService(player.server)
+                .onLogin(player.getUUID(), null);
+    }
+
+    private static DailySettlementBarrier.ReadyResult pendingReadyResult(
+            DailySettlementContext context) {
+        return new DailySettlementBarrier.ReadyResult(
+                context.absoluteDay(),
+                new OvernightSettlementPayload(context.absoluteDay(), List.of(), List.of()));
+    }
+
+    interface SettlementBackend {
+        Optional<OvernightSettlementPayload> settleIfOnline(
+                DailySettlementContext context, UUID playerId);
+    }
+
+    interface PendingStore {
+        Optional<PendingSettlement> find(UUID playerId);
+
+        void save(DailySettlementContext context, UUID playerId);
+
+        void clear(UUID playerId, int absoluteDay);
+    }
+
+    static final class PlayerDataPendingStore implements PendingStore {
+        private final Function<UUID, PlayerStardewData> playerData;
+        private final Runnable markPersistent;
+
+        PlayerDataPendingStore(
+                Function<UUID, PlayerStardewData> playerData, Runnable markPersistent) {
+            this.playerData = Objects.requireNonNull(playerData, "playerData");
+            this.markPersistent = Objects.requireNonNull(markPersistent, "markPersistent");
         }
-        return current;
+
+        @Override
+        public Optional<PendingSettlement> find(UUID playerId) {
+            return data(playerId).getPendingDailySettlement().map(PendingSettlement::fromData);
+        }
+
+        @Override
+        public void save(DailySettlementContext context, UUID playerId) {
+            PlayerStardewData.PendingDailySettlement scheduled =
+                    new PlayerStardewData.PendingDailySettlement(
+                            context.absoluteDay(), context.year(), context.season(), context.day(),
+                            context.sleepMinute(), context.seasonChanged());
+            if (data(playerId).schedulePendingDailySettlement(scheduled)) {
+                markPersistent.run();
+            }
+        }
+
+        @Override
+        public void clear(UUID playerId, int absoluteDay) {
+            if (data(playerId).clearPendingDailySettlement(absoluteDay)) {
+                markPersistent.run();
+            }
+        }
+
+        private PlayerStardewData data(UUID playerId) {
+            return Objects.requireNonNull(playerData.apply(playerId), "player data " + playerId);
+        }
+    }
+
+    record PendingSettlement(
+            int absoluteDay,
+            int year,
+            int season,
+            int day,
+            int sleepMinute,
+            boolean seasonChanged) {
+
+        private static PendingSettlement fromData(
+                PlayerStardewData.PendingDailySettlement pending) {
+            return new PendingSettlement(
+                    pending.absoluteDay(), pending.year(), pending.season(), pending.day(),
+                    pending.sleepMinute(), pending.seasonChanged());
+        }
+
+        private DailySettlementContext context(UUID playerId) {
+            return new DailySettlementContext(
+                    absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                    List.of(playerId), Set.of());
+        }
+    }
+
+    private static final class ProductionSettlementBackend implements SettlementBackend {
+        private final WeakReference<MinecraftServer> server;
+
+        private ProductionSettlementBackend(MinecraftServer server) {
+            this.server = new WeakReference<>(server);
+        }
+
+        @Override
+        public Optional<OvernightSettlementPayload> settleIfOnline(
+                DailySettlementContext context, UUID playerId) {
+            MinecraftServer current = server.get();
+            if (current == null) {
+                throw new IllegalStateException("Daily settlement server is no longer available");
+            }
+            ServerPlayer player = current.getPlayerList().getPlayer(playerId);
+            return player == null
+                    ? Optional.empty()
+                    : Optional.of(settleOnlinePlayer(context, player));
+        }
     }
 }

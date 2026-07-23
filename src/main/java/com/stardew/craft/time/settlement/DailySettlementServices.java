@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import java.lang.ref.WeakReference;
@@ -33,6 +34,27 @@ public final class DailySettlementServices {
             services.stop();
             SERVICES.remove(server);
         }
+    }
+
+    public static boolean ownsSettlement(Services services, UUID playerId) {
+        Objects.requireNonNull(playerId, "playerId");
+        return services != null && ownsSettlement(
+                playerId,
+                services.coordinator().context(),
+                services.barrier().isLocked(playerId),
+                services.players().pendingSettlement(playerId).isPresent());
+    }
+
+    static boolean ownsSettlement(
+            UUID playerId,
+            Optional<DailySettlementContext> activeContext,
+            boolean locked,
+            boolean pending) {
+        Objects.requireNonNull(playerId, "playerId");
+        Objects.requireNonNull(activeContext, "activeContext");
+        return locked || pending || activeContext
+                .map(context -> context.playerIds().contains(playerId))
+                .orElse(false);
     }
 
     private static Services create(MinecraftServer server) {

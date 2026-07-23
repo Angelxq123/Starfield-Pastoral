@@ -70,6 +70,19 @@ public final class DailySettlementBarrier {
         return true;
     }
 
+    public boolean replaceReady(UUID playerId, ReadyResult result) {
+        Objects.requireNonNull(playerId, "playerId");
+        Objects.requireNonNull(result, "result");
+        Integer lockedDay = locks.get(playerId);
+        ReadyResult existing = ready.get(playerId);
+        if (lockedDay == null || lockedDay != result.absoluteDay()
+                || existing == null || existing.absoluteDay() != result.absoluteDay()) {
+            return false;
+        }
+        ready.put(playerId, result);
+        return true;
+    }
+
     public boolean acknowledge(UUID playerId, int absoluteDay) {
         Objects.requireNonNull(playerId, "playerId");
         Integer lockedDay = locks.get(playerId);

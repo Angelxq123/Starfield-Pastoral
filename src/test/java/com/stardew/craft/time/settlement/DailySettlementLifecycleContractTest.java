@@ -1,6 +1,9 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.event.DimensionEventHandler;
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
+import com.stardew.craft.player.PlayerStardewData;
+import com.stardew.craft.player.SkillType;
 import com.stardew.craft.time.StardewTimeManager;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
@@ -20,7 +23,10 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -132,6 +138,66 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
+    void productionDatePublicationDoesNotRepeatBackingOrVirtualAdvanceWhenHooksRetry()
+            throws Exception {
+        StardewTimeManager time = oldNight();
+        time.setVirtualDayTime(12_000L);
+        DailySettlementContext target = context(226, 3, 0, 2);
+        AtomicInteger virtualPublications = new AtomicInteger();
+        AtomicInteger hookCalls = new AtomicInteger();
+        AtomicInteger readyCalls = new AtomicInteger();
+        DailySettlementWorkUnit publication = DailySettlementPlanFactory.publishDate(
+                target,
+                time,
+                () -> {
+                    virtualPublications.incrementAndGet();
+                    DimensionEventHandler.publishSettlementVirtualTime(
+                            time, target.absoluteDay());
+                },
+                () -> {
+                    if (hookCalls.incrementAndGet() == 1) {
+                        throw new IllegalStateException("injected post-publication failure");
+                    }
+                });
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(() -> 0L), () -> 1_000_000L, () -> 64,
+                (context, builder) -> builder.addCommit(publication),
+                new DailySettlementCoordinator.LifecycleListener() {
+                    @Override
+                    public void phaseChanged(
+                            DailySettlementContext context, DailySettlementPhase phase) {
+                    }
+
+                    @Override
+                    public void itemFailure(DailySettlementContext context, String unitName,
+                            String itemIdentity, int attempt, boolean permanent) {
+                    }
+
+                    @Override
+                    public void ready(DailySettlementContext context) {
+                        readyCalls.incrementAndGet();
+                    }
+                });
+
+        coordinator.start(target);
+        coordinator.tick();
+        assertEquals(DailySettlementPhase.COMMIT, coordinator.phase());
+        assertBackingDate(time, 3, 0, 2, StardewTimeManager.MORNING_START);
+        assertEquals((target.absoluteDay() - 1L) * 24_000L, time.getVirtualDayTime());
+        assertEquals(1, virtualPublications.get());
+        assertEquals(1, hookCalls.get());
+
+        coordinator.tick();
+
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
+        assertBackingDate(time, 3, 0, 2, StardewTimeManager.MORNING_START);
+        assertEquals((target.absoluteDay() - 1L) * 24_000L, time.getVirtualDayTime());
+        assertEquals(1, virtualPublications.get());
+        assertEquals(2, hookCalls.get());
+        assertEquals(1, readyCalls.get());
+    }
+
+    @Test
     void readyResultsRemainLockedAfterCoordinatorReturnsToIdleInThePublicationTick() {
         UUID player = UUID.randomUUID();
         DailySettlementContext target = new DailySettlementContext(
@@ -238,7 +304,7 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void playerBatchResolvesAtItemTimeKeepsDisconnectsAndPreservesPayloadOrder() throws Exception {
+    void playerBatchDefersDisconnectedConsumptionAndPreservesOnlinePayloadOrder() throws Exception {
         ParsedClass service = parse(
                 "src/main/java/com/stardew/craft/time/settlement/PlayerDailySettlementService.java");
         MethodTree create = service.method("createDailyWorkUnit", 1);
@@ -246,10 +312,10 @@ class DailySettlementLifecycleContractTest {
         MethodTree online = service.method("settleOnlinePlayer", 2);
 
         assertTrue(create.getBody().toString().contains("context.playerIds()"));
-        assertTrue(settle.getBody().toString().contains("getPlayer(playerId)"));
-        assertTrue(settle.getBody().toString().contains("if (player == null)"));
-        assertTrue(settle.getBody().toString().contains(
-                "payload = settleDisconnectedPlayer(context, playerId)"));
+        assertTrue(settle.getBody().toString().contains("settleIfOnline(context, playerId)"));
+        assertTrue(settle.getBody().toString().contains("pending.save(context, playerId)"));
+        assertFalse(settle.getBody().toString().contains("consumePayload"));
+        assertFalse(settle.getBody().toString().contains("consumePassOutResult"));
         assertTrue(settle.getBody().toString().contains("readyResults.put"));
 
         List<String> calls = invocationNames(online);
@@ -257,6 +323,193 @@ class DailySettlementLifecycleContractTest {
         assertTrue(calls.indexOf("recordOvernightShippedItems") > calls.indexOf("consumePayload"));
         assertTrue(calls.indexOf("applyPendingSkillLevelUps")
                 < calls.indexOf("buildPayload"));
+    }
+
+    @Test
+    void disconnectedPlayerSettlementSurvivesPersistenceAndCompletesExactlyOnceOnReconnect() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        PlayerStardewData original = unsettledPlayer(playerId);
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        playerData.put(playerId, original);
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(playerData);
+        PlayerDailySettlementService.PlayerDataPendingStore pending =
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++);
+        PlayerDailySettlementService service =
+                new PlayerDailySettlementService(backend, pending);
+
+        service.settlePlayer(target, playerId);
+
+        assertEquals(0, backend.settlementCalls);
+        assertTrue(backend.shippingLedgerAvailable);
+        assertTrue(backend.passOutAvailable);
+        assertEquals(500, original.getMoney());
+        assertEquals(0, original.getTotalShippingGold());
+        assertEquals(1, backend.persistenceWrites);
+        assertEquals(target.absoluteDay(), pending.find(playerId).orElseThrow().absoluteDay());
+
+        PlayerStardewData restored = PlayerStardewData.fromNBT(original.toNBT(), playerId);
+        playerData.put(playerId, restored);
+        PlayerDailySettlementService recovered = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), List.of(playerId));
+        assertTrue(barrier.publishReady(
+                playerId, recovered.readyResultOrCreate(target, playerId)));
+
+        backend.online = true;
+        recovered.onLogin(playerId, barrier);
+        recovered.onLogin(playerId, barrier);
+
+        assertEquals(1, backend.settlementCalls);
+        assertFalse(backend.shippingLedgerAvailable);
+        assertFalse(backend.passOutAvailable);
+        assertEquals(620, restored.getMoney());
+        assertEquals(120, restored.getTotalShippingGold());
+        assertEquals(restored.getMaxEnergy(), restored.getEnergy());
+        assertEquals(restored.getMaxHealth(), restored.getHealth());
+        assertEquals(1, restored.getDaysLeftForToolUpgrade());
+        assertEquals(5, restored.getRawSkillLevel(SkillType.FARMING));
+        assertTrue(restored.isRecipeUnlocked("test_recipe"));
+        assertTrue(restored.hasPendingProfessionChoices());
+        assertEquals(1, backend.questDayStartedCalls);
+        assertEquals(1, backend.masteryMorningCalls);
+        assertEquals(2, backend.persistenceWrites);
+        assertTrue(recovered.pendingSettlement(playerId).isEmpty());
+        assertEquals(5, barrier.readyResult(playerId, target.absoluteDay())
+                .payload().levelUps().size());
+    }
+
+    @Test
+    void reconnectBeforeReadyPublicationCompletesOnceWithoutPublishingEarly() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        playerData.put(playerId, unsettledPlayer(playerId));
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(playerData);
+        PlayerDailySettlementService service = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), List.of(playerId));
+
+        service.settlePlayer(target, playerId);
+        backend.online = true;
+        service.onLogin(playerId, barrier);
+
+        assertEquals(1, backend.settlementCalls);
+        assertTrue(service.pendingSettlement(playerId).isEmpty());
+        assertNull(barrier.readyResult(playerId, target.absoluteDay()));
+
+        assertTrue(barrier.publishReady(
+                playerId, service.readyResultOrCreate(target, playerId)));
+        assertEquals(5, barrier.readyResult(playerId, target.absoluteDay())
+                .payload().levelUps().size());
+        service.onLogin(playerId, barrier);
+        assertEquals(1, backend.settlementCalls);
+    }
+
+    @Test
+    void persistedPendingSettlementRecoversWithoutALiveBarrierOrServiceGraph()
+            throws Exception {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        PlayerStardewData original = unsettledPlayer(playerId);
+        playerData.put(playerId, original);
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(playerData);
+        PlayerDailySettlementService firstService = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        firstService.settlePlayer(target, playerId);
+
+        playerData.put(playerId, PlayerStardewData.fromNBT(original.toNBT(), playerId));
+        PlayerDailySettlementService recoveredService = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        backend.online = true;
+
+        DailySettlementBarrier.ReadyResult recovered =
+                recoveredService.onLogin(playerId, null).orElseThrow();
+
+        assertEquals(target.absoluteDay(), recovered.absoluteDay());
+        assertEquals(5, recovered.payload().levelUps().size());
+        assertEquals(1, backend.settlementCalls);
+        assertTrue(recoveredService.onLogin(playerId, null).isEmpty());
+        assertEquals(1, backend.settlementCalls);
+
+        ParsedClass events = parse(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementEvents.java");
+        String login = events.method("onPlayerLogin", 1).getBody().toString();
+        assertTrue(login.contains("recoverPending"));
+        assertTrue(login.indexOf("new OvernightBarrierPayload")
+                < login.indexOf("recovered.payload()"));
+        assertFalse(login.contains("DailySettlementServices.get"));
+    }
+
+    @Test
+    void productionAudienceSelectorsKeepLegacyMailValleyAndFarmScopeCoverage()
+            throws Exception {
+        AudiencePlayer overworldFarmMember = audience("overworld_farm", false);
+        AudiencePlayer valleyWithoutFarm = audience("valley_no_farm", true);
+        AudiencePlayer miningFarmMember = audience("mining_farm", false);
+        AudiencePlayer valleyFarmMember = audience("valley_farm", true);
+        List<AudiencePlayer> online = List.of(
+                overworldFarmMember, valleyWithoutFarm, miningFarmMember, valleyFarmMember);
+
+        assertEquals(online, DailySettlementPlanFactory.mailAudience(online));
+        assertEquals(
+                List.of(valleyWithoutFarm, valleyFarmMember),
+                DailySettlementPlanFactory.valleyAudience(online, AudiencePlayer::valley));
+        assertEquals(
+                Set.of(
+                        overworldFarmMember.id(), valleyWithoutFarm.id(),
+                        miningFarmMember.id(), valleyFarmMember.id()),
+                DailySettlementPlanFactory.dailyScopeAudience(online, AudiencePlayer::id));
+
+        ParsedClass factory = parse(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
+        String mail = factory.method("mail", 1).getBody().toString();
+        String valley = factory.method("onlineValleyPlayers", 0).getBody().toString();
+        String scope = factory.method("beginDailyProcess", 1).getBody().toString();
+        assertTrue(mail.contains("mailAudience"));
+        assertFalse(mail.contains("context.playerIds()"));
+        assertTrue(valley.contains("valleyAudience"));
+        assertTrue(scope.contains("dailyScopeAudience"));
+        assertFalse(scope.contains("context.playerIds()"));
+    }
+
+    @Test
+    void frozenParticipantOwnsItsLedgerBeforeTheBarrierLockAndDuringPendingRecovery()
+            throws Exception {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+
+        assertTrue(DailySettlementServices.ownsSettlement(
+                playerId, Optional.of(target), false, false));
+        assertTrue(DailySettlementServices.ownsSettlement(
+                playerId, Optional.empty(), true, false));
+        assertTrue(DailySettlementServices.ownsSettlement(
+                playerId, Optional.empty(), false, true));
+        assertFalse(DailySettlementServices.ownsSettlement(
+                playerId, Optional.empty(), false, false));
+
+        ParsedClass players = parse(
+                "src/main/java/com/stardew/craft/player/PlayerDataEventHandler.java");
+        String login = players.method("onPlayerLogin", 1).getBody().toString();
+        assertTrue(login.contains("DailySettlementServices.ownsSettlement"));
+        assertTrue(login.indexOf("DailySettlementServices.ownsSettlement")
+                < login.indexOf("OvernightSettlementTracker.consumePayload"));
     }
 
     @Test
@@ -340,8 +593,11 @@ class DailySettlementLifecycleContractTest {
         assertEquals(0, frequency(
                 invocationNames(dimension.method("advanceToNextMorning", 3)),
                 "setVirtualDayTime"));
-        assertEquals(1, frequency(
+        assertEquals(0, frequency(
                 invocationNames(dimension.method("onSettlementDatePublished", 2)),
+                "setVirtualDayTime"));
+        assertEquals(1, frequency(
+                invocationNames(dimension.method("publishSettlementVirtualTime", 2)),
                 "setVirtualDayTime"));
     }
 
@@ -400,6 +656,70 @@ class DailySettlementLifecycleContractTest {
         assertEquals(0, time.getCurrentSeason());
         assertEquals(2, time.getCurrentDay());
         assertEquals(StardewTimeManager.MORNING_START, time.getCurrentTime());
+    }
+
+    private static PlayerStardewData unsettledPlayer(UUID playerId) {
+        PlayerStardewData data = new PlayerStardewData(playerId);
+        data.setMoney(500);
+        data.setEnergy(10);
+        data.setHealth(10);
+        data.setToolBeingUpgraded("stardewcraft:copper_axe");
+        data.setDaysLeftForToolUpgrade(2);
+        data.addExperience(SkillType.FARMING, 2_150);
+        assertEquals(5, data.getRawSkillLevel(SkillType.FARMING));
+        return data;
+    }
+
+    private static AudiencePlayer audience(String name, boolean valley) {
+        return new AudiencePlayer(UUID.nameUUIDFromBytes(name.getBytes()), valley);
+    }
+
+    private record AudiencePlayer(UUID id, boolean valley) {
+    }
+
+    private static final class RecordingSettlementBackend
+            implements PlayerDailySettlementService.SettlementBackend {
+        private final Map<UUID, PlayerStardewData> playerData;
+        private boolean online;
+        private boolean shippingLedgerAvailable = true;
+        private boolean passOutAvailable = true;
+        private int settlementCalls;
+        private int persistenceWrites;
+        private int questDayStartedCalls;
+        private int masteryMorningCalls;
+
+        private RecordingSettlementBackend(Map<UUID, PlayerStardewData> playerData) {
+            this.playerData = playerData;
+        }
+
+        @Override
+        public Optional<OvernightSettlementPayload> settleIfOnline(
+                DailySettlementContext context, UUID playerId) {
+            if (!online) {
+                return Optional.empty();
+            }
+            settlementCalls++;
+            PlayerStardewData data = playerData.get(playerId);
+            if (shippingLedgerAvailable) {
+                shippingLedgerAvailable = false;
+                data.setMoney(data.getMoney() + 120);
+                data.addTotalShippingGold(120);
+            }
+            passOutAvailable = false;
+            data.setEnergy(data.getMaxEnergy());
+            data.setHealth(data.getMaxHealth());
+            data.setDaysLeftForToolUpgrade(data.getDaysLeftForToolUpgrade() - 1);
+            List<PlayerStardewData.SkillLevelUp> levels = data.applyPendingSkillLevelUps();
+            data.unlockRecipe("test_recipe");
+            questDayStartedCalls++;
+            masteryMorningCalls++;
+            List<OvernightSettlementPayload.LevelUpData> payloadLevels = levels.stream()
+                    .map(level -> new OvernightSettlementPayload.LevelUpData(
+                            level.skill().getId(), level.newLevel()))
+                    .toList();
+            return Optional.of(new OvernightSettlementPayload(
+                    context.absoluteDay(), List.of(), payloadLevels));
+        }
     }
 
     private static StardewTimeManager oldNight() {

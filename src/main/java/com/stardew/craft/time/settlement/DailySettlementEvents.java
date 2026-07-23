@@ -31,9 +31,18 @@ public final class DailySettlementEvents {
         DailySettlementServices.Services services =
                 DailySettlementServices.find(player.server);
         if (services == null) {
+            DailySettlementBarrier.ReadyResult recovered =
+                    PlayerDailySettlementService.recoverPending(player).orElse(null);
+            if (recovered != null) {
+                PacketDistributor.sendToPlayer(
+                        player, new OvernightBarrierPayload(recovered.absoluteDay(), true));
+                PacketDistributor.sendToPlayer(player, recovered.payload());
+                com.stardew.craft.cutscene.server.WakeUpEventScheduler
+                        .enqueueAtNightSettlement(player);
+            }
             return;
         }
-        services.players().onLogin(player.getUUID());
+        services.players().onLogin(player.getUUID(), services.barrier());
         int absoluteDay = services.barrier().lockedDay(player.getUUID());
         if (absoluteDay <= 0) {
             return;

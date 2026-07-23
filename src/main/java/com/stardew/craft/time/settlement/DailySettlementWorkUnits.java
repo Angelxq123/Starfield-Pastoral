@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class DailySettlementWorkUnits {
     private DailySettlementWorkUnits() {
@@ -49,6 +50,14 @@ public final class DailySettlementWorkUnits {
         Objects.requireNonNull(children, "children");
         Objects.requireNonNull(onClose, "onClose");
         return new SequenceWorkUnit(name, List.copyOf(children), onClose);
+    }
+
+    public static DailySettlementWorkUnit deferred(
+            String name,
+            Supplier<? extends DailySettlementWorkUnit> supplier) {
+        return new DeferredWorkUnit(
+                Objects.requireNonNull(name, "name"),
+                Objects.requireNonNull(supplier, "supplier"));
     }
 
     public static void drain(DailySettlementWorkUnit unit) {
@@ -210,6 +219,7 @@ public final class DailySettlementWorkUnits {
         private final Runnable onClose;
         private int cursor;
         private boolean closed;
+        private Throwable closeFailure;
 
         private SequenceWorkUnit(
                 String name,
@@ -265,22 +275,15 @@ public final class DailySettlementWorkUnits {
                 return;
             }
             closed = true;
-            RuntimeException failure = null;
             for (int index = 0; index < children.size(); index++) {
-                try {
-                    closeChild(index);
-                } catch (RuntimeException exception) {
-                    failure = appendFailure(failure, exception);
-                }
+                closeChildSafely(index);
             }
             try {
                 onClose.run();
-            } catch (RuntimeException exception) {
-                failure = appendFailure(failure, exception);
+            } catch (RuntimeException | Error failure) {
+                recordCloseFailure(failure);
             }
-            if (failure != null) {
-                throw failure;
-            }
+            rethrowCloseFailure();
         }
 
         private DailySettlementWorkUnit requireCurrentChild() {
@@ -293,8 +296,16 @@ public final class DailySettlementWorkUnits {
 
         private void advanceCompletedChildren() {
             while (cursor < children.size() && children.get(cursor).isComplete()) {
-                closeChild(cursor);
+                closeChildSafely(cursor);
                 cursor++;
+            }
+        }
+
+        private void closeChildSafely(int index) {
+            try {
+                closeChild(index);
+            } catch (RuntimeException | Error failure) {
+                recordCloseFailure(failure);
             }
         }
 
@@ -306,14 +317,124 @@ public final class DailySettlementWorkUnits {
             children.get(index).close();
         }
 
-        private static RuntimeException appendFailure(
-                RuntimeException existing,
-                RuntimeException addition) {
-            if (existing == null) {
-                return addition;
+        private void recordCloseFailure(Throwable failure) {
+            if (closeFailure == null) {
+                closeFailure = failure;
+            } else if (closeFailure != failure) {
+                closeFailure.addSuppressed(failure);
             }
-            existing.addSuppressed(addition);
-            return existing;
+        }
+
+        private void rethrowCloseFailure() {
+            if (closeFailure instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (closeFailure instanceof Error error) {
+                throw error;
+            }
+        }
+    }
+
+    private static final class DeferredWorkUnit implements DailySettlementWorkUnit {
+        private final String name;
+        private final Supplier<? extends DailySettlementWorkUnit> supplier;
+        private DailySettlementWorkUnit delegate;
+        private Throwable creationFailure;
+        private boolean initialized;
+        private boolean skipped;
+        private boolean closed;
+
+        private DeferredWorkUnit(
+                String name,
+                Supplier<? extends DailySettlementWorkUnit> supplier) {
+            this.name = name;
+            this.supplier = supplier;
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public String currentItemIdentity() {
+            initialize();
+            return creationFailure == null && delegate != null
+                    ? delegate.currentItemIdentity()
+                    : name;
+        }
+
+        @Override
+        public boolean isComplete() {
+            if (closed || skipped) {
+                return true;
+            }
+            initialize();
+            return creationFailure == null && delegate.isComplete();
+        }
+
+        @Override
+        public void runNext() throws Exception {
+            requireOpen();
+            initialize();
+            rethrowCreationFailure();
+            delegate.runNext();
+        }
+
+        @Override
+        public void skipFailedItem() {
+            requireOpen();
+            initialize();
+            if (creationFailure != null) {
+                skipped = true;
+                return;
+            }
+            delegate.skipFailedItem();
+        }
+
+        @Override
+        public int maxRetries() {
+            requireOpen();
+            initialize();
+            return creationFailure == null ? delegate.maxRetries() : 0;
+        }
+
+        @Override
+        public synchronized void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            if (delegate != null) {
+                delegate.close();
+            }
+        }
+
+        private synchronized void initialize() {
+            if (initialized || closed) {
+                return;
+            }
+            initialized = true;
+            try {
+                delegate = Objects.requireNonNull(supplier.get(), "deferred work unit");
+            } catch (RuntimeException | Error failure) {
+                creationFailure = failure;
+            }
+        }
+
+        private void requireOpen() {
+            if (closed) {
+                throw new IllegalStateException("Work unit is already closed: " + name);
+            }
+        }
+
+        private void rethrowCreationFailure() {
+            if (creationFailure instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (creationFailure instanceof Error error) {
+                throw error;
+            }
         }
     }
 }

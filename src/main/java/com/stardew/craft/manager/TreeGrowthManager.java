@@ -125,6 +125,9 @@ public class TreeGrowthManager extends SavedData {
 	public DailySettlementWorkUnit createDailyWorkUnit(
 			ServerLevel level,
 			DailySettlementContext context) {
+		if (isProcessing) {
+			throw new IllegalStateException("Tree daily work is already active");
+		}
 		Objects.requireNonNull(level, "level");
 		Objects.requireNonNull(context, "context");
 		isProcessing = true;

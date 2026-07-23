@@ -6,10 +6,13 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.EnhancedForLoopTree;
 import com.sun.source.tree.ForLoopTree;
+import com.sun.source.tree.IfTree;
+import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.TryTree;
 import com.sun.source.tree.VariableTree;
@@ -33,9 +36,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -131,6 +136,126 @@ class RegisteredDailyManagerWorkUnitTest {
     }
 
     @Test
+    void sequenceDefersCompletedChildCloseFailureUntilFinalCloseWithoutSkippingNextChild()
+            throws Exception {
+        List<String> events = new ArrayList<>();
+        RuntimeException closeFailure = new RuntimeException("close-a");
+        DailySettlementWorkUnit first = DailySettlementWorkUnits.atomic(
+                "a", () -> events.add("run-a"), () -> {
+                    events.add("close-a");
+                    throw closeFailure;
+                });
+        DailySettlementWorkUnit second = DailySettlementWorkUnits.atomic(
+                "b", () -> events.add("run-b"), () -> events.add("close-b"));
+        DailySettlementWorkUnit sequence = DailySettlementWorkUnits.sequence(
+                "sequence", List.of(first, second), () -> events.add("outer-cleanup"));
+
+        assertDoesNotThrow(sequence::runNext);
+        assertEquals("b", sequence.currentItemIdentity());
+        sequence.runNext();
+        assertEquals(List.of("run-a", "close-a", "run-b", "close-b"), events);
+
+        RuntimeException actual = assertThrows(RuntimeException.class, sequence::close);
+        assertSame(closeFailure, actual);
+        assertEquals(List.of(
+                "run-a", "close-a", "run-b", "close-b", "outer-cleanup"), events);
+        assertDoesNotThrow(sequence::close);
+    }
+
+    @Test
+    void sequenceClosePreservesErrorAfterClosingRemainingChildrenAndOuter() {
+        List<String> events = new ArrayList<>();
+        Error firstFailure = new AssertionError("close-a");
+        RuntimeException secondFailure = new RuntimeException("close-b");
+        Error outerFailure = new AssertionError("outer");
+        DailySettlementWorkUnit first = DailySettlementWorkUnits.atomic("a", () -> {}, () -> {
+            events.add("close-a");
+            throw firstFailure;
+        });
+        DailySettlementWorkUnit second = DailySettlementWorkUnits.atomic("b", () -> {}, () -> {
+            events.add("close-b");
+            throw secondFailure;
+        });
+        DailySettlementWorkUnit sequence = DailySettlementWorkUnits.sequence(
+                "sequence", List.of(first, second), () -> {
+                    events.add("outer-cleanup");
+                    throw outerFailure;
+                });
+
+        Error actual = assertThrows(Error.class, sequence::close);
+
+        assertSame(firstFailure, actual);
+        assertEquals(List.of(secondFailure, outerFailure), List.of(actual.getSuppressed()));
+        assertEquals(List.of("close-a", "close-b", "outer-cleanup"), events);
+        assertDoesNotThrow(sequence::close);
+    }
+
+    @Test
+    void emptySequenceClosesOuterExactlyOnce() {
+        AtomicInteger outerCloses = new AtomicInteger();
+        DailySettlementWorkUnit sequence = DailySettlementWorkUnits.sequence(
+                "empty", List.of(), outerCloses::incrementAndGet);
+
+        assertTrue(sequence.isComplete());
+        sequence.close();
+        sequence.close();
+
+        assertEquals(1, outerCloses.get());
+    }
+
+    @Test
+    void deferredCreatesItsChildOnceOnlyAfterItsSequencePhaseIsReached() throws Exception {
+        AtomicInteger supplierCalls = new AtomicInteger();
+        AtomicInteger childCloses = new AtomicInteger();
+        List<String> events = new ArrayList<>();
+        DailySettlementWorkUnit first = DailySettlementWorkUnits.cursor(
+                "first", List.of("sapling"), value -> value, events::add, () -> {});
+        DailySettlementWorkUnit deferred = DailySettlementWorkUnits.deferred("mature-phase", () -> {
+            supplierCalls.incrementAndGet();
+            return DailySettlementWorkUnits.cursor(
+                    "mature", List.of("bad", "good"), value -> value, value -> {
+                        if (value.equals("bad")) {
+                            throw new Exception("failure");
+                        }
+                        events.add(value);
+                    }, childCloses::incrementAndGet);
+        });
+        DailySettlementWorkUnit sequence = DailySettlementWorkUnits.sequence(
+                "fruit", List.of(first, deferred), () -> {});
+
+        assertEquals(0, supplierCalls.get());
+        assertEquals("sapling", sequence.currentItemIdentity());
+        assertEquals(0, supplierCalls.get());
+        sequence.runNext();
+        assertEquals(1, supplierCalls.get());
+        assertEquals("bad", sequence.currentItemIdentity());
+        assertEquals(0, sequence.maxRetries());
+        assertThrows(Exception.class, sequence::runNext);
+        sequence.skipFailedItem();
+        sequence.runNext();
+        sequence.close();
+
+        assertEquals(List.of("sapling", "good"), events);
+        assertEquals(1, supplierCalls.get());
+        assertEquals(1, childCloses.get());
+    }
+
+    @Test
+    void closingDeferredBeforeItsPhaseDoesNotCallSupplier() {
+        AtomicInteger supplierCalls = new AtomicInteger();
+        DailySettlementWorkUnit deferred = DailySettlementWorkUnits.deferred("unused", () -> {
+            supplierCalls.incrementAndGet();
+            return DailySettlementWorkUnits.atomic("late", () -> {}, () -> {});
+        });
+
+        deferred.close();
+        deferred.close();
+
+        assertEquals(0, supplierCalls.get());
+        assertTrue(deferred.isComplete());
+    }
+
+    @Test
     void legacyEntrypointsOnlyDrainTheCreatedCurrentDayWorkUnit() throws IOException {
         for (ManagerContract manager : MANAGERS) {
             MethodTree legacy = parseMethod(manager, manager.legacyMethod(), 1);
@@ -170,11 +295,24 @@ class RegisteredDailyManagerWorkUnitTest {
             List<AssignmentTree> assignments = scan(create, AssignmentTree.class);
             int processingTrue = indexOfAssignment(assignments, manager.processingField(), "true");
             assertTrue(processingTrue >= 0, manager.className() + " must enter processing at creation");
+            List<IfTree> ownershipGuards = create.getBody().getStatements().stream()
+                    .filter(IfTree.class::isInstance)
+                    .map(IfTree.class::cast)
+                    .filter(candidate -> isIdentifier(
+                            candidate.getCondition(), manager.processingField()))
+                    .toList();
+            assertEquals(1, ownershipGuards.size(),
+                    manager.className() + " must reject overlapping work units");
+            assertTrue(ownershipGuards.getFirst().getThenStatement().toString()
+                    .contains("new IllegalStateException"));
+            int ownershipGuard = create.getBody().getStatements().indexOf(ownershipGuards.getFirst());
             int processingStatement = directStatementIndexContaining(
                     create, manager.processingField() + " = true");
             int snapshotTry = directStatementIndex(create, TryTree.class);
-            assertTrue(processingStatement >= 0 && processingStatement < snapshotTry,
-                    manager.className() + " must enter processing before snapshot creation");
+            assertTrue(ownershipGuard >= 0 && ownershipGuard < processingStatement,
+                    manager.className() + " must guard before claiming processing ownership");
+            assertTrue(processingStatement < snapshotTry,
+                    manager.className() + " must claim ownership before snapshot creation");
 
             List<NewClassTree> arrayLists = scan(create, NewClassTree.class).stream()
                     .filter(node -> node.getIdentifier().toString().endsWith("ArrayList<>"))
@@ -269,19 +407,39 @@ class RegisteredDailyManagerWorkUnitTest {
     }
 
     @Test
-    void fruitSnapshotTagsSaplingsBeforeMatureTreesAndCopiesSaplingValues() throws IOException {
+    void fruitDefersMatureSnapshotUntilAfterFrozenSaplingCursor() throws IOException {
         ManagerContract fruit = MANAGERS.get(2);
         MethodTree create = parseMethod(fruit, "createDailyWorkUnit", 2);
-        List<EnhancedForLoopTree> loops = scan(create, EnhancedForLoopTree.class);
-        assertEquals(2, loops.size());
-        assertTrue(loops.getFirst().getExpression().toString().contains("saplings.entrySet()"));
-        assertTrue(loops.get(1).getExpression().toString().contains("matureTrees"));
-        String saplingLoop = loops.getFirst().toString();
-        String matureLoop = loops.get(1).toString();
+        List<EnhancedForLoopTree> createLoops = scan(create, EnhancedForLoopTree.class);
+        assertEquals(1, createLoops.size());
+        assertTrue(createLoops.getFirst().getExpression().toString().contains("saplings.entrySet()"));
+        String saplingLoop = createLoops.getFirst().toString();
         assertTrue(saplingLoop.contains("SAPLING"));
         assertTrue(saplingLoop.contains("daysRemaining"));
         assertTrue(saplingLoop.contains("type"));
+
+        List<MethodInvocationTree> deferredCalls = invocations(create).stream()
+                .filter(call -> methodName(call).equals("deferred"))
+                .toList();
+        assertEquals(1, deferredCalls.size());
+        assertEquals(2, deferredCalls.getFirst().getArguments().size());
+        assertTrue(deferredCalls.getFirst().getArguments().get(1) instanceof LambdaExpressionTree);
+        LambdaExpressionTree matureFactory =
+                (LambdaExpressionTree) deferredCalls.getFirst().getArguments().get(1);
+        assertTrue(invocations(matureFactory).stream()
+                .anyMatch(call -> methodName(call).equals("createMatureDailyWorkUnit")));
+
+        MethodTree createMature = parseMethod(fruit, "createMatureDailyWorkUnit", 1);
+        List<EnhancedForLoopTree> matureLoops = scan(createMature, EnhancedForLoopTree.class);
+        assertEquals(1, matureLoops.size());
+        assertTrue(matureLoops.getFirst().getExpression().toString().contains("matureTrees"));
+        String matureLoop = matureLoops.getFirst().toString();
         assertTrue(matureLoop.contains("MATURE"));
+        assertEquals(1, scan(createMature, NewClassTree.class).stream()
+                .filter(node -> node.getIdentifier().toString().endsWith("ArrayList<>"))
+                .filter(node -> node.getArguments().stream()
+                        .anyMatch(argument -> argument.toString().equals("matureTrees")))
+                .count());
 
         MethodTree identity = parseMethod(fruit, "dailyItemIdentity", 1);
         assertTrue(identity.toString().contains("kind"));
@@ -371,6 +529,15 @@ class RegisteredDailyManagerWorkUnitTest {
     private static void assertInvocation(Tree tree, String expectedName) {
         assertTrue(tree instanceof MethodInvocationTree, () -> "expected invocation: " + tree);
         assertEquals(expectedName, methodName((MethodInvocationTree) tree));
+    }
+
+    private static boolean isIdentifier(Tree tree, String expectedName) {
+        Tree current = tree;
+        while (current instanceof ParenthesizedTree parenthesized) {
+            current = parenthesized.getExpression();
+        }
+        return current instanceof IdentifierTree identifier
+                && identifier.getName().contentEquals(expectedName);
     }
 
     private static String methodName(MethodInvocationTree invocation) {

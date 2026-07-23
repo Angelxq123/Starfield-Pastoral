@@ -135,33 +135,53 @@ public class FruitTreeGrowthManager extends SavedData {
     public DailySettlementWorkUnit createDailyWorkUnit(
             ServerLevel level,
             DailySettlementContext context) {
+        if (processing) {
+            throw new IllegalStateException("Fruit tree daily work is already active");
+        }
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(context, "context");
         processing = true;
         try {
-            List<DailyTreeEntry> snapshot = new ArrayList<>(saplings.size() + matureTrees.size());
+            List<DailyTreeEntry> saplingSnapshot = new ArrayList<>(saplings.size());
             for (Map.Entry<GlobalPos, SaplingEntry> entry : new ArrayList<>(saplings.entrySet())) {
                 SaplingEntry sapling = entry.getValue();
-                snapshot.add(new DailyTreeEntry(
+                saplingSnapshot.add(new DailyTreeEntry(
                         DailyTreeKind.SAPLING,
                         entry.getKey(),
                         sapling.type,
                         sapling.daysRemaining));
             }
-            for (GlobalPos globalPos : new ArrayList<>(matureTrees)) {
-                snapshot.add(new DailyTreeEntry(
-                        DailyTreeKind.MATURE, globalPos, null, 0));
-            }
-            return DailySettlementWorkUnits.cursor(
+            DailySettlementWorkUnit saplingWork = DailySettlementWorkUnits.cursor(
                     "fruit_tree_growth",
-                    snapshot,
+                    saplingSnapshot,
                     FruitTreeGrowthManager::dailyItemIdentity,
                     entry -> processRegisteredTreeDay(level, entry),
+                    () -> {});
+            DailySettlementWorkUnit matureWork = DailySettlementWorkUnits.deferred(
+                    "fruit_tree_mature_phase",
+                    () -> createMatureDailyWorkUnit(level));
+            return DailySettlementWorkUnits.sequence(
+                    "fruit_tree_daily",
+                    List.of(saplingWork, matureWork),
                     this::finishDailyProcessing);
         } catch (RuntimeException | Error exception) {
             finishDailyProcessing();
             throw exception;
         }
+    }
+
+    private DailySettlementWorkUnit createMatureDailyWorkUnit(ServerLevel level) {
+        List<DailyTreeEntry> matureSnapshot = new ArrayList<>(matureTrees.size());
+        for (GlobalPos globalPos : new ArrayList<>(matureTrees)) {
+            matureSnapshot.add(new DailyTreeEntry(
+                    DailyTreeKind.MATURE, globalPos, null, 0));
+        }
+        return DailySettlementWorkUnits.cursor(
+                "fruit_tree_mature_growth",
+                matureSnapshot,
+                FruitTreeGrowthManager::dailyItemIdentity,
+                entry -> processRegisteredTreeDay(level, entry),
+                () -> {});
     }
 
     private void processRegisteredTreeDay(ServerLevel level, DailyTreeEntry entry) {

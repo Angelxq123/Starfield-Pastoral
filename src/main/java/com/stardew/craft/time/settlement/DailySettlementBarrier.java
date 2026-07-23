@@ -111,6 +111,16 @@ public final class DailySettlementBarrier {
     public static record ReadyResult(int absoluteDay, OvernightSettlementPayload payload) {
         public ReadyResult {
             Objects.requireNonNull(payload, "payload");
+            if (absoluteDay <= 0) {
+                throw new IllegalArgumentException("absoluteDay must be positive");
+            }
+            if (payload.absoluteDay() <= 0) {
+                throw new IllegalArgumentException("payload absoluteDay must be positive");
+            }
+            if (payload.absoluteDay() != absoluteDay) {
+                throw new IllegalArgumentException(
+                        "payload absoluteDay must match ready result: " + payload.absoluteDay());
+            }
         }
     }
 }

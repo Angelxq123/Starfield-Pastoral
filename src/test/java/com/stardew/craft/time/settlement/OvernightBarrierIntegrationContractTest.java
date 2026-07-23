@@ -6,9 +6,11 @@ import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionStatementTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.MemberReferenceTree;
+import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewClassTree;
@@ -236,7 +238,14 @@ class OvernightBarrierIntegrationContractTest {
     void readyAckAcknowledgesOnlyItsPayloadDay() throws IOException {
         ClassTree ackClass = classTree(ACK, "OvernightReadyAckPayload");
         assertEquals(List.of("absoluteDay"), recordComponents(ackClass));
+        List<? extends ExpressionTree> codec = compositeCodecArguments(ackClass);
+        assertEquals(3, codec.size());
+        assertMemberSelect(codec.get(0), "ByteBufCodecs", "VAR_INT");
+        assertMemberReference(codec.get(1), "OvernightReadyAckPayload", "absoluteDay");
+        assertConstructorReference(codec.get(2), "OvernightReadyAckPayload");
+
         MethodTree handle = method(ackClass, "handle", 2);
+        assertEnqueues(handle, "acknowledge");
         BlockTree work = enqueueBlock(handle);
         MethodInvocationTree acknowledge = invocations(work).stream()
                 .filter(invocation -> invocationName(invocation).equals("acknowledge"))
@@ -251,11 +260,19 @@ class OvernightBarrierIntegrationContractTest {
     void barrierPayloadCarriesDayAndLockStateToTheClientHandler() throws IOException {
         ClassTree payload = classTree(BARRIER_PAYLOAD, "OvernightBarrierPayload");
         assertEquals(List.of("absoluteDay", "locked"), recordComponents(payload));
-        VariableTree codec = field(payload, "STREAM_CODEC");
-        assertTrue(hasMemberReference(codec.getInitializer(), "absoluteDay"));
-        assertTrue(hasMemberReference(codec.getInitializer(), "locked"));
+        List<? extends ExpressionTree> codec = compositeCodecArguments(payload);
+        assertEquals(5, codec.size());
+        assertMemberSelect(codec.get(0), "ByteBufCodecs", "VAR_INT");
+        assertMemberReference(codec.get(1), "OvernightBarrierPayload", "absoluteDay");
+        assertMemberSelect(codec.get(2), "ByteBufCodecs", "BOOL");
+        assertMemberReference(codec.get(3), "OvernightBarrierPayload", "locked");
+        assertConstructorReference(codec.get(4), "OvernightBarrierPayload");
+
+        MethodTree handle = method(payload, "handle", 2);
+        assertEnqueues(handle, "handleClient");
         MethodTree handleClient = method(payload, "handleClient", 1);
-        assertTrue(hasInvocation(handleClient.getBody(), "receiveBarrierState"));
+        assertTrue(hasInvocationWithSelect(
+                handleClient.getBody(), "ClientOvernightHandler.receiveBarrierState"));
     }
 
     @Test
@@ -458,12 +475,66 @@ class OvernightBarrierIntegrationContractTest {
     }
 
     private static void assertRegistration(MethodTree register, String direction, String payload) {
-        boolean found = invocations(register.getBody()).stream()
+        String owner = "com.stardew.craft.network.overnight." + payload;
+        MethodInvocationTree registration = invocations(register.getBody()).stream()
                 .filter(invocation -> invocationName(invocation).equals(direction))
                 .filter(invocation -> invocation.getArguments().size() == 3)
-                .anyMatch(invocation -> invocation.getArguments().getFirst().toString()
-                        .equals("com.stardew.craft.network.overnight." + payload + ".TYPE"));
-        assertTrue(found, payload + " must be registered with " + direction);
+                .filter(invocation -> isMemberSelect(invocation.getArguments().get(0), owner, "TYPE"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(payload + " must be registered with " + direction));
+
+        assertMemberSelect(registration.getArguments().get(0), owner, "TYPE");
+        assertMemberSelect(registration.getArguments().get(1), owner, "STREAM_CODEC");
+        assertMemberReference(registration.getArguments().get(2), owner, "handle");
+    }
+
+    private static List<? extends ExpressionTree> compositeCodecArguments(ClassTree payload) {
+        ExpressionTree initializer = field(payload, "STREAM_CODEC").getInitializer();
+        assertTrue(initializer instanceof MethodInvocationTree,
+                "STREAM_CODEC must be initialized by StreamCodec.composite");
+        MethodInvocationTree composite = (MethodInvocationTree) initializer;
+        assertEquals("StreamCodec.composite", composite.getMethodSelect().toString());
+        return composite.getArguments();
+    }
+
+    private static boolean isMemberSelect(Tree tree, String owner, String member) {
+        return tree instanceof MemberSelectTree select
+                && select.getExpression().toString().equals(owner)
+                && select.getIdentifier().contentEquals(member);
+    }
+
+    private static void assertMemberSelect(Tree tree, String owner, String member) {
+        assertTrue(isMemberSelect(tree, owner, member),
+                () -> "expected member select " + owner + "." + member + ", got " + tree);
+    }
+
+    private static void assertMemberReference(Tree tree, String owner, String member) {
+        assertTrue(tree instanceof MemberReferenceTree,
+                () -> "expected member reference " + owner + "::" + member + ", got " + tree);
+        MemberReferenceTree reference = (MemberReferenceTree) tree;
+        assertEquals(MemberReferenceTree.ReferenceMode.INVOKE, reference.getMode());
+        assertEquals(owner, reference.getQualifierExpression().toString());
+        assertTrue(reference.getName().contentEquals(member));
+    }
+
+    private static void assertConstructorReference(Tree tree, String owner) {
+        assertTrue(tree instanceof MemberReferenceTree,
+                () -> "expected constructor reference " + owner + "::new, got " + tree);
+        MemberReferenceTree reference = (MemberReferenceTree) tree;
+        assertEquals(MemberReferenceTree.ReferenceMode.NEW, reference.getMode());
+        assertEquals(owner, reference.getQualifierExpression().toString());
+    }
+
+    private static void assertEnqueues(MethodTree handler, String enclosedInvocation) {
+        List<MethodInvocationTree> enqueueCalls = invocations(handler.getBody()).stream()
+                .filter(invocation -> invocation.getMethodSelect().toString().equals("context.enqueueWork"))
+                .toList();
+        assertEquals(1, enqueueCalls.size(), "handler must enqueue exactly one work item");
+        MethodInvocationTree enqueue = enqueueCalls.getFirst();
+        assertEquals(1, enqueue.getArguments().size());
+        assertTrue(enqueue.getArguments().getFirst() instanceof LambdaExpressionTree);
+        LambdaExpressionTree work = (LambdaExpressionTree) enqueue.getArguments().getFirst();
+        assertTrue(hasInvocation(work.getBody(), enclosedInvocation));
     }
 
     private static boolean hasInvocation(Tree tree, String name) {

@@ -60,7 +60,7 @@ class DailySettlementBarrierTest {
     void publishReadyRequiresTheMatchingLockAndKeepsItLocked() {
         DailySettlementBarrier barrier = new DailySettlementBarrier();
         UUID player = UUID.randomUUID();
-        OvernightSettlementPayload payload = payload();
+        OvernightSettlementPayload payload = payload(15);
         DailySettlementBarrier.ReadyResult ready =
                 new DailySettlementBarrier.ReadyResult(15, payload);
         barrier.lockAll(15, List.of(player));
@@ -79,14 +79,14 @@ class DailySettlementBarrierTest {
         UUID unlocked = UUID.randomUUID();
         barrier.lockAll(20, List.of(player));
         DailySettlementBarrier.ReadyResult current =
-                new DailySettlementBarrier.ReadyResult(20, payload());
+                new DailySettlementBarrier.ReadyResult(20, payload(20));
 
         assertFalse(barrier.publishReady(player,
-                new DailySettlementBarrier.ReadyResult(19, payload())));
+                new DailySettlementBarrier.ReadyResult(19, payload(19))));
         assertFalse(barrier.publishReady(unlocked, current));
         assertTrue(barrier.publishReady(player, current));
         assertFalse(barrier.publishReady(player,
-                new DailySettlementBarrier.ReadyResult(20, payload())));
+                new DailySettlementBarrier.ReadyResult(20, payload(20))));
 
         assertSame(current, barrier.readyResult(player, 20));
         assertNull(barrier.readyResult(player, 19));
@@ -97,7 +97,7 @@ class DailySettlementBarrierTest {
         DailySettlementBarrier barrier = new DailySettlementBarrier();
         UUID player = UUID.randomUUID();
         DailySettlementBarrier.ReadyResult ready =
-                new DailySettlementBarrier.ReadyResult(31, payload());
+                new DailySettlementBarrier.ReadyResult(31, payload(31));
         barrier.lockAll(31, List.of(player));
         barrier.publishReady(player, ready);
 
@@ -117,7 +117,7 @@ class DailySettlementBarrierTest {
         DailySettlementBarrier barrier = new DailySettlementBarrier();
         UUID stablePlayerId = UUID.randomUUID();
         DailySettlementBarrier.ReadyResult ready =
-                new DailySettlementBarrier.ReadyResult(54, payload());
+                new DailySettlementBarrier.ReadyResult(54, payload(54));
         barrier.lockAll(54, List.of(stablePlayerId));
         barrier.publishReady(stablePlayerId, ready);
 
@@ -135,7 +135,45 @@ class DailySettlementBarrierTest {
                 () -> new DailySettlementBarrier.ReadyResult(1, null));
     }
 
-    private static OvernightSettlementPayload payload() {
-        return new OvernightSettlementPayload(List.of(), List.of());
+    @Test
+    void readyResultRejectsNonPositiveWrapperDay() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new DailySettlementBarrier.ReadyResult(0, payload(1)));
+    }
+
+    @Test
+    void readyResultRejectsLegacyOrNonPositivePayloadDay() {
+        OvernightSettlementPayload legacyPayload =
+                new OvernightSettlementPayload(List.of(), List.of());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new DailySettlementBarrier.ReadyResult(15, legacyPayload));
+        assertThrows(IllegalArgumentException.class,
+                () -> new DailySettlementBarrier.ReadyResult(15, payload(0)));
+    }
+
+    @Test
+    void readyResultRejectsMismatchedPayloadDay() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new DailySettlementBarrier.ReadyResult(15, payload(16)));
+    }
+
+    @Test
+    void matchingPositiveReadyDayPublishesAndAcknowledges() {
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        UUID player = UUID.randomUUID();
+        DailySettlementBarrier.ReadyResult ready =
+                new DailySettlementBarrier.ReadyResult(73, payload(73));
+        barrier.lockAll(73, List.of(player));
+
+        assertTrue(barrier.publishReady(player, ready));
+        assertSame(ready, barrier.readyResult(player, 73));
+        assertTrue(barrier.acknowledge(player, 73));
+        assertFalse(barrier.isLocked(player));
+        assertNull(barrier.readyResult(player, 73));
+    }
+
+    private static OvernightSettlementPayload payload(int absoluteDay) {
+        return new OvernightSettlementPayload(absoluteDay, List.of(), List.of());
     }
 }

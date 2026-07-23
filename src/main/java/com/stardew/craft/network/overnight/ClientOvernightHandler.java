@@ -10,6 +10,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import com.stardew.craft.client.gui.overnight.ShippingMenuScreen;
@@ -67,6 +68,22 @@ public class ClientOvernightHandler {
 
     public static int currentAbsoluteDay() {
         return currentAbsoluteDay;
+    }
+
+    @SubscribeEvent
+    public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        resetConnectionState();
+    }
+
+    static void resetConnectionState() {
+        currentAbsoluteDay = -1;
+        locked = false;
+        pendingReadyPayload = null;
+        lastAcknowledgedAbsoluteDay = -1;
+        sequenceActive = false;
+        PENDING_SCREENS.clear();
+        activeScreen = null;
+        LOCAL_OVERNIGHT_PROFESSIONS.clear();
     }
 
     public static void receiveBarrierState(OvernightBarrierPayload payload) {

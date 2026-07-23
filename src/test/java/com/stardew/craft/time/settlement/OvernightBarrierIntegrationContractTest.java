@@ -175,6 +175,41 @@ class OvernightBarrierIntegrationContractTest {
     }
 
     @Test
+    void clientLogoutEventDelegatesToTheSingleConnectionResetMethod() throws IOException {
+        MethodTree logout = method(CLIENT_HANDLER, "ClientOvernightHandler", "onClientLogout", 1);
+        assertEquals("ClientPlayerNetworkEvent.LoggingOut",
+                logout.getParameters().getFirst().getType().toString());
+        assertTrue(logout.getModifiers().getAnnotations().stream()
+                .anyMatch(annotation -> annotation.getAnnotationType().toString().equals("SubscribeEvent")));
+        assertEquals(1, logout.getBody().getStatements().size(),
+                "logout handler must only delegate connection-state cleanup");
+        assertTrue(hasInvocation(logout.getBody().getStatements().getFirst(), "resetConnectionState"));
+        assertFalse(hasInvocation(logout.getBody(), "sendToServer"));
+        assertFalse(hasInvocation(logout.getBody(), "setScreen"));
+    }
+
+    @Test
+    void connectionResetClearsBarrierWatermarkAndSettlementSequenceWithoutScreenOrPackets() throws IOException {
+        MethodTree reset = method(CLIENT_HANDLER, "ClientOvernightHandler", "resetConnectionState", 0);
+        BlockTree body = reset.getBody();
+
+        assertEquals("-1", directAssignment(body, "currentAbsoluteDay").getExpression().toString());
+        assertEquals("false", directAssignment(body, "locked").getExpression().toString());
+        assertEquals("null", directAssignment(body, "pendingReadyPayload").getExpression().toString());
+        assertEquals("-1", directAssignment(body, "lastAcknowledgedAbsoluteDay").getExpression().toString());
+        assertEquals("false", directAssignment(body, "sequenceActive").getExpression().toString());
+        assertEquals("null", directAssignment(body, "activeScreen").getExpression().toString());
+        assertTrue(hasInvocationWithSelect(body, "PENDING_SCREENS.clear"));
+        assertTrue(hasInvocationWithSelect(body, "LOCAL_OVERNIGHT_PROFESSIONS.clear"));
+
+        assertFalse(hasInvocation(body, "sendToServer"));
+        assertFalse(hasInvocation(body, "setScreen"));
+        assertFalse(hasInvocation(body, "getInstance"));
+        assertFalse(hasNewClass(body, "OvernightReadyAckPayload"));
+        assertFalse(hasNewClass(body, "SleepCancelPayload"));
+    }
+
+    @Test
     void serverCancelChecksBarrierBeforeChangingSleepOrVoteState() throws IOException {
         MethodTree handle = method(CANCEL, "SleepCancelPayload", "handle", 2);
         BlockTree work = enqueueBlock(handle);
@@ -433,6 +468,11 @@ class OvernightBarrierIntegrationContractTest {
 
     private static boolean hasInvocation(Tree tree, String name) {
         return invocations(tree).stream().anyMatch(invocation -> invocationName(invocation).equals(name));
+    }
+
+    private static boolean hasInvocationWithSelect(Tree tree, String methodSelect) {
+        return invocations(tree).stream()
+                .anyMatch(invocation -> invocation.getMethodSelect().toString().equals(methodSelect));
     }
 
     private static List<MethodInvocationTree> invocations(Tree tree) {

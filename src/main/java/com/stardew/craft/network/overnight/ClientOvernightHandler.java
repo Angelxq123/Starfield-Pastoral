@@ -1,6 +1,7 @@
 package com.stardew.craft.network.overnight;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.client.gui.overnight.SleepWaitingOverlayScreen;
 import com.stardew.craft.network.payload.PassOutPayload;
 import com.stardew.craft.player.PassOutService;
 import net.minecraft.client.Minecraft;
@@ -10,6 +11,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import com.stardew.craft.client.gui.overnight.ShippingMenuScreen;
 import com.stardew.craft.client.gui.overnight.PassOutOverlayScreen;
 import com.stardew.craft.client.gui.overnight.PassOutSummaryScreen;
@@ -29,6 +31,9 @@ public class ClientOvernightHandler {
     private static final Deque<Screen> PENDING_SCREENS = new ArrayDeque<>();
     private static boolean sequenceActive;
     private static Screen activeScreen;
+    private static int currentAbsoluteDay = -1;
+    private static boolean locked;
+    private static OvernightSettlementPayload pendingReadyPayload;
 
     public static void beginSequence() {
         LOCAL_OVERNIGHT_PROFESSIONS.clear();
@@ -47,6 +52,77 @@ public class ClientOvernightHandler {
 
     public static boolean isSequenceActive() {
         return sequenceActive;
+    }
+
+    public static boolean isLocked() {
+        return locked;
+    }
+
+    public static boolean isReady() {
+        return locked
+                && pendingReadyPayload != null
+                && pendingReadyPayload.absoluteDay() == currentAbsoluteDay;
+    }
+
+    public static int currentAbsoluteDay() {
+        return currentAbsoluteDay;
+    }
+
+    public static void receiveBarrierState(OvernightBarrierPayload payload) {
+        if (payload.absoluteDay() <= 0
+                || (locked && payload.absoluteDay() < currentAbsoluteDay)) {
+            return;
+        }
+        if (!locked || payload.absoluteDay() > currentAbsoluteDay) {
+            currentAbsoluteDay = payload.absoluteDay();
+            locked = payload.locked();
+            pendingReadyPayload = null;
+            if (!locked) {
+                currentAbsoluteDay = -1;
+            }
+            return;
+        }
+        if (currentAbsoluteDay != payload.absoluteDay()) {
+            return;
+        }
+        locked = payload.locked();
+        if (!locked) {
+            currentAbsoluteDay = -1;
+            pendingReadyPayload = null;
+        }
+    }
+
+    public static void receiveSettlement(OvernightSettlementPayload payload) {
+        if (payload.absoluteDay() < 0) {
+            if (!locked) {
+                startSequence(payload);
+            }
+            return;
+        }
+        if (!locked || payload.absoluteDay() != currentAbsoluteDay) {
+            return;
+        }
+        if (pendingReadyPayload == null) {
+            pendingReadyPayload = payload;
+        }
+    }
+
+    public static boolean startReadySequence(int absoluteDay) {
+        if (!locked || absoluteDay != currentAbsoluteDay || !isReady()) {
+            return false;
+        }
+
+        OvernightSettlementPayload payload = pendingReadyPayload;
+        locked = false;
+        currentAbsoluteDay = -1;
+        pendingReadyPayload = null;
+
+        PacketDistributor.sendToServer(new OvernightReadyAckPayload(absoluteDay));
+        if (Minecraft.getInstance().screen instanceof SleepWaitingOverlayScreen waitingScreen) {
+            waitingScreen.onDayAdvanced();
+        }
+        startSequence(payload);
+        return true;
     }
 
     public static boolean openNextScreen(String source) {

@@ -1,6 +1,7 @@
 package com.stardew.craft.client.gui.overnight;
 
 import com.stardew.craft.client.gui.common.GuiText;
+import com.stardew.craft.network.overnight.ClientOvernightHandler;
 import com.stardew.craft.network.payload.SleepCancelPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -84,20 +85,28 @@ public class SleepWaitingOverlayScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // ESC (256) 或任意键取消睡眠
-        cancel();
-        return true;
+        return handleDismissInput();
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 点击也可以取消
-        cancel();
+        return handleDismissInput();
+    }
+
+    private boolean handleDismissInput() {
+        if (!ClientOvernightHandler.isLocked()) {
+            cancel();
+            return true;
+        }
+        if (!ClientOvernightHandler.isReady()) {
+            return true;
+        }
+        ClientOvernightHandler.startReadySequence(ClientOvernightHandler.currentAbsoluteDay());
         return true;
     }
 
     private void cancel() {
-        if (cancelled) return;
+        if (cancelled || ClientOvernightHandler.isLocked()) return;
         cancelled = true;
         // 通知服务端撤回投票
         PacketDistributor.sendToServer(new SleepCancelPayload());

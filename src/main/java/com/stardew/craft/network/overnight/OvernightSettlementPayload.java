@@ -13,6 +13,7 @@ import java.util.List;
 
 @SuppressWarnings("null")
 public record OvernightSettlementPayload(
+        int absoluteDay,
         List<ShippedItem> shippedItems,
         List<LevelUpData> levelUps,
         int passOutType,               // -1 = 未晕倒；>=0 = PassOutService.PassOutType.getId()
@@ -22,7 +23,23 @@ public record OvernightSettlementPayload(
 
     /** 无晕倒的便捷构造（兼容旧调用点） */
     public OvernightSettlementPayload(List<ShippedItem> shippedItems, List<LevelUpData> levelUps) {
-        this(shippedItems, levelUps, -1, 0, List.of());
+        this(-1, shippedItems, levelUps, -1, 0, List.of());
+    }
+
+    /** 带屏障日号、无晕倒的便捷构造 */
+    public OvernightSettlementPayload(
+            int absoluteDay, List<ShippedItem> shippedItems, List<LevelUpData> levelUps) {
+        this(absoluteDay, shippedItems, levelUps, -1, 0, List.of());
+    }
+
+    /** 原五参数构造器保留给现有日结算与调试调用。 */
+    public OvernightSettlementPayload(
+            List<ShippedItem> shippedItems,
+            List<LevelUpData> levelUps,
+            int passOutType,
+            int passOutMoneyLost,
+            List<ItemStack> passOutLostItems) {
+        this(-1, shippedItems, levelUps, passOutType, passOutMoneyLost, passOutLostItems);
     }
 
     /** 是否包含晕倒数据 */
@@ -33,6 +50,7 @@ public record OvernightSettlementPayload(
     public static final Type<OvernightSettlementPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "overnight_settlement"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OvernightSettlementPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, OvernightSettlementPayload::absoluteDay,
             ShippedItem.STREAM_CODEC.apply(ByteBufCodecs.list()), OvernightSettlementPayload::shippedItems,
             LevelUpData.STREAM_CODEC.apply(ByteBufCodecs.list()), OvernightSettlementPayload::levelUps,
             ByteBufCodecs.VAR_INT, OvernightSettlementPayload::passOutType,
@@ -52,7 +70,7 @@ public record OvernightSettlementPayload(
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(OvernightSettlementPayload payload) {
-        ClientOvernightHandler.startSequence(payload);
+        ClientOvernightHandler.receiveSettlement(payload);
     }
 
     public record LevelUpData(int skillIndex, int newLevel) {

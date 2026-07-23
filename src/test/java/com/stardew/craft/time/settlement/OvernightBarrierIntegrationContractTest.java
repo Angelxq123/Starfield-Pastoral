@@ -1,0 +1,450 @@
+package com.stardew.craft.time.settlement;
+
+import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.ExpressionStatementTree;
+import com.sun.source.tree.IfTree;
+import com.sun.source.tree.LambdaExpressionTree;
+import com.sun.source.tree.MemberReferenceTree;
+import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.ReturnTree;
+import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.tree.VariableTree;
+import com.sun.source.util.JavacTask;
+import com.sun.source.util.TreeScanner;
+import org.junit.jupiter.api.Test;
+
+import javax.lang.model.element.Modifier;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class OvernightBarrierIntegrationContractTest {
+    private static final Path PROJECT = Path.of(System.getProperty("stardewcraft.projectDir", "."));
+    private static final Path SCREEN = source("client/gui/overnight/SleepWaitingOverlayScreen.java");
+    private static final Path CLIENT_HANDLER = source("network/overnight/ClientOvernightHandler.java");
+    private static final Path SETTLEMENT = source("network/overnight/OvernightSettlementPayload.java");
+    private static final Path CANCEL = source("network/payload/SleepCancelPayload.java");
+    private static final Path ACK = source("network/overnight/OvernightReadyAckPayload.java");
+    private static final Path BARRIER_PAYLOAD = source("network/overnight/OvernightBarrierPayload.java");
+    private static final Path PACKETS = source("network/PacketHandler.java");
+    private static final Path BARRIER = source("time/settlement/DailySettlementBarrier.java");
+
+    @Test
+    void waitingScreenRoutesAllInputThroughTheBarrierGate() throws IOException {
+        MethodTree key = method(SCREEN, "SleepWaitingOverlayScreen", "keyPressed", 3);
+        MethodTree mouse = method(SCREEN, "SleepWaitingOverlayScreen", "mouseClicked", 3);
+        assertTrue(hasInvocation(key.getBody(), "handleDismissInput"));
+        assertTrue(hasInvocation(mouse.getBody(), "handleDismissInput"));
+
+        MethodTree gate = method(SCREEN, "SleepWaitingOverlayScreen", "handleDismissInput", 0);
+        List<IfTree> conditions = directIfs(gate.getBody());
+        assertEquals(2, conditions.size(), "input gate must distinguish unlocked, waiting, and ready");
+        assertTrue(hasInvocation(conditions.get(0).getCondition(), "isLocked"));
+        assertTrue(hasInvocation(conditions.get(0).getThenStatement(), "cancel"));
+        assertTrue(hasReturn(conditions.get(0).getThenStatement()));
+        assertTrue(hasInvocation(conditions.get(1).getCondition(), "isReady"));
+        assertFalse(hasInvocation(conditions.get(1).getThenStatement(), "cancel"));
+        assertFalse(hasInvocation(conditions.get(1).getThenStatement(), "setScreen"));
+        assertTrue(hasReturn(conditions.get(1).getThenStatement()));
+        assertTrue(hasInvocation(gate.getBody(), "startReadySequence"));
+        assertTrue(hasInvocation(gate.getBody(), "currentAbsoluteDay"));
+    }
+
+    @Test
+    void cancelMethodHasItsOwnLockedGuard() throws IOException {
+        MethodTree cancel = method(SCREEN, "SleepWaitingOverlayScreen", "cancel", 0);
+        IfTree first = directIfs(cancel.getBody()).getFirst();
+        assertTrue(hasInvocation(first.getCondition(), "isLocked"));
+        assertTrue(hasReturn(first.getThenStatement()));
+        int guard = cancel.getBody().getStatements().indexOf(first);
+        assertTrue(guard < directInvocationStatement(cancel.getBody(), "sendToServer"));
+        assertTrue(guard < directInvocationStatement(cancel.getBody(), "setScreen"));
+    }
+
+    @Test
+    void settlementIsReceivedAndCachedBeforeUserStartsTheSequence() throws IOException {
+        MethodTree handleClient = method(SETTLEMENT, "OvernightSettlementPayload", "handleClient", 1);
+        assertTrue(hasInvocation(handleClient.getBody(), "receiveSettlement"));
+        assertFalse(hasInvocation(handleClient.getBody(), "startSequence"));
+
+        MethodTree receive = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
+        assertTrue(hasAssignmentTo(receive.getBody(), "pendingReadyPayload"));
+        assertFalse(hasInvocation(receive.getBody(), "beginSequence"));
+
+        MethodTree startReady = method(CLIENT_HANDLER, "ClientOvernightHandler", "startReadySequence", 1);
+        assertTrue(hasNewClass(startReady.getBody(), "OvernightReadyAckPayload"));
+        assertTrue(hasInvocation(startReady.getBody(), "onDayAdvanced"));
+        assertTrue(hasInvocation(startReady.getBody(), "startSequence"));
+    }
+
+    @Test
+    void clientBarrierStateRejectsStaleUpdatesAndClearsReadyForANewDay() throws IOException {
+        MethodTree receiveBarrier = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveBarrierState", 1);
+        assertTrue(hasFieldReference(receiveBarrier.getBody(), "absoluteDay"));
+        assertTrue(hasFieldReference(receiveBarrier.getBody(), "locked"));
+        assertTrue(hasAssignmentTo(receiveBarrier.getBody(), "pendingReadyPayload"));
+        assertTrue(hasComparison(receiveBarrier.getBody(), Tree.Kind.LESS_THAN));
+
+        MethodTree receiveSettlement = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
+        assertTrue(hasComparison(receiveSettlement.getBody(), Tree.Kind.LESS_THAN));
+        assertTrue(hasComparison(receiveSettlement.getBody(), Tree.Kind.NOT_EQUAL_TO));
+    }
+
+    @Test
+    void serverCancelChecksBarrierBeforeChangingSleepOrVoteState() throws IOException {
+        MethodTree handle = method(CANCEL, "SleepCancelPayload", "handle", 2);
+        BlockTree work = enqueueBlock(handle);
+        int guard = directIfIndex(work, "isLocked");
+        int stopSleeping = invocationIndex(work, "stopSleeping");
+        int revoke = invocationIndex(work, "revokeVoteAndBroadcast");
+
+        assertTrue(guard >= 0);
+        assertTrue(hasInvocation(work.getStatements().get(guard), "find"));
+        assertTrue(hasReturn(work.getStatements().get(guard)));
+        assertTrue(guard < stopSleeping);
+        assertTrue(guard < revoke);
+    }
+
+    @Test
+    void packetDirectionsMatchTheBarrierProtocol() throws IOException {
+        MethodTree register = method(PACKETS, "PacketHandler", "register", 1);
+        assertRegistration(register, "playToServer", "OvernightReadyAckPayload");
+        assertRegistration(register, "playToClient", "OvernightBarrierPayload");
+        assertRegistration(register, "playToClient", "OvernightSettlementPayload");
+    }
+
+    @Test
+    void readyAckAcknowledgesOnlyItsPayloadDay() throws IOException {
+        ClassTree ackClass = classTree(ACK, "OvernightReadyAckPayload");
+        assertEquals(List.of("absoluteDay"), recordComponents(ackClass));
+        MethodTree handle = method(ackClass, "handle", 2);
+        BlockTree work = enqueueBlock(handle);
+        MethodInvocationTree acknowledge = invocations(work).stream()
+                .filter(invocation -> invocationName(invocation).equals("acknowledge"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("ACK handler must acknowledge the barrier"));
+        assertEquals(List.of("player.getUUID()", "payload.absoluteDay()"),
+                acknowledge.getArguments().stream().map(Object::toString).toList());
+        assertTrue(hasInvocation(work, "find"));
+    }
+
+    @Test
+    void barrierPayloadCarriesDayAndLockStateToTheClientHandler() throws IOException {
+        ClassTree payload = classTree(BARRIER_PAYLOAD, "OvernightBarrierPayload");
+        assertEquals(List.of("absoluteDay", "locked"), recordComponents(payload));
+        VariableTree codec = field(payload, "STREAM_CODEC");
+        assertTrue(hasMemberReference(codec.getInitializer(), "absoluteDay"));
+        assertTrue(hasMemberReference(codec.getInitializer(), "locked"));
+        MethodTree handleClient = method(payload, "handleClient", 1);
+        assertTrue(hasInvocation(handleClient.getBody(), "receiveBarrierState"));
+    }
+
+    @Test
+    void settlementCodecStartsWithAbsoluteDayAndKeepsLegacyConstructors() throws IOException {
+        ClassTree payload = classTree(SETTLEMENT, "OvernightSettlementPayload");
+        assertEquals("absoluteDay", recordComponents(payload).getFirst());
+        VariableTree codec = field(payload, "STREAM_CODEC");
+        List<String> references = memberReferences(codec.getInitializer());
+        assertTrue(references.indexOf("absoluteDay") >= 0);
+        assertTrue(references.indexOf("absoluteDay") < references.indexOf("shippedItems"));
+        assertTrue(constructors(payload).stream().anyMatch(constructor -> constructor.getParameters().size() == 2));
+        assertTrue(constructors(payload).stream().anyMatch(constructor -> constructor.getParameters().size() == 5));
+        assertTrue(constructors(payload).stream().anyMatch(constructor -> constructor.getParameters().size() == 3));
+    }
+
+    @Test
+    void readyGatePreservesTheExistingResultScreenOrder() throws IOException {
+        MethodTree start = method(CLIENT_HANDLER, "ClientOvernightHandler", "startSequence", 1);
+        List<String> screens = newClasses(start.getBody());
+        int overlay = screens.indexOf("PassOutOverlayScreen");
+        int summary = screens.indexOf("PassOutSummaryScreen");
+        int levelUp = screens.indexOf("com.stardew.craft.client.gui.overnight.LevelUpMenuScreen");
+        int shipping = screens.indexOf("ShippingMenuScreen");
+
+        assertTrue(overlay >= 0 && overlay < summary);
+        assertTrue(summary < levelUp);
+        assertTrue(levelUp < shipping);
+        assertTrue(hasInvocation(start.getBody(), "beginSequence"));
+        assertTrue(hasInvocation(start.getBody(), "openNextScreen"));
+    }
+
+    @Test
+    void barrierRegistryUsesWeakServerKeysAndHasNoCoordinatorDependency() throws IOException {
+        ClassTree barrier = classTree(BARRIER, "DailySettlementBarrier");
+        assertTrue(newClasses(barrier).contains("WeakHashMap<>"));
+        assertNotNull(method(barrier, "get", 1));
+        assertNotNull(method(barrier, "find", 1));
+        assertNotNull(method(barrier, "remove", 1));
+        assertFalse(hasIdentifier(barrier, "DailySettlementCoordinator"));
+    }
+
+    private static Path source(String relative) {
+        return PROJECT.resolve("src/main/java/com/stardew/craft").resolve(relative);
+    }
+
+    private static CompilationUnitTree unit(Path path) throws IOException {
+        String source = Files.readString(path);
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assertNotNull(compiler, "tests require a JDK compiler");
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        JavaFileObject file = new SimpleJavaFileObject(
+                URI.create("string:///" + path.getFileName()), JavaFileObject.Kind.SOURCE) {
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+                return source;
+            }
+        };
+        try (StandardJavaFileManager manager = compiler.getStandardFileManager(
+                diagnostics, null, StandardCharsets.UTF_8)) {
+            JavacTask task = (JavacTask) compiler.getTask(
+                    null, manager, diagnostics, List.of("-proc:none"), null, List.of(file));
+            CompilationUnitTree unit = task.parse().iterator().next();
+            List<String> errors = diagnostics.getDiagnostics().stream()
+                    .filter(diagnostic -> diagnostic.getKind() == Diagnostic.Kind.ERROR)
+                    .map(Object::toString)
+                    .toList();
+            assertTrue(errors.isEmpty(), () -> "source did not parse: " + String.join("; ", errors));
+            return unit;
+        }
+    }
+
+    private static ClassTree classTree(Path path, String name) throws IOException {
+        return unit(path).getTypeDecls().stream()
+                .filter(ClassTree.class::isInstance)
+                .map(ClassTree.class::cast)
+                .filter(type -> type.getSimpleName().contentEquals(name))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("class is missing: " + name));
+    }
+
+    private static MethodTree method(Path path, String owner, String name, int parameters) throws IOException {
+        return method(classTree(path, owner), name, parameters);
+    }
+
+    private static MethodTree method(ClassTree owner, String name, int parameters) {
+        return owner.getMembers().stream()
+                .filter(MethodTree.class::isInstance)
+                .map(MethodTree.class::cast)
+                .filter(candidate -> candidate.getName().contentEquals(name))
+                .filter(candidate -> candidate.getParameters().size() == parameters)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("method is missing: " + name + "/" + parameters));
+    }
+
+    private static List<MethodTree> constructors(ClassTree owner) {
+        return owner.getMembers().stream()
+                .filter(MethodTree.class::isInstance)
+                .map(MethodTree.class::cast)
+                .filter(candidate -> candidate.getName().contentEquals("<init>"))
+                .toList();
+    }
+
+    private static VariableTree field(ClassTree owner, String name) {
+        return owner.getMembers().stream()
+                .filter(VariableTree.class::isInstance)
+                .map(VariableTree.class::cast)
+                .filter(candidate -> candidate.getName().contentEquals(name))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("field is missing: " + name));
+    }
+
+    private static List<String> recordComponents(ClassTree owner) {
+        return owner.getMembers().stream()
+                .filter(VariableTree.class::isInstance)
+                .map(VariableTree.class::cast)
+                .filter(component -> component.getInitializer() == null)
+                .filter(component -> component.getModifiers().getFlags()
+                        .equals(EnumSet.of(Modifier.PRIVATE, Modifier.FINAL)))
+                .map(component -> component.getName().toString())
+                .toList();
+    }
+
+    private static BlockTree enqueueBlock(MethodTree handle) {
+        MethodInvocationTree enqueue = invocations(handle.getBody()).stream()
+                .filter(invocation -> invocationName(invocation).equals("enqueueWork"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("enqueueWork call is missing"));
+        assertEquals(1, enqueue.getArguments().size());
+        LambdaExpressionTree lambda = (LambdaExpressionTree) enqueue.getArguments().getFirst();
+        return (BlockTree) lambda.getBody();
+    }
+
+    private static List<IfTree> directIfs(BlockTree block) {
+        return block.getStatements().stream()
+                .filter(IfTree.class::isInstance)
+                .map(IfTree.class::cast)
+                .toList();
+    }
+
+    private static int directIfIndex(BlockTree block, String invocation) {
+        for (int i = 0; i < block.getStatements().size(); i++) {
+            StatementTree statement = block.getStatements().get(i);
+            if (statement instanceof IfTree tree && hasInvocation(tree.getCondition(), invocation)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int invocationIndex(BlockTree block, String name) {
+        for (int i = 0; i < block.getStatements().size(); i++) {
+            if (hasInvocation(block.getStatements().get(i), name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int directInvocationStatement(BlockTree block, String name) {
+        for (int i = 0; i < block.getStatements().size(); i++) {
+            StatementTree statement = block.getStatements().get(i);
+            if (statement instanceof ExpressionStatementTree && hasInvocation(statement, name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static void assertRegistration(MethodTree register, String direction, String payload) {
+        boolean found = invocations(register.getBody()).stream()
+                .filter(invocation -> invocationName(invocation).equals(direction))
+                .filter(invocation -> invocation.getArguments().size() == 3)
+                .anyMatch(invocation -> invocation.getArguments().getFirst().toString()
+                        .equals("com.stardew.craft.network.overnight." + payload + ".TYPE"));
+        assertTrue(found, payload + " must be registered with " + direction);
+    }
+
+    private static boolean hasInvocation(Tree tree, String name) {
+        return invocations(tree).stream().anyMatch(invocation -> invocationName(invocation).equals(name));
+    }
+
+    private static List<MethodInvocationTree> invocations(Tree tree) {
+        List<MethodInvocationTree> found = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitMethodInvocation(MethodInvocationTree node, Void unused) {
+                found.add(node);
+                return super.visitMethodInvocation(node, unused);
+            }
+        }.scan(tree, null);
+        return found;
+    }
+
+    private static String invocationName(MethodInvocationTree invocation) {
+        String select = invocation.getMethodSelect().toString();
+        int dot = select.lastIndexOf('.');
+        return dot >= 0 ? select.substring(dot + 1) : select;
+    }
+
+    private static boolean hasAssignmentTo(Tree tree, String fieldName) {
+        final boolean[] found = {false};
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitAssignment(com.sun.source.tree.AssignmentTree node, Void unused) {
+                if (node.getVariable().toString().equals(fieldName)) {
+                    found[0] = true;
+                }
+                return super.visitAssignment(node, unused);
+            }
+        }.scan(tree, null);
+        return found[0];
+    }
+
+    private static boolean hasComparison(Tree tree, Tree.Kind kind) {
+        final boolean[] found = {false};
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void scan(Tree node, Void unused) {
+                if (node != null && node.getKind() == kind) {
+                    found[0] = true;
+                }
+                return super.scan(node, unused);
+            }
+        }.scan(tree, null);
+        return found[0];
+    }
+
+    private static boolean hasReturn(Tree tree) {
+        final boolean[] found = {false};
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitReturn(ReturnTree node, Void unused) {
+                found[0] = true;
+                return super.visitReturn(node, unused);
+            }
+        }.scan(tree, null);
+        return found[0];
+    }
+
+    private static boolean hasNewClass(Tree tree, String simpleName) {
+        return newClasses(tree).stream().anyMatch(name -> name.equals(simpleName));
+    }
+
+    private static List<String> newClasses(Tree tree) {
+        List<String> names = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitNewClass(NewClassTree node, Void unused) {
+                names.add(node.getIdentifier().toString());
+                return super.visitNewClass(node, unused);
+            }
+        }.scan(tree, null);
+        return names;
+    }
+
+    private static boolean hasMemberReference(Tree tree, String name) {
+        return memberReferences(tree).contains(name);
+    }
+
+    private static List<String> memberReferences(Tree tree) {
+        List<String> names = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitMemberReference(MemberReferenceTree node, Void unused) {
+                names.add(node.getName().toString());
+                return super.visitMemberReference(node, unused);
+            }
+        }.scan(tree, null);
+        return names;
+    }
+
+    private static boolean hasFieldReference(Tree tree, String name) {
+        return invocations(tree).stream().anyMatch(invocation -> invocationName(invocation).equals(name));
+    }
+
+    private static boolean hasIdentifier(Tree tree, String name) {
+        final boolean[] found = {false};
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitIdentifier(com.sun.source.tree.IdentifierTree node, Void unused) {
+                if (node.getName().contentEquals(name)) {
+                    found[0] = true;
+                }
+                return super.visitIdentifier(node, unused);
+            }
+        }.scan(tree, null);
+        return found[0];
+    }
+}

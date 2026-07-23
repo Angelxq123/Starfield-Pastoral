@@ -2,6 +2,7 @@ package com.stardew.craft.network.payload;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.event.SleepVoteTracker;
+import com.stardew.craft.time.settlement.DailySettlementBarrier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -32,6 +33,10 @@ public record SleepCancelPayload() implements CustomPacketPayload {
     public static void handle(SleepCancelPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) {
+                return;
+            }
+            if (DailySettlementBarrier.find(player.server) instanceof DailySettlementBarrier barrier
+                    && barrier.isLocked(player.getUUID())) {
                 return;
             }
             // 唤醒玩家（取消睡眠姿态 + 移动锁定）

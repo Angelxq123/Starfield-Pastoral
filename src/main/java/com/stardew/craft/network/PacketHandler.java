@@ -1269,6 +1269,18 @@ public class PacketHandler {
             com.stardew.craft.network.overnight.OvernightSettlementPayload::handle
         );
 
+        registrar.playToClient(
+            com.stardew.craft.network.overnight.OvernightBarrierPayload.TYPE,
+            com.stardew.craft.network.overnight.OvernightBarrierPayload.STREAM_CODEC,
+            com.stardew.craft.network.overnight.OvernightBarrierPayload::handle
+        );
+
+        registrar.playToServer(
+            com.stardew.craft.network.overnight.OvernightReadyAckPayload.TYPE,
+            com.stardew.craft.network.overnight.OvernightReadyAckPayload.STREAM_CODEC,
+            com.stardew.craft.network.overnight.OvernightReadyAckPayload::handle
+        );
+
         // TV system
         registrar.playToClient(
             com.stardew.craft.network.payload.OpenTVScreenPayload.TYPE,

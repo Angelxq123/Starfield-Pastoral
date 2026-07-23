@@ -476,6 +476,94 @@ class DailySettlementCoordinatorTest {
     }
 
     @Test
+    void progressBeforeTailClockFailureResetsRetriesForTheNextItem() {
+        FailOnceClock clock = new FailOnceClock(3);
+        TwoItemRetryWorkUnit unit = new TwoItemRetryWorkUnit(true, false);
+        RecordingListener listener = new RecordingListener();
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(clock),
+                () -> DEFAULT_BUDGET,
+                () -> 10,
+                planFactory(ignored -> planWithPrepare(unit)),
+                listener);
+        coordinator.start(context());
+
+        coordinator.tick();
+        assertThrows(IllegalStateException.class, coordinator::tick);
+
+        assertEquals("B", unit.currentItemIdentity());
+        assertEquals(List.of(
+                new Failure("two-item", "A", 1, false)), listener.failures);
+
+        coordinator.tick();
+
+        assertEquals(List.of(
+                new Failure("two-item", "A", 1, false),
+                new Failure("two-item", "B", 1, false)), listener.failures);
+        assertEquals(0, unit.skips());
+        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
+
+        coordinator.tick();
+
+        assertEquals(2, unit.attemptsFor("B"));
+        assertEquals(0, unit.skips());
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+    }
+
+    @Test
+    void progressBeforeTailCompletionCheckFailureResetsRetriesForTheNextItem() {
+        TwoItemRetryWorkUnit unit = new TwoItemRetryWorkUnit(true, true);
+        RecordingListener listener = new RecordingListener();
+        DailySettlementCoordinator coordinator = coordinator(
+                ignored -> planWithPrepare(unit), listener, DEFAULT_BUDGET, 10);
+        coordinator.start(context());
+
+        coordinator.tick();
+        assertThrows(IllegalStateException.class, coordinator::tick);
+
+        assertTrue(unit.completionCheckFailedAfterProgress());
+        assertEquals("B", unit.currentItemIdentity());
+        assertEquals(List.of(
+                new Failure("two-item", "A", 1, false)), listener.failures);
+
+        coordinator.tick();
+
+        assertEquals(List.of(
+                new Failure("two-item", "A", 1, false),
+                new Failure("two-item", "B", 1, false)), listener.failures);
+        assertEquals(0, unit.skips());
+        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
+
+        coordinator.tick();
+
+        assertEquals(2, unit.attemptsFor("B"));
+        assertEquals(0, unit.skips());
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+    }
+
+    @Test
+    void failureAfterProgressInOneRunnerInvocationStartsAtAttemptOne() {
+        TwoItemRetryWorkUnit unit = new TwoItemRetryWorkUnit(false, false);
+        RecordingListener listener = new RecordingListener();
+        DailySettlementCoordinator coordinator = coordinator(
+                ignored -> planWithPrepare(unit), listener, DEFAULT_BUDGET, 10);
+        coordinator.start(context());
+
+        coordinator.tick();
+
+        assertEquals(1, unit.attemptsFor("A"));
+        assertEquals(List.of(
+                new Failure("two-item", "B", 1, false)), listener.failures);
+        assertEquals(0, unit.skips());
+        assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
+
+        coordinator.tick();
+
+        assertEquals(2, unit.attemptsFor("B"));
+        assertEquals(DailySettlementPhase.READY, coordinator.phase());
+    }
+
+    @Test
     void finishReadyReturnsToIdleWhileListenerRetainsReadyContext() {
         RecordingListener listener = new RecordingListener();
         DailySettlementCoordinator coordinator = coordinator(ignored -> emptyPlan(), listener);
@@ -989,6 +1077,98 @@ class DailySettlementCoordinatorTest {
 
         private void recover() {
             failed = false;
+        }
+    }
+
+    private static final class FailOnceClock implements BudgetedWorkRunner.NanoClock {
+        private final int failingCall;
+        private int calls;
+
+        private FailOnceClock(int failingCall) {
+            this.failingCall = failingCall;
+        }
+
+        @Override
+        public long nanoTime() {
+            if (++calls == failingCall) {
+                throw new IllegalStateException("clock failed after progress");
+            }
+            return calls;
+        }
+    }
+
+    private static final class TwoItemRetryWorkUnit implements DailySettlementWorkUnit {
+        private final List<String> items = List.of("A", "B");
+        private final int[] attempts = new int[2];
+        private final boolean failFirstA;
+        private final boolean failCompletionCheckAfterA;
+        private int cursor;
+        private int skips;
+        private boolean completionFailurePending;
+        private boolean completionCheckFailedAfterProgress;
+
+        private TwoItemRetryWorkUnit(
+                boolean failFirstA, boolean failCompletionCheckAfterA) {
+            this.failFirstA = failFirstA;
+            this.failCompletionCheckAfterA = failCompletionCheckAfterA;
+        }
+
+        @Override
+        public String name() {
+            return "two-item";
+        }
+
+        @Override
+        public String currentItemIdentity() {
+            return items.get(cursor);
+        }
+
+        @Override
+        public boolean isComplete() {
+            if (completionFailurePending) {
+                completionFailurePending = false;
+                completionCheckFailedAfterProgress = true;
+                throw new IllegalStateException("completion check failed after progress");
+            }
+            return cursor >= items.size();
+        }
+
+        @Override
+        public void runNext() throws Exception {
+            int item = cursor;
+            int attempt = ++attempts[item];
+            if ((item == 0 && failFirstA && attempt == 1)
+                    || (item == 1 && attempt == 1)) {
+                throw new Exception("item failed");
+            }
+            cursor++;
+            if (cursor == 1 && failCompletionCheckAfterA) {
+                completionFailurePending = true;
+            }
+        }
+
+        @Override
+        public void skipFailedItem() {
+            skips++;
+            cursor++;
+            completionFailurePending = false;
+        }
+
+        @Override
+        public int maxRetries() {
+            return 1;
+        }
+
+        private int attemptsFor(String item) {
+            return attempts[items.indexOf(item)];
+        }
+
+        private int skips() {
+            return skips;
+        }
+
+        private boolean completionCheckFailedAfterProgress() {
+            return completionCheckFailedAfterProgress;
         }
     }
 

@@ -113,16 +113,19 @@ public final class DailySettlementCoordinator {
         int effectiveItemLimit = consecutiveFailures > 0
                 ? Math.min(tickItemLimit, 1)
                 : tickItemLimit;
+        GuardedWorkUnit guardedUnit = new GuardedWorkUnit(unit);
         BudgetedWorkRunner.TickResult result;
         try {
-            result = runGuarded(unit, tickBudget, effectiveItemLimit);
+            result = runGuarded(guardedUnit, tickBudget, effectiveItemLimit);
         } catch (WorkItemExecutionException failure) {
+            resetFailuresAfterProgress(guardedUnit);
             handleItemFailure(unit);
             return;
+        } catch (RuntimeException | Error failure) {
+            resetFailuresAfterProgress(guardedUnit);
+            throw failure;
         }
-        if (result.processedItems() > 0) {
-            consecutiveFailures = 0;
-        }
+        resetFailuresAfterProgress(guardedUnit);
         if (result.complete()) {
             completeCurrentUnit(unit);
         }
@@ -160,11 +163,10 @@ public final class DailySettlementCoordinator {
     }
 
     private BudgetedWorkRunner.TickResult runGuarded(
-            DailySettlementWorkUnit unit, long tickBudget, int effectiveItemLimit)
+            GuardedWorkUnit unit, long tickBudget, int effectiveItemLimit)
             throws WorkItemExecutionException {
         try {
-            return runner.run(
-                    new GuardedWorkUnit(unit), tickBudget, effectiveItemLimit);
+            return runner.run(unit, tickBudget, effectiveItemLimit);
         } catch (WorkItemExecutionException failure) {
             throw failure;
         } catch (RuntimeException | Error failure) {
@@ -172,6 +174,12 @@ public final class DailySettlementCoordinator {
         } catch (Exception failure) {
             throw new IllegalStateException(
                     "Budgeted runner produced an unexpected checked exception", failure);
+        }
+    }
+
+    private void resetFailuresAfterProgress(GuardedWorkUnit unit) {
+        if (unit.successfulRuns() > 0) {
+            consecutiveFailures = 0;
         }
     }
 
@@ -366,6 +374,7 @@ public final class DailySettlementCoordinator {
 
     private static final class GuardedWorkUnit implements DailySettlementWorkUnit {
         private final DailySettlementWorkUnit delegate;
+        private int successfulRuns;
 
         private GuardedWorkUnit(DailySettlementWorkUnit delegate) {
             this.delegate = delegate;
@@ -390,6 +399,7 @@ public final class DailySettlementCoordinator {
         public void runNext() throws WorkItemExecutionException {
             try {
                 delegate.runNext();
+                successfulRuns++;
             } catch (Exception failure) {
                 throw new WorkItemExecutionException(failure);
             }
@@ -403,6 +413,10 @@ public final class DailySettlementCoordinator {
         @Override
         public int maxRetries() {
             return delegate.maxRetries();
+        }
+
+        private int successfulRuns() {
+            return successfulRuns;
         }
     }
 

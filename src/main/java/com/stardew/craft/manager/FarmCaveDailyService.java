@@ -18,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -80,7 +81,17 @@ public final class FarmCaveDailyService {
     public static void onNewDay(ServerLevel level) {
         DailySettlementWorkUnits.drain(createDailyWorkUnit(
                 level,
-                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+                captureLegacyContext(level)));
+    }
+
+    private static DailySettlementContext captureLegacyContext(ServerLevel level) {
+        List<UUID> playerIds = new ArrayList<>();
+        for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
+            playerIds.add(player.getUUID());
+        }
+        return DailySettlementContextFactory.withPlayers(
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get()),
+                playerIds);
     }
 
     public static DailySettlementWorkUnit createDailyWorkUnit(

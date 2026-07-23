@@ -50,6 +50,46 @@ public final class DailySettlementContextFactory {
                 Set.of());
     }
 
+    public static DailySettlementContext withSeason(
+            DailySettlementContext context, int season) {
+        Objects.requireNonNull(context, "context");
+        return withDate(context, context.year(), season);
+    }
+
+    public static DailySettlementContext withYear(
+            DailySettlementContext context, int year) {
+        Objects.requireNonNull(context, "context");
+        return withDate(context, year, context.season());
+    }
+
+    public static DailySettlementContext withPlayers(
+            DailySettlementContext context, Collection<UUID> players) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(players, "players");
+        return new DailySettlementContext(
+                context.absoluteDay(),
+                context.year(),
+                context.season(),
+                context.day(),
+                context.sleepMinute(),
+                context.seasonChanged(),
+                List.copyOf(players),
+                context.farmOwnerIds());
+    }
+
+    private static DailySettlementContext withDate(
+            DailySettlementContext context, int year, int season) {
+        return new DailySettlementContext(
+                absoluteDay(year, season, context.day()),
+                year,
+                season,
+                context.day(),
+                context.sleepMinute(),
+                context.seasonChanged(),
+                context.playerIds(),
+                context.farmOwnerIds());
+    }
+
     private static TargetDate after(int year, int season, int day) {
         TargetDate current = new TargetDate(year, season, day, false);
         if (current.day() < 28) {

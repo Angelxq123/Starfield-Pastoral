@@ -4,10 +4,12 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.EnhancedForLoopTree;
 import com.sun.source.tree.ForLoopTree;
+import com.sun.source.tree.IfTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.Tree;
+import com.sun.source.tree.TryTree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreeScanner;
 import net.minecraft.core.BlockPos;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
@@ -118,6 +121,158 @@ class PublicAreaDailyWorkUnitTest {
     void deterministicPositionOutputDoesNotDependOnItemBudget() throws Exception {
         assertEquals(runDeterministicScan(1), runDeterministicScan(7));
         assertEquals(runDeterministicScan(7), runDeterministicScan(31));
+    }
+
+    @Test
+    void explicitLegacyDatesOverrideOnlyTheCapturedDate() throws Exception {
+        UUID player = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        UUID owner = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        DailySettlementContext base = new DailySettlementContext(
+                117, 2, 0, 5, 600, false, List.of(player), Set.of(owner));
+
+        DailySettlementContext summer = invokeContextOverride("withSeason", base, 1);
+        assertEquals(145, summer.absoluteDay());
+        assertEquals(2, summer.year());
+        assertEquals(1, summer.season());
+        assertEquals(5, summer.day());
+        assertEquals(base.playerIds(), summer.playerIds());
+        assertEquals(base.farmOwnerIds(), summer.farmOwnerIds());
+
+        DailySettlementContext yearFour = invokeContextOverride("withYear", base, 4);
+        assertEquals(341, yearFour.absoluteDay());
+        assertEquals(4, yearFour.year());
+        assertEquals(0, yearFour.season());
+        assertEquals(base.playerIds(), yearFour.playerIds());
+        assertEquals(base.farmOwnerIds(), yearFour.farmOwnerIds());
+    }
+
+    @Test
+    void explicitSeasonAndYearArgumentsFlowIntoProductionFactories() throws IOException {
+        assertLegacyDateOverride(
+                "ForageSpawnService", "onNewDay", "season", "withSeason", "createDailyWorkUnit");
+        assertLegacyDateOverride(
+                "ForageSpawnService", "onNewDayForestFarms", "season", "withSeason",
+                "createForestFarmDailyWorkUnit");
+        assertLegacyDateOverride(
+                "ArtifactSpotSpawnService", "onNewDay", "season", "withSeason",
+                "createDailyWorkUnit");
+        assertLegacyDateOverride(
+                "QuarrySpawnService", "onNewDay", "year", "withYear", "createDailyWorkUnit");
+
+        assertInitialEntrypointForwards("ForageSpawnService", "season");
+        assertInitialEntrypointForwards("ArtifactSpotSpawnService", "season");
+        MethodTree quarryInitial = parse("QuarrySpawnService.java", "QuarrySpawnService")
+                .method("ensureInitialSpawn", 2);
+        assertTrue(quarryInitial.toString().contains("year"));
+    }
+
+    @Test
+    void farmCaveLegacyEntrypointCapturesOnlinePlayersBeforeCreatingWork() throws IOException {
+        ParsedClass caves = parse("FarmCaveDailyService.java", "FarmCaveDailyService");
+        MethodTree legacy = caves.method("onNewDay", 1);
+        MethodTree capture = caves.method("captureLegacyContext", 1);
+        MethodInvocationTree create = invocationsNamed(legacy, "createDailyWorkUnit").getFirst();
+
+        assertEquals("captureLegacyContext(level)", create.getArguments().get(1).toString());
+        assertEquals(1, invocationsNamed(capture, "getPlayers").size());
+        assertTrue(invocationsNamed(capture, "getUUID").size() >= 1);
+        assertTrue(capture.toString().contains("withPlayers"));
+        assertFalse(capture.toString().contains("List.of()"));
+    }
+
+    @Test
+    void forageProductionAttemptsResumeAndStayBudgetDeterministic() throws Exception {
+        AttemptRun oneAtATime = runForageAttempts(1);
+        AttemptRun batched = runForageAttempts(7);
+
+        assertEquals(oneAtATime.identities(), batched.identities());
+        assertEquals(oneAtATime.outputs(), batched.outputs());
+        assertEquals(List.of("0:2", "1:2", "2:2"), oneAtATime.outputs());
+        assertEquals(9, oneAtATime.identities().size());
+    }
+
+    @Test
+    void artifactProductionCapSurvivesTicksAndIsBudgetDeterministic() throws Exception {
+        AttemptRun oneAtATime = runArtifactCap(1);
+        AttemptRun batched = runArtifactCap(11);
+
+        assertEquals(oneAtATime.identities(), batched.identities());
+        assertEquals(oneAtATime.outputs(), batched.outputs());
+        assertEquals(4, oneAtATime.outputs().size());
+        assertTrue(oneAtATime.identities().size() < 100,
+                "production cap must stop the large rectangle early");
+    }
+
+    @Test
+    void productionStateMachinesCloseExactlyOnceOnCompleteCapAndAbort() throws Exception {
+        AtomicInteger normalChildClose = new AtomicInteger();
+        AtomicInteger normalParentClose = new AtomicInteger();
+        DailySettlementWorkUnit normalChild = forageAttempts(
+                1, 30, (slot, attempt) -> true, normalChildClose::incrementAndGet);
+        DailySettlementWorkUnit normalParent = DailySettlementWorkUnits.sequence(
+                "normal_parent", List.of(normalChild), normalParentClose::incrementAndGet);
+        normalParent.runNext();
+        assertTrue(normalParent.isComplete());
+        normalParent.close();
+        normalParent.close();
+        assertEquals(1, normalChildClose.get());
+        assertEquals(1, normalParentClose.get());
+
+        AtomicInteger capChildClose = new AtomicInteger();
+        DailySettlementWorkUnit capChild = cappedRectangle(
+                0, 0, 99, 99, 2, (x, z) -> true, capChildClose::incrementAndGet);
+        DailySettlementWorkUnit capParent = DailySettlementWorkUnits.sequence(
+                "cap_parent", List.of(capChild), () -> {});
+        runBudget(capParent, 1);
+        runBudget(capParent, 1);
+        assertTrue(capParent.isComplete());
+        assertEquals(1, capChildClose.get());
+        capParent.close();
+        assertEquals(1, capChildClose.get());
+
+        AtomicInteger abortChildClose = new AtomicInteger();
+        AtomicInteger abortParentClose = new AtomicInteger();
+        DailySettlementWorkUnit abortChild = forageAttempts(
+                2, 30, (slot, attempt) -> false, abortChildClose::incrementAndGet);
+        DailySettlementWorkUnit abortParent = DailySettlementWorkUnits.sequence(
+                "abort_parent", List.of(abortChild), abortParentClose::incrementAndGet);
+        abortParent.runNext();
+        assertFalse(abortParent.isComplete());
+        abortParent.close();
+        abortParent.close();
+        assertEquals(1, abortChildClose.get());
+        assertEquals(1, abortParentClose.get());
+    }
+
+    @Test
+    void forageAndArtifactCallTheTestedProductionStateFactories() throws IOException {
+        assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "forageAttempts");
+        assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "forageAttempts");
+        assertReachableCall("ArtifactSpotSpawnService", "createDailyWorkUnit", "cappedRectangle");
+    }
+
+    @Test
+    void coalForestInitializationMarksOnlyACompletedAttemptAndAlwaysReleasesChunks()
+            throws Exception {
+        ParsedClass coal = parse("CoalForestClumpSpawnService.java", "CoalForestClumpSpawnService");
+        MethodTree initial = coal.method("ensureInitialSpawn", 1);
+        List<TryTree> tries = scan(initial, TryTree.class);
+        assertEquals(1, tries.size());
+        TryTree guarded = tries.getFirst();
+        assertTrue(invocationsNamed(guarded.getFinallyBlock(), "releaseRegionChunks").size() == 1);
+        assertEquals(1, invocationsNamed(initial, "runInitialSpawn").size());
+
+        List<IfTree> completionGuards = scan(initial, IfTree.class).stream()
+                .filter(candidate -> invocationsNamed(candidate.getThenStatement(), "setInitialized").size() == 1)
+                .toList();
+        assertEquals(1, completionGuards.size(), "initialization mark must be success-guarded");
+        assertTrue(completionGuards.getFirst().getCondition().toString().contains("initialSpawnComplete"));
+
+        Method decision = Class.forName("com.stardew.craft.manager.CoalForestClumpSpawnService")
+                .getDeclaredMethod("initialSpawnComplete", int.class);
+        decision.setAccessible(true);
+        assertEquals(false, decision.invoke(null, 0));
+        assertEquals(true, decision.invoke(null, 1));
     }
 
     @Test
@@ -238,6 +393,157 @@ class PublicAreaDailyWorkUnitTest {
         return output;
     }
 
+    private static DailySettlementContext invokeContextOverride(
+            String methodName,
+            DailySettlementContext base,
+            int value) throws Exception {
+        Method method;
+        try {
+            method = DailySettlementContextFactory.class.getMethod(
+                    methodName, DailySettlementContext.class, int.class);
+        } catch (NoSuchMethodException missing) {
+            fail("production context override is missing: " + methodName, missing);
+            return null;
+        }
+        return (DailySettlementContext) method.invoke(null, base, value);
+    }
+
+    private static AttemptRun runForageAttempts(int budget) throws Exception {
+        List<String> identities = new ArrayList<>();
+        List<String> outputs = new ArrayList<>();
+        DailySettlementWorkUnit unit = forageAttempts(
+                3,
+                30,
+                (slot, attempt) -> {
+                    if (attempt == 2) {
+                        outputs.add(slot + ":" + attempt);
+                        return true;
+                    }
+                    return false;
+                },
+                () -> {});
+        try (unit) {
+            while (!unit.isComplete()) {
+                for (int item = 0; item < budget && !unit.isComplete(); item++) {
+                    identities.add(unit.currentItemIdentity());
+                    unit.runNext();
+                }
+            }
+        }
+        return new AttemptRun(List.copyOf(identities), List.copyOf(outputs));
+    }
+
+    private static AttemptRun runArtifactCap(int budget) throws Exception {
+        List<String> identities = new ArrayList<>();
+        List<String> outputs = new ArrayList<>();
+        DailySettlementWorkUnit unit = cappedRectangle(
+                -20,
+                30,
+                29,
+                79,
+                4,
+                (x, z) -> {
+                    boolean accepted = DailySettlementRandom.forPosition(
+                                    WORLD_SEED,
+                                    ABSOLUTE_DAY,
+                                    "artifact_state_test",
+                                    new BlockPos(x, 0, z))
+                            .nextDouble() < 0.35D;
+                    if (accepted) {
+                        outputs.add(x + "," + z);
+                    }
+                    return accepted;
+                },
+                () -> {});
+        try (unit) {
+            while (!unit.isComplete()) {
+                for (int item = 0; item < budget && !unit.isComplete(); item++) {
+                    identities.add(unit.currentItemIdentity());
+                    unit.runNext();
+                }
+            }
+        }
+        return new AttemptRun(List.copyOf(identities), List.copyOf(outputs));
+    }
+
+    private static DailySettlementWorkUnit forageAttempts(
+            int slots,
+            int maxAttempts,
+            IndexedAttempt operation,
+            Runnable onClose) throws Exception {
+        Class<?> helper = productionHelper();
+        Class<?> operationType = nestedType(helper, "IndexedAttempt");
+        Object operationProxy = Proxy.newProxyInstance(
+                helper.getClassLoader(),
+                new Class<?>[]{operationType},
+                (proxy, method, arguments) -> method.getName().equals("trySpawn")
+                        ? operation.trySpawn((int) arguments[0], (int) arguments[1])
+                        : null);
+        Method factory = helper.getMethod(
+                "forageAttempts",
+                String.class,
+                int.class,
+                int.class,
+                operationType,
+                Runnable.class);
+        return (DailySettlementWorkUnit) factory.invoke(
+                null, "test_forage", slots, maxAttempts, operationProxy, onClose);
+    }
+
+    private static DailySettlementWorkUnit cappedRectangle(
+            int minX,
+            int minZ,
+            int maxX,
+            int maxZ,
+            int cap,
+            PlacementAttempt operation,
+            Runnable onClose) throws Exception {
+        Class<?> helper = productionHelper();
+        Class<?> operationType = nestedType(helper, "PlacementAttempt");
+        Object operationProxy = Proxy.newProxyInstance(
+                helper.getClassLoader(),
+                new Class<?>[]{operationType},
+                (proxy, method, arguments) -> method.getName().equals("tryPlace")
+                        ? operation.tryPlace((int) arguments[0], (int) arguments[1])
+                        : null);
+        Method factory = helper.getMethod(
+                "cappedRectangle",
+                String.class,
+                int.class,
+                int.class,
+                int.class,
+                int.class,
+                int.class,
+                operationType,
+                Runnable.class);
+        return (DailySettlementWorkUnit) factory.invoke(
+                null,
+                "test_artifact_cap",
+                minX,
+                minZ,
+                maxX,
+                maxZ,
+                cap,
+                operationProxy,
+                onClose);
+    }
+
+    private static Class<?> productionHelper() {
+        try {
+            return Class.forName("com.stardew.craft.manager.PublicAreaDailyWorkUnits");
+        } catch (ClassNotFoundException missing) {
+            fail("production public-area state helper is missing", missing);
+            return null;
+        }
+    }
+
+    private static Class<?> nestedType(Class<?> owner, String name) {
+        return List.of(owner.getDeclaredClasses()).stream()
+                .filter(type -> type.getSimpleName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(name + " is missing"));
+    }
+
     private static DailySettlementWorkUnit rectangle(
             int minX,
             int minZ,
@@ -304,6 +610,33 @@ class PublicAreaDailyWorkUnitTest {
         Tree argument = drains.getFirst().getArguments().getFirst();
         assertTrue(argument instanceof MethodInvocationTree);
         assertEquals(factoryName, methodName((MethodInvocationTree) argument));
+    }
+
+    private static void assertLegacyDateOverride(
+            String className,
+            String legacyMethod,
+            String explicitArgument,
+            String overrideMethod,
+            String factoryMethod) throws IOException {
+        MethodTree legacy = parse(className + ".java", className).method(legacyMethod, 2);
+        MethodInvocationTree factory = invocationsNamed(legacy, factoryMethod).getFirst();
+        assertEquals(2, factory.getArguments().size());
+        Tree contextArgument = factory.getArguments().get(1);
+        assertTrue(contextArgument instanceof MethodInvocationTree);
+        MethodInvocationTree override = (MethodInvocationTree) contextArgument;
+        assertEquals(overrideMethod, methodName(override));
+        assertEquals(explicitArgument, override.getArguments().get(1).toString());
+        assertTrue(override.getArguments().getFirst() instanceof MethodInvocationTree);
+        assertEquals("captureCurrentDay",
+                methodName((MethodInvocationTree) override.getArguments().getFirst()));
+    }
+
+    private static void assertInitialEntrypointForwards(String className, String explicitArgument)
+            throws IOException {
+        MethodTree initial = parse(className + ".java", className).method("ensureInitialSpawn", 2);
+        List<MethodInvocationTree> dailyCalls = invocationsNamed(initial, "onNewDay");
+        assertEquals(1, dailyCalls.size());
+        assertEquals(explicitArgument, dailyCalls.getFirst().getArguments().get(1).toString());
     }
 
     private static void assertReachableCall(String className, String factory, String expected)
@@ -425,6 +758,19 @@ class PublicAreaDailyWorkUnitTest {
     @FunctionalInterface
     private interface ColumnAction {
         void accept(int x, int z);
+    }
+
+    @FunctionalInterface
+    private interface IndexedAttempt {
+        boolean trySpawn(int slot, int attempt);
+    }
+
+    @FunctionalInterface
+    private interface PlacementAttempt {
+        boolean tryPlace(int x, int z);
+    }
+
+    private record AttemptRun(List<String> identities, List<String> outputs) {
     }
 
     private record ParsedClass(ClassTree type) {

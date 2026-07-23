@@ -70,7 +70,9 @@ public final class QuarrySpawnService {
     public static void onNewDay(ServerLevel level, int year) {
         DailySettlementWorkUnits.drain(createDailyWorkUnit(
                 level,
-                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+                DailySettlementContextFactory.withYear(
+                        DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get()),
+                        year)));
     }
 
     public static DailySettlementWorkUnit createDailyWorkUnit(

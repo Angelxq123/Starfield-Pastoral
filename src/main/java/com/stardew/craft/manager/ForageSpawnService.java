@@ -103,7 +103,9 @@ public final class ForageSpawnService {
     public static void onNewDay(ServerLevel level, int season) {
         DailySettlementWorkUnits.drain(createDailyWorkUnit(
                 level,
-                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+                DailySettlementContextFactory.withSeason(
+                        DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get()),
+                        season)));
     }
 
     public static DailySettlementWorkUnit createDailyWorkUnit(
@@ -199,19 +201,24 @@ public final class ForageSpawnService {
         int toSpawn = Math.min(rolled, zone.maxSpawnedAtOnce - existing);
         StardewCraft.LOGGER.info("[ForageSpawn] {} zone: existing={}, toSpawn={}, possibleEntries={}",
                 zone.name, existing, toSpawn, possibleForage.size());
-        return forageAttempts(
+        AtomicInteger spawned = new AtomicInteger();
+        return PublicAreaDailyWorkUnits.forageAttempts(
                 "forage_spawn_" + zone.name,
                 toSpawn,
+                30,
                 (slot, attempt) -> {
                     long attemptId = zoneId ^ ((long) slot << 32) ^ attempt;
                     RandomSource random = DailySettlementRandom.forId(
                             worldSeed, absoluteDay, "forage_spawn_attempt", attemptId);
-                    return trySpawnForage(level, zone, possibleForage, random);
+                    boolean placed = trySpawnForage(level, zone, possibleForage, random);
+                    if (placed) spawned.incrementAndGet();
+                    return placed;
                 },
-                spawned -> {
-                    totalSpawned.addAndGet(spawned);
+                () -> {
+                    totalSpawned.addAndGet(spawned.get());
                     StardewCraft.LOGGER.info(
-                            "[ForageSpawn] {} zone: spawned {} forage blocks", zone.name, spawned);
+                            "[ForageSpawn] {} zone: spawned {} forage blocks",
+                            zone.name, spawned.get());
                 });
     }
 
@@ -462,7 +469,9 @@ public final class ForageSpawnService {
     public static void onNewDayForestFarms(ServerLevel level, int season) {
         DailySettlementWorkUnits.drain(createForestFarmDailyWorkUnit(
                 level,
-                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+                DailySettlementContextFactory.withSeason(
+                        DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get()),
+                        season)));
     }
 
     public static DailySettlementWorkUnit createForestFarmDailyWorkUnit(
@@ -556,22 +565,27 @@ public final class ForageSpawnService {
         int rolled = FOREST_FARM_MIN_SPAWN + countRandom.nextInt(
                 FOREST_FARM_MAX_SPAWN - FOREST_FARM_MIN_SPAWN + 1);
         int toSpawn = Math.min(rolled, capacity);
-        return forageAttempts(
+        AtomicInteger spawned = new AtomicInteger();
+        return PublicAreaDailyWorkUnits.forageAttempts(
                 "forest_farm_forage_spawn_" + farm.ownerId(),
                 toSpawn,
+                30,
                 (slot, attempt) -> {
                     RandomSource random = DailySettlementRandom.forId(
                             worldSeed,
                             absoluteDay,
                             "forest_farm_forage_attempt",
                             farmId ^ ((long) slot << 32) ^ attempt);
-                    return trySpawnForestFarmForage(level, farm, possibleForage, random);
+                    boolean placed = trySpawnForestFarmForage(
+                            level, farm, possibleForage, random);
+                    if (placed) spawned.incrementAndGet();
+                    return placed;
                 },
-                spawned -> {
-                    totalSpawned.addAndGet(spawned);
+                () -> {
+                    totalSpawned.addAndGet(spawned.get());
                     StardewCraft.LOGGER.info(
                             "[ForageSpawn] Forest farm ({}): spawned {} forage in zone",
-                            farm.ownerName(), spawned);
+                            farm.ownerName(), spawned.get());
                 });
     }
 
@@ -602,72 +616,6 @@ public final class ForageSpawnService {
         return true;
     }
 
-    private static DailySettlementWorkUnit forageAttempts(
-            String name,
-            int slots,
-            SpawnAttempt operation,
-            java.util.function.IntConsumer onClose) {
-        return new DailySettlementWorkUnit() {
-            private int slot;
-            private int attempt;
-            private int spawned;
-            private boolean closed;
-
-            @Override
-            public String name() {
-                return name;
-            }
-
-            @Override
-            public String currentItemIdentity() {
-                return isComplete() ? name : name + ":" + slot + ":" + attempt;
-            }
-
-            @Override
-            public boolean isComplete() {
-                return slot >= slots;
-            }
-
-            @Override
-            public void runNext() {
-                requireCurrentItem();
-                boolean placed = operation.trySpawn(slot, attempt);
-                advanceAttempt(placed);
-            }
-
-            @Override
-            public void skipFailedItem() {
-                requireCurrentItem();
-                advanceAttempt(false);
-            }
-
-            @Override
-            public synchronized void close() {
-                if (closed) return;
-                closed = true;
-                onClose.accept(spawned);
-            }
-
-            private void advanceAttempt(boolean placed) {
-                attempt++;
-                if (placed) {
-                    spawned++;
-                    slot++;
-                    attempt = 0;
-                } else if (attempt >= 30) {
-                    slot++;
-                    attempt = 0;
-                }
-            }
-
-            private void requireCurrentItem() {
-                if (isComplete()) {
-                    throw new IllegalStateException("Work unit is already complete: " + name);
-                }
-            }
-        };
-    }
-
     private static long stableStringId(String value) {
         long hash = 0xcbf29ce484222325L;
         for (int index = 0; index < value.length(); index++) {
@@ -679,11 +627,6 @@ public final class ForageSpawnService {
 
     private static long stableUuid(UUID ownerId) {
         return ownerId.getMostSignificantBits() ^ ownerId.getLeastSignificantBits();
-    }
-
-    @FunctionalInterface
-    private interface SpawnAttempt {
-        boolean trySpawn(int slot, int attempt);
     }
 
     private record ForestFarmDailyEntry(

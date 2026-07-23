@@ -17,11 +17,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -120,8 +122,74 @@ public final class CoalForestClumpSpawnService {
             return;
         }
 
-        onNewDay(level);
-        data.setInitialized(true);
+        List<ChunkPos> forcedChunks = forceRegionChunks(level);
+        int spawned;
+        try {
+            spawned = runInitialSpawn(level);
+        } finally {
+            releaseRegionChunks(level, forcedChunks);
+        }
+        if (initialSpawnComplete(spawned)) {
+            data.setInitialized(true);
+        }
+    }
+
+    private static int runInitialSpawn(ServerLevel level) {
+        clearExistingInitial(level);
+        RandomSource random = level.getRandom();
+        int spawned = 0;
+        for (BlockPos pos : LARGE_STUMP_POSITIONS) {
+            if (tryPlaceAt(level, random, ModBlocks.LARGE_STUMP.get(), pos)) {
+                spawned++;
+            } else {
+                StardewCraft.LOGGER.warn("[SECRET_WOODS] Failed to place large stump at {}", pos);
+            }
+        }
+        StardewCraft.LOGGER.info("[SECRET_WOODS] Initial stump spawn: largeStump={}/{}",
+                spawned, LARGE_STUMP_POSITIONS.size());
+        return spawned;
+    }
+
+    private static boolean initialSpawnComplete(int spawned) {
+        return spawned > 0;
+    }
+
+    private static List<ChunkPos> forceRegionChunks(ServerLevel level) {
+        List<ChunkPos> newlyForced = new ArrayList<>();
+        try {
+            int minChunkX = CoalForestArea.MIN_X >> 4;
+            int maxChunkX = CoalForestArea.MAX_X >> 4;
+            int minChunkZ = CoalForestArea.MIN_Z >> 4;
+            int maxChunkZ = CoalForestArea.MAX_Z >> 4;
+            for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+                for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                    long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
+                    if (!level.getForcedChunks().contains(chunkKey)) {
+                        level.setChunkForced(chunkX, chunkZ, true);
+                        newlyForced.add(new ChunkPos(chunkX, chunkZ));
+                    }
+                    level.getChunk(chunkX, chunkZ);
+                }
+            }
+            return List.copyOf(newlyForced);
+        } catch (RuntimeException | Error failure) {
+            releaseRegionChunks(level, newlyForced);
+            throw failure;
+        }
+    }
+
+    private static void releaseRegionChunks(ServerLevel level, List<ChunkPos> forcedChunks) {
+        for (ChunkPos chunk : forcedChunks) {
+            level.setChunkForced(chunk.x, chunk.z, false);
+        }
+    }
+
+    private static void clearExistingInitial(ServerLevel level) {
+        for (int x = CoalForestArea.MIN_X; x <= CoalForestArea.MAX_X; x++) {
+            for (int z = CoalForestArea.MIN_Z; z <= CoalForestArea.MAX_Z; z++) {
+                processClearColumn(level, x, z);
+            }
+        }
     }
 
     private static boolean tryPlaceAt(ServerLevel level, RandomSource random, Block block, BlockPos mainPos) {

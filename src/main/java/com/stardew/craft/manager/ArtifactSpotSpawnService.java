@@ -124,7 +124,9 @@ public final class ArtifactSpotSpawnService {
     public static void onNewDay(ServerLevel level, int season) {
         DailySettlementWorkUnits.drain(createDailyWorkUnit(
                 level,
-                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+                DailySettlementContextFactory.withSeason(
+                        DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get()),
+                        season)));
     }
 
     public static DailySettlementWorkUnit createDailyWorkUnit(
@@ -291,21 +293,24 @@ public final class ArtifactSpotSpawnService {
         List<DailySettlementWorkUnit> chanceScans = new ArrayList<>(zone.rects.length);
         for (int index = 0; index < zone.rects.length; index++) {
             ZoneRect rect = zone.rects[index];
-            chanceScans.add(PublicAreaDailyWorkUnits.rectangle(
+            chanceScans.add(PublicAreaDailyWorkUnits.cappedRectangle(
                     "artifact_sand_chance_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
+                    remaining,
                     (x, z) -> {
                         RandomSource random = DailySettlementRandom.forPosition(
                                 worldSeed,
                                 absoluteDay,
                                 "artifact_sand_chance_" + zone.name,
                                 new BlockPos(x, 0, z));
-                        if (random.nextDouble() >= chance) return;
-                        if (!level.hasChunk(x >> 4, z >> 4)) return;
-                        if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) return;
+                        if (random.nextDouble() >= chance) return false;
+                        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+                        if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) return false;
                         if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
                             placed.incrementAndGet();
+                            return true;
                         }
+                        return false;
                     },
                     () -> placed.get() >= remaining,
                     () -> {}));
@@ -418,65 +423,19 @@ public final class ArtifactSpotSpawnService {
             String subsystem,
             long stableId,
             ArtifactAttempt operation) {
-        return new DailySettlementWorkUnit() {
-            private int cursor;
-            private double chance = 1.0D;
-            private boolean complete;
-            private boolean closed;
-
-            @Override
-            public String name() {
-                return name;
-            }
-
-            @Override
-            public String currentItemIdentity() {
-                return complete ? name : name + ":" + cursor;
-            }
-
-            @Override
-            public boolean isComplete() {
-                return complete;
-            }
-
-            @Override
-            public void runNext() {
-                if (complete) {
-                    throw new IllegalStateException("Work unit is already complete: " + name);
-                }
-                RandomSource random = DailySettlementRandom.forId(
-                        worldSeed, absoluteDay, subsystem, stableId ^ cursor);
-                if (random.nextDouble() >= chance) {
-                    complete = true;
-                    return;
-                }
-                double nextChance = chance * 0.75D;
-                if (season == 3) {
-                    nextChance += 0.10D;
-                }
-                operation.attempt(random);
-                chance = nextChance;
-                cursor++;
-            }
-
-            @Override
-            public void skipFailedItem() {
-                if (complete) {
-                    throw new IllegalStateException("Work unit is already complete: " + name);
-                }
-                chance *= 0.75D;
-                if (season == 3) {
-                    chance += 0.10D;
-                }
-                cursor++;
-            }
-
-            @Override
-            public synchronized void close() {
-                if (closed) return;
-                closed = true;
-            }
-        };
+        return PublicAreaDailyWorkUnits.decayingAttempts(
+                name,
+                season == 3,
+                (cursor, chance) -> {
+                    RandomSource random = DailySettlementRandom.forId(
+                            worldSeed, absoluteDay, subsystem, stableId ^ cursor);
+                    if (random.nextDouble() >= chance) {
+                        return false;
+                    }
+                    operation.attempt(random);
+                    return true;
+                },
+                () -> {});
     }
 
     private static long stableStringId(String value) {

@@ -238,6 +238,19 @@ public class PlayerStardewDataAPI {
         PlayerStardewData data = getData(player);
         return data.applyPendingSkillLevelUps();
     }
+
+    public static java.util.List<PlayerStardewData.SkillLevelUp>
+            applyPendingSkillLevelUpsForSettlement(ServerPlayer player) {
+        PlayerStardewData data = getData(player);
+        return data.applyPendingSkillLevelUpsForSettlement();
+    }
+
+    public static void clearPendingSkillLevelUps(ServerPlayer player) {
+        PlayerStardewData data = getData(player);
+        if (data.clearPendingSkillLevelUps()) {
+            PlayerDataEventHandler.syncPlayerData(player, data);
+        }
+    }
     
     /**
      * 设置经验值（绝对值）

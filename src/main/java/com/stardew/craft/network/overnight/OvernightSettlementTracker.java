@@ -66,6 +66,14 @@ public final class OvernightSettlementTracker extends SavedData {
         return get(server).consumeAvailable(playerId, absoluteDay);
     }
 
+    public static OvernightSettlementPayload peekPayload(
+            MinecraftServer server, UUID playerId, int absoluteDay) {
+        if (server == null || playerId == null) {
+            return new OvernightSettlementPayload(List.of(), List.of());
+        }
+        return get(server).peekAvailable(playerId, absoluteDay);
+    }
+
     private OvernightSettlementPayload consumeAvailable(UUID playerId, int currentDay) {
         PlayerLedger ledger = ledgerByPlayer.get(playerId);
         if (ledger == null || ledger.shippedItems.isEmpty()) {
@@ -88,6 +96,20 @@ public final class OvernightSettlementTracker extends SavedData {
             setDirty();
         }
 
+        return new OvernightSettlementPayload(List.copyOf(ready), List.of());
+    }
+
+    private OvernightSettlementPayload peekAvailable(UUID playerId, int currentDay) {
+        PlayerLedger ledger = ledgerByPlayer.get(playerId);
+        if (ledger == null || ledger.shippedItems.isEmpty()) {
+            return new OvernightSettlementPayload(List.of(), List.of());
+        }
+        List<OvernightSettlementPayload.ShippedItem> ready = ledger.shippedItems.stream()
+                .filter(entry -> entry.availableDay() <= currentDay)
+                .map(PendingShippedItem::item)
+                .map(item -> new OvernightSettlementPayload.ShippedItem(
+                        item.stack().copy(), item.category(), item.pricePerItem()))
+                .toList();
         return new OvernightSettlementPayload(List.copyOf(ready), List.of());
     }
 

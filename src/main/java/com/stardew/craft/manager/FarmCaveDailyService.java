@@ -103,11 +103,9 @@ public final class FarmCaveDailyService {
         PlayerInteriorAllocator alloc = PlayerInteriorAllocator.get(level);
         Set<UUID> processedOwners = new HashSet<>();
         List<FarmCaveDailyEntry> farmSnapshot = new ArrayList<>();
-        for (UUID playerId : context.playerIds()) {
-            UUID ownerUUID = reg.getOwnerForPlayer(playerId);
-            if (ownerUUID == null || !processedOwners.add(ownerUUID)) continue;
-            FarmInstance farm = reg.getFarm(ownerUUID);
-            if (farm == null) continue;
+        for (FarmInstance farm : reg.getAllFarms()) {
+            UUID ownerUUID = farm.getOwnerUUID();
+            if (!processedOwners.add(ownerUUID)) continue;
             if (!alloc.isCavePlaced(ownerUUID)) continue;
             FarmCaveChoice choice = farm.getCaveChoice();
             if (choice == FarmCaveChoice.NONE) continue;

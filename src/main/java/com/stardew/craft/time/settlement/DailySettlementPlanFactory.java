@@ -289,12 +289,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private void updateFarmCursor(DailySettlementContext context) {
             com.stardew.craft.farm.FarmInstanceRegistry registry =
                     com.stardew.craft.farm.FarmInstanceRegistry.get();
-            for (UUID ownerId : context.farmOwnerIds()) {
-                com.stardew.craft.farm.FarmInstance farm = registry.getFarm(ownerId);
-                if (farm != null) {
-                    farm.setLastOnlineDay(context.absoluteDay());
-                    farm.setLastOnlineSeason(context.season());
-                }
+            for (com.stardew.craft.farm.FarmInstance farm : registry.getAllFarms()) {
+                farm.setLastOnlineDay(context.absoluteDay());
+                farm.setLastOnlineSeason(context.season());
             }
             registry.setDirty();
         }

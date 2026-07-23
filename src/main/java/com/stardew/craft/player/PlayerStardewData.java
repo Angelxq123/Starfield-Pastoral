@@ -417,13 +417,26 @@ public class PlayerStardewData {
         data.lastSyncTime = tag.getLong("LastSyncTime");
         if (tag.contains("PendingDailySettlement", 10)) {
             CompoundTag pending = tag.getCompound("PendingDailySettlement");
+            List<SkillLevelUp> appliedLevels = new ArrayList<>();
+            if (pending.contains("AppliedLevels", 9)) {
+                ListTag levels = pending.getList("AppliedLevels", 10);
+                for (int i = 0; i < levels.size(); i++) {
+                    CompoundTag level = levels.getCompound(i);
+                    if (level.contains("SkillId") && level.contains("Level")) {
+                        appliedLevels.add(new SkillLevelUp(
+                                SkillType.fromId(level.getInt("SkillId")), level.getInt("Level")));
+                    }
+                }
+            }
             data.pendingDailySettlement = new PendingDailySettlement(
                     pending.getInt("AbsoluteDay"),
                     pending.getInt("Year"),
                     pending.getInt("Season"),
                     pending.getInt("Day"),
                     pending.getInt("SleepMinute"),
-                    pending.getBoolean("SeasonChanged"));
+                    pending.getBoolean("SeasonChanged"),
+                    pending.getInt("Stage"),
+                    appliedLevels);
         }
 
         // 精通系统
@@ -870,6 +883,15 @@ public class PlayerStardewData {
             pending.putInt("Day", pendingDailySettlement.day());
             pending.putInt("SleepMinute", pendingDailySettlement.sleepMinute());
             pending.putBoolean("SeasonChanged", pendingDailySettlement.seasonChanged());
+            pending.putInt("Stage", pendingDailySettlement.stage());
+            ListTag appliedLevels = new ListTag();
+            for (SkillLevelUp levelUp : pendingDailySettlement.appliedLevels()) {
+                CompoundTag level = new CompoundTag();
+                level.putInt("SkillId", levelUp.skill().getId());
+                level.putInt("Level", levelUp.newLevel());
+                appliedLevels.add(level);
+            }
+            pending.put("AppliedLevels", appliedLevels);
             tag.put("PendingDailySettlement", pending);
         }
 
@@ -3023,13 +3045,39 @@ public class PlayerStardewData {
         return true;
     }
 
+    public boolean updatePendingDailySettlement(PendingDailySettlement pending) {
+        Objects.requireNonNull(pending, "pending");
+        if (pendingDailySettlement == null
+                || pendingDailySettlement.absoluteDay() != pending.absoluteDay()) {
+            return false;
+        }
+        if (pendingDailySettlement.equals(pending)) {
+            return false;
+        }
+        pendingDailySettlement = pending;
+        markDirty();
+        return true;
+    }
+
     public record PendingDailySettlement(
             int absoluteDay,
             int year,
             int season,
             int day,
             int sleepMinute,
-            boolean seasonChanged) {
+            boolean seasonChanged,
+            int stage,
+            List<SkillLevelUp> appliedLevels) {
+
+        public PendingDailySettlement(
+                int absoluteDay,
+                int year,
+                int season,
+                int day,
+                int sleepMinute,
+                boolean seasonChanged) {
+            this(absoluteDay, year, season, day, sleepMinute, seasonChanged, 0, List.of());
+        }
 
         public PendingDailySettlement {
             long expected = (year - 1L) * 112L + season * 28L + day;
@@ -3037,7 +3085,39 @@ public class PlayerStardewData {
                     || absoluteDay != expected) {
                 throw new IllegalArgumentException("Invalid pending daily settlement date");
             }
+            if (stage < 0 || stage > 6) {
+                throw new IllegalArgumentException("Invalid pending daily settlement stage");
+            }
+            appliedLevels = List.copyOf(Objects.requireNonNull(appliedLevels, "appliedLevels"));
         }
+    }
+
+    public List<SkillLevelUp> applyPendingSkillLevelUpsForSettlement() {
+        List<SkillLevelUp> applied = new ArrayList<>(pendingNewLevels);
+        for (SkillLevelUp levelUp : applied) {
+            SkillType skill = levelUp.skill();
+            int level = levelUp.newLevel();
+            if (level == 5 && !hasLevel5Profession(skill) && !hasPendingProfessionChoice(skill, 5)) {
+                pendingProfessionChoices.add(new ProfessionChoicePrompt(skill, 5));
+            }
+            if (level == 10 && hasLevel5Profession(skill)
+                    && !hasLevel10Profession(skill) && !hasPendingProfessionChoice(skill, 10)) {
+                pendingProfessionChoices.add(new ProfessionChoicePrompt(skill, 10));
+            }
+        }
+        if (!applied.isEmpty()) {
+            markDirty();
+        }
+        return applied;
+    }
+
+    public boolean clearPendingSkillLevelUps() {
+        if (pendingNewLevels.isEmpty()) {
+            return false;
+        }
+        pendingNewLevels.clear();
+        markDirty();
+        return true;
     }
     
     public void markDirty() {

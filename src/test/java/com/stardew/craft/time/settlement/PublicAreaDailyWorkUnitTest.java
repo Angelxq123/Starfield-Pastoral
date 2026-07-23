@@ -417,7 +417,8 @@ class PublicAreaDailyWorkUnitTest {
         MethodTree factory = caves.method("createDailyWorkUnit", 2);
         MethodTree item = caves.method("processFarmCave", -1);
 
-        assertEquals(1, invocationsNamed(factory, "playerIds").size());
+        assertEquals(0, invocationsNamed(factory, "playerIds").size());
+        assertEquals(1, invocationsNamed(factory, "getAllFarms").size());
         assertEquals(1, invocationsNamed(factory, "cursor").size());
         assertTrue(factory.toString().contains("FarmCaveDailyEntry"));
         assertTrue(invocationsNamed(factory, "processFarmCave").size() == 1);

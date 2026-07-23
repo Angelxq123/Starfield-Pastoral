@@ -268,13 +268,9 @@ public class StardewTimeManager extends SavedData {
                 .toList();
         com.stardew.craft.farm.FarmInstanceRegistry farms =
                 com.stardew.craft.farm.FarmInstanceRegistry.get();
-        java.util.Set<java.util.UUID> owners = new java.util.HashSet<>();
-        for (java.util.UUID playerId : participants) {
-            java.util.UUID ownerId = farms.getOwnerForPlayer(playerId);
-            if (ownerId != null) {
-                owners.add(ownerId);
-            }
-        }
+        java.util.Set<java.util.UUID> owners = farms.getAllFarms().stream()
+                .map(com.stardew.craft.farm.FarmInstance::getOwnerUUID)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
         DailySettlementContext context =
                 com.stardew.craft.time.settlement.DailySettlementContextFactory.captureNextDay(
                         this,

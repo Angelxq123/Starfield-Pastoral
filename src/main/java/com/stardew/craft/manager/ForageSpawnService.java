@@ -4,6 +4,12 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.api.v1.world.StardewForageZoneDefinition;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.nature.ForageBlock;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import com.stardew.craft.world.data.ForageZoneData;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
@@ -25,7 +31,11 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
@@ -91,95 +101,150 @@ public final class ForageSpawnService {
      * Called once per day from StardewTimeManager. Replicates SDV GameLocation.spawnObjects().
      */
     public static void onNewDay(ServerLevel level, int season) {
-        RandomSource random = level.getRandom();
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
+        List<ForageZone> zones = runtimeZones(level);
+        long worldSeed = level.getSeed();
+        int absoluteDay = context.absoluteDay();
+        int season = context.season();
+        AtomicInteger totalSpawned = new AtomicInteger();
+        List<DailySettlementWorkUnit> zoneWork = new ArrayList<>(zones.size());
         StardewCraft.LOGGER.info("[ForageSpawn] onNewDay called, season={}", season);
-
-        int totalSpawned = 0;
-        for (ForageZone zone : runtimeZones(level)) {
-            // Filter entries for current season
-            List<ForageEntry> possibleForage = new ArrayList<>();
-            for (ForageEntry entry : zone.entries) {
-                if (entry.matchesSeason(season)) {
-                    possibleForage.add(entry);
-                }
-            }
-            if (possibleForage.isEmpty()) {
-                StardewCraft.LOGGER.info("[ForageSpawn] {} zone: no forage entries for season {}", zone.name, season);
-                continue;
-            }
-
-            // Count existing forage blocks in zone (lightweight heightmap-based scan)
-            int existingCount = countForageInZone(level, zone);
-            if (existingCount >= zone.maxSpawnedAtOnce) {
-                StardewCraft.LOGGER.info("[ForageSpawn] {} zone: already at max ({}/{})",
-                        zone.name, existingCount, zone.maxSpawnedAtOnce);
-                continue;
-            }
-
-            // Determine number to spawn (SDV: random between min and max inclusive)
-            int numberToSpawn = zone.minDailySpawn + random.nextInt(
-                    zone.maxDailySpawn - zone.minDailySpawn + 1);
-            numberToSpawn = Math.min(numberToSpawn, zone.maxSpawnedAtOnce - existingCount);
-
-            StardewCraft.LOGGER.info("[ForageSpawn] {} zone: existing={}, toSpawn={}, possibleEntries={}",
-                    zone.name, existingCount, numberToSpawn, possibleForage.size());
-
-            int spawned = 0;
-            for (int i = 0; i < numberToSpawn; i++) {
-                // SDV: up to 30 attempts per spawn (raised from 11 to compensate for
-                // densely decorated terrain with grass/flowers occupying positions)
-                for (int attempt = 0; attempt < 30; attempt++) {
-                    // Pick random rect (with weight for beach second rect)
-                    ZoneRect rect = pickRandomRect(zone, random);
-
-                    // Random position within rect
-                    int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
-                    int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-
-                    // Skip if chunk not loaded
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-
-                    // Use heightmap that ignores leaves to find surface quickly
-                    int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                    BlockPos surfacePos = new BlockPos(x, surfaceY, z);
-
-                    // If the heightmap surface is a replaceable plant (weeds, flowers, etc.),
-                    // look below it for the real solid ground (e.g. grass_block).
-                    BlockState surfaceState = level.getBlockState(surfacePos);
-                    if (isReplaceablePlant(surfaceState)) {
-                        surfacePos = surfacePos.below();
-                        surfaceState = level.getBlockState(surfacePos);
-                    }
-                    if (!rect.containsSurfaceY(surfacePos.getY())) continue;
-                    BlockPos placePos = surfacePos.above();
-
-                    // Validate surface block
-                    if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) continue;
-
-                    // Check placement conditions
-                    if (!canPlaceForage(level, surfacePos, placePos, zone.surface)) continue;
-
-                    // Pick a random forage entry and apply chance
-                    ForageEntry chosen = possibleForage.get(random.nextInt(possibleForage.size()));
-                    if (random.nextDouble() > chosen.chance) continue;
-
-                    // Remove any replaceable plant at the placement position before placing forage
-                    BlockState existing = level.getBlockState(placePos);
-                    if (!existing.isAir() && isReplaceablePlant(existing)) {
-                        level.destroyBlock(placePos, false);
-                    }
-
-                    // Place the block
-                    level.setBlock(placePos, chosen.block.get().defaultBlockState(), Block.UPDATE_ALL);
-                    spawned++;
-                    break; // success, move to next spawn slot
-                }
-            }
-
-            totalSpawned += spawned;
-            StardewCraft.LOGGER.info("[ForageSpawn] {} zone: spawned {} forage blocks", zone.name, spawned);
+        for (ForageZone zone : zones) {
+            zoneWork.add(createZoneDailyWorkUnit(
+                    level, zone, season, worldSeed, absoluteDay, totalSpawned));
         }
-        StardewCraft.LOGGER.info("[ForageSpawn] Day complete: total spawned = {}", totalSpawned);
+        return DailySettlementWorkUnits.sequence(
+                "forage_daily",
+                zoneWork,
+                () -> StardewCraft.LOGGER.info(
+                        "[ForageSpawn] Day complete: total spawned = {}", totalSpawned.get()));
+    }
+
+    private static DailySettlementWorkUnit createZoneDailyWorkUnit(
+            ServerLevel level,
+            ForageZone zone,
+            int season,
+            long worldSeed,
+            int absoluteDay,
+            AtomicInteger totalSpawned) {
+        List<ForageEntry> possibleForage = zone.entries.stream()
+                .filter(entry -> entry.matchesSeason(season))
+                .toList();
+        if (possibleForage.isEmpty()) {
+            return DailySettlementWorkUnits.cursor(
+                    "forage_zone_" + zone.name,
+                    List.<String>of(),
+                    value -> value,
+                    value -> {},
+                    () -> StardewCraft.LOGGER.info(
+                            "[ForageSpawn] {} zone: no forage entries for season {}", zone.name, season));
+        }
+
+        AtomicInteger existing = new AtomicInteger();
+        List<DailySettlementWorkUnit> scans = new ArrayList<>(zone.rects.size());
+        for (int index = 0; index < zone.rects.size(); index++) {
+            ZoneRect rect = zone.rects.get(index);
+            scans.add(PublicAreaDailyWorkUnits.rectangle(
+                    "forage_count_" + zone.name + "_" + index,
+                    rect.minX, rect.minZ, rect.maxX, rect.maxZ,
+                    (x, z) -> existing.addAndGet(countForageColumn(level, rect, x, z)),
+                    () -> existing.get() >= zone.maxSpawnedAtOnce,
+                    () -> {}));
+        }
+        DailySettlementWorkUnit countWork = DailySettlementWorkUnits.sequence(
+                "forage_count_" + zone.name, scans, () -> {});
+        DailySettlementWorkUnit spawnWork = DailySettlementWorkUnits.deferred(
+                "forage_spawn_" + zone.name,
+                () -> createForageAttemptWorkUnit(
+                        level, zone, possibleForage, existing.get(), worldSeed, absoluteDay,
+                        totalSpawned));
+        return DailySettlementWorkUnits.sequence(
+                "forage_zone_" + zone.name,
+                List.of(countWork, spawnWork),
+                () -> {});
+    }
+
+    private static DailySettlementWorkUnit createForageAttemptWorkUnit(
+            ServerLevel level,
+            ForageZone zone,
+            List<ForageEntry> possibleForage,
+            int existing,
+            long worldSeed,
+            int absoluteDay,
+            AtomicInteger totalSpawned) {
+        if (existing >= zone.maxSpawnedAtOnce) {
+            return DailySettlementWorkUnits.cursor(
+                    "forage_spawn_" + zone.name,
+                    List.<String>of(),
+                    value -> value,
+                    value -> {},
+                    () -> StardewCraft.LOGGER.info(
+                            "[ForageSpawn] {} zone: already at max ({}/{})",
+                            zone.name, existing, zone.maxSpawnedAtOnce));
+        }
+        long zoneId = stableStringId(zone.name);
+        RandomSource countRandom = DailySettlementRandom.forId(
+                worldSeed, absoluteDay, "forage_spawn_count", zoneId);
+        int rolled = zone.minDailySpawn + countRandom.nextInt(
+                zone.maxDailySpawn - zone.minDailySpawn + 1);
+        int toSpawn = Math.min(rolled, zone.maxSpawnedAtOnce - existing);
+        StardewCraft.LOGGER.info("[ForageSpawn] {} zone: existing={}, toSpawn={}, possibleEntries={}",
+                zone.name, existing, toSpawn, possibleForage.size());
+        return forageAttempts(
+                "forage_spawn_" + zone.name,
+                toSpawn,
+                (slot, attempt) -> {
+                    long attemptId = zoneId ^ ((long) slot << 32) ^ attempt;
+                    RandomSource random = DailySettlementRandom.forId(
+                            worldSeed, absoluteDay, "forage_spawn_attempt", attemptId);
+                    return trySpawnForage(level, zone, possibleForage, random);
+                },
+                spawned -> {
+                    totalSpawned.addAndGet(spawned);
+                    StardewCraft.LOGGER.info(
+                            "[ForageSpawn] {} zone: spawned {} forage blocks", zone.name, spawned);
+                });
+    }
+
+    private static boolean trySpawnForage(
+            ServerLevel level,
+            ForageZone zone,
+            List<ForageEntry> possibleForage,
+            RandomSource random) {
+        ZoneRect rect = pickRandomRect(zone, random);
+        int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
+        int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
+        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+
+        int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        BlockPos surfacePos = new BlockPos(x, surfaceY, z);
+        BlockState surfaceState = level.getBlockState(surfacePos);
+        if (isReplaceablePlant(surfaceState)) {
+            surfacePos = surfacePos.below();
+            surfaceState = level.getBlockState(surfacePos);
+        }
+        if (!rect.containsSurfaceY(surfacePos.getY())) return false;
+        BlockPos placePos = surfacePos.above();
+        if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) return false;
+        if (!canPlaceForage(level, surfacePos, placePos, zone.surface)) return false;
+
+        ForageEntry chosen = possibleForage.get(random.nextInt(possibleForage.size()));
+        if (random.nextDouble() > chosen.chance) return false;
+        BlockState existing = level.getBlockState(placePos);
+        if (!existing.isAir() && isReplaceablePlant(existing)) {
+            level.destroyBlock(placePos, false);
+        }
+        level.setBlock(placePos, chosen.block.get().defaultBlockState(), Block.UPDATE_ALL);
+        return true;
     }
 
     // ======================== Helpers ========================
@@ -295,27 +360,11 @@ public final class ForageSpawnService {
         return state.canBeReplaced();
     }
 
-    /**
-     * Count existing ForageBlock instances in a zone.
-     * Only scans loaded chunks. The scan is exact so old unpicked forage still counts
-     * against MaxSpawnedForageAtOnce instead of allowing extra seasonal spawns nearby.
-     */
-    private static int countForageInZone(ServerLevel level, ForageZone zone) {
-        int count = 0;
-        for (ZoneRect rect : zone.rects) {
-            for (int x = rect.minX; x <= rect.maxX; x++) {
-                for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                    // Skip unloaded chunks
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-
-                    int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                    if (!rect.containsSurfaceY(surfaceY)) continue;
-
-                    count += countForageAtColumn(level, x, z);
-                }
-            }
-        }
-        return count;
+    private static int countForageColumn(ServerLevel level, ZoneRect rect, int x, int z) {
+        if (!level.hasChunk(x >> 4, z >> 4)) return 0;
+        int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        if (!rect.containsSurfaceY(surfaceY)) return 0;
+        return countForageAtColumn(level, x, z);
     }
 
     private static int countForageAtColumn(ServerLevel level, int x, int z) {
@@ -411,87 +460,238 @@ public final class ForageSpawnService {
      * Called from StardewTimeManager.advanceDayWithSleepTime().
      */
     public static void onNewDayForestFarms(ServerLevel level, int season) {
-        if (season == WINTER || season < 0 || season > 2) return;
+        DailySettlementWorkUnits.drain(createForestFarmDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public static DailySettlementWorkUnit createForestFarmDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
+        int season = context.season();
+        if (season == WINTER || season < 0 || season > 2) {
+            return DailySettlementWorkUnits.sequence("forest_farm_forage_daily", List.of(), () -> {});
+        }
 
         List<DeferredBlock<Block>> possibleForage = FOREST_FARM_FORAGE.get(season);
-        if (possibleForage.isEmpty()) return;
-
-        com.stardew.craft.farm.FarmInstanceRegistry registry = com.stardew.craft.farm.FarmInstanceRegistry.get();
-        int totalSpawned = 0;
-
-        for (com.stardew.craft.farm.FarmInstance farm : registry.getAllFarms()) {
+        List<ForestFarmDailyEntry> farmSnapshot = new ArrayList<>();
+        for (com.stardew.craft.farm.FarmInstance farm
+                : com.stardew.craft.farm.FarmInstanceRegistry.get().getAllFarms()) {
             if (farm.getFarmType() != com.stardew.craft.farm.FarmType.FOREST) continue;
             com.stardew.craft.farm.FarmType.FarmLayout layout = farm.getFarmType().getLayout();
             if (layout == null || layout.forageZoneMin() == null || layout.forageZoneMax() == null) continue;
-
-            BlockPos origin = farm.getOrigin();
-            BlockPos zoneMin = origin.offset(layout.forageZoneMin());
-            BlockPos zoneMax = origin.offset(layout.forageZoneMax());
-
-            int minX = Math.min(zoneMin.getX(), zoneMax.getX());
-            int maxX = Math.max(zoneMin.getX(), zoneMax.getX());
-            int minZ = Math.min(zoneMin.getZ(), zoneMax.getZ());
-            int maxZ = Math.max(zoneMin.getZ(), zoneMax.getZ());
-
-            // Count existing forage in zone
-            int existing = countForageInRect(level, minX, minZ, maxX, maxZ);
-            if (existing >= FOREST_FARM_MAX_AT_ONCE) continue;
-
-            RandomSource random = level.getRandom();
-            int toSpawn = FOREST_FARM_MIN_SPAWN + random.nextInt(
-                    FOREST_FARM_MAX_SPAWN - FOREST_FARM_MIN_SPAWN + 1);
-            toSpawn = Math.min(toSpawn, FOREST_FARM_MAX_AT_ONCE - existing);
-
-            int spawned = 0;
-            for (int i = 0; i < toSpawn; i++) {
-                for (int attempt = 0; attempt < 30; attempt++) {
-                    int x = minX + random.nextInt(maxX - minX + 1);
-                    int z = minZ + random.nextInt(maxZ - minZ + 1);
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-
-                    int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                    BlockPos surfacePos = new BlockPos(x, surfaceY, z);
-                    BlockState surfaceState = level.getBlockState(surfacePos);
-                    if (isReplaceablePlant(surfaceState)) {
-                        surfacePos = surfacePos.below();
-                        surfaceState = level.getBlockState(surfacePos);
-                    }
-                    BlockPos placePos = surfacePos.above();
-
-                    if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) continue;
-                    if (!canPlaceForage(level, surfacePos, placePos, SurfaceType.NATURAL)) continue;
-
-                    // Equal probability among 4 items
-                    DeferredBlock<Block> chosen = possibleForage.get(random.nextInt(possibleForage.size()));
-
-                    BlockState existingState = level.getBlockState(placePos);
-                    if (!existingState.isAir() && isReplaceablePlant(existingState)) {
-                        level.destroyBlock(placePos, false);
-                    }
-
-                    level.setBlock(placePos, chosen.get().defaultBlockState(), Block.UPDATE_ALL);
-                    spawned++;
-                    break;
-                }
-            }
-            totalSpawned += spawned;
-            StardewCraft.LOGGER.info("[ForageSpawn] Forest farm ({}): spawned {} forage in zone",
-                    farm.getOwnerName(), spawned);
+            BlockPos zoneMin = farm.getOrigin().offset(layout.forageZoneMin());
+            BlockPos zoneMax = farm.getOrigin().offset(layout.forageZoneMax());
+            farmSnapshot.add(new ForestFarmDailyEntry(
+                    farm.getOwnerUUID(),
+                    farm.getOwnerName(),
+                    Math.min(zoneMin.getX(), zoneMax.getX()),
+                    Math.min(zoneMin.getZ(), zoneMax.getZ()),
+                    Math.max(zoneMin.getX(), zoneMax.getX()),
+                    Math.max(zoneMin.getZ(), zoneMax.getZ())));
         }
+        farmSnapshot.sort(Comparator.comparing(entry -> entry.ownerId().toString()));
 
-        if (totalSpawned > 0) {
-            StardewCraft.LOGGER.info("[ForageSpawn] Forest farms total: {} forage spawned", totalSpawned);
+        long worldSeed = level.getSeed();
+        int absoluteDay = context.absoluteDay();
+        AtomicInteger totalSpawned = new AtomicInteger();
+        List<DailySettlementWorkUnit> farmWork = new ArrayList<>(farmSnapshot.size());
+        for (ForestFarmDailyEntry farm : farmSnapshot) {
+            farmWork.add(createForestFarmWorkUnit(
+                    level, farm, possibleForage, worldSeed, absoluteDay, totalSpawned));
         }
+        return DailySettlementWorkUnits.sequence(
+                "forest_farm_forage_daily",
+                farmWork,
+                () -> {
+                    if (totalSpawned.get() > 0) {
+                        StardewCraft.LOGGER.info(
+                                "[ForageSpawn] Forest farms total: {} forage spawned",
+                                totalSpawned.get());
+                    }
+                });
     }
 
-    private static int countForageInRect(ServerLevel level, int minX, int minZ, int maxX, int maxZ) {
-        int count = 0;
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                count += countForageAtColumn(level, x, z);
-            }
+    private static DailySettlementWorkUnit createForestFarmWorkUnit(
+            ServerLevel level,
+            ForestFarmDailyEntry farm,
+            List<DeferredBlock<Block>> possibleForage,
+            long worldSeed,
+            int absoluteDay,
+            AtomicInteger totalSpawned) {
+        AtomicInteger existing = new AtomicInteger();
+        DailySettlementWorkUnit scan = PublicAreaDailyWorkUnits.rectangle(
+                "forest_farm_forage_count_" + farm.ownerId(),
+                farm.minX(), farm.minZ(), farm.maxX(), farm.maxZ(),
+                (x, z) -> {
+                    if (level.hasChunk(x >> 4, z >> 4)) {
+                        existing.addAndGet(countForageAtColumn(level, x, z));
+                    }
+                },
+                () -> existing.get() >= FOREST_FARM_MAX_AT_ONCE,
+                () -> {});
+        DailySettlementWorkUnit spawn = DailySettlementWorkUnits.deferred(
+                "forest_farm_forage_spawn_" + farm.ownerId(),
+                () -> createForestFarmAttemptWorkUnit(
+                        level, farm, possibleForage, existing.get(), worldSeed, absoluteDay,
+                        totalSpawned));
+        return DailySettlementWorkUnits.sequence(
+                "forest_farm_forage_" + farm.ownerId(), List.of(scan, spawn), () -> {});
+    }
+
+    private static DailySettlementWorkUnit createForestFarmAttemptWorkUnit(
+            ServerLevel level,
+            ForestFarmDailyEntry farm,
+            List<DeferredBlock<Block>> possibleForage,
+            int existing,
+            long worldSeed,
+            int absoluteDay,
+            AtomicInteger totalSpawned) {
+        int capacity = Math.max(0, FOREST_FARM_MAX_AT_ONCE - existing);
+        long farmId = stableUuid(farm.ownerId());
+        RandomSource countRandom = DailySettlementRandom.forId(
+                worldSeed, absoluteDay, "forest_farm_forage_count", farmId);
+        int rolled = FOREST_FARM_MIN_SPAWN + countRandom.nextInt(
+                FOREST_FARM_MAX_SPAWN - FOREST_FARM_MIN_SPAWN + 1);
+        int toSpawn = Math.min(rolled, capacity);
+        return forageAttempts(
+                "forest_farm_forage_spawn_" + farm.ownerId(),
+                toSpawn,
+                (slot, attempt) -> {
+                    RandomSource random = DailySettlementRandom.forId(
+                            worldSeed,
+                            absoluteDay,
+                            "forest_farm_forage_attempt",
+                            farmId ^ ((long) slot << 32) ^ attempt);
+                    return trySpawnForestFarmForage(level, farm, possibleForage, random);
+                },
+                spawned -> {
+                    totalSpawned.addAndGet(spawned);
+                    StardewCraft.LOGGER.info(
+                            "[ForageSpawn] Forest farm ({}): spawned {} forage in zone",
+                            farm.ownerName(), spawned);
+                });
+    }
+
+    private static boolean trySpawnForestFarmForage(
+            ServerLevel level,
+            ForestFarmDailyEntry farm,
+            List<DeferredBlock<Block>> possibleForage,
+            RandomSource random) {
+        int x = farm.minX() + random.nextInt(farm.maxX() - farm.minX() + 1);
+        int z = farm.minZ() + random.nextInt(farm.maxZ() - farm.minZ() + 1);
+        if (!level.hasChunk(x >> 4, z >> 4)) return false;
+        int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        BlockPos surfacePos = new BlockPos(x, surfaceY, z);
+        BlockState surfaceState = level.getBlockState(surfacePos);
+        if (isReplaceablePlant(surfaceState)) {
+            surfacePos = surfacePos.below();
+            surfaceState = level.getBlockState(surfacePos);
         }
-        return count;
+        BlockPos placePos = surfacePos.above();
+        if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) return false;
+        if (!canPlaceForage(level, surfacePos, placePos, SurfaceType.NATURAL)) return false;
+        DeferredBlock<Block> chosen = possibleForage.get(random.nextInt(possibleForage.size()));
+        BlockState existingState = level.getBlockState(placePos);
+        if (!existingState.isAir() && isReplaceablePlant(existingState)) {
+            level.destroyBlock(placePos, false);
+        }
+        level.setBlock(placePos, chosen.get().defaultBlockState(), Block.UPDATE_ALL);
+        return true;
+    }
+
+    private static DailySettlementWorkUnit forageAttempts(
+            String name,
+            int slots,
+            SpawnAttempt operation,
+            java.util.function.IntConsumer onClose) {
+        return new DailySettlementWorkUnit() {
+            private int slot;
+            private int attempt;
+            private int spawned;
+            private boolean closed;
+
+            @Override
+            public String name() {
+                return name;
+            }
+
+            @Override
+            public String currentItemIdentity() {
+                return isComplete() ? name : name + ":" + slot + ":" + attempt;
+            }
+
+            @Override
+            public boolean isComplete() {
+                return slot >= slots;
+            }
+
+            @Override
+            public void runNext() {
+                requireCurrentItem();
+                boolean placed = operation.trySpawn(slot, attempt);
+                advanceAttempt(placed);
+            }
+
+            @Override
+            public void skipFailedItem() {
+                requireCurrentItem();
+                advanceAttempt(false);
+            }
+
+            @Override
+            public synchronized void close() {
+                if (closed) return;
+                closed = true;
+                onClose.accept(spawned);
+            }
+
+            private void advanceAttempt(boolean placed) {
+                attempt++;
+                if (placed) {
+                    spawned++;
+                    slot++;
+                    attempt = 0;
+                } else if (attempt >= 30) {
+                    slot++;
+                    attempt = 0;
+                }
+            }
+
+            private void requireCurrentItem() {
+                if (isComplete()) {
+                    throw new IllegalStateException("Work unit is already complete: " + name);
+                }
+            }
+        };
+    }
+
+    private static long stableStringId(String value) {
+        long hash = 0xcbf29ce484222325L;
+        for (int index = 0; index < value.length(); index++) {
+            hash ^= value.charAt(index);
+            hash *= 0x100000001b3L;
+        }
+        return hash;
+    }
+
+    private static long stableUuid(UUID ownerId) {
+        return ownerId.getMostSignificantBits() ^ ownerId.getLeastSignificantBits();
+    }
+
+    @FunctionalInterface
+    private interface SpawnAttempt {
+        boolean trySpawn(int slot, int attempt);
+    }
+
+    private record ForestFarmDailyEntry(
+            UUID ownerId,
+            String ownerName,
+            int minX,
+            int minZ,
+            int maxX,
+            int maxZ) {
     }
 }

@@ -8,17 +8,28 @@ import com.stardew.craft.farm.FarmInstance;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.interior.InteriorSubspaceManager;
 import com.stardew.craft.interior.PlayerInteriorAllocator;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 农场洞穴每日结算：
@@ -67,35 +78,70 @@ public final class FarmCaveDailyService {
     // ── 入口 ──
 
     public static void onNewDay(ServerLevel level) {
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
         FarmInstanceRegistry reg = FarmInstanceRegistry.get();
         PlayerInteriorAllocator alloc = PlayerInteriorAllocator.get(level);
-        RandomSource rng = level.getRandom();
-        java.util.Set<UUID> processedOwners = new java.util.HashSet<>();
-
-        int fruitCount = 0;
-        int mushroomCount = 0;
-
-        for (ServerPlayer sp : level.getServer().getPlayerList().getPlayers()) {
-            UUID ownerUUID = reg.getOwnerForPlayer(sp.getUUID());
+        Set<UUID> processedOwners = new HashSet<>();
+        List<FarmCaveDailyEntry> farmSnapshot = new ArrayList<>();
+        for (UUID playerId : context.playerIds()) {
+            UUID ownerUUID = reg.getOwnerForPlayer(playerId);
             if (ownerUUID == null || !processedOwners.add(ownerUUID)) continue;
-
             FarmInstance farm = reg.getFarm(ownerUUID);
             if (farm == null) continue;
             if (!alloc.isCavePlaced(ownerUUID)) continue;
-
             FarmCaveChoice choice = farm.getCaveChoice();
             if (choice == FarmCaveChoice.NONE) continue;
-
             BlockPos caveOrigin = alloc.getCaveOrigin(ownerUUID);
-            if (choice == FarmCaveChoice.FRUIT_BATS) {
-                fruitCount += processFruitBats(level, caveOrigin, rng);
-            } else if (choice == FarmCaveChoice.MUSHROOMS) {
-                mushroomCount += processMushrooms(level, caveOrigin, rng);
-            }
+            farmSnapshot.add(new FarmCaveDailyEntry(ownerUUID, caveOrigin, choice));
         }
+        farmSnapshot.sort(Comparator.comparing(entry -> entry.ownerId().toString()));
 
-        if (fruitCount > 0 || mushroomCount > 0) {
-            StardewCraft.LOGGER.info("[FARM-CAVE] Daily result: fruits={}, mushrooms={}", fruitCount, mushroomCount);
+        long worldSeed = level.getSeed();
+        int absoluteDay = context.absoluteDay();
+        AtomicInteger fruitCount = new AtomicInteger();
+        AtomicInteger mushroomCount = new AtomicInteger();
+        return DailySettlementWorkUnits.cursor(
+                "farm_cave_daily",
+                farmSnapshot,
+                entry -> "farm_cave:" + entry.ownerId(),
+                entry -> processFarmCave(
+                        level,
+                        entry,
+                        worldSeed,
+                        absoluteDay,
+                        fruitCount,
+                        mushroomCount),
+                () -> {
+                    if (fruitCount.get() > 0 || mushroomCount.get() > 0) {
+                        StardewCraft.LOGGER.info(
+                                "[FARM-CAVE] Daily result: fruits={}, mushrooms={}",
+                                fruitCount.get(), mushroomCount.get());
+                    }
+                });
+    }
+
+    private static void processFarmCave(
+            ServerLevel level,
+            FarmCaveDailyEntry entry,
+            long worldSeed,
+            int absoluteDay,
+            AtomicInteger fruitCount,
+            AtomicInteger mushroomCount) {
+        RandomSource random = DailySettlementRandom.forId(
+                worldSeed, absoluteDay, "farm_cave", stableUuid(entry.ownerId()));
+        if (entry.choice() == FarmCaveChoice.FRUIT_BATS) {
+            fruitCount.addAndGet(processFruitBats(level, entry.caveOrigin(), random));
+        } else if (entry.choice() == FarmCaveChoice.MUSHROOMS) {
+            mushroomCount.addAndGet(processMushrooms(level, entry.caveOrigin(), random));
         }
     }
 
@@ -173,5 +219,15 @@ public final class FarmCaveDailyService {
         if (r < 0.025D + 0.075D + 0.090D) return MOREL;    // 0.190
         if (r < 0.025D + 0.075D + 0.090D + 0.150D) return RED_MUSHROOM; // 0.340
         return COMMON_MUSHROOM;
+    }
+
+    private static long stableUuid(UUID ownerId) {
+        return ownerId.getMostSignificantBits() ^ ownerId.getLeastSignificantBits();
+    }
+
+    private record FarmCaveDailyEntry(
+            UUID ownerId,
+            BlockPos caveOrigin,
+            FarmCaveChoice choice) {
     }
 }

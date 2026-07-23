@@ -3,6 +3,12 @@ package com.stardew.craft.manager;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.api.v1.world.StardewWorldLootPools;
 import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import com.stardew.craft.world.data.WorldLootPoolData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -16,6 +22,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 采石场（Quarry）每日刷新服务 — SDV Mountain.quarryDayUpdate 的 MC 等价实现。
@@ -58,20 +68,49 @@ public final class QuarrySpawnService {
 
     /** 每日（过夜结算）调用，从 StardewTimeManager 触发。 */
     public static void onNewDay(ServerLevel level, int year) {
-        if (!level.dimension().equals(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY)) return;
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
 
-        int n = Math.min(16, 5 + year * 2);
-        java.util.List<long[]> forced = forceQuarryChunks(level);
-        int placed = 0;
-        try {
-            RandomSource random = level.getRandom();
-            for (int i = 0; i < n; i++) {
-                if (trySpawnOne(level, random)) placed++;
-            }
-        } finally {
-            releaseQuarryChunks(level, forced);
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
+        if (!level.dimension().equals(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY)) {
+            return DailySettlementWorkUnits.sequence("quarry_daily", List.of(), () -> {});
         }
-        StardewCraft.LOGGER.info("[QUARRY] onNewDay year={} attempts={} placed={}", year, n, placed);
+        int n = Math.min(16, 5 + context.year() * 2);
+        List<Integer> attempts = new ArrayList<>(n);
+        for (int attempt = 0; attempt < n; attempt++) {
+            attempts.add(attempt);
+        }
+        long worldSeed = level.getSeed();
+        int absoluteDay = context.absoluteDay();
+        AtomicInteger placed = new AtomicInteger();
+        return DailySettlementWorkUnits.cursor(
+                "quarry_daily",
+                attempts,
+                attempt -> "quarry:" + attempt,
+                attempt -> processDailyAttempt(
+                        level, worldSeed, absoluteDay, attempt, placed),
+                () -> StardewCraft.LOGGER.info(
+                        "[QUARRY] onNewDay year={} attempts={} placed={}",
+                        context.year(), n, placed.get()));
+    }
+
+    private static void processDailyAttempt(
+            ServerLevel level,
+            long worldSeed,
+            int absoluteDay,
+            int attempt,
+            AtomicInteger placed) {
+        RandomSource random = DailySettlementRandom.forId(
+                worldSeed, absoluteDay, "quarry_spawn", attempt);
+        if (trySpawnOne(level, random)) {
+            placed.incrementAndGet();
+        }
     }
 
     /** 初始全图铺设密度 — 每个砂土格按此概率触发一次放置尝试（与原版 hand-painted 采石场密度近似）。 */

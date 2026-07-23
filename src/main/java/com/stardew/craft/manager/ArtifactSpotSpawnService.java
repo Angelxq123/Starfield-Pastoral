@@ -4,6 +4,12 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.nature.ArtifactSpotBlock;
 import com.stardew.craft.core.ModDimensions;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +25,15 @@ import javax.annotation.Nonnull;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * SDV-parity artifact spot spawning service.
@@ -107,116 +122,382 @@ public final class ArtifactSpotSpawnService {
      * Called once per day. Replicates SDV GameLocation.spawnObjects() artifact spot logic.
      */
     public static void onNewDay(ServerLevel level, int season) {
-        if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
-
-        RandomSource random = level.getRandom();
-
-        for (SpawnZone zone : ZONES) {
-            // 0. Revert public yellow-dirt farmland back to yellow_dirt in non-farm zones.
-            //    Sand-backed artifact spots till directly back to sand and need no farmland reset.
-            if (!"Farm".equals(zone.name) && zone.surface == SurfaceKind.YELLOW_DIRT) {
-                for (ZoneRect rect : zone.rects) {
-                    revertFarmlandInRect(level, rect);
-                }
-            }
-
-            // 1. Count & remove existing spots (SDV: 15% removal per spot per day)
-            int existingCount = 0;
-            for (ZoneRect rect : zone.rects) {
-                removeAndCountSpots(level, rect, random, zone.surface);
-                existingCount += countSpotsInRect(level, rect, zone.surface);
-            }
-
-            // 2. Check cap: SDV — Farm stops if >0, non-Farm stops if >1,
-            //    but in Winter spawning continues as long as count <= 4
-            //    沙漠走低概率 bbox 扫描；其他区域走 SDV 衰减循环。
-            int threshold = "Farm".equals(zone.name) ? MAX_SPOTS_FARM : MAX_SPOTS_NON_FARM;
-            boolean overCap = existingCount > threshold && (season != 3 || existingCount > MAX_SPOTS_WINTER);
-
-            // 3a. 沙滩/沙漠：在明确包围区域内扫描露天沙子，替换为对应远古斑点。
-            //     这些区域的 pregen 地表现在都是 sand，不再以 sandstone 作为底块。
-            if (isSandSurface(zone.surface)) {
-                int cap = sandZoneDailyCap(zone, season);
-                if (existingCount >= cap) continue;
-                double perBlockChance = zone.surface == SurfaceKind.DESERT_SAND
-                        ? DESERT_SAND_DAILY_CHANCE
-                        : BEACH_SAND_DAILY_CHANCE;
-                int remaining = cap - existingCount;
-                int placed = spawnInLoadedSandZone(level, zone, random, perBlockChance, remaining);
-                if (placed == 0 && existingCount == 0) {
-                    placeOneLoadedSandSpot(level, zone, random);
-                }
-                continue;
-            }
-
-            if (overCap) continue;
-
-            // 3b. SDV spawn loop: chanceForNewArtifactAttempt（黄土区域）
-            double chanceForNewAttempt = 1.0;
-            while (random.nextDouble() < chanceForNewAttempt) {
-                // SDV: *= 0.75, winter +0.10
-                // Decay FIRST so that `continue` (e.g. unloaded chunk) cannot skip it
-                chanceForNewAttempt *= 0.75;
-                if (season == 3) {
-                    chanceForNewAttempt += 0.10;
-                }
-
-                // Pick a random rect
-                ZoneRect rect = zone.rects[random.nextInt(zone.rects.length)];
-
-                // Random position within rect
-                int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
-                int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-
-                // Skip if chunk not loaded (no sync generation)
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-
-                // Check spawn conditions
-                if (canSpawnArtifactSpot(level, x, z, zone.surface)) {
-                    int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                    BlockPos pos = new BlockPos(x, surfaceY, z);
-                    level.setBlock(pos, spotStateFor(level.getBlockState(pos), zone.surface), Block.UPDATE_ALL);
-                }
-            }
-        }
-
-        spawnOnPlayerFarms(level, season, random);
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
     }
 
-    private static void spawnOnPlayerFarms(ServerLevel level, int season, RandomSource random) {
-        for (com.stardew.craft.farm.FarmInstance farm : com.stardew.craft.farm.FarmInstanceRegistry.get().getAllFarms()) {
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
+        if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) {
+            return DailySettlementWorkUnits.sequence("artifact_spot_daily", List.of(), () -> {});
+        }
+
+        List<SpawnZone> zones = List.of(ZONES);
+        List<FarmArtifactDailyEntry> farmSnapshot = new ArrayList<>();
+        for (com.stardew.craft.farm.FarmInstance farm
+                : com.stardew.craft.farm.FarmInstanceRegistry.get().getAllFarms()) {
             BlockPos min = farm.getFarmBoundsMin();
             BlockPos max = farm.getFarmBoundsMax();
-            ZoneRect rect = rect(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ());
-
-            int existingCount = 0;
-            removeAndCountSpots(level, rect, random, SurfaceKind.YELLOW_DIRT);
-            existingCount += countSpotsInRect(level, rect, SurfaceKind.YELLOW_DIRT);
-
-            boolean overCap = existingCount > MAX_SPOTS_FARM && (season != 3 || existingCount > MAX_SPOTS_WINTER);
-            if (overCap) {
-                continue;
-            }
-
-            double chanceForNewAttempt = 1.0D;
-            while (random.nextDouble() < chanceForNewAttempt) {
-                chanceForNewAttempt *= 0.75D;
-                if (season == 3) {
-                    chanceForNewAttempt += 0.10D;
-                }
-
-                int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
-                int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-                if (!level.hasChunk(x >> 4, z >> 4)) {
-                    continue;
-                }
-                if (canSpawnArtifactSpotInRect(level, x, z, SurfaceKind.YELLOW_DIRT, rect)) {
-                    int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                    BlockPos pos = new BlockPos(x, surfaceY, z);
-                    level.setBlock(pos, spotStateFor(level.getBlockState(pos), SurfaceKind.YELLOW_DIRT), Block.UPDATE_ALL);
-                }
-            }
+            farmSnapshot.add(new FarmArtifactDailyEntry(
+                    farm.getOwnerUUID(),
+                    rect(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ())));
         }
+        farmSnapshot.sort(Comparator.comparing(entry -> entry.ownerId().toString()));
+
+        long worldSeed = level.getSeed();
+        int absoluteDay = context.absoluteDay();
+        int season = context.season();
+        List<DailySettlementWorkUnit> work = new ArrayList<>(zones.size() + farmSnapshot.size());
+        for (SpawnZone zone : zones) {
+            work.add(createArtifactZoneWorkUnit(
+                    level, zone, season, worldSeed, absoluteDay));
+        }
+        for (FarmArtifactDailyEntry farm : farmSnapshot) {
+            work.add(createFarmArtifactWorkUnit(
+                    level, farm, season, worldSeed, absoluteDay));
+        }
+        return DailySettlementWorkUnits.sequence("artifact_spot_daily", work, () -> {});
+    }
+
+    private static DailySettlementWorkUnit createArtifactZoneWorkUnit(
+            ServerLevel level,
+            SpawnZone zone,
+            int season,
+            long worldSeed,
+            int absoluteDay) {
+        AtomicInteger existing = new AtomicInteger();
+        List<DailySettlementWorkUnit> scans = new ArrayList<>(zone.rects.length);
+        for (int index = 0; index < zone.rects.length; index++) {
+            ZoneRect rect = zone.rects[index];
+            scans.add(PublicAreaDailyWorkUnits.rectangle(
+                    "artifact_scan_" + zone.name + "_" + index,
+                    rect.minX, rect.minZ, rect.maxX, rect.maxZ,
+                    (x, z) -> existing.addAndGet(processArtifactColumn(
+                            level,
+                            rect,
+                            x,
+                            z,
+                            zone.surface,
+                            zone.surface == SurfaceKind.YELLOW_DIRT,
+                            worldSeed,
+                            absoluteDay,
+                            "artifact_remove_" + zone.name)),
+                    () -> false,
+                    () -> {}));
+        }
+        DailySettlementWorkUnit scan = DailySettlementWorkUnits.sequence(
+                "artifact_scan_" + zone.name, scans, () -> {});
+        DailySettlementWorkUnit spawn = DailySettlementWorkUnits.deferred(
+                "artifact_spawn_" + zone.name,
+                () -> createArtifactSpawnWorkUnit(
+                        level, zone, existing.get(), season, worldSeed, absoluteDay));
+        return DailySettlementWorkUnits.sequence(
+                "artifact_zone_" + zone.name, List.of(scan, spawn), () -> {});
+    }
+
+    private static DailySettlementWorkUnit createFarmArtifactWorkUnit(
+            ServerLevel level,
+            FarmArtifactDailyEntry farm,
+            int season,
+            long worldSeed,
+            int absoluteDay) {
+        ZoneRect rect = farm.rect();
+        AtomicInteger existing = new AtomicInteger();
+        DailySettlementWorkUnit scan = PublicAreaDailyWorkUnits.rectangle(
+                "artifact_farm_scan_" + farm.ownerId(),
+                rect.minX, rect.minZ, rect.maxX, rect.maxZ,
+                (x, z) -> existing.addAndGet(processArtifactColumn(
+                        level,
+                        rect,
+                        x,
+                        z,
+                        SurfaceKind.YELLOW_DIRT,
+                        false,
+                        worldSeed,
+                        absoluteDay,
+                        "artifact_farm_remove_" + farm.ownerId())),
+                () -> false,
+                () -> {});
+        DailySettlementWorkUnit spawn = DailySettlementWorkUnits.deferred(
+                "artifact_farm_spawn_" + farm.ownerId(),
+                () -> {
+                    boolean overCap = existing.get() > MAX_SPOTS_FARM
+                            && (season != 3 || existing.get() > MAX_SPOTS_WINTER);
+                    if (overCap) {
+                        return DailySettlementWorkUnits.sequence(
+                                "artifact_farm_spawn_" + farm.ownerId(), List.of(), () -> {});
+                    }
+                    return artifactAttempts(
+                            "artifact_farm_spawn_" + farm.ownerId(),
+                            season,
+                            worldSeed,
+                            absoluteDay,
+                            "artifact_farm_attempt",
+                            stableUuid(farm.ownerId()),
+                            random -> attemptFarmArtifactSpawn(level, rect, random));
+                });
+        return DailySettlementWorkUnits.sequence(
+                "artifact_farm_" + farm.ownerId(), List.of(scan, spawn), () -> {});
+    }
+
+    private static DailySettlementWorkUnit createArtifactSpawnWorkUnit(
+            ServerLevel level,
+            SpawnZone zone,
+            int existing,
+            int season,
+            long worldSeed,
+            int absoluteDay) {
+        if (isSandSurface(zone.surface)) {
+            return createSandArtifactWorkUnit(
+                    level, zone, existing, season, worldSeed, absoluteDay);
+        }
+        boolean overCap = existing > MAX_SPOTS_NON_FARM
+                && (season != 3 || existing > MAX_SPOTS_WINTER);
+        if (overCap) {
+            return DailySettlementWorkUnits.sequence(
+                    "artifact_spawn_" + zone.name, List.of(), () -> {});
+        }
+        return artifactAttempts(
+                "artifact_spawn_" + zone.name,
+                season,
+                worldSeed,
+                absoluteDay,
+                "artifact_attempt_" + zone.name,
+                stableStringId(zone.name),
+                random -> attemptZoneArtifactSpawn(level, zone, random));
+    }
+
+    private static DailySettlementWorkUnit createSandArtifactWorkUnit(
+            ServerLevel level,
+            SpawnZone zone,
+            int existing,
+            int season,
+            long worldSeed,
+            int absoluteDay) {
+        int cap = sandZoneDailyCap(zone, season);
+        if (existing >= cap) {
+            return DailySettlementWorkUnits.sequence(
+                    "artifact_sand_spawn_" + zone.name, List.of(), () -> {});
+        }
+        int remaining = cap - existing;
+        double chance = zone.surface == SurfaceKind.DESERT_SAND
+                ? DESERT_SAND_DAILY_CHANCE
+                : BEACH_SAND_DAILY_CHANCE;
+        AtomicInteger placed = new AtomicInteger();
+        List<DailySettlementWorkUnit> chanceScans = new ArrayList<>(zone.rects.length);
+        for (int index = 0; index < zone.rects.length; index++) {
+            ZoneRect rect = zone.rects[index];
+            chanceScans.add(PublicAreaDailyWorkUnits.rectangle(
+                    "artifact_sand_chance_" + zone.name + "_" + index,
+                    rect.minX, rect.minZ, rect.maxX, rect.maxZ,
+                    (x, z) -> {
+                        RandomSource random = DailySettlementRandom.forPosition(
+                                worldSeed,
+                                absoluteDay,
+                                "artifact_sand_chance_" + zone.name,
+                                new BlockPos(x, 0, z));
+                        if (random.nextDouble() >= chance) return;
+                        if (!level.hasChunk(x >> 4, z >> 4)) return;
+                        if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) return;
+                        if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
+                            placed.incrementAndGet();
+                        }
+                    },
+                    () -> placed.get() >= remaining,
+                    () -> {}));
+        }
+        DailySettlementWorkUnit chanceScan = DailySettlementWorkUnits.sequence(
+                "artifact_sand_chance_" + zone.name, chanceScans, () -> {});
+
+        AtomicReference<BlockPos> fallback = new AtomicReference<>();
+        AtomicLong bestScore = new AtomicLong(-1L);
+        List<DailySettlementWorkUnit> fallbackScans = new ArrayList<>(zone.rects.length);
+        for (int index = 0; index < zone.rects.length; index++) {
+            ZoneRect rect = zone.rects[index];
+            fallbackScans.add(PublicAreaDailyWorkUnits.rectangle(
+                    "artifact_sand_fallback_" + zone.name + "_" + index,
+                    rect.minX, rect.minZ, rect.maxX, rect.maxZ,
+                    (x, z) -> {
+                        if (!level.hasChunk(x >> 4, z >> 4)) return;
+                        if (!canSpawnArtifactSpot(level, x, z, zone.surface)) return;
+                        long score = DailySettlementRandom.forPosition(
+                                worldSeed,
+                                absoluteDay,
+                                "artifact_sand_fallback_" + zone.name,
+                                new BlockPos(x, 0, z)).nextLong();
+                        if (Long.compareUnsigned(score, bestScore.get()) < 0) {
+                            bestScore.set(score);
+                            fallback.set(new BlockPos(x, 0, z));
+                        }
+                    },
+                    () -> placed.get() > 0 || existing > 0,
+                    () -> {}));
+        }
+        DailySettlementWorkUnit fallbackScan = DailySettlementWorkUnits.sequence(
+                "artifact_sand_fallback_" + zone.name, fallbackScans, () -> {});
+        DailySettlementWorkUnit fallbackPlace = DailySettlementWorkUnits.atomic(
+                "artifact_sand_fallback_place_" + zone.name,
+                () -> {
+                    BlockPos chosen = fallback.get();
+                    if (placed.get() == 0 && existing == 0 && chosen != null
+                            && tryPlaceArtifactSpot(level, chosen.getX(), chosen.getZ(), zone.surface)) {
+                        placed.incrementAndGet();
+                    }
+                },
+                () -> {});
+        return DailySettlementWorkUnits.sequence(
+                "artifact_sand_spawn_" + zone.name,
+                List.of(chanceScan, fallbackScan, fallbackPlace),
+                () -> {});
+    }
+
+    private static int processArtifactColumn(
+            ServerLevel level,
+            ZoneRect rect,
+            int x,
+            int z,
+            SurfaceKind surface,
+            boolean revertFarmland,
+            long worldSeed,
+            int absoluteDay,
+            String randomSubsystem) {
+        if (!level.hasChunk(x >> 4, z >> 4)) return 0;
+        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+        BlockPos pos = new BlockPos(x, surfaceY, z);
+        if (revertFarmland
+                && level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.FARMLAND)
+                && level.getBlockState(pos.above()).isAir()) {
+            level.setBlock(pos, ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
+        }
+        Block spotBlock = spotBlockFor(surface);
+        BlockState state = level.getBlockState(pos);
+        if (state.is(spotBlock)) {
+            RandomSource random = DailySettlementRandom.forPosition(
+                    worldSeed, absoluteDay, randomSubsystem, new BlockPos(x, 0, z));
+            if (random.nextDouble() < 0.15D) {
+                level.setBlock(pos, underlyingStateFor(state, surface), Block.UPDATE_ALL);
+                return 0;
+            }
+            return 1;
+        }
+        return 0;
+    }
+
+    private static void attemptZoneArtifactSpawn(
+            ServerLevel level, SpawnZone zone, RandomSource random) {
+        ZoneRect rect = zone.rects[random.nextInt(zone.rects.length)];
+        int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
+        int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
+        if (!level.hasChunk(x >> 4, z >> 4)) return;
+        tryPlaceArtifactSpot(level, x, z, zone.surface);
+    }
+
+    private static void attemptFarmArtifactSpawn(
+            ServerLevel level, ZoneRect rect, RandomSource random) {
+        int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
+        int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
+        if (!level.hasChunk(x >> 4, z >> 4)) return;
+        if (!canSpawnArtifactSpotInRect(level, x, z, SurfaceKind.YELLOW_DIRT, rect)) return;
+        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+        BlockPos pos = new BlockPos(x, surfaceY, z);
+        level.setBlock(
+                pos,
+                spotStateFor(level.getBlockState(pos), SurfaceKind.YELLOW_DIRT),
+                Block.UPDATE_ALL);
+    }
+
+    private static DailySettlementWorkUnit artifactAttempts(
+            String name,
+            int season,
+            long worldSeed,
+            int absoluteDay,
+            String subsystem,
+            long stableId,
+            ArtifactAttempt operation) {
+        return new DailySettlementWorkUnit() {
+            private int cursor;
+            private double chance = 1.0D;
+            private boolean complete;
+            private boolean closed;
+
+            @Override
+            public String name() {
+                return name;
+            }
+
+            @Override
+            public String currentItemIdentity() {
+                return complete ? name : name + ":" + cursor;
+            }
+
+            @Override
+            public boolean isComplete() {
+                return complete;
+            }
+
+            @Override
+            public void runNext() {
+                if (complete) {
+                    throw new IllegalStateException("Work unit is already complete: " + name);
+                }
+                RandomSource random = DailySettlementRandom.forId(
+                        worldSeed, absoluteDay, subsystem, stableId ^ cursor);
+                if (random.nextDouble() >= chance) {
+                    complete = true;
+                    return;
+                }
+                double nextChance = chance * 0.75D;
+                if (season == 3) {
+                    nextChance += 0.10D;
+                }
+                operation.attempt(random);
+                chance = nextChance;
+                cursor++;
+            }
+
+            @Override
+            public void skipFailedItem() {
+                if (complete) {
+                    throw new IllegalStateException("Work unit is already complete: " + name);
+                }
+                chance *= 0.75D;
+                if (season == 3) {
+                    chance += 0.10D;
+                }
+                cursor++;
+            }
+
+            @Override
+            public synchronized void close() {
+                if (closed) return;
+                closed = true;
+            }
+        };
+    }
+
+    private static long stableStringId(String value) {
+        long hash = 0xcbf29ce484222325L;
+        for (int index = 0; index < value.length(); index++) {
+            hash ^= value.charAt(index);
+            hash *= 0x100000001b3L;
+        }
+        return hash;
+    }
+
+    private static long stableUuid(UUID ownerId) {
+        return ownerId.getMostSignificantBits() ^ ownerId.getLeastSignificantBits();
+    }
+
+    @FunctionalInterface
+    private interface ArtifactAttempt {
+        void attempt(RandomSource random);
+    }
+
+    private record FarmArtifactDailyEntry(UUID ownerId, ZoneRect rect) {
     }
 
     // ======================== Chunk Load Spawn ========================
@@ -379,45 +660,6 @@ public final class ArtifactSpotSpawnService {
         return season == 3 ? MAX_SPOTS_WINTER + 1 : MAX_SPOTS_NON_FARM + 1;
     }
 
-    private static int spawnInLoadedSandZone(ServerLevel level, SpawnZone zone, RandomSource random,
-                                            double perBlockChance, int maxPlacements) {
-        int placed = 0;
-        for (ZoneRect rect : zone.rects) {
-            for (int x = rect.minX; x <= rect.maxX; x++) {
-                for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                    if (placed >= maxPlacements) return placed;
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                    if (random.nextDouble() >= perBlockChance) continue;
-                    if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) continue;
-                    if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
-                        placed++;
-                    }
-                }
-            }
-        }
-        return placed;
-    }
-
-    private static boolean placeOneLoadedSandSpot(ServerLevel level, SpawnZone zone, RandomSource random) {
-        BlockPos chosen = null;
-        int seen = 0;
-        for (ZoneRect rect : zone.rects) {
-            for (int x = rect.minX; x <= rect.maxX; x++) {
-                for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                    if (!canSpawnArtifactSpot(level, x, z, zone.surface)) continue;
-                    seen++;
-                    if (random.nextInt(seen) == 0) {
-                        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                        chosen = new BlockPos(x, surfaceY, z);
-                    }
-                }
-            }
-        }
-        if (chosen == null) return false;
-        return tryPlaceArtifactSpot(level, chosen.getX(), chosen.getZ(), zone.surface);
-    }
-
     private static boolean tryPlaceArtifactSpot(ServerLevel level, int x, int z, SurfaceKind surface) {
         if (!canSpawnArtifactSpot(level, x, z, surface)) return false;
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
@@ -456,70 +698,6 @@ public final class ArtifactSpotSpawnService {
             return artifactSpot.resolveUnderlyingState(state);
         }
         return underlyingBlockFor(surface).defaultBlockState();
-    }
-
-    /**
-     * Remove existing artifact spots with 15% chance each (SDV parity).
-     * Returns number removed.
-     */
-    private static int removeAndCountSpots(ServerLevel level, ZoneRect rect, RandomSource random, SurfaceKind surface) {
-        int removed = 0;
-        Block spotBlock = spotBlockFor(surface);
-        for (int x = rect.minX; x <= rect.maxX; x++) {
-            for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockPos pos = new BlockPos(x, surfaceY, z);
-                BlockState state = level.getBlockState(pos);
-                if (state.is(spotBlock)) {
-                    if (random.nextDouble() < 0.15) {
-                        level.setBlock(pos, underlyingStateFor(state, surface), Block.UPDATE_ALL);
-                        removed++;
-                    }
-                }
-            }
-        }
-        return removed;
-    }
-
-    /**
-     * Count existing artifact spots in a rect.
-     */
-    private static int countSpotsInRect(ServerLevel level, ZoneRect rect, SurfaceKind surface) {
-        int count = 0;
-        Block spotBlock = spotBlockFor(surface);
-        for (int x = rect.minX; x <= rect.maxX; x++) {
-            for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockPos pos = new BlockPos(x, surfaceY, z);
-                if (level.getBlockState(pos).is(spotBlock)) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    /**
-     * Revert any farmland in a non-farm zone rect back to yellow_dirt.
-     * This handles artifact spots that were dug by players — they become farmland,
-     * and should reset to yellow_dirt the next day so new artifact spots can spawn.
-     *
-     * <p>但若耕地上方有作物 / forage / 任何非空气方块，则跳过——保留耕地，
-     * 否则 BushBlock 类（forage、作物等）会失去支撑而被 vanilla 自动破坏并丢物品。
-     */
-    private static void revertFarmlandInRect(ServerLevel level, ZoneRect rect) {
-        for (int x = rect.minX; x <= rect.maxX; x++) {
-            for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockPos pos = new BlockPos(x, surfaceY, z);
-                if (!level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.FARMLAND)) continue;
-                // 上方有方块（作物/forage/装饰等）则保留耕地，避免支撑被毁
-                if (!level.getBlockState(pos.above()).isAir()) continue;
-                level.setBlock(pos, ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
-            }
-        }
     }
 
     // ======================== First-Day Initial Spawn ========================

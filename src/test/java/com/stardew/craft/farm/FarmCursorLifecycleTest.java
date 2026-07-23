@@ -148,13 +148,15 @@ class FarmCursorLifecycleTest {
                 .orElseThrow(() -> new AssertionError("server-player logout branch is missing"));
         BlockTree playerBody = asBlock(serverPlayer.getThenStatement());
 
-        assertTrue(isDirectInvocation(playerBody.getStatements().getFirst(),
+        int farmLogout = directInvocationIndex(playerBody,
+                "com.stardew.craft.farm.FarmChunkManager.get()",
+                "onPlayerLogout", "player");
+        int settlementLogout = directInvocationIndex(playerBody,
                 "com.stardew.craft.time.settlement.DailySettlementEvents",
-                "onPlayerLogout", "player"));
-        assertTrue(playerBody.getStatements().stream().anyMatch(statement ->
-                isDirectInvocation(statement,
-                        "com.stardew.craft.farm.FarmChunkManager.get()",
-                        "onPlayerLogout", "player")));
+                "onPlayerLogout", "player");
+        assertEquals(0, farmLogout, "farm occupancy cleanup must be the first player-specific operation");
+        assertTrue(settlementLogout > farmLogout,
+                "settlement logout handling must remain after farm occupancy cleanup");
         assertEquals(1, invocations(playerBody).stream()
                 .filter(invocation -> isInvocation(invocation,
                         "com.stardew.craft.farm.FarmChunkManager.get()",

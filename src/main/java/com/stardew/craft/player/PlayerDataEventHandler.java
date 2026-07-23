@@ -265,8 +265,8 @@ public class PlayerDataEventHandler {
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            com.stardew.craft.time.settlement.DailySettlementEvents.onPlayerLogout(player);
             com.stardew.craft.farm.FarmChunkManager.get().onPlayerLogout(player);
+            com.stardew.craft.time.settlement.DailySettlementEvents.onPlayerLogout(player);
 
             // Settle cursor-held shop purchases before the player inventory is saved.
             com.stardew.craft.network.payload.ShopPickupPayload.deliverAllPending(player);

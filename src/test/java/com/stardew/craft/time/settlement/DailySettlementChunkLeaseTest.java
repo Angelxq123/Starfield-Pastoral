@@ -1,12 +1,24 @@
 package com.stardew.craft.time.settlement;
 
+import com.sun.source.tree.BinaryTree;
+import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.EnhancedForLoopTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ForLoopTree;
+import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
+import com.sun.source.tree.LambdaExpressionTree;
+import com.sun.source.tree.LiteralTree;
+import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.ParameterizedTypeTree;
+import com.sun.source.tree.ParenthesizedTree;
+import com.sun.source.tree.ReturnTree;
+import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.TryTree;
 import com.sun.source.tree.VariableTree;
@@ -139,13 +151,15 @@ class DailySettlementChunkLeaseTest {
             throws IOException {
         ParsedClass animal = parseManager("AnimalGrowthManager");
         MethodTree create = animal.method("createDailyWorkUnit", 2);
-        MethodInvocationTree finalizeCursor = invocations(create).stream()
-                .filter(call -> methodName(call).equals("cursor"))
-                .filter(call -> !call.getArguments().isEmpty()
-                        && call.getArguments().getFirst().toString().equals("\"animal_daily_finalize\""))
-                .findFirst().orElseThrow();
-        assertEquals("animalSnapshot", finalizeCursor.getArguments().get(1).toString());
-        assertTrue(finalizeCursor.getArguments().get(3).toString().contains("syncAnimalEntityDay"));
+        VariableTree finalizeWork = uniqueVariable(create, "finalizeWork");
+        MethodInvocationTree finalizeCursor = asInvocation(finalizeWork.getInitializer());
+        assertMemberCall(finalizeCursor, "DailySettlementWorkUnits", "cursor", 5);
+        assertStringLiteral(finalizeCursor.getArguments().getFirst(), "animal_daily_finalize");
+        assertIdentifier(finalizeCursor.getArguments().get(1), "animalSnapshot");
+        LambdaExpressionTree finalizeConsumer = asLambda(finalizeCursor.getArguments().get(3));
+        MethodInvocationTree finalizeCall = asInvocation(finalizeConsumer.getBody());
+        assertUnqualifiedCall(finalizeCall, "syncAnimalEntityDay", 3);
+        assertIdentifiers(finalizeCall.getArguments(), "level", "worldData", "animalId");
         assertFalse(invocations(animal.type()).stream()
                 .anyMatch(call -> methodName(call).equals("syncAll")));
 
@@ -167,48 +181,117 @@ class DailySettlementChunkLeaseTest {
     void animalFinalizeBindsAllBuildingStatesAndRemovesOrphansPerItem() throws IOException {
         ParsedClass animal = parseManager("AnimalGrowthManager");
         MethodTree sync = animal.method("syncAnimalEntityDay", -1);
-        List<String> syncCalls = invocations(sync).stream()
-                .map(DailySettlementChunkLeaseTest::methodName).toList();
-        assertTrue(syncCalls.contains("getBuilding"));
-        assertTrue(syncCalls.contains("getBuildingIncludingInactive"));
-        assertTrue(syncCalls.contains("settlementDisposition"));
-        assertTrue(syncCalls.contains("removeOrphanAnimal"),
-                "missing buildings must remove the orphan instead of returning");
-        assertTrue(scan(sync, IfTree.class).stream()
-                .filter(branch -> branch.getCondition().toString().contains("KEEP_INACTIVE"))
-                .anyMatch(branch -> scan(branch.getThenStatement(), com.sun.source.tree.ReturnTree.class)
-                        .size() == 1));
-        assertTrue(scan(sync, IfTree.class).stream()
-                .filter(branch -> branch.getCondition().toString().contains("REMOVE_ORPHAN"))
-                .anyMatch(branch -> invocations(branch.getThenStatement()).stream()
-                        .anyMatch(call -> methodName(call).equals("removeOrphanAnimal"))));
+        VariableTree building = uniqueVariable(sync, "building");
+        assertOptionalBuildingLookup(building, "getBuilding");
+        VariableTree includingInactive = uniqueVariable(sync, "includingInactive");
+        assertOptionalBuildingLookup(includingInactive, "getBuildingIncludingInactive");
+
+        VariableTree disposition = uniqueVariable(sync, "disposition");
+        MethodInvocationTree dispositionCall = asInvocation(disposition.getInitializer());
+        assertMemberCall(dispositionCall, "AnimalEntitySyncService", "settlementDisposition", 2);
+        assertNotNullCheck(dispositionCall.getArguments().get(0), "building");
+        assertNotNullCheck(dispositionCall.getArguments().get(1), "includingInactive");
+
+        IfTree keepInactive = dispositionBranch(sync, "KEEP_INACTIVE");
+        assertDirectReturnsOnly(keepInactive.getThenStatement());
+        IfTree removeOrphan = dispositionBranch(sync, "REMOVE_ORPHAN");
+        BlockTree removeBlock = asBlock(removeOrphan.getThenStatement());
+        MethodInvocationTree removeOrphanCall = uniqueInvocation(removeBlock, "removeOrphanAnimal");
+        assertUnqualifiedCall(removeOrphanCall, "removeOrphanAnimal", 3);
+        assertIdentifiers(removeOrphanCall.getArguments(), "level", "worldData", "record");
+        assertEquals(Tree.Kind.RETURN, removeBlock.getStatements().getLast().getKind());
+
+        TryTree activeLease = leaseTry(sync, "leaseBounds");
+        assertTrue(statementIndex(sync, keepInactive) < statementIndex(sync, removeOrphan));
+        assertTrue(statementIndex(sync, removeOrphan) < statementIndex(sync, activeLease));
+        MethodInvocationTree syncOne = uniqueInvocation(activeLease.getBlock(), "syncOne");
+        assertMemberCall(syncOne, "AnimalEntitySyncService", "syncOne", 3);
+        assertIdentifiers(syncOne.getArguments(), "level", "worldData", "record");
 
         MethodTree remove = animal.method("removeOrphanAnimal", -1);
+        IfTree entityBranch = identifierNotNullBranch(remove, "entity");
+        VariableTree entityPos = uniqueVariable(entityBranch.getThenStatement(), "entityPos");
+        MethodInvocationTree blockPosition = asInvocation(entityPos.getInitializer());
+        assertMemberCall(blockPosition, "entity", "blockPosition", 0);
         TryTree leaseTry = leaseTry(remove, "leasePosition");
-        assertEquals("0", resourceInvocation(leaseTry).getArguments().get(2).toString());
-        assertEveryNamedCallIsInsideLease(remove, leaseTry, List.of("removeLoaded"));
-        assertTrue(invocations(remove).stream()
-                .anyMatch(call -> methodName(call).equals("removeAnimal")),
-                "orphan cleanup must remove the authoritative data record");
+        assertTrue(scan(entityBranch.getThenStatement(), TryTree.class).contains(leaseTry));
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry);
+        assertMemberCall(leaseCall,
+                "com.stardew.craft.farm.FarmDailyProcessHelper", "leasePosition", 3);
+        assertIdentifier(leaseCall.getArguments().get(0), "level");
+        assertIdentifier(leaseCall.getArguments().get(1), "entityPos");
+        assertIntLiteral(leaseCall.getArguments().get(2), 0);
+        MethodInvocationTree removeLoaded = uniqueInvocation(leaseTry.getBlock(), "removeLoaded");
+        assertMemberCall(removeLoaded, "AnimalEntitySyncService", "removeLoaded", 2);
+        assertIdentifier(removeLoaded.getArguments().get(0), "level");
+        assertRecordIdCall(removeLoaded.getArguments().get(1));
+
+        IfTree removeRecord = invocationConditionBranch(remove, "worldData", "removeAnimal");
+        MethodInvocationTree removeAnimal = asInvocation(unwrap(removeRecord.getCondition()));
+        assertRecordIdCall(removeAnimal.getArguments().getFirst());
+        assertTrue(statementIndex(remove, entityBranch) < statementIndex(remove, removeRecord),
+                "data removal must occur after the optional entity cleanup branch");
     }
 
     @Test
     void reproductionDefersNewbornProjectionUntilAStableCursorAfterCreation() throws IOException {
         ParsedClass animal = parseManager("AnimalGrowthManager");
         MethodTree create = animal.method("createDailyWorkUnit", 2);
-        List<MethodInvocationTree> createCalls = invocations(create);
-        assertTrue(createCalls.stream()
-                .filter(call -> methodName(call).equals("deferred"))
-                .anyMatch(call -> call.getArguments().getFirst().toString()
-                        .equals("\"animal_newborn_sync\"")));
+        VariableTree newbornIds = uniqueVariable(create, "newbornSyncIds");
+        assertListOfLong(newbornIds.getType());
+        NewClassTree idsInitializer = asNewClass(newbornIds.getInitializer());
+        assertEquals("ArrayList", rawTypeName(idsInitializer.getIdentifier()));
+
+        VariableTree reproductionWork = uniqueVariable(create, "reproductionWork");
+        MethodInvocationTree reproductionCursor = asInvocation(reproductionWork.getInitializer());
+        LambdaExpressionTree reproductionConsumer =
+                asLambda(reproductionCursor.getArguments().get(3));
+        MethodInvocationTree reproductionCall = asInvocation(reproductionConsumer.getBody());
+        assertUnqualifiedCall(reproductionCall, "processReproductionDay", 6);
+        assertIdentifier(reproductionCall.getArguments().getLast(), "newbornSyncIds");
 
         MethodTree reproduction = animal.method("processReproductionDay", -1);
-        List<String> reproductionCalls = invocations(reproduction).stream()
-                .map(DailySettlementChunkLeaseTest::methodName).toList();
-        assertTrue(reproductionCalls.contains("createAnimal"));
-        assertTrue(reproductionCalls.contains("add"));
-        assertFalse(reproductionCalls.contains("syncOne"),
-                "a retryable reproduction item must not sync after creating its newborn");
+        VariableTree newbornParameter = reproduction.getParameters().getLast();
+        assertEquals("newbornSyncIds", newbornParameter.getName().toString());
+        assertListOfLong(newbornParameter.getType());
+        TryTree reproductionLease = leaseTry(reproduction, "leaseBounds");
+        VariableTree newborn = uniqueVariable(reproductionLease.getBlock(), "newborn");
+        MethodInvocationTree createAnimal = asInvocation(newborn.getInitializer());
+        assertMemberCall(createAnimal, "worldData", "createAnimal", 4);
+        MethodInvocationTree add = uniqueInvocation(reproductionLease.getBlock(), "add");
+        assertMemberCall(add, "newbornSyncIds", "add", 1);
+        assertNoArgMemberCall(add.getArguments().getFirst(), "newborn", "animalId");
+        assertTrue(statementIndex(reproductionLease.getBlock(), newborn)
+                        < containingStatementIndex(reproductionLease.getBlock(), add),
+                "newborn ID must be queued after createAnimal returns");
+        assertTrue(invocations(reproduction).stream()
+                        .noneMatch(call -> methodName(call).equals("syncOne")),
+                "reproduction must leave projection work to the deferred cursor");
+
+        VariableTree finalizeWork = uniqueVariable(create, "finalizeWork");
+        MethodInvocationTree finalizeCursor = asInvocation(finalizeWork.getInitializer());
+        assertIdentifier(finalizeCursor.getArguments().get(1), "animalSnapshot");
+
+        VariableTree newbornWork = uniqueVariable(create, "newbornSyncWork");
+        MethodInvocationTree deferred = asInvocation(newbornWork.getInitializer());
+        assertMemberCall(deferred, "DailySettlementWorkUnits", "deferred", 2);
+        assertStringLiteral(deferred.getArguments().getFirst(), "animal_newborn_sync");
+        LambdaExpressionTree factory = asLambda(deferred.getArguments().get(1));
+        MethodInvocationTree newbornCursor = asInvocation(factory.getBody());
+        assertMemberCall(newbornCursor, "DailySettlementWorkUnits", "cursor", 5);
+        assertIdentifier(newbornCursor.getArguments().get(1), "newbornSyncIds");
+        LambdaExpressionTree newbornConsumer = asLambda(newbornCursor.getArguments().get(3));
+        assertEquals(List.of("animalId"), newbornConsumer.getParameters().stream()
+                .map(parameter -> parameter.getName().toString()).toList());
+        MethodInvocationTree newbornSync = asInvocation(newbornConsumer.getBody());
+        assertUnqualifiedCall(newbornSync, "syncAnimalEntityDay", 3);
+        assertIdentifiers(newbornSync.getArguments(), "level", "worldData", "animalId");
+
+        MethodInvocationTree sequence = uniqueInvocation(create, "sequence");
+        MethodInvocationTree children = asInvocation(sequence.getArguments().get(1));
+        assertMemberCall(children, "List", "of", 5);
+        assertIdentifiers(children.getArguments(),
+                "animalWork", "reproductionWork", "finalizeWork", "newbornSyncWork", "publishWork");
     }
 
     @Test
@@ -265,6 +348,245 @@ class DailySettlementChunkLeaseTest {
             method.setAccessible(true);
             return method.invoke(null, active, includingInactive).toString();
         });
+    }
+
+    private static void assertOptionalBuildingLookup(VariableTree variable, String lookupName) {
+        MethodInvocationTree orElse = asInvocation(variable.getInitializer());
+        MemberSelectTree orElseSelect = asMemberSelect(orElse.getMethodSelect());
+        assertEquals("orElse", orElseSelect.getIdentifier().toString());
+        assertEquals(1, orElse.getArguments().size());
+        assertEquals(Tree.Kind.NULL_LITERAL, unwrap(orElse.getArguments().getFirst()).getKind());
+
+        MethodInvocationTree lookup = asInvocation(orElseSelect.getExpression());
+        assertMemberCall(lookup, "worldData", lookupName, 1);
+        assertNoArgMemberCall(lookup.getArguments().getFirst(), "record", "buildingId");
+    }
+
+    private static IfTree dispositionBranch(MethodTree method, String constant) {
+        List<IfTree> matches = scan(method.getBody(), IfTree.class).stream()
+                .filter(branch -> isDispositionComparison(branch.getCondition(), constant))
+                .toList();
+        assertEquals(1, matches.size(), "expected one disposition branch for " + constant);
+        return matches.getFirst();
+    }
+
+    private static boolean isDispositionComparison(ExpressionTree expression, String constant) {
+        ExpressionTree unwrapped = unwrap(expression);
+        if (!(unwrapped instanceof BinaryTree binary)
+                || binary.getKind() != Tree.Kind.EQUAL_TO) {
+            return false;
+        }
+        return isIdentifier(binary.getLeftOperand(), "disposition")
+                && qualifiedName(binary.getRightOperand()).equals(
+                        "AnimalEntitySyncService.SettlementDisposition." + constant);
+    }
+
+    private static IfTree identifierNotNullBranch(MethodTree method, String identifier) {
+        List<IfTree> matches = method.getBody().getStatements().stream()
+                .filter(IfTree.class::isInstance)
+                .map(IfTree.class::cast)
+                .filter(branch -> isNotNullCheck(branch.getCondition(), identifier))
+                .toList();
+        assertEquals(1, matches.size(), "expected one top-level null check for " + identifier);
+        return matches.getFirst();
+    }
+
+    private static IfTree invocationConditionBranch(
+            MethodTree method, String receiver, String invocationName) {
+        List<IfTree> matches = method.getBody().getStatements().stream()
+                .filter(IfTree.class::isInstance)
+                .map(IfTree.class::cast)
+                .filter(branch -> isMemberCall(
+                        unwrap(branch.getCondition()), receiver, invocationName))
+                .toList();
+        assertEquals(1, matches.size(),
+                "expected one top-level branch for " + receiver + "." + invocationName);
+        return matches.getFirst();
+    }
+
+    private static void assertDirectReturnsOnly(StatementTree statement) {
+        BlockTree block = asBlock(statement);
+        assertEquals(1, block.getStatements().size());
+        assertTrue(block.getStatements().getFirst() instanceof ReturnTree);
+    }
+
+    private static VariableTree uniqueVariable(Tree tree, String name) {
+        List<VariableTree> matches = scan(tree, VariableTree.class).stream()
+                .filter(variable -> variable.getName().contentEquals(name))
+                .toList();
+        assertEquals(1, matches.size(), "expected one variable named " + name);
+        return matches.getFirst();
+    }
+
+    private static MethodInvocationTree uniqueInvocation(Tree tree, String name) {
+        List<MethodInvocationTree> matches = invocations(tree).stream()
+                .filter(invocation -> methodName(invocation).equals(name))
+                .toList();
+        assertEquals(1, matches.size(), "expected one invocation named " + name);
+        return matches.getFirst();
+    }
+
+    private static MethodInvocationTree asInvocation(Tree tree) {
+        assertTrue(tree instanceof MethodInvocationTree,
+                () -> "expected method invocation, got " + tree.getKind());
+        return (MethodInvocationTree) tree;
+    }
+
+    private static MemberSelectTree asMemberSelect(Tree tree) {
+        assertTrue(tree instanceof MemberSelectTree,
+                () -> "expected member select, got " + tree.getKind());
+        return (MemberSelectTree) tree;
+    }
+
+    private static LambdaExpressionTree asLambda(Tree tree) {
+        assertTrue(tree instanceof LambdaExpressionTree,
+                () -> "expected lambda, got " + tree.getKind());
+        return (LambdaExpressionTree) tree;
+    }
+
+    private static NewClassTree asNewClass(Tree tree) {
+        assertTrue(tree instanceof NewClassTree,
+                () -> "expected new class expression, got " + tree.getKind());
+        return (NewClassTree) tree;
+    }
+
+    private static BlockTree asBlock(Tree tree) {
+        assertTrue(tree instanceof BlockTree,
+                () -> "expected block, got " + tree.getKind());
+        return (BlockTree) tree;
+    }
+
+    private static void assertMemberCall(
+            MethodInvocationTree invocation, String receiver, String name, int argumentCount) {
+        MemberSelectTree select = asMemberSelect(invocation.getMethodSelect());
+        assertEquals(receiver, qualifiedName(select.getExpression()));
+        assertEquals(name, select.getIdentifier().toString());
+        assertEquals(argumentCount, invocation.getArguments().size());
+    }
+
+    private static boolean isMemberCall(Tree tree, String receiver, String name) {
+        if (!(tree instanceof MethodInvocationTree invocation)
+                || !(invocation.getMethodSelect() instanceof MemberSelectTree select)) {
+            return false;
+        }
+        return select.getIdentifier().contentEquals(name)
+                && qualifiedName(select.getExpression()).equals(receiver);
+    }
+
+    private static void assertUnqualifiedCall(
+            MethodInvocationTree invocation, String name, int argumentCount) {
+        assertTrue(invocation.getMethodSelect() instanceof IdentifierTree);
+        assertEquals(name, ((IdentifierTree) invocation.getMethodSelect()).getName().toString());
+        assertEquals(argumentCount, invocation.getArguments().size());
+    }
+
+    private static void assertNoArgMemberCall(
+            ExpressionTree expression, String receiver, String name) {
+        MethodInvocationTree invocation = asInvocation(unwrap(expression));
+        assertMemberCall(invocation, receiver, name, 0);
+    }
+
+    private static void assertRecordIdCall(ExpressionTree expression) {
+        assertNoArgMemberCall(expression, "record", "animalId");
+    }
+
+    private static void assertNotNullCheck(ExpressionTree expression, String identifier) {
+        assertTrue(isNotNullCheck(expression, identifier),
+                () -> "expected " + identifier + " != null");
+    }
+
+    private static boolean isNotNullCheck(ExpressionTree expression, String identifier) {
+        ExpressionTree unwrapped = unwrap(expression);
+        if (!(unwrapped instanceof BinaryTree binary)
+                || binary.getKind() != Tree.Kind.NOT_EQUAL_TO) {
+            return false;
+        }
+        return isIdentifier(binary.getLeftOperand(), identifier)
+                && unwrap(binary.getRightOperand()).getKind() == Tree.Kind.NULL_LITERAL;
+    }
+
+    private static void assertIdentifier(ExpressionTree expression, String expected) {
+        assertTrue(isIdentifier(expression, expected), () -> "expected identifier " + expected);
+    }
+
+    private static boolean isIdentifier(ExpressionTree expression, String expected) {
+        ExpressionTree unwrapped = unwrap(expression);
+        return unwrapped instanceof IdentifierTree identifier
+                && identifier.getName().contentEquals(expected);
+    }
+
+    private static void assertIdentifiers(
+            List<? extends ExpressionTree> expressions, String... expected) {
+        assertEquals(expected.length, expressions.size());
+        for (int index = 0; index < expected.length; index++) {
+            assertIdentifier(expressions.get(index), expected[index]);
+        }
+    }
+
+    private static void assertIntLiteral(ExpressionTree expression, int expected) {
+        ExpressionTree unwrapped = unwrap(expression);
+        assertTrue(unwrapped instanceof LiteralTree);
+        assertEquals(expected, ((LiteralTree) unwrapped).getValue());
+    }
+
+    private static void assertStringLiteral(ExpressionTree expression, String expected) {
+        ExpressionTree unwrapped = unwrap(expression);
+        assertTrue(unwrapped instanceof LiteralTree);
+        assertEquals(expected, ((LiteralTree) unwrapped).getValue());
+    }
+
+    private static void assertListOfLong(Tree type) {
+        assertTrue(type instanceof ParameterizedTypeTree,
+                () -> "expected parameterized List<Long>, got " + type.getKind());
+        ParameterizedTypeTree parameterized = (ParameterizedTypeTree) type;
+        assertEquals("List", qualifiedName(parameterized.getType()));
+        assertEquals(1, parameterized.getTypeArguments().size());
+        assertEquals("Long", qualifiedName(parameterized.getTypeArguments().getFirst()));
+    }
+
+    private static String rawTypeName(Tree type) {
+        return type instanceof ParameterizedTypeTree parameterized
+                ? qualifiedName(parameterized.getType())
+                : qualifiedName(type);
+    }
+
+    private static String qualifiedName(Tree tree) {
+        if (tree instanceof IdentifierTree identifier) {
+            return identifier.getName().toString();
+        }
+        if (tree instanceof MemberSelectTree select) {
+            return qualifiedName(select.getExpression()) + "." + select.getIdentifier();
+        }
+        return "";
+    }
+
+    private static ExpressionTree unwrap(ExpressionTree expression) {
+        ExpressionTree current = expression;
+        while (current instanceof ParenthesizedTree parenthesized) {
+            current = parenthesized.getExpression();
+        }
+        return current;
+    }
+
+    private static int statementIndex(MethodTree method, StatementTree statement) {
+        return statementIndex(method.getBody(), statement);
+    }
+
+    private static int statementIndex(BlockTree block, StatementTree statement) {
+        int index = block.getStatements().indexOf(statement);
+        assertTrue(index >= 0, "expected a direct statement in the enclosing block");
+        return index;
+    }
+
+    private static int containingStatementIndex(BlockTree block, Tree nested) {
+        for (int index = 0; index < block.getStatements().size(); index++) {
+            StatementTree statement = block.getStatements().get(index);
+            if (statement == nested || scan(statement, nested.getClass()).stream()
+                    .anyMatch(candidate -> candidate == nested)) {
+                return index;
+            }
+        }
+        throw new AssertionError("nested tree is not contained by a direct statement");
     }
 
     private static void assertEveryNamedCallIsInsideLease(
@@ -341,9 +663,14 @@ class DailySettlementChunkLeaseTest {
     }
 
     private static String methodName(MethodInvocationTree invocation) {
-        String select = invocation.getMethodSelect().toString();
-        int separator = select.lastIndexOf('.');
-        return separator < 0 ? select : select.substring(separator + 1);
+        ExpressionTree select = invocation.getMethodSelect();
+        if (select instanceof IdentifierTree identifier) {
+            return identifier.getName().toString();
+        }
+        if (select instanceof MemberSelectTree memberSelect) {
+            return memberSelect.getIdentifier().toString();
+        }
+        throw new AssertionError("unsupported method select: " + select.getKind());
     }
 
     private static <T extends Tree> List<T> scan(Tree tree, Class<T> type) {

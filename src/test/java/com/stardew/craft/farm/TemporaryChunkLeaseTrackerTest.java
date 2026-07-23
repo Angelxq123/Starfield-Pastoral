@@ -247,6 +247,25 @@ class TemporaryChunkLeaseTrackerTest {
     }
 
     @Test
+    void sharedReleaseFailureIsNotSelfSuppressedAndRemainingChunksStillRelease() {
+        RecordingBackend backend = new RecordingBackend();
+        RuntimeException shared = new RuntimeException("shared release failure");
+        backend.sharedReleaseFailure = shared;
+        backend.sharedFailureChunks.addAll(Set.of(A, B));
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TemporaryChunkLeaseTracker.Lease lease = tracker.acquire(
+                new TestLevel("level"), List.of(A, B, C));
+
+        RuntimeException actual = assertThrows(RuntimeException.class, lease::close);
+
+        assertSame(shared, actual);
+        assertEquals(0, actual.getSuppressed().length);
+        assertEquals(1, backend.releaseCount(A));
+        assertEquals(1, backend.releaseCount(B));
+        assertEquals(1, backend.releaseCount(C));
+    }
+
+    @Test
     void closeAllReleaseFailureKeepsEntryForRetryAndInvalidatesOldHandle() {
         RecordingBackend backend = new RecordingBackend();
         backend.releaseFailuresRemaining = 1;
@@ -398,6 +417,8 @@ class TemporaryChunkLeaseTrackerTest {
         private ChunkPos failLoadWithErrorOn;
         private int releaseFailuresRemaining;
         private int releaseErrorFailuresRemaining;
+        private final Set<ChunkPos> sharedFailureChunks = new HashSet<>();
+        private RuntimeException sharedReleaseFailure;
 
         @Override
         public boolean acquire(TestLevel level, ChunkPos chunk) {
@@ -429,6 +450,9 @@ class TemporaryChunkLeaseTrackerTest {
             if (releaseErrorFailuresRemaining > 0) {
                 releaseErrorFailuresRemaining--;
                 throw new AssertionError("release error " + chunk.x + "," + chunk.z);
+            }
+            if (sharedReleaseFailure != null && sharedFailureChunks.contains(chunk)) {
+                throw sharedReleaseFailure;
             }
         }
 

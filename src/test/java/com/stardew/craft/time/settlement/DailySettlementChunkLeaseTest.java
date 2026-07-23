@@ -4,6 +4,7 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.EnhancedForLoopTree;
 import com.sun.source.tree.ForLoopTree;
+import com.sun.source.tree.IfTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
@@ -21,6 +22,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -52,9 +54,16 @@ class DailySettlementChunkLeaseTest {
             new ManagerMethod("AnimalGrowthManager", "processAnimalDay", -1, "leaseBounds",
                     List.of("applyDayUpdate")),
             new ManagerMethod("AnimalGrowthManager", "processReproductionDay", -1, "leaseBounds",
-                    List.of("createAnimal", "syncOne", "sendSystemMessage")),
+                    List.of("createAnimal")),
             new ManagerMethod("AnimalGrowthManager", "syncAnimalEntityDay", -1, "leaseBounds",
                     List.of("syncOne")));
+
+    @Test
+    void animalSettlementDispositionDistinguishesActiveInactiveAndMissingBuildings() {
+        assertEquals("SYNC_ACTIVE", settlementDisposition(true, true));
+        assertEquals("KEEP_INACTIVE", settlementDisposition(false, true));
+        assertEquals("REMOVE_ORPHAN", settlementDisposition(false, false));
+    }
 
     @Test
     void cropLeaseCoversGiantCropFootprint() throws IOException {
@@ -155,6 +164,54 @@ class DailySettlementChunkLeaseTest {
     }
 
     @Test
+    void animalFinalizeBindsAllBuildingStatesAndRemovesOrphansPerItem() throws IOException {
+        ParsedClass animal = parseManager("AnimalGrowthManager");
+        MethodTree sync = animal.method("syncAnimalEntityDay", -1);
+        List<String> syncCalls = invocations(sync).stream()
+                .map(DailySettlementChunkLeaseTest::methodName).toList();
+        assertTrue(syncCalls.contains("getBuilding"));
+        assertTrue(syncCalls.contains("getBuildingIncludingInactive"));
+        assertTrue(syncCalls.contains("settlementDisposition"));
+        assertTrue(syncCalls.contains("removeOrphanAnimal"),
+                "missing buildings must remove the orphan instead of returning");
+        assertTrue(scan(sync, IfTree.class).stream()
+                .filter(branch -> branch.getCondition().toString().contains("KEEP_INACTIVE"))
+                .anyMatch(branch -> scan(branch.getThenStatement(), com.sun.source.tree.ReturnTree.class)
+                        .size() == 1));
+        assertTrue(scan(sync, IfTree.class).stream()
+                .filter(branch -> branch.getCondition().toString().contains("REMOVE_ORPHAN"))
+                .anyMatch(branch -> invocations(branch.getThenStatement()).stream()
+                        .anyMatch(call -> methodName(call).equals("removeOrphanAnimal"))));
+
+        MethodTree remove = animal.method("removeOrphanAnimal", -1);
+        TryTree leaseTry = leaseTry(remove, "leasePosition");
+        assertEquals("0", resourceInvocation(leaseTry).getArguments().get(2).toString());
+        assertEveryNamedCallIsInsideLease(remove, leaseTry, List.of("removeLoaded"));
+        assertTrue(invocations(remove).stream()
+                .anyMatch(call -> methodName(call).equals("removeAnimal")),
+                "orphan cleanup must remove the authoritative data record");
+    }
+
+    @Test
+    void reproductionDefersNewbornProjectionUntilAStableCursorAfterCreation() throws IOException {
+        ParsedClass animal = parseManager("AnimalGrowthManager");
+        MethodTree create = animal.method("createDailyWorkUnit", 2);
+        List<MethodInvocationTree> createCalls = invocations(create);
+        assertTrue(createCalls.stream()
+                .filter(call -> methodName(call).equals("deferred"))
+                .anyMatch(call -> call.getArguments().getFirst().toString()
+                        .equals("\"animal_newborn_sync\"")));
+
+        MethodTree reproduction = animal.method("processReproductionDay", -1);
+        List<String> reproductionCalls = invocations(reproduction).stream()
+                .map(DailySettlementChunkLeaseTest::methodName).toList();
+        assertTrue(reproductionCalls.contains("createAnimal"));
+        assertTrue(reproductionCalls.contains("add"));
+        assertFalse(reproductionCalls.contains("syncOne"),
+                "a retryable reproduction item must not sync after creating its newborn");
+    }
+
+    @Test
     void dailyRootScopeOwnsFallbackCleanupAndLegacyTimeLifecycleHasNoGlobalInteriorForce()
             throws IOException {
         ParsedClass helper = parse(
@@ -197,6 +254,17 @@ class DailySettlementChunkLeaseTest {
                 "new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1)"),
                 leaseCall.getArguments().stream().map(Object::toString).toList(),
                 methodName + " must cover the legacy door scan without loading unrelated chunks");
+    }
+
+    private static String settlementDisposition(boolean active, boolean includingInactive) {
+        return org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> {
+            Class<?> service = Class.forName(
+                    "com.stardew.craft.animal.service.AnimalEntitySyncService");
+            Method method = service.getDeclaredMethod(
+                    "settlementDisposition", boolean.class, boolean.class);
+            method.setAccessible(true);
+            return method.invoke(null, active, includingInactive).toString();
+        });
     }
 
     private static void assertEveryNamedCallIsInsideLease(

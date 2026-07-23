@@ -149,6 +149,7 @@ public class AnimalGrowthManager extends SavedData {
             for (AnimalBuildingRecord building : worldData.getBuildings()) {
                 buildingSnapshot.add(building.buildingId());
             }
+            List<Long> newbornSyncIds = new ArrayList<>();
             long worldSeed = level.getSeed();
             int absoluteDay = context.absoluteDay();
             DailySettlementWorkUnit animalWork = DailySettlementWorkUnits.cursor(
@@ -163,7 +164,7 @@ public class AnimalGrowthManager extends SavedData {
                     buildingSnapshot,
                     buildingId -> buildingId,
                     buildingId -> processReproductionDay(
-                            level, worldData, buildingId, worldSeed, absoluteDay),
+                            level, worldData, buildingId, worldSeed, absoluteDay, newbornSyncIds),
                     () -> {});
             DailySettlementWorkUnit finalizeWork = DailySettlementWorkUnits.cursor(
                     "animal_daily_finalize",
@@ -171,6 +172,14 @@ public class AnimalGrowthManager extends SavedData {
                     Object::toString,
                     animalId -> syncAnimalEntityDay(level, worldData, animalId),
                     () -> {});
+            DailySettlementWorkUnit newbornSyncWork = DailySettlementWorkUnits.deferred(
+                    "animal_newborn_sync",
+                    () -> DailySettlementWorkUnits.cursor(
+                            "animal_newborn_sync",
+                            newbornSyncIds,
+                            Object::toString,
+                            animalId -> syncAnimalEntityDay(level, worldData, animalId),
+                            () -> {}));
             DailySettlementWorkUnit publishWork = DailySettlementWorkUnits.cursor(
                     "animal_daily_publish",
                     List.of("publish"),
@@ -179,7 +188,7 @@ public class AnimalGrowthManager extends SavedData {
                     () -> {});
             return DailySettlementWorkUnits.sequence(
                     "animal_daily",
-                    List.of(animalWork, reproductionWork, finalizeWork, publishWork),
+                    List.of(animalWork, reproductionWork, finalizeWork, newbornSyncWork, publishWork),
                     this::finishDailyProcessing);
         } catch (RuntimeException | Error exception) {
             finishDailyProcessing();
@@ -233,9 +242,23 @@ public class AnimalGrowthManager extends SavedData {
         if (record == null) {
             return;
         }
+        if (record.buildingId() == null || record.buildingId().isBlank()) {
+            return;
+        }
         AnimalBuildingRecord building = worldData.getBuilding(record.buildingId()).orElse(null);
-        if (building == null
-                || !level.dimension().location().toString().equals(building.dimensionId())
+        AnimalBuildingRecord includingInactive = worldData
+                .getBuildingIncludingInactive(record.buildingId()).orElse(null);
+        AnimalEntitySyncService.SettlementDisposition disposition =
+                AnimalEntitySyncService.settlementDisposition(
+                        building != null, includingInactive != null);
+        if (disposition == AnimalEntitySyncService.SettlementDisposition.KEEP_INACTIVE) {
+            return;
+        }
+        if (disposition == AnimalEntitySyncService.SettlementDisposition.REMOVE_ORPHAN) {
+            removeOrphanAnimal(level, worldData, record);
+            return;
+        }
+        if (!level.dimension().location().toString().equals(building.dimensionId())
                 || !shouldProcessBuildingToday(level, building)) {
             return;
         }
@@ -245,6 +268,23 @@ public class AnimalGrowthManager extends SavedData {
                 new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
                 new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
             AnimalEntitySyncService.syncOne(level, worldData, record);
+        }
+    }
+
+    private void removeOrphanAnimal(
+            ServerLevel level, AnimalWorldData worldData, FarmAnimalRecord record) {
+        BaseCoopAnimalEntity entity = AnimalEntitySyncService.findLoaded(level, record.animalId());
+        if (entity != null) {
+            BlockPos entityPos = entity.blockPosition();
+            try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
+                    .leasePosition(level, entityPos, 0)) {
+                AnimalEntitySyncService.removeLoaded(level, record.animalId());
+            }
+        }
+        if (worldData.removeAnimal(record.animalId())) {
+            StardewCraft.LOGGER.info(
+                    "[ANIMAL_SYNC] Removed orphan animal {} (building gone)",
+                    record.animalId());
         }
     }
 
@@ -593,7 +633,8 @@ public class AnimalGrowthManager extends SavedData {
             AnimalWorldData worldData,
             String buildingId,
             long worldSeed,
-            int absoluteDaysPlayed) {
+            int absoluteDaysPlayed,
+            List<Long> newbornSyncIds) {
         AnimalBuildingRecord building = worldData.getBuilding(buildingId).orElse(null);
         if (building == null || !shouldProcessBuildingToday(level, building)) {
             return;
@@ -638,8 +679,10 @@ public class AnimalGrowthManager extends SavedData {
                     building.buildingId(),
                     AnimalAcquisitionSource.PREGNANCY
             );
-            AnimalEntitySyncService.syncOne(level, worldData, newborn);
+            newbornSyncIds.add(newborn.animalId());
+        }
 
+        try {
             UUID ownerUuid;
             try {
                 ownerUuid = UUID.fromString(building.ownerPlayerUuid());
@@ -654,6 +697,10 @@ public class AnimalGrowthManager extends SavedData {
                 owner.sendSystemMessage(Component.translatable(
                         "stardewcraft.animal.pregnancy.birth_notification", parentName));
             }
+        } catch (RuntimeException | Error notificationFailure) {
+            StardewCraft.LOGGER.error(
+                    "[ANIMAL] Failed to notify owner about newborn in building {}",
+                    building.buildingId(), notificationFailure);
         }
     }
 

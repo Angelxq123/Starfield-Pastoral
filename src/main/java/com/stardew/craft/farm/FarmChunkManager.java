@@ -82,7 +82,12 @@ public class FarmChunkManager {
         }
 
         private void closeEntry(ScopedLease lease) {
-            lease.closeDelegate();
+            try {
+                lease.closeDelegate();
+            } catch (RuntimeException | Error ignored) {
+                // Root close owns observable cleanup failures and will retry this entry.
+                return;
+            }
             synchronized (this) {
                 openLeases.remove(lease);
             }
@@ -109,7 +114,7 @@ public class FarmChunkManager {
                 } catch (RuntimeException | Error closeFailure) {
                     if (failure == null) {
                         failure = closeFailure;
-                    } else {
+                    } else if (failure != closeFailure) {
                         failure.addSuppressed(closeFailure);
                     }
                 }

@@ -24,7 +24,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -166,7 +168,7 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void runtimeReleaseFailureOnEntryCloseIsRetriedByRootFallback() {
+    void runtimeReleaseFailureOnEntryCloseDoesNotFailItemAndIsRetriedByRootFallback() {
         RecordingBackend backend = new RecordingBackend();
         backend.runtimeReleaseFailures.put(A, 1);
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
@@ -175,7 +177,7 @@ class FarmChunkManagerTest {
                 new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
         TemporaryChunkLeaseTracker.Lease lease = scope.lease(List.of(A));
 
-        assertThrows(RuntimeException.class, lease::close);
+        assertDoesNotThrow(lease::close);
         assertTrue(backend.forced.contains(A));
         scope.close();
 
@@ -184,7 +186,7 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void errorReleaseFailureOnEntryCloseIsRetriedByRootFallback() {
+    void errorReleaseFailureOnEntryCloseDoesNotFailItemAndIsRetriedByRootFallback() {
         RecordingBackend backend = new RecordingBackend();
         backend.errorReleaseFailures.put(A, 1);
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
@@ -193,11 +195,30 @@ class FarmChunkManagerTest {
                 new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
         TemporaryChunkLeaseTracker.Lease lease = scope.lease(List.of(A));
 
-        assertThrows(AssertionError.class, lease::close);
+        assertDoesNotThrow(lease::close);
         assertTrue(backend.forced.contains(A));
         scope.close();
 
         assertFalse(backend.forced.contains(A));
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void entryCloseCanExplicitlyRetryAReleaseFailure() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.runtimeReleaseFailures.put(A, 1);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        TemporaryChunkLeaseTracker.Lease lease = scope.lease(List.of(A));
+
+        assertDoesNotThrow(lease::close);
+        assertTrue(backend.forced.contains(A));
+        assertDoesNotThrow(lease::close);
+        assertFalse(backend.forced.contains(A));
+        scope.close();
+
         assertEquals(2, backend.releaseCount(A));
     }
 
@@ -223,6 +244,79 @@ class FarmChunkManagerTest {
         assertTrue(backend.forced.isEmpty());
         assertEquals(2, backend.releaseCount(A));
         assertEquals(2, backend.releaseCount(B));
+    }
+
+    @Test
+    void successfulCursorItemAdvancesOnceWhenEntryReleaseInitiallyFails() throws Exception {
+        RecordingBackend backend = new RecordingBackend();
+        backend.runtimeReleaseFailures.put(A, 1);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        AtomicInteger mutations = new AtomicInteger();
+        DailySettlementWorkUnit work = DailySettlementWorkUnits.cursor(
+                "irreversible_mutation", List.of(A), ChunkPos::toString, chunk -> {
+                    try (var lease = scope.lease(List.of(chunk))) {
+                        mutations.incrementAndGet();
+                    }
+                }, () -> {});
+
+        work.runNext();
+
+        assertTrue(work.isComplete());
+        assertEquals(1, mutations.get());
+        assertTrue(backend.forced.contains(A));
+        scope.close();
+        assertFalse(backend.forced.contains(A));
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void bodyFailureRemainsPrimaryWhenEntryReleaseAlsoFails() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.runtimeReleaseFailures.put(A, 1);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        RuntimeException bodyFailure = new RuntimeException("body failed");
+
+        RuntimeException actual = assertThrows(RuntimeException.class, () -> {
+            try (var lease = scope.lease(List.of(A))) {
+                throw bodyFailure;
+            }
+        });
+
+        assertSame(bodyFailure, actual);
+        assertEquals(0, actual.getSuppressed().length);
+        assertTrue(backend.forced.contains(A));
+        scope.close();
+        assertFalse(backend.forced.contains(A));
+    }
+
+    @Test
+    void rootCloseDoesNotSelfSuppressSharedFailureAndContinuesCleanup() {
+        RecordingBackend backend = new RecordingBackend();
+        RuntimeException shared = new RuntimeException("shared release failure");
+        backend.sharedReleaseFailure = shared;
+        backend.sharedFailureChunks.addAll(Set.of(A, B));
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        scope.lease(List.of(A));
+        scope.lease(List.of(B));
+        scope.lease(List.of(C));
+
+        RuntimeException actual = assertThrows(RuntimeException.class, scope::close);
+
+        assertSame(shared, actual);
+        assertEquals(0, actual.getSuppressed().length);
+        assertEquals(1, backend.releaseCount(A));
+        assertEquals(1, backend.releaseCount(B));
+        assertEquals(1, backend.releaseCount(C));
+        assertFalse(backend.forced.contains(C));
     }
 
     @Test
@@ -339,6 +433,8 @@ class FarmChunkManagerTest {
         private final Set<ChunkPos> forced = new HashSet<>();
         private final Map<ChunkPos, Integer> runtimeReleaseFailures = new java.util.HashMap<>();
         private final Map<ChunkPos, Integer> errorReleaseFailures = new java.util.HashMap<>();
+        private final Set<ChunkPos> sharedFailureChunks = new HashSet<>();
+        private RuntimeException sharedReleaseFailure;
 
         @Override
         public boolean acquire(TestLevel level, ChunkPos chunk) {
@@ -358,6 +454,9 @@ class FarmChunkManagerTest {
             }
             if (consumeFailure(errorReleaseFailures, chunk)) {
                 throw new AssertionError("release error " + chunk.x + "," + chunk.z);
+            }
+            if (sharedReleaseFailure != null && sharedFailureChunks.contains(chunk)) {
+                throw sharedReleaseFailure;
             }
             forced.remove(chunk);
         }

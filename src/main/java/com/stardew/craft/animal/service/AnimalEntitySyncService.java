@@ -24,6 +24,22 @@ public final class AnimalEntitySyncService {
     public record SyncResult(int updated, int spawned, int orphansRemoved) {
     }
 
+    public enum SettlementDisposition {
+        SYNC_ACTIVE,
+        KEEP_INACTIVE,
+        REMOVE_ORPHAN
+    }
+
+    public static SettlementDisposition settlementDisposition(
+            boolean activeBuildingPresent, boolean includingInactiveBuildingPresent) {
+        if (activeBuildingPresent) {
+            return SettlementDisposition.SYNC_ACTIVE;
+        }
+        return includingInactiveBuildingPresent
+                ? SettlementDisposition.KEEP_INACTIVE
+                : SettlementDisposition.REMOVE_ORPHAN;
+    }
+
     public static SyncResult syncAll(ServerLevel level) {
         AnimalWorldData data = AnimalWorldData.get(level);
         CollectionState state = collectLoaded(level);

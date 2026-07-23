@@ -152,7 +152,9 @@ final class TemporaryChunkLeaseTracker<L> {
                 if (failure == null) {
                     return releaseFailure;
                 }
-                failure.addSuppressed(releaseFailure);
+                if (failure != releaseFailure) {
+                    failure.addSuppressed(releaseFailure);
+                }
                 return failure;
             }
         }

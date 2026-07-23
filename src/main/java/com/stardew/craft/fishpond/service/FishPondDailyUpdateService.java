@@ -9,6 +9,11 @@ import com.stardew.craft.item.artisan.PreservesItem;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.SkillType;
 import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -20,8 +25,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FishPondDailyUpdateService {
     private static final int QUEST_BASE_EXP = 20;
@@ -29,12 +41,90 @@ public final class FishPondDailyUpdateService {
     private static final double JUMP_SYNC_RADIUS = 48.0D;
     private static final double JUMP_SYNC_RADIUS_SQR = JUMP_SYNC_RADIUS * JUMP_SYNC_RADIUS;
     private static final Map<String, DebugAdvanceCursor> DEBUG_ADVANCE_CURSORS = new HashMap<>();
+    private static final Set<DailyUpdateKey> PROCESSING = new HashSet<>();
 
     private FishPondDailyUpdateService() {
     }
 
     public static void onNewDay(ServerLevel level) {
-        applyDayUpdates(level, null, 1, currentAbsoluteDay());
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
+        DailyUpdateKey processingKey = new DailyUpdateKey(level.getServer(), level.dimension());
+        synchronized (PROCESSING) {
+            if (!PROCESSING.add(processingKey)) {
+                throw new IllegalStateException("Fish pond daily work is already active");
+            }
+        }
+        try {
+            FishPondWorldData worldData = FishPondWorldData.get(level);
+            String dimensionId = level.dimension().location().toString();
+            List<PondDailyEntry> pondSnapshot = new ArrayList<>();
+            for (FishPondRecord pond : worldData.getPonds()) {
+                if (dimensionId.equals(pond.dimensionId())) {
+                    pondSnapshot.add(new PondDailyEntry(pond.pondId(), stablePondId(pond.pondId())));
+                }
+            }
+            long worldSeed = level.getSeed();
+            int absoluteDay = context.absoluteDay();
+            AtomicBoolean anyChanged = new AtomicBoolean();
+            DailySettlementWorkUnit pondWork = DailySettlementWorkUnits.cursor(
+                    "fish_pond_daily",
+                    pondSnapshot,
+                    PondDailyEntry::pondId,
+                    entry -> processPondDay(
+                            level, worldData, entry, worldSeed, absoluteDay, dimensionId, anyChanged),
+                    () -> {});
+            DailySettlementWorkUnit syncWork = DailySettlementWorkUnits.cursor(
+                    "fish_pond_daily_sync",
+                    List.of("sync"),
+                    value -> value,
+                    value -> {
+                        if (anyChanged.get()) {
+                            FishPondColorSyncService.broadcastSnapshot(level);
+                        }
+                    },
+                    () -> {});
+            return DailySettlementWorkUnits.sequence(
+                    "fish_pond_daily_sequence",
+                    List.of(pondWork, syncWork),
+                    () -> finishDailyProcessing(processingKey));
+        } catch (RuntimeException | Error exception) {
+            finishDailyProcessing(processingKey);
+            throw exception;
+        }
+    }
+
+    private static void processPondDay(
+            ServerLevel level,
+            FishPondWorldData worldData,
+            PondDailyEntry entry,
+            long worldSeed,
+            int absoluteDay,
+            String dimensionId,
+            AtomicBoolean anyChanged) {
+        RandomSource random = DailySettlementRandom.forId(
+                worldSeed, absoluteDay, "fish_pond", entry.stableId());
+        FishPondRecord pond = worldData.getPond(entry.pondId()).orElse(null);
+        if (pond == null || !dimensionId.equals(pond.dimensionId())) {
+            return;
+        }
+        if (applySingleDay(level, worldData, pond, random)) {
+            anyChanged.set(true);
+        }
+    }
+
+    private static void finishDailyProcessing(DailyUpdateKey processingKey) {
+        synchronized (PROCESSING) {
+            PROCESSING.remove(processingKey);
+        }
     }
 
     public static void advanceNearby(ServerLevel level, BlockPos center, int days) {
@@ -58,7 +148,9 @@ public final class FishPondDailyUpdateService {
                 continue;
             }
             for (int i = 0; i < days; i++) {
-                if (applySingleDay(level, worldData, pond, startDay + i)) {
+                RandomSource random = DailySettlementRandom.forId(
+                        level.getSeed(), startDay + i, "fish_pond", stablePondId(pond.pondId()));
+                if (applySingleDay(level, worldData, pond, random)) {
                     anyColorChanged = true;
                 }
             }
@@ -72,7 +164,7 @@ public final class FishPondDailyUpdateService {
     private static boolean applySingleDay(ServerLevel level,
                                           FishPondWorldData worldData,
                                           FishPondRecord pond,
-                                          int absoluteDay) {
+                                          RandomSource random) {
         if (pond.currentPopulation() <= 0 || pond.fishTypeId().isBlank()) {
             return false;
         }
@@ -84,8 +176,6 @@ public final class FishPondDailyUpdateService {
         }
 
         var pondData = pondDataOpt.get();
-    long seed = mixSeed(pond.pondId().hashCode(), absoluteDay);
-        RandomSource random = RandomSource.create(seed);
         boolean changed = false;
 
         if (pond.hasCompletedRequest()) {
@@ -360,13 +450,23 @@ public final class FishPondDailyUpdateService {
         return startDay;
     }
 
-    private static long mixSeed(long pondSeed, long daySeed) {
-        long seed = 1469598103934665603L;
-        seed = (seed ^ pondSeed) * 1099511628211L;
-        seed = (seed ^ daySeed) * 1099511628211L;
-        return seed;
+    private static long stablePondId(String pondId) {
+        long hash = 0xcbf29ce484222325L;
+        for (byte current : pondId.getBytes(StandardCharsets.UTF_8)) {
+            hash ^= current & 0xFFL;
+            hash *= 0x100000001b3L;
+        }
+        return hash;
     }
 
     private record DebugAdvanceCursor(int baseDay, int nextOffset) {
+    }
+
+    private record PondDailyEntry(String pondId, long stableId) {
+    }
+
+    private record DailyUpdateKey(
+            net.minecraft.server.MinecraftServer server,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
     }
 }

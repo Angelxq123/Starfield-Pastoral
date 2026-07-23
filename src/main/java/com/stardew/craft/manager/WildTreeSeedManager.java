@@ -2,6 +2,11 @@ package com.stardew.craft.manager;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import com.stardew.craft.tree.WildTrees;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -15,6 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -22,8 +28,13 @@ import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -53,6 +64,9 @@ public class WildTreeSeedManager extends SavedData {
 	}
 
 	private final Map<GlobalPos, Entry> entries = new ConcurrentHashMap<>();
+	private final Map<GlobalPos, Entry> pendingAdds = new HashMap<>();
+	private final Set<GlobalPos> pendingRemoves = new HashSet<>();
+	private boolean processing;
 
 	@SuppressWarnings("null")
 	public static WildTreeSeedManager get(ServerLevel level) {
@@ -65,6 +79,14 @@ public class WildTreeSeedManager extends SavedData {
 	public void trackTree(ServerLevel level, BlockPos trunk0Pos, WildTrees.Def def) {
 		@SuppressWarnings("null")
 		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
+		if (processing) {
+			pendingRemoves.remove(gp);
+			if (!entries.containsKey(gp)) {
+				pendingAdds.putIfAbsent(gp, new Entry(def.id()));
+			}
+			setDirty();
+			return;
+		}
 		entries.computeIfAbsent(gp, k -> {
 			setDirty();
 			return new Entry(def.id());
@@ -74,6 +96,14 @@ public class WildTreeSeedManager extends SavedData {
 	public void untrackTree(ServerLevel level, BlockPos trunk0Pos) {
 		@SuppressWarnings("null")
 		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
+		if (processing) {
+			pendingAdds.remove(gp);
+			if (entries.containsKey(gp)) {
+				pendingRemoves.add(gp);
+			}
+			setDirty();
+			return;
+		}
 		if (entries.remove(gp) != null) {
 			setDirty();
 		}
@@ -126,81 +156,147 @@ public class WildTreeSeedManager extends SavedData {
 	 */
 	@SuppressWarnings("null")
 	public void onNewDay(ServerLevel level, int absDay) {
-		boolean changed = false;
+		DailySettlementWorkUnits.drain(createDailyWorkUnit(
+				level, contextForAbsoluteDay(absDay)));
+	}
 
-		// 清理：树被砍/变更后，移除无效记录
-		Iterator<Map.Entry<GlobalPos, Entry>> it = entries.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<GlobalPos, Entry> e = it.next();
-			GlobalPos gp = e.getKey();
-			if (gp.dimension() != level.dimension()) {
-				continue;
-			}
-			BlockPos pos = gp.pos();
-			if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
-				continue;
-			}
-			if (!level.isLoaded(pos)) {
-				continue;
-			}
-			WildTrees.Def def = findDefById(e.getValue().treeId);
-			if (def == null) {
-				it.remove();
-				changed = true;
-				continue;
-			}
-			BlockState treeState = level.getBlockState(pos);
-			if (treeState.getBlock() != def.trunk0().get() && !def.isModernRoot(treeState)) {
-				it.remove();
-				changed = true;
-			} else if (def.isModernRoot(treeState)) {
-				tryMigrateGeneratedTreeMarker(level, pos, def);
-			}
+	public DailySettlementWorkUnit createDailyWorkUnit(
+			ServerLevel level,
+			DailySettlementContext context) {
+		if (processing) {
+			throw new IllegalStateException("Wild tree seed daily work is already active");
 		}
-
-		for (Map.Entry<GlobalPos, Entry> mapEntry : entries.entrySet()) {
-			GlobalPos gp = mapEntry.getKey();
-			if (gp.dimension() != level.dimension()) {
-				continue;
-			}
-			BlockPos pos = gp.pos();
-			if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
-				continue;
-			}
-			if (!level.isLoaded(pos)) {
-				continue;
-			}
-			Entry entry = mapEntry.getValue();
-			WildTrees.Def def = findDefById(entry.treeId);
-			if (def == null) {
-				continue;
-			}
-
-			// 仅对“完整树”（非树桩）进行每日种子/扩散。
-			if (!isFullTree(level, pos, def)) {
-				continue;
-			}
-
-			if (entry.lastSeedRollAbsDay != absDay) {
-				entry.lastSeedRollAbsDay = absDay;
-				entry.lastShakenAbsDay = Integer.MIN_VALUE;
-				entry.hasSeed = level.random.nextFloat() < seedOnShakeChance(def);
-				changed = true;
-			}
-
-			if (level.random.nextFloat() < seedSpreadChance(def)) {
-				@SuppressWarnings("null")
-				BlockPos target = pos.offset(Mth.nextInt(level.random, -3, 3), 0, Mth.nextInt(level.random, -3, 3));
-				if (tryPlaceSapling(level, target, def)) {
-					TreeGrowthManager.get(level).addSapling(level, target);
-					changed = true;
+		Objects.requireNonNull(level, "level");
+		Objects.requireNonNull(context, "context");
+		processing = true;
+		try {
+			List<DailyTreeEntry> treeSnapshot = new ArrayList<>(entries.size());
+			for (GlobalPos globalPos : new ArrayList<>(entries.keySet())) {
+				Entry entry = entries.get(globalPos);
+				if (entry != null) {
+					treeSnapshot.add(new DailyTreeEntry(
+							globalPos,
+							entry.treeId,
+							entry.hasSeed,
+							entry.lastSeedRollAbsDay,
+							entry.lastShakenAbsDay));
 				}
 			}
+			long worldSeed = level.getSeed();
+			int absoluteDay = context.absoluteDay();
+			return DailySettlementWorkUnits.cursor(
+					"wild_tree_seed",
+					treeSnapshot,
+					WildTreeSeedManager::dailyItemIdentity,
+					entry -> processTreeDay(level, entry, worldSeed, absoluteDay),
+					this::finishDailyProcessing);
+		} catch (RuntimeException | Error exception) {
+			finishDailyProcessing();
+			throw exception;
+		}
+	}
+
+	@SuppressWarnings("null")
+	private void processTreeDay(
+			ServerLevel level,
+			DailyTreeEntry snapshot,
+			long worldSeed,
+			int absoluteDay) {
+		GlobalPos globalPos = snapshot.globalPos();
+		BlockPos pos = globalPos.pos();
+		RandomSource random = DailySettlementRandom.forPosition(
+				worldSeed, absoluteDay, "wild_tree_seed", pos);
+		if (globalPos.dimension() != level.dimension()
+				|| pendingRemoves.contains(globalPos)
+				|| !com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)
+				|| !level.isLoaded(pos)) {
+			return;
 		}
 
+		Entry liveEntry = entries.get(globalPos);
+		if (liveEntry == null || !snapshot.treeId().equals(liveEntry.treeId)) {
+			return;
+		}
+		WildTrees.Def def = findDefById(snapshot.treeId());
+		if (def == null) {
+			pendingRemoves.add(globalPos);
+			setDirty();
+			return;
+		}
+		BlockState treeState = level.getBlockState(pos);
+		if (treeState.getBlock() != def.trunk0().get() && !def.isModernRoot(treeState)) {
+			pendingRemoves.add(globalPos);
+			setDirty();
+			return;
+		}
+		if (def.isModernRoot(treeState)) {
+			tryMigrateGeneratedTreeMarker(level, pos, def);
+		}
+		if (!isFullTree(level, pos, def)) {
+			return;
+		}
+
+		if (snapshot.lastSeedRollAbsDay() != absoluteDay) {
+			liveEntry.lastSeedRollAbsDay = absoluteDay;
+			liveEntry.lastShakenAbsDay = Integer.MIN_VALUE;
+			liveEntry.hasSeed = random.nextFloat() < seedOnShakeChance(def);
+			setDirty();
+		}
+		if (random.nextFloat() < seedSpreadChance(def)) {
+			BlockPos target = pos.offset(
+					Mth.nextInt(random, -3, 3), 0, Mth.nextInt(random, -3, 3));
+			if (tryPlaceSapling(level, target, def)) {
+				TreeGrowthManager.get(level).addSapling(level, target);
+				setDirty();
+			}
+		}
+	}
+
+	private void finishDailyProcessing() {
+		processing = false;
+		applyPendingChanges();
+	}
+
+	private void applyPendingChanges() {
+		boolean changed = false;
+		for (GlobalPos globalPos : pendingRemoves) {
+			changed |= entries.remove(globalPos) != null;
+		}
+		pendingRemoves.clear();
+		for (Map.Entry<GlobalPos, Entry> pendingAdd : pendingAdds.entrySet()) {
+			changed |= entries.putIfAbsent(pendingAdd.getKey(), pendingAdd.getValue()) == null;
+		}
+		pendingAdds.clear();
 		if (changed) {
 			setDirty();
 		}
+	}
+
+	private static String dailyItemIdentity(DailyTreeEntry entry) {
+		GlobalPos globalPos = entry.globalPos();
+		return globalPos.dimension().location() + ":" + globalPos.pos().toShortString();
+	}
+
+	private static DailySettlementContext contextForAbsoluteDay(int absoluteDay) {
+		if (absoluteDay < 1) {
+			throw new IllegalArgumentException("absoluteDay must be at least 1");
+		}
+		DailySettlementContext current = DailySettlementContextFactory.captureCurrentDay(
+				StardewTimeManager.get());
+		int zeroBasedDay = absoluteDay - 1;
+		int year = zeroBasedDay / 112 + 1;
+		int dayOfYear = zeroBasedDay % 112;
+		int season = dayOfYear / 28;
+		int day = dayOfYear % 28 + 1;
+		return new DailySettlementContext(
+				absoluteDay,
+				year,
+				season,
+				day,
+				current.sleepMinute(),
+				current.seasonChanged(),
+				current.playerIds(),
+				current.farmOwnerIds());
 	}
 
 	private static boolean isFullTree(ServerLevel level, BlockPos trunk0Pos, WildTrees.Def def) {
@@ -301,6 +397,14 @@ public class WildTreeSeedManager extends SavedData {
 		int season = time.getCurrentSeason();
 		int day = time.getCurrentDay();
 		return (year - 1) * (28 * 4) + season * 28 + day;
+	}
+
+	private record DailyTreeEntry(
+			GlobalPos globalPos,
+			String treeId,
+			boolean hasSeed,
+			int lastSeedRollAbsDay,
+			int lastShakenAbsDay) {
 	}
 
 	@SuppressWarnings("null")

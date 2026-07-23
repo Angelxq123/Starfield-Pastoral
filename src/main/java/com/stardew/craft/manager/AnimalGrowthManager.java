@@ -22,6 +22,11 @@ import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.ProfessionType;
 import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementRandom;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import com.stardew.craft.weather.WeatherManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,7 +45,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -53,6 +61,7 @@ public class AnimalGrowthManager extends SavedData {
     private static final int APPROX_TICKS_PER_TEN_MINUTE_SLOT = 167;
     private static final double PIG_TRUFFLE_FIND_CHANCE_PER_SLOT = 1.0D
         - Math.pow(1.0D - PIG_TRUFFLE_FIND_CHANCE_PER_TICK, APPROX_TICKS_PER_TEN_MINUTE_SLOT);
+    private boolean processing;
 
     private enum AnimalHarvestType {
         DROP_OVERNIGHT,
@@ -116,51 +125,109 @@ public class AnimalGrowthManager extends SavedData {
     }
 
     public void growDaily(ServerLevel level) {
-        AnimalWorldData worldData = AnimalWorldData.get(level);
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
 
-        StardewTimeManager time = StardewTimeManager.get();
-        int currentAbsDay = (time.getCurrentYear() - 1) * (28 * 4) + time.getCurrentSeason() * 28 + time.getCurrentDay();
+    public DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        if (processing) {
+            throw new IllegalStateException("Animal daily work is already active");
+        }
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
+        processing = true;
+        try {
+            AnimalWorldData worldData = AnimalWorldData.get(level);
+            List<Long> animalSnapshot = new ArrayList<>();
+            for (FarmAnimalRecord record : worldData.getAnimals()) {
+                animalSnapshot.add(record.animalId());
+            }
+            List<String> buildingSnapshot = new ArrayList<>();
+            for (AnimalBuildingRecord building : worldData.getBuildings()) {
+                buildingSnapshot.add(building.buildingId());
+            }
+            long worldSeed = level.getSeed();
+            int absoluteDay = context.absoluteDay();
+            DailySettlementWorkUnit animalWork = DailySettlementWorkUnits.cursor(
+                    "animal_growth",
+                    animalSnapshot,
+                    Object::toString,
+                    animalId -> processAnimalDay(
+                            level, worldData, animalId, worldSeed, absoluteDay),
+                    () -> {});
+            DailySettlementWorkUnit reproductionWork = DailySettlementWorkUnits.cursor(
+                    "animal_reproduction",
+                    buildingSnapshot,
+                    buildingId -> buildingId,
+                    buildingId -> processReproductionDay(
+                            level, worldData, buildingId, worldSeed, absoluteDay),
+                    () -> {});
+            DailySettlementWorkUnit finalizeWork = DailySettlementWorkUnits.cursor(
+                    "animal_daily_finalize",
+                    List.of("finalize"),
+                    value -> value,
+                    value -> finalizeAnimalDay(level, worldData),
+                    () -> {});
+            return DailySettlementWorkUnits.sequence(
+                    "animal_daily",
+                    List.of(animalWork, reproductionWork, finalizeWork),
+                    this::finishDailyProcessing);
+        } catch (RuntimeException | Error exception) {
+            finishDailyProcessing();
+            throw exception;
+        }
+    }
 
-        for (FarmAnimalRecord record : worldData.getAnimals()) {
-            AnimalBuildingRecord building = worldData.getBuilding(record.buildingId()).orElse(null);
-            if (building != null && !shouldProcessBuildingToday(level, building)) {
-                continue;
-            }
-            if (building != null) {
-                ensureBuildingLoaded(level, building);
-            }
-
-            int lastDay = record.lastProcessedAbsDay();
-            
-            // 新动物或旧存档：初始化为昨天，只处理今天
-            if (lastDay <= 0) {
-                lastDay = currentAbsDay - 1;
-            }
-            
-            int daysMissed = currentAbsDay - lastDay;
-            if (daysMissed <= 0) {
-                // 已经处理过今天，跳过（防止重复调用）
-                continue;
-            }
-            
-            // 追赶离线天数（离线模式：简化逻辑，假设室内已喂食）
-            for (int d = 1; d < daysMissed; d++) {
-                int catchUpDay = lastDay + d;
-                applyDayUpdate(level, worldData, record, catchUpDay, true /* isOfflineCatchUp */);
-            }
-            
-            // 处理今天（在线模式：完整逻辑）
-            applyDayUpdate(level, worldData, record, currentAbsDay, false /* isOfflineCatchUp */);
-            
-            // 更新时间戳
-            record.setLastProcessedAbsDay(currentAbsDay);
+    private void processAnimalDay(
+            ServerLevel level,
+            AnimalWorldData worldData,
+            long animalId,
+            long worldSeed,
+            int absoluteDay) {
+        RandomSource random = DailySettlementRandom.forId(
+                worldSeed, absoluteDay, "animal_growth", animalId);
+        FarmAnimalRecord record = worldData.getAnimal(animalId).orElse(null);
+        if (record == null) {
+            return;
+        }
+        AnimalBuildingRecord building = worldData.getBuilding(record.buildingId()).orElse(null);
+        if (building != null && !shouldProcessBuildingToday(level, building)) {
+            return;
+        }
+        if (building != null) {
+            ensureBuildingLoaded(level, building);
         }
 
-        tryReproduction(level, worldData, currentAbsDay);
+        int lastDay = record.lastProcessedAbsDay();
+        if (lastDay <= 0) {
+            lastDay = absoluteDay - 1;
+        }
+        int daysMissed = absoluteDay - lastDay;
+        if (daysMissed <= 0) {
+            return;
+        }
 
+        for (int dayOffset = 1; dayOffset < daysMissed; dayOffset++) {
+            int catchUpDay = lastDay + dayOffset;
+            RandomSource catchUpRandom = DailySettlementRandom.forId(
+                    worldSeed, catchUpDay, "animal_growth", animalId);
+            applyDayUpdate(level, worldData, record, catchUpDay, true, catchUpRandom);
+        }
+        applyDayUpdate(level, worldData, record, absoluteDay, false, random);
+        record.setLastProcessedAbsDay(absoluteDay);
+    }
+
+    private void finalizeAnimalDay(ServerLevel level, AnimalWorldData worldData) {
         worldData.markChanged();
         AnimalEntitySyncService.syncAll(level);
         setDirty();
+    }
+
+    private void finishDailyProcessing() {
+        processing = false;
     }
 
     public void updatePerTenMinutes(ServerLevel level, int timeOfDay) {
@@ -309,9 +376,14 @@ public class AnimalGrowthManager extends SavedData {
      * 
      * @param isOfflineCatchUp true 表示离线追赶模式（简化逻辑，假设室内已喂食，跳过产出放置）
      */
-    private boolean applyDayUpdate(ServerLevel level, AnimalWorldData worldData, FarmAnimalRecord record, int absoluteDaysPlayed, boolean isOfflineCatchUp) {
+    private boolean applyDayUpdate(
+            ServerLevel level,
+            AnimalWorldData worldData,
+            FarmAnimalRecord record,
+            int absoluteDaysPlayed,
+            boolean isOfflineCatchUp,
+            RandomSource random) {
         AnimalProfile profile = resolveProfile(record.animalTypeId());
-        RandomSource random = randomForAnimalDay(record.animalId(), absoluteDaysPlayed);
         AnimalBuildingRecord building = worldData.getBuilding(record.buildingId()).orElse(null);
         BaseCoopAnimalEntity runtimeEntity = findEntityByManagedId(level, record.animalId());
         StardewAnimalData publicData = runtimeEntity == null
@@ -489,70 +561,67 @@ public class AnimalGrowthManager extends SavedData {
 
     // --- Barn animal reproduction (SDV parity) ---
 
-    private void tryReproduction(ServerLevel level, AnimalWorldData worldData, int absoluteDaysPlayed) {
-        for (AnimalBuildingRecord building : worldData.getBuildings()) {
-            if (!shouldProcessBuildingToday(level, building)) {
-                continue;
-            }
-            ensureBuildingLoaded(level, building);
-            if (!"barn".equals(building.buildingType().family())) {
-                continue;
-            }
-            if (!building.hasCapacity()) {
-                continue;
-            }
+    private void processReproductionDay(
+            ServerLevel level,
+            AnimalWorldData worldData,
+            String buildingId,
+            long worldSeed,
+            int absoluteDaysPlayed) {
+        AnimalBuildingRecord building = worldData.getBuilding(buildingId).orElse(null);
+        if (building == null || !shouldProcessBuildingToday(level, building)) {
+            return;
+        }
+        ensureBuildingLoaded(level, building);
+        if (!"barn".equals(building.buildingType().family()) || !building.hasCapacity()) {
+            return;
+        }
 
-            // Find best candidate: adult barn animal with reproduction enabled and highest friendship
-            FarmAnimalRecord bestCandidate = null;
-            for (FarmAnimalRecord record : worldData.getAnimals()) {
-                if (!record.buildingId().equals(building.buildingId())) {
-                    continue;
-                }
-                if (!"barn".equals(AnimalTypeCatalog.resolve(record.animalTypeId()).family())) {
-                    continue;
-                }
-                if (record.isBaby() || !record.allowReproduction()) {
-                    continue;
-                }
-                if (bestCandidate == null || record.friendship() > bestCandidate.friendship()) {
-                    bestCandidate = record;
-                }
-            }
-
-            if (bestCandidate == null) {
+        FarmAnimalRecord bestCandidate = null;
+        for (FarmAnimalRecord record : worldData.getAnimals()) {
+            if (!record.buildingId().equals(building.buildingId())) {
                 continue;
             }
-
-            // Parity: pregnancy chance = friendship / 1200.0
-            RandomSource random = randomForAnimalDay(bestCandidate.animalId(), absoluteDaysPlayed);
-            double chance = bestCandidate.friendship() / 1200.0;
-            if (random.nextDouble() >= chance) {
+            if (!"barn".equals(AnimalTypeCatalog.resolve(record.animalTypeId()).family())) {
                 continue;
             }
+            if (record.isBaby() || !record.allowReproduction()) {
+                continue;
+            }
+            if (bestCandidate == null || record.friendship() > bestCandidate.friendship()) {
+                bestCandidate = record;
+            }
+        }
 
-            // Create baby of the same type
-            worldData.createAnimal(
+        if (bestCandidate == null) {
+            return;
+        }
+        RandomSource random = DailySettlementRandom.forId(
+                worldSeed, absoluteDaysPlayed, "animal_reproduction", bestCandidate.animalId());
+        double chance = bestCandidate.friendship() / 1200.0;
+        if (random.nextDouble() >= chance) {
+            return;
+        }
+
+        worldData.createAnimal(
                 bestCandidate.animalTypeId(),
                 "",
                 building.buildingId(),
                 AnimalAcquisitionSource.PREGNANCY
-            );
+        );
 
-            // Notify building owner
-            UUID ownerUuid;
-            try {
-                ownerUuid = UUID.fromString(building.ownerPlayerUuid());
-            } catch (IllegalArgumentException ex) {
-                continue;
-            }
-            ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerUuid);
-            if (owner != null) {
-                String parentName = bestCandidate.customName().isBlank()
+        UUID ownerUuid;
+        try {
+            ownerUuid = UUID.fromString(building.ownerPlayerUuid());
+        } catch (IllegalArgumentException ex) {
+            return;
+        }
+        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerUuid);
+        if (owner != null) {
+            String parentName = bestCandidate.customName().isBlank()
                     ? bestCandidate.animalTypeId()
                     : bestCandidate.customName();
-                owner.sendSystemMessage(Component.translatable(
+            owner.sendSystemMessage(Component.translatable(
                     "stardewcraft.animal.pregnancy.birth_notification", parentName));
-            }
         }
     }
 
@@ -601,13 +670,6 @@ public class AnimalGrowthManager extends SavedData {
 
     private AnimalProfile resolveProfile(String animalTypeId) {
         return PROFILES.getOrDefault(animalTypeId, DEFAULT_CHICKEN);
-    }
-
-    private RandomSource randomForAnimalDay(long animalId, int absoluteDaysPlayed) {
-        long seed = 1469598103934665603L;
-        seed = (seed ^ (animalId / 2L)) * 1099511628211L;
-        seed = (seed ^ absoluteDaysPlayed) * 1099511628211L;
-        return RandomSource.create(seed);
     }
 
     private boolean isFestivalDay(ServerLevel level) {

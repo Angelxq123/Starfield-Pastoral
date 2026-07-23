@@ -2,6 +2,10 @@ package com.stardew.craft.manager;
 
 import com.stardew.craft.block.tree.WildTreeSaplingBlock;
 import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import com.stardew.craft.tree.WildTrees;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -17,7 +21,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -111,29 +117,62 @@ public class TreeGrowthManager extends SavedData {
 	}
 
 	public void growDaily(ServerLevel level) {
+		DailySettlementWorkUnits.drain(createDailyWorkUnit(
+				level,
+				DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+	}
+
+	public DailySettlementWorkUnit createDailyWorkUnit(
+			ServerLevel level,
+			DailySettlementContext context) {
+		Objects.requireNonNull(level, "level");
+		Objects.requireNonNull(context, "context");
 		isProcessing = true;
 		try {
-			java.util.List<GlobalPos> snapshot = new java.util.ArrayList<>(saplingPositions);
-			for (GlobalPos globalPos : snapshot) {
-				if (globalPos.dimension() != level.dimension()) {
-					continue;
-				}
-				BlockPos pos = Objects.requireNonNull(globalPos.pos(), "pos");
-
-				if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
-					continue;
-				}
-
-				if (!level.isLoaded(pos)) {
-					continue;
-				}
-
-				processSaplingDay(level, pos, currentSeason());
-			}
-		} finally {
-			isProcessing = false;
-			applyPendingChanges();
+			List<GlobalPos> snapshot = new ArrayList<>(saplingPositions);
+			return DailySettlementWorkUnits.cursor(
+					"tree_growth",
+					snapshot,
+					TreeGrowthManager::dailyItemIdentity,
+					globalPos -> processRegisteredSaplingDay(
+							level, globalPos, context.season()),
+					this::finishDailyProcessing);
+		} catch (RuntimeException | Error exception) {
+			finishDailyProcessing();
+			throw exception;
 		}
+	}
+
+	private void processRegisteredSaplingDay(
+			ServerLevel level,
+			GlobalPos globalPos,
+			int season) {
+		if (globalPos.dimension() != level.dimension()) {
+			return;
+		}
+		BlockPos pos = Objects.requireNonNull(globalPos.pos(), "pos");
+		if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
+			return;
+		}
+		if (!level.isLoaded(pos)) {
+			return;
+		}
+		BlockState state = level.getBlockState(pos);
+		if (!(state.getBlock() instanceof WildTreeSaplingBlock)) {
+			removeSapling(level, pos);
+			return;
+		}
+		processSaplingDay(level, pos, season);
+	}
+
+	private void finishDailyProcessing() {
+		isProcessing = false;
+		applyPendingChanges();
+	}
+
+	private static String dailyItemIdentity(GlobalPos globalPos) {
+		Objects.requireNonNull(globalPos, "globalPos");
+		return globalPos.dimension().location() + ":" + globalPos.pos().toShortString();
 	}
 
 	/** Debug/utility: advance a single sapling by one day using the same growth rules as daily processing. */

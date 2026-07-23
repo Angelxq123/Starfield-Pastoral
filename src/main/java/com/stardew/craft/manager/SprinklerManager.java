@@ -1,6 +1,11 @@
 package com.stardew.craft.manager;
 
 import com.stardew.craft.block.utility.SprinklerBlock;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.CompoundTag;
@@ -13,8 +18,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class SprinklerManager extends SavedData {
@@ -81,35 +88,58 @@ public class SprinklerManager extends SavedData {
 
     @SuppressWarnings("null")
     public void waterDaily(ServerLevel level) {
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
         isProcessing = true;
         try {
-            List<GlobalPos> snapshot = new java.util.ArrayList<>(sprinklerPositions);
-            for (GlobalPos gp : snapshot) {
-                if (gp.dimension() != level.dimension()) {
-                    continue;
-                }
-                BlockPos pos = gp.pos();
-
-                // 多人农场优化：跳过离线玩家农场中的喷头
-                if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
-                    continue;
-                }
-
-                if (!level.isLoaded(pos)) {
-                    continue;
-                }
-                BlockState state = level.getBlockState(pos);
-                if (!(state.getBlock() instanceof SprinklerBlock sprinkler)) {
-                    removeSprinkler(level, pos);
-                    continue;
-                }
-
-                SprinklerBlock.waterNow(level, pos, sprinkler.getTier(), false);
-            }
-        } finally {
-            isProcessing = false;
-            applyPendingChanges();
+            List<GlobalPos> snapshot = new ArrayList<>(sprinklerPositions);
+            return DailySettlementWorkUnits.cursor(
+                    "sprinkler_watering",
+                    snapshot,
+                    SprinklerManager::dailyItemIdentity,
+                    globalPos -> processSprinklerDay(level, globalPos),
+                    this::finishDailyProcessing);
+        } catch (RuntimeException | Error exception) {
+            finishDailyProcessing();
+            throw exception;
         }
+    }
+
+    private void processSprinklerDay(ServerLevel level, GlobalPos globalPos) {
+        if (globalPos.dimension() != level.dimension()) {
+            return;
+        }
+        BlockPos pos = globalPos.pos();
+        if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
+            return;
+        }
+        if (!level.isLoaded(pos)) {
+            return;
+        }
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof SprinklerBlock sprinkler)) {
+            removeSprinkler(level, pos);
+            return;
+        }
+        SprinklerBlock.waterNow(level, pos, sprinkler.getTier(), false);
+    }
+
+    private void finishDailyProcessing() {
+        isProcessing = false;
+        applyPendingChanges();
+    }
+
+    private static String dailyItemIdentity(GlobalPos globalPos) {
+        Objects.requireNonNull(globalPos, "globalPos");
+        return globalPos.dimension().location() + ":" + globalPos.pos().toShortString();
     }
 
     @SuppressWarnings("null")

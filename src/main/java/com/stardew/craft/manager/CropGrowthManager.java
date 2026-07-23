@@ -3,6 +3,11 @@ package com.stardew.craft.manager;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.crop.StardewCropBlock;
 import com.stardew.craft.manager.FertilizerManager;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.CompoundTag;
@@ -20,7 +25,9 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
@@ -216,74 +223,89 @@ public class CropGrowthManager extends SavedData {
      * 由 TimeManager 在 advanceDay() 时调用
      */
     @SuppressWarnings("null")
-    public void growDaily(ServerLevel serverLevel) {
+    public void growDaily(ServerLevel level) {
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
         isProcessing = true;
         try {
-            // 使用快照遍历，避免方块替换触发 add/remove 导致 HashSet 迭代器 CME
-            java.util.List<GlobalPos> snapshot = new java.util.ArrayList<>(cropPositions);
-            for (GlobalPos globalPos : snapshot) {
+            List<GlobalPos> snapshot = new java.util.ArrayList<>(cropPositions);
+            DailySettlementWorkUnit cropEntries = DailySettlementWorkUnits.cursor(
+                    "crop_growth",
+                    snapshot,
+                    CropGrowthManager::dailyItemIdentity,
+                    globalPos -> processCropDay(level, globalPos),
+                    () -> {});
+            // Atomic hotspot: a later shared scan/deterministic-random task will split this work.
+            DailySettlementWorkUnit farmlandScan = DailySettlementWorkUnits.atomic(
+                    "farmland_scan",
+                    () -> dryAllFarmland(level),
+                    () -> {});
+            return DailySettlementWorkUnits.sequence(
+                    "crop_daily",
+                    List.of(cropEntries, farmlandScan),
+                    this::finishDailyProcessing);
+        } catch (RuntimeException | Error exception) {
+            finishDailyProcessing();
+            throw exception;
+        }
+    }
 
-                // 确保是当前处理的维度
-                if (globalPos.dimension() != serverLevel.dimension()) {
-                    continue;
-                }
-
-                BlockPos pos = globalPos.pos();
-
-                // 多人农场优化：跳过离线玩家农场中的作物
-                if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(serverLevel, pos)) {
-                    continue;
-                }
-
-                // 检查区块是否加载 (避免加载未加载的区块造成卡顿)
-                if (serverLevel.isLoaded(pos)) {
-                    @SuppressWarnings("null")
-                    BlockState state = serverLevel.getBlockState(pos);
-                    Block block = state.getBlock();
-
-                    // 校验：这还是个作物吗？
-                    if (block instanceof StardewCropBlock cropBlock) {
-                        CropGrowthState growthState = cropStates.computeIfAbsent(globalPos, (k) -> new CropGrowthState());
-
-                        // 检查水分 (来自下方耕地)
-                        BlockPos belowPos = pos.below();
-                        @SuppressWarnings("null")
-                        BlockState belowState = serverLevel.getBlockState(belowPos);
-                        boolean isWatered = false;
-
-                        if (belowState.getBlock() instanceof FarmBlock) {
-                            @SuppressWarnings("null")
-                            int moisture = belowState.getValue(FarmBlock.MOISTURE);
-                            isWatered = moisture > 0;
-                        }
-
-                        // growCropOneDay 内部会处理季节判断；若替换为 DEAD_CROP，会触发 onRemove。
-                        // onRemove 调用 removeCrop 时会被延迟处理，避免遍历时 CME。
-                        cropBlock.growCropOneDay(serverLevel, pos, state, isWatered, growthState);
-                        // growthState is mutated in-place
-                        setDirty();
-
-                        // SDV: 成熟当日 1% 概率长成 3×3 巨型作物
-                        BlockState afterGrow = serverLevel.getBlockState(pos);
-                        if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck
-                                && afterGrow.hasProperty(StardewCropBlock.AGE)
-                                && afterGrow.getValue(StardewCropBlock.AGE) == StardewCropBlock.MAX_AGE) {
-                            com.stardew.craft.spawner.GiantCropSpawner.tryRoll(serverLevel, pos, matureCheck);
-                        }
-
-                    } else {
-                        // 只要发现位置上不是作物了，就清理掉脏数据
-                        removeCrop(serverLevel, pos);
-                    }
-                }
-            }
-        } finally {
-            isProcessing = false;
-            applyPendingChanges();
+    @SuppressWarnings("null")
+    private void processCropDay(ServerLevel level, GlobalPos globalPos) {
+        if (globalPos.dimension() != level.dimension()) {
+            return;
+        }
+        BlockPos pos = globalPos.pos();
+        if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
+            return;
+        }
+        if (!level.isLoaded(pos)) {
+            return;
         }
 
-        // 暴力处理所有加载区块的耕地 (干燥化)
-        dryAllFarmland(serverLevel);
+        BlockState state = level.getBlockState(pos);
+        Block block = state.getBlock();
+        if (!(block instanceof StardewCropBlock cropBlock)) {
+            removeCrop(level, pos);
+            return;
+        }
+
+        CropGrowthState growthState = cropStates.computeIfAbsent(
+                globalPos, ignored -> new CropGrowthState());
+        BlockState belowState = level.getBlockState(pos.below());
+        boolean isWatered = false;
+        if (belowState.getBlock() instanceof FarmBlock) {
+            int moisture = belowState.getValue(FarmBlock.MOISTURE);
+            isWatered = moisture > 0;
+        }
+
+        cropBlock.growCropOneDay(level, pos, state, isWatered, growthState);
+        setDirty();
+
+        BlockState afterGrow = level.getBlockState(pos);
+        if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck
+                && afterGrow.hasProperty(StardewCropBlock.AGE)
+                && afterGrow.getValue(StardewCropBlock.AGE) == StardewCropBlock.MAX_AGE) {
+            com.stardew.craft.spawner.GiantCropSpawner.tryRoll(level, pos, matureCheck);
+        }
+    }
+
+    private void finishDailyProcessing() {
+        isProcessing = false;
+        applyPendingChanges();
+    }
+
+    private static String dailyItemIdentity(GlobalPos globalPos) {
+        Objects.requireNonNull(globalPos, "globalPos");
+        return globalPos.dimension().location() + ":" + globalPos.pos().toShortString();
     }
 
     /**

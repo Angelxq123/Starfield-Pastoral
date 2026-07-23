@@ -41,6 +41,16 @@ public final class DailySettlementWorkUnits {
                 Objects.requireNonNull(onClose, "onClose"));
     }
 
+    public static DailySettlementWorkUnit sequence(
+            String name,
+            Collection<? extends DailySettlementWorkUnit> children,
+            Runnable onClose) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(children, "children");
+        Objects.requireNonNull(onClose, "onClose");
+        return new SequenceWorkUnit(name, List.copyOf(children), onClose);
+    }
+
     public static void drain(DailySettlementWorkUnit unit) {
         Objects.requireNonNull(unit, "unit");
         try (unit) {
@@ -190,6 +200,120 @@ public final class DailySettlementWorkUnits {
             }
             closed = true;
             onClose.run();
+        }
+    }
+
+    private static final class SequenceWorkUnit implements DailySettlementWorkUnit {
+        private final String name;
+        private final List<DailySettlementWorkUnit> children;
+        private final boolean[] childClosed;
+        private final Runnable onClose;
+        private int cursor;
+        private boolean closed;
+
+        private SequenceWorkUnit(
+                String name,
+                List<DailySettlementWorkUnit> children,
+                Runnable onClose) {
+            this.name = name;
+            this.children = children;
+            this.childClosed = new boolean[children.size()];
+            this.onClose = onClose;
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public String currentItemIdentity() {
+            advanceCompletedChildren();
+            return cursor >= children.size()
+                    ? name
+                    : children.get(cursor).currentItemIdentity();
+        }
+
+        @Override
+        public boolean isComplete() {
+            advanceCompletedChildren();
+            return cursor >= children.size();
+        }
+
+        @Override
+        public void runNext() throws Exception {
+            DailySettlementWorkUnit child = requireCurrentChild();
+            child.runNext();
+            advanceCompletedChildren();
+        }
+
+        @Override
+        public void skipFailedItem() {
+            DailySettlementWorkUnit child = requireCurrentChild();
+            child.skipFailedItem();
+            advanceCompletedChildren();
+        }
+
+        @Override
+        public int maxRetries() {
+            return requireCurrentChild().maxRetries();
+        }
+
+        @Override
+        public synchronized void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            RuntimeException failure = null;
+            for (int index = 0; index < children.size(); index++) {
+                try {
+                    closeChild(index);
+                } catch (RuntimeException exception) {
+                    failure = appendFailure(failure, exception);
+                }
+            }
+            try {
+                onClose.run();
+            } catch (RuntimeException exception) {
+                failure = appendFailure(failure, exception);
+            }
+            if (failure != null) {
+                throw failure;
+            }
+        }
+
+        private DailySettlementWorkUnit requireCurrentChild() {
+            advanceCompletedChildren();
+            if (cursor >= children.size()) {
+                throw new IllegalStateException("Work unit is already complete: " + name);
+            }
+            return children.get(cursor);
+        }
+
+        private void advanceCompletedChildren() {
+            while (cursor < children.size() && children.get(cursor).isComplete()) {
+                closeChild(cursor);
+                cursor++;
+            }
+        }
+
+        private void closeChild(int index) {
+            if (childClosed[index]) {
+                return;
+            }
+            childClosed[index] = true;
+            children.get(index).close();
+        }
+
+        private static RuntimeException appendFailure(
+                RuntimeException existing,
+                RuntimeException addition) {
+            if (existing == null) {
+                return addition;
+            }
+            existing.addSuppressed(addition);
+            return existing;
         }
     }
 }

@@ -3,6 +3,11 @@ package com.stardew.craft.manager;
 import com.stardew.craft.block.tree.fruit.FruitTreeBlock;
 import com.stardew.craft.block.tree.fruit.FruitTreeSaplingBlock;
 import com.stardew.craft.blockentity.FruitTreeBlockEntity;
+import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementContext;
+import com.stardew.craft.time.settlement.DailySettlementContextFactory;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import com.stardew.craft.tree.fruit.FruitTreeRules;
 import com.stardew.craft.tree.fruit.FruitTreeType;
 import net.minecraft.core.BlockPos;
@@ -22,7 +27,9 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -120,34 +127,86 @@ public class FruitTreeGrowthManager extends SavedData {
     }
 
     public void growDaily(ServerLevel level) {
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level,
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+    }
+
+    public DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(context, "context");
         processing = true;
         try {
-            for (Map.Entry<GlobalPos, SaplingEntry> entry : new java.util.ArrayList<>(saplings.entrySet())) {
-                GlobalPos globalPos = entry.getKey();
-                if (globalPos.dimension() != level.dimension()) {
-                    continue;
-                }
-                BlockPos pos = globalPos.pos();
-                if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos) || !level.isLoaded(pos)) {
-                    continue;
-                }
-                processSaplingDay(level, pos, entry.getValue());
+            List<DailyTreeEntry> snapshot = new ArrayList<>(saplings.size() + matureTrees.size());
+            for (Map.Entry<GlobalPos, SaplingEntry> entry : new ArrayList<>(saplings.entrySet())) {
+                SaplingEntry sapling = entry.getValue();
+                snapshot.add(new DailyTreeEntry(
+                        DailyTreeKind.SAPLING,
+                        entry.getKey(),
+                        sapling.type,
+                        sapling.daysRemaining));
             }
-
-            for (GlobalPos globalPos : new java.util.ArrayList<>(matureTrees)) {
-                if (globalPos.dimension() != level.dimension()) {
-                    continue;
-                }
-                BlockPos pos = globalPos.pos();
-                if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos) || !level.isLoaded(pos)) {
-                    continue;
-                }
-                processMatureTreeDay(level, pos);
+            for (GlobalPos globalPos : new ArrayList<>(matureTrees)) {
+                snapshot.add(new DailyTreeEntry(
+                        DailyTreeKind.MATURE, globalPos, null, 0));
             }
-        } finally {
-            processing = false;
-            applyPendingRemoves();
+            return DailySettlementWorkUnits.cursor(
+                    "fruit_tree_growth",
+                    snapshot,
+                    FruitTreeGrowthManager::dailyItemIdentity,
+                    entry -> processRegisteredTreeDay(level, entry),
+                    this::finishDailyProcessing);
+        } catch (RuntimeException | Error exception) {
+            finishDailyProcessing();
+            throw exception;
         }
+    }
+
+    private void processRegisteredTreeDay(ServerLevel level, DailyTreeEntry entry) {
+        GlobalPos globalPos = entry.globalPos();
+        if (globalPos.dimension() != level.dimension()) {
+            return;
+        }
+        BlockPos pos = globalPos.pos();
+        if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
+            return;
+        }
+        if (!level.isLoaded(pos)) {
+            return;
+        }
+        BlockState state = level.getBlockState(pos);
+        if (entry.kind() == DailyTreeKind.SAPLING) {
+            if (!(state.getBlock() instanceof FruitTreeSaplingBlock)
+                    || state.getValue(FruitTreeSaplingBlock.HALF) != DoubleBlockHalf.LOWER) {
+                removeSapling(level, pos);
+                return;
+            }
+            SaplingEntry frozenSapling = new SaplingEntry(entry.type(), entry.daysRemaining());
+            saplings.put(globalPos, frozenSapling);
+            processSaplingDay(level, pos, frozenSapling);
+            return;
+        }
+        if (entry.kind() == DailyTreeKind.MATURE) {
+            if (!(state.getBlock() instanceof FruitTreeBlock)) {
+                removeMatureTree(level, pos);
+                return;
+            }
+            processMatureTreeDay(level, pos);
+        }
+    }
+
+    private void finishDailyProcessing() {
+        processing = false;
+        applyPendingRemoves();
+    }
+
+    private static String dailyItemIdentity(DailyTreeEntry entry) {
+        Objects.requireNonNull(entry, "entry");
+        GlobalPos globalPos = entry.globalPos();
+        return entry.kind() + ":" + globalPos.dimension().location()
+                + ":" + globalPos.pos().toShortString();
     }
 
     public boolean strikeRandomMatureTree(@Nonnull ServerLevel level, @Nonnull RandomSource random) {
@@ -351,6 +410,25 @@ public class FruitTreeGrowthManager extends SavedData {
         private SaplingEntry(FruitTreeType type, int daysRemaining) {
             this.type = type;
             this.daysRemaining = daysRemaining;
+        }
+    }
+
+    private enum DailyTreeKind {
+        SAPLING,
+        MATURE
+    }
+
+    private record DailyTreeEntry(
+            DailyTreeKind kind,
+            GlobalPos globalPos,
+            FruitTreeType type,
+            int daysRemaining) {
+        private DailyTreeEntry {
+            Objects.requireNonNull(kind, "kind");
+            Objects.requireNonNull(globalPos, "globalPos");
+            if (kind == DailyTreeKind.SAPLING) {
+                Objects.requireNonNull(type, "type");
+            }
         }
     }
 }

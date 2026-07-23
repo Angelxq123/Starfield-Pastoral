@@ -32,6 +32,7 @@ public class ClientOvernightHandler {
     private static boolean sequenceActive;
     private static Screen activeScreen;
     private static int currentAbsoluteDay = -1;
+    private static int lastAcknowledgedAbsoluteDay = -1;
     private static boolean locked;
     private static OvernightSettlementPayload pendingReadyPayload;
 
@@ -69,6 +70,9 @@ public class ClientOvernightHandler {
     }
 
     public static void receiveBarrierState(OvernightBarrierPayload payload) {
+        if (payload.absoluteDay() <= lastAcknowledgedAbsoluteDay) {
+            return;
+        }
         if (payload.absoluteDay() <= 0
                 || (locked && payload.absoluteDay() < currentAbsoluteDay)) {
             return;
@@ -113,6 +117,7 @@ public class ClientOvernightHandler {
         }
 
         OvernightSettlementPayload payload = pendingReadyPayload;
+        lastAcknowledgedAbsoluteDay = absoluteDay;
         locked = false;
         currentAbsoluteDay = -1;
         pendingReadyPayload = null;

@@ -1,5 +1,7 @@
 package com.stardew.craft.time.settlement;
 
+import com.sun.source.tree.AssignmentTree;
+import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
@@ -110,6 +112,66 @@ class OvernightBarrierIntegrationContractTest {
         MethodTree receiveSettlement = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
         assertTrue(hasComparison(receiveSettlement.getBody(), Tree.Kind.LESS_THAN));
         assertTrue(hasComparison(receiveSettlement.getBody(), Tree.Kind.NOT_EQUAL_TO));
+    }
+
+    @Test
+    void acknowledgedDayWatermarkRejectsLateSameDayLocksBeforeAnyStateMutation() throws IOException {
+        ClassTree handler = classTree(CLIENT_HANDLER, "ClientOvernightHandler");
+        VariableTree watermark = field(handler, "lastAcknowledgedAbsoluteDay");
+        assertEquals("int", watermark.getType().toString());
+        assertEquals("-1", watermark.getInitializer().toString());
+
+        MethodTree receiveBarrier = method(handler, "receiveBarrierState", 1);
+        StatementTree firstStatement = receiveBarrier.getBody().getStatements().getFirst();
+        assertTrue(firstStatement instanceof IfTree,
+                "acknowledged-day rejection must be the first barrier-state statement");
+        IfTree acknowledgedGuard = (IfTree) firstStatement;
+        assertTrue(hasComparisonBetween(
+                acknowledgedGuard.getCondition(), Tree.Kind.LESS_THAN_EQUAL,
+                "payload.absoluteDay()", "lastAcknowledgedAbsoluteDay"));
+        assertTrue(hasReturn(acknowledgedGuard.getThenStatement()));
+
+        int guardIndex = receiveBarrier.getBody().getStatements().indexOf(acknowledgedGuard);
+        assertTrue(guardIndex < assignmentOwnerIndex(receiveBarrier.getBody(), "currentAbsoluteDay"));
+        assertTrue(guardIndex < assignmentOwnerIndex(receiveBarrier.getBody(), "locked"));
+        assertTrue(hasComparison(receiveBarrier.getBody(), Tree.Kind.GREATER_THAN),
+                "a later absolute day must still have an acceptance path");
+    }
+
+    @Test
+    void readyStartRecordsWatermarkBeforeClearingStateAndSendingAck() throws IOException {
+        MethodTree startReady = method(CLIENT_HANDLER, "ClientOvernightHandler", "startReadySequence", 1);
+        BlockTree body = startReady.getBody();
+        AssignmentTree watermark = directAssignment(body, "lastAcknowledgedAbsoluteDay");
+        assertEquals("absoluteDay", watermark.getExpression().toString());
+
+        int watermarkIndex = directAssignmentIndex(body, "lastAcknowledgedAbsoluteDay");
+        assertTrue(watermarkIndex < directAssignmentIndex(body, "locked"));
+        assertTrue(watermarkIndex < directAssignmentIndex(body, "currentAbsoluteDay"));
+        assertTrue(watermarkIndex < directAssignmentIndex(body, "pendingReadyPayload"));
+        assertTrue(watermarkIndex < invocationIndex(body, "sendToServer"));
+        assertTrue(watermarkIndex < invocationIndex(body, "startSequence"));
+    }
+
+    @Test
+    void duplicateReadyClicksAndLateSettlementsRemainGuardedAfterAcknowledgement() throws IOException {
+        MethodTree startReady = method(CLIENT_HANDLER, "ClientOvernightHandler", "startReadySequence", 1);
+        IfTree readyGuard = directIfs(startReady.getBody()).getFirst();
+        assertTrue(hasIdentifier(readyGuard.getCondition(), "locked"));
+        assertTrue(hasIdentifier(readyGuard.getCondition(), "currentAbsoluteDay"));
+        assertTrue(hasInvocation(readyGuard.getCondition(), "isReady"));
+        assertTrue(hasReturn(readyGuard.getThenStatement()));
+
+        MethodTree receiveSettlement = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
+        IfTree settlementGuard = directIfs(receiveSettlement.getBody()).stream()
+                .filter(candidate -> hasIdentifier(candidate.getCondition(), "locked"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("locked settlement guard is missing"));
+        int stateGuard = receiveSettlement.getBody().getStatements().indexOf(settlementGuard);
+        int readyAssignment = assignmentOwnerIndex(receiveSettlement.getBody(), "pendingReadyPayload");
+        assertTrue(stateGuard >= 0 && stateGuard < readyAssignment,
+                "late settlement must be rejected before restoring pending READY state");
+        assertTrue(hasReturn(settlementGuard.getThenStatement()));
     }
 
     @Test
@@ -327,6 +389,39 @@ class OvernightBarrierIntegrationContractTest {
         return -1;
     }
 
+    private static AssignmentTree directAssignment(BlockTree block, String variableName) {
+        return block.getStatements().stream()
+                .filter(ExpressionStatementTree.class::isInstance)
+                .map(ExpressionStatementTree.class::cast)
+                .map(ExpressionStatementTree::getExpression)
+                .filter(AssignmentTree.class::isInstance)
+                .map(AssignmentTree.class::cast)
+                .filter(assignment -> assignment.getVariable().toString().equals(variableName))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("assignment is missing: " + variableName));
+    }
+
+    private static int directAssignmentIndex(BlockTree block, String variableName) {
+        AssignmentTree assignment = directAssignment(block, variableName);
+        for (int i = 0; i < block.getStatements().size(); i++) {
+            StatementTree statement = block.getStatements().get(i);
+            if (statement instanceof ExpressionStatementTree expression
+                    && expression.getExpression() == assignment) {
+                return i;
+            }
+        }
+        throw new AssertionError("assignment statement is missing: " + variableName);
+    }
+
+    private static int assignmentOwnerIndex(BlockTree block, String variableName) {
+        for (int i = 0; i < block.getStatements().size(); i++) {
+            if (hasAssignmentTo(block.getStatements().get(i), variableName)) {
+                return i;
+            }
+        }
+        throw new AssertionError("assignment owner is missing: " + variableName);
+    }
+
     private static void assertRegistration(MethodTree register, String direction, String payload) {
         boolean found = invocations(register.getBody()).stream()
                 .filter(invocation -> invocationName(invocation).equals(direction))
@@ -381,6 +476,23 @@ class OvernightBarrierIntegrationContractTest {
                     found[0] = true;
                 }
                 return super.scan(node, unused);
+            }
+        }.scan(tree, null);
+        return found[0];
+    }
+
+    private static boolean hasComparisonBetween(
+            Tree tree, Tree.Kind kind, String leftOperand, String rightOperand) {
+        final boolean[] found = {false};
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitBinary(BinaryTree node, Void unused) {
+                if (node.getKind() == kind
+                        && node.getLeftOperand().toString().equals(leftOperand)
+                        && node.getRightOperand().toString().equals(rightOperand)) {
+                    found[0] = true;
+                }
+                return super.visitBinary(node, unused);
             }
         }.scan(tree, null);
         return found[0];

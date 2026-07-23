@@ -9,11 +9,14 @@ final class FarmDailyDecisions {
     private FarmDailyDecisions() {
     }
 
-    static int firstAnimalDayToProcess(int lastProcessedAbsDay, int absoluteDay) {
-        int normalizedLastDay = lastProcessedAbsDay <= 0
-                ? absoluteDay - 1
+    static long firstAnimalDayToProcess(int lastProcessedAbsDay, int absoluteDay) {
+        if (lastProcessedAbsDay > 0 && lastProcessedAbsDay >= absoluteDay) {
+            return (long) absoluteDay + 1L;
+        }
+        long normalizedLastDay = lastProcessedAbsDay <= 0
+                ? (long) absoluteDay - 1L
                 : lastProcessedAbsDay;
-        return normalizedLastDay + 1;
+        return normalizedLastDay + 1L;
     }
 
     static boolean rollGrassSource(RandomSource random) {
@@ -32,6 +35,20 @@ final class FarmDailyDecisions {
         return Objects.requireNonNull(random, "random").nextFloat() < chance;
     }
 
+    static WildSeedDailyState reconcileWildSeedState(
+            boolean hasSeed,
+            int lastSeedRollAbsDay,
+            int lastShakenAbsDay,
+            int absoluteDay,
+            RandomSource random,
+            float seedChance) {
+        if (lastSeedRollAbsDay == absoluteDay) {
+            return new WildSeedDailyState(hasSeed, lastSeedRollAbsDay, lastShakenAbsDay);
+        }
+        return new WildSeedDailyState(
+                rollWildSeed(random, seedChance), absoluteDay, Integer.MIN_VALUE);
+    }
+
     static boolean rollWildSpread(RandomSource random, float chance) {
         return Objects.requireNonNull(random, "random").nextFloat() < chance;
     }
@@ -39,4 +56,36 @@ final class FarmDailyDecisions {
     static int rollWildOffset(RandomSource random) {
         return Mth.nextInt(Objects.requireNonNull(random, "random"), -3, 3);
     }
+
+    static WildPendingState onWildTreeTracked(
+            boolean liveEntryExists,
+            boolean pendingRemove,
+            String pendingAddTreeId,
+            String trackedTreeId) {
+        Objects.requireNonNull(trackedTreeId, "trackedTreeId");
+        if (pendingRemove) {
+            return new WildPendingState(
+                    true, pendingAddTreeId == null ? trackedTreeId : pendingAddTreeId);
+        }
+        if (pendingAddTreeId != null) {
+            return new WildPendingState(false, pendingAddTreeId);
+        }
+        return new WildPendingState(false, liveEntryExists ? null : trackedTreeId);
+    }
+
+    static WildPendingState onWildTreeUntracked(
+            boolean liveEntryExists,
+            boolean pendingRemove,
+            String pendingAddTreeId) {
+        return new WildPendingState(liveEntryExists || pendingRemove, null);
+    }
+}
+
+record WildSeedDailyState(
+        boolean hasSeed,
+        int lastSeedRollAbsDay,
+        int lastShakenAbsDay) {
+}
+
+record WildPendingState(boolean pendingRemove, String pendingAddTreeId) {
 }

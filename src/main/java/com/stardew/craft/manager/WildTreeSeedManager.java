@@ -79,9 +79,21 @@ public class WildTreeSeedManager extends SavedData {
 		@SuppressWarnings("null")
 		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
 		if (processing) {
-			pendingRemoves.remove(gp);
-			if (!entries.containsKey(gp)) {
-				pendingAdds.putIfAbsent(gp, new Entry(def.id()));
+			Entry pendingAdd = pendingAdds.get(gp);
+			WildPendingState transition = FarmDailyDecisions.onWildTreeTracked(
+					entries.containsKey(gp),
+					pendingRemoves.contains(gp),
+					pendingAdd == null ? null : pendingAdd.treeId,
+					def.id());
+			if (transition.pendingRemove()) {
+				pendingRemoves.add(gp);
+			} else {
+				pendingRemoves.remove(gp);
+			}
+			if (transition.pendingAddTreeId() == null) {
+				pendingAdds.remove(gp);
+			} else if (pendingAdd == null) {
+				pendingAdds.put(gp, new Entry(transition.pendingAddTreeId()));
 			}
 			setDirty();
 			return;
@@ -96,10 +108,17 @@ public class WildTreeSeedManager extends SavedData {
 		@SuppressWarnings("null")
 		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
 		if (processing) {
-			pendingAdds.remove(gp);
-			if (entries.containsKey(gp)) {
+			Entry pendingAdd = pendingAdds.get(gp);
+			WildPendingState transition = FarmDailyDecisions.onWildTreeUntracked(
+					entries.containsKey(gp),
+					pendingRemoves.contains(gp),
+					pendingAdd == null ? null : pendingAdd.treeId);
+			if (transition.pendingRemove()) {
 				pendingRemoves.add(gp);
+			} else {
+				pendingRemoves.remove(gp);
 			}
+			pendingAdds.remove(gp);
 			setDirty();
 			return;
 		}
@@ -175,10 +194,7 @@ public class WildTreeSeedManager extends SavedData {
 				if (entry != null) {
 					treeSnapshot.add(new DailyTreeEntry(
 							globalPos,
-							entry.treeId,
-							entry.hasSeed,
-							entry.lastSeedRollAbsDay,
-							entry.lastShakenAbsDay));
+							entry.treeId));
 				}
 			}
 			long worldSeed = level.getSeed();
@@ -213,10 +229,10 @@ public class WildTreeSeedManager extends SavedData {
 		}
 
 		Entry liveEntry = entries.get(globalPos);
-		if (liveEntry == null || !snapshot.treeId().equals(liveEntry.treeId)) {
+		if (liveEntry == null || !snapshot.expectedTreeId().equals(liveEntry.treeId)) {
 			return;
 		}
-		WildTrees.Def def = findDefById(snapshot.treeId());
+		WildTrees.Def def = findDefById(snapshot.expectedTreeId());
 		if (def == null) {
 			pendingRemoves.add(globalPos);
 			setDirty();
@@ -235,11 +251,21 @@ public class WildTreeSeedManager extends SavedData {
 			return;
 		}
 
-		if (snapshot.lastSeedRollAbsDay() != absoluteDay) {
-			liveEntry.lastSeedRollAbsDay = absoluteDay;
-			liveEntry.lastShakenAbsDay = Integer.MIN_VALUE;
-			liveEntry.hasSeed = FarmDailyDecisions.rollWildSeed(
-					random, seedOnShakeChance(def));
+		WildSeedDailyState liveState = new WildSeedDailyState(
+				liveEntry.hasSeed,
+				liveEntry.lastSeedRollAbsDay,
+				liveEntry.lastShakenAbsDay);
+		WildSeedDailyState settledState = FarmDailyDecisions.reconcileWildSeedState(
+				liveEntry.hasSeed,
+				liveEntry.lastSeedRollAbsDay,
+				liveEntry.lastShakenAbsDay,
+				absoluteDay,
+				random,
+				seedOnShakeChance(def));
+		if (!settledState.equals(liveState)) {
+			liveEntry.hasSeed = settledState.hasSeed();
+			liveEntry.lastSeedRollAbsDay = settledState.lastSeedRollAbsDay();
+			liveEntry.lastShakenAbsDay = settledState.lastShakenAbsDay();
 			setDirty();
 		}
 		if (FarmDailyDecisions.rollWildSpread(random, seedSpreadChance(def))) {
@@ -403,10 +429,7 @@ public class WildTreeSeedManager extends SavedData {
 
 	private record DailyTreeEntry(
 			GlobalPos globalPos,
-			String treeId,
-			boolean hasSeed,
-			int lastSeedRollAbsDay,
-			int lastShakenAbsDay) {
+			String expectedTreeId) {
 	}
 
 	@SuppressWarnings("null")

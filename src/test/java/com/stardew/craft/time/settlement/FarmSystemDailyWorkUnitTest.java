@@ -140,25 +140,104 @@ class FarmSystemDailyWorkUnitTest {
     }
 
     @Test
-    void wildSnapshotCopiesEveryRequiredKeyAndValueFieldWithoutRetainingLiveEntries() throws IOException {
+    void wildSnapshotCopiesOnlyStablePositionAndExpectedIdentity() throws IOException {
         MethodTree create = parse(SYSTEMS.get(3)).method("createDailyWorkUnit", 2);
         List<NewClassTree> snapshots = scan(create.getBody(), NewClassTree.class).stream()
                 .filter(created -> created.getIdentifier().toString().equals("DailyTreeEntry"))
                 .toList();
 
         assertEquals(1, snapshots.size());
-        assertEquals(List.of(
-                        "globalPos",
-                        "entry.treeId",
-                        "entry.hasSeed",
-                        "entry.lastSeedRollAbsDay",
-                        "entry.lastShakenAbsDay"),
+        assertEquals(List.of("globalPos", "entry.treeId"),
                 snapshots.getFirst().getArguments().stream().map(Object::toString).toList());
         assertFalse(scan(create.getBody(), VariableTree.class).stream()
                         .anyMatch(variable -> variable.getType() != null
                                 && variable.getType().toString().contains("Map.Entry")),
                 "wild snapshot must not retain live Map.Entry objects");
         assertCursorUsesSnapshot(create, "treeSnapshot", "processTreeDay");
+    }
+
+    @Test
+    void wildLiveShakeStateWinsOverTheEarlierCursorSnapshot() throws Exception {
+        RandomSource random = DailySettlementRandom.forPosition(
+                WORLD_SEED, TARGET_DAY, "wild_tree_seed", new BlockPos(4, 70, -9));
+        RandomSource untouchedControl = DailySettlementRandom.forPosition(
+                WORLD_SEED, TARGET_DAY, "wild_tree_seed", new BlockPos(4, 70, -9));
+
+        Object settled = invokeFarmDecision(
+                "reconcileWildSeedState",
+                new Class<?>[]{boolean.class, int.class, int.class, int.class,
+                        RandomSource.class, float.class},
+                false, TARGET_DAY, TARGET_DAY, TARGET_DAY, random, 1.0F);
+
+        assertEquals(false, invokeAccessor(settled, "hasSeed"));
+        assertEquals(TARGET_DAY, invokeAccessor(settled, "lastSeedRollAbsDay"));
+        assertEquals(TARGET_DAY, invokeAccessor(settled, "lastShakenAbsDay"));
+        assertEquals(untouchedControl.nextLong(), random.nextLong(),
+                "already-rolled live state must not consume a second seed roll");
+    }
+
+    @Test
+    void wildItemReconcilesFromLiveFieldsInsteadOfSnapshotMutableState() throws IOException {
+        MethodTree item = parse(SYSTEMS.get(3)).method("processTreeDay", -1);
+        MethodInvocationTree reconcile = invocationsNamed(
+                item.getBody(), "reconcileWildSeedState").stream()
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("wild item must reconcile live seed state"));
+
+        assertEquals(List.of(
+                        "liveEntry.hasSeed",
+                        "liveEntry.lastSeedRollAbsDay",
+                        "liveEntry.lastShakenAbsDay",
+                        "absoluteDay",
+                        "random",
+                        "seedOnShakeChance(def)"),
+                reconcile.getArguments().stream().map(Object::toString).toList());
+        assertFalse(scan(item.getBody(), MemberSelectTree.class).stream()
+                        .map(Object::toString)
+                        .anyMatch(value -> value.equals("snapshot.hasSeed")
+                                || value.equals("snapshot.lastSeedRollAbsDay")
+                                || value.equals("snapshot.lastShakenAbsDay")),
+                "wild item must never consult mutable state frozen before a later shake");
+    }
+
+    @Test
+    void wildUntrackThenTrackKeepsRemovalAndQueuesAFreshReplacement() throws Exception {
+        Object afterUntrack = invokeFarmDecision(
+                "onWildTreeUntracked",
+                new Class<?>[]{boolean.class, boolean.class, String.class},
+                true, false, null);
+        assertEquals(true, invokeAccessor(afterUntrack, "pendingRemove"));
+        assertEquals(null, invokeAccessor(afterUntrack, "pendingAddTreeId"));
+
+        Object afterTrack = invokeFarmDecision(
+                "onWildTreeTracked",
+                new Class<?>[]{boolean.class, boolean.class, String.class, String.class},
+                true,
+                invokeAccessor(afterUntrack, "pendingRemove"),
+                invokeAccessor(afterUntrack, "pendingAddTreeId"),
+                "pine");
+        assertEquals(true, invokeAccessor(afterTrack, "pendingRemove"));
+        assertEquals("pine", invokeAccessor(afterTrack, "pendingAddTreeId"));
+    }
+
+    @Test
+    void wildPendingReplacementIsFreshAndAppliedRemoveBeforeAdd() throws IOException {
+        ParsedClass wild = parse(SYSTEMS.get(3));
+        MethodTree track = wild.method("trackTree", -1);
+        MethodTree apply = wild.method("applyPendingChanges", -1);
+        List<NewClassTree> freshEntries = scan(track.getBody(), NewClassTree.class).stream()
+                .filter(created -> created.getIdentifier().toString().equals("Entry"))
+                .toList();
+
+        assertTrue(freshEntries.stream().anyMatch(created -> created.getArguments().size() == 1
+                        && created.getArguments().getFirst().toString()
+                                .equals("transition.pendingAddTreeId()")),
+                "replacement must allocate a fresh Entry from the queued new tree type");
+        List<? extends StatementTree> statements = apply.getBody().getStatements();
+        int removeIndex = statementIndexInvoking(statements, "remove");
+        int addIndex = statementIndexInvoking(statements, "putIfAbsent");
+        assertTrue(removeIndex >= 0 && removeIndex < addIndex,
+                "close must remove the old entry before adding its fresh replacement");
     }
 
     @Test
@@ -207,6 +286,27 @@ class FarmSystemDailyWorkUnitTest {
     }
 
     @Test
+    void animalDayWindowCannotOverflowIntoCatchUpWork() throws Exception {
+        long afterTarget = ((Number) invokeFarmDecision(
+                "firstAnimalDayToProcess",
+                new Class<?>[]{int.class, int.class},
+                TARGET_DAY, TARGET_DAY)).longValue();
+        long maxValue = ((Number) invokeFarmDecision(
+                "firstAnimalDayToProcess",
+                new Class<?>[]{int.class, int.class},
+                Integer.MAX_VALUE, TARGET_DAY)).longValue();
+        long maxTarget = ((Number) invokeFarmDecision(
+                "firstAnimalDayToProcess",
+                new Class<?>[]{int.class, int.class},
+                Integer.MAX_VALUE, Integer.MAX_VALUE)).longValue();
+
+        assertTrue(afterTarget > TARGET_DAY);
+        assertTrue(maxValue > TARGET_DAY);
+        assertTrue(maxTarget > Integer.MAX_VALUE,
+                "Integer.MAX_VALUE must produce a long no-work sentinel, not wrap negative");
+    }
+
+    @Test
     void reachableCursorCodeUsesOnlySeededObjectDailyRandomStreams() throws IOException {
         for (SystemContract system : SYSTEMS) {
             ParsedClass parsed = parse(system);
@@ -251,9 +351,13 @@ class FarmSystemDailyWorkUnitTest {
                 "FarmDailyDecisions.rollGrassNeighbor",
                 "FarmDailyDecisions.rollGrassVariant");
         assertInvokesQualified(wild.method("processTreeDay", -1),
-                "FarmDailyDecisions.rollWildSeed",
+                "FarmDailyDecisions.reconcileWildSeedState",
                 "FarmDailyDecisions.rollWildSpread",
                 "FarmDailyDecisions.rollWildOffset");
+        assertInvokesQualified(wild.method("trackTree", -1),
+                "FarmDailyDecisions.onWildTreeTracked");
+        assertInvokesQualified(wild.method("untrackTree", -1),
+                "FarmDailyDecisions.onWildTreeUntracked");
     }
 
     @Test
@@ -292,6 +396,8 @@ class FarmSystemDailyWorkUnitTest {
     }
 
     private static SimulatedSettlement runBoundSettlement(int itemLimit) throws Exception {
+        // ServerLevel is not constructible in this unit harness. AST contracts above bind these
+        // executable record/block decisions to the exact helpers called by each world-facing item.
         Map<Long, AnimalDecision> animals = new LinkedHashMap<>();
         List<Long> animalItems = new ArrayList<>();
         for (long id = 1; id <= 137; id++) {
@@ -319,11 +425,11 @@ class FarmSystemDailyWorkUnitTest {
         DailySettlementWorkUnit animalUnit = DailySettlementWorkUnits.cursor(
                 "animal", animalItems, Object::toString, id -> {
                     AnimalDecision current = animals.get(id);
-                    int firstDay = (int) invokePure(
+                    long firstDay = ((Number) invokePure(
                             "com.stardew.craft.manager.FarmDailyDecisions",
                             "firstAnimalDayToProcess",
                             new Class<?>[]{int.class, int.class},
-                            current.lastProcessedDay(), TARGET_DAY);
+                            current.lastProcessedDay(), TARGET_DAY)).longValue();
                     if (firstDay <= TARGET_DAY) {
                         animals.put(id, new AnimalDecision(
                                 current.initialLastDay(), TARGET_DAY, current.processCount() + 1));
@@ -365,8 +471,13 @@ class FarmSystemDailyWorkUnitTest {
                 "wild", positions, BlockPos::toShortString, pos -> {
                     RandomSource random = DailySettlementRandom.forPosition(
                             WORLD_SEED, TARGET_DAY, "wild_tree_seed", pos);
-                    boolean seed = (boolean) invokeFarmDecision(
-                            "rollWildSeed", new Class<?>[]{RandomSource.class, float.class}, random, 0.2F);
+                    Object seedState = invokeFarmDecision(
+                            "reconcileWildSeedState",
+                            new Class<?>[]{boolean.class, int.class, int.class, int.class,
+                                    RandomSource.class, float.class},
+                            false, Integer.MIN_VALUE, Integer.MIN_VALUE,
+                            TARGET_DAY, random, 0.2F);
+                    boolean seed = (boolean) invokeAccessor(seedState, "hasSeed");
                     boolean spread = (boolean) invokeFarmDecision(
                             "rollWildSpread", new Class<?>[]{RandomSource.class, float.class}, random, 0.05F);
                     BlockPos target = spread
@@ -418,6 +529,12 @@ class FarmSystemDailyWorkUnitTest {
             }
             throw exception;
         }
+    }
+
+    private static Object invokeAccessor(Object target, String accessor) throws Exception {
+        Method method = target.getClass().getDeclaredMethod(accessor);
+        method.setAccessible(true);
+        return method.invoke(target);
     }
 
     private static void assertDerivedRandomCall(MethodTree item, SystemContract system) {

@@ -1,16 +1,13 @@
 package com.stardew.craft.farm;
 
 import com.stardew.craft.core.FarmAreaResolver;
-import com.stardew.craft.server.performance.PerformanceCounter;
-import com.stardew.craft.server.performance.PerformanceTiming;
-import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.ChunkPos;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,29 +23,42 @@ public final class FarmDailyProcessHelper {
 
     private FarmDailyProcessHelper() {}
 
+    public interface Lease extends AutoCloseable {
+        @Override
+        void close();
+    }
+
     /** 日结算期间缓存的在线玩家 UUID 集合，避免对每个位置线性搜索玩家列表 */
     private static Set<UUID> cachedOnlinePlayers;
-    /** 已在本次结算中确认加载的区块。 */
-    private static Set<Long> cachedEnsuredChunks;
-    /** 本次结算新增的强加载票据；结束时只释放这些票据。 */
-    private static Set<ChunkPos> cachedNewlyForcedChunks;
+    private static ServerLevel dailySettlementLevel;
+    private static FarmChunkManager.DailySettlementChunkLeaseScope<ServerLevel>
+            dailySettlementLeaseScope;
 
     /**
      * 日结算开始前调用，预计算在线玩家集合。
      */
     public static void beginDailyProcess(ServerLevel level) {
-        cachedOnlinePlayers = new HashSet<>();
-        cachedEnsuredChunks = new HashSet<>();
-        cachedNewlyForcedChunks = new HashSet<>();
-        for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
-            cachedOnlinePlayers.add(player.getUUID());
+        Objects.requireNonNull(level, "level");
+        if (dailySettlementLeaseScope != null) {
+            throw new IllegalStateException("Daily settlement process is already active");
         }
 
+        dailySettlementLevel = level;
+        dailySettlementLeaseScope = FarmChunkManager.get()
+                .beginDailySettlementChunkLeaseScope(level);
         try {
+            cachedOnlinePlayers = new HashSet<>();
+            for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
+                cachedOnlinePlayers.add(player.getUUID());
+            }
             // 递减在线玩家农场的跨季宽限倒计时
             tickGracePeriods(level);
-        } catch (RuntimeException exception) {
-            endDailyProcess(level);
+        } catch (RuntimeException | Error exception) {
+            try {
+                endDailyProcess(level);
+            } catch (RuntimeException | Error cleanupFailure) {
+                exception.addSuppressed(cleanupFailure);
+            }
             throw exception;
         }
     }
@@ -57,14 +67,17 @@ public final class FarmDailyProcessHelper {
      * 日结算结束后调用，释放缓存。
      */
     public static void endDailyProcess(ServerLevel level) {
-        if (cachedNewlyForcedChunks != null) {
-            for (ChunkPos chunk : cachedNewlyForcedChunks) {
-                level.setChunkForced(chunk.x, chunk.z, false);
+        FarmChunkManager.DailySettlementChunkLeaseScope<ServerLevel> scope =
+                dailySettlementLeaseScope;
+        try {
+            if (scope != null) {
+                scope.close();
             }
+        } finally {
+            dailySettlementLeaseScope = null;
+            dailySettlementLevel = null;
+            cachedOnlinePlayers = null;
         }
-        cachedNewlyForcedChunks = null;
-        cachedEnsuredChunks = null;
-        cachedOnlinePlayers = null;
     }
 
     /**
@@ -87,7 +100,6 @@ public final class FarmDailyProcessHelper {
         if (cachedOnlinePlayers != null) {
             for (UUID farmer : farm.getAllFarmers()) {
                 if (cachedOnlinePlayers.contains(farmer)) {
-                    ensurePositionNeighborhoodLoaded(level, pos, 8);
                     return true;
                 }
             }
@@ -113,47 +125,28 @@ public final class FarmDailyProcessHelper {
         return false;
     }
 
-    /**
-     * 日结算期间按需同步加载一个对象所在区块。不会加载整张 300×300 以上的农场地图。
-     */
-    public static void ensurePositionLoaded(ServerLevel level, BlockPos pos) {
-        if (cachedEnsuredChunks == null || cachedNewlyForcedChunks == null) return;
-        int chunkX = pos.getX() >> 4;
-        int chunkZ = pos.getZ() >> 4;
-        long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
-        if (!cachedEnsuredChunks.add(chunkKey)) return;
-
-        if (!level.getForcedChunks().contains(chunkKey)) {
-            level.setChunkForced(chunkX, chunkZ, true);
-            cachedNewlyForcedChunks.add(new ChunkPos(chunkX, chunkZ));
-        }
-        ServerPerformanceRecorder.increment(PerformanceCounter.DAILY_SYNC_CHUNK_LOADS, 1L);
-        ServerPerformanceRecorder.measure(
-                PerformanceTiming.DAILY_SYNC_CHUNK_LOAD,
-                () -> level.getChunk(chunkX, chunkZ));
+    public static Lease leasePosition(ServerLevel level, BlockPos pos, int radius) {
+        TemporaryChunkLeaseTracker.Lease lease = requireLeaseScope(level).lease(
+                FarmChunkManager.chunkPositionsForPosition(
+                        Objects.requireNonNull(pos, "pos"), radius));
+        return lease::close;
     }
 
-    /** 为可能跨区块生成结构的树木等对象补齐周边区块。 */
-    public static void ensurePositionNeighborhoodLoaded(ServerLevel level, BlockPos pos, int radius) {
-        int safeRadius = Math.max(0, radius);
-        ensureBoundsLoaded(
-            level,
-            pos.offset(-safeRadius, 0, -safeRadius),
-            pos.offset(safeRadius, 0, safeRadius)
-        );
+    public static Lease leaseBounds(ServerLevel level, BlockPos min, BlockPos max) {
+        TemporaryChunkLeaseTracker.Lease lease = requireLeaseScope(level).lease(
+                FarmChunkManager.chunkPositionsForBounds(
+                        Objects.requireNonNull(min, "min"),
+                        Objects.requireNonNull(max, "max")));
+        return lease::close;
     }
 
-    /** 为畜棚、鸡舍等小型结算区域加载其覆盖的区块。 */
-    public static void ensureBoundsLoaded(ServerLevel level, BlockPos min, BlockPos max) {
-        int minChunkX = Math.min(min.getX(), max.getX()) >> 4;
-        int maxChunkX = Math.max(min.getX(), max.getX()) >> 4;
-        int minChunkZ = Math.min(min.getZ(), max.getZ()) >> 4;
-        int maxChunkZ = Math.max(min.getZ(), max.getZ()) >> 4;
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                ensurePositionLoaded(level, new BlockPos(chunkX << 4, min.getY(), chunkZ << 4));
-            }
+    private static FarmChunkManager.DailySettlementChunkLeaseScope<ServerLevel>
+            requireLeaseScope(ServerLevel level) {
+        Objects.requireNonNull(level, "level");
+        if (dailySettlementLeaseScope == null || dailySettlementLevel != level) {
+            throw new IllegalStateException("No daily settlement process is active for this level");
         }
+        return dailySettlementLeaseScope;
     }
 
     /**

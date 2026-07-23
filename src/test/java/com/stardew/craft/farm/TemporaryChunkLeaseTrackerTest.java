@@ -257,6 +257,22 @@ class TemporaryChunkLeaseTrackerTest {
     }
 
     @Test
+    void loadErrorRollsBackEveryOwnedChunk() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.failLoadWithErrorOn = B;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel("level");
+
+        AssertionError failure = assertThrows(AssertionError.class,
+                () -> tracker.acquire(level, List.of(A, B)));
+
+        assertEquals("load error 3,4", failure.getMessage());
+        assertEquals(List.of(B, A), backend.releasedChunks());
+        tracker.closeAll(level);
+        assertEquals(List.of(B, A), backend.releasedChunks());
+    }
+
+    @Test
     void incompletePendingEntryRetriesLoadWithoutReacquiringTicket() {
         RecordingBackend backend = new RecordingBackend();
         backend.failLoadOn = A;
@@ -353,6 +369,7 @@ class TemporaryChunkLeaseTrackerTest {
         private final Set<ChunkPos> unowned = new HashSet<>();
         private ChunkPos failAcquireOn;
         private ChunkPos failLoadOn;
+        private ChunkPos failLoadWithErrorOn;
         private int releaseFailuresRemaining;
 
         @Override
@@ -369,6 +386,9 @@ class TemporaryChunkLeaseTrackerTest {
             loads.add(new Call(level, chunk));
             if (chunk.equals(failLoadOn)) {
                 throw new RuntimeException("load failed " + chunk.x + "," + chunk.z);
+            }
+            if (chunk.equals(failLoadWithErrorOn)) {
+                throw new AssertionError("load error " + chunk.x + "," + chunk.z);
             }
         }
 

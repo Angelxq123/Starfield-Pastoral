@@ -194,11 +194,8 @@ public class AnimalGrowthManager extends SavedData {
             return;
         }
         AnimalBuildingRecord building = worldData.getBuilding(record.buildingId()).orElse(null);
-        if (building != null && !shouldProcessBuildingToday(level, building)) {
+        if (building == null || !shouldProcessBuildingToday(level, building)) {
             return;
-        }
-        if (building != null) {
-            ensureBuildingLoaded(level, building);
         }
 
         int lastDay = record.lastProcessedAbsDay();
@@ -207,15 +204,20 @@ public class AnimalGrowthManager extends SavedData {
             return;
         }
 
-        for (long catchUpDayValue = firstDay;
-                catchUpDayValue < absoluteDay;
-                catchUpDayValue++) {
-            int catchUpDay = Math.toIntExact(catchUpDayValue);
-            RandomSource catchUpRandom = DailySettlementRandom.forId(
-                    worldSeed, catchUpDay, "animal_growth", animalId);
-            applyDayUpdate(level, worldData, record, catchUpDay, true, catchUpRandom);
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
+                level,
+                new BlockPos(building.minX(), building.minY(), building.minZ()),
+                new BlockPos(building.maxX(), building.maxY(), building.maxZ()))) {
+            for (long catchUpDayValue = firstDay;
+                    catchUpDayValue < absoluteDay;
+                    catchUpDayValue++) {
+                int catchUpDay = Math.toIntExact(catchUpDayValue);
+                RandomSource catchUpRandom = DailySettlementRandom.forId(
+                        worldSeed, catchUpDay, "animal_growth", animalId);
+                applyDayUpdate(level, worldData, record, catchUpDay, true, catchUpRandom);
+            }
+            applyDayUpdate(level, worldData, record, absoluteDay, false, random);
         }
-        applyDayUpdate(level, worldData, record, absoluteDay, false, random);
         record.setLastProcessedAbsDay(absoluteDay);
     }
 
@@ -570,7 +572,6 @@ public class AnimalGrowthManager extends SavedData {
         if (building == null || !shouldProcessBuildingToday(level, building)) {
             return;
         }
-        ensureBuildingLoaded(level, building);
         if (!"barn".equals(building.buildingType().family()) || !building.hasCapacity()) {
             return;
         }
@@ -601,26 +602,31 @@ public class AnimalGrowthManager extends SavedData {
             return;
         }
 
-        worldData.createAnimal(
-                bestCandidate.animalTypeId(),
-                "",
-                building.buildingId(),
-                AnimalAcquisitionSource.PREGNANCY
-        );
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
+                level,
+                new BlockPos(building.minX(), building.minY(), building.minZ()),
+                new BlockPos(building.maxX(), building.maxY(), building.maxZ()))) {
+            worldData.createAnimal(
+                    bestCandidate.animalTypeId(),
+                    "",
+                    building.buildingId(),
+                    AnimalAcquisitionSource.PREGNANCY
+            );
 
-        UUID ownerUuid;
-        try {
-            ownerUuid = UUID.fromString(building.ownerPlayerUuid());
-        } catch (IllegalArgumentException ex) {
-            return;
-        }
-        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerUuid);
-        if (owner != null) {
-            String parentName = bestCandidate.customName().isBlank()
-                    ? bestCandidate.animalTypeId()
-                    : bestCandidate.customName();
-            owner.sendSystemMessage(Component.translatable(
-                    "stardewcraft.animal.pregnancy.birth_notification", parentName));
+            UUID ownerUuid;
+            try {
+                ownerUuid = UUID.fromString(building.ownerPlayerUuid());
+            } catch (IllegalArgumentException ex) {
+                return;
+            }
+            ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerUuid);
+            if (owner != null) {
+                String parentName = bestCandidate.customName().isBlank()
+                        ? bestCandidate.animalTypeId()
+                        : bestCandidate.customName();
+                owner.sendSystemMessage(Component.translatable(
+                        "stardewcraft.animal.pregnancy.birth_notification", parentName));
+            }
         }
     }
 
@@ -633,14 +639,6 @@ public class AnimalGrowthManager extends SavedData {
                 building.buildingId(), building.ownerPlayerUuid());
             return false;
         }
-    }
-
-    private void ensureBuildingLoaded(ServerLevel level, AnimalBuildingRecord building) {
-        com.stardew.craft.farm.FarmDailyProcessHelper.ensureBoundsLoaded(
-            level,
-            new BlockPos(building.minX() - 1, building.minY() - 1, building.minZ() - 1),
-            new BlockPos(building.maxX() + 1, building.maxY() + 1, building.maxZ() + 1)
-        );
     }
 
     private int rollQuality(int friendship, int happiness, boolean hasQualityProfession, RandomSource random) {

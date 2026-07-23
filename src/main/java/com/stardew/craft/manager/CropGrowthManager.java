@@ -270,34 +270,37 @@ public class CropGrowthManager extends SavedData {
         if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
             return;
         }
-        if (!level.isLoaded(pos)) {
-            return;
-        }
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
+                .leasePosition(level, pos, 0)) {
+            if (!level.isLoaded(pos)) {
+                return;
+            }
 
-        BlockState state = level.getBlockState(pos);
-        Block block = state.getBlock();
-        if (!(block instanceof StardewCropBlock cropBlock)) {
-            removeCrop(level, pos);
-            return;
-        }
+            BlockState state = level.getBlockState(pos);
+            Block block = state.getBlock();
+            if (!(block instanceof StardewCropBlock cropBlock)) {
+                removeCrop(level, pos);
+                return;
+            }
 
-        CropGrowthState growthState = cropStates.computeIfAbsent(
-                globalPos, ignored -> new CropGrowthState());
-        BlockState belowState = level.getBlockState(pos.below());
-        boolean isWatered = false;
-        if (belowState.getBlock() instanceof FarmBlock) {
-            int moisture = belowState.getValue(FarmBlock.MOISTURE);
-            isWatered = moisture > 0;
-        }
+            CropGrowthState growthState = cropStates.computeIfAbsent(
+                    globalPos, ignored -> new CropGrowthState());
+            BlockState belowState = level.getBlockState(pos.below());
+            boolean isWatered = false;
+            if (belowState.getBlock() instanceof FarmBlock) {
+                int moisture = belowState.getValue(FarmBlock.MOISTURE);
+                isWatered = moisture > 0;
+            }
 
-        cropBlock.growCropOneDay(level, pos, state, isWatered, growthState);
-        setDirty();
+            cropBlock.growCropOneDay(level, pos, state, isWatered, growthState);
+            setDirty();
 
-        BlockState afterGrow = level.getBlockState(pos);
-        if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck
-                && afterGrow.hasProperty(StardewCropBlock.AGE)
-                && afterGrow.getValue(StardewCropBlock.AGE) == StardewCropBlock.MAX_AGE) {
-            com.stardew.craft.spawner.GiantCropSpawner.tryRoll(level, pos, matureCheck);
+            BlockState afterGrow = level.getBlockState(pos);
+            if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck
+                    && afterGrow.hasProperty(StardewCropBlock.AGE)
+                    && afterGrow.getValue(StardewCropBlock.AGE) == StardewCropBlock.MAX_AGE) {
+                com.stardew.craft.spawner.GiantCropSpawner.tryRoll(level, pos, matureCheck);
+            }
         }
     }
 

@@ -157,15 +157,18 @@ public class TreeGrowthManager extends SavedData {
 		if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
 			return;
 		}
-		if (!level.isLoaded(pos)) {
-			return;
+		try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
+				.leasePosition(level, pos, 8)) {
+			if (!level.isLoaded(pos)) {
+				return;
+			}
+			BlockState state = level.getBlockState(pos);
+			if (!(state.getBlock() instanceof WildTreeSaplingBlock)) {
+				removeSapling(level, pos);
+				return;
+			}
+			processSaplingDay(level, pos, season);
 		}
-		BlockState state = level.getBlockState(pos);
-		if (!(state.getBlock() instanceof WildTreeSaplingBlock)) {
-			removeSapling(level, pos);
-			return;
-		}
-		processSaplingDay(level, pos, season);
 	}
 
 	private void finishDailyProcessing() {

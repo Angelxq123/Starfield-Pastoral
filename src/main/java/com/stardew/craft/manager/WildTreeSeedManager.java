@@ -235,59 +235,64 @@ public class WildTreeSeedManager extends SavedData {
 				worldSeed, absoluteDay, "wild_tree_seed", pos);
 		if (globalPos.dimension() != level.dimension()
 				|| pendingRemoves.contains(globalPos)
-				|| !com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)
-				|| !level.isLoaded(pos)) {
+				|| !com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
 			return;
 		}
 
-		Entry liveEntry = entries.get(globalPos);
-		if (liveEntry == null || !snapshot.expectedTreeId().equals(liveEntry.treeId)) {
-			return;
-		}
-		WildTrees.Def def = findDefById(snapshot.expectedTreeId());
-		if (def == null) {
-			pendingRemoves.add(globalPos);
-			setDirty();
-			return;
-		}
-		BlockState treeState = level.getBlockState(pos);
-		if (treeState.getBlock() != def.trunk0().get() && !def.isModernRoot(treeState)) {
-			pendingRemoves.add(globalPos);
-			setDirty();
-			return;
-		}
-		if (def.isModernRoot(treeState)) {
-			tryMigrateGeneratedTreeMarker(level, pos, def);
-		}
-		if (!isFullTree(level, pos, def)) {
-			return;
-		}
-
-		WildSeedDailyState liveState = new WildSeedDailyState(
-				liveEntry.hasSeed,
-				liveEntry.lastSeedRollAbsDay,
-				liveEntry.lastShakenAbsDay);
-		WildSeedDailyState settledState = FarmDailyDecisions.reconcileWildSeedState(
-				liveEntry.hasSeed,
-				liveEntry.lastSeedRollAbsDay,
-				liveEntry.lastShakenAbsDay,
-				absoluteDay,
-				random,
-				seedOnShakeChance(def));
-		if (!settledState.equals(liveState)) {
-			liveEntry.hasSeed = settledState.hasSeed();
-			liveEntry.lastSeedRollAbsDay = settledState.lastSeedRollAbsDay();
-			liveEntry.lastShakenAbsDay = settledState.lastShakenAbsDay();
-			setDirty();
-		}
-		if (FarmDailyDecisions.rollWildSpread(random, seedSpreadChance(def))) {
-			BlockPos target = pos.offset(
-					FarmDailyDecisions.rollWildOffset(random),
-					0,
-					FarmDailyDecisions.rollWildOffset(random));
-			if (tryPlaceSapling(level, target, def)) {
-				TreeGrowthManager.get(level).addSapling(level, target);
+		try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
+				.leasePosition(level, pos, 8)) {
+			if (!level.isLoaded(pos)) {
+				return;
+			}
+			Entry liveEntry = entries.get(globalPos);
+			if (liveEntry == null || !snapshot.expectedTreeId().equals(liveEntry.treeId)) {
+				return;
+			}
+			WildTrees.Def def = findDefById(snapshot.expectedTreeId());
+			if (def == null) {
+				pendingRemoves.add(globalPos);
 				setDirty();
+				return;
+			}
+			BlockState treeState = level.getBlockState(pos);
+			if (treeState.getBlock() != def.trunk0().get() && !def.isModernRoot(treeState)) {
+				pendingRemoves.add(globalPos);
+				setDirty();
+				return;
+			}
+			if (def.isModernRoot(treeState)) {
+				tryMigrateGeneratedTreeMarker(level, pos, def);
+			}
+			if (!isFullTree(level, pos, def)) {
+				return;
+			}
+
+			WildSeedDailyState liveState = new WildSeedDailyState(
+					liveEntry.hasSeed,
+					liveEntry.lastSeedRollAbsDay,
+					liveEntry.lastShakenAbsDay);
+			WildSeedDailyState settledState = FarmDailyDecisions.reconcileWildSeedState(
+					liveEntry.hasSeed,
+					liveEntry.lastSeedRollAbsDay,
+					liveEntry.lastShakenAbsDay,
+					absoluteDay,
+					random,
+					seedOnShakeChance(def));
+			if (!settledState.equals(liveState)) {
+				liveEntry.hasSeed = settledState.hasSeed();
+				liveEntry.lastSeedRollAbsDay = settledState.lastSeedRollAbsDay();
+				liveEntry.lastShakenAbsDay = settledState.lastShakenAbsDay();
+				setDirty();
+			}
+			if (FarmDailyDecisions.rollWildSpread(random, seedSpreadChance(def))) {
+				BlockPos target = pos.offset(
+						FarmDailyDecisions.rollWildOffset(random),
+						0,
+						FarmDailyDecisions.rollWildOffset(random));
+				if (tryPlaceSapling(level, target, def)) {
+					TreeGrowthManager.get(level).addSapling(level, target);
+					setDirty();
+				}
 			}
 		}
 	}

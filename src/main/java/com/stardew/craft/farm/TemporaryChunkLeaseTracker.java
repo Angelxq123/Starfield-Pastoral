@@ -66,7 +66,7 @@ final class TemporaryChunkLeaseTracker<L> {
                     entry.loaded = true;
                 }
             }
-        } catch (RuntimeException exception) {
+        } catch (RuntimeException | Error exception) {
             rollback(level, levelEntries, acquisitions, exception);
             throw exception;
         }
@@ -93,7 +93,7 @@ final class TemporaryChunkLeaseTracker<L> {
     }
 
     private void rollback(L level, Map<ChunkPos, Entry<L>> levelEntries,
-                          List<Acquisition<L>> acquisitions, RuntimeException failure) {
+                          List<Acquisition<L>> acquisitions, Throwable failure) {
         for (int index = acquisitions.size() - 1; index >= 0; index--) {
             Acquisition<L> acquisition = acquisitions.get(index);
             Entry<L> entry = acquisition.entry;
@@ -108,7 +108,7 @@ final class TemporaryChunkLeaseTracker<L> {
     }
 
     private synchronized void closeLease(List<LeaseEntry<L>> leaseEntries) {
-        RuntimeException failure = null;
+        Throwable failure = null;
         for (LeaseEntry<L> leaseEntry : leaseEntries) {
             Entry<L> entry = leaseEntry.entry;
             if (!entry.active || entry.epoch != leaseEntry.epoch || --entry.references > 0) {
@@ -116,13 +116,11 @@ final class TemporaryChunkLeaseTracker<L> {
             }
             failure = releaseUnused(entry, failure);
         }
-        if (failure != null) {
-            throw failure;
-        }
+        rethrowUnchecked(failure);
     }
 
     private void closeEntries(Collection<Entry<L>> entries) {
-        RuntimeException failure = null;
+        Throwable failure = null;
         for (Entry<L> entry : entries) {
             if (!entry.active) {
                 continue;
@@ -131,12 +129,10 @@ final class TemporaryChunkLeaseTracker<L> {
             entry.references = 0;
             failure = releaseUnused(entry, failure);
         }
-        if (failure != null) {
-            throw failure;
-        }
+        rethrowUnchecked(failure);
     }
 
-    private RuntimeException releaseUnused(Entry<L> entry, RuntimeException failure) {
+    private Throwable releaseUnused(Entry<L> entry, Throwable failure) {
         if (!entry.active || entry.references != 0) {
             return failure;
         }
@@ -144,7 +140,7 @@ final class TemporaryChunkLeaseTracker<L> {
         if (entry.owned) {
             try {
                 backend.release(entry.level, entry.chunk);
-            } catch (RuntimeException releaseFailure) {
+            } catch (RuntimeException | Error releaseFailure) {
                 if (failure == null) {
                     return releaseFailure;
                 }
@@ -162,6 +158,15 @@ final class TemporaryChunkLeaseTracker<L> {
             }
         }
         return failure;
+    }
+
+    private static void rethrowUnchecked(Throwable failure) {
+        if (failure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        if (failure instanceof Error error) {
+            throw error;
+        }
     }
 
     private static final class Acquisition<L> {

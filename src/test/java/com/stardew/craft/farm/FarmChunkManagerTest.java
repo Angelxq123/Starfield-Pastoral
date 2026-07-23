@@ -11,7 +11,10 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -21,6 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FarmChunkManagerTest {
+
+    private static final ChunkPos A = new ChunkPos(1, 2);
+    private static final ChunkPos B = new ChunkPos(2, 2);
+    private static final ChunkPos C = new ChunkPos(3, 2);
 
     @Test
     void includesEveryChunkTouchedByFarmBounds() {
@@ -45,6 +52,101 @@ class FarmChunkManagerTest {
             new ChunkPos(0, 0), new ChunkPos(0, 1),
             new ChunkPos(1, 0), new ChunkPos(1, 1)
         ), chunks);
+    }
+
+    @Test
+    void positionRadiusUsesOnlyActuallyCoveredChunks() {
+        BlockPos edge = new BlockPos(15, 64, 15);
+
+        assertEquals(Set.of(new ChunkPos(0, 0)),
+                FarmChunkManager.chunkPositionsForPosition(edge, 0));
+        assertEquals(Set.of(
+                new ChunkPos(0, 0), new ChunkPos(0, 1),
+                new ChunkPos(1, 0), new ChunkPos(1, 1)),
+                FarmChunkManager.chunkPositionsForPosition(edge, 8));
+    }
+
+    @Test
+    void settlementEntryLeasesShareReferencesAndReleaseImmediately() {
+        RecordingBackend backend = new RecordingBackend();
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+
+        TemporaryChunkLeaseTracker.Lease first = scope.lease(List.of(A, B));
+        TemporaryChunkLeaseTracker.Lease second = scope.lease(List.of(B, C));
+
+        first.close();
+        assertEquals(List.of(A), backend.releases);
+        second.close();
+        assertEquals(List.of(A, B, C), backend.releases);
+        scope.close();
+        assertEquals(List.of(A, B, C), backend.releases);
+    }
+
+    @Test
+    void settlementScopeLeavesPreforcedAndExternalLeaseChunksOwned() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.forced.add(C);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        TemporaryChunkLeaseTracker.Lease external = tracker.acquire(level, List.of(A));
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+
+        scope.lease(List.of(A, B, C));
+        scope.close();
+
+        assertEquals(List.of(B), backend.releases);
+        assertTrue(backend.forced.contains(A));
+        assertTrue(backend.forced.contains(C));
+        external.close();
+        assertEquals(List.of(B, A), backend.releases);
+    }
+
+    @Test
+    void settlementScopeClosesLeakedEntriesOnAbortAndIsIdempotent() {
+        RecordingBackend backend = new RecordingBackend();
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        RuntimeException failure = new RuntimeException("abort");
+
+        RuntimeException actual = org.junit.jupiter.api.Assertions.assertThrows(
+                RuntimeException.class, () -> {
+                    try (FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                                 new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level)) {
+                        scope.lease(List.of(A));
+                        scope.lease(List.of(B));
+                        throw failure;
+                    }
+                });
+
+        assertTrue(actual == failure);
+        assertEquals(Set.of(A, B), new HashSet<>(backend.releases));
+        assertEquals(2, backend.releases.size());
+    }
+
+    @Test
+    void staleEntryFromClosedScopeCannotAffectNextGeneration() {
+        RecordingBackend backend = new RecordingBackend();
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> firstScope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        TemporaryChunkLeaseTracker.Lease stale = firstScope.lease(List.of(A));
+        firstScope.close();
+
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> secondScope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        TemporaryChunkLeaseTracker.Lease current = secondScope.lease(List.of(A));
+        stale.close();
+
+        assertEquals(1, backend.releases.size());
+        current.close();
+        assertEquals(2, backend.releases.size());
+        assertEquals(2, backend.acquires.stream().filter(A::equals).count());
+        secondScope.close();
     }
 
     @Test
@@ -117,5 +219,31 @@ class FarmChunkManagerTest {
         Path projectDir = Path.of(System.getProperty("stardewcraft.projectDir"));
         return Files.readString(projectDir.resolve(
             "src/main/java/com/stardew/craft/farm/FarmChunkManager.java"));
+    }
+
+    private static final class TestLevel {
+    }
+
+    private static final class RecordingBackend
+            implements TemporaryChunkLeaseTracker.Backend<TestLevel> {
+        private final List<ChunkPos> acquires = new ArrayList<>();
+        private final List<ChunkPos> releases = new ArrayList<>();
+        private final Set<ChunkPos> forced = new HashSet<>();
+
+        @Override
+        public boolean acquire(TestLevel level, ChunkPos chunk) {
+            acquires.add(chunk);
+            return forced.add(chunk);
+        }
+
+        @Override
+        public void load(TestLevel level, ChunkPos chunk) {
+        }
+
+        @Override
+        public void release(TestLevel level, ChunkPos chunk) {
+            releases.add(chunk);
+            forced.remove(chunk);
+        }
     }
 }

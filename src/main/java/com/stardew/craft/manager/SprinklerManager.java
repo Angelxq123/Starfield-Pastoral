@@ -124,15 +124,18 @@ public class SprinklerManager extends SavedData {
         if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
             return;
         }
-        if (!level.isLoaded(pos)) {
-            return;
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
+                .leasePosition(level, pos, 0)) {
+            if (!level.isLoaded(pos)) {
+                return;
+            }
+            BlockState state = level.getBlockState(pos);
+            if (!(state.getBlock() instanceof SprinklerBlock sprinkler)) {
+                removeSprinkler(level, pos);
+                return;
+            }
+            SprinklerBlock.waterNow(level, pos, sprinkler.getTier(), false);
         }
-        BlockState state = level.getBlockState(pos);
-        if (!(state.getBlock() instanceof SprinklerBlock sprinkler)) {
-            removeSprinkler(level, pos);
-            return;
-        }
-        SprinklerBlock.waterNow(level, pos, sprinkler.getTier(), false);
     }
 
     private void finishDailyProcessing() {

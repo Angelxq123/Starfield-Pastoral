@@ -311,9 +311,6 @@ public class StardewTimeManager extends SavedData {
                 // 对齐 Stardew 的日结算语义：先确定“今天”的天气，再结算昨夜生长。
                 com.stardew.craft.weather.WeatherManager.applyWeatherForNewDay(stardewLevel, currentDay, getSeasonName(), totalDaysPlayed);
                 com.stardew.craft.npc.runtime.NpcSpawnManager.resetScheduledNpcsForNewDay(stardewLevel);
-                // 确保所有室内区块（含温室）在日结算期间已加载，
-                // 否则 growDaily / waterDaily 会因 isLoaded(pos)==false 跳过温室作物。
-                com.stardew.craft.interior.InteriorSubspaceManager.setInteriorChunksForced(stardewLevel, true, "daily_settlement");
                 try {
                     com.stardew.craft.farm.FarmDailyProcessHelper.beginDailyProcess(stardewLevel);
                     runWorldDailyStep("crops", () -> com.stardew.craft.manager.CropGrowthManager.get(stardewLevel).growDaily(stardewLevel));
@@ -337,12 +334,7 @@ public class StardewTimeManager extends SavedData {
                         e
                     );
                 } finally {
-                    try {
-                        com.stardew.craft.farm.FarmDailyProcessHelper.endDailyProcess(stardewLevel);
-                    } finally {
-                        // 日结算完成后立即释放室内区块，避免 784 区块永久 force-loaded
-                        com.stardew.craft.interior.InteriorSubspaceManager.setInteriorChunksForced(stardewLevel, false, "daily_settlement_done");
-                    }
+                    com.stardew.craft.farm.FarmDailyProcessHelper.endDailyProcess(stardewLevel);
                 }
                 
                 // 多人农场：更新所有在线玩家的 lastOnlineDay

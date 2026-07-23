@@ -193,27 +193,30 @@ public class FruitTreeGrowthManager extends SavedData {
         if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
             return;
         }
-        if (!level.isLoaded(pos)) {
-            return;
-        }
-        BlockState state = level.getBlockState(pos);
-        if (entry.kind() == DailyTreeKind.SAPLING) {
-            if (!(state.getBlock() instanceof FruitTreeSaplingBlock)
-                    || state.getValue(FruitTreeSaplingBlock.HALF) != DoubleBlockHalf.LOWER) {
-                removeSapling(level, pos);
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
+                .leasePosition(level, pos, 8)) {
+            if (!level.isLoaded(pos)) {
                 return;
             }
-            SaplingEntry frozenSapling = new SaplingEntry(entry.type(), entry.daysRemaining());
-            saplings.put(globalPos, frozenSapling);
-            processSaplingDay(level, pos, frozenSapling);
-            return;
-        }
-        if (entry.kind() == DailyTreeKind.MATURE) {
-            if (!(state.getBlock() instanceof FruitTreeBlock)) {
-                removeMatureTree(level, pos);
+            BlockState state = level.getBlockState(pos);
+            if (entry.kind() == DailyTreeKind.SAPLING) {
+                if (!(state.getBlock() instanceof FruitTreeSaplingBlock)
+                        || state.getValue(FruitTreeSaplingBlock.HALF) != DoubleBlockHalf.LOWER) {
+                    removeSapling(level, pos);
+                    return;
+                }
+                SaplingEntry frozenSapling = new SaplingEntry(entry.type(), entry.daysRemaining());
+                saplings.put(globalPos, frozenSapling);
+                processSaplingDay(level, pos, frozenSapling);
                 return;
             }
-            processMatureTreeDay(level, pos);
+            if (entry.kind() == DailyTreeKind.MATURE) {
+                if (!(state.getBlock() instanceof FruitTreeBlock)) {
+                    removeMatureTree(level, pos);
+                    return;
+                }
+                processMatureTreeDay(level, pos);
+            }
         }
     }
 

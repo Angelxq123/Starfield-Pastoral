@@ -61,6 +61,95 @@ public class FarmChunkManager {
                 }
             });
 
+    static final class DailySettlementChunkLeaseScope<L> implements AutoCloseable {
+        private final TemporaryChunkLeaseTracker<L> tracker;
+        private final L level;
+        private final Set<ScopedLease> openLeases =
+                Collections.newSetFromMap(new IdentityHashMap<>());
+        private boolean closed;
+
+        DailySettlementChunkLeaseScope(TemporaryChunkLeaseTracker<L> tracker, L level) {
+            this.tracker = Objects.requireNonNull(tracker, "tracker");
+            this.level = Objects.requireNonNull(level, "level");
+        }
+
+        synchronized TemporaryChunkLeaseTracker.Lease lease(Collection<ChunkPos> chunks) {
+            if (closed) {
+                throw new IllegalStateException("Daily settlement chunk lease scope is closed");
+            }
+            ScopedLease lease = new ScopedLease(tracker.acquire(level, chunks));
+            openLeases.add(lease);
+            return lease;
+        }
+
+        private void closeEntry(ScopedLease lease) {
+            synchronized (this) {
+                if (!openLeases.remove(lease)) {
+                    return;
+                }
+            }
+            lease.closeDelegate();
+        }
+
+        @Override
+        public void close() {
+            List<ScopedLease> leases;
+            synchronized (this) {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                leases = new ArrayList<>(openLeases);
+                openLeases.clear();
+            }
+
+            Throwable failure = null;
+            for (ScopedLease lease : leases) {
+                try {
+                    lease.closeDelegate();
+                } catch (RuntimeException | Error closeFailure) {
+                    if (failure == null) {
+                        failure = closeFailure;
+                    } else {
+                        failure.addSuppressed(closeFailure);
+                    }
+                }
+            }
+            rethrowUnchecked(failure);
+        }
+
+        private static void rethrowUnchecked(@Nullable Throwable failure) {
+            if (failure instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (failure instanceof Error error) {
+                throw error;
+            }
+        }
+
+        private final class ScopedLease implements TemporaryChunkLeaseTracker.Lease {
+            private final TemporaryChunkLeaseTracker.Lease delegate;
+            private boolean closed;
+
+            private ScopedLease(TemporaryChunkLeaseTracker.Lease delegate) {
+                this.delegate = delegate;
+            }
+
+            @Override
+            public void close() {
+                closeEntry(this);
+            }
+
+            private synchronized void closeDelegate() {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                delegate.close();
+            }
+        }
+    }
+
     private static final class TemporaryFarmLoad {
         private final TemporaryChunkLeaseTracker.Lease lease;
         private int references = 1;
@@ -147,6 +236,10 @@ public class FarmChunkManager {
         return temporaryChunkLeases.acquire(level, chunks);
     }
 
+    DailySettlementChunkLeaseScope<ServerLevel> beginDailySettlementChunkLeaseScope(ServerLevel level) {
+        return new DailySettlementChunkLeaseScope<>(temporaryChunkLeases, level);
+    }
+
     /** 获取一份临时农场区块租约，供离线追赶和每日结算使用。 */
     public void acquireTemporaryFarmChunks(ServerLevel level, int slotIndex) {
         Map<Integer, TemporaryFarmLoad> loadsForLevel = temporaryFarmLoads.get(level);
@@ -209,6 +302,13 @@ public class FarmChunkManager {
             }
         }
         return chunks;
+    }
+
+    static Set<ChunkPos> chunkPositionsForPosition(BlockPos position, int radius) {
+        int safeRadius = Math.max(0, radius);
+        return chunkPositionsForBounds(
+                position.offset(-safeRadius, 0, -safeRadius),
+                position.offset(safeRadius, 0, safeRadius));
     }
 
     static FarmInstance findContainingFarm(Collection<FarmInstance> farms, BlockPos position) {

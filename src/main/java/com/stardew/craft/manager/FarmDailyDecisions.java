@@ -79,6 +79,31 @@ final class FarmDailyDecisions {
             String pendingAddTreeId) {
         return new WildPendingState(liveEntryExists || pendingRemove, null);
     }
+
+    static <T> T routeWildShakeEntry(T liveEntry, T pendingAddEntry) {
+        return pendingAddEntry != null ? pendingAddEntry : liveEntry;
+    }
+
+    static WildShakeDecision applyWildShakeState(
+            boolean hasSeed,
+            int lastSeedRollAbsDay,
+            int lastShakenAbsDay,
+            int absoluteDay,
+            boolean canDropSeed) {
+        WildSeedDailyState current = new WildSeedDailyState(
+                hasSeed, lastSeedRollAbsDay, lastShakenAbsDay);
+        if (lastShakenAbsDay == absoluteDay) {
+            return new WildShakeDecision(false, false, current);
+        }
+        boolean dropSeed = hasSeed && canDropSeed;
+        return new WildShakeDecision(
+                true,
+                dropSeed,
+                new WildSeedDailyState(
+                        dropSeed ? false : hasSeed,
+                        lastSeedRollAbsDay,
+                        absoluteDay));
+    }
 }
 
 record WildSeedDailyState(
@@ -88,4 +113,10 @@ record WildSeedDailyState(
 }
 
 record WildPendingState(boolean pendingRemove, String pendingAddTreeId) {
+}
+
+record WildShakeDecision(
+        boolean accepted,
+        boolean dropSeed,
+        WildSeedDailyState state) {
 }

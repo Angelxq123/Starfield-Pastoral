@@ -48,6 +48,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FarmSystemDailyWorkUnitTest {
@@ -238,6 +239,105 @@ class FarmSystemDailyWorkUnitTest {
         int addIndex = statementIndexInvoking(statements, "putIfAbsent");
         assertTrue(removeIndex >= 0 && removeIndex < addIndex,
                 "close must remove the old entry before adding its fresh replacement");
+    }
+
+    @Test
+    void wildReplacementShakeStateSurvivesCloseAndRejectsASecondShakeThatDay()
+            throws Exception {
+        Object oldEntry = newWildSeedState(true, TARGET_DAY, TARGET_DAY - 1);
+        Object afterUntrack = invokeFarmDecision(
+                "onWildTreeUntracked",
+                new Class<?>[]{boolean.class, boolean.class, String.class},
+                true, false, null);
+        Object afterTrack = invokeFarmDecision(
+                "onWildTreeTracked",
+                new Class<?>[]{boolean.class, boolean.class, String.class, String.class},
+                true,
+                invokeAccessor(afterUntrack, "pendingRemove"),
+                invokeAccessor(afterUntrack, "pendingAddTreeId"),
+                "pine");
+        assertEquals(true, invokeAccessor(afterTrack, "pendingRemove"));
+        assertEquals("pine", invokeAccessor(afterTrack, "pendingAddTreeId"));
+
+        Object pendingReplacement = newWildSeedState(
+                false, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        assertSame(oldEntry, invokeFarmDecision(
+                "routeWildShakeEntry",
+                new Class<?>[]{Object.class, Object.class},
+                oldEntry, null),
+                "an ordinary tracked tree must keep using its live entry");
+
+        Object routedEntry = invokeFarmDecision(
+                "routeWildShakeEntry",
+                new Class<?>[]{Object.class, Object.class},
+                oldEntry, pendingReplacement);
+        assertSame(pendingReplacement, routedEntry,
+                "a queued replacement must receive the shake before close");
+        boolean routedToOldEntry = routedEntry == oldEntry;
+
+        Object rolledState = invokeFarmDecision(
+                "reconcileWildSeedState",
+                new Class<?>[]{boolean.class, int.class, int.class, int.class,
+                        RandomSource.class, float.class},
+                invokeAccessor(routedEntry, "hasSeed"),
+                invokeAccessor(routedEntry, "lastSeedRollAbsDay"),
+                invokeAccessor(routedEntry, "lastShakenAbsDay"),
+                TARGET_DAY,
+                RandomSource.create(12L),
+                1.0F);
+        if (routedToOldEntry) {
+            oldEntry = rolledState;
+        } else {
+            pendingReplacement = rolledState;
+        }
+
+        Object firstShake = applyWildShake(rolledState, true);
+        assertEquals(true, invokeAccessor(firstShake, "accepted"));
+        assertEquals(true, invokeAccessor(firstShake, "dropSeed"));
+        Object firstShakeState = invokeAccessor(firstShake, "state");
+        if (routedToOldEntry) {
+            oldEntry = firstShakeState;
+        } else {
+            pendingReplacement = firstShakeState;
+        }
+
+        // applyPendingChanges removes oldEntry and then installs pendingReplacement.
+        Object liveAfterClose = pendingReplacement;
+        assertEquals(TARGET_DAY, invokeAccessor(liveAfterClose, "lastShakenAbsDay"));
+        assertEquals(false, invokeAccessor(liveAfterClose, "hasSeed"));
+        Object secondShake = applyWildShake(liveAfterClose, true);
+        assertEquals(false, invokeAccessor(secondShake, "accepted"),
+                "the replacement must retain its same-day shake guard after close");
+        assertEquals(false, invokeAccessor(secondShake, "dropSeed"));
+    }
+
+    @Test
+    void wildShakeUsesProductionReplacementRouterAndAppliesStateToTheRoutedEntry()
+            throws IOException {
+        MethodTree shake = parse(SYSTEMS.get(3)).method("shake", -1);
+
+        assertInvokesQualified(shake,
+                "FarmDailyDecisions.routeWildShakeEntry",
+                "FarmDailyDecisions.applyWildShakeState");
+        MethodInvocationTree route = invocationsNamed(
+                shake.getBody(), "routeWildShakeEntry").getFirst();
+        assertEquals(List.of("liveEntry", "pendingAdd"),
+                route.getArguments().stream().map(Object::toString).toList());
+        assertVariableInitializer(shake, "entry",
+                "FarmDailyDecisions.routeWildShakeEntry(liveEntry, pendingAdd)");
+
+        MethodInvocationTree ensureRoll = invocationsNamed(
+                shake.getBody(), "ensureRolledForDay").getFirst();
+        assertEquals("entry", ensureRoll.getArguments().get(3).toString());
+        MethodInvocationTree applyShake = invocationsNamed(
+                shake.getBody(), "applyWildShakeState").getFirst();
+        assertEquals(List.of(
+                        "entry.hasSeed",
+                        "entry.lastSeedRollAbsDay",
+                        "entry.lastShakenAbsDay",
+                        "absDay",
+                        "canDropSeed"),
+                applyShake.getArguments().stream().map(Object::toString).toList());
     }
 
     @Test
@@ -535,6 +635,27 @@ class FarmSystemDailyWorkUnitTest {
         Method method = target.getClass().getDeclaredMethod(accessor);
         method.setAccessible(true);
         return method.invoke(target);
+    }
+
+    private static Object newWildSeedState(
+            boolean hasSeed,
+            int lastSeedRollAbsDay,
+            int lastShakenAbsDay) throws Exception {
+        Class<?> type = Class.forName("com.stardew.craft.manager.WildSeedDailyState");
+        var constructor = type.getDeclaredConstructor(boolean.class, int.class, int.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(hasSeed, lastSeedRollAbsDay, lastShakenAbsDay);
+    }
+
+    private static Object applyWildShake(Object state, boolean canDropSeed) throws Exception {
+        return invokeFarmDecision(
+                "applyWildShakeState",
+                new Class<?>[]{boolean.class, int.class, int.class, int.class, boolean.class},
+                invokeAccessor(state, "hasSeed"),
+                invokeAccessor(state, "lastSeedRollAbsDay"),
+                invokeAccessor(state, "lastShakenAbsDay"),
+                TARGET_DAY,
+                canDropSeed);
     }
 
     private static void assertDerivedRandomCall(MethodTree item, SystemContract system) {

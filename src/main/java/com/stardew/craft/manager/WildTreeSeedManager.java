@@ -144,7 +144,11 @@ public class WildTreeSeedManager extends SavedData {
 		int absDay = getAbsDay();
 		@SuppressWarnings("null")
 		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
-		Entry entry = entries.computeIfAbsent(gp, k -> new Entry(def.id()));
+		Entry pendingAdd = pendingAdds.get(gp);
+		Entry liveEntry = pendingAdd == null
+				? entries.computeIfAbsent(gp, k -> new Entry(def.id()))
+				: entries.get(gp);
+		Entry entry = FarmDailyDecisions.routeWildShakeEntry(liveEntry, pendingAdd);
 
 		// 同一天只允许摇一次（对齐 wasShakenToday 防重复）
 		if (entry.lastShakenAbsDay == absDay) {
@@ -153,16 +157,24 @@ public class WildTreeSeedManager extends SavedData {
 
 		ensureRolledForDay(level, trunk0Pos, def, entry, absDay);
 
-		entry.lastShakenAbsDay = absDay;
 		// 采集等级门槛：单人 >=1；多人允许 0 级拿到种子（对齐 SV 的 multiplayer 分支）。
 		int foragingLevel = com.stardew.craft.player.PlayerStardewDataAPI.getSkillLevel(player, com.stardew.craft.player.SkillType.FORAGING);
 		boolean canDropSeed = player.server.getPlayerList().getPlayerCount() > 1 || foragingLevel >= 1;
-		if (entry.hasSeed && canDropSeed) {
+		WildShakeDecision shakeDecision = FarmDailyDecisions.applyWildShakeState(
+				entry.hasSeed,
+				entry.lastSeedRollAbsDay,
+				entry.lastShakenAbsDay,
+				absDay,
+				canDropSeed);
+		WildSeedDailyState shakenState = shakeDecision.state();
+		entry.hasSeed = shakenState.hasSeed();
+		entry.lastSeedRollAbsDay = shakenState.lastSeedRollAbsDay();
+		entry.lastShakenAbsDay = shakenState.lastShakenAbsDay();
+		if (shakeDecision.dropSeed()) {
 			Item drop = getShakeDropItem(def);
 			if (drop != null) {
 				Block.popResource(level, trunk0Pos, new ItemStack(drop, 1));
 			}
-			entry.hasSeed = false;
 		}
 
 		setDirty();

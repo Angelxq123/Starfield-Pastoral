@@ -84,12 +84,12 @@ public class PastureGrassGrowthManager extends SavedData {
             level.removeBlock(pos, false);
             return;
         }
-        if (random.nextDouble() >= 0.65) {
+        if (!FarmDailyDecisions.rollGrassSource(random)) {
             return;
         }
 
         for (BlockPos neighbor : List.of(pos.north(), pos.south(), pos.east(), pos.west())) {
-            if (!level.isLoaded(neighbor) || random.nextDouble() >= 0.25) {
+            if (!level.isLoaded(neighbor) || !FarmDailyDecisions.rollGrassNeighbor(random)) {
                 continue;
             }
             if (!level.getBlockState(neighbor).isAir()) {
@@ -98,7 +98,8 @@ public class PastureGrassGrowthManager extends SavedData {
 
             BlockState sourceState = level.getBlockState(pos);
             BlockState grow = sourceState.getBlock().defaultBlockState()
-                    .setValue(PastureGrassBlock.VARIANT, random.nextInt(3));
+                    .setValue(PastureGrassBlock.VARIANT,
+                            FarmDailyDecisions.rollGrassVariant(random));
             if (grow.canSurvive(level, neighbor)) {
                 level.setBlock(neighbor, grow, 3);
             }

@@ -202,16 +202,12 @@ public class AnimalGrowthManager extends SavedData {
         }
 
         int lastDay = record.lastProcessedAbsDay();
-        if (lastDay <= 0) {
-            lastDay = absoluteDay - 1;
-        }
-        int daysMissed = absoluteDay - lastDay;
-        if (daysMissed <= 0) {
+        int firstDay = FarmDailyDecisions.firstAnimalDayToProcess(lastDay, absoluteDay);
+        if (firstDay > absoluteDay) {
             return;
         }
 
-        for (int dayOffset = 1; dayOffset < daysMissed; dayOffset++) {
-            int catchUpDay = lastDay + dayOffset;
+        for (int catchUpDay = firstDay; catchUpDay < absoluteDay; catchUpDay++) {
             RandomSource catchUpRandom = DailySettlementRandom.forId(
                     worldSeed, catchUpDay, "animal_growth", animalId);
             applyDayUpdate(level, worldData, record, catchUpDay, true, catchUpRandom);

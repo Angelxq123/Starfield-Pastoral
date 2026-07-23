@@ -25,7 +25,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,7 +68,8 @@ public final class FishPondDailyUpdateService {
             List<PondDailyEntry> pondSnapshot = new ArrayList<>();
             for (FishPondRecord pond : worldData.getPonds()) {
                 if (dimensionId.equals(pond.dimensionId())) {
-                    pondSnapshot.add(new PondDailyEntry(pond.pondId(), stablePondId(pond.pondId())));
+                    pondSnapshot.add(new PondDailyEntry(
+                            pond.pondId(), FishPondDailyDecisions.stableId(pond.pondId())));
                 }
             }
             long worldSeed = level.getSeed();
@@ -149,7 +149,8 @@ public final class FishPondDailyUpdateService {
             }
             for (int i = 0; i < days; i++) {
                 RandomSource random = DailySettlementRandom.forId(
-                        level.getSeed(), startDay + i, "fish_pond", stablePondId(pond.pondId()));
+                        level.getSeed(), startDay + i, "fish_pond",
+                        FishPondDailyDecisions.stableId(pond.pondId()));
                 if (applySingleDay(level, worldData, pond, random)) {
                     anyColorChanged = true;
                 }
@@ -191,7 +192,7 @@ public final class FishPondDailyUpdateService {
                 (float) pondData.baseMinProduceChance(),
                 (float) pondData.baseMaxProduceChance());
 
-        if (random.nextDouble() < produceChance) {
+        if (FishPondDailyDecisions.rollChance(random, produceChance)) {
             ItemStack outputStack = createProducedItemStack(pond, dataService.rollProducedItem(pond, random).orElse(null), random);
             if (!outputStack.isEmpty()) {
                 ResourceLocation outputId = BuiltInRegistries.ITEM.getKey(outputStack.getItem());
@@ -448,15 +449,6 @@ public final class FishPondDailyUpdateService {
         int startDay = currentDay + cursor.nextOffset() + 1;
         DEBUG_ADVANCE_CURSORS.put(key, new DebugAdvanceCursor(currentDay, cursor.nextOffset() + days));
         return startDay;
-    }
-
-    private static long stablePondId(String pondId) {
-        long hash = 0xcbf29ce484222325L;
-        for (byte current : pondId.getBytes(StandardCharsets.UTF_8)) {
-            hash ^= current & 0xFFL;
-            hash *= 0x100000001b3L;
-        }
-        return hash;
     }
 
     private record DebugAdvanceCursor(int baseDay, int nextOffset) {

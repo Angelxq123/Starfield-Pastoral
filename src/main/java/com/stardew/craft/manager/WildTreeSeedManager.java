@@ -19,7 +19,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -239,12 +238,15 @@ public class WildTreeSeedManager extends SavedData {
 		if (snapshot.lastSeedRollAbsDay() != absoluteDay) {
 			liveEntry.lastSeedRollAbsDay = absoluteDay;
 			liveEntry.lastShakenAbsDay = Integer.MIN_VALUE;
-			liveEntry.hasSeed = random.nextFloat() < seedOnShakeChance(def);
+			liveEntry.hasSeed = FarmDailyDecisions.rollWildSeed(
+					random, seedOnShakeChance(def));
 			setDirty();
 		}
-		if (random.nextFloat() < seedSpreadChance(def)) {
+		if (FarmDailyDecisions.rollWildSpread(random, seedSpreadChance(def))) {
 			BlockPos target = pos.offset(
-					Mth.nextInt(random, -3, 3), 0, Mth.nextInt(random, -3, 3));
+					FarmDailyDecisions.rollWildOffset(random),
+					0,
+					FarmDailyDecisions.rollWildOffset(random));
 			if (tryPlaceSapling(level, target, def)) {
 				TreeGrowthManager.get(level).addSapling(level, target);
 				setDirty();

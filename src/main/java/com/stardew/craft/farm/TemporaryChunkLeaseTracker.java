@@ -111,7 +111,15 @@ final class TemporaryChunkLeaseTracker<L> {
         Throwable failure = null;
         for (LeaseEntry<L> leaseEntry : leaseEntries) {
             Entry<L> entry = leaseEntry.entry;
-            if (!entry.active || entry.epoch != leaseEntry.epoch || --entry.references > 0) {
+            if (!entry.active || entry.epoch != leaseEntry.epoch) {
+                leaseEntry.referenceReleased = true;
+                continue;
+            }
+            if (!leaseEntry.referenceReleased) {
+                entry.references--;
+                leaseEntry.referenceReleased = true;
+            }
+            if (entry.references > 0) {
                 continue;
             }
             failure = releaseUnused(entry, failure);
@@ -182,6 +190,7 @@ final class TemporaryChunkLeaseTracker<L> {
     private static final class LeaseEntry<L> {
         private final Entry<L> entry;
         private final long epoch;
+        private boolean referenceReleased;
 
         private LeaseEntry(Entry<L> entry, long epoch) {
             this.entry = entry;
@@ -218,8 +227,8 @@ final class TemporaryChunkLeaseTracker<L> {
             if (closed) {
                 return;
             }
-            closed = true;
             closeLease(entries);
+            closed = true;
         }
     }
 }

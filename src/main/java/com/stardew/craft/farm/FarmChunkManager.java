@@ -64,8 +64,7 @@ public class FarmChunkManager {
     static final class DailySettlementChunkLeaseScope<L> implements AutoCloseable {
         private final TemporaryChunkLeaseTracker<L> tracker;
         private final L level;
-        private final Set<ScopedLease> openLeases =
-                Collections.newSetFromMap(new IdentityHashMap<>());
+        private final Set<ScopedLease> openLeases = new LinkedHashSet<>();
         private boolean closed;
 
         DailySettlementChunkLeaseScope(TemporaryChunkLeaseTracker<L> tracker, L level) {
@@ -83,30 +82,30 @@ public class FarmChunkManager {
         }
 
         private void closeEntry(ScopedLease lease) {
-            synchronized (this) {
-                if (!openLeases.remove(lease)) {
-                    return;
-                }
-            }
             lease.closeDelegate();
+            synchronized (this) {
+                openLeases.remove(lease);
+            }
         }
 
         @Override
         public void close() {
             List<ScopedLease> leases;
             synchronized (this) {
-                if (closed) {
+                if (closed && openLeases.isEmpty()) {
                     return;
                 }
                 closed = true;
                 leases = new ArrayList<>(openLeases);
-                openLeases.clear();
             }
 
             Throwable failure = null;
             for (ScopedLease lease : leases) {
                 try {
                     lease.closeDelegate();
+                    synchronized (this) {
+                        openLeases.remove(lease);
+                    }
                 } catch (RuntimeException | Error closeFailure) {
                     if (failure == null) {
                         failure = closeFailure;
@@ -144,8 +143,8 @@ public class FarmChunkManager {
                 if (closed) {
                     return;
                 }
-                closed = true;
                 delegate.close();
+                closed = true;
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.stardew.craft.farm;
 
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -15,12 +17,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FarmChunkManagerTest {
@@ -55,15 +60,26 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void positionRadiusUsesOnlyActuallyCoveredChunks() {
-        BlockPos edge = new BlockPos(15, 64, 15);
-
-        assertEquals(Set.of(new ChunkPos(0, 0)),
-                FarmChunkManager.chunkPositionsForPosition(edge, 0));
+    void settlementFootprintsUseOnlyActuallyCoveredBoundaryChunks() {
         assertEquals(Set.of(
                 new ChunkPos(0, 0), new ChunkPos(0, 1),
                 new ChunkPos(1, 0), new ChunkPos(1, 1)),
-                FarmChunkManager.chunkPositionsForPosition(edge, 8));
+                FarmChunkManager.chunkPositionsForPosition(new BlockPos(15, 64, 15), 1));
+        assertEquals(Set.of(
+                new ChunkPos(0, 0), new ChunkPos(0, 1),
+                new ChunkPos(1, 0), new ChunkPos(1, 1)),
+                FarmChunkManager.chunkPositionsForPosition(new BlockPos(14, 64, 14), 2));
+        assertEquals(Set.of(
+                new ChunkPos(0, 0), new ChunkPos(0, 1),
+                new ChunkPos(1, 0), new ChunkPos(1, 1)),
+                FarmChunkManager.chunkPositionsForPosition(new BlockPos(8, 64, 8), 8));
+
+        assertEquals(Set.of(
+                new ChunkPos(0, 0), new ChunkPos(0, 1), new ChunkPos(0, 2),
+                new ChunkPos(1, 0), new ChunkPos(1, 1), new ChunkPos(1, 2),
+                new ChunkPos(2, 0), new ChunkPos(2, 1), new ChunkPos(2, 2)),
+                FarmChunkManager.chunkPositionsForBounds(
+                        new BlockPos(15, 40, 15), new BlockPos(32, 90, 32)));
     }
 
     @Test
@@ -150,6 +166,98 @@ class FarmChunkManagerTest {
     }
 
     @Test
+    void runtimeReleaseFailureOnEntryCloseIsRetriedByRootFallback() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.runtimeReleaseFailures.put(A, 1);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        TemporaryChunkLeaseTracker.Lease lease = scope.lease(List.of(A));
+
+        assertThrows(RuntimeException.class, lease::close);
+        assertTrue(backend.forced.contains(A));
+        scope.close();
+
+        assertFalse(backend.forced.contains(A));
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void errorReleaseFailureOnEntryCloseIsRetriedByRootFallback() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.errorReleaseFailures.put(A, 1);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        TemporaryChunkLeaseTracker.Lease lease = scope.lease(List.of(A));
+
+        assertThrows(AssertionError.class, lease::close);
+        assertTrue(backend.forced.contains(A));
+        scope.close();
+
+        assertFalse(backend.forced.contains(A));
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void rootCloseContinuesAfterFailuresAndRetainsEveryFailedEntryForRetry() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.runtimeReleaseFailures.put(A, 1);
+        backend.errorReleaseFailures.put(B, 1);
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        scope.lease(List.of(A));
+        scope.lease(List.of(B));
+
+        RuntimeException failure = assertThrows(RuntimeException.class, scope::close);
+
+        assertEquals("release failed 1,2", failure.getMessage());
+        assertEquals(1, failure.getSuppressed().length);
+        assertEquals("release error 2,2", failure.getSuppressed()[0].getMessage());
+        assertTrue(backend.forced.containsAll(Set.of(A, B)));
+        scope.close();
+        assertTrue(backend.forced.isEmpty());
+        assertEquals(2, backend.releaseCount(A));
+        assertEquals(2, backend.releaseCount(B));
+    }
+
+    @Test
+    void cursorFailureReleasesEntryBeforeRetryOrSkip() throws Exception {
+        RecordingBackend backend = new RecordingBackend();
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        AtomicInteger attempts = new AtomicInteger();
+        DailySettlementWorkUnit work = DailySettlementWorkUnits.cursor(
+                "lease_retry", List.of(A, B), ChunkPos::toString, chunk -> {
+                    try (var lease = scope.lease(List.of(chunk))) {
+                        if (chunk.equals(A) && attempts.incrementAndGet() <= 2) {
+                            throw new RuntimeException("retry");
+                        }
+                    }
+                }, () -> {});
+
+        assertThrows(RuntimeException.class, work::runNext);
+        assertFalse(backend.forced.contains(A));
+        assertThrows(RuntimeException.class, work::runNext);
+        assertFalse(backend.forced.contains(A));
+        work.skipFailedItem();
+        assertFalse(backend.forced.contains(A));
+        work.runNext();
+        assertFalse(backend.forced.contains(B));
+
+        work.close();
+        scope.close();
+        assertEquals(2, backend.releaseCount(A));
+        assertEquals(1, backend.releaseCount(B));
+    }
+
+    @Test
     void exposesPackagePrivateTargetedLeaseApiWithoutCheckedClose() throws Exception {
         Method method = FarmChunkManager.class.getDeclaredMethod(
             "acquireTemporaryChunks", ServerLevel.class, Collection.class);
@@ -229,6 +337,8 @@ class FarmChunkManagerTest {
         private final List<ChunkPos> acquires = new ArrayList<>();
         private final List<ChunkPos> releases = new ArrayList<>();
         private final Set<ChunkPos> forced = new HashSet<>();
+        private final Map<ChunkPos, Integer> runtimeReleaseFailures = new java.util.HashMap<>();
+        private final Map<ChunkPos, Integer> errorReleaseFailures = new java.util.HashMap<>();
 
         @Override
         public boolean acquire(TestLevel level, ChunkPos chunk) {
@@ -243,7 +353,26 @@ class FarmChunkManagerTest {
         @Override
         public void release(TestLevel level, ChunkPos chunk) {
             releases.add(chunk);
+            if (consumeFailure(runtimeReleaseFailures, chunk)) {
+                throw new RuntimeException("release failed " + chunk.x + "," + chunk.z);
+            }
+            if (consumeFailure(errorReleaseFailures, chunk)) {
+                throw new AssertionError("release error " + chunk.x + "," + chunk.z);
+            }
             forced.remove(chunk);
+        }
+
+        private long releaseCount(ChunkPos chunk) {
+            return releases.stream().filter(chunk::equals).count();
+        }
+
+        private static boolean consumeFailure(Map<ChunkPos, Integer> failures, ChunkPos chunk) {
+            int remaining = failures.getOrDefault(chunk, 0);
+            if (remaining <= 0) {
+                return false;
+            }
+            failures.put(chunk, remaining - 1);
+            return true;
         }
     }
 }

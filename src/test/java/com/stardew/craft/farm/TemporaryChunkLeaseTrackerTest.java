@@ -221,6 +221,32 @@ class TemporaryChunkLeaseTrackerTest {
     }
 
     @Test
+    void runtimeReleaseFailureCanBeRetriedBySameLeaseHandle() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.releaseFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TemporaryChunkLeaseTracker.Lease lease = tracker.acquire(new TestLevel("level"), List.of(A));
+
+        assertThrows(RuntimeException.class, lease::close);
+        lease.close();
+
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
+    void errorReleaseFailureCanBeRetriedBySameLeaseHandle() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.releaseErrorFailuresRemaining = 1;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TemporaryChunkLeaseTracker.Lease lease = tracker.acquire(new TestLevel("level"), List.of(A));
+
+        assertThrows(AssertionError.class, lease::close);
+        lease.close();
+
+        assertEquals(2, backend.releaseCount(A));
+    }
+
+    @Test
     void closeAllReleaseFailureKeepsEntryForRetryAndInvalidatesOldHandle() {
         RecordingBackend backend = new RecordingBackend();
         backend.releaseFailuresRemaining = 1;
@@ -371,6 +397,7 @@ class TemporaryChunkLeaseTrackerTest {
         private ChunkPos failLoadOn;
         private ChunkPos failLoadWithErrorOn;
         private int releaseFailuresRemaining;
+        private int releaseErrorFailuresRemaining;
 
         @Override
         public boolean acquire(TestLevel level, ChunkPos chunk) {
@@ -398,6 +425,10 @@ class TemporaryChunkLeaseTrackerTest {
             if (releaseFailuresRemaining > 0) {
                 releaseFailuresRemaining--;
                 throw new RuntimeException("release failed " + chunk.x + "," + chunk.z);
+            }
+            if (releaseErrorFailuresRemaining > 0) {
+                releaseErrorFailuresRemaining--;
+                throw new AssertionError("release error " + chunk.x + "," + chunk.z);
             }
         }
 

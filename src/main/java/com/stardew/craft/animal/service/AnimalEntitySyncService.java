@@ -65,6 +65,20 @@ public final class AnimalEntitySyncService {
         return new SyncResult(updated, spawned, orphanIds.size());
     }
 
+    /** Reconciles exactly one authoritative record against its runtime projection. */
+    public static SyncResult syncOne(
+            ServerLevel level, AnimalWorldData data, FarmAnimalRecord record) {
+        BaseCoopAnimalEntity entity = findLoaded(level, record.animalId());
+        if (entity == null) {
+            entity = spawnEntityForRecord(level, data, record);
+            return entity == null
+                    ? new SyncResult(0, 0, 0)
+                    : new SyncResult(1, 1, 0);
+        }
+        applyAuthoritativeState(entity, record);
+        return new SyncResult(1, 0, 0);
+    }
+
     /**
      * Ensures a projection exists immediately for an explicit lifecycle action
      * such as purchase, incubation or moving home. This may load the target

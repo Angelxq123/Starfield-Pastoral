@@ -167,13 +167,19 @@ public class AnimalGrowthManager extends SavedData {
                     () -> {});
             DailySettlementWorkUnit finalizeWork = DailySettlementWorkUnits.cursor(
                     "animal_daily_finalize",
-                    List.of("finalize"),
+                    animalSnapshot,
+                    Object::toString,
+                    animalId -> syncAnimalEntityDay(level, worldData, animalId),
+                    () -> {});
+            DailySettlementWorkUnit publishWork = DailySettlementWorkUnits.cursor(
+                    "animal_daily_publish",
+                    List.of("publish"),
                     value -> value,
-                    value -> finalizeAnimalDay(level, worldData),
+                    value -> finalizeAnimalDay(worldData),
                     () -> {});
             return DailySettlementWorkUnits.sequence(
                     "animal_daily",
-                    List.of(animalWork, reproductionWork, finalizeWork),
+                    List.of(animalWork, reproductionWork, finalizeWork, publishWork),
                     this::finishDailyProcessing);
         } catch (RuntimeException | Error exception) {
             finishDailyProcessing();
@@ -206,8 +212,8 @@ public class AnimalGrowthManager extends SavedData {
 
         try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
                 level,
-                new BlockPos(building.minX(), building.minY(), building.minZ()),
-                new BlockPos(building.maxX(), building.maxY(), building.maxZ()))) {
+                new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
+                new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
             for (long catchUpDayValue = firstDay;
                     catchUpDayValue < absoluteDay;
                     catchUpDayValue++) {
@@ -221,9 +227,29 @@ public class AnimalGrowthManager extends SavedData {
         record.setLastProcessedAbsDay(absoluteDay);
     }
 
-    private void finalizeAnimalDay(ServerLevel level, AnimalWorldData worldData) {
+    private void syncAnimalEntityDay(
+            ServerLevel level, AnimalWorldData worldData, long animalId) {
+        FarmAnimalRecord record = worldData.getAnimal(animalId).orElse(null);
+        if (record == null) {
+            return;
+        }
+        AnimalBuildingRecord building = worldData.getBuilding(record.buildingId()).orElse(null);
+        if (building == null
+                || !level.dimension().location().toString().equals(building.dimensionId())
+                || !shouldProcessBuildingToday(level, building)) {
+            return;
+        }
+
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
+                level,
+                new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
+                new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
+            AnimalEntitySyncService.syncOne(level, worldData, record);
+        }
+    }
+
+    private void finalizeAnimalDay(AnimalWorldData worldData) {
         worldData.markChanged();
-        AnimalEntitySyncService.syncAll(level);
         setDirty();
     }
 
@@ -604,14 +630,15 @@ public class AnimalGrowthManager extends SavedData {
 
         try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
                 level,
-                new BlockPos(building.minX(), building.minY(), building.minZ()),
-                new BlockPos(building.maxX(), building.maxY(), building.maxZ()))) {
-            worldData.createAnimal(
+                new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
+                new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
+            FarmAnimalRecord newborn = worldData.createAnimal(
                     bestCandidate.animalTypeId(),
                     "",
                     building.buildingId(),
                     AnimalAcquisitionSource.PREGNANCY
             );
+            AnimalEntitySyncService.syncOne(level, worldData, newborn);
 
             UUID ownerUuid;
             try {

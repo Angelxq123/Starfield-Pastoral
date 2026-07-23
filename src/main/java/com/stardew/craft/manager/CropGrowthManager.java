@@ -271,7 +271,7 @@ public class CropGrowthManager extends SavedData {
             return;
         }
         try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
-                .leasePosition(level, pos, 0)) {
+                .leasePosition(level, pos, 1)) {
             if (!level.isLoaded(pos)) {
                 return;
             }

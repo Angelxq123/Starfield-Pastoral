@@ -46,27 +46,75 @@ public final class BooksellerSchedule {
     }
 
     public static void onNewDayForPlayers(ServerLevel level, List<UUID> playerIds) {
-        if (!isToday(level)) {
+        StardewTimeManager time = StardewTimeManager.get();
+        int absoluteDay = time.getAbsoluteDay();
+        onNewDayForPlayers(
+                level, playerIds, time.getCurrentYear(), time.getCurrentSeason(),
+                time.getCurrentDay(), absoluteDay);
+        deliverPendingNoticesForPlayers(level.getServer(), playerIds, absoluteDay);
+    }
+
+    public static void onNewDayForPlayers(
+            ServerLevel level,
+            List<UUID> playerIds,
+            int year,
+            int season,
+            int day,
+            int absoluteDay) {
+        if (!isBooksellerDay(level, year, season, day)) {
             return;
         }
-        int absoluteDay = StardewTimeManager.get().getAbsoluteDay();
         for (UUID playerId : List.copyOf(playerIds)) {
             com.stardew.craft.player.PlayerDataManager.getPlayerData(playerId)
                     .queueBooksellerNotice(absoluteDay);
-            ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
-            if (player != null) {
-                onPlayerLogin(player);
-            }
         }
     }
 
     public static void onPlayerLogin(ServerPlayer player) {
         int absoluteDay = StardewTimeManager.get().getAbsoluteDay();
-        if (com.stardew.craft.player.PlayerDataManager.getPlayerData(player)
-                .consumeBooksellerNotice(absoluteDay)) {
-            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
-                    player, Component.translatable("stardewcraft.bookseller.in_town"));
+        deliverPendingNotice(
+                com.stardew.craft.player.PlayerDataManager.getPlayerData(player),
+                absoluteDay,
+                () -> com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
+                        player, Component.translatable("stardewcraft.bookseller.in_town")));
+    }
+
+    public static void deliverPendingNoticesForPlayers(
+            net.minecraft.server.MinecraftServer server,
+            List<UUID> playerIds,
+            int publishedAbsoluteDay) {
+        for (UUID playerId : List.copyOf(playerIds)) {
+            ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+            if (player != null) {
+                deliverPendingNotice(
+                        com.stardew.craft.player.PlayerDataManager.getPlayerData(playerId),
+                        publishedAbsoluteDay,
+                        () -> com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
+                                player,
+                                Component.translatable("stardewcraft.bookseller.in_town")));
+            }
         }
+    }
+
+    static boolean deliverPendingNotice(
+            com.stardew.craft.player.PlayerStardewData data,
+            int publishedAbsoluteDay,
+            Runnable sender) {
+        java.util.Objects.requireNonNull(data, "data");
+        java.util.Objects.requireNonNull(sender, "sender");
+        int pendingDay = data.getPendingBooksellerNoticeDay();
+        if (pendingDay != Integer.MIN_VALUE && pendingDay < publishedAbsoluteDay) {
+            data.acknowledgeBooksellerNotice(pendingDay);
+            return false;
+        }
+        if (!data.hasPendingBooksellerNotice(publishedAbsoluteDay)) {
+            return false;
+        }
+        if (!data.acknowledgeBooksellerNotice(publishedAbsoluteDay)) {
+            return false;
+        }
+        sender.run();
+        return true;
     }
 
     private static long createSeed(ServerLevel level, int year, int seasonIndex) {

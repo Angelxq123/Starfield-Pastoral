@@ -352,7 +352,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
 
         private void bookseller(DailySettlementContext context) {
             com.stardew.craft.book.BooksellerSchedule.onNewDayForPlayers(
-                    level(), context.valleyOnlinePlayerIds());
+                    level(), context.valleyOnlinePlayerIds(), context.year(),
+                    context.season(), context.day(), context.absoluteDay());
             com.stardew.craft.shop.BooksellerEvents.forceCheckNow(level());
         }
 
@@ -367,7 +368,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             com.stardew.craft.time.StardewTimeManager time =
                     com.stardew.craft.time.StardewTimeManager.get();
             time.scheduleDateTriggeredMailForPlayers(
-                    server(), context.allOnlinePlayerIds(), context.season(), context.day());
+                    server(), context.allOnlinePlayerIds(), context.absoluteDay());
         }
 
         private DailySettlementWorkUnit publication(DailySettlementContext context) {

@@ -130,6 +130,8 @@ public final class DailySettlementServices {
 
         @Override
         public void ready(DailySettlementContext context) {
+            com.stardew.craft.book.BooksellerSchedule.deliverPendingNoticesForPlayers(
+                    server(), context.valleyOnlinePlayerIds(), context.absoluteDay());
             for (UUID playerId : context.playerIds()) {
                 DailySettlementBarrier.ReadyResult result =
                         players.readyResultOrCreate(context, playerId);

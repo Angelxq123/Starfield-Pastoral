@@ -99,6 +99,9 @@ public class PlayerStardewData {
     private int lastDailySettlementQuestDay = Integer.MIN_VALUE;
     private int lastDailySettlementMasteryDay = Integer.MIN_VALUE;
     private int pendingBooksellerNoticeDay = Integer.MIN_VALUE;
+    private final List<Integer> pendingDateTriggeredMailDays = new ArrayList<>();
+    private final List<String> pendingMailDeliveryEffects = new ArrayList<>();
+    private final List<String> pendingSpecialOrderItemCleanups = new ArrayList<>();
 
     // ============ 运气系统 ============
     // 每日运气（per-player），按星露谷日期刷新（由 PlayerStardewDataAPI 惰性刷新）
@@ -434,6 +437,14 @@ public class PlayerStardewData {
                 ? tag.getInt("LastDailySettlementMasteryDay") : Integer.MIN_VALUE;
         data.pendingBooksellerNoticeDay = tag.contains("PendingBooksellerNoticeDay")
                 ? tag.getInt("PendingBooksellerNoticeDay") : Integer.MIN_VALUE;
+        for (int absoluteDay : tag.getIntArray("PendingDateTriggeredMailDays")) {
+            if (absoluteDay > 0 && !data.pendingDateTriggeredMailDays.contains(absoluteDay)) {
+                data.pendingDateTriggeredMailDays.add(absoluteDay);
+            }
+        }
+        readStringList(tag, "PendingMailDeliveryEffects", data.pendingMailDeliveryEffects);
+        readStringList(tag, "PendingSpecialOrderItemCleanups",
+                data.pendingSpecialOrderItemCleanups);
         if (tag.contains("PendingDailySettlement", 10)) {
             CompoundTag pending = tag.getCompound("PendingDailySettlement");
             List<SkillLevelUp> appliedLevels = new ArrayList<>();
@@ -901,6 +912,10 @@ public class PlayerStardewData {
         tag.putInt("LastDailySettlementQuestDay", lastDailySettlementQuestDay);
         tag.putInt("LastDailySettlementMasteryDay", lastDailySettlementMasteryDay);
         tag.putInt("PendingBooksellerNoticeDay", pendingBooksellerNoticeDay);
+        tag.putIntArray("PendingDateTriggeredMailDays", pendingDateTriggeredMailDays);
+        putStringList(tag, "PendingMailDeliveryEffects", pendingMailDeliveryEffects);
+        putStringList(tag, "PendingSpecialOrderItemCleanups",
+                pendingSpecialOrderItemCleanups);
         if (pendingDailySettlement != null) {
             CompoundTag pending = new CompoundTag();
             pending.putInt("AbsoluteDay", pendingDailySettlement.absoluteDay());
@@ -2486,7 +2501,10 @@ public class PlayerStardewData {
         boolean dirty = false;
         if (!mailForTomorrow.isEmpty()) {
             for (String mid : mailForTomorrow) {
-                if (!mailbox.contains(mid)) mailbox.add(mid);
+                if (!mailbox.contains(mid)) {
+                    mailbox.add(mid);
+                    queuePendingMailDeliveryEffect(mid);
+                }
             }
             mailForTomorrow.clear();
             dirty = true;
@@ -2498,7 +2516,9 @@ public class PlayerStardewData {
             }
             if (!due.isEmpty()) {
                 for (String flag : due) {
-                    mailFlags.add(flag);
+                    if (mailFlags.add(flag)) {
+                        queuePendingMailDeliveryEffect(flag);
+                    }
                     mailFlagsForTomorrow.remove(flag);
                 }
                 flushedFlags = due;
@@ -3195,6 +3215,19 @@ public class PlayerStardewData {
         return pendingBooksellerNoticeDay;
     }
 
+    public boolean hasPendingBooksellerNotice(int absoluteDay) {
+        return pendingBooksellerNoticeDay == absoluteDay;
+    }
+
+    public boolean acknowledgeBooksellerNotice(int absoluteDay) {
+        if (!hasPendingBooksellerNotice(absoluteDay)) {
+            return false;
+        }
+        pendingBooksellerNoticeDay = Integer.MIN_VALUE;
+        markDirty();
+        return true;
+    }
+
     public boolean consumeBooksellerNotice(int currentAbsoluteDay) {
         if (pendingBooksellerNoticeDay == Integer.MIN_VALUE
                 || pendingBooksellerNoticeDay > currentAbsoluteDay) {
@@ -3204,6 +3237,100 @@ public class PlayerStardewData {
         pendingBooksellerNoticeDay = Integer.MIN_VALUE;
         markDirty();
         return shouldNotify;
+    }
+
+    public boolean queuePendingDateTriggeredMailDay(int absoluteDay) {
+        if (absoluteDay <= 0) {
+            throw new IllegalArgumentException("absoluteDay must be positive");
+        }
+        if (pendingDateTriggeredMailDays.contains(absoluteDay)) {
+            return false;
+        }
+        pendingDateTriggeredMailDays.add(absoluteDay);
+        markDirty();
+        return true;
+    }
+
+    public List<Integer> getPendingDateTriggeredMailDays() {
+        return List.copyOf(pendingDateTriggeredMailDays);
+    }
+
+    public boolean completePendingDateTriggeredMailDay(int absoluteDay) {
+        if (!pendingDateTriggeredMailDays.remove(Integer.valueOf(absoluteDay))) {
+            return false;
+        }
+        markDirty();
+        return true;
+    }
+
+    public boolean queuePendingMailDeliveryEffect(String mailId) {
+        if (mailId == null || mailId.isBlank()
+                || pendingMailDeliveryEffects.contains(mailId)) {
+            return false;
+        }
+        pendingMailDeliveryEffects.add(mailId);
+        markDirty();
+        return true;
+    }
+
+    public List<String> getPendingMailDeliveryEffects() {
+        return List.copyOf(pendingMailDeliveryEffects);
+    }
+
+    public boolean claimPendingMailDeliveryEffect(String mailId) {
+        if (!pendingMailDeliveryEffects.remove(mailId)) {
+            return false;
+        }
+        markDirty();
+        return true;
+    }
+
+    public boolean queuePendingSpecialOrderItemCleanup(String itemId) {
+        if (itemId == null || itemId.isBlank()
+                || pendingSpecialOrderItemCleanups.contains(itemId)) {
+            return false;
+        }
+        pendingSpecialOrderItemCleanups.add(itemId);
+        markDirty();
+        return true;
+    }
+
+    public List<String> getPendingSpecialOrderItemCleanups() {
+        return List.copyOf(pendingSpecialOrderItemCleanups);
+    }
+
+    public boolean completePendingSpecialOrderItemCleanup(String itemId) {
+        if (!pendingSpecialOrderItemCleanups.remove(itemId)) {
+            return false;
+        }
+        markDirty();
+        return true;
+    }
+
+    private static void readStringList(
+            CompoundTag tag, String key, List<String> destination) {
+        if (!tag.contains(key, Tag.TAG_LIST)) {
+            return;
+        }
+        ListTag values = tag.getList(key, Tag.TAG_STRING);
+        for (int i = 0; i < values.size(); i++) {
+            String value = values.getString(i);
+            if (!value.isBlank() && !destination.contains(value)) {
+                destination.add(value);
+            }
+        }
+    }
+
+    private static void putStringList(
+            CompoundTag tag, String key, List<String> values) {
+        if (values.isEmpty()) {
+            return;
+        }
+        ListTag list = new ListTag();
+        for (String value : values) {
+            list.add(StringTag.valueOf(value));
+        }
+        tag.put(key, list);
     }
 
     public record PendingDailySettlement(

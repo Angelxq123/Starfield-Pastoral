@@ -914,7 +914,41 @@ public final class SpecialOrderManager {
                 PlayerDataManager.getPlayerData(playerId).removeMailFlag(mailFlag);
             }
         }
-        cleanupTemporaryOrderState(onlinePlayers, definition);
+        String itemId = definition.itemToRemoveOnEnd();
+        if (itemId != null && !itemId.isBlank()) {
+            for (UUID playerId : playerIds) {
+                queueTemporaryItemCleanup(
+                        PlayerDataManager.getPlayerData(playerId), itemId);
+            }
+            for (ServerPlayer player : onlinePlayers) {
+                resumeTemporaryItemCleanup(player);
+            }
+        }
+    }
+
+    static void queueTemporaryItemCleanup(PlayerStardewData data, String itemId) {
+        java.util.Objects.requireNonNull(data, "data")
+                .queuePendingSpecialOrderItemCleanup(itemId);
+    }
+
+    static void resumeTemporaryItemCleanup(
+            PlayerStardewData data, java.util.function.Consumer<String> remover) {
+        java.util.Objects.requireNonNull(data, "data");
+        java.util.Objects.requireNonNull(remover, "remover");
+        for (String itemId : data.getPendingSpecialOrderItemCleanups()) {
+            remover.accept(itemId);
+            data.completePendingSpecialOrderItemCleanup(itemId);
+        }
+    }
+
+    public static void resumeTemporaryItemCleanup(ServerPlayer player) {
+        PlayerStardewData data = PlayerDataManager.getPlayerData(player);
+        resumeTemporaryItemCleanup(data, itemId -> {
+            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemId));
+            if (item != net.minecraft.world.item.Items.AIR) {
+                removeAllFromInventory(player, item);
+            }
+        });
     }
 
     private static void removeAllFromInventory(ServerPlayer player, Item item) {

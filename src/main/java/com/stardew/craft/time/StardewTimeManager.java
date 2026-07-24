@@ -318,14 +318,52 @@ public class StardewTimeManager extends SavedData {
             java.util.Collection<java.util.UUID> playerIds,
             int season,
             int day) {
+        int absoluteDay = (getCurrentYear() - 1) * 112 + season * 28 + day;
+        scheduleDateTriggeredMailForPlayers(server, playerIds, absoluteDay);
+    }
+
+    public void scheduleDateTriggeredMailForPlayers(
+            net.minecraft.server.MinecraftServer server,
+            java.util.Collection<java.util.UUID> playerIds,
+            int absoluteDay) {
         java.util.Objects.requireNonNull(server, "server");
         for (java.util.UUID playerId : java.util.List.copyOf(playerIds)) {
+            com.stardew.craft.player.PlayerStardewData data =
+                    com.stardew.craft.player.PlayerDataManager.getPlayerData(playerId);
+            queueDateTriggeredMail(data, absoluteDay);
             net.minecraft.server.level.ServerPlayer player =
                     server.getPlayerList().getPlayer(playerId);
             if (player != null) {
-                scheduleMailByDate(player, season, day);
+                resumePendingDateTriggeredMail(
+                        data, day -> scheduleMailForAbsoluteDay(player, day));
             }
         }
+    }
+
+    static void queueDateTriggeredMail(
+            com.stardew.craft.player.PlayerStardewData data, int absoluteDay) {
+        java.util.Objects.requireNonNull(data, "data")
+                .queuePendingDateTriggeredMailDay(absoluteDay);
+    }
+
+    static void resumePendingDateTriggeredMail(
+            com.stardew.craft.player.PlayerStardewData data,
+            java.util.function.IntConsumer scheduler) {
+        java.util.Objects.requireNonNull(data, "data");
+        java.util.Objects.requireNonNull(scheduler, "scheduler");
+        for (int absoluteDay : data.getPendingDateTriggeredMailDays()) {
+            scheduler.accept(absoluteDay);
+            data.completePendingDateTriggeredMailDay(absoluteDay);
+        }
+    }
+
+    private void scheduleMailForAbsoluteDay(
+            net.minecraft.server.level.ServerPlayer player, int absoluteDay) {
+        int dayIndex = absoluteDay - 1;
+        int season = Math.floorMod(dayIndex / 28, 4);
+        int day = Math.floorMod(dayIndex, 28) + 1;
+        schedulePersonalMailForAbsoluteDay(player, absoluteDay);
+        scheduleGlobalCalendarMail(player, season, day);
     }
 
     private void schedulePersonalMailForAbsoluteDay(net.minecraft.server.level.ServerPlayer player, int globalDays) {
@@ -410,6 +448,8 @@ public class StardewTimeManager extends SavedData {
         int currentAbsoluteDay = (currentYear - 1) * (28 * 4) + currentSeason * 28 + currentDay;
         com.stardew.craft.player.PlayerStardewData pData =
                 com.stardew.craft.player.PlayerDataManager.getPlayerData(player);
+        resumePendingDateTriggeredMail(
+                pData, absoluteDay -> scheduleMailForAbsoluteDay(player, absoluteDay));
         int firstJoinDay = pData.getFirstJoinDay();
         if (firstJoinDay < 0) {
             pData.setFirstJoinDay(currentAbsoluteDay);

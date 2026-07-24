@@ -97,6 +97,22 @@ public final class DailySettlementCoordinator {
             throw failure;
         }
 
+        try {
+            planFactory.prepareStart(newContext);
+        } catch (RuntimeException | Error failure) {
+            closeUnits(builder.registeredUnits(), failure);
+            try {
+                planFactory.cleanup();
+            } catch (RuntimeException | Error cleanupFailure) {
+                if (cleanupFailure != failure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
+            metrics.abort();
+            resetToIdle();
+            throw failure;
+        }
+
         context = newContext;
         plan = createdPlan;
         unitCursor = 0;
@@ -174,10 +190,6 @@ public final class DailySettlementCoordinator {
         }
         if (result.overshootNanos() > 0L) {
             metrics.recordOvershoot(budgetSubsystemName, result.overshootNanos());
-        }
-        if (guardedUnit.successfulRuns() > 0
-                && "settlement_barrier_lock".equals(unit.name())) {
-            metrics.markLocked();
         }
         return result.elapsedNanos();
     }
@@ -453,6 +465,12 @@ public final class DailySettlementCoordinator {
     @FunctionalInterface
     public interface PlanFactory {
         void build(DailySettlementContext context, SettlementPlanBuilder builder);
+
+        default void prepareStart(DailySettlementContext context) {
+        }
+
+        default void cleanup() {
+        }
     }
 
     public static final class SettlementPlanBuilder {

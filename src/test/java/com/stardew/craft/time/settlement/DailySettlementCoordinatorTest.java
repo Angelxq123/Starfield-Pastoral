@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -36,6 +37,91 @@ class DailySettlementCoordinatorTest {
         assertEquals(DailySettlementPhase.PREPARE, coordinator.phase());
         assertEquals(context, coordinator.context().orElseThrow());
         assertTrue(coordinator.isActive());
+    }
+
+    @Test
+    void startLocksParticipantsBeforeTheFirstTickAndKeepsAllAccessGated() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard accessGuard = new DailySettlementAccessGuard(barrier);
+        AtomicReference<DailySettlementCoordinator> coordinatorRef = new AtomicReference<>();
+        AtomicBoolean workRan = new AtomicBoolean();
+        DailySettlementCoordinator.PlanFactory factory = new DailySettlementCoordinator.PlanFactory() {
+            @Override
+            public void prepareStart(DailySettlementContext context) {
+                assertTrue(coordinatorRef.get().context().isEmpty(),
+                        "start lock must run before active context becomes visible");
+                barrier.lockAll(context.absoluteDay(), context.playerIds());
+                accessGuard.captureAnchor(
+                        playerId, net.minecraft.world.level.Level.OVERWORLD,
+                        new net.minecraft.world.phys.Vec3(1.0D, 64.0D, 2.0D), 10.0F, 20.0F);
+            }
+
+            @Override
+                public void build(
+                    DailySettlementContext context,
+                    DailySettlementCoordinator.SettlementPlanBuilder builder) {
+                builder.addPrepare(DailySettlementWorkUnits.atomic(
+                        "first", () -> workRan.set(true), () -> {}));
+            }
+        };
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> DEFAULT_BUDGET, () -> DEFAULT_ITEM_LIMIT,
+                factory, DailySettlementCoordinator.LifecycleListener.NOOP);
+        coordinatorRef.set(coordinator);
+
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        assertTrue(coordinator.start(target));
+        assertTrue(barrier.isLocked(playerId), "C2S guard must be active immediately after start");
+        assertFalse(accessGuard.isGameplayAllowed(playerId));
+        assertTrue(accessGuard.rejectTeleport(playerId));
+        assertTrue(accessGuard.anchor(playerId).isPresent());
+        accessGuard.onLogout(playerId);
+        accessGuard.reconnectAnchor(
+                playerId, net.minecraft.world.level.Level.NETHER,
+                new net.minecraft.world.phys.Vec3(8.0D, 70.0D, 9.0D), 30.0F, 40.0F);
+        assertFalse(accessGuard.isGameplayAllowed(playerId));
+        assertFalse(workRan.get(), "the first work unit must not establish the first lock");
+
+        coordinator.tick();
+        assertTrue(workRan.get());
+    }
+
+    @Test
+    void failedStartLockCleansUpBeforeCoordinatorBecomesActive() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementCoordinator.PlanFactory factory = new DailySettlementCoordinator.PlanFactory() {
+            @Override
+            public void prepareStart(DailySettlementContext context) {
+                barrier.lockAll(context.absoluteDay(), context.playerIds());
+                throw new IllegalStateException("lock failed");
+            }
+
+            @Override
+            public void cleanup() {
+                barrier.clear();
+            }
+
+            @Override
+            public void build(
+                    DailySettlementContext context,
+                    DailySettlementCoordinator.SettlementPlanBuilder builder) {
+            }
+        };
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> DEFAULT_BUDGET, () -> DEFAULT_ITEM_LIMIT,
+                factory, DailySettlementCoordinator.LifecycleListener.NOOP);
+
+        assertThrows(IllegalStateException.class, () -> coordinator.start(
+                new DailySettlementContext(
+                        226, 3, 0, 2, 1560, false, List.of(playerId), Set.of())));
+        assertFalse(coordinator.isActive());
+        assertTrue(coordinator.context().isEmpty());
+        assertFalse(barrier.isLocked(playerId));
     }
 
     @Test

@@ -17,8 +17,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
     private static final List<String> PREPARE = List.of(
             "shipping_bin_flush",
             "non_participant_cleanup",
-            "daily_process_scope",
-            "settlement_barrier_lock");
+            "daily_process_scope");
     private static final List<String> WORLD = List.of(
             "festival_season_prep",
             "weather_npc_reset",
@@ -115,6 +114,12 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
     }
 
+    @Override
+    public void prepareStart(DailySettlementContext context) {
+        Objects.requireNonNull(context, "context");
+        workUnits.prepareStart(context);
+    }
+
     private DailySettlementWorkUnit create(String name, DailySettlementContext context) {
         return Objects.requireNonNull(workUnits.create(name, context), "work unit " + name);
     }
@@ -143,6 +148,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
     @FunctionalInterface
     public interface WorkUnitFactory {
         DailySettlementWorkUnit create(String name, DailySettlementContext context);
+
+        default void prepareStart(DailySettlementContext context) {
+        }
 
         default void cleanup() {
         }
@@ -186,7 +194,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "non_participant_cleanup" -> createNonParticipantCleanupWorkUnit(
                         context, playerId -> cleanupNonParticipant(context, playerId));
                 case "daily_process_scope" -> atomic(name, () -> beginDailyProcess(context));
-                case "settlement_barrier_lock" -> atomic(name, () -> lockBarrier(context));
                 case "festival_season_prep" -> atomic(name, () -> festivalAndSeason(context));
                 case "weather_npc_reset" -> atomic(name, () -> weatherAndNpcs(context));
                 case "crops", "trees", "fruit_trees", "wild_tree_seeds",
@@ -213,8 +220,15 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         @Override
+        public void prepareStart(DailySettlementContext context) {
+            lockBarrier(context);
+        }
+
+        @Override
         public void cleanup() {
             cleanupDailyProcess();
+            accessGuard.clear();
+            barrier.clear();
         }
 
         private DailySettlementWorkUnit atomic(
@@ -330,20 +344,26 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         private void lockBarrier(DailySettlementContext context) {
-            barrier.lockAll(context.absoluteDay(), context.playerIds());
-            if (metrics != null) {
-                metrics.markLocked();
-            }
-            for (UUID playerId : context.playerIds()) {
-                net.minecraft.server.level.ServerPlayer player =
-                        server().getPlayerList().getPlayer(playerId);
-                if (player != null) {
-                    accessGuard.captureAnchor(player);
-                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
-                            player,
-                            new com.stardew.craft.network.overnight.OvernightBarrierPayload(
-                                    context.absoluteDay(), true));
+            try {
+                barrier.lockAll(context.absoluteDay(), context.playerIds());
+                if (metrics != null) {
+                    metrics.markLocked();
                 }
+                for (UUID playerId : context.playerIds()) {
+                    net.minecraft.server.level.ServerPlayer player =
+                            server().getPlayerList().getPlayer(playerId);
+                    if (player != null) {
+                        accessGuard.captureAnchor(player);
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                                player,
+                                new com.stardew.craft.network.overnight.OvernightBarrierPayload(
+                                        context.absoluteDay(), true));
+                    }
+                }
+            } catch (RuntimeException | Error failure) {
+                accessGuard.clear();
+                barrier.clear();
+                throw failure;
             }
         }
 

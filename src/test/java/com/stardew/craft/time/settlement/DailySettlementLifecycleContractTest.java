@@ -78,6 +78,21 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
+    void aPlayerWithoutPendingSettlementHasNoUnacknowledgedReadyToBlockSleepCancel() {
+        UUID playerId = UUID.randomUUID();
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        playerData.put(playerId, unsettledPlayer(playerId));
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(playerData);
+        PlayerDailySettlementService service = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+
+        assertFalse(service.hasUnacknowledgedReady(playerId));
+        assertEquals(0, backend.persistenceWrites);
+    }
+
+    @Test
     void sameTargetMayNestButDifferentTargetIsRejectedWithoutLosingTheOuterScope() throws Exception {
         DailySettlementContext target = context(226, 3, 0, 2);
         DailySettlementContext sameTarget = new DailySettlementContext(

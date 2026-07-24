@@ -43,7 +43,7 @@ public final class DailySettlementEvents {
     @net.neoforged.bus.api.SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onPlayerTick(PlayerTickEvent.Pre event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            accessGuard(player).ifPresent(guard -> guard.onPlayerTick(player));
+            liveAccessGuard(player).ifPresent(guard -> guard.onPlayerTick(player));
         }
     }
 
@@ -172,6 +172,14 @@ public final class DailySettlementEvents {
 
     private static Optional<DailySettlementAccessGuard> accessGuard(ServerPlayer player) {
         return Optional.of(DailySettlementServices.getForPlayer(player).accessGuard());
+    }
+
+    private static Optional<DailySettlementAccessGuard> liveAccessGuard(ServerPlayer player) {
+        DailySettlementServices.Services services =
+                DailySettlementServices.find(player.server);
+        return services == null
+                ? Optional.empty()
+                : Optional.of(services.accessGuard());
     }
 
     static Optional<DailySettlementBarrier.ReadyResult> resumePlayerSettlement(

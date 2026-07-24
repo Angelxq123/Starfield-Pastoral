@@ -3,7 +3,6 @@ package com.stardew.craft.network.payload;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.event.SleepVoteTracker;
 import com.stardew.craft.time.settlement.DailySettlementServices;
-import com.stardew.craft.time.settlement.PlayerDailySettlementService;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -36,11 +35,12 @@ public record SleepCancelPayload() implements CustomPacketPayload {
             if (!(context.player() instanceof ServerPlayer player)) {
                 return;
             }
-            DailySettlementServices.Services services = DailySettlementServices.find(player.server);
-            if (services != null && services.barrier().isLocked(player.getUUID())) {
+            DailySettlementServices.Services services =
+                    DailySettlementServices.getForPlayer(player);
+            if (!services.accessGuard().isGameplayAllowed(player.getUUID())) {
                 return;
             }
-            if (PlayerDailySettlementService.hasUnacknowledgedReady(player)) {
+            if (services.players().hasUnacknowledgedReady(player.getUUID())) {
                 return;
             }
             // 唤醒玩家（取消睡眠姿态 + 移动锁定）

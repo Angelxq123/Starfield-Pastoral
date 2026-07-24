@@ -86,13 +86,15 @@ class OvernightBarrierIntegrationContractTest {
     void serverCancelChecksBarrierBeforeChangingSleepOrVoteState() throws IOException {
         MethodTree handle = method(CANCEL, "SleepCancelPayload", "handle", 2);
         BlockTree work = enqueueBlock(handle);
-        int guard = directIfIndex(work, "isLocked");
-        int find = invocationIndex(work, "find");
+        int guard = directIfIndex(work, "isGameplayAllowed");
+        int ready = directIfIndex(work, "hasUnacknowledgedReady");
+        int get = invocationIndex(work, "getForPlayer");
         int stopSleeping = invocationIndex(work, "stopSleeping");
         int revoke = invocationIndex(work, "revokeVoteAndBroadcast");
 
         assertTrue(guard >= 0);
-        assertTrue(find >= 0 && find < guard);
+        assertTrue(get >= 0 && get < guard);
+        assertTrue(ready >= 0 && ready < stopSleeping);
         assertTrue(hasReturn(work.getStatements().get(guard)));
         assertTrue(guard < stopSleeping);
         assertTrue(guard < revoke);

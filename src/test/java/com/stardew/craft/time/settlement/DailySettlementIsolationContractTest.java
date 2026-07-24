@@ -338,6 +338,39 @@ class DailySettlementIsolationContractTest {
         assertFalse(guard.contains("server.pause"));
     }
 
+    @Test
+    void playerTickUsesOnlyAnExistingLiveGuardAndNeverRestoresPersistence()
+            throws IOException {
+        MethodTree tick = parseMethod(
+                sourcePath("time/settlement/DailySettlementEvents.java"),
+                "DailySettlementEvents", "onPlayerTick", 1);
+        assertTrue(hasInvocation(tick, null, "liveAccessGuard", "player"));
+        assertFalse(hasInvocation(tick, null, "getForPlayer"));
+        assertFalse(hasInvocation(tick, null, "onLogin"));
+
+        MethodTree liveGuard = parseMethod(
+                sourcePath("time/settlement/DailySettlementEvents.java"),
+                "DailySettlementEvents", "liveAccessGuard", 1);
+        assertTrue(hasInvocation(liveGuard, "DailySettlementServices", "find", "player.server"));
+        assertFalse(hasInvocation(liveGuard, "DailySettlementServices", "getForPlayer", "player"));
+    }
+
+    @Test
+    void coordinatorLocksBeforePublishingActiveContextAndRemovesTheLockWorkUnit()
+            throws IOException {
+        MethodTree start = parseMethod(
+                sourcePath("time/settlement/DailySettlementCoordinator.java"),
+                "DailySettlementCoordinator", "start", 1);
+        String body = start.getBody().toString();
+        assertTrue(body.contains("prepareStart(newContext)"));
+        assertTrue(body.indexOf("prepareStart(newContext)") < body.indexOf("context = newContext"));
+
+        String plan = source("src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
+        assertFalse(plan.contains("settlement_barrier_lock"));
+        assertTrue(plan.contains("prepareStart"));
+        assertTrue(plan.contains("lockBarrier(context)"));
+    }
+
     private static void assertDate(
             StardewTimeManager time, int year, int season, int day, int minute) {
         assertEquals(year, time.getCurrentYear());

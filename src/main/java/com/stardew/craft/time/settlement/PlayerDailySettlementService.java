@@ -306,6 +306,13 @@ public final class PlayerDailySettlementService {
                 .isPresent();
     }
 
+    public boolean hasUnacknowledgedReady(UUID playerId) {
+        Objects.requireNonNull(playerId, "playerId");
+        return pending.find(playerId)
+                .flatMap(PendingSettlement::completedPayload)
+                .isPresent();
+    }
+
     Optional<DailySettlementBarrier.ReadyResult> onLogin(
             UUID playerId, DailySettlementBarrier barrier) {
         Objects.requireNonNull(playerId, "playerId");

@@ -790,6 +790,56 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
+    void missingServicesRestoreTheLiveBarrierBeforeAReadyAckCanReleaseIt()
+            throws Exception {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        PlayerStardewData original = unsettledPlayer(playerId);
+        playerData.put(playerId, original);
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(playerData);
+        PlayerDailySettlementService first = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        first.settlePlayer(target, playerId);
+
+        playerData.put(playerId, PlayerStardewData.fromNBT(
+                original.toNBT(REGISTRIES), playerId, REGISTRIES));
+        PlayerDailySettlementService recovered = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        backend.online = true;
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(() -> 0L), () -> 1L, () -> 1,
+                (context, builder) -> {}, DailySettlementCoordinator.LifecycleListener.NOOP);
+
+        DailySettlementBarrier.ReadyResult ready =
+                DailySettlementServices.restorePlayerBarrier(
+                        recovered, barrier, coordinator, playerId).orElseThrow();
+        assertTrue(barrier.isLocked(playerId));
+        assertTrue(barrier.readyResult(playerId, target.absoluteDay()) != null);
+        assertFalse(barrier.acknowledge(playerId, target.absoluteDay() - 1));
+        assertTrue(barrier.acknowledge(playerId, ready.absoluteDay()));
+        assertTrue(recovered.acknowledgeReady(playerId, ready.absoluteDay()));
+        assertTrue(recovered.pendingSettlement(playerId).isEmpty());
+
+        ParsedClass ack = parse(
+                "src/main/java/com/stardew/craft/network/overnight/OvernightReadyAckPayload.java");
+        List<String> selects = invocationSelects(ack.method("handle", 2));
+        assertTrue(selects.contains("DailySettlementServices.getForPlayer"));
+        assertFalse(selects.contains(
+                "PlayerDailySettlementService.acknowledgeReady"));
+        ParsedClass services = parse(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementServices.java");
+        assertTrue(invocationNames(services.method("getForPlayer", 1))
+                .contains("restorePlayerBarrier"));
+    }
+
+    @Test
     void activeCoordinatorKeepsRetryOwnershipAcrossLogoutAndLogin() {
         UUID playerId = UUID.randomUUID();
         DailySettlementContext target = new DailySettlementContext(
@@ -1591,6 +1641,18 @@ class DailySettlementLifecycleContractTest {
                 String selected = node.getMethodSelect().toString();
                 int separator = selected.lastIndexOf('.');
                 result.add(separator < 0 ? selected : selected.substring(separator + 1));
+                return super.visitMethodInvocation(node, unused);
+            }
+        }.scan(tree, null);
+        return result;
+    }
+
+    private static List<String> invocationSelects(Tree tree) {
+        List<String> result = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitMethodInvocation(MethodInvocationTree node, Void unused) {
+                result.add(node.getMethodSelect().toString());
                 return super.visitMethodInvocation(node, unused);
             }
         }.scan(tree, null);

@@ -171,11 +171,7 @@ public final class DailySettlementEvents {
     }
 
     private static Optional<DailySettlementAccessGuard> accessGuard(ServerPlayer player) {
-        DailySettlementServices.Services services =
-                DailySettlementServices.find(player.server);
-        return services == null
-                ? Optional.empty()
-                : Optional.of(services.accessGuard());
+        return Optional.of(DailySettlementServices.getForPlayer(player).accessGuard());
     }
 
     static Optional<DailySettlementBarrier.ReadyResult> resumePlayerSettlement(

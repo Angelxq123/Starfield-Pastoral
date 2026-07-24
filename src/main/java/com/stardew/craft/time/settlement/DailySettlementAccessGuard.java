@@ -35,9 +35,8 @@ public final class DailySettlementAccessGuard {
                 return false;
             }
             DailySettlementServices.Services services =
-                    DailySettlementServices.find(player.server);
-            return services == null
-                    || services.accessGuard().isGameplayAllowed(player.getUUID());
+                    DailySettlementServices.getForPlayer(player);
+            return services.accessGuard().isGameplayAllowed(player.getUUID());
         });
     }
 
@@ -133,7 +132,11 @@ public final class DailySettlementAccessGuard {
     }
 
     public boolean rejectTeleport(ServerPlayer player) {
-        UUID playerId = player.getUUID();
+        return rejectTeleport(player.getUUID());
+    }
+
+    boolean rejectTeleport(UUID playerId) {
+        Objects.requireNonNull(playerId, "playerId");
         return barrier.isLocked(playerId) && !restoring.contains(playerId);
     }
 

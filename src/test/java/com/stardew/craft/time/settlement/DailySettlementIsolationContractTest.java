@@ -221,6 +221,49 @@ class DailySettlementIsolationContractTest {
     }
 
     @Test
+    void defaultGatedHandlerFailsClosedAndResolvesLiveServices() throws IOException {
+        MethodTree gated = parseMethod(
+                sourcePath("time/settlement/DailySettlementAccessGuard.java"),
+                "DailySettlementAccessGuard", "gated", 1);
+        assertTrue(hasInvocation(gated, "DailySettlementServices", "getForPlayer", "player"));
+
+        AtomicReference<Runnable> queuedWork = new AtomicReference<>();
+        IPayloadContext context = (IPayloadContext) Proxy.newProxyInstance(
+                IPayloadContext.class.getClassLoader(),
+                new Class<?>[]{IPayloadContext.class},
+                (proxy, method, arguments) -> {
+                    if (method.getName().equals("enqueueWork")) {
+                        queuedWork.set((Runnable) arguments[0]);
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    if (method.getName().equals("player")) {
+                        return null;
+                    }
+                    throw new UnsupportedOperationException(method.getName());
+                });
+        AtomicInteger handled = new AtomicInteger();
+        IPayloadHandler<OvernightSettlementPayload> guarded =
+                DailySettlementAccessGuard.gated(
+                        (payload, payloadContext) -> handled.incrementAndGet());
+
+        guarded.handle(new OvernightSettlementPayload(29, List.of(), List.of()), context);
+        queuedWork.get().run();
+        assertEquals(0, handled.get());
+    }
+
+    @Test
+    void teleportGuardRejectsOnlyLockedParticipants() {
+        UUID locked = UUID.randomUUID();
+        UUID free = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard guard = new DailySettlementAccessGuard(barrier);
+        barrier.lockAll(29, List.of(locked));
+
+        assertTrue(guard.rejectTeleport(locked));
+        assertFalse(guard.rejectTeleport(free));
+    }
+
+    @Test
     void machineTimeReadersKeepUsingTheSharedClockWithoutSettlementPauseFlags()
             throws IOException {
         for (String file : List.of(

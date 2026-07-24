@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import net.minecraft.server.level.ServerPlayer;
 
 public final class DailySettlementServices {
     private static final WeakKeyRegistry<MinecraftServer, Services> SERVICES =
@@ -23,6 +24,31 @@ public final class DailySettlementServices {
 
     public static synchronized Services find(MinecraftServer server) {
         return server == null ? null : SERVICES.get(server);
+    }
+
+    public static synchronized Services getForPlayer(ServerPlayer player) {
+        Objects.requireNonNull(player, "player");
+        Services services = get(player.server);
+        restorePlayerBarrier(
+                services.players(), services.barrier(), services.coordinator(), player.getUUID());
+        return services;
+    }
+
+    static Optional<DailySettlementBarrier.ReadyResult> restorePlayerBarrier(
+            PlayerDailySettlementService players,
+            DailySettlementBarrier barrier,
+            DailySettlementCoordinator coordinator,
+            UUID playerId) {
+        Objects.requireNonNull(players, "players");
+        Objects.requireNonNull(barrier, "barrier");
+        Objects.requireNonNull(coordinator, "coordinator");
+        Objects.requireNonNull(playerId, "playerId");
+        boolean coordinatorOwns = coordinator.context()
+                .map(context -> context.playerIds().contains(playerId))
+                .orElse(false);
+        return coordinatorOwns
+                ? Optional.empty()
+                : players.onLogin(playerId, barrier);
     }
 
     public static synchronized void remove(MinecraftServer server) {

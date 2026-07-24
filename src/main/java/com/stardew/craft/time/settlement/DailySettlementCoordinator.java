@@ -170,7 +170,7 @@ public final class DailySettlementCoordinator {
         }
         resetFailuresAfterProgress(guardedUnit);
         if (result.complete()) {
-            completeCurrentUnit(unit);
+            completeCurrentUnit(unit, budgetSubsystemName);
         }
         if (result.overshootNanos() > 0L) {
             metrics.recordOvershoot(budgetSubsystemName, result.overshootNanos());
@@ -226,6 +226,7 @@ public final class DailySettlementCoordinator {
                 continue;
             }
 
+            String subsystemName = subsystemNameOf(unit);
             try {
                 new GuardedWorkUnit(
                         unit, context, metrics,
@@ -236,7 +237,7 @@ public final class DailySettlementCoordinator {
             }
             consecutiveFailures = 0;
             if (unit.isComplete()) {
-                completeCurrentUnit(unit);
+                completeCurrentUnit(unit, subsystemName);
             }
         }
         return true;
@@ -283,20 +284,25 @@ public final class DailySettlementCoordinator {
     }
 
     private void completeCurrentUnit(DailySettlementWorkUnit unit) {
+        completeCurrentUnit(unit, subsystemNameOf(unit));
+    }
+
+    private void completeCurrentUnit(DailySettlementWorkUnit unit, String subsystemName) {
         unitCursor++;
         consecutiveFailures = 0;
-        safeClose(unit);
+        safeClose(unit, subsystemName);
         advanceToWork();
     }
 
     private void handleItemFailure(DailySettlementWorkUnit unit) {
         String itemIdentity = unit.currentItemIdentity();
         String unitName = unit.name();
+        String subsystemName = unit.subsystemName();
         int maxRetries = unit.maxRetries();
         int attempt = consecutiveFailures + 1;
         boolean permanent = attempt > maxRetries;
         consecutiveFailures = attempt;
-        metrics.recordRetry(unitName, itemIdentity, permanent);
+        metrics.recordRetry(subsystemName, itemIdentity, permanent);
         safeItemFailure(unitName, itemIdentity, attempt, permanent);
         if (!permanent) {
             return;
@@ -305,7 +311,7 @@ public final class DailySettlementCoordinator {
         unit.skipFailedItem();
         consecutiveFailures = 0;
         if (unit.isComplete()) {
-            completeCurrentUnit(unit);
+            completeCurrentUnit(unit, subsystemName);
         }
     }
 
@@ -360,17 +366,29 @@ public final class DailySettlementCoordinator {
     }
 
     private void safeClose(DailySettlementWorkUnit unit) {
+        safeClose(unit, subsystemNameOf(unit));
+    }
+
+    private void safeClose(DailySettlementWorkUnit unit, String subsystemName) {
         try {
             closeUnit(unit);
         } catch (RuntimeException | Error closeFailure) {
             try {
-                metrics.recordRetry(unit.name(), "<close>", true);
+                metrics.recordRetry(subsystemName, "<close>", true);
             } catch (RuntimeException | Error ignored) {
             }
             try {
                 safeItemFailure(unit.name(), "<close>", 1, true);
             } catch (RuntimeException | Error ignored) {
             }
+        }
+    }
+
+    private String subsystemNameOf(DailySettlementWorkUnit unit) {
+        try {
+            return unit.subsystemName();
+        } catch (RuntimeException failure) {
+            return unit.name();
         }
     }
 

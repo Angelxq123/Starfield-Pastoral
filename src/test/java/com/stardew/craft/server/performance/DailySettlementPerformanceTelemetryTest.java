@@ -11,12 +11,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -203,6 +205,45 @@ class DailySettlementPerformanceTelemetryTest {
 
         assertEquals(1L, metrics.readySummary().subsystems()
                 .get("close_failure").permanentFailures());
+    }
+
+    @Test
+    void sequenceFailureTelemetryUsesTheCurrentChildSubsystemForAllFailures() {
+        AtomicLong nanos = new AtomicLong();
+        AtomicInteger attempts = new AtomicInteger();
+        DailySettlementMetrics metrics = new DailySettlementMetrics(
+                nanos::incrementAndGet, () -> 0L);
+        DailySettlementWorkUnit child = DailySettlementWorkUnits.atomic(
+                "inner_subsystem",
+                () -> {
+                    attempts.incrementAndGet();
+                    throw new IllegalStateException("item failed");
+                },
+                () -> { throw new IllegalStateException("close failed"); },
+                2);
+        DailySettlementWorkUnit sequence = DailySettlementWorkUnits.sequence(
+                "outer_sequence", List.of(child), () -> {});
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(nanos::incrementAndGet),
+                () -> 100L,
+                () -> 10,
+                (context, builder) -> builder.addPrepare(sequence),
+                DailySettlementCoordinator.LifecycleListener.NOOP,
+                metrics,
+                () -> true);
+
+        assertTrue(coordinator.start(new DailySettlementContext(
+                2, 1, 0, 2, 1_560, false, List.of(), Set.of())));
+        for (int tick = 0; coordinator.isActive() && tick < 20; tick++) {
+            coordinator.tick();
+        }
+
+        DailySettlementMetrics.SubsystemMetrics inner = metrics.readySummary()
+                .subsystems().get("inner_subsystem");
+        assertEquals(3, attempts.get());
+        assertFalse(metrics.readySummary().subsystems().containsKey("outer_sequence"));
+        assertEquals(2L, inner.retries());
+        assertEquals(2L, inner.permanentFailures());
     }
 
     @Test

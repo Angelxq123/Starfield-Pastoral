@@ -125,7 +125,8 @@ class OvernightBarrierIntegrationContractTest {
                 .orElseThrow(() -> new AssertionError("ACK handler must acknowledge the barrier"));
         assertEquals(List.of("player.getUUID()", "payload.absoluteDay()"),
                 acknowledge.getArguments().stream().map(Object::toString).toList());
-        assertTrue(hasInvocation(work, "find"));
+        assertTrue(hasInvocation(work, "getForPlayer"));
+        assertFalse(hasInvocation(work, "find"));
     }
 
     @Test

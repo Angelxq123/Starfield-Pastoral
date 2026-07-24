@@ -5,6 +5,7 @@ import com.stardew.craft.deco.DecorationType;
 import com.stardew.craft.leaderboard.LeaderboardMetric;
 import com.stardew.craft.leaderboard.LeaderboardPeriod;
 import com.stardew.craft.mastery.MasteryProgress;
+import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -451,7 +452,8 @@ public class PlayerStardewData {
                     pending.getInt("SleepMinute"),
                     pending.getBoolean("SeasonChanged"),
                     pending.getInt("Stage"),
-                    appliedLevels);
+                    appliedLevels,
+                    loadCompletedSettlementPayload(pending, registries));
         }
 
         // 精通系统
@@ -912,6 +914,11 @@ public class PlayerStardewData {
                 appliedLevels.add(level);
             }
             pending.put("AppliedLevels", appliedLevels);
+            pendingDailySettlement.completedPayload().ifPresent(payload -> {
+                if (registries != null) {
+                    pending.put("CompletedPayload", saveSettlementPayload(payload, registries));
+                }
+            });
             tag.put("PendingDailySettlement", pending);
         }
 
@@ -3065,6 +3072,22 @@ public class PlayerStardewData {
         return true;
     }
 
+    public boolean acknowledgePendingDailySettlement(int absoluteDay) {
+        if (pendingDailySettlement == null
+                || pendingDailySettlement.absoluteDay() != absoluteDay
+                || pendingDailySettlement.completedPayload().isEmpty()) {
+            return false;
+        }
+        pendingDailySettlement = null;
+        markDirty();
+        return true;
+    }
+
+    public boolean hasUnacknowledgedDailySettlementReady() {
+        return pendingDailySettlement != null
+                && pendingDailySettlement.completedPayload().isPresent();
+    }
+
     public boolean updatePendingDailySettlement(PendingDailySettlement pending) {
         Objects.requireNonNull(pending, "pending");
         if (pendingDailySettlement == null
@@ -3159,7 +3182,8 @@ public class PlayerStardewData {
             int sleepMinute,
             boolean seasonChanged,
             int stage,
-            List<SkillLevelUp> appliedLevels) {
+            List<SkillLevelUp> appliedLevels,
+            Optional<OvernightSettlementPayload> completedPayload) {
 
         public PendingDailySettlement(
                 int absoluteDay,
@@ -3169,6 +3193,19 @@ public class PlayerStardewData {
                 int sleepMinute,
                 boolean seasonChanged) {
             this(absoluteDay, year, season, day, sleepMinute, seasonChanged, 0, List.of());
+        }
+
+        public PendingDailySettlement(
+                int absoluteDay,
+                int year,
+                int season,
+                int day,
+                int sleepMinute,
+                boolean seasonChanged,
+                int stage,
+                List<SkillLevelUp> appliedLevels) {
+            this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                    stage, appliedLevels, Optional.empty());
         }
 
         public PendingDailySettlement {
@@ -3181,7 +3218,102 @@ public class PlayerStardewData {
                 throw new IllegalArgumentException("Invalid pending daily settlement stage");
             }
             appliedLevels = List.copyOf(Objects.requireNonNull(appliedLevels, "appliedLevels"));
+            completedPayload = Objects.requireNonNull(completedPayload, "completedPayload")
+                    .map(PlayerStardewData::copySettlementPayload);
+            if (completedPayload.isPresent()
+                    && completedPayload.orElseThrow().absoluteDay() != absoluteDay) {
+                throw new IllegalArgumentException(
+                        "Completed payload day must match pending settlement");
+            }
         }
+    }
+
+    private static Optional<OvernightSettlementPayload> loadCompletedSettlementPayload(
+            CompoundTag pending,
+            @Nullable net.minecraft.core.HolderLookup.Provider registries) {
+        if (registries == null || !pending.contains("CompletedPayload", Tag.TAG_COMPOUND)) {
+            return Optional.empty();
+        }
+        CompoundTag saved = pending.getCompound("CompletedPayload");
+        List<OvernightSettlementPayload.ShippedItem> shippedItems = new ArrayList<>();
+        ListTag shipped = saved.getList("ShippedItems", Tag.TAG_COMPOUND);
+        for (int i = 0; i < shipped.size(); i++) {
+            CompoundTag entry = shipped.getCompound(i);
+            net.minecraft.world.item.ItemStack stack = net.minecraft.world.item.ItemStack
+                    .parseOptional(registries, entry.getCompound("Stack"));
+            if (!stack.isEmpty()) {
+                shippedItems.add(new OvernightSettlementPayload.ShippedItem(
+                        stack, entry.getInt("Category"), entry.getInt("PricePerItem")));
+            }
+        }
+        List<OvernightSettlementPayload.LevelUpData> levelUps = new ArrayList<>();
+        ListTag levels = saved.getList("LevelUps", Tag.TAG_COMPOUND);
+        for (int i = 0; i < levels.size(); i++) {
+            CompoundTag entry = levels.getCompound(i);
+            levelUps.add(new OvernightSettlementPayload.LevelUpData(
+                    entry.getInt("SkillIndex"), entry.getInt("NewLevel")));
+        }
+        List<net.minecraft.world.item.ItemStack> lostItems = new ArrayList<>();
+        ListTag lost = saved.getList("PassOutLostItems", Tag.TAG_COMPOUND);
+        for (int i = 0; i < lost.size(); i++) {
+            net.minecraft.world.item.ItemStack stack = net.minecraft.world.item.ItemStack
+                    .parseOptional(registries, lost.getCompound(i));
+            if (!stack.isEmpty()) {
+                lostItems.add(stack);
+            }
+        }
+        return Optional.of(new OvernightSettlementPayload(
+                saved.getInt("AbsoluteDay"), List.copyOf(shippedItems), List.copyOf(levelUps),
+                saved.getInt("PassOutType"), saved.getInt("PassOutMoneyLost"),
+                List.copyOf(lostItems)));
+    }
+
+    private static CompoundTag saveSettlementPayload(
+            OvernightSettlementPayload payload,
+            net.minecraft.core.HolderLookup.Provider registries) {
+        CompoundTag saved = new CompoundTag();
+        saved.putInt("AbsoluteDay", payload.absoluteDay());
+        saved.putInt("PassOutType", payload.passOutType());
+        saved.putInt("PassOutMoneyLost", payload.passOutMoneyLost());
+        ListTag shipped = new ListTag();
+        for (OvernightSettlementPayload.ShippedItem item : payload.shippedItems()) {
+            CompoundTag entry = new CompoundTag();
+            entry.put("Stack", item.stack().save(registries));
+            entry.putInt("Category", item.category());
+            entry.putInt("PricePerItem", item.pricePerItem());
+            shipped.add(entry);
+        }
+        saved.put("ShippedItems", shipped);
+        ListTag levels = new ListTag();
+        for (OvernightSettlementPayload.LevelUpData levelUp : payload.levelUps()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putInt("SkillIndex", levelUp.skillIndex());
+            entry.putInt("NewLevel", levelUp.newLevel());
+            levels.add(entry);
+        }
+        saved.put("LevelUps", levels);
+        ListTag lost = new ListTag();
+        for (net.minecraft.world.item.ItemStack stack : payload.passOutLostItems()) {
+            if (!stack.isEmpty()) {
+                lost.add(stack.save(registries));
+            }
+        }
+        saved.put("PassOutLostItems", lost);
+        return saved;
+    }
+
+    private static OvernightSettlementPayload copySettlementPayload(
+            OvernightSettlementPayload payload) {
+        List<OvernightSettlementPayload.ShippedItem> shipped = payload.shippedItems().stream()
+                .map(item -> new OvernightSettlementPayload.ShippedItem(
+                        item.stack().copy(), item.category(), item.pricePerItem()))
+                .toList();
+        List<net.minecraft.world.item.ItemStack> lost = payload.passOutLostItems().stream()
+                .map(net.minecraft.world.item.ItemStack::copy)
+                .toList();
+        return new OvernightSettlementPayload(
+                payload.absoluteDay(), shipped, List.copyOf(payload.levelUps()),
+                payload.passOutType(), payload.passOutMoneyLost(), lost);
     }
 
     public List<SkillLevelUp> applyPendingSkillLevelUpsForSettlement() {

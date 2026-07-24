@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 public final class DailySettlementPlanFactory implements DailySettlementCoordinator.PlanFactory {
     private static final List<String> PREPARE = List.of(
             "shipping_bin_flush",
+            "non_participant_cleanup",
             "daily_process_scope",
             "settlement_barrier_lock");
     private static final List<String> WORLD = List.of(
@@ -68,10 +69,21 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             DailySettlementCoordinator.SettlementPlanBuilder builder) {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(builder, "builder");
-        PREPARE.forEach(name -> builder.addPrepare(create(name, context)));
-        WORLD.forEach(name -> builder.addWorld(create(name, context)));
-        PLAYERS.forEach(name -> builder.addPlayer(create(name, context)));
-        COMMIT.forEach(name -> builder.addCommit(create(name, context)));
+        try {
+            PREPARE.forEach(name -> builder.addPrepare(create(name, context)));
+            WORLD.forEach(name -> builder.addWorld(create(name, context)));
+            PLAYERS.forEach(name -> builder.addPlayer(create(name, context)));
+            COMMIT.forEach(name -> builder.addCommit(create(name, context)));
+        } catch (RuntimeException | Error failure) {
+            try {
+                workUnits.cleanup();
+            } catch (RuntimeException | Error cleanupFailure) {
+                if (cleanupFailure != failure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
+            throw failure;
+        }
     }
 
     private DailySettlementWorkUnit create(String name, DailySettlementContext context) {
@@ -79,9 +91,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
     }
 
     public void cleanup() {
-        if (workUnits instanceof ProductionWorkUnitFactory production) {
-            production.cleanupDailyProcess();
-        }
+        workUnits.cleanup();
     }
 
     static Map<UUID, com.stardew.craft.farm.FarmInstance> snapshotFarms(
@@ -104,6 +114,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
     @FunctionalInterface
     public interface WorkUnitFactory {
         DailySettlementWorkUnit create(String name, DailySettlementContext context);
+
+        default void cleanup() {
+        }
     }
 
     private static final class ProductionWorkUnitFactory implements WorkUnitFactory {
@@ -132,6 +145,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             return switch (name) {
                 case "shipping_bin_flush" -> atomic(name,
                         com.stardew.craft.blockentity.ShippingBinBlockEntity::flushAllForOvernight);
+                case "non_participant_cleanup" -> createNonParticipantCleanupWorkUnit(
+                        context, playerId -> cleanupNonParticipant(context, playerId));
                 case "daily_process_scope" -> atomic(name, () -> beginDailyProcess(context));
                 case "settlement_barrier_lock" -> atomic(name, () -> lockBarrier(context));
                 case "festival_season_prep" -> atomic(name, () -> festivalAndSeason(context));
@@ -160,6 +175,11 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "date_publication" -> publication(context);
                 default -> throw new IllegalArgumentException("Unknown settlement work unit: " + name);
             };
+        }
+
+        @Override
+        public void cleanup() {
+            cleanupDailyProcess();
         }
 
         private DailySettlementWorkUnit atomic(
@@ -200,11 +220,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
 
         private void beginDailyProcess(DailySettlementContext context) {
             ServerLevel level = level();
-            Set<UUID> onlinePlayerIds = dailyScopeAudience(
-                    server().getPlayerList().getPlayers(),
-                    net.minecraft.server.level.ServerPlayer::getUUID);
             com.stardew.craft.farm.FarmDailyProcessHelper.beginDailyProcess(
-                    level, onlinePlayerIds);
+                    level, context.playerIds());
             activeLevel = level;
             dailyProcessActive = true;
             try {
@@ -219,6 +236,14 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 }
                 throw failure;
             }
+        }
+
+        private void cleanupNonParticipant(
+                DailySettlementContext context, UUID playerId) {
+            com.stardew.craft.network.overnight.OvernightSettlementTracker.consumePayload(
+                    server(), playerId, context.absoluteDay());
+            com.stardew.craft.player.PassOutService.consumePassOutResult(
+                    playerId, context.absoluteDay());
         }
 
         private void prepareWorldSnapshots(DailySettlementContext context) {
@@ -440,19 +465,58 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         Objects.requireNonNull(time, "time");
         Objects.requireNonNull(publishVirtualTime, "publishVirtualTime");
         Objects.requireNonNull(runPublicationHooks, "runPublicationHooks");
-        return DailySettlementWorkUnits.sequence(
-                "date_publication",
-                List.of(
-                        DailySettlementWorkUnits.atomic(
-                                "backing_date", () -> time.publishSettlementDate(context),
-                                () -> {}, Integer.MAX_VALUE),
-                        DailySettlementWorkUnits.atomic(
-                                "virtual_day", publishVirtualTime,
-                                () -> {}, Integer.MAX_VALUE),
-                        DailySettlementWorkUnits.atomic(
-                                "publication_hooks", runPublicationHooks,
-                                () -> {}, Integer.MAX_VALUE)),
-                () -> {});
+        return new DailySettlementWorkUnit() {
+            private int stage;
+
+            @Override
+            public String name() {
+                return "date_publication";
+            }
+
+            @Override
+            public String currentItemIdentity() {
+                return switch (stage) {
+                    case 0 -> "virtual_day";
+                    case 1 -> "publication_hooks";
+                    case 2 -> "backing_date";
+                    default -> name();
+                };
+            }
+
+            @Override
+            public boolean isComplete() {
+                return stage >= 3;
+            }
+
+            @Override
+            public void runNext() throws Exception {
+                if (isComplete()) {
+                    throw new IllegalStateException("Work unit is already complete: " + name());
+                }
+                if (stage == 0) {
+                    publishVirtualTime.run();
+                    stage = 1;
+                }
+                if (stage == 1) {
+                    runPublicationHooks.run();
+                    stage = 2;
+                }
+                if (stage == 2) {
+                    time.publishSettlementDate(context);
+                    stage = 3;
+                }
+            }
+
+            @Override
+            public void skipFailedItem() {
+                throw new IllegalStateException("Date publication cannot be skipped");
+            }
+
+            @Override
+            public int maxRetries() {
+                return Integer.MAX_VALUE;
+            }
+        };
     }
 
     static <T> List<T> mailAudience(List<T> onlinePlayers) {
@@ -473,6 +537,30 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         return onlinePlayers.stream()
                 .map(playerId)
                 .map(id -> Objects.requireNonNull(id, "playerId"))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    static DailySettlementWorkUnit createNonParticipantCleanupWorkUnit(
+            DailySettlementContext context,
+            DailySettlementWorkUnits.ThrowingConsumer<UUID> cleanup) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(cleanup, "cleanup");
+        return DailySettlementWorkUnits.cursor(
+                "non_participant_cleanup",
+                context.nonParticipantCleanupIds(),
+                UUID::toString,
+                cleanup,
+                () -> {});
+    }
+
+    public static Set<UUID> farmOwnerAudience(
+            List<UUID> participantIds, Function<? super UUID, UUID> ownerForPlayer) {
+        Objects.requireNonNull(participantIds, "participantIds");
+        Objects.requireNonNull(ownerForPlayer, "ownerForPlayer");
+        return participantIds.stream()
+                .map(playerId -> Objects.requireNonNull(playerId, "playerId"))
+                .map(ownerForPlayer)
+                .filter(Objects::nonNull)
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 }

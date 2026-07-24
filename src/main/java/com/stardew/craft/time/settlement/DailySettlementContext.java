@@ -13,11 +13,26 @@ public record DailySettlementContext(
         int sleepMinute,
         boolean seasonChanged,
         List<UUID> playerIds,
-        Set<UUID> farmOwnerIds) {
+        Set<UUID> farmOwnerIds,
+        List<UUID> nonParticipantCleanupIds) {
+
+    public DailySettlementContext(
+            int absoluteDay,
+            int year,
+            int season,
+            int day,
+            int sleepMinute,
+            boolean seasonChanged,
+            List<UUID> playerIds,
+            Set<UUID> farmOwnerIds) {
+        this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                playerIds, farmOwnerIds, List.of());
+    }
 
     public DailySettlementContext {
         Objects.requireNonNull(playerIds, "playerIds");
         Objects.requireNonNull(farmOwnerIds, "farmOwnerIds");
+        Objects.requireNonNull(nonParticipantCleanupIds, "nonParticipantCleanupIds");
         if (year < 1) {
             throw new IllegalArgumentException("year must be at least 1");
         }
@@ -36,5 +51,6 @@ public record DailySettlementContext(
 
         playerIds = List.copyOf(playerIds);
         farmOwnerIds = Set.copyOf(farmOwnerIds);
+        nonParticipantCleanupIds = List.copyOf(nonParticipantCleanupIds);
     }
 }

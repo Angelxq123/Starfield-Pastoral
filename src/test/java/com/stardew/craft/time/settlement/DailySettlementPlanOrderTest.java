@@ -35,6 +35,7 @@ class DailySettlementPlanOrderTest {
         assertFalse(coordinator.isActive(), "ready publication must return the coordinator to idle");
         assertEquals(List.of(
                 item(DailySettlementPhase.PREPARE, "shipping_bin_flush"),
+                item(DailySettlementPhase.PREPARE, "non_participant_cleanup"),
                 item(DailySettlementPhase.PREPARE, "daily_process_scope"),
                 item(DailySettlementPhase.PREPARE, "settlement_barrier_lock"),
 
@@ -90,8 +91,8 @@ class DailySettlementPlanOrderTest {
         assertEquals(1, names.stream().filter("shipping_bin_flush"::equals).count());
         assertEquals(1, names.stream().filter("player_daily_settlement"::equals).count());
         assertEquals(0, names.subList(names.indexOf("date_publication") + 1, names.size()).size());
-        assertEquals(20, names.indexOf("player_daily_settlement"));
-        assertEquals(22, names.indexOf("farm_cursor"));
+        assertEquals(21, names.indexOf("player_daily_settlement"));
+        assertEquals(23, names.indexOf("farm_cursor"));
         assertEquals(0, names.indexOf("shipping_bin_flush"));
     }
 

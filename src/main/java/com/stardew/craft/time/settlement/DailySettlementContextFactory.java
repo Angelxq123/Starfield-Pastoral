@@ -17,9 +17,19 @@ public final class DailySettlementContextFactory {
             int sleepMinute,
             Collection<UUID> players,
             Collection<UUID> farms) {
+        return captureNextDay(time, sleepMinute, players, farms, List.of());
+    }
+
+    public static DailySettlementContext captureNextDay(
+            StardewTimeManager time,
+            int sleepMinute,
+            Collection<UUID> players,
+            Collection<UUID> farms,
+            Collection<UUID> nonParticipantCleanupIds) {
         Objects.requireNonNull(time, "time");
         Objects.requireNonNull(players, "players");
         Objects.requireNonNull(farms, "farms");
+        Objects.requireNonNull(nonParticipantCleanupIds, "nonParticipantCleanupIds");
 
         TargetDate target = after(
                 time.getCurrentYear(), time.getCurrentSeason(), time.getCurrentDay());
@@ -31,7 +41,8 @@ public final class DailySettlementContextFactory {
                 sleepMinute,
                 target.seasonChanged(),
                 List.copyOf(players),
-                Set.copyOf(farms));
+                Set.copyOf(farms),
+                List.copyOf(nonParticipantCleanupIds));
     }
 
     public static DailySettlementContext captureCurrentDay(StardewTimeManager time) {
@@ -74,7 +85,8 @@ public final class DailySettlementContextFactory {
                 context.sleepMinute(),
                 context.seasonChanged(),
                 List.copyOf(players),
-                context.farmOwnerIds());
+                context.farmOwnerIds(),
+                context.nonParticipantCleanupIds());
     }
 
     private static DailySettlementContext withDate(
@@ -87,7 +99,8 @@ public final class DailySettlementContextFactory {
                 context.sleepMinute(),
                 context.seasonChanged(),
                 context.playerIds(),
-                context.farmOwnerIds());
+                context.farmOwnerIds(),
+                context.nonParticipantCleanupIds());
     }
 
     private static TargetDate after(int year, int season, int day) {

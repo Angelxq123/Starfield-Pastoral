@@ -262,21 +262,28 @@ public class StardewTimeManager extends SavedData {
         }
         com.stardew.craft.time.settlement.DailySettlementServices.Services services =
                 com.stardew.craft.time.settlement.DailySettlementServices.get(server);
-        java.util.List<java.util.UUID> participants = server.getPlayerList().getPlayers().stream()
+        java.util.List<net.minecraft.server.level.ServerPlayer> rolloverPlayers =
+                java.util.List.copyOf(server.getPlayerList().getPlayers());
+        java.util.List<java.util.UUID> participants = rolloverPlayers.stream()
                 .filter(services.players()::participates)
+                .map(net.minecraft.server.level.ServerPlayer::getUUID)
+                .toList();
+        java.util.List<java.util.UUID> nonParticipantCleanupIds = rolloverPlayers.stream()
+                .filter(services.players()::requiresNonParticipantCleanup)
                 .map(net.minecraft.server.level.ServerPlayer::getUUID)
                 .toList();
         com.stardew.craft.farm.FarmInstanceRegistry farms =
                 com.stardew.craft.farm.FarmInstanceRegistry.get();
-        java.util.Set<java.util.UUID> owners = farms.getAllFarms().stream()
-                .map(com.stardew.craft.farm.FarmInstance::getOwnerUUID)
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        java.util.Set<java.util.UUID> owners =
+                com.stardew.craft.time.settlement.DailySettlementPlanFactory.farmOwnerAudience(
+                        participants, farms::getOwnerForPlayer);
         DailySettlementContext context =
                 com.stardew.craft.time.settlement.DailySettlementContextFactory.captureNextDay(
                         this,
                         sleepMinute,
                         java.util.List.copyOf(participants),
-                        java.util.Set.copyOf(owners));
+                        java.util.Set.copyOf(owners),
+                        java.util.List.copyOf(nonParticipantCleanupIds));
         services.coordinator().start(context);
     }
 

@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,6 +60,7 @@ public final class DailySettlementAccessGuard {
 
     public void captureAnchor(ServerPlayer player) {
         Objects.requireNonNull(player, "player");
+        closeContainerIfLocked(player);
         captureAnchor(
                 player.getUUID(),
                 player.level().dimension(),
@@ -82,6 +84,7 @@ public final class DailySettlementAccessGuard {
 
     public void reconnectAnchor(ServerPlayer player) {
         Objects.requireNonNull(player, "player");
+        closeContainerIfLocked(player);
         reconnectAnchor(
                 player.getUUID(),
                 player.level().dimension(),
@@ -153,6 +156,21 @@ public final class DailySettlementAccessGuard {
     public void onLogout(UUID playerId) {
         anchors.remove(Objects.requireNonNull(playerId, "playerId"));
         restoring.remove(playerId);
+    }
+
+    void clearAnchors(Collection<UUID> playerIds) {
+        for (UUID playerId : Objects.requireNonNull(playerIds, "playerIds")) {
+            anchors.remove(Objects.requireNonNull(playerId, "playerId"));
+            restoring.remove(playerId);
+        }
+    }
+
+    public void closeContainerIfLocked(ServerPlayer player) {
+        Objects.requireNonNull(player, "player");
+        if (barrier.isLocked(player.getUUID())
+                && player.containerMenu != player.inventoryMenu) {
+            player.closeContainer();
+        }
     }
 
     public void clear() {

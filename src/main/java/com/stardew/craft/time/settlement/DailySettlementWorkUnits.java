@@ -240,6 +240,7 @@ public final class DailySettlementWorkUnits {
         private int cursor;
         private boolean closed;
         private Throwable closeFailure;
+        private String closeFailureSubsystem;
 
         private SequenceWorkUnit(
                 String name,
@@ -295,6 +296,11 @@ public final class DailySettlementWorkUnits {
         }
 
         @Override
+        public String closeFailureSubsystemName() {
+            return closeFailureSubsystem == null ? name : closeFailureSubsystem;
+        }
+
+        @Override
         public boolean isAtomic() {
             return requireCurrentChild().isAtomic();
         }
@@ -311,7 +317,7 @@ public final class DailySettlementWorkUnits {
             try {
                 onClose.run();
             } catch (RuntimeException | Error failure) {
-                recordCloseFailure(failure);
+                recordCloseFailure(failure, name);
             }
             rethrowCloseFailure();
         }
@@ -335,7 +341,7 @@ public final class DailySettlementWorkUnits {
             try {
                 closeChild(index);
             } catch (RuntimeException | Error failure) {
-                recordCloseFailure(failure);
+                recordCloseFailure(failure, safeSubsystemName(children.get(index)));
             }
         }
 
@@ -347,11 +353,20 @@ public final class DailySettlementWorkUnits {
             children.get(index).close();
         }
 
-        private void recordCloseFailure(Throwable failure) {
+        private void recordCloseFailure(Throwable failure, String subsystemName) {
             if (closeFailure == null) {
                 closeFailure = failure;
+                closeFailureSubsystem = subsystemName;
             } else if (closeFailure != failure) {
                 closeFailure.addSuppressed(failure);
+            }
+        }
+
+        private String safeSubsystemName(DailySettlementWorkUnit child) {
+            try {
+                return child.subsystemName();
+            } catch (RuntimeException failure) {
+                return child.name();
             }
         }
 

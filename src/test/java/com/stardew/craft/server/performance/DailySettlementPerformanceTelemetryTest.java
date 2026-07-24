@@ -137,6 +137,8 @@ class DailySettlementPerformanceTelemetryTest {
         String coordinator = source(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementCoordinator.java");
         String chunkManager = source("src/main/java/com/stardew/craft/farm/FarmChunkManager.java");
+        String metrics = source(
+                "src/main/java/com/stardew/craft/server/performance/DailySettlementMetrics.java");
         String readyPublisher = source(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementReadyPublisher.java");
 
@@ -145,6 +147,8 @@ class DailySettlementPerformanceTelemetryTest {
         assertTrue(coordinator.contains("metrics.recordRetry"));
         assertTrue(coordinator.contains("metrics.recordOvershoot"));
         assertTrue(chunkManager.contains("recordDailySettlementChunkLeases"));
+        assertTrue(chunkManager.contains("measureSynchronousChunkLoad"));
+        assertTrue(metrics.contains("coordinator().isActive()"));
         assertTrue(readyPublisher.contains("metrics.publishReady"));
     }
 

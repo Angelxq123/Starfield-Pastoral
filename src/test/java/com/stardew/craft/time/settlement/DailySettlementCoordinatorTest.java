@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.server.performance.DailySettlementMetrics;
 import com.stardew.craft.time.StardewTimeManager;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
@@ -215,6 +217,75 @@ class DailySettlementCoordinatorTest {
         assertTrue(accessGuard.anchor(first).isEmpty());
         assertTrue(accessGuard.anchor(second).isEmpty());
         assertTrue(accessGuard.anchor(third).isEmpty());
+    }
+
+    @Test
+    void failedNewStartPreservesAnEarlierUnacknowledgedBarrierState() {
+        UUID oldPlayer = UUID.randomUUID();
+        UUID newPlayer = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard accessGuard = new DailySettlementAccessGuard(barrier);
+        DailySettlementBarrier.ReadyResult oldReady =
+                new DailySettlementBarrier.ReadyResult(
+                        100, new com.stardew.craft.network.overnight.OvernightSettlementPayload(
+                                100, List.of(), List.of()));
+        barrier.lockAll(100, List.of(oldPlayer));
+        assertTrue(barrier.publishReady(oldPlayer, oldReady));
+        accessGuard.captureAnchor(
+                oldPlayer, net.minecraft.world.level.Level.OVERWORLD,
+                new net.minecraft.world.phys.Vec3(1.0D, 64.0D, 2.0D), 0.0F, 0.0F);
+
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () ->
+                DailySettlementPlanFactory.lockBarrierAtStart(
+                        new DailySettlementContext(
+                                227, 3, 0, 3, 1560, false,
+                                List.of(newPlayer), Set.of()),
+                        barrier, accessGuard, null,
+                        (playerId, day, locked) -> {
+                            if (locked) {
+                                throw new IllegalStateException("new start failed");
+                            }
+                            return true;
+                        }));
+
+        assertEquals("new start failed", failure.getMessage());
+        assertTrue(barrier.isLocked(oldPlayer));
+        assertEquals(100, barrier.lockedDay(oldPlayer));
+        assertSame(oldReady, barrier.readyResult(oldPlayer, 100));
+        assertTrue(accessGuard.anchor(oldPlayer).isPresent());
+        assertFalse(barrier.isLocked(newPlayer));
+    }
+
+    @Test
+    void sequenceCloseFailureUsesTheChildSubsystemThatActuallyFailed() throws Exception {
+        AtomicLong nanos = new AtomicLong();
+        DailySettlementMetrics metrics = new DailySettlementMetrics(
+                nanos::incrementAndGet, () -> 0L);
+        DailySettlementWorkUnit first = DailySettlementWorkUnits.atomic(
+                "first_child", () -> {}, () -> { throw new IllegalStateException("first close"); });
+        first.runNext();
+        DailySettlementWorkUnit second = DailySettlementWorkUnits.atomic(
+                "second_child", () -> {}, () -> {});
+        DailySettlementWorkUnit sequence = DailySettlementWorkUnits.sequence(
+                "sequence", List.of(first, second), () -> {});
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(nanos::incrementAndGet),
+                () -> 100L, () -> 10,
+                (context, builder) -> builder.addPrepare(sequence),
+                DailySettlementCoordinator.LifecycleListener.NOOP,
+                metrics,
+                () -> true);
+
+        assertTrue(coordinator.start(new DailySettlementContext(
+                2, 1, 0, 2, 1560, false, List.of(), Set.of())));
+        for (int tick = 0; coordinator.isActive() && tick < 10; tick++) {
+            coordinator.tick();
+        }
+
+        assertEquals(1L, metrics.readySummary().subsystems()
+                .get("first_child").permanentFailures());
+        assertEquals(0L, metrics.readySummary().subsystems()
+                .get("second_child").permanentFailures());
     }
 
     @Test

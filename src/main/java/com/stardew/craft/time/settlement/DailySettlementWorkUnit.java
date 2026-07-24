@@ -15,6 +15,10 @@ public interface DailySettlementWorkUnit extends AutoCloseable {
         return name();
     }
 
+    default String closeFailureSubsystemName() {
+        return subsystemName();
+    }
+
     default boolean isAtomic() {
         return false;
     }

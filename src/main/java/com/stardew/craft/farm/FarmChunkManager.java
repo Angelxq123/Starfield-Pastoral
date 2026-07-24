@@ -2,9 +2,7 @@ package com.stardew.craft.farm;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.core.ModDimensions;
-import com.stardew.craft.server.performance.PerformanceCounter;
-import com.stardew.craft.server.performance.PerformanceTiming;
-import com.stardew.craft.server.performance.ServerPerformanceRecorder;
+import com.stardew.craft.server.performance.DailySettlementMetrics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,14 +47,8 @@ public class FarmChunkManager {
 
                 @Override
                 public void load(ServerLevel level, ChunkPos chunk) {
-                    ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
-                    ServerPerformanceRecorder.increment(
-                            PerformanceCounter.DAILY_SYNC_CHUNK_LOADS, 1L);
-                    ServerPerformanceRecorder.measure(
-                            PerformanceTiming.FARM_SYNC_CHUNK_LOAD,
-                            () -> ServerPerformanceRecorder.measure(
-                                    PerformanceTiming.DAILY_SYNC_CHUNK_LOAD,
-                                    () -> level.getChunk(chunk.x, chunk.z)));
+                    DailySettlementMetrics.measureSynchronousChunkLoad(
+                            level.getServer(), () -> level.getChunk(chunk.x, chunk.z));
                 }
 
                 @Override

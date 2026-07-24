@@ -2,10 +2,12 @@ package com.stardew.craft.time.settlement;
 
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public final class DailySettlementBarrier {
@@ -13,6 +15,10 @@ public final class DailySettlementBarrier {
     private final Map<UUID, ReadyResult> ready = new HashMap<>();
 
     public void lockAll(int absoluteDay, Collection<UUID> playerIds) {
+        lockAllScoped(absoluteDay, playerIds);
+    }
+
+    public LockScope lockAllScoped(int absoluteDay, Collection<UUID> playerIds) {
         if (absoluteDay <= 0) {
             throw new IllegalArgumentException("absoluteDay must be positive");
         }
@@ -21,6 +27,8 @@ public final class DailySettlementBarrier {
                 .map(playerId -> Objects.requireNonNull(playerId, "playerId"))
                 .toList();
 
+        Map<UUID, Integer> previousLocks = new HashMap<>();
+        Map<UUID, ReadyResult> previousReady = new HashMap<>();
         for (UUID playerId : copiedIds) {
             Integer lockedDay = locks.get(playerId);
             if (lockedDay != null && lockedDay != absoluteDay) {
@@ -29,12 +37,44 @@ public final class DailySettlementBarrier {
             }
         }
 
+        Set<UUID> newlyLocked = new java.util.LinkedHashSet<>();
+        for (UUID playerId : copiedIds) {
+            Integer previousLock = locks.get(playerId);
+            previousLocks.put(playerId, previousLock);
+            previousReady.put(playerId, ready.get(playerId));
+            if (previousLock == null) {
+                newlyLocked.add(playerId);
+            }
+        }
         for (UUID playerId : copiedIds) {
             if (!locks.containsKey(playerId)) {
                 ready.remove(playerId);
                 locks.put(playerId, absoluteDay);
             }
         }
+        return new LockScope(this, previousLocks, previousReady,
+                newlyLocked);
+    }
+
+    public void rollback(LockScope scope) {
+        Objects.requireNonNull(scope, "scope");
+        if (scope.barrier() != this) {
+            throw new IllegalArgumentException("lock scope belongs to another barrier");
+        }
+        scope.previousLocks().forEach((playerId, lockedDay) -> {
+            if (lockedDay == null) {
+                locks.remove(playerId);
+            } else {
+                locks.put(playerId, lockedDay);
+            }
+        });
+        scope.previousReady().forEach((playerId, result) -> {
+            if (result == null) {
+                ready.remove(playerId);
+            } else {
+                ready.put(playerId, result);
+            }
+        });
     }
 
     public boolean isLocked(UUID playerId) {
@@ -137,6 +177,21 @@ public final class DailySettlementBarrier {
                 throw new IllegalArgumentException(
                         "payload absoluteDay must match ready result: " + payload.absoluteDay());
             }
+        }
+    }
+
+    public static record LockScope(
+            DailySettlementBarrier barrier,
+            Map<UUID, Integer> previousLocks,
+            Map<UUID, ReadyResult> previousReady,
+            Set<UUID> newlyLocked) {
+        public LockScope {
+            Objects.requireNonNull(barrier, "barrier");
+            previousLocks = Collections.unmodifiableMap(
+                    new HashMap<>(Objects.requireNonNull(previousLocks, "previousLocks")));
+            previousReady = Collections.unmodifiableMap(
+                    new HashMap<>(Objects.requireNonNull(previousReady, "previousReady")));
+            newlyLocked = Set.copyOf(Objects.requireNonNull(newlyLocked, "newlyLocked"));
         }
     }
 }

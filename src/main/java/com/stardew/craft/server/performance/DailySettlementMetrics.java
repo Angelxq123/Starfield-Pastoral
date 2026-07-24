@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import net.minecraft.server.MinecraftServer;
 
 public final class DailySettlementMetrics {
@@ -36,6 +37,30 @@ public final class DailySettlementMetrics {
                 System::nanoTime,
                 () -> ServerPerformanceRecorder.counterValue(
                         PerformanceCounter.DAILY_SYNC_CHUNK_LOADS));
+    }
+
+    public boolean isActive() {
+        return absoluteDay > 0;
+    }
+
+    public static <T> T measureSynchronousChunkLoad(
+            MinecraftServer server, Supplier<T> load) {
+        Objects.requireNonNull(server, "server");
+        Objects.requireNonNull(load, "load");
+        ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
+        DailySettlementServices.Services services = DailySettlementServices.find(server);
+        boolean settlementActive = services != null
+                && services.coordinator().isActive()
+                && services.metrics().isActive();
+        if (!settlementActive) {
+            return ServerPerformanceRecorder.measure(
+                    PerformanceTiming.FARM_SYNC_CHUNK_LOAD, load);
+        }
+        ServerPerformanceRecorder.increment(PerformanceCounter.DAILY_SYNC_CHUNK_LOADS, 1L);
+        return ServerPerformanceRecorder.measure(
+                PerformanceTiming.DAILY_SYNC_CHUNK_LOAD,
+                () -> ServerPerformanceRecorder.measure(
+                        PerformanceTiming.FARM_SYNC_CHUNK_LOAD, load));
     }
 
     public void begin(int day) {

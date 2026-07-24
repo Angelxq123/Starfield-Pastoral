@@ -427,14 +427,17 @@ class FarmChunkManagerTest {
         assertTrue(source.contains("return false;"));
         assertTrue(source.contains("return level.setChunkForced(chunk.x, chunk.z, true)"));
         assertTrue(loadMethod.find());
-        assertTrue(loadMethod.group("body").contains("PerformanceCounter.FARM_SYNC_CHUNK_LOADS"));
-        assertTrue(loadMethod.group("body").contains("PerformanceCounter.DAILY_SYNC_CHUNK_LOADS"));
-        assertTrue(loadMethod.group("body").contains("PerformanceTiming.FARM_SYNC_CHUNK_LOAD"));
-        assertTrue(loadMethod.group("body").contains("PerformanceTiming.DAILY_SYNC_CHUNK_LOAD"));
+        assertTrue(loadMethod.group("body").contains("measureSynchronousChunkLoad"));
         assertTrue(loadMethod.group("body").contains("level.getChunk(chunk.x, chunk.z)"));
         assertEquals(1, occurrences(
                 loadMethod.group("body"), "level.getChunk(chunk.x, chunk.z)"),
                 "both timings must wrap the same synchronous load");
+        String metrics = Files.readString(Path.of(System.getProperty("stardewcraft.projectDir"))
+                .resolve("src/main/java/com/stardew/craft/server/performance/DailySettlementMetrics.java"));
+        assertTrue(metrics.contains("PerformanceCounter.FARM_SYNC_CHUNK_LOADS"));
+        assertTrue(metrics.contains("PerformanceCounter.DAILY_SYNC_CHUNK_LOADS"));
+        assertTrue(metrics.contains("PerformanceTiming.FARM_SYNC_CHUNK_LOAD"));
+        assertTrue(metrics.contains("PerformanceTiming.DAILY_SYNC_CHUNK_LOAD"));
         assertTrue(source.contains("level.setChunkForced(chunk.x, chunk.z, false)"));
         assertFalse(source.contains("catch (RuntimeException exception)"));
     }

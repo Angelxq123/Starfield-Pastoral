@@ -16,6 +16,7 @@
     "LevelStardewGameTimeMixin",
     "MinecraftServerTimeSyncMixin",
     "ServerLevelSleepMixin",
+    "ServerContainerClickBarrierMixin",
     "ServerLevelStardewPauseMixin",
     "ServerChunkCacheStardewPauseMixin",
     "LevelWeatherStateMixin",

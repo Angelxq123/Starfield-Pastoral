@@ -385,8 +385,13 @@ public final class DailySettlementCoordinator {
         try {
             closeUnit(unit);
         } catch (RuntimeException | Error closeFailure) {
+            String closeSubsystem = subsystemName;
             try {
-                metrics.recordRetry(subsystemName, "<close>", true);
+                closeSubsystem = unit.closeFailureSubsystemName();
+            } catch (RuntimeException ignored) {
+            }
+            try {
+                metrics.recordRetry(closeSubsystem, "<close>", true);
             } catch (RuntimeException | Error ignored) {
             }
             try {

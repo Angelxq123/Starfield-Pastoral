@@ -157,8 +157,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         Objects.requireNonNull(accessGuard, "accessGuard");
         Objects.requireNonNull(notifier, "notifier");
         List<UUID> notifiedPlayers = new ArrayList<>();
+        DailySettlementBarrier.LockScope scope = null;
         try {
-            barrier.lockAll(context.absoluteDay(), context.playerIds());
+            scope = barrier.lockAllScoped(context.absoluteDay(), context.playerIds());
             if (metrics != null) {
                 metrics.markLocked();
             }
@@ -167,6 +168,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     notifiedPlayers.add(playerId);
                 }
             }
+            return;
         } catch (RuntimeException | Error failure) {
             for (UUID playerId : notifiedPlayers) {
                 try {
@@ -177,8 +179,10 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     }
                 }
             }
-            accessGuard.clear();
-            barrier.clear();
+            if (scope != null) {
+                accessGuard.clearAnchors(scope.newlyLocked());
+                barrier.rollback(scope);
+            }
             throw failure;
         }
     }

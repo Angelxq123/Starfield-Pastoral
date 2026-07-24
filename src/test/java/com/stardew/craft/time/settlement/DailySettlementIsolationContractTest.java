@@ -374,6 +374,51 @@ class DailySettlementIsolationContractTest {
         assertTrue(plan.contains("absoluteDay, locked"));
     }
 
+    @Test
+    void nativeContainerClicksUseARegisteredServerMixinAndCloseMenusOnLock()
+            throws IOException {
+        String mixins = source("src/main/resources/stardewcraft.mixins.json");
+        assertTrue(mixins.contains("ServerContainerClickBarrierMixin"));
+
+        Path mixinPath = projectRoot().resolve(
+                "src/main/java/com/stardew/craft/mixin/ServerContainerClickBarrierMixin.java");
+        String mixin = Files.readString(mixinPath);
+        assertTrue(mixin.contains("@Mixin(ServerGamePacketListenerImpl.class)"));
+        assertTrue(mixin.contains(
+                "@Inject(method = \"handleContainerClick\", at = @At(\"HEAD\"), cancellable = true)"));
+        MethodTree click = parseMethod(
+                mixinPath, "ServerContainerClickBarrierMixin",
+                "stardewcraft$blockLockedContainerClick", 2);
+        assertEquals("ServerboundContainerClickPacket",
+                click.getParameters().getFirst().getType().toString());
+        assertTrue(hasInvocation(click, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(hasInvocation(click, "services.accessGuard()", "isGameplayAllowed",
+                "player.getUUID()"));
+        assertTrue(hasInvocation(click, "services.accessGuard()", "closeContainerIfLocked",
+                "player"));
+        assertTrue(hasInvocation(click, "ci", "cancel"));
+
+        MethodTree closeContainer = parseMethod(
+                sourcePath("time/settlement/DailySettlementAccessGuard.java"),
+                "DailySettlementAccessGuard", "closeContainerIfLocked", 1);
+        String closeBody = normalized(closeContainer.getBody());
+        assertTrue(closeBody.contains("barrier.isLocked(player.getUUID())"));
+        assertTrue(closeBody.contains("player.containerMenu!=player.inventoryMenu"));
+        assertTrue(hasInvocation(closeContainer, "player", "closeContainer"));
+    }
+
+    @Test
+    void synchronousFarmChunkTelemetryIsConditionalOnLiveSettlementMetrics()
+            throws IOException {
+        String chunkManager = source("src/main/java/com/stardew/craft/farm/FarmChunkManager.java");
+        String metrics = source(
+                "src/main/java/com/stardew/craft/server/performance/DailySettlementMetrics.java");
+        assertTrue(chunkManager.contains("measureSynchronousChunkLoad"));
+        assertTrue(metrics.contains("DAILY_SYNC_CHUNK_LOADS"));
+        assertTrue(metrics.contains("DAILY_SYNC_CHUNK_LOAD"));
+        assertTrue(metrics.contains("coordinator().isActive()"));
+    }
+
     private static void assertDate(
             StardewTimeManager time, int year, int season, int day, int minute) {
         assertEquals(year, time.getCurrentYear());

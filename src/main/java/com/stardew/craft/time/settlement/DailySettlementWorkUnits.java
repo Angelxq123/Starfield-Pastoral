@@ -218,6 +218,11 @@ public final class DailySettlementWorkUnits {
         }
 
         @Override
+        public boolean isAtomic() {
+            return true;
+        }
+
+        @Override
         public synchronized void close() {
             if (closed) {
                 return;
@@ -282,6 +287,16 @@ public final class DailySettlementWorkUnits {
         @Override
         public int maxRetries() {
             return requireCurrentChild().maxRetries();
+        }
+
+        @Override
+        public String subsystemName() {
+            return requireCurrentChild().subsystemName();
+        }
+
+        @Override
+        public boolean isAtomic() {
+            return requireCurrentChild().isAtomic();
         }
 
         @Override
@@ -412,6 +427,19 @@ public final class DailySettlementWorkUnits {
             requireOpen();
             initialize();
             return creationFailure == null ? delegate.maxRetries() : 0;
+        }
+
+        @Override
+        public String subsystemName() {
+            initialize();
+            return creationFailure == null && delegate != null
+                    ? delegate.subsystemName() : name;
+        }
+
+        @Override
+        public boolean isAtomic() {
+            initialize();
+            return creationFailure == null && delegate != null && delegate.isAtomic();
         }
 
         @Override

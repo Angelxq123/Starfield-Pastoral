@@ -4,8 +4,15 @@ import java.util.Map;
 
 public record PerformanceSnapshot(
     Map<PerformanceTiming, TimingSummary> timings,
-    Map<PerformanceCounter, Long> counters
+    Map<PerformanceCounter, Long> counters,
+    DailySettlementMetrics.ReadySummary dailySettlement
 ) {
+    public PerformanceSnapshot(
+            Map<PerformanceTiming, TimingSummary> timings,
+            Map<PerformanceCounter, Long> counters) {
+        this(timings, counters, null);
+    }
+
     public PerformanceSnapshot {
         timings = Map.copyOf(timings);
         counters = Map.copyOf(counters);

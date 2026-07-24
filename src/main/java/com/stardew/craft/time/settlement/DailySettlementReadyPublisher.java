@@ -1,6 +1,7 @@
 package com.stardew.craft.time.settlement;
 
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
+import com.stardew.craft.server.performance.DailySettlementMetrics;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -16,6 +17,7 @@ final class DailySettlementReadyPublisher
         implements DailySettlementCoordinator.LifecycleListener {
     private final DailySettlementBarrier barrier;
     private final Operations operations;
+    private final DailySettlementMetrics metrics;
     private final Map<UUID, DailySettlementBarrier.ReadyResult> retainedResults =
             new LinkedHashMap<>();
     private final Set<UUID> sent = new java.util.HashSet<>();
@@ -26,15 +28,24 @@ final class DailySettlementReadyPublisher
 
     DailySettlementReadyPublisher(
             DailySettlementBarrier barrier, Operations operations) {
+        this(barrier, operations, null);
+    }
+
+    DailySettlementReadyPublisher(
+            DailySettlementBarrier barrier,
+            Operations operations,
+            DailySettlementMetrics metrics) {
         this.barrier = Objects.requireNonNull(barrier, "barrier");
         this.operations = Objects.requireNonNull(operations, "operations");
+        this.metrics = metrics;
     }
 
     static DailySettlementReadyPublisher production(
             MinecraftServer server,
             DailySettlementBarrier barrier,
             PlayerDailySettlementService players,
-            DailySettlementCommitHooks commitHooks) {
+            DailySettlementCommitHooks commitHooks,
+            DailySettlementMetrics metrics) {
         WeakReference<MinecraftServer> reference =
                 new WeakReference<>(Objects.requireNonNull(server, "server"));
         return new DailySettlementReadyPublisher(barrier, new Operations() {
@@ -83,7 +94,7 @@ final class DailySettlementReadyPublisher
                 }
                 return player;
             }
-        });
+        }, Objects.requireNonNull(metrics, "metrics"));
     }
 
     @Override
@@ -98,9 +109,6 @@ final class DailySettlementReadyPublisher
             String itemIdentity,
             int attempt,
             boolean permanent) {
-        com.stardew.craft.StardewCraft.LOGGER.error(
-                "[DAILY] unit={} item={} attempt={} permanent={}",
-                unitName, itemIdentity, attempt, permanent);
     }
 
     @Override
@@ -139,6 +147,10 @@ final class DailySettlementReadyPublisher
                 operations.wake(playerId);
                 woken.add(playerId);
             }
+        }
+        if (metrics != null) {
+            DailySettlementMetrics.ReadySummary summary = metrics.completeReady();
+            metrics.publishReady(summary);
         }
     }
 

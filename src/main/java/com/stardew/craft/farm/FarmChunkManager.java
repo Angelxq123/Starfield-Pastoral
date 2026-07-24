@@ -90,6 +90,11 @@ public class FarmChunkManager {
                         tracker.acquire(level, newChunks);
                 rootLeases.add(rootLease);
                 heldChunks.addAll(newChunks);
+                if (level instanceof ServerLevel serverLevel) {
+                    com.stardew.craft.server.performance.DailySettlementMetrics
+                            .recordDailySettlementChunkLeases(
+                                    serverLevel.getServer(), newChunks.size());
+                }
             }
             return () -> {};
         }

@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.server.performance.DailySettlementMetrics;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntSupplier;
+import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 
 public final class DailySettlementCoordinator {
@@ -17,6 +19,8 @@ public final class DailySettlementCoordinator {
     private final IntSupplier itemLimit;
     private final PlanFactory planFactory;
     private final LifecycleListener listener;
+    private final DailySettlementMetrics metrics;
+    private final BooleanSupplier serverThread;
     private final Set<DailySettlementWorkUnit> closedUnits =
             Collections.newSetFromMap(new IdentityHashMap<>());
 
@@ -33,11 +37,25 @@ public final class DailySettlementCoordinator {
             IntSupplier itemLimit,
             PlanFactory planFactory,
             LifecycleListener listener) {
+        this(runner, budgetNanos, itemLimit, planFactory, listener,
+                DailySettlementMetrics.production(), () -> true);
+    }
+
+    public DailySettlementCoordinator(
+            BudgetedWorkRunner runner,
+            LongSupplier budgetNanos,
+            IntSupplier itemLimit,
+            PlanFactory planFactory,
+            LifecycleListener listener,
+            DailySettlementMetrics metrics,
+            BooleanSupplier serverThread) {
         this.runner = Objects.requireNonNull(runner, "runner");
         this.budgetNanos = Objects.requireNonNull(budgetNanos, "budgetNanos");
         this.itemLimit = Objects.requireNonNull(itemLimit, "itemLimit");
         this.planFactory = Objects.requireNonNull(planFactory, "planFactory");
         this.listener = Objects.requireNonNull(listener, "listener");
+        this.metrics = Objects.requireNonNull(metrics, "metrics");
+        this.serverThread = Objects.requireNonNull(serverThread, "serverThread");
     }
 
     public DailySettlementPhase phase() {
@@ -53,6 +71,7 @@ public final class DailySettlementCoordinator {
     }
 
     public boolean start(DailySettlementContext newContext) {
+        requireServerThread();
         Objects.requireNonNull(newContext, "context");
         if (isActive()) {
             if (context.absoluteDay() == newContext.absoluteDay()) {
@@ -64,6 +83,7 @@ public final class DailySettlementCoordinator {
         }
 
         closedUnits.clear();
+        metrics.begin(newContext.absoluteDay());
         SettlementPlanBuilder builder = new SettlementPlanBuilder();
         SettlementPlan createdPlan;
         try {
@@ -72,6 +92,7 @@ public final class DailySettlementCoordinator {
         } catch (RuntimeException | Error failure) {
             builder.seal();
             closeUnits(builder.registeredUnits(), failure);
+            metrics.abort();
             resetToIdle();
             throw failure;
         }
@@ -87,23 +108,39 @@ public final class DailySettlementCoordinator {
     }
 
     public void tick() {
+        requireServerThread();
         if (phase == DailySettlementPhase.IDLE) {
             return;
         }
+        long tickStartedAt = metrics.beginTick();
+        long tickWorkNanos = 0L;
+        try {
+            tickWorkNanos = tickActive();
+        } finally {
+            metrics.endTick(tickStartedAt, tickWorkNanos);
+        }
         if (phase == DailySettlementPhase.READY) {
             if (notifyReady()) {
+                if (metrics.readySummary() == null) {
+                    metrics.completeReady();
+                }
                 resetToIdle();
             }
-            return;
+        }
+    }
+
+    private long tickActive() {
+        if (phase == DailySettlementPhase.READY) {
+            return 0L;
         }
 
         DailySettlementWorkUnit unit = advanceToWork();
         if (unit == null) {
-            return;
+            return 0L;
         }
         if (unit.isComplete()) {
             completeCurrentUnit(unit);
-            return;
+            return 0L;
         }
 
         long tickBudget = budgetNanos.getAsLong();
@@ -117,14 +154,16 @@ public final class DailySettlementCoordinator {
         int effectiveItemLimit = consecutiveFailures > 0
                 ? Math.min(tickItemLimit, 1)
                 : tickItemLimit;
-        GuardedWorkUnit guardedUnit = new GuardedWorkUnit(unit, context);
+        String budgetSubsystemName = unit.subsystemName();
+        GuardedWorkUnit guardedUnit = new GuardedWorkUnit(
+                unit, context, metrics, phase == DailySettlementPhase.PLAYER_BATCHES);
         BudgetedWorkRunner.TickResult result;
         try {
             result = runGuarded(guardedUnit, tickBudget, effectiveItemLimit);
         } catch (WorkItemExecutionException failure) {
             resetFailuresAfterProgress(guardedUnit);
             handleItemFailure(unit);
-            return;
+            return guardedUnit.elapsedNanos();
         } catch (RuntimeException | Error failure) {
             resetFailuresAfterProgress(guardedUnit);
             throw failure;
@@ -133,9 +172,18 @@ public final class DailySettlementCoordinator {
         if (result.complete()) {
             completeCurrentUnit(unit);
         }
+        if (result.overshootNanos() > 0L) {
+            metrics.recordOvershoot(budgetSubsystemName, result.overshootNanos());
+        }
+        if (guardedUnit.successfulRuns() > 0
+                && "settlement_barrier_lock".equals(unit.name())) {
+            metrics.markLocked();
+        }
+        return result.elapsedNanos();
     }
 
     public boolean drain() {
+        requireServerThread();
         long now = System.nanoTime();
         long deadline = now > Long.MAX_VALUE - STOP_DRAIN_TIMEOUT_NANOS
                 ? Long.MAX_VALUE : now + STOP_DRAIN_TIMEOUT_NANOS;
@@ -143,10 +191,12 @@ public final class DailySettlementCoordinator {
     }
 
     boolean drain(int attemptLimit) {
+        requireServerThread();
         return drain(() -> 0L, Long.MAX_VALUE, attemptLimit);
     }
 
     boolean drain(LongSupplier clock, long deadlineNanos, int attemptLimit) {
+        requireServerThread();
         Objects.requireNonNull(clock, "clock");
         if (attemptLimit <= 0) {
             throw new IllegalArgumentException("attemptLimit must be positive");
@@ -160,6 +210,9 @@ public final class DailySettlementCoordinator {
             attempts++;
             if (phase == DailySettlementPhase.READY) {
                 if (notifyReady()) {
+                    if (metrics.readySummary() == null) {
+                        metrics.completeReady();
+                    }
                     resetToIdle();
                 }
                 continue;
@@ -174,7 +227,9 @@ public final class DailySettlementCoordinator {
             }
 
             try {
-                DailySettlementDateView.run(context, unit::runNext);
+                new GuardedWorkUnit(
+                        unit, context, metrics,
+                        phase == DailySettlementPhase.PLAYER_BATCHES).runNext();
             } catch (Exception failure) {
                 handleItemFailure(unit);
                 continue;
@@ -188,6 +243,7 @@ public final class DailySettlementCoordinator {
     }
 
     public void finishReady() {
+        requireServerThread();
         if (phase != DailySettlementPhase.READY || !readyNotified) {
             throw new IllegalStateException("Settlement is not ready for completion");
         }
@@ -240,6 +296,7 @@ public final class DailySettlementCoordinator {
         int attempt = consecutiveFailures + 1;
         boolean permanent = attempt > maxRetries;
         consecutiveFailures = attempt;
+        metrics.recordRetry(unitName, itemIdentity, permanent);
         safeItemFailure(unitName, itemIdentity, attempt, permanent);
         if (!permanent) {
             return;
@@ -274,11 +331,6 @@ public final class DailySettlementCoordinator {
         unitCursor = 0;
         consecutiveFailures = 0;
         safePhaseChanged();
-        if (phase == DailySettlementPhase.READY) {
-            if (notifyReady()) {
-                resetToIdle();
-            }
-        }
     }
 
     private void safePhaseChanged() {
@@ -311,6 +363,10 @@ public final class DailySettlementCoordinator {
         try {
             closeUnit(unit);
         } catch (RuntimeException | Error closeFailure) {
+            try {
+                metrics.recordRetry(unit.name(), "<close>", true);
+            } catch (RuntimeException | Error ignored) {
+            }
             try {
                 safeItemFailure(unit.name(), "<close>", 1, true);
             } catch (RuntimeException | Error ignored) {
@@ -365,7 +421,15 @@ public final class DailySettlementCoordinator {
                 safeClose(unit);
             }
         }
+        metrics.abort();
         resetToIdle();
+    }
+
+    private void requireServerThread() {
+        if (!serverThread.getAsBoolean()) {
+            throw new IllegalStateException(
+                    "Daily settlement coordinator must run on the server tick thread");
+        }
     }
 
     @FunctionalInterface
@@ -429,12 +493,20 @@ public final class DailySettlementCoordinator {
     private static final class GuardedWorkUnit implements DailySettlementWorkUnit {
         private final DailySettlementWorkUnit delegate;
         private final DailySettlementContext context;
+        private final DailySettlementMetrics metrics;
+        private final boolean playerBatch;
         private int successfulRuns;
+        private long elapsedNanos;
 
         private GuardedWorkUnit(
-                DailySettlementWorkUnit delegate, DailySettlementContext context) {
+                DailySettlementWorkUnit delegate,
+                DailySettlementContext context,
+                DailySettlementMetrics metrics,
+                boolean playerBatch) {
             this.delegate = delegate;
             this.context = context;
+            this.metrics = metrics;
+            this.playerBatch = playerBatch;
         }
 
         @Override
@@ -454,10 +526,20 @@ public final class DailySettlementCoordinator {
 
         @Override
         public void runNext() throws WorkItemExecutionException {
+            String subsystemName = delegate.subsystemName();
+            boolean atomic = delegate.isAtomic();
+            long startedAt = System.nanoTime();
             try {
                 DailySettlementDateView.run(context, delegate::runNext);
                 successfulRuns++;
+                long itemNanos = Math.max(0L, System.nanoTime() - startedAt);
+                elapsedNanos += itemNanos;
+                metrics.recordItem(
+                        subsystemName, itemNanos, atomic, playerBatch);
             } catch (Exception failure) {
+                long itemNanos = Math.max(0L, System.nanoTime() - startedAt);
+                elapsedNanos += itemNanos;
+                metrics.recordFailedAttempt(subsystemName, itemNanos, atomic);
                 throw new WorkItemExecutionException(failure);
             }
         }
@@ -472,8 +554,22 @@ public final class DailySettlementCoordinator {
             return delegate.maxRetries();
         }
 
+        @Override
+        public String subsystemName() {
+            return delegate.subsystemName();
+        }
+
+        @Override
+        public boolean isAtomic() {
+            return delegate.isAtomic();
+        }
+
         private int successfulRuns() {
             return successfulRuns;
+        }
+
+        private long elapsedNanos() {
+            return elapsedNanos;
         }
     }
 

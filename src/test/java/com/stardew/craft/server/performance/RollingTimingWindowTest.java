@@ -123,7 +123,11 @@ class RollingTimingWindowTest {
             PerformanceTiming.CONTENT_SNAPSHOT_BUILD,
             PerformanceTiming.JEI_CATALOG_BUILD,
             PerformanceTiming.FARM_SYNC_CHUNK_LOAD,
-            PerformanceTiming.DAILY_SYNC_CHUNK_LOAD
+            PerformanceTiming.DAILY_SYNC_CHUNK_LOAD,
+            PerformanceTiming.DAILY_SETTLEMENT_TOTAL,
+            PerformanceTiming.DAILY_SETTLEMENT_TICK,
+            PerformanceTiming.DAILY_SETTLEMENT_ATOMIC_ITEM,
+            PerformanceTiming.DAILY_SETTLEMENT_LOCK_TO_READY
         }, PerformanceTiming.values());
     }
 }

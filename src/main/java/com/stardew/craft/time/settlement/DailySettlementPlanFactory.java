@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.server.performance.DailySettlementMetrics;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -67,7 +68,28 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             DailySettlementBarrier barrier,
             PlayerDailySettlementService players,
             DailySettlementCommitHooks commitHooks) {
-        this(new ProductionWorkUnitFactory(server, barrier, players, commitHooks));
+        this(server, barrier, players, commitHooks,
+                new DailySettlementAccessGuard(barrier));
+    }
+
+    DailySettlementPlanFactory(
+            MinecraftServer server,
+            DailySettlementBarrier barrier,
+            PlayerDailySettlementService players,
+            DailySettlementCommitHooks commitHooks,
+            DailySettlementAccessGuard accessGuard) {
+        this(server, barrier, players, commitHooks, accessGuard, null);
+    }
+
+    DailySettlementPlanFactory(
+            MinecraftServer server,
+            DailySettlementBarrier barrier,
+            PlayerDailySettlementService players,
+            DailySettlementCommitHooks commitHooks,
+            DailySettlementAccessGuard accessGuard,
+            DailySettlementMetrics metrics) {
+        this(new ProductionWorkUnitFactory(
+                server, barrier, players, commitHooks, accessGuard, metrics));
     }
 
     @Override
@@ -131,6 +153,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private final DailySettlementBarrier barrier;
         private final PlayerDailySettlementService players;
         private final DailySettlementCommitHooks commitHooks;
+        private final DailySettlementAccessGuard accessGuard;
+        private final DailySettlementMetrics metrics;
         private final Map<String, DailySettlementWorkUnit> preparedWorld =
                 new LinkedHashMap<>();
         private Map<UUID, com.stardew.craft.farm.FarmInstance> frozenFarms = Map.of();
@@ -142,11 +166,15 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 MinecraftServer server,
                 DailySettlementBarrier barrier,
                 PlayerDailySettlementService players,
-                DailySettlementCommitHooks commitHooks) {
+                DailySettlementCommitHooks commitHooks,
+                DailySettlementAccessGuard accessGuard,
+                DailySettlementMetrics metrics) {
             this.server = new WeakReference<>(Objects.requireNonNull(server, "server"));
             this.barrier = Objects.requireNonNull(barrier, "barrier");
             this.players = Objects.requireNonNull(players, "players");
             this.commitHooks = Objects.requireNonNull(commitHooks, "commitHooks");
+            this.accessGuard = Objects.requireNonNull(accessGuard, "accessGuard");
+            this.metrics = metrics;
         }
 
         @Override
@@ -303,10 +331,14 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
 
         private void lockBarrier(DailySettlementContext context) {
             barrier.lockAll(context.absoluteDay(), context.playerIds());
+            if (metrics != null) {
+                metrics.markLocked();
+            }
             for (UUID playerId : context.playerIds()) {
                 net.minecraft.server.level.ServerPlayer player =
                         server().getPlayerList().getPlayer(playerId);
                 if (player != null) {
+                    accessGuard.captureAnchor(player);
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
                             player,
                             new com.stardew.craft.network.overnight.OvernightBarrierPayload(

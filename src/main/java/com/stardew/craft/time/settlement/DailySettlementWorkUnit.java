@@ -11,6 +11,14 @@ public interface DailySettlementWorkUnit extends AutoCloseable {
 
     void skipFailedItem();
 
+    default String subsystemName() {
+        return name();
+    }
+
+    default boolean isAtomic() {
+        return false;
+    }
+
     default int maxRetries() {
         return 0;
     }

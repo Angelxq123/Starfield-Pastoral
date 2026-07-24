@@ -151,8 +151,12 @@ public final class StardewTimePauseService {
         boolean changed = simulationPaused != nextSimulationPaused || clockPaused != nextClockPaused;
         simulationPaused = nextSimulationPaused;
         clockPaused = nextClockPaused;
+        com.stardew.craft.time.settlement.DailySettlementServices.Services settlementServices =
+                com.stardew.craft.time.settlement.DailySettlementServices.find(server);
+        boolean settlementActive = settlementServices != null
+                && settlementServices.coordinator().isActive();
         if (!simulationPaused) {
-            timeManager.advanceSimulationGameTime();
+            timeManager.advanceSimulationGameTime(settlementActive);
         }
         if (changed) {
             TimeSyncPacket packet = TimeSyncPacket.fromTimeManager(timeManager);

@@ -1,6 +1,9 @@
 package com.stardew.craft.time.settlement;
 
 import net.minecraft.server.MinecraftServer;
+import com.stardew.craft.Config;
+import com.stardew.craft.server.performance.DailySettlementMetrics;
+import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,32 +70,42 @@ public final class DailySettlementServices {
 
     private static Services create(MinecraftServer server) {
         DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard accessGuard = new DailySettlementAccessGuard(barrier);
+        DailySettlementMetrics metrics = DailySettlementMetrics.production();
         PlayerDailySettlementService players = new PlayerDailySettlementService(server);
         DailySettlementCommitHooks commitHooks =
                 DailySettlementCommitHooks.production(server);
         DailySettlementPlanFactory plan =
-                new DailySettlementPlanFactory(server, barrier, players, commitHooks);
+                new DailySettlementPlanFactory(
+                        server, barrier, players, commitHooks, accessGuard, metrics);
         DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
                 new BudgetedWorkRunner(System::nanoTime),
-                () -> 2_000_000L,
-                () -> 64,
+                () -> TimeUnit.MILLISECONDS.toNanos(
+                        Config.DAILY_SETTLEMENT_BUDGET_MILLIS.get().longValue()),
+                () -> Config.DAILY_SETTLEMENT_ITEM_LIMIT.get(),
                 plan,
                 DailySettlementReadyPublisher.production(
-                        server, barrier, players, commitHooks));
-        return new Services(coordinator, barrier, plan, players);
+                        server, barrier, players, commitHooks, metrics),
+                metrics,
+                server::isSameThread);
+        return new Services(coordinator, barrier, accessGuard, plan, players, metrics);
     }
 
     public record Services(
             DailySettlementCoordinator coordinator,
             DailySettlementBarrier barrier,
+            DailySettlementAccessGuard accessGuard,
             DailySettlementPlanFactory plan,
-            PlayerDailySettlementService players) {
+            PlayerDailySettlementService players,
+            DailySettlementMetrics metrics) {
 
         public Services {
             Objects.requireNonNull(coordinator, "coordinator");
             Objects.requireNonNull(barrier, "barrier");
+            Objects.requireNonNull(accessGuard, "accessGuard");
             Objects.requireNonNull(plan, "plan");
             Objects.requireNonNull(players, "players");
+            Objects.requireNonNull(metrics, "metrics");
         }
 
         public void stop() {
@@ -106,8 +119,12 @@ public final class DailySettlementServices {
                 try {
                     plan.cleanup();
                 } finally {
-                    barrier.clear();
-                    players.clear();
+                    try {
+                        accessGuard.clear();
+                    } finally {
+                        barrier.clear();
+                        players.clear();
+                    }
                 }
             }
         }

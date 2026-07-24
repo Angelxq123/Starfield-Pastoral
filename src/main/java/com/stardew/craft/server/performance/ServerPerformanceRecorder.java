@@ -16,6 +16,7 @@ public final class ServerPerformanceRecorder {
     private static final EnumMap<PerformanceTiming, RollingTimingWindow> TIMINGS =
         new EnumMap<>(PerformanceTiming.class);
     private static final long[] COUNTERS = new long[PerformanceCounter.values().length];
+    private static DailySettlementMetrics.ReadySummary dailySettlement;
 
     static {
         for (PerformanceTiming timing : PerformanceTiming.values()) {
@@ -49,6 +50,16 @@ public final class ServerPerformanceRecorder {
         COUNTERS[index] = current > Long.MAX_VALUE - amount
             ? Long.MAX_VALUE
             : current + amount;
+    }
+
+    public static long counterValue(PerformanceCounter counter) {
+        Objects.requireNonNull(counter, "counter");
+        return COUNTERS[counter.ordinal()];
+    }
+
+    public static void publishDailySettlement(
+            DailySettlementMetrics.ReadySummary summary) {
+        dailySettlement = Objects.requireNonNull(summary, "summary");
     }
 
     /**
@@ -94,7 +105,7 @@ public final class ServerPerformanceRecorder {
         for (PerformanceCounter counter : PerformanceCounter.values()) {
             counterSnapshots.put(counter, COUNTERS[counter.ordinal()]);
         }
-        return new PerformanceSnapshot(timingSnapshots, counterSnapshots);
+        return new PerformanceSnapshot(timingSnapshots, counterSnapshots, dailySettlement);
     }
 
     /**
@@ -105,5 +116,6 @@ public final class ServerPerformanceRecorder {
             timingWindow.clear();
         }
         Arrays.fill(COUNTERS, 0L);
+        dailySettlement = null;
     }
 }

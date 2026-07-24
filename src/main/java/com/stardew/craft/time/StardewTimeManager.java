@@ -120,6 +120,13 @@ public class StardewTimeManager extends SavedData {
      * @return 本次实际推进的 dayTime tick 数
      */
     public long advanceIndependentDayTime(double multiplier) {
+        return advanceIndependentDayTime(multiplier, isDailySettlementActive());
+    }
+
+    public long advanceIndependentDayTime(double multiplier, boolean settlementActive) {
+        if (settlementActive) {
+            return 0L;
+        }
         TimeAdvance advance = calculateTimeAdvance(timeAdvanceRemainder, multiplier);
         timeAdvanceRemainder = advance.remainder();
         if (advance.wholeTicks() > 0L) {
@@ -178,11 +185,27 @@ public class StardewTimeManager extends SavedData {
     }
 
     public void advanceSimulationGameTime() {
+        advanceSimulationGameTime(isDailySettlementActive());
+    }
+
+    public void advanceSimulationGameTime(boolean settlementActive) {
+        if (settlementActive) {
+            return;
+        }
         if (simulationGameTime < 0L) {
             throw new IllegalStateException("Stardew simulation gameTime was not initialized");
         }
         simulationGameTime++;
         setDirty();
+    }
+
+    private static boolean isDailySettlementActive() {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return false;
+        }
+        var services = com.stardew.craft.time.settlement.DailySettlementServices.find(server);
+        return services != null && services.coordinator().isActive();
     }
     
     /**

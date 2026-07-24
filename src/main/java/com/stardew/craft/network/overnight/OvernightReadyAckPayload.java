@@ -37,7 +37,7 @@ public record OvernightReadyAckPayload(int absoluteDay) implements CustomPacketP
                         player.getUUID(), payload.absoluteDay())) {
                     return;
                 }
-                if (services.barrier().acknowledge(
+                if (services.accessGuard().acknowledge(
                         player.getUUID(), payload.absoluteDay())) {
                     services.players().acknowledgeReady(
                             player.getUUID(), payload.absoluteDay());

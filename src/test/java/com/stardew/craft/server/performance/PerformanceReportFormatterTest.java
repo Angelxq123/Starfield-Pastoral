@@ -39,12 +39,24 @@ class PerformanceReportFormatterTest {
             "JEI_CATALOG_BUILD samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "FARM_SYNC_CHUNK_LOAD samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "DAILY_SYNC_CHUNK_LOAD samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "DAILY_SETTLEMENT_TOTAL samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "DAILY_SETTLEMENT_TICK samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "DAILY_SETTLEMENT_ATOMIC_ITEM samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "DAILY_SETTLEMENT_LOCK_TO_READY samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "CONTENT_SYNC_RECIPIENTS=0",
             "CONTENT_SYNC_PACKETS=16",
             "CONTENT_REGISTRY_BYTES=0",
             "JEI_CATALOG_ENTRIES=0",
             "FARM_SYNC_CHUNK_LOADS=0",
-            "DAILY_SYNC_CHUNK_LOADS=0"
+            "DAILY_SYNC_CHUNK_LOADS=0",
+            "DAILY_SETTLEMENT_TICKS=0",
+            "DAILY_SETTLEMENT_ITEMS=0",
+            "DAILY_SETTLEMENT_CHUNK_LEASES=0",
+            "DAILY_SETTLEMENT_OVERSHOOTS=0",
+            "DAILY_SETTLEMENT_RETRIES=0",
+            "DAILY_SETTLEMENT_PERMANENT_FAILURES=0",
+            "DAILY_SETTLEMENT_PLAYER_BATCHES=0",
+            "DAILY_SETTLEMENT_READY_PUBLICATIONS=0"
         ), lines);
     }
 

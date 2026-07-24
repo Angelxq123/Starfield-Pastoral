@@ -33,6 +33,10 @@ public final class Config {
 
     public static final ModConfigSpec.IntValue MAX_STACK_SIZE = GENERAL.MAX_STACK_SIZE;
     public static final ModConfigSpec.DoubleValue TIME_SPEED_MULTIPLIER = GENERAL.TIME_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.IntValue DAILY_SETTLEMENT_BUDGET_MILLIS =
+            GENERAL.DAILY_SETTLEMENT_BUDGET_MILLIS;
+    public static final ModConfigSpec.IntValue DAILY_SETTLEMENT_ITEM_LIMIT =
+            GENERAL.DAILY_SETTLEMENT_ITEM_LIMIT;
 
     public static final ModConfigSpec.BooleanValue TOTEM_POLE_ENFORCE_PLACEMENT_RULES = TOTEM_POLE.ENFORCE_PLACEMENT_RULES;
 
@@ -239,6 +243,8 @@ public final class Config {
     public static final class General {
         public final ModConfigSpec.IntValue MAX_STACK_SIZE;
         public final ModConfigSpec.DoubleValue TIME_SPEED_MULTIPLIER;
+        public final ModConfigSpec.IntValue DAILY_SETTLEMENT_BUDGET_MILLIS;
+        public final ModConfigSpec.IntValue DAILY_SETTLEMENT_ITEM_LIMIT;
 
         private General(ModConfigSpec.Builder builder) {
             builder.push("general");
@@ -253,6 +259,12 @@ public final class Config {
                             "1.0 is the normal speed; fractional values are accumulated exactly.")
                     .translation("config.stardewcraft.general.time_speed_multiplier")
                     .defineInRange("timeSpeedMultiplier", 1.0D, 0.1D, 100.0D);
+            DAILY_SETTLEMENT_BUDGET_MILLIS = builder
+                    .comment("Maximum daily settlement work time per server tick in milliseconds.")
+                    .defineInRange("dailySettlementBudgetMillis", 4, 1, 10);
+            DAILY_SETTLEMENT_ITEM_LIMIT = builder
+                    .comment("Maximum daily settlement work items processed per server tick.")
+                    .defineInRange("dailySettlementItemLimit", 256, 1, 4096);
             builder.pop();
         }
     }

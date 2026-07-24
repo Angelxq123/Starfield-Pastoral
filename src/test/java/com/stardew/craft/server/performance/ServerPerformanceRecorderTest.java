@@ -38,7 +38,15 @@ class ServerPerformanceRecorderTest {
             PerformanceCounter.CONTENT_REGISTRY_BYTES,
             PerformanceCounter.JEI_CATALOG_ENTRIES,
             PerformanceCounter.FARM_SYNC_CHUNK_LOADS,
-            PerformanceCounter.DAILY_SYNC_CHUNK_LOADS
+            PerformanceCounter.DAILY_SYNC_CHUNK_LOADS,
+            PerformanceCounter.DAILY_SETTLEMENT_TICKS,
+            PerformanceCounter.DAILY_SETTLEMENT_ITEMS,
+            PerformanceCounter.DAILY_SETTLEMENT_CHUNK_LEASES,
+            PerformanceCounter.DAILY_SETTLEMENT_OVERSHOOTS,
+            PerformanceCounter.DAILY_SETTLEMENT_RETRIES,
+            PerformanceCounter.DAILY_SETTLEMENT_PERMANENT_FAILURES,
+            PerformanceCounter.DAILY_SETTLEMENT_PLAYER_BATCHES,
+            PerformanceCounter.DAILY_SETTLEMENT_READY_PUBLICATIONS
         }, PerformanceCounter.values());
     }
 

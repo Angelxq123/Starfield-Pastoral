@@ -871,7 +871,7 @@ class DailySettlementLifecycleContractTest {
                 "src/main/java/com/stardew/craft/network/overnight/OvernightReadyAckPayload.java");
         String ackHandler = ack.method("handle", 2).getBody().toString();
         assertTrue(ackHandler.indexOf("hasCompletedReady")
-                < ackHandler.indexOf("barrier().acknowledge"),
+                < ackHandler.indexOf("accessGuard().acknowledge"),
                 "an ACK must not unlock a fallback without a completed payload");
         assertTrue(barrier.acknowledge(playerId, target.absoluteDay()));
         assertTrue(service.acknowledgeReady(playerId, target.absoluteDay()));

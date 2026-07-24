@@ -462,7 +462,8 @@ public class DimensionEventHandler {
         // 星露谷时钟只由自己的暂停/节日状态控制，完全不读取主世界昼夜规则。
         if (!settlementActive && !clockPaused
                 && !com.stardew.craft.festival.ActiveFestivalHandlers.isAnyTimeFreezeActive()) {
-            timeManager.advanceIndependentDayTime(com.stardew.craft.Config.TIME_SPEED_MULTIPLIER.get());
+            timeManager.advanceIndependentDayTime(
+                    com.stardew.craft.Config.TIME_SPEED_MULTIPLIER.get(), settlementActive);
         }
         long virtualDayTime = com.stardew.craft.festival.ActiveFestivalHandlers.applyTimeFreeze(serverLevel, timeManager);
         serverLevel.setDayTime(virtualDayTime);

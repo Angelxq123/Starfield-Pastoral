@@ -33,6 +33,10 @@ public record OvernightReadyAckPayload(int absoluteDay) implements CustomPacketP
             }
             DailySettlementServices.Services services = DailySettlementServices.find(player.server);
             if (services != null) {
+                if (!services.players().hasCompletedReady(
+                        player.getUUID(), payload.absoluteDay())) {
+                    return;
+                }
                 if (services.barrier().acknowledge(
                         player.getUUID(), payload.absoluteDay())) {
                     services.players().acknowledgeReady(

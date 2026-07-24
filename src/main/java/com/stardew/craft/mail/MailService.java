@@ -275,11 +275,20 @@ public class MailService {
      * 让温室、鱼塘淘金、公告板奖励等和 CC 路径一样生效。
      */
     public static void deliverAllTomorrowMail(net.minecraft.server.MinecraftServer server) {
+        deliverTomorrowMail(server, server.getPlayerList().getPlayers());
+    }
+
+    public static void deliverTomorrowMail(
+            net.minecraft.server.MinecraftServer server,
+            java.util.Collection<ServerPlayer> players) {
+        java.util.Objects.requireNonNull(server, "server");
+        java.util.List<ServerPlayer> audience = java.util.List.copyOf(
+                java.util.Objects.requireNonNull(players, "players"));
         int today = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
         PlayerDataManager manager = PlayerDataManager.get();
         net.minecraft.server.level.ServerLevel stardewLevel =
             server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+        for (ServerPlayer player : audience) {
             PlayerStardewData data = manager.getOrCreateData(player.getUUID());
             int beforeMailbox = data.getMailbox().size();
             int beforeTomorrow = data.getMailForTomorrow().size();

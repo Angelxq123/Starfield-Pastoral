@@ -271,9 +271,27 @@ public final class PlayerDailySettlementService {
             return result;
         }
         pending.save(context, playerId);
+        Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
+        if (payload.isPresent()) {
+            DailySettlementBarrier.ReadyResult completed =
+                    new DailySettlementBarrier.ReadyResult(
+                            context.absoluteDay(), payload.orElseThrow());
+            pending.complete(playerId, completed.payload());
+            readyResults.put(playerId, completed);
+            finishPreparedSettlement(context, playerId);
+            return completed;
+        }
         DailySettlementBarrier.ReadyResult fallback = pendingReadyResult(context);
         readyResults.put(playerId, fallback);
         return fallback;
+    }
+
+    public boolean hasCompletedReady(UUID playerId, int absoluteDay) {
+        Objects.requireNonNull(playerId, "playerId");
+        return pending.find(playerId)
+                .filter(progress -> progress.absoluteDay() == absoluteDay)
+                .flatMap(PendingSettlement::completedPayload)
+                .isPresent();
     }
 
     Optional<DailySettlementBarrier.ReadyResult> onLogin(

@@ -264,6 +264,14 @@ public class StardewTimeManager extends SavedData {
                 com.stardew.craft.time.settlement.DailySettlementServices.get(server);
         java.util.List<net.minecraft.server.level.ServerPlayer> rolloverPlayers =
                 java.util.List.copyOf(server.getPlayerList().getPlayers());
+        java.util.List<java.util.UUID> allOnlinePlayerIds = rolloverPlayers.stream()
+                .map(net.minecraft.server.level.ServerPlayer::getUUID)
+                .toList();
+        java.util.List<java.util.UUID> valleyOnlinePlayerIds = rolloverPlayers.stream()
+                .filter(player -> player.level().dimension()
+                        == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY)
+                .map(net.minecraft.server.level.ServerPlayer::getUUID)
+                .toList();
         java.util.List<java.util.UUID> participants = rolloverPlayers.stream()
                 .filter(services.players()::participates)
                 .map(net.minecraft.server.level.ServerPlayer::getUUID)
@@ -276,14 +284,16 @@ public class StardewTimeManager extends SavedData {
                 com.stardew.craft.farm.FarmInstanceRegistry.get();
         java.util.Set<java.util.UUID> owners =
                 com.stardew.craft.time.settlement.DailySettlementPlanFactory.farmOwnerAudience(
-                        participants, farms::getOwnerForPlayer);
+                        allOnlinePlayerIds, farms::getOwnerForPlayer);
         DailySettlementContext context =
                 com.stardew.craft.time.settlement.DailySettlementContextFactory.captureNextDay(
                         this,
                         sleepMinute,
                         java.util.List.copyOf(participants),
                         java.util.Set.copyOf(owners),
-                        java.util.List.copyOf(nonParticipantCleanupIds));
+                        java.util.List.copyOf(nonParticipantCleanupIds),
+                        java.util.List.copyOf(allOnlinePlayerIds),
+                        java.util.List.copyOf(valleyOnlinePlayerIds));
         services.coordinator().start(context);
     }
 

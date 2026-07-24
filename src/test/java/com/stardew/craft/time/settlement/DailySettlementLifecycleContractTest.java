@@ -559,30 +559,47 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void productionAudienceSelectorsKeepLegacyMailAndValleyCoverageButFreezeDailyScope()
+    void frozenCommitHookAudiencesExcludeLateLoginsAndDoNotReplaceLogouts()
             throws Exception {
-        AudiencePlayer overworldFarmMember = audience("overworld_farm", false);
-        AudiencePlayer valleyWithoutFarm = audience("valley_no_farm", true);
-        AudiencePlayer miningFarmMember = audience("mining_farm", false);
-        AudiencePlayer valleyFarmMember = audience("valley_farm", true);
-        List<AudiencePlayer> online = List.of(
-                overworldFarmMember, valleyWithoutFarm, miningFarmMember, valleyFarmMember);
+        AudiencePlayer mainWorldAtStart = audience("main_world_start", false);
+        AudiencePlayer valleyAtStart = audience("valley_start", true);
+        AudiencePlayer valleyLoggedOut = audience("valley_logout", true);
+        AudiencePlayer lateValleyLogin = audience("valley_late", true);
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false,
+                List.of(valleyAtStart.id()), Set.of(), List.of(),
+                List.of(mainWorldAtStart.id(), valleyAtStart.id(), valleyLoggedOut.id()),
+                List.of(valleyAtStart.id(), valleyLoggedOut.id()));
+        Map<UUID, AudiencePlayer> onlineAfterStart = Map.of(
+                mainWorldAtStart.id(), mainWorldAtStart,
+                valleyAtStart.id(), valleyAtStart,
+                lateValleyLogin.id(), lateValleyLogin);
 
-        assertEquals(online, DailySettlementPlanFactory.mailAudience(online));
         assertEquals(
-                List.of(valleyWithoutFarm, valleyFarmMember),
-                DailySettlementPlanFactory.valleyAudience(online, AudiencePlayer::valley));
+                List.of(mainWorldAtStart, valleyAtStart),
+                DailySettlementPlanFactory.resolveOnlineAudience(
+                        target.allOnlinePlayerIds(), onlineAfterStart::get));
+        assertEquals(
+                List.of(valleyAtStart),
+                DailySettlementPlanFactory.resolveOnlineAudience(
+                        target.valleyOnlinePlayerIds(), onlineAfterStart::get));
         ParsedClass factory = parse(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
+        String orders = factory.method("specialOrders", 1).getBody().toString();
         String mail = factory.method("mail", 1).getBody().toString();
-        String valley = factory.method("onlineValleyPlayers", 0).getBody().toString();
+        String bookseller = factory.method("bookseller", 1).getBody().toString();
         String scope = factory.method("beginDailyProcess", 1).getBody().toString();
-        assertTrue(mail.contains("mailAudience"));
-        assertFalse(mail.contains("context.playerIds()"));
-        assertTrue(valley.contains("valleyAudience"));
+        assertTrue(orders.contains("context.allOnlinePlayerIds()"));
+        assertTrue(mail.contains("context.allOnlinePlayerIds()"));
+        assertTrue(bookseller.contains("context.valleyOnlinePlayerIds()"));
+        assertTrue(mail.contains("deliverTomorrowMail"));
+        assertFalse(mail.contains("deliverAllTomorrowMail"));
+        assertFalse(orders.contains("getPlayers()"));
+        assertFalse(mail.contains("getPlayers()"));
+        assertFalse(bookseller.contains("getPlayers()"));
         assertFalse(scope.contains("dailyScopeAudience"));
         assertFalse(scope.contains("getPlayerList"));
-        assertTrue(scope.contains("context.playerIds()"));
+        assertTrue(scope.contains("context.allOnlinePlayerIds()"));
     }
 
     @Test
@@ -613,30 +630,34 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void frozenParticipantsDeriveUniqueFarmOwnersAndIgnoreLaterAudienceChanges() {
+    void frozenAllOnlineAudienceDerivesFarmOwnersAndIgnoresLaterAudienceChanges() {
         UUID sharedOwner = UUID.randomUUID();
-        UUID sharedMember = UUID.randomUUID();
+        UUID mainWorldSharedMember = UUID.randomUUID();
         UUID soloOwner = UUID.randomUUID();
         UUID noFarm = UUID.randomUUID();
         UUID lateLogin = UUID.randomUUID();
         Map<UUID, UUID> ownerByPlayer = Map.of(
                 sharedOwner, sharedOwner,
-                sharedMember, sharedOwner,
+                mainWorldSharedMember, sharedOwner,
                 soloOwner, soloOwner);
-        List<UUID> startParticipants = new ArrayList<>(
-                List.of(sharedMember, sharedOwner, soloOwner, noFarm));
+        List<UUID> startAllOnline = new ArrayList<>(
+                List.of(mainWorldSharedMember, sharedOwner, soloOwner, noFarm));
+        List<UUID> participants = List.of(sharedOwner, soloOwner);
 
         Set<UUID> owners = DailySettlementPlanFactory.farmOwnerAudience(
-                startParticipants, ownerByPlayer::get);
+                startAllOnline, ownerByPlayer::get);
         DailySettlementContext target = new DailySettlementContext(
-                226, 3, 0, 2, 1560, false, startParticipants, owners);
-        startParticipants.clear();
-        startParticipants.add(lateLogin);
+                226, 3, 0, 2, 1560, false,
+                participants, owners, List.of(), startAllOnline, List.of(sharedOwner));
+        startAllOnline.clear();
+        startAllOnline.add(lateLogin);
 
+        assertEquals(participants, target.playerIds());
         assertEquals(
-                List.of(sharedMember, sharedOwner, soloOwner, noFarm), target.playerIds());
+                List.of(mainWorldSharedMember, sharedOwner, soloOwner, noFarm),
+                target.allOnlinePlayerIds());
         assertEquals(Set.of(sharedOwner, soloOwner), target.farmOwnerIds());
-        assertFalse(target.playerIds().contains(lateLogin));
+        assertFalse(target.allOnlinePlayerIds().contains(lateLogin));
     }
 
     @Test
@@ -822,6 +843,57 @@ class DailySettlementLifecycleContractTest {
         assertEquals(1, backend.shippingApplications);
         assertEquals(1, backend.levelApplications);
         assertEquals(1, backend.recipeApplications);
+        assertEquals(1, backend.questDayStartedCalls);
+        assertEquals(1, backend.masteryMorningCalls);
+    }
+
+    @Test
+    void coordinatorReadyPublicationCompletesAnOfflineItemThatReconnectedBeforeReady()
+            throws Exception {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        PlayerStardewData data = unsettledPlayer(playerId);
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        playerData.put(playerId, data);
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(playerData);
+        PlayerDailySettlementService service = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), target.playerIds());
+
+        service.settlePlayer(target, playerId);
+        assertEquals(0, backend.settlementCalls);
+        assertEquals(0, service.pendingSettlement(playerId).orElseThrow().stage());
+
+        backend.online = true;
+        assertTrue(DailySettlementEvents.resumePlayerSettlement(
+                service, barrier, playerId, true).isEmpty(),
+                "login must not race the active coordinator");
+        DailySettlementBarrier.ReadyResult ready =
+                service.readyResultOrCreate(target, playerId);
+
+        assertEquals(1, backend.settlementCalls);
+        assertEquals(620, data.getMoney());
+        assertEquals(data.getMaxEnergy(), data.getEnergy());
+        assertEquals(1, data.getDaysLeftForToolUpgrade());
+        assertEquals(5, ready.payload().levelUps().size());
+        assertTrue(service.pendingSettlement(playerId).orElseThrow()
+                .completedPayload().isPresent());
+        assertTrue(barrier.publishReady(playerId, ready));
+
+        ParsedClass ack = parse(
+                "src/main/java/com/stardew/craft/network/overnight/OvernightReadyAckPayload.java");
+        String ackHandler = ack.method("handle", 2).getBody().toString();
+        assertTrue(ackHandler.indexOf("hasCompletedReady")
+                < ackHandler.indexOf("barrier().acknowledge"),
+                "an ACK must not unlock a fallback without a completed payload");
+        assertTrue(barrier.acknowledge(playerId, target.absoluteDay()));
+        assertTrue(service.acknowledgeReady(playerId, target.absoluteDay()));
+        assertTrue(service.pendingSettlement(playerId).isEmpty());
+        assertEquals(1, backend.settlementCalls);
         assertEquals(1, backend.questDayStartedCalls);
         assertEquals(1, backend.masteryMorningCalls);
     }

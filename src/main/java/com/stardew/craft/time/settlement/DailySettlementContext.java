@@ -14,7 +14,9 @@ public record DailySettlementContext(
         boolean seasonChanged,
         List<UUID> playerIds,
         Set<UUID> farmOwnerIds,
-        List<UUID> nonParticipantCleanupIds) {
+        List<UUID> nonParticipantCleanupIds,
+        List<UUID> allOnlinePlayerIds,
+        List<UUID> valleyOnlinePlayerIds) {
 
     public DailySettlementContext(
             int absoluteDay,
@@ -26,13 +28,31 @@ public record DailySettlementContext(
             List<UUID> playerIds,
             Set<UUID> farmOwnerIds) {
         this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
-                playerIds, farmOwnerIds, List.of());
+                playerIds, farmOwnerIds, List.of(), playerIds, playerIds);
+    }
+
+    public DailySettlementContext(
+            int absoluteDay,
+            int year,
+            int season,
+            int day,
+            int sleepMinute,
+            boolean seasonChanged,
+            List<UUID> playerIds,
+            Set<UUID> farmOwnerIds,
+            List<UUID> nonParticipantCleanupIds) {
+        this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                playerIds, farmOwnerIds, nonParticipantCleanupIds,
+                combinedAudience(playerIds, nonParticipantCleanupIds),
+                combinedAudience(playerIds, nonParticipantCleanupIds));
     }
 
     public DailySettlementContext {
         Objects.requireNonNull(playerIds, "playerIds");
         Objects.requireNonNull(farmOwnerIds, "farmOwnerIds");
         Objects.requireNonNull(nonParticipantCleanupIds, "nonParticipantCleanupIds");
+        Objects.requireNonNull(allOnlinePlayerIds, "allOnlinePlayerIds");
+        Objects.requireNonNull(valleyOnlinePlayerIds, "valleyOnlinePlayerIds");
         if (year < 1) {
             throw new IllegalArgumentException("year must be at least 1");
         }
@@ -52,5 +72,13 @@ public record DailySettlementContext(
         playerIds = List.copyOf(playerIds);
         farmOwnerIds = Set.copyOf(farmOwnerIds);
         nonParticipantCleanupIds = List.copyOf(nonParticipantCleanupIds);
+        allOnlinePlayerIds = List.copyOf(allOnlinePlayerIds);
+        valleyOnlinePlayerIds = List.copyOf(valleyOnlinePlayerIds);
+    }
+
+    private static List<UUID> combinedAudience(List<UUID> first, List<UUID> second) {
+        java.util.LinkedHashSet<UUID> combined = new java.util.LinkedHashSet<>(first);
+        combined.addAll(second);
+        return List.copyOf(combined);
     }
 }

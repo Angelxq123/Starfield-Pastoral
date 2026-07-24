@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -160,9 +159,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "player_daily_settlement" -> players.createDailyWorkUnit(context);
                 case "weather_forecast" -> atomic(name, () -> forecast(context));
                 case "farm_cursor" -> atomic(name, () -> updateFarmCursor(context));
-                case "special_orders" -> atomic(name, () ->
-                        com.stardew.craft.specialorder.SpecialOrderManager.onNewDay(
-                                level(), onlineValleyPlayers()));
+                case "special_orders" -> atomic(name, () -> specialOrders(context));
                 case "lost_and_found" -> atomic(name, () ->
                         com.stardew.craft.lostandfound.LostAndFoundService.onNewDay(level()));
                 case "bookseller" -> atomic(name, () -> bookseller(context));
@@ -221,7 +218,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private void beginDailyProcess(DailySettlementContext context) {
             ServerLevel level = level();
             com.stardew.craft.farm.FarmDailyProcessHelper.beginDailyProcess(
-                    level, context.playerIds());
+                    level, context.allOnlinePlayerIds());
             activeLevel = level;
             dailyProcessActive = true;
             try {
@@ -354,17 +351,24 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         private void bookseller(DailySettlementContext context) {
-            List<net.minecraft.server.level.ServerPlayer> online = onlineValleyPlayers();
+            List<net.minecraft.server.level.ServerPlayer> online = onlinePlayers(
+                    context.valleyOnlinePlayerIds());
             com.stardew.craft.book.BooksellerSchedule.onNewDay(level(), online);
             com.stardew.craft.shop.BooksellerEvents.forceCheckNow(level());
         }
 
+        private void specialOrders(DailySettlementContext context) {
+            com.stardew.craft.specialorder.SpecialOrderManager.onNewDay(
+                    level(), onlinePlayers(context.allOnlinePlayerIds()));
+        }
+
         private void mail(DailySettlementContext context) {
-            com.stardew.craft.mail.MailService.deliverAllTomorrowMail(server());
+            List<net.minecraft.server.level.ServerPlayer> online = onlinePlayers(
+                    context.allOnlinePlayerIds());
+            com.stardew.craft.mail.MailService.deliverTomorrowMail(server(), online);
             com.stardew.craft.time.StardewTimeManager time =
                     com.stardew.craft.time.StardewTimeManager.get();
-            for (net.minecraft.server.level.ServerPlayer player
-                    : mailAudience(server().getPlayerList().getPlayers())) {
+            for (net.minecraft.server.level.ServerPlayer player : online) {
                 time.scheduleDateTriggeredMail(player, context.season(), context.day());
             }
         }
@@ -382,11 +386,10 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                             .onSettlementDatePublished(server(), time));
         }
 
-        private List<net.minecraft.server.level.ServerPlayer> onlineValleyPlayers() {
-            return valleyAudience(
-                    server().getPlayerList().getPlayers(),
-                    player -> player.level().dimension()
-                            == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+        private List<net.minecraft.server.level.ServerPlayer> onlinePlayers(
+                List<UUID> playerIds) {
+            return resolveOnlineAudience(
+                    playerIds, playerId -> server().getPlayerList().getPlayer(playerId));
         }
 
         private synchronized void cleanupDailyProcess() {
@@ -519,17 +522,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         };
     }
 
-    static <T> List<T> mailAudience(List<T> onlinePlayers) {
-        return List.copyOf(Objects.requireNonNull(onlinePlayers, "onlinePlayers"));
-    }
-
-    static <T> List<T> valleyAudience(
-            List<T> onlinePlayers, Predicate<? super T> isValleyPlayer) {
-        Objects.requireNonNull(onlinePlayers, "onlinePlayers");
-        Objects.requireNonNull(isValleyPlayer, "isValleyPlayer");
-        return onlinePlayers.stream().filter(isValleyPlayer).toList();
-    }
-
     static <T> Set<UUID> dailyScopeAudience(
             List<T> onlinePlayers, Function<? super T, UUID> playerId) {
         Objects.requireNonNull(onlinePlayers, "onlinePlayers");
@@ -538,6 +530,17 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 .map(playerId)
                 .map(id -> Objects.requireNonNull(id, "playerId"))
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    static <T> List<T> resolveOnlineAudience(
+            List<UUID> playerIds, Function<? super UUID, T> resolver) {
+        Objects.requireNonNull(playerIds, "playerIds");
+        Objects.requireNonNull(resolver, "resolver");
+        return playerIds.stream()
+                .map(playerId -> Objects.requireNonNull(playerId, "playerId"))
+                .map(resolver)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     static DailySettlementWorkUnit createNonParticipantCleanupWorkUnit(

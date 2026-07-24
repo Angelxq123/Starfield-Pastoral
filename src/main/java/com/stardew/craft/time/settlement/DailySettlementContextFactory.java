@@ -26,10 +26,27 @@ public final class DailySettlementContextFactory {
             Collection<UUID> players,
             Collection<UUID> farms,
             Collection<UUID> nonParticipantCleanupIds) {
+        java.util.LinkedHashSet<UUID> allOnline = new java.util.LinkedHashSet<>(players);
+        allOnline.addAll(nonParticipantCleanupIds);
+        return captureNextDay(
+                time, sleepMinute, players, farms, nonParticipantCleanupIds,
+                allOnline, allOnline);
+    }
+
+    public static DailySettlementContext captureNextDay(
+            StardewTimeManager time,
+            int sleepMinute,
+            Collection<UUID> players,
+            Collection<UUID> farms,
+            Collection<UUID> nonParticipantCleanupIds,
+            Collection<UUID> allOnlinePlayerIds,
+            Collection<UUID> valleyOnlinePlayerIds) {
         Objects.requireNonNull(time, "time");
         Objects.requireNonNull(players, "players");
         Objects.requireNonNull(farms, "farms");
         Objects.requireNonNull(nonParticipantCleanupIds, "nonParticipantCleanupIds");
+        Objects.requireNonNull(allOnlinePlayerIds, "allOnlinePlayerIds");
+        Objects.requireNonNull(valleyOnlinePlayerIds, "valleyOnlinePlayerIds");
 
         TargetDate target = after(
                 time.getCurrentYear(), time.getCurrentSeason(), time.getCurrentDay());
@@ -42,7 +59,9 @@ public final class DailySettlementContextFactory {
                 target.seasonChanged(),
                 List.copyOf(players),
                 Set.copyOf(farms),
-                List.copyOf(nonParticipantCleanupIds));
+                List.copyOf(nonParticipantCleanupIds),
+                List.copyOf(allOnlinePlayerIds),
+                List.copyOf(valleyOnlinePlayerIds));
     }
 
     public static DailySettlementContext captureCurrentDay(StardewTimeManager time) {
@@ -86,7 +105,9 @@ public final class DailySettlementContextFactory {
                 context.seasonChanged(),
                 List.copyOf(players),
                 context.farmOwnerIds(),
-                context.nonParticipantCleanupIds());
+                context.nonParticipantCleanupIds(),
+                context.allOnlinePlayerIds(),
+                context.valleyOnlinePlayerIds());
     }
 
     private static DailySettlementContext withDate(
@@ -100,7 +121,9 @@ public final class DailySettlementContextFactory {
                 context.seasonChanged(),
                 context.playerIds(),
                 context.farmOwnerIds(),
-                context.nonParticipantCleanupIds());
+                context.nonParticipantCleanupIds(),
+                context.allOnlinePlayerIds(),
+                context.valleyOnlinePlayerIds());
     }
 
     private static TargetDate after(int year, int season, int day) {

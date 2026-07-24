@@ -464,7 +464,7 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void persistedPendingSettlementRecoversWithoutALiveBarrierOrServiceGraph()
+    void persistedPendingSettlementRecoversThroughTheLiveBarrierAndServiceGraph()
             throws Exception {
         UUID playerId = UUID.randomUUID();
         DailySettlementContext target = new DailySettlementContext(
@@ -499,10 +499,13 @@ class DailySettlementLifecycleContractTest {
         ParsedClass events = parse(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementEvents.java");
         String login = events.method("onPlayerLogin", 1).getBody().toString();
-        assertTrue(login.contains("recoverPending"));
+        assertTrue(login.contains("DailySettlementServices.get"));
+        assertTrue(login.contains("services.players().onLogin"));
+        assertTrue(login.contains("services.barrier()"));
+        assertTrue(login.contains("services.accessGuard().reconnectAnchor"));
         assertTrue(login.indexOf("new OvernightBarrierPayload")
                 < login.indexOf("recovered.payload()"));
-        assertFalse(login.contains("DailySettlementServices.get"));
+        assertFalse(login.contains("recoverPending"));
     }
 
     @Test

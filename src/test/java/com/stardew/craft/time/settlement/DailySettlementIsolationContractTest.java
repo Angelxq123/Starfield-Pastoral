@@ -3,10 +3,23 @@ package com.stardew.craft.time.settlement;
 import com.stardew.craft.Config;
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import com.stardew.craft.time.StardewTimeManager;
+import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.ParenthesizedTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.util.JavacTask;
+import com.sun.source.util.TreeScanner;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.Optional;
@@ -15,8 +28,16 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -138,6 +159,26 @@ class DailySettlementIsolationContractTest {
     }
 
     @Test
+    void persistedReadyRecoveryRestoresTheServerBarrierBeforeGameplayResumes()
+            throws IOException {
+        MethodTree login = parseMethod(
+                sourcePath("time/settlement/DailySettlementEvents.java"),
+                "DailySettlementEvents", "onPlayerLogin", 1);
+        BlockTree recovery = asBlock(findDirectIf(login.getBody(), condition ->
+                normalized(unwrapped(condition)).equals("services==null")).getThenStatement());
+
+        assertTrue(hasInvocation(recovery, "DailySettlementServices", "get", "player.server"),
+                "recovery must create the server-owned settlement services");
+        assertTrue(hasInvocation(recovery, "services.players()", "onLogin",
+                "player.getUUID()", "services.barrier()"),
+                "recovery must restore the persisted result through the live barrier");
+        assertTrue(hasInvocation(recovery, "services.accessGuard()", "reconnectAnchor", "player"),
+                "recovery must anchor the reconnecting player before ACK");
+        assertTrue(hasInvocation(recovery, "services.barrier()", "lockedDay", "player.getUUID()"),
+                "recovery must send the retained day from the restored barrier");
+    }
+
+    @Test
     void gatedPayloadHandlerChecksAccessOnTheServerExecutorBeforeDelegating() {
         AtomicReference<Runnable> queuedWork = new AtomicReference<>();
         IPayloadContext context = (IPayloadContext) Proxy.newProxyInstance(
@@ -198,6 +239,41 @@ class DailySettlementIsolationContractTest {
     }
 
     @Test
+    void machineTickersUseDateViewProtectedStardewGetters() throws IOException {
+        MethodTree timedReady = parseMethod(
+                sourcePath("blockentity/TimedProductionBlockEntity.java"),
+                "TimedProductionBlockEntity", "computeReady", 0);
+        assertTrue(hasInvocation(timedReady, null, "getCurrentAbsMinute"));
+
+        MethodTree absoluteMinute = parseMethod(
+                sourcePath("blockentity/TimedProductionBlockEntity.java"),
+                "TimedProductionBlockEntity", "getCurrentAbsMinute", 0);
+        assertTrue(hasInvocation(absoluteMinute, "tm", "getCurrentTime"));
+        assertTrue(hasInvocation(absoluteMinute, null, "getCurrentDayIndex"));
+
+        for (String file : List.of("CaskBlockEntity.java", "SolarPanelBlockEntity.java")) {
+            String className = file.substring(0, file.length() - ".java".length());
+            MethodTree ticker = parseMethod(
+                    sourcePath("blockentity/" + file), className, "tickServer", 3);
+            assertTrue(hasInvocation(ticker, null, "getCurrentDayIndex"),
+                    className + " ticker must read the settlement-visible day through its getter");
+            MethodTree dayIndex = parseMethod(
+                    sourcePath("blockentity/" + file), className, "getCurrentDayIndex", 0);
+            assertTrue(hasInvocation(dayIndex, "tm", "getCurrentYear"));
+            assertTrue(hasInvocation(dayIndex, "tm", "getCurrentSeason"));
+            assertTrue(hasInvocation(dayIndex, "tm", "getCurrentDay"));
+        }
+
+        for (String getter : List.of(
+                "getCurrentTime", "getCurrentYear", "getCurrentSeason", "getCurrentDay")) {
+            MethodTree method = parseMethod(
+                    sourcePath("time/StardewTimeManager.java"),
+                    "StardewTimeManager", getter, 0);
+            assertTrue(hasInvocation(method, "DailySettlementDateView", "current"), getter);
+        }
+    }
+
+    @Test
     void neoforgeEarlyRejectionIsParticipantScopedAndUsesConcreteEvents()
             throws IOException {
         String events = source(
@@ -229,6 +305,122 @@ class DailySettlementIsolationContractTest {
 
     private static String source(String relativePath) throws IOException {
         return Files.readString(projectRoot().resolve(relativePath));
+    }
+
+    private static Path sourcePath(String relativePath) {
+        return projectRoot().resolve("src/main/java/com/stardew/craft/").resolve(relativePath);
+    }
+
+    private static MethodTree parseMethod(
+            Path sourcePath, String className, String methodName, int parameterCount)
+            throws IOException {
+        String source = Files.readString(sourcePath);
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assertTrue(compiler != null, "tests require a JDK compiler");
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        JavaFileObject sourceFile = new SimpleJavaFileObject(
+                URI.create("string:///" + className + JavaFileObject.Kind.SOURCE.extension),
+                JavaFileObject.Kind.SOURCE) {
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+                return source;
+            }
+        };
+
+        try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(
+                diagnostics, null, StandardCharsets.UTF_8)) {
+            JavacTask task = (JavacTask) compiler.getTask(
+                    null, fileManager, diagnostics, List.of("-proc:none"), null, List.of(sourceFile));
+            CompilationUnitTree unit = task.parse().iterator().next();
+            List<String> parseErrors = diagnostics.getDiagnostics().stream()
+                    .filter(diagnostic -> diagnostic.getKind() == Diagnostic.Kind.ERROR)
+                    .map(Object::toString)
+                    .toList();
+            assertTrue(parseErrors.isEmpty(),
+                    () -> "source did not parse: " + String.join("; ", parseErrors));
+
+            ClassTree targetClass = unit.getTypeDecls().stream()
+                    .filter(ClassTree.class::isInstance)
+                    .map(ClassTree.class::cast)
+                    .filter(candidate -> candidate.getSimpleName().contentEquals(className))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("class is missing: " + className));
+            return targetClass.getMembers().stream()
+                    .filter(MethodTree.class::isInstance)
+                    .map(MethodTree.class::cast)
+                    .filter(candidate -> candidate.getName().contentEquals(methodName))
+                    .filter(candidate -> candidate.getParameters().size() == parameterCount)
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError(
+                            "method is missing: " + methodName + "/" + parameterCount));
+        }
+    }
+
+    private static com.sun.source.tree.IfTree findDirectIf(
+            BlockTree block, Predicate<ExpressionTree> condition) {
+        List<com.sun.source.tree.IfTree> matches = new ArrayList<>();
+        block.getStatements().stream()
+                .filter(com.sun.source.tree.IfTree.class::isInstance)
+                .map(com.sun.source.tree.IfTree.class::cast)
+                .filter(candidate -> condition.test(candidate.getCondition()))
+                .forEach(matches::add);
+        assertEquals(1, matches.size(), "expected exactly one matching if statement");
+        return matches.getFirst();
+    }
+
+    private static boolean hasInvocation(
+            Tree tree, String receiver, String methodName, String... arguments) {
+        return invocations(tree).stream()
+                .anyMatch(invocation -> isInvocation(invocation, receiver, methodName, arguments));
+    }
+
+    private static List<MethodInvocationTree> invocations(Tree tree) {
+        List<MethodInvocationTree> result = new ArrayList<>();
+        new TreeScanner<Void, Void>() {
+            @Override
+            public Void visitMethodInvocation(MethodInvocationTree invocation, Void unused) {
+                result.add(invocation);
+                return super.visitMethodInvocation(invocation, unused);
+            }
+        }.scan(tree, null);
+        return result;
+    }
+
+    private static boolean isInvocation(
+            MethodInvocationTree invocation, String receiver, String methodName,
+            String... arguments) {
+        if (!(invocation.getMethodSelect() instanceof com.sun.source.tree.MemberSelectTree select)) {
+            return receiver == null
+                    && invocation.getMethodSelect().toString().equals(methodName)
+                    && argumentsMatch(invocation, arguments);
+        }
+        return (receiver == null
+                || normalized(select.getExpression()).equals(normalized(receiver)))
+                && select.getIdentifier().contentEquals(methodName)
+                && argumentsMatch(invocation, arguments);
+    }
+
+    private static boolean argumentsMatch(MethodInvocationTree invocation, String... arguments) {
+        return invocation.getArguments().stream().map(DailySettlementIsolationContractTest::normalized)
+                .toList().equals(List.of(arguments).stream()
+                        .map(DailySettlementIsolationContractTest::normalized).toList());
+    }
+
+    private static ExpressionTree unwrapped(ExpressionTree expression) {
+        ExpressionTree current = expression;
+        while (current instanceof ParenthesizedTree parenthesized) {
+            current = parenthesized.getExpression();
+        }
+        return current;
+    }
+
+    private static BlockTree asBlock(com.sun.source.tree.StatementTree statement) {
+        assertTrue(statement instanceof BlockTree, "expected block statement");
+        return (BlockTree) statement;
+    }
+
+    private static String normalized(Object syntaxTree) {
+        return syntaxTree.toString().replaceAll("\\s+", "");
     }
 
     private static Path projectRoot() {

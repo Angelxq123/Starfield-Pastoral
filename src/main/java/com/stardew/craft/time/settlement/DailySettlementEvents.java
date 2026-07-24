@@ -113,11 +113,17 @@ public final class DailySettlementEvents {
         DailySettlementServices.Services services =
                 DailySettlementServices.find(player.server);
         if (services == null) {
+            services = DailySettlementServices.get(player.server);
             DailySettlementBarrier.ReadyResult recovered =
-                    PlayerDailySettlementService.recoverPending(player).orElse(null);
+                    services.players().onLogin(
+                            player.getUUID(), services.barrier()).orElse(null);
+            int absoluteDay = services.barrier().lockedDay(player.getUUID());
+            if (absoluteDay > 0) {
+                services.accessGuard().reconnectAnchor(player);
+            }
             if (recovered != null) {
                 PacketDistributor.sendToPlayer(
-                        player, new OvernightBarrierPayload(recovered.absoluteDay(), true));
+                        player, new OvernightBarrierPayload(absoluteDay, true));
                 PacketDistributor.sendToPlayer(player, recovered.payload());
                 com.stardew.craft.cutscene.server.WakeUpEventScheduler
                         .enqueueAtNightSettlement(player);

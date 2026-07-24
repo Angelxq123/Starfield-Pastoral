@@ -8,6 +8,9 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @EventBusSubscriber(modid = StardewCraft.MODID)
 public final class DailySettlementEvents {
     private DailySettlementEvents() {
@@ -42,7 +45,11 @@ public final class DailySettlementEvents {
             }
             return;
         }
-        services.players().onLogin(player.getUUID(), services.barrier());
+        boolean coordinatorOwns = services.coordinator().context()
+                .map(context -> context.playerIds().contains(player.getUUID()))
+                .orElse(false);
+        resumePlayerSettlement(
+                services.players(), services.barrier(), player.getUUID(), coordinatorOwns);
         int absoluteDay = services.barrier().lockedDay(player.getUUID());
         if (absoluteDay <= 0) {
             return;
@@ -62,5 +69,16 @@ public final class DailySettlementEvents {
         if (services != null) {
             services.players().onLogout(player.getUUID());
         }
+    }
+
+    static Optional<DailySettlementBarrier.ReadyResult> resumePlayerSettlement(
+            PlayerDailySettlementService players,
+            DailySettlementBarrier barrier,
+            UUID playerId,
+            boolean coordinatorOwns) {
+        if (coordinatorOwns) {
+            return Optional.empty();
+        }
+        return players.onLogin(playerId, barrier);
     }
 }

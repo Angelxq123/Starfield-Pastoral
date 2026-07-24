@@ -92,6 +92,11 @@ public class PlayerStardewData {
     private boolean dirty;           // 数据是否需要保存
     @Nullable
     private PendingDailySettlement pendingDailySettlement;
+    private int lastOvernightShippingHistoryDay = Integer.MIN_VALUE;
+    private int lastOvernightShippingOrdersDay = Integer.MIN_VALUE;
+    private int lastOvernightShippingMoneyDay = Integer.MIN_VALUE;
+    private int lastDailySettlementQuestDay = Integer.MIN_VALUE;
+    private int lastDailySettlementMasteryDay = Integer.MIN_VALUE;
 
     // ============ 运气系统 ============
     // 每日运气（per-player），按星露谷日期刷新（由 PlayerStardewDataAPI 惰性刷新）
@@ -415,6 +420,16 @@ public class PlayerStardewData {
         
         // 元数据
         data.lastSyncTime = tag.getLong("LastSyncTime");
+        data.lastOvernightShippingHistoryDay = tag.contains("LastOvernightShippingHistoryDay")
+                ? tag.getInt("LastOvernightShippingHistoryDay") : Integer.MIN_VALUE;
+        data.lastOvernightShippingOrdersDay = tag.contains("LastOvernightShippingOrdersDay")
+                ? tag.getInt("LastOvernightShippingOrdersDay") : Integer.MIN_VALUE;
+        data.lastOvernightShippingMoneyDay = tag.contains("LastOvernightShippingMoneyDay")
+                ? tag.getInt("LastOvernightShippingMoneyDay") : Integer.MIN_VALUE;
+        data.lastDailySettlementQuestDay = tag.contains("LastDailySettlementQuestDay")
+                ? tag.getInt("LastDailySettlementQuestDay") : Integer.MIN_VALUE;
+        data.lastDailySettlementMasteryDay = tag.contains("LastDailySettlementMasteryDay")
+                ? tag.getInt("LastDailySettlementMasteryDay") : Integer.MIN_VALUE;
         if (tag.contains("PendingDailySettlement", 10)) {
             CompoundTag pending = tag.getCompound("PendingDailySettlement");
             List<SkillLevelUp> appliedLevels = new ArrayList<>();
@@ -875,6 +890,11 @@ public class PlayerStardewData {
         
         // 元数据
         tag.putLong("LastSyncTime", lastSyncTime);
+        tag.putInt("LastOvernightShippingHistoryDay", lastOvernightShippingHistoryDay);
+        tag.putInt("LastOvernightShippingOrdersDay", lastOvernightShippingOrdersDay);
+        tag.putInt("LastOvernightShippingMoneyDay", lastOvernightShippingMoneyDay);
+        tag.putInt("LastDailySettlementQuestDay", lastDailySettlementQuestDay);
+        tag.putInt("LastDailySettlementMasteryDay", lastDailySettlementMasteryDay);
         if (pendingDailySettlement != null) {
             CompoundTag pending = new CompoundTag();
             pending.putInt("AbsoluteDay", pendingDailySettlement.absoluteDay());
@@ -3059,6 +3079,78 @@ public class PlayerStardewData {
         return true;
     }
 
+    public boolean recordOvernightShippingHistory(
+            int absoluteDay,
+            List<com.stardew.craft.network.overnight.OvernightSettlementPayload.ShippedItem> items) {
+        Objects.requireNonNull(items, "items");
+        if (lastOvernightShippingHistoryDay == absoluteDay) {
+            return false;
+        }
+        lastOvernightShippingHistoryDay = absoluteDay;
+        markDirty();
+        for (com.stardew.craft.network.overnight.OvernightSettlementPayload.ShippedItem item : items) {
+            if (item == null || item.stack().isEmpty() || item.stack().getCount() <= 0) {
+                continue;
+            }
+            String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(item.stack().getItem()).toString();
+            recordShippedItem(itemId, item.stack().getCount());
+        }
+        return true;
+    }
+
+    public boolean markOvernightShippingOrdersApplied(int absoluteDay) {
+        if (lastOvernightShippingOrdersDay == absoluteDay) {
+            return false;
+        }
+        lastOvernightShippingOrdersDay = absoluteDay;
+        markDirty();
+        return true;
+    }
+
+    public boolean isOvernightShippingOrdersApplied(int absoluteDay) {
+        return lastOvernightShippingOrdersDay == absoluteDay;
+    }
+
+    public boolean markOvernightShippingMoneyApplied(int absoluteDay) {
+        if (lastOvernightShippingMoneyDay == absoluteDay) {
+            return false;
+        }
+        lastOvernightShippingMoneyDay = absoluteDay;
+        markDirty();
+        return true;
+    }
+
+    public boolean isOvernightShippingMoneyApplied(int absoluteDay) {
+        return lastOvernightShippingMoneyDay == absoluteDay;
+    }
+
+    public boolean markDailySettlementQuestApplied(int absoluteDay) {
+        if (lastDailySettlementQuestDay == absoluteDay) {
+            return false;
+        }
+        lastDailySettlementQuestDay = absoluteDay;
+        markDirty();
+        return true;
+    }
+
+    public boolean isDailySettlementQuestApplied(int absoluteDay) {
+        return lastDailySettlementQuestDay == absoluteDay;
+    }
+
+    public boolean markDailySettlementMasteryApplied(int absoluteDay) {
+        if (lastDailySettlementMasteryDay == absoluteDay) {
+            return false;
+        }
+        lastDailySettlementMasteryDay = absoluteDay;
+        markDirty();
+        return true;
+    }
+
+    public boolean isDailySettlementMasteryApplied(int absoluteDay) {
+        return lastDailySettlementMasteryDay == absoluteDay;
+    }
+
     public record PendingDailySettlement(
             int absoluteDay,
             int year,
@@ -3085,7 +3177,7 @@ public class PlayerStardewData {
                     || absoluteDay != expected) {
                 throw new IllegalArgumentException("Invalid pending daily settlement date");
             }
-            if (stage < 0 || stage > 6) {
+            if (stage < 0 || stage > 12) {
                 throw new IllegalArgumentException("Invalid pending daily settlement stage");
             }
             appliedLevels = List.copyOf(Objects.requireNonNull(appliedLevels, "appliedLevels"));

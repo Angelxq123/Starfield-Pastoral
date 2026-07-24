@@ -60,15 +60,26 @@ public class SharedMoneyData extends SavedData {
     }
 
     public void addMoney(ServerPlayer player, int amount) {
+        if (addMoneyWithoutSync(player, amount)) {
+            Group group = ensureGroup(player);
+            syncGroup(group.id());
+        }
+    }
+
+    public boolean addMoneyWithoutSync(ServerPlayer player, int amount) {
         if (amount <= 0) {
-            return;
+            return false;
         }
         Group group = ensureGroup(player);
         PlayerStardewData playerData = PlayerDataManager.getPlayerData(player);
         playerData.addMoney(amount);
         groups.put(group.id(), group.withBalance(group.balance() + amount));
         setDirty();
-        syncGroup(group.id());
+        return true;
+    }
+
+    public void syncPlayerGroup(ServerPlayer player) {
+        syncGroup(ensureGroup(player).id());
     }
 
     public void addMoney(UUID playerId, int amount) {

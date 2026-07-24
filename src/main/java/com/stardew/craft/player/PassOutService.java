@@ -101,6 +101,12 @@ public final class PassOutService {
         return result;
     }
 
+    @javax.annotation.Nullable
+    public static PassOutResult peekPassOutResult(java.util.UUID playerId, int settlementDay) {
+        PassOutResult result = pendingPassOutResults.get(playerId);
+        return result != null && result.settlementDay() == settlementDay ? result : null;
+    }
+
     public static boolean hasPendingPassOutResult(java.util.UUID playerId) {
         return pendingPassOutResults.containsKey(playerId);
     }

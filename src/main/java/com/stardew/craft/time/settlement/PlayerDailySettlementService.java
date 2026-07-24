@@ -24,11 +24,17 @@ import java.util.function.Function;
 
 public final class PlayerDailySettlementService {
     private static final int BASE_STAGE = 1;
-    private static final int SHIPPING_STAGE = 2;
-    private static final int LEVELS_STAGE = 3;
-    private static final int SYNC_STAGE = 4;
-    private static final int QUEST_STAGE = 5;
-    private static final int MASTERY_STAGE = 6;
+    private static final int SHIPPING_HISTORY_STAGE = 2;
+    private static final int SHIPPING_ORDERS_STAGE = 3;
+    private static final int SHIPPING_MONEY_STAGE = 4;
+    private static final int LEVELS_STAGE = 5;
+    private static final int RECIPES_STAGE = 6;
+    private static final int SYNC_STAGE = 7;
+    private static final int QUEST_STAGE = 8;
+    private static final int MASTERY_STAGE = 9;
+    private static final int SHIPPING_CLEANUP_STAGE = 10;
+    private static final int PASS_OUT_CLEANUP_STAGE = 11;
+    private static final int LEVEL_CLEANUP_STAGE = 12;
 
     private final SettlementBackend backend;
     private final PendingStore pending;
@@ -66,15 +72,33 @@ public final class PlayerDailySettlementService {
     }
 
     void settlePlayer(DailySettlementContext context, UUID playerId) {
+        Optional<PendingSettlement> progress = pending.find(playerId);
+        DailySettlementBarrier.ReadyResult completed = readyResult(
+                playerId, context.absoluteDay());
+        if (completed != null && (progress.isEmpty()
+                || progress.orElseThrow().stage() >= MASTERY_STAGE)) {
+            finishPreparedSettlement(context, playerId);
+            return;
+        }
         pending.save(context, playerId);
         Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
         if (payload.isEmpty()) {
-            readyResults.putIfAbsent(playerId, pendingReadyResult(context));
             return;
         }
-        pending.clear(playerId, context.absoluteDay());
         readyResults.put(playerId,
                 new DailySettlementBarrier.ReadyResult(context.absoluteDay(), payload.orElseThrow()));
+        finishPreparedSettlement(context, playerId);
+    }
+
+    private void finishPreparedSettlement(DailySettlementContext context, UUID playerId) {
+        Optional<PendingSettlement> progress = pending.find(playerId);
+        if (progress.isEmpty()) {
+            return;
+        }
+        backend.finalizeSettlement(
+                context, playerId, progress.orElseThrow(),
+                next -> pending.checkpoint(playerId, next));
+        pending.clear(playerId, context.absoluteDay());
     }
 
     private Optional<OvernightSettlementPayload> settleIfOnline(
@@ -94,6 +118,12 @@ public final class PlayerDailySettlementService {
         } catch (Exception failure) {
             throw new IllegalStateException("Unable to settle player " + playerId, failure);
         }
+        if (result[0].isPresent()) {
+            PendingSettlement completed = pending.find(playerId).orElse(progress);
+            if (completed.stage() < MASTERY_STAGE) {
+                pending.checkpoint(playerId, completed.atStage(MASTERY_STAGE));
+            }
+        }
         return result[0];
     }
 
@@ -102,66 +132,90 @@ public final class PlayerDailySettlementService {
             ServerPlayer player,
             PendingSettlement progress,
             Consumer<PendingSettlement> checkpoint) {
+        return prepareOnlineSettlement(
+                context, player.getUUID(), progress, checkpoint,
+                new ProductionSettlementOperations(player.server, player.getUUID(), player));
+    }
+
+    static OvernightSettlementPayload prepareOnlineSettlement(
+            DailySettlementContext context,
+            UUID playerId,
+            PendingSettlement progress,
+            Consumer<PendingSettlement> checkpoint,
+            SettlementOperations operations) {
         if (progress.stage() < BASE_STAGE) {
-            if (player.isCreative()) {
-                PlayerStardewDataAPI.cureExhaustion(player);
-                PlayerStardewDataAPI.restoreEnergy(player, PlayerStardewDataAPI.getMaxEnergy(player));
-                com.stardew.craft.mastery.MasteryBuffLifecycle.clearAllDailyMasteryBuffs(player);
-            } else {
-                PlayerStardewDataAPI.sleep(player, context.sleepMinute());
-                PassOutService.applyCombatDeathEnergyPenalty(player);
-            }
-            PlayerStardewDataAPI.setHealth(player, PlayerStardewDataAPI.getMaxHealth(player));
-            com.stardew.craft.shop.BlacksmithService.onNewDay(player);
-            com.stardew.craft.shop.BlacksmithService.showToolUpgradeNotification(player);
+            operations.applyBase(context);
             checkpoint.accept(progress.atStage(BASE_STAGE));
         }
 
-        OvernightSettlementPayload settlementPayload = OvernightSettlementTracker.peekPayload(
-                player.server, player.getUUID(), context.absoluteDay());
-        if (progress.stage() < SHIPPING_STAGE) {
-            PlayerStardewDataAPI.recordOvernightShippedItems(player, settlementPayload.shippedItems());
-            checkpoint.accept(progress.atStage(SHIPPING_STAGE));
+        OvernightSettlementPayload settlementPayload = operations.shippingPayload(context.absoluteDay());
+        if (progress.stage() < SHIPPING_HISTORY_STAGE) {
+            operations.applyShippingHistory(context.absoluteDay(), settlementPayload);
+            checkpoint.accept(progress.atStage(SHIPPING_HISTORY_STAGE));
+        }
+        if (progress.stage() < SHIPPING_ORDERS_STAGE) {
+            operations.applyShippingOrders(context.absoluteDay(), settlementPayload);
+            checkpoint.accept(progress.atStage(SHIPPING_ORDERS_STAGE));
+        }
+        if (progress.stage() < SHIPPING_MONEY_STAGE) {
+            operations.applyShippingMoney(context.absoluteDay(), settlementPayload);
+            checkpoint.accept(progress.atStage(SHIPPING_MONEY_STAGE));
         }
 
         List<PlayerStardewData.SkillLevelUp> appliedLevelUps = progress.appliedLevels();
         if (progress.stage() < LEVELS_STAGE) {
-            appliedLevelUps = PlayerStardewDataAPI.applyPendingSkillLevelUpsForSettlement(player);
-            PlayerStardewDataAPI.applySkillLevelRecipeUnlocks(player, appliedLevelUps);
-            if (!appliedLevelUps.isEmpty()) {
-                PlayerStardewDataAPI.restoreEnergy(player, PlayerStardewDataAPI.getMaxEnergy(player));
-                PlayerStardewDataAPI.setHealth(player, PlayerStardewDataAPI.getMaxHealth(player));
-            }
+            appliedLevelUps = operations.applyLevels();
             checkpoint.accept(progress.atStage(LEVELS_STAGE, appliedLevelUps));
+        }
+        if (progress.stage() < RECIPES_STAGE) {
+            operations.applyRecipes(appliedLevelUps);
+            checkpoint.accept(progress.atStage(RECIPES_STAGE, appliedLevelUps));
         }
 
         if (progress.stage() < SYNC_STAGE) {
-            com.stardew.craft.player.PlayerDataEventHandler.syncPlayerData(
-                    player, com.stardew.craft.player.PlayerDataManager.getPlayerData(player));
+            operations.syncPlayer();
             checkpoint.accept(progress.atStage(SYNC_STAGE, appliedLevelUps));
         }
         if (progress.stage() < QUEST_STAGE) {
-            com.stardew.craft.quest.StardewQuestEvents.fireDayStarted(player, context.absoluteDay());
+            operations.applyQuest(context.absoluteDay());
             checkpoint.accept(progress.atStage(QUEST_STAGE, appliedLevelUps));
         }
         if (progress.stage() < MASTERY_STAGE) {
-            com.stardew.craft.mastery.MasteryOnboardingService.checkOnMorning(player);
+            operations.applyMastery(context.absoluteDay());
             checkpoint.accept(progress.atStage(MASTERY_STAGE, appliedLevelUps));
         }
 
-        OvernightSettlementPayload result = buildPayload(
-                context, player.getUUID(), settlementPayload, appliedLevelUps);
-        OvernightSettlementTracker.consumePayload(
-                player.server, player.getUUID(), context.absoluteDay());
-        PlayerStardewDataAPI.clearPendingSkillLevelUps(player);
-        return result;
+        return buildPayload(
+                context, playerId, settlementPayload, appliedLevelUps,
+                operations.passOutResult(context.absoluteDay()));
+    }
+
+    static void finalizeOnlineSettlement(
+            DailySettlementContext context,
+            UUID playerId,
+            PendingSettlement progress,
+            Consumer<PendingSettlement> checkpoint,
+            SettlementOperations operations) {
+        if (progress.stage() < SHIPPING_CLEANUP_STAGE) {
+            operations.consumeShipping(context.absoluteDay());
+            checkpoint.accept(progress.atStage(SHIPPING_CLEANUP_STAGE));
+        }
+        if (progress.stage() < PASS_OUT_CLEANUP_STAGE) {
+            operations.consumePassOut(context.absoluteDay());
+            checkpoint.accept(progress.atStage(PASS_OUT_CLEANUP_STAGE));
+        }
+        if (progress.stage() < LEVEL_CLEANUP_STAGE) {
+            operations.clearLevels();
+            checkpoint.accept(progress.atStage(LEVEL_CLEANUP_STAGE));
+        }
     }
 
     private static OvernightSettlementPayload buildPayload(
             DailySettlementContext context,
             UUID playerId,
             OvernightSettlementPayload settlementPayload,
-            List<PlayerStardewData.SkillLevelUp> appliedLevelUps) {
+            List<PlayerStardewData.SkillLevelUp> appliedLevelUps,
+            PassOutService.PassOutResult passOutResult) {
         List<OvernightSettlementPayload.LevelUpData> levelUps =
                 new ArrayList<>(settlementPayload.levelUps());
         for (PlayerStardewData.SkillLevelUp levelUp : appliedLevelUps) {
@@ -169,8 +223,6 @@ public final class PlayerDailySettlementService {
                     levelUp.skill().getId(), levelUp.newLevel()));
         }
 
-        PassOutService.PassOutResult passOutResult =
-                PassOutService.consumePassOutResult(playerId, context.absoluteDay());
         int passOutType = passOutResult == null ? -1 : passOutResult.type().getId();
         int moneyLost = passOutResult == null ? 0 : passOutResult.moneyLost();
         List<net.minecraft.world.item.ItemStack> lostItems =
@@ -210,13 +262,19 @@ public final class PlayerDailySettlementService {
             return Optional.empty();
         }
         DailySettlementContext context = scheduled.orElseThrow().context(playerId);
-        Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
-        if (payload.isEmpty()) {
-            return Optional.empty();
+        DailySettlementBarrier.ReadyResult result = readyResult(
+                playerId, context.absoluteDay());
+        if (result == null || scheduled.orElseThrow().stage() < MASTERY_STAGE) {
+            Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
+            if (payload.isEmpty()) {
+                return Optional.empty();
+            }
+            DailySettlementBarrier.ReadyResult prepared = new DailySettlementBarrier.ReadyResult(
+                    context.absoluteDay(), payload.orElseThrow());
+            readyResults.put(playerId, prepared);
+            result = prepared;
         }
-        DailySettlementBarrier.ReadyResult result = new DailySettlementBarrier.ReadyResult(
-                context.absoluteDay(), payload.orElseThrow());
-        readyResults.put(playerId, result);
+        finishPreparedSettlement(context, playerId);
         if (barrier != null) {
             DailySettlementBarrier.ReadyResult retained =
                     barrier.readyResult(playerId, context.absoluteDay());
@@ -225,7 +283,6 @@ public final class PlayerDailySettlementService {
                         "Unable to replace retained settlement result for " + playerId);
             }
         }
-        pending.clear(playerId, context.absoluteDay());
         return Optional.of(result);
     }
 
@@ -265,6 +322,43 @@ public final class PlayerDailySettlementService {
                 Consumer<PendingSettlement> checkpoint) {
             return settleIfOnline(context, playerId);
         }
+
+        default void finalizeSettlement(
+                DailySettlementContext context,
+                UUID playerId,
+                PendingSettlement progress,
+                Consumer<PendingSettlement> checkpoint) {
+        }
+    }
+
+    interface SettlementOperations {
+        void applyBase(DailySettlementContext context);
+
+        OvernightSettlementPayload shippingPayload(int absoluteDay);
+
+        void applyShippingHistory(int absoluteDay, OvernightSettlementPayload payload);
+
+        void applyShippingOrders(int absoluteDay, OvernightSettlementPayload payload);
+
+        void applyShippingMoney(int absoluteDay, OvernightSettlementPayload payload);
+
+        List<PlayerStardewData.SkillLevelUp> applyLevels();
+
+        void applyRecipes(List<PlayerStardewData.SkillLevelUp> levels);
+
+        void syncPlayer();
+
+        void applyQuest(int absoluteDay);
+
+        void applyMastery(int absoluteDay);
+
+        PassOutService.PassOutResult passOutResult(int absoluteDay);
+
+        void consumeShipping(int absoluteDay);
+
+        void consumePassOut(int absoluteDay);
+
+        void clearLevels();
     }
 
     interface PendingStore {
@@ -386,6 +480,138 @@ public final class PlayerDailySettlementService {
         }
     }
 
+    private static final class ProductionSettlementOperations implements SettlementOperations {
+        private final WeakReference<MinecraftServer> server;
+        private final UUID playerId;
+        private final ServerPlayer player;
+
+        private ProductionSettlementOperations(
+                MinecraftServer server, UUID playerId, ServerPlayer player) {
+            this.server = new WeakReference<>(Objects.requireNonNull(server, "server"));
+            this.playerId = Objects.requireNonNull(playerId, "playerId");
+            this.player = player;
+        }
+
+        @Override
+        public void applyBase(DailySettlementContext context) {
+            ServerPlayer current = requirePlayer();
+            if (current.isCreative()) {
+                PlayerStardewDataAPI.cureExhaustion(current);
+                PlayerStardewDataAPI.restoreEnergy(
+                        current, PlayerStardewDataAPI.getMaxEnergy(current));
+                com.stardew.craft.mastery.MasteryBuffLifecycle.clearAllDailyMasteryBuffs(current);
+            } else {
+                PlayerStardewDataAPI.sleep(current, context.sleepMinute());
+                PassOutService.applyCombatDeathEnergyPenalty(current);
+            }
+            PlayerStardewDataAPI.setHealth(current, PlayerStardewDataAPI.getMaxHealth(current));
+            com.stardew.craft.shop.BlacksmithService.onNewDay(current);
+            com.stardew.craft.shop.BlacksmithService.showToolUpgradeNotification(current);
+        }
+
+        @Override
+        public OvernightSettlementPayload shippingPayload(int absoluteDay) {
+            return OvernightSettlementTracker.peekPayload(server(), playerId, absoluteDay);
+        }
+
+        @Override
+        public void applyShippingHistory(int absoluteDay, OvernightSettlementPayload payload) {
+            PlayerStardewDataAPI.applyOvernightShippingHistory(
+                    requirePlayer(), absoluteDay, payload.shippedItems());
+        }
+
+        @Override
+        public void applyShippingOrders(int absoluteDay, OvernightSettlementPayload payload) {
+            PlayerStardewDataAPI.applyOvernightShippingOrders(
+                    requirePlayer(), absoluteDay, payload.shippedItems());
+        }
+
+        @Override
+        public void applyShippingMoney(int absoluteDay, OvernightSettlementPayload payload) {
+            PlayerStardewDataAPI.applyOvernightShippingMoney(
+                    requirePlayer(), absoluteDay, payload.shippedItems());
+        }
+
+        @Override
+        public List<PlayerStardewData.SkillLevelUp> applyLevels() {
+            return PlayerStardewDataAPI.applyPendingSkillLevelUpsForSettlement(requirePlayer());
+        }
+
+        @Override
+        public void applyRecipes(List<PlayerStardewData.SkillLevelUp> levels) {
+            ServerPlayer current = requirePlayer();
+            PlayerStardewDataAPI.applySkillLevelRecipeUnlocks(current, levels);
+            if (!levels.isEmpty()) {
+                PlayerStardewDataAPI.restoreEnergy(
+                        current, PlayerStardewDataAPI.getMaxEnergy(current));
+                PlayerStardewDataAPI.setHealth(current, PlayerStardewDataAPI.getMaxHealth(current));
+            }
+        }
+
+        @Override
+        public void syncPlayer() {
+            PlayerStardewDataAPI.syncOvernightSettlement(requirePlayer());
+        }
+
+        @Override
+        public void applyQuest(int absoluteDay) {
+            ServerPlayer current = requirePlayer();
+            PlayerStardewData data = com.stardew.craft.player.PlayerDataManager
+                    .getPlayerData(current);
+            if (!data.markDailySettlementQuestApplied(absoluteDay)) {
+                return;
+            }
+            com.stardew.craft.quest.StardewQuestEvents.fireDayStarted(current, absoluteDay);
+        }
+
+        @Override
+        public void applyMastery(int absoluteDay) {
+            ServerPlayer current = requirePlayer();
+            PlayerStardewData data = com.stardew.craft.player.PlayerDataManager
+                    .getPlayerData(current);
+            if (!data.markDailySettlementMasteryApplied(absoluteDay)) {
+                return;
+            }
+            com.stardew.craft.mastery.MasteryOnboardingService.checkOnMorning(current);
+        }
+
+        @Override
+        public PassOutService.PassOutResult passOutResult(int absoluteDay) {
+            return PassOutService.peekPassOutResult(playerId, absoluteDay);
+        }
+
+        @Override
+        public void consumeShipping(int absoluteDay) {
+            OvernightSettlementTracker.consumePayload(server(), playerId, absoluteDay);
+        }
+
+        @Override
+        public void consumePassOut(int absoluteDay) {
+            PassOutService.consumePassOutResult(playerId, absoluteDay);
+        }
+
+        @Override
+        public void clearLevels() {
+            com.stardew.craft.player.PlayerDataManager.getPlayerData(playerId)
+                    .clearPendingSkillLevelUps();
+        }
+
+        private ServerPlayer requirePlayer() {
+            if (player == null) {
+                throw new IllegalStateException("Player " + playerId + " is not online");
+            }
+            return player;
+        }
+
+        private MinecraftServer server() {
+            MinecraftServer current = server.get();
+            if (current == null) {
+                throw new IllegalStateException("Daily settlement server is no longer available");
+            }
+            return current;
+        }
+    }
+
     private static final class ProductionSettlementBackend implements SettlementBackend {
         private final WeakReference<MinecraftServer> server;
 
@@ -426,6 +652,22 @@ public final class PlayerDailySettlementService {
             return player == null
                     ? Optional.empty()
                     : Optional.of(settleOnlinePlayer(context, player, progress, checkpoint));
+        }
+
+        @Override
+        public void finalizeSettlement(
+                DailySettlementContext context,
+                UUID playerId,
+                PendingSettlement progress,
+                Consumer<PendingSettlement> checkpoint) {
+            MinecraftServer current = server.get();
+            if (current == null) {
+                throw new IllegalStateException("Daily settlement server is no longer available");
+            }
+            finalizeOnlineSettlement(
+                    context, playerId, progress, checkpoint,
+                    new ProductionSettlementOperations(
+                            current, playerId, current.getPlayerList().getPlayer(playerId)));
         }
     }
 }

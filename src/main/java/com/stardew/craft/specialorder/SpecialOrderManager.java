@@ -251,6 +251,22 @@ public final class SpecialOrderManager {
                 SpecialOrderProgressEvent.Kind.ITEM_SHIPPED, stack, count, null));
     }
 
+    public static void recordOvernightShippedCore(
+            ServerPlayer player,
+            List<com.stardew.craft.network.overnight.OvernightSettlementPayload.ShippedItem> items) {
+        for (com.stardew.craft.network.overnight.OvernightSettlementPayload.ShippedItem item : items) {
+            if (item == null || item.stack().isEmpty() || item.stack().getCount() <= 0) {
+                continue;
+            }
+            progressItemCore(
+                    player, item.stack(), item.stack().getCount(),
+                    Set.of(SpecialOrderDefinition.ObjectiveType.SHIP));
+            progressExtensionsCore(player, new SpecialOrderProgressEvent(
+                    SpecialOrderProgressEvent.Kind.ITEM_SHIPPED,
+                    item.stack(), item.stack().getCount(), null));
+        }
+    }
+
     public static boolean canDonateToDropBox(ServerPlayer player, String dropBoxId, ItemStack stack) {
         if (stack.isEmpty()) {
             return false;
@@ -516,6 +532,16 @@ public final class SpecialOrderManager {
     }
 
     private static void progressItem(ServerPlayer player, ItemStack stack, int count, Set<SpecialOrderDefinition.ObjectiveType> types) {
+        if (progressItemCore(player, stack, count, types)) {
+            syncAll(player.server);
+        }
+    }
+
+    private static boolean progressItemCore(
+            ServerPlayer player,
+            ItemStack stack,
+            int count,
+            Set<SpecialOrderDefinition.ObjectiveType> types) {
         SpecialOrderWorldData data = SpecialOrderWorldData.get(player.serverLevel());
         boolean changed = false;
         for (SpecialOrderInstance order : data.active()) {
@@ -532,11 +558,20 @@ public final class SpecialOrderManager {
         }
         if (changed) {
             data.setDirty();
-            syncAll(player.server);
         }
+        return changed;
     }
 
     private static boolean progressExtensions(ServerPlayer player, SpecialOrderProgressEvent event) {
+        boolean changed = progressExtensionsCore(player, event);
+        if (changed) {
+            syncAll(player.server);
+        }
+        return changed;
+    }
+
+    private static boolean progressExtensionsCore(
+            ServerPlayer player, SpecialOrderProgressEvent event) {
         SpecialOrderWorldData data = SpecialOrderWorldData.get(player.serverLevel());
         boolean changed = false;
         for (SpecialOrderInstance order : List.copyOf(data.active())) {
@@ -563,7 +598,6 @@ public final class SpecialOrderManager {
         }
         if (changed) {
             data.setDirty();
-            syncAll(player.server);
         }
         return changed;
     }

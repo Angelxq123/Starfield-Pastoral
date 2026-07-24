@@ -1,8 +1,12 @@
 package com.stardew.craft.time.settlement;
 
 import com.stardew.craft.event.DimensionEventHandler;
+import com.stardew.craft.farm.FarmInstance;
+import com.stardew.craft.farm.FarmInstanceRegistry;
+import com.stardew.craft.farm.FarmType;
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import com.stardew.craft.player.PlayerStardewData;
+import com.stardew.craft.player.PassOutService;
 import com.stardew.craft.player.SkillType;
 import com.stardew.craft.time.StardewTimeManager;
 import com.sun.source.tree.ClassTree;
@@ -13,12 +17,17 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreeScanner;
 import org.junit.jupiter.api.Test;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import javax.tools.JavaCompiler;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -310,7 +320,18 @@ class DailySettlementLifecycleContractTest {
                 "src/main/java/com/stardew/craft/time/settlement/PlayerDailySettlementService.java");
         MethodTree create = service.method("createDailyWorkUnit", 1);
         MethodTree settle = service.method("settlePlayer", 2);
-        MethodTree online = service.method("settleOnlinePlayer", 4);
+        MethodTree prepare = service.method("prepareOnlineSettlement", 5);
+        MethodTree finalize = service.method("finalizeOnlineSettlement", 5);
+        MethodTree production = service.methods("shippingPayload").stream()
+                .filter(method -> method.getBody() != null
+                        && method.getBody().toString().contains("peekPayload"))
+                .findFirst()
+                .orElseThrow();
+        MethodTree consume = service.methods("consumeShipping").stream()
+                .filter(method -> method.getBody() != null
+                        && method.getBody().toString().contains("consumePayload"))
+                .findFirst()
+                .orElseThrow();
 
         assertTrue(create.getBody().toString().contains("context.playerIds()"));
         assertTrue(settle.getBody().toString().contains("settleIfOnline(context, playerId)"));
@@ -319,15 +340,19 @@ class DailySettlementLifecycleContractTest {
         assertFalse(settle.getBody().toString().contains("consumePassOutResult"));
         assertTrue(settle.getBody().toString().contains("readyResults.put"));
 
-        List<String> calls = invocationNames(online);
-        assertTrue(calls.indexOf("peekPayload") >= 0);
-        assertTrue(calls.indexOf("peekPayload") < calls.indexOf("recordOvernightShippedItems"));
-        assertTrue(calls.indexOf("recordOvernightShippedItems")
-                < calls.indexOf("buildPayload"));
-        assertTrue(calls.indexOf("consumePayload") >= 0);
-        assertTrue(calls.indexOf("buildPayload") < calls.indexOf("consumePayload"));
-        assertTrue(calls.indexOf("applyPendingSkillLevelUpsForSettlement")
-                < calls.indexOf("buildPayload"));
+        List<String> prepareCalls = invocationNames(prepare);
+        assertTrue(prepareCalls.indexOf("shippingPayload") >= 0);
+        assertTrue(prepareCalls.indexOf("shippingPayload")
+                < prepareCalls.indexOf("applyShippingHistory"));
+        assertTrue(prepareCalls.indexOf("applyShippingHistory")
+                < prepareCalls.indexOf("applyShippingMoney"));
+        assertTrue(prepareCalls.indexOf("applyLevels")
+                < prepareCalls.indexOf("buildPayload"));
+        assertTrue(invocationNames(production).contains("peekPayload"));
+        assertTrue(invocationNames(finalize).indexOf("consumeShipping") >= 0);
+        assertTrue(invocationNames(consume).contains("consumePayload"));
+        assertTrue(settle.getBody().toString().indexOf("readyResults.put")
+                < settle.getBody().toString().lastIndexOf("finishPreparedSettlement"));
     }
 
     @Test
@@ -383,7 +408,7 @@ class DailySettlementLifecycleContractTest {
         assertTrue(restored.hasPendingProfessionChoices());
         assertEquals(1, backend.questDayStartedCalls);
         assertEquals(1, backend.masteryMorningCalls);
-        assertEquals(2, backend.persistenceWrites);
+        assertEquals(3, backend.persistenceWrites);
         assertTrue(recovered.pendingSettlement(playerId).isEmpty());
         assertEquals(5, barrier.readyResult(playerId, target.absoluteDay())
                 .payload().levelUps().size());
@@ -494,7 +519,7 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void registeredFarmOwnersDriveFarmCursorAndCavesOutsideSettlementParticipants()
+    void frozenFarmOwnersDriveFarmCursorAndCavesWithoutRegistryRescans()
             throws Exception {
         ParsedClass time = parse("src/main/java/com/stardew/craft/time/StardewTimeManager.java");
         String advance = time.method("advanceDayWithSleepTime", 1).getBody().toString();
@@ -504,18 +529,41 @@ class DailySettlementLifecycleContractTest {
         ParsedClass factory = parse(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
         String cursor = factory.method("updateFarmCursor", 1).getBody().toString();
-        assertTrue(cursor.contains("getAllFarms()"),
-                "farm cursor must derive its owners from the registry");
-        assertFalse(cursor.contains("context.farmOwnerIds()"),
-                "farm cursor must not reuse participant-derived owners");
+        assertFalse(cursor.contains("getAllFarms()"),
+                "farm cursor must not rescan the registry during commit");
+        assertTrue(cursor.contains("frozenFarms"),
+                "farm cursor must consume the start-time farm snapshot");
 
         ParsedClass caves = parse(
                 "src/main/java/com/stardew/craft/manager/FarmCaveDailyService.java");
-        String caveWork = caves.method("createDailyWorkUnit", 2).getBody().toString();
-        assertTrue(caveWork.contains("getAllFarms()"),
-                "farm caves must include registered farms even without participants");
-        assertFalse(caveWork.contains("context.playerIds()"),
-                "farm caves must not be filtered by settlement participants");
+        String caveWork = caves.method("createDailyWorkUnit", 3).getBody().toString();
+        assertFalse(caveWork.contains("getAllFarms()"),
+                "farm caves must not rescan the registry");
+        assertTrue(caveWork.contains("context.farmOwnerIds()"),
+                "farm caves must be bounded by the frozen owner ids");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void startTimeFarmSnapshotSurvivesRegistryAddsAndDeletes() throws Exception {
+        FarmInstanceRegistry registry = new FarmInstanceRegistry();
+        UUID frozenOwner = UUID.randomUUID();
+        UUID lateOwner = UUID.randomUUID();
+        FarmInstance frozenFarm = createFarm(registry, frozenOwner, "Frozen");
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(), Set.of(frozenOwner));
+        Method snapshotMethod = DailySettlementPlanFactory.class.getDeclaredMethod(
+                "snapshotFarms", DailySettlementContext.class, FarmInstanceRegistry.class);
+        snapshotMethod.setAccessible(true);
+        Map<UUID, FarmInstance> snapshot = (Map<UUID, FarmInstance>) snapshotMethod.invoke(
+                null, target, registry);
+
+        registry.deleteFarm(frozenOwner);
+        createFarm(registry, lateOwner, "Late");
+
+        assertEquals(Set.of(frozenOwner), snapshot.keySet());
+        assertSame(frozenFarm, snapshot.get(frozenOwner));
+        assertFalse(snapshot.containsKey(lateOwner));
     }
 
     @Test
@@ -584,6 +632,169 @@ class DailySettlementLifecycleContractTest {
         assertEquals(1, backend.recipeApplications);
         assertEquals(1, backend.questDayStartedCalls);
         assertEquals(1, backend.masteryMorningCalls);
+    }
+
+    @Test
+    void activeCoordinatorKeepsRetryOwnershipAcrossLogoutAndLogin() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        PlayerStardewData data = unsettledPlayer(playerId);
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        playerData.put(playerId, data);
+        FailingOnlineSettlementBackend backend = new FailingOnlineSettlementBackend(data);
+        backend.online = true;
+        PlayerDailySettlementService service = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), List.of(playerId));
+
+        assertThrows(IllegalStateException.class, () -> service.settlePlayer(target, playerId));
+        service.onLogout(playerId);
+        assertTrue(DailySettlementEvents.resumePlayerSettlement(
+                service, barrier, playerId, true).isEmpty(),
+                "login must leave an active coordinator's failed item pending");
+        assertTrue(service.pendingSettlement(playerId).isPresent());
+        assertEquals(1, backend.shippingApplications);
+
+        backend.failAfterShipping = false;
+        service.settlePlayer(target, playerId);
+        DailySettlementBarrier.ReadyResult ready =
+                service.readyResult(playerId, target.absoluteDay());
+        assertTrue(barrier.publishReady(playerId, ready));
+
+        service.settlePlayer(target, playerId);
+
+        assertSame(ready, service.readyResult(playerId, target.absoluteDay()));
+        assertSame(ready, barrier.readyResult(playerId, target.absoluteDay()));
+        assertTrue(service.pendingSettlement(playerId).isEmpty());
+        assertEquals(1, backend.shippingApplications);
+        assertEquals(1, backend.levelApplications);
+        assertEquals(1, backend.recipeApplications);
+        assertEquals(1, backend.questDayStartedCalls);
+        assertEquals(1, backend.masteryMorningCalls);
+    }
+
+    @Test
+    void productionSettlementRetriesInsideShippingAndFinalCleanupWithoutDuplicateEffects()
+            throws Exception {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        Class<?> operationsType = List.of(PlayerDailySettlementService.class.getDeclaredClasses()).stream()
+                .filter(type -> type.getSimpleName().equals("SettlementOperations"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("production settlement operations are missing"));
+        InternalFailureState state = new InternalFailureState(target.absoluteDay());
+        Object operations = Proxy.newProxyInstance(
+                operationsType.getClassLoader(), new Class<?>[]{operationsType}, state::invoke);
+        AtomicReference<PlayerDailySettlementService.PendingSettlement> progress =
+                new AtomicReference<>(new PlayerDailySettlementService.PendingSettlement(
+                        target.absoluteDay(), target.year(), target.season(), target.day(),
+                        target.sleepMinute(), target.seasonChanged()));
+        Method prepare = PlayerDailySettlementService.class.getDeclaredMethod(
+                "prepareOnlineSettlement", DailySettlementContext.class, UUID.class,
+                PlayerDailySettlementService.PendingSettlement.class, Consumer.class, operationsType);
+        Method finalize = PlayerDailySettlementService.class.getDeclaredMethod(
+                "finalizeOnlineSettlement", DailySettlementContext.class, UUID.class,
+                PlayerDailySettlementService.PendingSettlement.class, Consumer.class, operationsType);
+        prepare.setAccessible(true);
+        finalize.setAccessible(true);
+
+        assertThrows(IllegalStateException.class, () -> invokeSettlement(
+                prepare, target, playerId, progress, operations));
+        OvernightSettlementPayload payload = (OvernightSettlementPayload) invokeSettlement(
+                prepare, target, playerId, progress, operations);
+
+        assertEquals(120, state.money);
+        assertEquals(1, state.historyApplications);
+        assertEquals(1, state.orderApplications);
+        assertEquals(1, state.moneyApplications);
+        assertEquals(1, state.levelApplications);
+        assertEquals(1, state.recipeApplications);
+        assertEquals(1, state.questApplications);
+        assertEquals(1, state.masteryApplications);
+        assertEquals(1, payload.shippedItems().size());
+        assertTrue(payload.hasPassOut());
+
+        assertThrows(IllegalStateException.class, () -> invokeSettlement(
+                finalize, target, playerId, progress, operations));
+        invokeSettlement(finalize, target, playerId, progress, operations);
+
+        assertEquals(1, state.shippingConsumes);
+        assertEquals(1, state.passOutConsumes);
+        assertEquals(1, state.levelClears);
+        assertEquals(1, payload.shippedItems().size(), "prepared READY payload must survive cleanup retry");
+        assertTrue(payload.hasPassOut(), "prepared READY payload must retain pass-out data");
+    }
+
+    @Test
+    void productionReceiptsAreClaimedBeforeNonIdempotentSettlementEffects() throws Exception {
+        ParsedClass data = parse(
+                "src/main/java/com/stardew/craft/player/PlayerStardewData.java");
+        String history = data.method("recordOvernightShippingHistory", 2).getBody().toString();
+        assertTrue(history.indexOf("lastOvernightShippingHistoryDay = absoluteDay")
+                < history.indexOf("for ("),
+                "shipping history must claim its day before incrementing counters");
+
+        ParsedClass api = parse(
+                "src/main/java/com/stardew/craft/player/PlayerStardewDataAPI.java");
+        String orders = api.method("applyOvernightShippingOrders", 3).getBody().toString();
+        assertTrue(orders.indexOf("markOvernightShippingOrdersApplied")
+                < orders.indexOf("recordOvernightShippedCore"),
+                "special-order hooks must be claimed before they can mutate progress");
+        String money = api.method("applyOvernightShippingMoney", 3).getBody().toString();
+        int moneyReceipt = money.indexOf("markOvernightShippingMoneyApplied");
+        assertTrue(moneyReceipt < money.indexOf("addMoneyWithoutSync"),
+                "shared money must be claimed before payment");
+        assertTrue(moneyReceipt < money.indexOf("addTotalShippingGold"),
+                "shipping totals must be claimed before incrementing history");
+
+        ParsedClass service = parse(
+                "src/main/java/com/stardew/craft/time/settlement/PlayerDailySettlementService.java");
+        MethodTree quest = service.methods("applyQuest").stream()
+                .filter(method -> method.getBody() != null
+                        && method.getBody().toString().contains("fireDayStarted"))
+                .findFirst().orElseThrow();
+        assertTrue(quest.getBody().toString().indexOf("markDailySettlementQuestApplied")
+                < quest.getBody().toString().indexOf("fireDayStarted"));
+        MethodTree mastery = service.methods("applyMastery").stream()
+                .filter(method -> method.getBody() != null
+                        && method.getBody().toString().contains("checkOnMorning"))
+                .findFirst().orElseThrow();
+        assertTrue(mastery.getBody().toString().indexOf("markDailySettlementMasteryApplied")
+                < mastery.getBody().toString().indexOf("checkOnMorning"));
+    }
+
+    @Test
+    void settlementReceiptsRoundTripAndRejectTheSameDayTwice() {
+        UUID playerId = UUID.randomUUID();
+        PlayerStardewData data = new PlayerStardewData(playerId);
+        int absoluteDay = 226;
+        List<OvernightSettlementPayload.ShippedItem> items = List.of(
+                new OvernightSettlementPayload.ShippedItem(
+                        new ItemStack(Items.DIAMOND, 2), 3, 60));
+
+        assertTrue(data.recordOvernightShippingHistory(absoluteDay, items));
+        assertFalse(data.recordOvernightShippingHistory(absoluteDay, items));
+        assertTrue(data.markOvernightShippingOrdersApplied(absoluteDay));
+        assertFalse(data.markOvernightShippingOrdersApplied(absoluteDay));
+        assertTrue(data.markOvernightShippingMoneyApplied(absoluteDay));
+        assertFalse(data.markOvernightShippingMoneyApplied(absoluteDay));
+        assertTrue(data.markDailySettlementQuestApplied(absoluteDay));
+        assertFalse(data.markDailySettlementQuestApplied(absoluteDay));
+        assertTrue(data.markDailySettlementMasteryApplied(absoluteDay));
+        assertFalse(data.markDailySettlementMasteryApplied(absoluteDay));
+
+        PlayerStardewData restored = PlayerStardewData.fromNBT(data.toNBT(), playerId);
+        assertEquals(2, restored.getItemsShippedCount("minecraft:diamond"));
+        assertFalse(restored.recordOvernightShippingHistory(absoluteDay, items));
+        assertTrue(restored.isOvernightShippingOrdersApplied(absoluteDay));
+        assertTrue(restored.isOvernightShippingMoneyApplied(absoluteDay));
+        assertTrue(restored.isDailySettlementQuestApplied(absoluteDay));
+        assertTrue(restored.isDailySettlementMasteryApplied(absoluteDay));
     }
 
     @Test
@@ -678,6 +889,10 @@ class DailySettlementLifecycleContractTest {
         String closeAll = factory.method("closePreparedWorld", 0).getBody().toString();
 
         assertTrue(cleanup.contains("closePreparedWorld()"));
+        int clearFrozen = cleanup.indexOf("clearFrozenFarms()");
+        assertTrue(clearFrozen >= 0, "cleanup must explicitly release the frozen farm snapshot");
+        assertTrue(clearFrozen < cleanup.indexOf("if (!dailyProcessActive)"),
+                "plan-build cleanup must release a snapshot before the daily scope starts");
         assertTrue(closeAll.contains("for (DailySettlementWorkUnit work"));
         assertTrue(closeAll.contains("catch (RuntimeException | Error"));
         assertTrue(closeAll.contains("addSuppressed"));
@@ -770,6 +985,118 @@ class DailySettlementLifecycleContractTest {
 
     private static AudiencePlayer audience(String name, boolean valley) {
         return new AudiencePlayer(UUID.nameUUIDFromBytes(name.getBytes()), valley);
+    }
+
+    private static FarmInstance createFarm(
+            FarmInstanceRegistry registry, UUID ownerId, String ownerName) throws Exception {
+        Method create = FarmInstanceRegistry.class.getDeclaredMethod(
+                "createFarmAtDate", UUID.class, String.class, String.class,
+                FarmType.class, int.class, int.class);
+        create.setAccessible(true);
+        return (FarmInstance) create.invoke(
+                registry, ownerId, ownerName, ownerName + " Farm", FarmType.STANDARD, 225, 3);
+    }
+
+    private static Object invokeSettlement(
+            Method method,
+            DailySettlementContext context,
+            UUID playerId,
+            AtomicReference<PlayerDailySettlementService.PendingSettlement> progress,
+            Object operations) throws Exception {
+        try {
+            return method.invoke(
+                    null, context, playerId, progress.get(),
+                    (Consumer<PlayerDailySettlementService.PendingSettlement>) progress::set,
+                    operations);
+        } catch (InvocationTargetException failure) {
+            Throwable cause = failure.getCause();
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException(cause);
+        }
+    }
+
+    private static final class InternalFailureState {
+        private final int absoluteDay;
+        private final Set<String> receipts = new java.util.HashSet<>();
+        private boolean failMoney = true;
+        private boolean failShippingCleanup = true;
+        private int money;
+        private int historyApplications;
+        private int orderApplications;
+        private int moneyApplications;
+        private int levelApplications;
+        private int recipeApplications;
+        private int questApplications;
+        private int masteryApplications;
+        private int shippingConsumes;
+        private int passOutConsumes;
+        private int levelClears;
+
+        private InternalFailureState(int absoluteDay) {
+            this.absoluteDay = absoluteDay;
+        }
+
+        private Object invoke(Object proxy, Method method, Object[] arguments) {
+            return switch (method.getName()) {
+                case "applyBase" -> once("base", () -> {});
+                case "shippingPayload" -> new OvernightSettlementPayload(
+                        absoluteDay,
+                        List.of(new OvernightSettlementPayload.ShippedItem(
+                                new ItemStack(Items.DIAMOND, 2), 3, 60)),
+                        List.of());
+                case "applyShippingHistory" -> once(
+                        "history", () -> historyApplications++);
+                case "applyShippingOrders" -> once(
+                        "orders", () -> orderApplications++);
+                case "applyShippingMoney" -> {
+                    once("money", () -> {
+                        moneyApplications++;
+                        money += 120;
+                    });
+                    if (failMoney) {
+                        failMoney = false;
+                        throw new IllegalStateException("injected inside shipping money");
+                    }
+                    yield null;
+                }
+                case "applyLevels" -> {
+                    once("levels", () -> levelApplications++);
+                    yield List.of(new PlayerStardewData.SkillLevelUp(SkillType.FARMING, 5));
+                }
+                case "applyRecipes" -> once("recipes", () -> recipeApplications++);
+                case "syncPlayer" -> null;
+                case "applyQuest" -> once("quest", () -> questApplications++);
+                case "applyMastery" -> once("mastery", () -> masteryApplications++);
+                case "passOutResult" -> new PassOutService.PassOutResult(
+                        PassOutService.PassOutType.EXHAUSTION_2AM, 25, List.of(), absoluteDay);
+                case "consumeShipping" -> {
+                    once("consume_shipping", () -> shippingConsumes++);
+                    if (failShippingCleanup) {
+                        failShippingCleanup = false;
+                        throw new IllegalStateException("injected inside final shipping cleanup");
+                    }
+                    yield null;
+                }
+                case "consumePassOut" -> once("consume_passout", () -> passOutConsumes++);
+                case "clearLevels" -> once("clear_levels", () -> levelClears++);
+                case "toString" -> "InternalFailureState";
+                case "hashCode" -> System.identityHashCode(proxy);
+                case "equals" -> proxy == arguments[0];
+                default -> throw new AssertionError("Unexpected operation: " + method.getName());
+            };
+        }
+
+        private Object once(String receipt, Runnable action) {
+            if (receipts.add(receipt)) {
+                action.run();
+            }
+            return null;
+        }
     }
 
     private record AudiencePlayer(UUID id, boolean valley) {
@@ -965,17 +1292,22 @@ class DailySettlementLifecycleContractTest {
     }
 
     private record ParsedClass(ClassTree type) {
-        MethodTree method(String name, int parameterCount) {
+        List<MethodTree> methods(String name) {
             List<MethodTree> methods = new ArrayList<>();
             new TreeScanner<Void, Void>() {
                 @Override
                 public Void visitMethod(MethodTree method, Void unused) {
-                    methods.add(method);
+                    if (method.getName().contentEquals(name)) {
+                        methods.add(method);
+                    }
                     return super.visitMethod(method, unused);
                 }
             }.scan(type, null);
-            return methods.stream()
-                    .filter(method -> method.getName().contentEquals(name))
+            return methods;
+        }
+
+        MethodTree method(String name, int parameterCount) {
+            return methods(name).stream()
                     .filter(method -> method.getParameters().size() == parameterCount)
                     .findFirst()
                     .orElseThrow(() -> new AssertionError(

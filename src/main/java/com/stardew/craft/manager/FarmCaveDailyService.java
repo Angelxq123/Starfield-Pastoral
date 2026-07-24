@@ -89,23 +89,45 @@ public final class FarmCaveDailyService {
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
             playerIds.add(player.getUUID());
         }
-        return DailySettlementContextFactory.withPlayers(
+        DailySettlementContext current = DailySettlementContextFactory.withPlayers(
                 DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get()),
                 playerIds);
+        Set<UUID> farmOwners = FarmInstanceRegistry.get().getAllFarms().stream()
+                .map(FarmInstance::getOwnerUUID)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        return new DailySettlementContext(
+                current.absoluteDay(), current.year(), current.season(), current.day(),
+                current.sleepMinute(), current.seasonChanged(), current.playerIds(), farmOwners);
     }
 
     public static DailySettlementWorkUnit createDailyWorkUnit(
             ServerLevel level,
             DailySettlementContext context) {
+        FarmInstanceRegistry registry = FarmInstanceRegistry.get();
+        java.util.Map<UUID, FarmInstance> farms = new java.util.LinkedHashMap<>();
+        for (UUID ownerId : context.farmOwnerIds()) {
+            FarmInstance farm = registry.getFarm(ownerId);
+            if (farm != null) {
+                farms.put(ownerId, farm);
+            }
+        }
+        return createDailyWorkUnit(level, context, java.util.Map.copyOf(farms));
+    }
+
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level,
+            DailySettlementContext context,
+            java.util.Map<UUID, FarmInstance> frozenFarms) {
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(context, "context");
-        FarmInstanceRegistry reg = FarmInstanceRegistry.get();
+        Objects.requireNonNull(frozenFarms, "frozenFarms");
         PlayerInteriorAllocator alloc = PlayerInteriorAllocator.get(level);
         Set<UUID> processedOwners = new HashSet<>();
         List<FarmCaveDailyEntry> farmSnapshot = new ArrayList<>();
-        for (FarmInstance farm : reg.getAllFarms()) {
-            UUID ownerUUID = farm.getOwnerUUID();
+        for (UUID ownerUUID : context.farmOwnerIds()) {
             if (!processedOwners.add(ownerUUID)) continue;
+            FarmInstance farm = frozenFarms.get(ownerUUID);
+            if (farm == null) continue;
             if (!alloc.isCavePlaced(ownerUUID)) continue;
             FarmCaveChoice choice = farm.getCaveChoice();
             if (choice == FarmCaveChoice.NONE) continue;

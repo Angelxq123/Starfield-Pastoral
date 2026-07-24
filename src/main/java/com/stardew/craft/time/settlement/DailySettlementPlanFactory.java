@@ -84,6 +84,23 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
     }
 
+    static Map<UUID, com.stardew.craft.farm.FarmInstance> snapshotFarms(
+            DailySettlementContext context,
+            com.stardew.craft.farm.FarmInstanceRegistry registry) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(registry, "registry");
+        Map<UUID, com.stardew.craft.farm.FarmInstance> snapshot = new LinkedHashMap<>();
+        context.farmOwnerIds().stream()
+                .sorted(java.util.Comparator.comparing(UUID::toString))
+                .forEach(ownerId -> {
+                    com.stardew.craft.farm.FarmInstance farm = registry.getFarm(ownerId);
+                    if (farm != null) {
+                        snapshot.put(ownerId, farm);
+                    }
+                });
+        return Map.copyOf(snapshot);
+    }
+
     @FunctionalInterface
     public interface WorkUnitFactory {
         DailySettlementWorkUnit create(String name, DailySettlementContext context);
@@ -95,6 +112,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private final PlayerDailySettlementService players;
         private final Map<String, DailySettlementWorkUnit> preparedWorld =
                 new LinkedHashMap<>();
+        private Map<UUID, com.stardew.craft.farm.FarmInstance> frozenFarms = Map.of();
+        private int frozenFarmDay = Integer.MIN_VALUE;
         private ServerLevel activeLevel;
         private boolean dailyProcessActive;
 
@@ -109,6 +128,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
 
         @Override
         public DailySettlementWorkUnit create(String name, DailySettlementContext context) {
+            freezeFarms(context);
             return switch (name) {
                 case "shipping_bin_flush" -> atomic(name,
                         com.stardew.craft.blockentity.ShippingBinBlockEntity::flushAllForOvernight);
@@ -244,7 +264,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "coal_forest" -> com.stardew.craft.manager.CoalForestClumpSpawnService
                         .createDailyWorkUnit(level(), context);
                 case "farm_caves" -> com.stardew.craft.manager.FarmCaveDailyService
-                        .createDailyWorkUnit(level(), context);
+                        .createDailyWorkUnit(level(), context, frozenFarms);
                 default -> throw new IllegalArgumentException("Unknown world snapshot: " + name);
             };
         }
@@ -289,11 +309,23 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private void updateFarmCursor(DailySettlementContext context) {
             com.stardew.craft.farm.FarmInstanceRegistry registry =
                     com.stardew.craft.farm.FarmInstanceRegistry.get();
-            for (com.stardew.craft.farm.FarmInstance farm : registry.getAllFarms()) {
+            for (com.stardew.craft.farm.FarmInstance farm : frozenFarms.values()) {
                 farm.setLastOnlineDay(context.absoluteDay());
                 farm.setLastOnlineSeason(context.season());
             }
             registry.setDirty();
+        }
+
+        private void freezeFarms(DailySettlementContext context) {
+            if (frozenFarmDay == context.absoluteDay()) {
+                return;
+            }
+            if (frozenFarmDay != Integer.MIN_VALUE) {
+                throw new IllegalStateException("A different farm snapshot is still active");
+            }
+            frozenFarms = snapshotFarms(
+                    context, com.stardew.craft.farm.FarmInstanceRegistry.get());
+            frozenFarmDay = context.absoluteDay();
         }
 
         private void bookseller(DailySettlementContext context) {
@@ -333,6 +365,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         private synchronized void cleanupDailyProcess() {
+            clearFrozenFarms();
             if (!dailyProcessActive) {
                 return;
             }
@@ -347,6 +380,11 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     activeLevel = null;
                 }
             }
+        }
+
+        private void clearFrozenFarms() {
+            frozenFarms = Map.of();
+            frozenFarmDay = Integer.MIN_VALUE;
         }
 
         private void closePreparedWorld() {

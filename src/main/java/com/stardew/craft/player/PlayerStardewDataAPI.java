@@ -247,9 +247,7 @@ public class PlayerStardewDataAPI {
 
     public static void clearPendingSkillLevelUps(ServerPlayer player) {
         PlayerStardewData data = getData(player);
-        if (data.clearPendingSkillLevelUps()) {
-            PlayerDataEventHandler.syncPlayerData(player, data);
-        }
+        data.clearPendingSkillLevelUps();
     }
     
     /**
@@ -761,6 +759,57 @@ public class PlayerStardewDataAPI {
         if (changed) {
             PlayerDataEventHandler.syncPlayerData(player, data);
         }
+    }
+
+    public static void applyOvernightShippingHistory(
+            ServerPlayer player,
+            int absoluteDay,
+            java.util.List<OvernightSettlementPayload.ShippedItem> shippedItems) {
+        java.util.Objects.requireNonNull(player, "player");
+        java.util.Objects.requireNonNull(shippedItems, "shippedItems");
+        getData(player).recordOvernightShippingHistory(absoluteDay, shippedItems);
+    }
+
+    public static void applyOvernightShippingOrders(
+            ServerPlayer player,
+            int absoluteDay,
+            java.util.List<OvernightSettlementPayload.ShippedItem> shippedItems) {
+        java.util.Objects.requireNonNull(player, "player");
+        java.util.Objects.requireNonNull(shippedItems, "shippedItems");
+        PlayerStardewData data = getData(player);
+        if (!data.markOvernightShippingOrdersApplied(absoluteDay)) {
+            return;
+        }
+        com.stardew.craft.specialorder.SpecialOrderManager
+                .recordOvernightShippedCore(player, shippedItems);
+    }
+
+    public static void applyOvernightShippingMoney(
+            ServerPlayer player,
+            int absoluteDay,
+            java.util.List<OvernightSettlementPayload.ShippedItem> shippedItems) {
+        java.util.Objects.requireNonNull(player, "player");
+        java.util.Objects.requireNonNull(shippedItems, "shippedItems");
+        int totalGold = 0;
+        for (OvernightSettlementPayload.ShippedItem shippedItem : shippedItems) {
+            if (shippedItem != null && !shippedItem.stack().isEmpty()) {
+                totalGold += shippedItem.pricePerItem() * shippedItem.stack().getCount();
+            }
+        }
+        PlayerStardewData data = getData(player);
+        if (!data.markOvernightShippingMoneyApplied(absoluteDay)) {
+            return;
+        }
+        if (totalGold > 0) {
+            com.stardew.craft.money.SharedMoneyService.addMoneyWithoutSync(player, totalGold);
+            data.addTotalShippingGold(totalGold);
+        }
+    }
+
+    public static void syncOvernightSettlement(ServerPlayer player) {
+        PlayerDataEventHandler.syncPlayerData(player, getData(player));
+        com.stardew.craft.specialorder.SpecialOrderManager.syncAll(player.server);
+        com.stardew.craft.money.SharedMoneyService.syncPlayerGroup(player);
     }
 
     public static void applySkillLevelRecipeUnlocks(ServerPlayer player, java.util.List<PlayerStardewData.SkillLevelUp> levelUps) {

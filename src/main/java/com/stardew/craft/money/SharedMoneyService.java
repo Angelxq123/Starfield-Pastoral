@@ -40,6 +40,14 @@ public final class SharedMoneyService {
         SharedMoneyData.get().addMoney(player, amount);
     }
 
+    public static boolean addMoneyWithoutSync(ServerPlayer player, int amount) {
+        return SharedMoneyData.get().addMoneyWithoutSync(player, amount);
+    }
+
+    public static void syncPlayerGroup(ServerPlayer player) {
+        SharedMoneyData.get().syncPlayerGroup(player);
+    }
+
     public static void addMoney(UUID playerId, int amount) {
         SharedMoneyData.get().addMoney(playerId, amount);
     }

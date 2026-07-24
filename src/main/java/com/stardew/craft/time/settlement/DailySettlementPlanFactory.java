@@ -1,6 +1,7 @@
 package com.stardew.craft.time.settlement;
 
 import com.stardew.craft.server.performance.DailySettlementMetrics;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -143,6 +144,48 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     }
                 });
         return Map.copyOf(snapshot);
+    }
+
+    static void lockBarrierAtStart(
+            DailySettlementContext context,
+            DailySettlementBarrier barrier,
+            DailySettlementAccessGuard accessGuard,
+            DailySettlementMetrics metrics,
+            BarrierNotifier notifier) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(barrier, "barrier");
+        Objects.requireNonNull(accessGuard, "accessGuard");
+        Objects.requireNonNull(notifier, "notifier");
+        List<UUID> notifiedPlayers = new ArrayList<>();
+        try {
+            barrier.lockAll(context.absoluteDay(), context.playerIds());
+            if (metrics != null) {
+                metrics.markLocked();
+            }
+            for (UUID playerId : context.playerIds()) {
+                if (notifier.send(playerId, context.absoluteDay(), true)) {
+                    notifiedPlayers.add(playerId);
+                }
+            }
+        } catch (RuntimeException | Error failure) {
+            for (UUID playerId : notifiedPlayers) {
+                try {
+                    notifier.send(playerId, context.absoluteDay(), false);
+                } catch (RuntimeException | Error unlockFailure) {
+                    if (unlockFailure != failure) {
+                        failure.addSuppressed(unlockFailure);
+                    }
+                }
+            }
+            accessGuard.clear();
+            barrier.clear();
+            throw failure;
+        }
+    }
+
+    @FunctionalInterface
+    interface BarrierNotifier {
+        boolean send(UUID playerId, int absoluteDay, boolean locked);
     }
 
     @FunctionalInterface
@@ -344,27 +387,24 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         private void lockBarrier(DailySettlementContext context) {
-            try {
-                barrier.lockAll(context.absoluteDay(), context.playerIds());
-                if (metrics != null) {
-                    metrics.markLocked();
-                }
-                for (UUID playerId : context.playerIds()) {
-                    net.minecraft.server.level.ServerPlayer player =
-                            server().getPlayerList().getPlayer(playerId);
-                    if (player != null) {
-                        accessGuard.captureAnchor(player);
-                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
-                                player,
-                                new com.stardew.craft.network.overnight.OvernightBarrierPayload(
-                                        context.absoluteDay(), true));
-                    }
-                }
-            } catch (RuntimeException | Error failure) {
-                accessGuard.clear();
-                barrier.clear();
-                throw failure;
+            lockBarrierAtStart(
+                    context, barrier, accessGuard, metrics, this::sendBarrierState);
+        }
+
+        private boolean sendBarrierState(UUID playerId, int absoluteDay, boolean locked) {
+            net.minecraft.server.level.ServerPlayer player =
+                    server().getPlayerList().getPlayer(playerId);
+            if (player == null) {
+                return false;
             }
+            if (locked) {
+                accessGuard.captureAnchor(player);
+            }
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                    player,
+                    new com.stardew.craft.network.overnight.OvernightBarrierPayload(
+                            absoluteDay, locked));
+            return true;
         }
 
         private void festivalAndSeason(DailySettlementContext context) {

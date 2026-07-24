@@ -286,6 +286,29 @@ class DailySettlementPerformanceTelemetryTest {
         assertEquals(50L, metrics.readySummary().totalWallNanos());
     }
 
+    @Test
+    void normalSettlementAndForageProgressLogsAreNotInfoLevel() throws IOException {
+        String dimension = source(
+                "src/main/java/com/stardew/craft/event/DimensionEventHandler.java");
+        String compactDimension = dimension.replaceAll("\\s+", "");
+        assertFalse(compactDimension.contains(
+                "LOGGER.info(\"Stardewdailysettlementstarted"));
+        assertFalse(compactDimension.contains(
+                "LOGGER.info(\"Stardewdaypublished"));
+        assertTrue(compactDimension.contains(
+                "LOGGER.debug(\"Stardewdailysettlementstarted"));
+        assertTrue(compactDimension.contains(
+                "LOGGER.debug(\"Stardewdaypublished"));
+        assertTrue(dimension.contains("Stardew daily settlement started"));
+        assertTrue(dimension.contains("Stardew day published"));
+
+        String forage = source(
+                "src/main/java/com/stardew/craft/manager/ForageSpawnService.java");
+        assertFalse(forage.contains("StardewCraft.LOGGER.info("),
+                "successful forage progress must not add per-day or per-zone info logs");
+        assertTrue(forage.contains("StardewCraft.LOGGER.debug("));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of(System.getProperty("stardewcraft.projectDir")).resolve(relativePath));
     }

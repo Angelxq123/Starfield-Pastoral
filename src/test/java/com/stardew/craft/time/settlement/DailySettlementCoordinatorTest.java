@@ -125,6 +125,99 @@ class DailySettlementCoordinatorTest {
     }
 
     @Test
+    void partialStartNotificationFailureUnlocksEarlierClientsAndCleansServerState() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard accessGuard = new DailySettlementAccessGuard(barrier);
+        List<String> notifications = new ArrayList<>();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(first, second), Set.of());
+        DailySettlementPlanFactory.BarrierNotifier notifier = (playerId, day, locked) -> {
+            notifications.add(playerId + ":" + locked);
+            if (!locked) {
+                assertTrue(barrier.isLocked(playerId),
+                        "client rollback should be attempted before server lock cleanup");
+                return true;
+            }
+            accessGuard.captureAnchor(
+                    playerId, net.minecraft.world.level.Level.OVERWORLD,
+                    new net.minecraft.world.phys.Vec3(1.0D, 64.0D, 2.0D), 0.0F, 0.0F);
+            if (playerId.equals(second)) {
+                throw new IllegalStateException("second notification failed");
+            }
+            return true;
+        };
+        DailySettlementCoordinator.PlanFactory factory = new DailySettlementCoordinator.PlanFactory() {
+            @Override
+            public void prepareStart(DailySettlementContext context) {
+                DailySettlementPlanFactory.lockBarrierAtStart(
+                        context, barrier, accessGuard, null, notifier);
+            }
+
+            @Override
+            public void build(
+                    DailySettlementContext context,
+                    DailySettlementCoordinator.SettlementPlanBuilder builder) {
+            }
+        };
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> DEFAULT_BUDGET, () -> DEFAULT_ITEM_LIMIT,
+                factory, DailySettlementCoordinator.LifecycleListener.NOOP);
+
+        IllegalStateException failure = assertThrows(
+                IllegalStateException.class, () -> coordinator.start(target));
+
+        assertEquals("second notification failed", failure.getMessage());
+        assertEquals(List.of(first + ":true", second + ":true", first + ":false"), notifications);
+        assertFalse(coordinator.isActive());
+        assertTrue(coordinator.context().isEmpty());
+        assertFalse(barrier.isLocked(first));
+        assertFalse(barrier.isLocked(second));
+        assertTrue(accessGuard.anchor(first).isEmpty());
+        assertTrue(accessGuard.anchor(second).isEmpty());
+    }
+
+    @Test
+    void rollbackNotificationFailureDoesNotBlockRemainingUnlocksOrCleanup() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID third = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard accessGuard = new DailySettlementAccessGuard(barrier);
+        List<String> notifications = new ArrayList<>();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(first, second, third), Set.of());
+
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () ->
+                DailySettlementPlanFactory.lockBarrierAtStart(
+                        target, barrier, accessGuard, null, (playerId, day, locked) -> {
+                            notifications.add(playerId + ":" + locked);
+                            if (locked && playerId.equals(third)) {
+                                throw new IllegalStateException("third lock failed");
+                            }
+                            if (!locked && playerId.equals(first)) {
+                                throw new IllegalStateException("first unlock failed");
+                            }
+                            return true;
+                        }));
+
+        assertEquals("third lock failed", failure.getMessage());
+        assertEquals(1, failure.getSuppressed().length);
+        assertEquals("first unlock failed", failure.getSuppressed()[0].getMessage());
+        assertEquals(List.of(
+                first + ":true", second + ":true", third + ":true",
+                first + ":false", second + ":false"), notifications);
+        assertFalse(barrier.isLocked(first));
+        assertFalse(barrier.isLocked(second));
+        assertFalse(barrier.isLocked(third));
+        assertTrue(accessGuard.anchor(first).isEmpty());
+        assertTrue(accessGuard.anchor(second).isEmpty());
+        assertTrue(accessGuard.anchor(third).isEmpty());
+    }
+
+    @Test
     void duplicateStartForSameDayIsIdempotentAndCreatesPlanOnce() {
         AtomicInteger plans = new AtomicInteger();
         DailySettlementCoordinator coordinator = coordinator(context -> {

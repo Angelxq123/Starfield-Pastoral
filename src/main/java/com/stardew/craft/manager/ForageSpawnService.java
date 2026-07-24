@@ -119,7 +119,7 @@ public final class ForageSpawnService {
         int season = context.season();
         AtomicInteger totalSpawned = new AtomicInteger();
         List<DailySettlementWorkUnit> zoneWork = new ArrayList<>(zones.size());
-        StardewCraft.LOGGER.info("[ForageSpawn] onNewDay called, season={}", season);
+        StardewCraft.LOGGER.debug("[ForageSpawn] onNewDay called, season={}", season);
         for (ForageZone zone : zones) {
             zoneWork.add(createZoneDailyWorkUnit(
                     level, zone, season, worldSeed, absoluteDay, totalSpawned));
@@ -127,7 +127,7 @@ public final class ForageSpawnService {
         return DailySettlementWorkUnits.sequence(
                 "forage_daily",
                 zoneWork,
-                () -> StardewCraft.LOGGER.info(
+                () -> StardewCraft.LOGGER.debug(
                         "[ForageSpawn] Day complete: total spawned = {}", totalSpawned.get()));
     }
 
@@ -147,7 +147,7 @@ public final class ForageSpawnService {
                     List.<String>of(),
                     value -> value,
                     value -> {},
-                    () -> StardewCraft.LOGGER.info(
+                    () -> StardewCraft.LOGGER.debug(
                             "[ForageSpawn] {} zone: no forage entries for season {}", zone.name, season));
         }
 
@@ -189,7 +189,7 @@ public final class ForageSpawnService {
                     List.<String>of(),
                     value -> value,
                     value -> {},
-                    () -> StardewCraft.LOGGER.info(
+                    () -> StardewCraft.LOGGER.debug(
                             "[ForageSpawn] {} zone: already at max ({}/{})",
                             zone.name, existing, zone.maxSpawnedAtOnce));
         }
@@ -199,7 +199,7 @@ public final class ForageSpawnService {
         int rolled = zone.minDailySpawn + countRandom.nextInt(
                 zone.maxDailySpawn - zone.minDailySpawn + 1);
         int toSpawn = Math.min(rolled, zone.maxSpawnedAtOnce - existing);
-        StardewCraft.LOGGER.info("[ForageSpawn] {} zone: existing={}, toSpawn={}, possibleEntries={}",
+        StardewCraft.LOGGER.debug("[ForageSpawn] {} zone: existing={}, toSpawn={}, possibleEntries={}",
                 zone.name, existing, toSpawn, possibleForage.size());
         AtomicInteger spawned = new AtomicInteger();
         return PublicAreaDailyWorkUnits.forageAttempts(
@@ -216,7 +216,7 @@ public final class ForageSpawnService {
                 },
                 () -> {
                     totalSpawned.addAndGet(spawned.get());
-                    StardewCraft.LOGGER.info(
+                    StardewCraft.LOGGER.debug(
                             "[ForageSpawn] {} zone: spawned {} forage blocks",
                             zone.name, spawned.get());
                 });
@@ -399,7 +399,7 @@ public final class ForageSpawnService {
                 ForageInitData.factory(), INIT_DATA_ID);
         if (data.isInitialized()) return;
 
-        StardewCraft.LOGGER.info("[ForageSpawn] Running first-day initial forage spawn (season={})", season);
+        StardewCraft.LOGGER.debug("[ForageSpawn] Running first-day initial forage spawn (season={})", season);
         onNewDay(level, season);
         data.markInitialized();
     }
@@ -516,7 +516,7 @@ public final class ForageSpawnService {
                 farmWork,
                 () -> {
                     if (totalSpawned.get() > 0) {
-                        StardewCraft.LOGGER.info(
+                        StardewCraft.LOGGER.debug(
                                 "[ForageSpawn] Forest farms total: {} forage spawned",
                                 totalSpawned.get());
                     }
@@ -583,7 +583,7 @@ public final class ForageSpawnService {
                 },
                 () -> {
                     totalSpawned.addAndGet(spawned.get());
-                    StardewCraft.LOGGER.info(
+                    StardewCraft.LOGGER.debug(
                             "[ForageSpawn] Forest farm ({}): spawned {} forage in zone",
                             farm.ownerName(), spawned.get());
                 });

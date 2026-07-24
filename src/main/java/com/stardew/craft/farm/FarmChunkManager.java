@@ -50,9 +50,13 @@ public class FarmChunkManager {
                 @Override
                 public void load(ServerLevel level, ChunkPos chunk) {
                     ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
+                    ServerPerformanceRecorder.increment(
+                            PerformanceCounter.DAILY_SYNC_CHUNK_LOADS, 1L);
                     ServerPerformanceRecorder.measure(
                             PerformanceTiming.FARM_SYNC_CHUNK_LOAD,
-                            () -> level.getChunk(chunk.x, chunk.z));
+                            () -> ServerPerformanceRecorder.measure(
+                                    PerformanceTiming.DAILY_SYNC_CHUNK_LOAD,
+                                    () -> level.getChunk(chunk.x, chunk.z)));
                 }
 
                 @Override

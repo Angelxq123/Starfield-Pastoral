@@ -87,7 +87,7 @@ public class DimensionEventHandler {
             } catch (Exception e) {
                 StardewCraft.LOGGER.error("Error during advanceDayWithSleepTime (day still advanced to prevent freeze)", e);
             }
-            StardewCraft.LOGGER.info(
+            StardewCraft.LOGGER.debug(
                     "Stardew daily settlement started by {} (sleepMinute={})",
                     reason, sleepMinute);
         } finally {
@@ -630,7 +630,7 @@ public class DimensionEventHandler {
         midnightWarned = false;
         oneAMWarned = false;
         twoAMWarned = false;
-        StardewCraft.LOGGER.info(
+        StardewCraft.LOGGER.debug(
                 "Stardew day published: year={} season={} day={}",
                 timeManager.getCurrentYear(),
                 timeManager.getCurrentSeason(),

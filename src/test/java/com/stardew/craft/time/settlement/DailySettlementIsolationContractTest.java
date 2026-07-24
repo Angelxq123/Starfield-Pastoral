@@ -369,6 +369,9 @@ class DailySettlementIsolationContractTest {
         assertFalse(plan.contains("settlement_barrier_lock"));
         assertTrue(plan.contains("prepareStart"));
         assertTrue(plan.contains("lockBarrier(context)"));
+        assertTrue(plan.contains("lockBarrierAtStart("));
+        assertTrue(plan.contains("this::sendBarrierState"));
+        assertTrue(plan.contains("absoluteDay, locked"));
     }
 
     private static void assertDate(

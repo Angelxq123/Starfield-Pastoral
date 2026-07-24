@@ -428,8 +428,13 @@ class FarmChunkManagerTest {
         assertTrue(source.contains("return level.setChunkForced(chunk.x, chunk.z, true)"));
         assertTrue(loadMethod.find());
         assertTrue(loadMethod.group("body").contains("PerformanceCounter.FARM_SYNC_CHUNK_LOADS"));
+        assertTrue(loadMethod.group("body").contains("PerformanceCounter.DAILY_SYNC_CHUNK_LOADS"));
         assertTrue(loadMethod.group("body").contains("PerformanceTiming.FARM_SYNC_CHUNK_LOAD"));
+        assertTrue(loadMethod.group("body").contains("PerformanceTiming.DAILY_SYNC_CHUNK_LOAD"));
         assertTrue(loadMethod.group("body").contains("level.getChunk(chunk.x, chunk.z)"));
+        assertEquals(1, occurrences(
+                loadMethod.group("body"), "level.getChunk(chunk.x, chunk.z)"),
+                "both timings must wrap the same synchronous load");
         assertTrue(source.contains("level.setChunkForced(chunk.x, chunk.z, false)"));
         assertFalse(source.contains("catch (RuntimeException exception)"));
     }
@@ -454,6 +459,16 @@ class FarmChunkManagerTest {
         Path projectDir = Path.of(System.getProperty("stardewcraft.projectDir"));
         return Files.readString(projectDir.resolve(
             "src/main/java/com/stardew/craft/farm/FarmChunkManager.java"));
+    }
+
+    private static int occurrences(String source, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = source.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 
     private static List<ChunkPos> footprint(int startX, int startZ) {

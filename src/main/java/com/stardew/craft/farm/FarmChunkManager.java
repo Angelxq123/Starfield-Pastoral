@@ -64,7 +64,9 @@ public class FarmChunkManager {
     static final class DailySettlementChunkLeaseScope<L> implements AutoCloseable {
         private final TemporaryChunkLeaseTracker<L> tracker;
         private final L level;
-        private final Set<ScopedLease> openLeases = new LinkedHashSet<>();
+        private final Set<ChunkPos> heldChunks = new LinkedHashSet<>();
+        private final List<TemporaryChunkLeaseTracker.Lease> rootLeases =
+                new ArrayList<>();
         private boolean closed;
 
         DailySettlementChunkLeaseScope(TemporaryChunkLeaseTracker<L> tracker, L level) {
@@ -76,40 +78,39 @@ public class FarmChunkManager {
             if (closed) {
                 throw new IllegalStateException("Daily settlement chunk lease scope is closed");
             }
-            ScopedLease lease = new ScopedLease(tracker.acquire(level, chunks));
-            openLeases.add(lease);
-            return lease;
-        }
-
-        private void closeEntry(ScopedLease lease) {
-            try {
-                lease.closeDelegate();
-            } catch (RuntimeException | Error ignored) {
-                // Root close owns observable cleanup failures and will retry this entry.
-                return;
+            LinkedHashSet<ChunkPos> newChunks = new LinkedHashSet<>();
+            for (ChunkPos chunk : chunks) {
+                ChunkPos required = Objects.requireNonNull(chunk, "chunk");
+                if (!heldChunks.contains(required)) {
+                    newChunks.add(required);
+                }
             }
-            synchronized (this) {
-                openLeases.remove(lease);
+            if (!newChunks.isEmpty()) {
+                TemporaryChunkLeaseTracker.Lease rootLease =
+                        tracker.acquire(level, newChunks);
+                rootLeases.add(rootLease);
+                heldChunks.addAll(newChunks);
             }
+            return () -> {};
         }
 
         @Override
         public void close() {
-            List<ScopedLease> leases;
+            List<TemporaryChunkLeaseTracker.Lease> leases;
             synchronized (this) {
-                if (closed && openLeases.isEmpty()) {
+                if (closed && rootLeases.isEmpty()) {
                     return;
                 }
                 closed = true;
-                leases = new ArrayList<>(openLeases);
+                leases = new ArrayList<>(rootLeases);
             }
 
             Throwable failure = null;
-            for (ScopedLease lease : leases) {
+            for (TemporaryChunkLeaseTracker.Lease lease : leases) {
                 try {
-                    lease.closeDelegate();
+                    lease.close();
                     synchronized (this) {
-                        openLeases.remove(lease);
+                        rootLeases.remove(lease);
                     }
                 } catch (RuntimeException | Error closeFailure) {
                     if (failure == null) {
@@ -131,27 +132,6 @@ public class FarmChunkManager {
             }
         }
 
-        private final class ScopedLease implements TemporaryChunkLeaseTracker.Lease {
-            private final TemporaryChunkLeaseTracker.Lease delegate;
-            private boolean closed;
-
-            private ScopedLease(TemporaryChunkLeaseTracker.Lease delegate) {
-                this.delegate = delegate;
-            }
-
-            @Override
-            public void close() {
-                closeEntry(this);
-            }
-
-            private synchronized void closeDelegate() {
-                if (closed) {
-                    return;
-                }
-                delegate.close();
-                closed = true;
-            }
-        }
     }
 
     private static final class TemporaryFarmLoad {

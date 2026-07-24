@@ -2,21 +2,18 @@ package com.stardew.craft.client.gui.overnight;
 
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.network.overnight.ClientOvernightHandler;
-import com.stardew.craft.network.payload.SleepCancelPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * 多人睡眠等待界面。
  * <p>
  * 玩家确认睡觉后显示此界面，渐黑背景 + "等待其他玩家…" + 投票进度。
- * 按 ESC 或任意键可取消睡眠并撤回投票。
- * 当日推进完成（收到 OvernightSettlementPayload）时自动关闭。
+ * READY 前输入只会被吞掉；READY 后首次输入开始完整夜间结算链。
  */
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
@@ -27,7 +24,6 @@ public class SleepWaitingOverlayScreen extends Screen {
     private int ticksOpen;
     private int votedCount;
     private int requiredCount;
-    private boolean cancelled;
 
     public SleepWaitingOverlayScreen(int votedCount, int requiredCount) {
         super(Component.empty());
@@ -77,9 +73,6 @@ public class SleepWaitingOverlayScreen extends Screen {
                     votedCount, requiredCount);
             GuiText.drawCenteredClamped(graphics, font, progressText, width / 2, height / 2 + 4, textMaxWidth, 0xFFCCCCCC, false);
 
-            // "按 ESC 取消"
-            Component hintText = Component.translatable("stardewcraft.sleep.cancel.hint");
-            GuiText.drawCenteredClamped(graphics, font, hintText, width / 2, height / 2 + 24, textMaxWidth, 0xFF888888, false);
         }
     }
 
@@ -94,30 +87,13 @@ public class SleepWaitingOverlayScreen extends Screen {
     }
 
     private boolean handleDismissInput() {
-        if (!ClientOvernightHandler.isLocked()) {
-            cancel();
-            return true;
-        }
-        if (!ClientOvernightHandler.isReady()) {
-            return true;
-        }
-        ClientOvernightHandler.startReadySequence(ClientOvernightHandler.currentAbsoluteDay());
-        return true;
-    }
-
-    private void cancel() {
-        if (cancelled || ClientOvernightHandler.isLocked()) return;
-        cancelled = true;
-        // 通知服务端撤回投票
-        PacketDistributor.sendToServer(new SleepCancelPayload());
-        Minecraft.getInstance().setScreen(null);
+        return ClientOvernightHandler.handleWaitingInput();
     }
 
     /**
      * 日推进完成后由客户端结算流程调用，关闭此界面（不发取消包）。
      */
     public void onDayAdvanced() {
-        cancelled = true; // 防止关闭时发取消包
         Minecraft.getInstance().setScreen(null);
     }
 }

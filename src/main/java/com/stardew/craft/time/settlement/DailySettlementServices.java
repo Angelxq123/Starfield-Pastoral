@@ -1,24 +1,20 @@
 package com.stardew.craft.time.settlement;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.WeakHashMap;
-import java.lang.ref.WeakReference;
 
 public final class DailySettlementServices {
-    private static final WeakHashMap<MinecraftServer, Services> SERVICES = new WeakHashMap<>();
+    private static final WeakKeyRegistry<MinecraftServer, Services> SERVICES =
+            new WeakKeyRegistry<>();
 
     private DailySettlementServices() {
     }
 
     public static synchronized Services get(MinecraftServer server) {
         Objects.requireNonNull(server, "server");
-        return SERVICES.computeIfAbsent(server, DailySettlementServices::create);
+        return SERVICES.getOrCreate(server, DailySettlementServices::create);
     }
 
     public static synchronized Services find(MinecraftServer server) {
@@ -69,7 +65,8 @@ public final class DailySettlementServices {
                 () -> 2_000_000L,
                 () -> 64,
                 plan,
-                new ReadyPublisher(server, barrier, players, commitHooks));
+                DailySettlementReadyPublisher.production(
+                        server, barrier, players, commitHooks));
         return new Services(coordinator, barrier, plan, players);
     }
 
@@ -88,7 +85,11 @@ public final class DailySettlementServices {
 
         public void stop() {
             try {
-                coordinator.drain();
+                if (!coordinator.drain()) {
+                    com.stardew.craft.StardewCraft.LOGGER.error(
+                            "[DAILY] Stop drain deadline exceeded; "
+                                    + "aborted active settlement and started cleanup");
+                }
             } finally {
                 try {
                     plan.cleanup();
@@ -100,66 +101,4 @@ public final class DailySettlementServices {
         }
     }
 
-    private static final class ReadyPublisher
-            implements DailySettlementCoordinator.LifecycleListener {
-        private final WeakReference<MinecraftServer> server;
-        private final DailySettlementBarrier barrier;
-        private final PlayerDailySettlementService players;
-        private final DailySettlementCommitHooks commitHooks;
-
-        private ReadyPublisher(
-                MinecraftServer server,
-                DailySettlementBarrier barrier,
-                PlayerDailySettlementService players,
-                DailySettlementCommitHooks commitHooks) {
-            this.server = new WeakReference<>(server);
-            this.barrier = barrier;
-            this.players = players;
-            this.commitHooks = commitHooks;
-        }
-
-        @Override
-        public void phaseChanged(DailySettlementContext context, DailySettlementPhase phase) {
-        }
-
-        @Override
-        public void itemFailure(
-                DailySettlementContext context,
-                String unitName,
-                String itemIdentity,
-                int attempt,
-                boolean permanent) {
-            com.stardew.craft.StardewCraft.LOGGER.error(
-                    "[DAILY] unit={} item={} attempt={} permanent={}",
-                    unitName, itemIdentity, attempt, permanent);
-        }
-
-        @Override
-        public void ready(DailySettlementContext context) {
-            commitHooks.ready(context);
-            for (UUID playerId : context.playerIds()) {
-                DailySettlementBarrier.ReadyResult result =
-                        players.readyResultOrCreate(context, playerId);
-                if (!barrier.publishReady(playerId, result)
-                        && barrier.readyResult(playerId, context.absoluteDay()) != result) {
-                    throw new IllegalStateException(
-                            "Unable to publish settlement result for " + playerId);
-                }
-                ServerPlayer player = server().getPlayerList().getPlayer(playerId);
-                if (player != null) {
-                    PacketDistributor.sendToPlayer(player, result.payload());
-                    com.stardew.craft.cutscene.server.WakeUpEventScheduler
-                            .enqueueAtNightSettlement(player);
-                }
-            }
-        }
-
-        private MinecraftServer server() {
-            MinecraftServer current = server.get();
-            if (current == null) {
-                throw new IllegalStateException("Daily settlement server is no longer available");
-            }
-            return current;
-        }
-    }
 }

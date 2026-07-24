@@ -70,6 +70,29 @@ public final class DailySettlementBarrier {
         return true;
     }
 
+    public boolean publishReadyAll(int absoluteDay, Map<UUID, ReadyResult> results) {
+        if (absoluteDay <= 0) {
+            throw new IllegalArgumentException("absoluteDay must be positive");
+        }
+        Map<UUID, ReadyResult> copied = Map.copyOf(
+                Objects.requireNonNull(results, "results"));
+        for (Map.Entry<UUID, ReadyResult> entry : copied.entrySet()) {
+            UUID playerId = entry.getKey();
+            ReadyResult result = entry.getValue();
+            Integer lockedDay = locks.get(playerId);
+            ReadyResult existing = ready.get(playerId);
+            if (result.absoluteDay() != absoluteDay
+                    || lockedDay == null || lockedDay != absoluteDay
+                    || (existing != null && existing != result)) {
+                return false;
+            }
+        }
+        for (Map.Entry<UUID, ReadyResult> entry : copied.entrySet()) {
+            ready.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        return true;
+    }
+
     public boolean replaceReady(UUID playerId, ReadyResult result) {
         Objects.requireNonNull(playerId, "playerId");
         Objects.requireNonNull(result, "result");

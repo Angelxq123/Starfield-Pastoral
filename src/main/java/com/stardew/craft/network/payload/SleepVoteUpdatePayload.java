@@ -37,6 +37,8 @@ public record SleepVoteUpdatePayload(int votedCount, int requiredCount) implemen
         context.enqueueWork(() -> {
             // 显示投票进度到 action bar（原版 InBedChatScreen 下依然可见）
             Minecraft mc = Minecraft.getInstance();
+            com.stardew.craft.network.overnight.ClientOvernightHandler
+                    .receiveVoteProgress(payload.votedCount(), payload.requiredCount());
             if (mc.player != null) {
                 mc.player.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable(

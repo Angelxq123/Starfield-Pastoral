@@ -30,12 +30,44 @@ import java.util.Set;
 public class ClientOvernightHandler {
     private static final Set<Integer> LOCAL_OVERNIGHT_PROFESSIONS = new HashSet<>();
     private static final Deque<Screen> PENDING_SCREENS = new ArrayDeque<>();
+    private static final ClientOvernightFlow FLOW = new ClientOvernightFlow(
+            new ClientOvernightFlow.UiGateway() {
+                @Override
+                public boolean isLocalSleeperOrWaiting() {
+                    Screen screen = Minecraft.getInstance().screen;
+                    return screen instanceof net.minecraft.client.gui.screens.InBedChatScreen
+                            || screen instanceof SleepWaitingOverlayScreen;
+                }
+
+                @Override
+                public void showWaiting(int votedCount, int requiredCount) {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    if (minecraft.screen instanceof SleepWaitingOverlayScreen waiting) {
+                        waiting.updateProgress(votedCount, requiredCount);
+                    } else {
+                        minecraft.setScreen(
+                                new SleepWaitingOverlayScreen(votedCount, requiredCount));
+                    }
+                }
+
+                @Override
+                public void acknowledgeAndStart(
+                        int absoluteDay, OvernightSettlementPayload payload) {
+                    PacketDistributor.sendToServer(new OvernightReadyAckPayload(absoluteDay));
+                    if (Minecraft.getInstance().screen
+                            instanceof SleepWaitingOverlayScreen waiting) {
+                        waiting.onDayAdvanced();
+                    }
+                    startSequence(payload);
+                }
+
+                @Override
+                public void startLegacy(OvernightSettlementPayload payload) {
+                    startSequence(payload);
+                }
+            });
     private static boolean sequenceActive;
     private static Screen activeScreen;
-    private static int currentAbsoluteDay = -1;
-    private static int lastAcknowledgedAbsoluteDay = -1;
-    private static boolean locked;
-    private static OvernightSettlementPayload pendingReadyPayload;
 
     public static void beginSequence() {
         LOCAL_OVERNIGHT_PROFESSIONS.clear();
@@ -57,17 +89,15 @@ public class ClientOvernightHandler {
     }
 
     public static boolean isLocked() {
-        return locked;
+        return FLOW.isLocked();
     }
 
     public static boolean isReady() {
-        return locked
-                && pendingReadyPayload != null
-                && pendingReadyPayload.absoluteDay() == currentAbsoluteDay;
+        return FLOW.isReady();
     }
 
     public static int currentAbsoluteDay() {
-        return currentAbsoluteDay;
+        return FLOW.currentAbsoluteDay();
     }
 
     @SubscribeEvent
@@ -76,10 +106,7 @@ public class ClientOvernightHandler {
     }
 
     static void resetConnectionState() {
-        currentAbsoluteDay = -1;
-        locked = false;
-        pendingReadyPayload = null;
-        lastAcknowledgedAbsoluteDay = -1;
+        FLOW.resetConnectionState();
         sequenceActive = false;
         PENDING_SCREENS.clear();
         activeScreen = null;
@@ -87,64 +114,23 @@ public class ClientOvernightHandler {
     }
 
     public static void receiveBarrierState(OvernightBarrierPayload payload) {
-        if (payload.absoluteDay() <= lastAcknowledgedAbsoluteDay) {
-            return;
-        }
-        if (payload.absoluteDay() <= 0
-                || (locked && payload.absoluteDay() < currentAbsoluteDay)) {
-            return;
-        }
-        if (!locked || payload.absoluteDay() > currentAbsoluteDay) {
-            currentAbsoluteDay = payload.absoluteDay();
-            locked = payload.locked();
-            pendingReadyPayload = null;
-            if (!locked) {
-                currentAbsoluteDay = -1;
-            }
-            return;
-        }
-        if (currentAbsoluteDay != payload.absoluteDay()) {
-            return;
-        }
-        locked = payload.locked();
-        if (!locked) {
-            currentAbsoluteDay = -1;
-            pendingReadyPayload = null;
-        }
+        FLOW.receiveBarrierState(payload);
     }
 
     public static void receiveSettlement(OvernightSettlementPayload payload) {
-        if (payload.absoluteDay() < 0) {
-            if (!locked) {
-                startSequence(payload);
-            }
-            return;
-        }
-        if (!locked || payload.absoluteDay() != currentAbsoluteDay) {
-            return;
-        }
-        if (pendingReadyPayload == null) {
-            pendingReadyPayload = payload;
-        }
+        FLOW.receiveSettlement(payload);
+    }
+
+    public static void receiveVoteProgress(int votedCount, int requiredCount) {
+        FLOW.receiveVoteProgress(votedCount, requiredCount);
+    }
+
+    public static boolean handleWaitingInput() {
+        return FLOW.handleDismissInput();
     }
 
     public static boolean startReadySequence(int absoluteDay) {
-        if (!locked || absoluteDay != currentAbsoluteDay || !isReady()) {
-            return false;
-        }
-
-        OvernightSettlementPayload payload = pendingReadyPayload;
-        lastAcknowledgedAbsoluteDay = absoluteDay;
-        locked = false;
-        currentAbsoluteDay = -1;
-        pendingReadyPayload = null;
-
-        PacketDistributor.sendToServer(new OvernightReadyAckPayload(absoluteDay));
-        if (Minecraft.getInstance().screen instanceof SleepWaitingOverlayScreen waitingScreen) {
-            waitingScreen.onDayAdvanced();
-        }
-        startSequence(payload);
-        return true;
+        return FLOW.startReadySequence(absoluteDay);
     }
 
     public static boolean openNextScreen(String source) {
@@ -203,20 +189,23 @@ public class ClientOvernightHandler {
 
         List<Screen> screenStack = new java.util.ArrayList<>();
 
-        // 如果是 2AM 晕倒，先展示渐黑 + 惩罚摘要画面，再进入正常结算流程
-        if (payload.hasPassOut()) {
-            PassOutPayload passOutPayload = new PassOutPayload(
-                PassOutService.PassOutType.fromId(payload.passOutType()),
-                payload.passOutMoneyLost(),
-                payload.passOutLostItems()
-            );
-            screenStack.add(new PassOutOverlayScreen(passOutPayload, screenStack));
-            screenStack.add(new PassOutSummaryScreen(passOutPayload, screenStack));
-        }
-
-        // 技能升级画面
-        for (OvernightSettlementPayload.LevelUpData levelData : payload.levelUps()) {
-            screenStack.add(new com.stardew.craft.client.gui.overnight.LevelUpMenuScreen(levelData, screenStack));
+        PassOutPayload passOutPayload = payload.hasPassOut()
+                ? new PassOutPayload(
+                        PassOutService.PassOutType.fromId(payload.passOutType()),
+                        payload.passOutMoneyLost(), payload.passOutLostItems())
+                : null;
+        int levelIndex = 0;
+        for (SettlementStage stage : settlementStages(payload)) {
+            switch (stage) {
+                case PASS_OUT_OVERLAY ->
+                        screenStack.add(new PassOutOverlayScreen(passOutPayload, screenStack));
+                case PASS_OUT_SUMMARY ->
+                        screenStack.add(new PassOutSummaryScreen(passOutPayload, screenStack));
+                case LEVEL_UP -> screenStack.add(new LevelUpMenuScreen(
+                        payload.levelUps().get(levelIndex++), screenStack));
+                case SHIPPING ->
+                        screenStack.add(new ShippingMenuScreen(payload.shippedItems(), screenStack));
+            }
         }
 
         long levelUpScreenCount = screenStack.stream().filter(LevelUpMenuScreen.class::isInstance).count();
@@ -225,12 +214,30 @@ public class ClientOvernightHandler {
                 payload.levelUps().size(), levelUpScreenCount);
         }
 
-        // 始终添加出货结算画面（即使没有出货物品也要展示夜间过渡动画）
-        screenStack.add(new ShippingMenuScreen(payload.shippedItems(), screenStack));
         PENDING_SCREENS.addAll(screenStack);
         sequenceActive = true;
         StardewCraft.LOGGER.info("[OVERNIGHT_CLIENT] Screen chain size={}, opening first screen: {}",
             PENDING_SCREENS.size(), PENDING_SCREENS.peekFirst().getClass().getSimpleName());
         openNextScreen("start");
+    }
+
+    static List<SettlementStage> settlementStages(OvernightSettlementPayload payload) {
+        List<SettlementStage> stages = new java.util.ArrayList<>();
+        if (payload.hasPassOut()) {
+            stages.add(SettlementStage.PASS_OUT_OVERLAY);
+            stages.add(SettlementStage.PASS_OUT_SUMMARY);
+        }
+        for (int ignored = 0; ignored < payload.levelUps().size(); ignored++) {
+            stages.add(SettlementStage.LEVEL_UP);
+        }
+        stages.add(SettlementStage.SHIPPING);
+        return List.copyOf(stages);
+    }
+
+    enum SettlementStage {
+        PASS_OUT_OVERLAY,
+        PASS_OUT_SUMMARY,
+        LEVEL_UP,
+        SHIPPING
     }
 }

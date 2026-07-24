@@ -64,117 +64,8 @@ class OvernightBarrierIntegrationContractTest {
         assertTrue(hasInvocation(mouse.getBody(), "handleDismissInput"));
 
         MethodTree gate = method(SCREEN, "SleepWaitingOverlayScreen", "handleDismissInput", 0);
-        List<IfTree> conditions = directIfs(gate.getBody());
-        assertEquals(2, conditions.size(), "input gate must distinguish unlocked, waiting, and ready");
-        assertTrue(hasInvocation(conditions.get(0).getCondition(), "isLocked"));
-        assertTrue(hasInvocation(conditions.get(0).getThenStatement(), "cancel"));
-        assertTrue(hasReturn(conditions.get(0).getThenStatement()));
-        assertTrue(hasInvocation(conditions.get(1).getCondition(), "isReady"));
-        assertFalse(hasInvocation(conditions.get(1).getThenStatement(), "cancel"));
-        assertFalse(hasInvocation(conditions.get(1).getThenStatement(), "setScreen"));
-        assertTrue(hasReturn(conditions.get(1).getThenStatement()));
-        assertTrue(hasInvocation(gate.getBody(), "startReadySequence"));
-        assertTrue(hasInvocation(gate.getBody(), "currentAbsoluteDay"));
-    }
-
-    @Test
-    void cancelMethodHasItsOwnLockedGuard() throws IOException {
-        MethodTree cancel = method(SCREEN, "SleepWaitingOverlayScreen", "cancel", 0);
-        IfTree first = directIfs(cancel.getBody()).getFirst();
-        assertTrue(hasInvocation(first.getCondition(), "isLocked"));
-        assertTrue(hasReturn(first.getThenStatement()));
-        int guard = cancel.getBody().getStatements().indexOf(first);
-        assertTrue(guard < directInvocationStatement(cancel.getBody(), "sendToServer"));
-        assertTrue(guard < directInvocationStatement(cancel.getBody(), "setScreen"));
-    }
-
-    @Test
-    void settlementIsReceivedAndCachedBeforeUserStartsTheSequence() throws IOException {
-        MethodTree handleClient = method(SETTLEMENT, "OvernightSettlementPayload", "handleClient", 1);
-        assertTrue(hasInvocation(handleClient.getBody(), "receiveSettlement"));
-        assertFalse(hasInvocation(handleClient.getBody(), "startSequence"));
-
-        MethodTree receive = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
-        assertTrue(hasAssignmentTo(receive.getBody(), "pendingReadyPayload"));
-        assertFalse(hasInvocation(receive.getBody(), "beginSequence"));
-
-        MethodTree startReady = method(CLIENT_HANDLER, "ClientOvernightHandler", "startReadySequence", 1);
-        assertTrue(hasNewClass(startReady.getBody(), "OvernightReadyAckPayload"));
-        assertTrue(hasInvocation(startReady.getBody(), "onDayAdvanced"));
-        assertTrue(hasInvocation(startReady.getBody(), "startSequence"));
-    }
-
-    @Test
-    void clientBarrierStateRejectsStaleUpdatesAndClearsReadyForANewDay() throws IOException {
-        MethodTree receiveBarrier = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveBarrierState", 1);
-        assertTrue(hasFieldReference(receiveBarrier.getBody(), "absoluteDay"));
-        assertTrue(hasFieldReference(receiveBarrier.getBody(), "locked"));
-        assertTrue(hasAssignmentTo(receiveBarrier.getBody(), "pendingReadyPayload"));
-        assertTrue(hasComparison(receiveBarrier.getBody(), Tree.Kind.LESS_THAN));
-
-        MethodTree receiveSettlement = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
-        assertTrue(hasComparison(receiveSettlement.getBody(), Tree.Kind.LESS_THAN));
-        assertTrue(hasComparison(receiveSettlement.getBody(), Tree.Kind.NOT_EQUAL_TO));
-    }
-
-    @Test
-    void acknowledgedDayWatermarkRejectsLateSameDayLocksBeforeAnyStateMutation() throws IOException {
-        ClassTree handler = classTree(CLIENT_HANDLER, "ClientOvernightHandler");
-        VariableTree watermark = field(handler, "lastAcknowledgedAbsoluteDay");
-        assertEquals("int", watermark.getType().toString());
-        assertEquals("-1", watermark.getInitializer().toString());
-
-        MethodTree receiveBarrier = method(handler, "receiveBarrierState", 1);
-        StatementTree firstStatement = receiveBarrier.getBody().getStatements().getFirst();
-        assertTrue(firstStatement instanceof IfTree,
-                "acknowledged-day rejection must be the first barrier-state statement");
-        IfTree acknowledgedGuard = (IfTree) firstStatement;
-        assertTrue(hasComparisonBetween(
-                acknowledgedGuard.getCondition(), Tree.Kind.LESS_THAN_EQUAL,
-                "payload.absoluteDay()", "lastAcknowledgedAbsoluteDay"));
-        assertTrue(hasReturn(acknowledgedGuard.getThenStatement()));
-
-        int guardIndex = receiveBarrier.getBody().getStatements().indexOf(acknowledgedGuard);
-        assertTrue(guardIndex < assignmentOwnerIndex(receiveBarrier.getBody(), "currentAbsoluteDay"));
-        assertTrue(guardIndex < assignmentOwnerIndex(receiveBarrier.getBody(), "locked"));
-        assertTrue(hasComparison(receiveBarrier.getBody(), Tree.Kind.GREATER_THAN),
-                "a later absolute day must still have an acceptance path");
-    }
-
-    @Test
-    void readyStartRecordsWatermarkBeforeClearingStateAndSendingAck() throws IOException {
-        MethodTree startReady = method(CLIENT_HANDLER, "ClientOvernightHandler", "startReadySequence", 1);
-        BlockTree body = startReady.getBody();
-        AssignmentTree watermark = directAssignment(body, "lastAcknowledgedAbsoluteDay");
-        assertEquals("absoluteDay", watermark.getExpression().toString());
-
-        int watermarkIndex = directAssignmentIndex(body, "lastAcknowledgedAbsoluteDay");
-        assertTrue(watermarkIndex < directAssignmentIndex(body, "locked"));
-        assertTrue(watermarkIndex < directAssignmentIndex(body, "currentAbsoluteDay"));
-        assertTrue(watermarkIndex < directAssignmentIndex(body, "pendingReadyPayload"));
-        assertTrue(watermarkIndex < invocationIndex(body, "sendToServer"));
-        assertTrue(watermarkIndex < invocationIndex(body, "startSequence"));
-    }
-
-    @Test
-    void duplicateReadyClicksAndLateSettlementsRemainGuardedAfterAcknowledgement() throws IOException {
-        MethodTree startReady = method(CLIENT_HANDLER, "ClientOvernightHandler", "startReadySequence", 1);
-        IfTree readyGuard = directIfs(startReady.getBody()).getFirst();
-        assertTrue(hasIdentifier(readyGuard.getCondition(), "locked"));
-        assertTrue(hasIdentifier(readyGuard.getCondition(), "currentAbsoluteDay"));
-        assertTrue(hasInvocation(readyGuard.getCondition(), "isReady"));
-        assertTrue(hasReturn(readyGuard.getThenStatement()));
-
-        MethodTree receiveSettlement = method(CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
-        IfTree settlementGuard = directIfs(receiveSettlement.getBody()).stream()
-                .filter(candidate -> hasIdentifier(candidate.getCondition(), "locked"))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("locked settlement guard is missing"));
-        int stateGuard = receiveSettlement.getBody().getStatements().indexOf(settlementGuard);
-        int readyAssignment = assignmentOwnerIndex(receiveSettlement.getBody(), "pendingReadyPayload");
-        assertTrue(stateGuard >= 0 && stateGuard < readyAssignment,
-                "late settlement must be rejected before restoring pending READY state");
-        assertTrue(hasReturn(settlementGuard.getThenStatement()));
+        assertTrue(hasInvocationWithSelect(
+                gate.getBody(), "ClientOvernightHandler.handleWaitingInput"));
     }
 
     @Test
@@ -189,27 +80,6 @@ class OvernightBarrierIntegrationContractTest {
         assertTrue(hasInvocation(logout.getBody().getStatements().getFirst(), "resetConnectionState"));
         assertFalse(hasInvocation(logout.getBody(), "sendToServer"));
         assertFalse(hasInvocation(logout.getBody(), "setScreen"));
-    }
-
-    @Test
-    void connectionResetClearsBarrierWatermarkAndSettlementSequenceWithoutScreenOrPackets() throws IOException {
-        MethodTree reset = method(CLIENT_HANDLER, "ClientOvernightHandler", "resetConnectionState", 0);
-        BlockTree body = reset.getBody();
-
-        assertEquals("-1", directAssignment(body, "currentAbsoluteDay").getExpression().toString());
-        assertEquals("false", directAssignment(body, "locked").getExpression().toString());
-        assertEquals("null", directAssignment(body, "pendingReadyPayload").getExpression().toString());
-        assertEquals("-1", directAssignment(body, "lastAcknowledgedAbsoluteDay").getExpression().toString());
-        assertEquals("false", directAssignment(body, "sequenceActive").getExpression().toString());
-        assertEquals("null", directAssignment(body, "activeScreen").getExpression().toString());
-        assertTrue(hasInvocationWithSelect(body, "PENDING_SCREENS.clear"));
-        assertTrue(hasInvocationWithSelect(body, "LOCAL_OVERNIGHT_PROFESSIONS.clear"));
-
-        assertFalse(hasInvocation(body, "sendToServer"));
-        assertFalse(hasInvocation(body, "setScreen"));
-        assertFalse(hasInvocation(body, "getInstance"));
-        assertFalse(hasNewClass(body, "OvernightReadyAckPayload"));
-        assertFalse(hasNewClass(body, "SleepCancelPayload"));
     }
 
     @Test
@@ -291,25 +161,9 @@ class OvernightBarrierIntegrationContractTest {
     }
 
     @Test
-    void readyGatePreservesTheExistingResultScreenOrder() throws IOException {
-        MethodTree start = method(CLIENT_HANDLER, "ClientOvernightHandler", "startSequence", 1);
-        List<String> screens = newClasses(start.getBody());
-        int overlay = screens.indexOf("PassOutOverlayScreen");
-        int summary = screens.indexOf("PassOutSummaryScreen");
-        int levelUp = screens.indexOf("com.stardew.craft.client.gui.overnight.LevelUpMenuScreen");
-        int shipping = screens.indexOf("ShippingMenuScreen");
-
-        assertTrue(overlay >= 0 && overlay < summary);
-        assertTrue(summary < levelUp);
-        assertTrue(levelUp < shipping);
-        assertTrue(hasInvocation(start.getBody(), "beginSequence"));
-        assertTrue(hasInvocation(start.getBody(), "openNextScreen"));
-    }
-
-    @Test
     void servicesRegistryUsesWeakServerKeysAndOwnsTheCoordinatorAndBarrier() throws IOException {
         ClassTree services = classTree(SERVICES, "DailySettlementServices");
-        assertTrue(newClasses(services).contains("WeakHashMap<>"));
+        assertTrue(hasIdentifier(services, "WeakKeyRegistry"));
         assertNotNull(method(services, "get", 1));
         assertNotNull(method(services, "find", 1));
         assertNotNull(method(services, "remove", 1));

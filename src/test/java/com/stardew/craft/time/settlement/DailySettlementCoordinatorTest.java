@@ -923,6 +923,93 @@ class DailySettlementCoordinatorTest {
                 () -> new DailySettlementCoordinator.SettlementPlan(withNull, List.of(), List.of(), List.of()));
     }
 
+    @Test
+    void boundedDrainAbortsRequiredCleanupAndPublicationFailures() {
+        for (String unitName : List.of("daily_process_cleanup", "date_publication")) {
+            AtomicInteger attempts = new AtomicInteger();
+            AtomicInteger closes = new AtomicInteger();
+            DailySettlementWorkUnit failing = new DailySettlementWorkUnit() {
+                @Override
+                public String name() {
+                    return unitName;
+                }
+
+                @Override
+                public String currentItemIdentity() {
+                    return unitName;
+                }
+
+                @Override
+                public boolean isComplete() {
+                    return false;
+                }
+
+                @Override
+                public void runNext() {
+                    attempts.incrementAndGet();
+                    throw new IllegalStateException("injected permanent failure");
+                }
+
+                @Override
+                public void skipFailedItem() {
+                    throw new AssertionError("required work must not be skipped");
+                }
+
+                @Override
+                public int maxRetries() {
+                    return Integer.MAX_VALUE;
+                }
+
+                @Override
+                public void close() {
+                    closes.incrementAndGet();
+                }
+            };
+            DailySettlementCoordinator coordinator = coordinator(ignored ->
+                    new DailySettlementCoordinator.SettlementPlan(
+                            List.of(), List.of(), List.of(), List.of(failing)));
+            assertTrue(coordinator.start(context()));
+
+            assertFalse(coordinator.drain(4));
+
+            assertTrue(attempts.get() > 0 && attempts.get() <= 4);
+            assertEquals(1, closes.get());
+            assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
+            assertFalse(coordinator.context().isPresent());
+        }
+    }
+
+    @Test
+    void boundedDrainAbortsPermanentReadyFailure() {
+        AtomicInteger readyAttempts = new AtomicInteger();
+        DailySettlementCoordinator coordinator = coordinator(
+                ignored -> emptyPlan(), new DailySettlementCoordinator.LifecycleListener() {
+                    @Override
+                    public void phaseChanged(
+                            DailySettlementContext context, DailySettlementPhase phase) {
+                    }
+
+                    @Override
+                    public void itemFailure(
+                            DailySettlementContext context, String unitName,
+                            String itemIdentity, int attempt, boolean permanent) {
+                    }
+
+                    @Override
+                    public void ready(DailySettlementContext context) {
+                        readyAttempts.incrementAndGet();
+                        throw new IllegalStateException("injected READY failure");
+                    }
+                });
+        assertTrue(coordinator.start(context()));
+
+        assertFalse(coordinator.drain(3));
+
+        assertTrue(readyAttempts.get() > 0 && readyAttempts.get() <= 3);
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
+        assertFalse(coordinator.context().isPresent());
+    }
+
     private static DailySettlementCoordinator coordinator(
             Function<DailySettlementContext, DailySettlementCoordinator.SettlementPlan> planFactory) {
         return coordinator(planFactory, DailySettlementCoordinator.LifecycleListener.NOOP);

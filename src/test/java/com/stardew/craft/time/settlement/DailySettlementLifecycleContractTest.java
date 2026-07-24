@@ -310,15 +310,15 @@ class DailySettlementLifecycleContractTest {
         String source = source("src/main/java/com/stardew/craft/time/settlement/DailySettlementServices.java");
         ParsedClass services = parseSource("DailySettlementServices", source);
 
-        assertTrue(source.contains("WeakHashMap<MinecraftServer, Services>"));
+        assertTrue(source.contains("WeakKeyRegistry<MinecraftServer, Services>"));
         assertTrue(services.method("get", 1).getModifiers().getFlags()
                 .contains(javax.lang.model.element.Modifier.SYNCHRONIZED));
         assertTrue(services.method("find", 1).getModifiers().getFlags()
                 .contains(javax.lang.model.element.Modifier.SYNCHRONIZED));
         assertTrue(services.method("remove", 1).getModifiers().getFlags()
                 .contains(javax.lang.model.element.Modifier.SYNCHRONIZED));
-        assertTrue(services.method("get", 1).getBody().toString().contains("computeIfAbsent"));
-        assertFalse(services.method("find", 1).getBody().toString().contains("computeIfAbsent"));
+        assertTrue(services.method("get", 1).getBody().toString().contains("getOrCreate"));
+        assertFalse(services.method("find", 1).getBody().toString().contains("getOrCreate"));
 
         String coordinator = source("src/main/java/com/stardew/craft/time/settlement/DailySettlementCoordinator.java");
         assertFalse(coordinator.contains("static DailySettlementCoordinator"));
@@ -1113,13 +1113,16 @@ class DailySettlementLifecycleContractTest {
                 "src/main/java/com/stardew/craft/time/settlement/PlayerDailySettlementService.java");
         String services = source(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementServices.java");
+        String readyPublisher = source(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementReadyPublisher.java");
 
         assertTrue(plan.contains("WeakReference<MinecraftServer>"));
         assertTrue(players.contains("WeakReference<MinecraftServer>"));
-        assertTrue(services.contains("WeakReference<MinecraftServer>"));
+        assertTrue(readyPublisher.contains("WeakReference<MinecraftServer>"));
         assertFalse(plan.contains("private final MinecraftServer server;"));
         assertFalse(players.contains("private final MinecraftServer server;"));
         assertFalse(services.contains("private final MinecraftServer server;"));
+        assertFalse(readyPublisher.contains("private final MinecraftServer server;"));
     }
 
     @Test

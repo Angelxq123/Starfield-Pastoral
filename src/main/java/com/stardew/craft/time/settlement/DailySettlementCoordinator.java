@@ -10,6 +10,8 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 
 public final class DailySettlementCoordinator {
+    private static final long STOP_DRAIN_TIMEOUT_NANOS = 2_000_000_000L;
+    private static final int STOP_DRAIN_ATTEMPT_LIMIT = 100_000;
     private final BudgetedWorkRunner runner;
     private final LongSupplier budgetNanos;
     private final IntSupplier itemLimit;
@@ -133,8 +135,29 @@ public final class DailySettlementCoordinator {
         }
     }
 
-    public void drain() {
+    public boolean drain() {
+        long now = System.nanoTime();
+        long deadline = now > Long.MAX_VALUE - STOP_DRAIN_TIMEOUT_NANOS
+                ? Long.MAX_VALUE : now + STOP_DRAIN_TIMEOUT_NANOS;
+        return drain(System::nanoTime, deadline, STOP_DRAIN_ATTEMPT_LIMIT);
+    }
+
+    boolean drain(int attemptLimit) {
+        return drain(() -> 0L, Long.MAX_VALUE, attemptLimit);
+    }
+
+    boolean drain(LongSupplier clock, long deadlineNanos, int attemptLimit) {
+        Objects.requireNonNull(clock, "clock");
+        if (attemptLimit <= 0) {
+            throw new IllegalArgumentException("attemptLimit must be positive");
+        }
+        int attempts = 0;
         while (phase != DailySettlementPhase.IDLE) {
+            if (attempts >= attemptLimit || clock.getAsLong() >= deadlineNanos) {
+                abortActiveSettlement();
+                return false;
+            }
+            attempts++;
             if (phase == DailySettlementPhase.READY) {
                 if (notifyReady()) {
                     resetToIdle();
@@ -161,6 +184,7 @@ public final class DailySettlementCoordinator {
                 completeCurrentUnit(unit);
             }
         }
+        return true;
     }
 
     public void finishReady() {
@@ -324,6 +348,24 @@ public final class DailySettlementCoordinator {
         consecutiveFailures = 0;
         readyNotified = false;
         closedUnits.clear();
+    }
+
+    private void abortActiveSettlement() {
+        if (plan != null) {
+            for (DailySettlementWorkUnit unit : plan.prepare()) {
+                safeClose(unit);
+            }
+            for (DailySettlementWorkUnit unit : plan.world()) {
+                safeClose(unit);
+            }
+            for (DailySettlementWorkUnit unit : plan.players()) {
+                safeClose(unit);
+            }
+            for (DailySettlementWorkUnit unit : plan.commit()) {
+                safeClose(unit);
+            }
+        }
+        resetToIdle();
     }
 
     @FunctionalInterface

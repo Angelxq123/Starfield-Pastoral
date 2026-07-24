@@ -559,8 +559,7 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void frozenCommitHookAudiencesExcludeLateLoginsAndDoNotReplaceLogouts()
-            throws Exception {
+    void frozenCommitHookAudiencesExcludeLateLoginsAndDoNotReplaceLogouts() {
         AudiencePlayer mainWorldAtStart = audience("main_world_start", false);
         AudiencePlayer valleyAtStart = audience("valley_start", true);
         AudiencePlayer valleyLoggedOut = audience("valley_logout", true);
@@ -578,40 +577,6 @@ class DailySettlementLifecycleContractTest {
                 target.valleyOnlinePlayerIds());
         assertFalse(target.allOnlinePlayerIds().contains(lateValleyLogin.id()));
         assertFalse(target.valleyOnlinePlayerIds().contains(lateValleyLogin.id()));
-        ParsedClass factory = parse(
-                "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
-        String orders = factory.method("specialOrders", 1).getBody().toString();
-        String mail = factory.method("mail", 1).getBody().toString();
-        String bookseller = factory.method("bookseller", 1).getBody().toString();
-        String scope = factory.method("beginDailyProcess", 1).getBody().toString();
-        assertTrue(orders.contains("context.allOnlinePlayerIds()"));
-        assertTrue(mail.contains("context.allOnlinePlayerIds()"));
-        assertTrue(bookseller.contains("context.valleyOnlinePlayerIds()"));
-        assertTrue(orders.contains("onNewDayForPlayers"));
-        assertTrue(bookseller.contains("onNewDayForPlayers"));
-        assertTrue(mail.contains("deliverTomorrowMailForPlayers"));
-        assertFalse(orders.contains("onlinePlayers"));
-        assertFalse(mail.contains("onlinePlayers"));
-        assertFalse(bookseller.contains("onlinePlayers"));
-        assertFalse(orders.contains("getPlayers()"));
-        assertFalse(mail.contains("getPlayers()"));
-        assertFalse(bookseller.contains("getPlayers()"));
-        assertFalse(scope.contains("dailyScopeAudience"));
-        assertFalse(scope.contains("getPlayerList"));
-        assertTrue(scope.contains("context.allOnlinePlayerIds()"));
-
-        PlayerStardewData offlineNotice = new PlayerStardewData(valleyLoggedOut.id());
-        assertTrue(offlineNotice.queueBooksellerNotice(target.absoluteDay()));
-        PlayerStardewData restored = PlayerStardewData.fromNBT(
-                offlineNotice.toNBT(), valleyLoggedOut.id());
-        assertEquals(target.absoluteDay(), restored.getPendingBooksellerNoticeDay());
-        assertTrue(restored.consumeBooksellerNotice(target.absoluteDay()));
-        assertFalse(restored.consumeBooksellerNotice(target.absoluteDay()));
-
-        ParsedClass login = parse(
-                "src/main/java/com/stardew/craft/player/PlayerDataEventHandler.java");
-        assertTrue(login.method("onPlayerLogin", 1).getBody().toString()
-                .contains("BooksellerSchedule.onPlayerLogin"));
     }
 
     @Test

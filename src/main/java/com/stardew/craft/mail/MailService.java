@@ -288,39 +288,116 @@ public class MailService {
     public static void deliverTomorrowMailForPlayers(
             net.minecraft.server.MinecraftServer server,
             java.util.Collection<java.util.UUID> playerIds) {
+        deliverTomorrowMailForPlayers(
+                server,
+                playerIds,
+                com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay());
+    }
+
+    public static void deliverTomorrowMailForPlayers(
+            net.minecraft.server.MinecraftServer server,
+            java.util.Collection<java.util.UUID> playerIds,
+            int currentAbsoluteDay) {
         java.util.Objects.requireNonNull(server, "server");
         java.util.List<java.util.UUID> audience = java.util.List.copyOf(
                 java.util.Objects.requireNonNull(playerIds, "playerIds"));
-        int today = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
         PlayerDataManager manager = PlayerDataManager.get();
         net.minecraft.server.level.ServerLevel stardewLevel =
             server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
         for (java.util.UUID playerId : audience) {
             PlayerStardewData data = manager.getOrCreateData(playerId);
-            int beforeMailbox = data.getMailbox().size();
-            int beforeTomorrow = data.getMailForTomorrow().size();
-            int beforeEffects = data.getPendingMailDeliveryEffects().size();
-            flushTomorrowMailbox(data, today);
-            boolean changed = data.getMailbox().size() != beforeMailbox
-                    || data.getMailForTomorrow().size() != beforeTomorrow
-                    || data.getPendingMailDeliveryEffects().size() != beforeEffects;
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-            if (player != null) {
-                resumePendingDeliveryEffects(
-                        data, mailId -> dispatchDeliveryEffect(player, stardewLevel, mailId));
+            deliverTomorrowMailForPlayer(data, currentAbsoluteDay, callbacks(
+                    manager, player, stardewLevel));
+        }
+    }
+
+    static void deliverTomorrowMailForPlayer(
+            PlayerStardewData data,
+            int currentAbsoluteDay,
+            MailDeliveryCallbacks callbacks) {
+        java.util.Objects.requireNonNull(data, "data");
+        java.util.Objects.requireNonNull(callbacks, "callbacks");
+        int beforeMailbox = data.getMailbox().size();
+        int beforeTomorrow = data.getMailForTomorrow().size();
+        int beforeFlags = data.getMailFlags().size();
+        int beforeEffects = data.getPendingMailDeliveryEffects().size();
+        java.util.List<String> flushedFlags =
+                flushTomorrowMailbox(data, currentAbsoluteDay);
+        boolean persistentChanged = !flushedFlags.isEmpty()
+                || data.getMailbox().size() != beforeMailbox
+                || data.getMailForTomorrow().size() != beforeTomorrow
+                || data.getMailFlags().size() != beforeFlags
+                || data.getPendingMailDeliveryEffects().size() != beforeEffects;
+        boolean persistenceMarked = false;
+        if (persistentChanged) {
+            callbacks.markPersistent();
+            persistenceMarked = true;
+        }
+        if (!callbacks.online()) {
+            return;
+        }
+        boolean claimedEffect = false;
+        try {
+            for (String mailId : data.getPendingMailDeliveryEffects()) {
+                if (!data.claimPendingMailDeliveryEffect(mailId)) {
+                    continue;
+                }
+                claimedEffect = true;
+                if (!persistenceMarked) {
+                    callbacks.markPersistent();
+                    persistenceMarked = true;
+                }
+                callbacks.dispatch(mailId);
             }
-            if (changed) {
-                manager.setDirty();
-            }
-            if (changed && player != null) {
-                PlayerDataEventHandler.syncPlayerData(player, data);
+        } finally {
+            if (persistentChanged || claimedEffect) {
+                callbacks.sync(data);
             }
         }
     }
 
-    static void flushTomorrowMailbox(PlayerStardewData data, int currentAbsoluteDay) {
+    private static MailDeliveryCallbacks callbacks(
+            PlayerDataManager manager,
+            ServerPlayer player,
+            net.minecraft.server.level.ServerLevel stardewLevel) {
+        return new MailDeliveryCallbacks() {
+            @Override
+            public boolean online() {
+                return player != null;
+            }
+
+            @Override
+            public void markPersistent() {
+                manager.setDirty();
+            }
+
+            @Override
+            public void dispatch(String mailId) {
+                dispatchDeliveryEffect(player, stardewLevel, mailId);
+            }
+
+            @Override
+            public void sync(PlayerStardewData data) {
+                PlayerDataEventHandler.syncPlayerData(player, data);
+            }
+        };
+    }
+
+    interface MailDeliveryCallbacks {
+        boolean online();
+
+        void markPersistent();
+
+        void dispatch(String mailId);
+
+        void sync(PlayerStardewData data);
+    }
+
+    static java.util.List<String> flushTomorrowMailbox(
+            PlayerStardewData data, int currentAbsoluteDay) {
         java.util.Objects.requireNonNull(data, "data");
-        data.deliverTomorrowMail(currentAbsoluteDay);
+        return data.deliverTomorrowMail(currentAbsoluteDay);
     }
 
     static void resumePendingDeliveryEffects(
@@ -342,20 +419,11 @@ public class MailService {
     public static void flushOnLogin(ServerPlayer player) {
         int today = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
         PlayerStardewData data = PlayerDataManager.getPlayerData(player);
-        int beforeMailbox = data.getMailbox().size();
-        int beforeTomorrow = data.getMailForTomorrow().size();
-        int beforeEffects = data.getPendingMailDeliveryEffects().size();
-        flushTomorrowMailbox(data, today);
         net.minecraft.server.level.ServerLevel stardewLevel =
             player.getServer() == null ? null
             : player.getServer().getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
-        resumePendingDeliveryEffects(
-                data, mailId -> dispatchDeliveryEffect(player, stardewLevel, mailId));
-        if (data.getMailbox().size() != beforeMailbox
-                || data.getMailForTomorrow().size() != beforeTomorrow
-                || data.getPendingMailDeliveryEffects().size() != beforeEffects) {
-            PlayerDataEventHandler.syncPlayerData(player, data);
-        }
+        deliverTomorrowMailForPlayer(
+                data, today, callbacks(PlayerDataManager.get(), player, stardewLevel));
     }
 
     private static void dispatchDeliveryEffect(

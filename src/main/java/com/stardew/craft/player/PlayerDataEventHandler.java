@@ -59,7 +59,6 @@ public class PlayerDataEventHandler {
             // 获取或创建玩家数据（会自动从NBT加载）
             PlayerStardewData data = PlayerDataManager.getPlayerData(player);
             data.setLastKnownName(player.getName().getString());
-            com.stardew.craft.book.BooksellerSchedule.onPlayerLogin(player);
             if (!data.getPreferredName().isBlank()) {
                 com.stardew.craft.farm.FarmInstanceRegistry.get()
                         .updateOwnerName(player.getUUID(), data.getPreferredName());
@@ -199,8 +198,8 @@ public class PlayerDataEventHandler {
             // 离线跨日后，登录时需要先 flush 已排队到“明天”的邮件，
             // 再补跑当天日期邮件调度；否则成员/离线玩家会漏掉个人信件，
             // 进一步卡住依赖邮件的个人剧情与触发。
-            com.stardew.craft.mail.MailService.flushOnLogin(player);
-            tm.syncDateTriggeredMailOnLogin(player);
+            com.stardew.craft.time.settlement.DailySettlementLoginRecovery
+                    .onPlayerLogin(player);
 
             com.stardew.craft.quest.StardewQuestEvents.fireDayStarted(player, absDay);
         }

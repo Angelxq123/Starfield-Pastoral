@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DailyMailRecoveryTest {
 
@@ -31,5 +32,25 @@ class DailyMailRecoveryTest {
         assertEquals(List.of(targetAbsoluteDay), scheduledDays);
         assertEquals(List.of(), restored.getPendingDateTriggeredMailDays());
         assertEquals(List.of(), lateLogin.getPendingDateTriggeredMailDays());
+    }
+
+    @Test
+    void dateMailSchedulerFailureKeepsTheTargetDayRetryable() {
+        PlayerStardewData data = new PlayerStardewData(UUID.randomUUID());
+        int targetAbsoluteDay = 226;
+        StardewTimeManager.queueDateTriggeredMail(data, targetAbsoluteDay);
+        List<Integer> scheduled = new ArrayList<>();
+
+        assertThrows(IllegalStateException.class, () ->
+                StardewTimeManager.resumePendingDateTriggeredMail(data, day -> {
+                    throw new IllegalStateException("injected date scheduler failure");
+                }));
+        assertEquals(List.of(targetAbsoluteDay), data.getPendingDateTriggeredMailDays());
+
+        StardewTimeManager.resumePendingDateTriggeredMail(data, scheduled::add);
+        StardewTimeManager.resumePendingDateTriggeredMail(data, scheduled::add);
+
+        assertEquals(List.of(targetAbsoluteDay), scheduled);
+        assertEquals(List.of(), data.getPendingDateTriggeredMailDays());
     }
 }

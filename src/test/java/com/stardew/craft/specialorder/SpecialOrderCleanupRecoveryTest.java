@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SpecialOrderCleanupRecoveryTest {
 
@@ -35,5 +36,26 @@ class SpecialOrderCleanupRecoveryTest {
         assertEquals(List.of("stardewcraft:ectoplasm"), lateLoginInventory);
         assertEquals(List.of(), restored.getPendingSpecialOrderItemCleanups());
         assertEquals(List.of(), lateLogin.getPendingSpecialOrderItemCleanups());
+    }
+
+    @Test
+    void temporaryItemRemovalFailureRetainsCleanupForLoginRetry() {
+        PlayerStardewData data = new PlayerStardewData(UUID.randomUUID());
+        SpecialOrderManager.queueTemporaryItemCleanup(
+                data, "stardewcraft:prismatic_jelly");
+        List<String> removed = new ArrayList<>();
+
+        assertThrows(IllegalStateException.class, () ->
+                SpecialOrderManager.resumeTemporaryItemCleanup(data, itemId -> {
+                    throw new IllegalStateException("injected inventory failure");
+                }));
+        assertEquals(List.of("stardewcraft:prismatic_jelly"),
+                data.getPendingSpecialOrderItemCleanups());
+
+        SpecialOrderManager.resumeTemporaryItemCleanup(data, removed::add);
+        SpecialOrderManager.resumeTemporaryItemCleanup(data, removed::add);
+
+        assertEquals(List.of("stardewcraft:prismatic_jelly"), removed);
+        assertEquals(List.of(), data.getPendingSpecialOrderItemCleanups());
     }
 }

@@ -60,13 +60,16 @@ public final class DailySettlementServices {
     private static Services create(MinecraftServer server) {
         DailySettlementBarrier barrier = new DailySettlementBarrier();
         PlayerDailySettlementService players = new PlayerDailySettlementService(server);
-        DailySettlementPlanFactory plan = new DailySettlementPlanFactory(server, barrier, players);
+        DailySettlementCommitHooks commitHooks =
+                DailySettlementCommitHooks.production(server);
+        DailySettlementPlanFactory plan =
+                new DailySettlementPlanFactory(server, barrier, players, commitHooks);
         DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
                 new BudgetedWorkRunner(System::nanoTime),
                 () -> 2_000_000L,
                 () -> 64,
                 plan,
-                new ReadyPublisher(server, barrier, players));
+                new ReadyPublisher(server, barrier, players, commitHooks));
         return new Services(coordinator, barrier, plan, players);
     }
 
@@ -102,14 +105,17 @@ public final class DailySettlementServices {
         private final WeakReference<MinecraftServer> server;
         private final DailySettlementBarrier barrier;
         private final PlayerDailySettlementService players;
+        private final DailySettlementCommitHooks commitHooks;
 
         private ReadyPublisher(
                 MinecraftServer server,
                 DailySettlementBarrier barrier,
-                PlayerDailySettlementService players) {
+                PlayerDailySettlementService players,
+                DailySettlementCommitHooks commitHooks) {
             this.server = new WeakReference<>(server);
             this.barrier = barrier;
             this.players = players;
+            this.commitHooks = commitHooks;
         }
 
         @Override
@@ -130,8 +136,7 @@ public final class DailySettlementServices {
 
         @Override
         public void ready(DailySettlementContext context) {
-            com.stardew.craft.book.BooksellerSchedule.deliverPendingNoticesForPlayers(
-                    server(), context.valleyOnlinePlayerIds(), context.absoluteDay());
+            commitHooks.ready(context);
             for (UUID playerId : context.playerIds()) {
                 DailySettlementBarrier.ReadyResult result =
                         players.readyResultOrCreate(context, playerId);

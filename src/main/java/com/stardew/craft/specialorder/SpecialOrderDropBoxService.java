@@ -26,7 +26,6 @@ public final class SpecialOrderDropBoxService {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            SpecialOrderManager.resumeTemporaryItemCleanup(player);
             SpecialOrderManager.migrateQueuedDonations(player);
             syncHints(player);
         }

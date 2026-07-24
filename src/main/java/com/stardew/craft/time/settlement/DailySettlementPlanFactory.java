@@ -59,7 +59,15 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             MinecraftServer server,
             DailySettlementBarrier barrier,
             PlayerDailySettlementService players) {
-        this(new ProductionWorkUnitFactory(server, barrier, players));
+        this(server, barrier, players, DailySettlementCommitHooks.production(server));
+    }
+
+    DailySettlementPlanFactory(
+            MinecraftServer server,
+            DailySettlementBarrier barrier,
+            PlayerDailySettlementService players,
+            DailySettlementCommitHooks commitHooks) {
+        this(new ProductionWorkUnitFactory(server, barrier, players, commitHooks));
     }
 
     @Override
@@ -122,6 +130,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private final WeakReference<MinecraftServer> server;
         private final DailySettlementBarrier barrier;
         private final PlayerDailySettlementService players;
+        private final DailySettlementCommitHooks commitHooks;
         private final Map<String, DailySettlementWorkUnit> preparedWorld =
                 new LinkedHashMap<>();
         private Map<UUID, com.stardew.craft.farm.FarmInstance> frozenFarms = Map.of();
@@ -132,10 +141,12 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private ProductionWorkUnitFactory(
                 MinecraftServer server,
                 DailySettlementBarrier barrier,
-                PlayerDailySettlementService players) {
+                PlayerDailySettlementService players,
+                DailySettlementCommitHooks commitHooks) {
             this.server = new WeakReference<>(Objects.requireNonNull(server, "server"));
             this.barrier = Objects.requireNonNull(barrier, "barrier");
             this.players = Objects.requireNonNull(players, "players");
+            this.commitHooks = Objects.requireNonNull(commitHooks, "commitHooks");
         }
 
         @Override
@@ -159,13 +170,12 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "player_daily_settlement" -> players.createDailyWorkUnit(context);
                 case "weather_forecast" -> atomic(name, () -> forecast(context));
                 case "farm_cursor" -> atomic(name, () -> updateFarmCursor(context));
-                case "special_orders" -> atomic(name, () -> specialOrders(context));
+                case "special_orders", "bookseller", "mail" ->
+                        commitHooks.create(name, context);
                 case "lost_and_found" -> atomic(name, () ->
                         com.stardew.craft.lostandfound.LostAndFoundService.onNewDay(level()));
-                case "bookseller" -> atomic(name, () -> bookseller(context));
                 case "shop_stock" -> atomic(name,
                         com.stardew.craft.shop.ShopStockTracker::resetForNewDay);
-                case "mail" -> atomic(name, () -> mail(context));
                 case "dirty_mark" -> atomic(name, () ->
                         com.stardew.craft.farm.FarmInstanceRegistry.get().setDirty());
                 case "daily_process_cleanup" -> requiredAtomic(name, this::cleanupDailyProcess);
@@ -348,27 +358,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             frozenFarms = snapshotFarms(
                     context, com.stardew.craft.farm.FarmInstanceRegistry.get());
             frozenFarmDay = context.absoluteDay();
-        }
-
-        private void bookseller(DailySettlementContext context) {
-            com.stardew.craft.book.BooksellerSchedule.onNewDayForPlayers(
-                    level(), context.valleyOnlinePlayerIds(), context.year(),
-                    context.season(), context.day(), context.absoluteDay());
-            com.stardew.craft.shop.BooksellerEvents.forceCheckNow(level());
-        }
-
-        private void specialOrders(DailySettlementContext context) {
-            com.stardew.craft.specialorder.SpecialOrderManager.onNewDayForPlayers(
-                    level(), context.allOnlinePlayerIds());
-        }
-
-        private void mail(DailySettlementContext context) {
-            com.stardew.craft.mail.MailService.deliverTomorrowMailForPlayers(
-                    server(), context.allOnlinePlayerIds());
-            com.stardew.craft.time.StardewTimeManager time =
-                    com.stardew.craft.time.StardewTimeManager.get();
-            time.scheduleDateTriggeredMailForPlayers(
-                    server(), context.allOnlinePlayerIds(), context.absoluteDay());
         }
 
         private DailySettlementWorkUnit publication(DailySettlementContext context) {

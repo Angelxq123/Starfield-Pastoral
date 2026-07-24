@@ -4,6 +4,7 @@ import net.minecraft.server.MinecraftServer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public final class DailySettlementServices {
     private static final WeakKeyRegistry<MinecraftServer, Services> SERVICES =
@@ -25,10 +26,21 @@ public final class DailySettlementServices {
         if (server == null) {
             return;
         }
-        Services services = SERVICES.get(server);
-        if (services != null) {
-            services.stop();
-            SERVICES.remove(server);
+        removeRegistered(SERVICES, server, Services::stop);
+    }
+
+    static <K, V> void removeRegistered(
+            WeakKeyRegistry<K, V> registry, K key, Consumer<V> stop) {
+        Objects.requireNonNull(registry, "registry");
+        Objects.requireNonNull(stop, "stop");
+        V value = registry.get(Objects.requireNonNull(key, "key"));
+        if (value == null) {
+            return;
+        }
+        try {
+            stop.accept(value);
+        } finally {
+            registry.remove(key);
         }
     }
 

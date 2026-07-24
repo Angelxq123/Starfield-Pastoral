@@ -31,9 +31,15 @@ public class ClientOvernightHandler {
     private static final Set<Integer> LOCAL_OVERNIGHT_PROFESSIONS = new HashSet<>();
     private static final Deque<Screen> PENDING_SCREENS = new ArrayDeque<>();
     private static final ClientOvernightFlow FLOW = new ClientOvernightFlow(
-            new ClientOvernightFlow.UiGateway() {
+            new ClientOvernightUiGateway(new ClientOvernightUiGateway.ClientAccess() {
                 @Override
-                public boolean isLocalSleeperOrWaiting() {
+                public boolean isPlayerSleeping() {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    return minecraft.player != null && minecraft.player.isSleeping();
+                }
+
+                @Override
+                public boolean isInBedOrWaitingScreen() {
                     Screen screen = Minecraft.getInstance().screen;
                     return screen instanceof net.minecraft.client.gui.screens.InBedChatScreen
                             || screen instanceof SleepWaitingOverlayScreen;
@@ -65,7 +71,7 @@ public class ClientOvernightHandler {
                 public void startLegacy(OvernightSettlementPayload payload) {
                     startSequence(payload);
                 }
-            });
+            }));
     private static boolean sequenceActive;
     private static Screen activeScreen;
 

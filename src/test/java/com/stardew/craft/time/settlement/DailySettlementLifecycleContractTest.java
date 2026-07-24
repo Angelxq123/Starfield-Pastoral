@@ -302,7 +302,13 @@ class DailySettlementLifecycleContractTest {
         assertTrue(stopCalls.indexOf("drain") < stopCalls.indexOf("clear"));
         MethodTree remove = services.method("remove", 1);
         List<String> removeCalls = invocationNames(remove);
-        assertTrue(removeCalls.indexOf("stop") < removeCalls.indexOf("remove"));
+        assertTrue(removeCalls.contains("removeRegistered"));
+        List<String> removeRegisteredCalls = invocationNames(
+                services.method("removeRegistered", 3));
+        assertTrue(removeRegisteredCalls.indexOf("get")
+                < removeRegisteredCalls.indexOf("accept"));
+        assertTrue(removeRegisteredCalls.indexOf("accept")
+                < removeRegisteredCalls.indexOf("remove"));
     }
 
     @Test
@@ -1219,10 +1225,14 @@ class DailySettlementLifecycleContractTest {
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementServices.java");
         List<String> stopCalls = invocationNames(services.method("stop", 0));
         List<String> removeCalls = invocationNames(services.method("remove", 1));
+        List<String> removeRegisteredCalls = invocationNames(
+                services.method("removeRegistered", 3));
 
         assertTrue(stopCalls.indexOf("drain") >= 0);
         assertTrue(stopCalls.indexOf("drain") < stopCalls.indexOf("clear"));
-        assertTrue(removeCalls.indexOf("stop") < removeCalls.indexOf("remove"));
+        assertTrue(removeCalls.contains("removeRegistered"));
+        assertTrue(removeRegisteredCalls.indexOf("accept")
+                < removeRegisteredCalls.indexOf("remove"));
     }
 
     @Test

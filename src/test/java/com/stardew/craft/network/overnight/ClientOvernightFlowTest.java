@@ -12,6 +12,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ClientOvernightFlowTest {
 
     @Test
+    void productionGatewayOpensVoteOverlayForSleepingPlayerAfterScreenCloses() {
+        RecordingClientAccess access = new RecordingClientAccess();
+        ClientOvernightFlow flow = new ClientOvernightFlow(
+                new ClientOvernightUiGateway(access));
+
+        flow.receiveVoteProgress(1, 2);
+        assertEquals(0, access.waitingOpens);
+
+        access.playerSleeping = true;
+        flow.receiveVoteProgress(1, 2);
+        assertEquals(1, access.waitingOpens);
+
+        access.playerSleeping = false;
+        flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
+        assertEquals(2, access.waitingOpens);
+    }
+
+    @Test
     void voteProgressOpensWaitingOnlyForTheLocalSleeper() {
         RecordingGateway gateway = new RecordingGateway();
         ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
@@ -149,6 +167,36 @@ class ClientOvernightFlowTest {
         @Override
         public void startLegacy(OvernightSettlementPayload payload) {
             startedStages = ClientOvernightHandler.settlementStages(payload);
+        }
+    }
+
+    private static final class RecordingClientAccess
+            implements ClientOvernightUiGateway.ClientAccess {
+        private boolean playerSleeping;
+        private int waitingOpens;
+
+        @Override
+        public boolean isPlayerSleeping() {
+            return playerSleeping;
+        }
+
+        @Override
+        public boolean isInBedOrWaitingScreen() {
+            return false;
+        }
+
+        @Override
+        public void showWaiting(int votedCount, int requiredCount) {
+            waitingOpens++;
+        }
+
+        @Override
+        public void acknowledgeAndStart(
+                int absoluteDay, OvernightSettlementPayload payload) {
+        }
+
+        @Override
+        public void startLegacy(OvernightSettlementPayload payload) {
         }
     }
 }

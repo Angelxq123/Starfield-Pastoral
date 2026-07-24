@@ -98,6 +98,7 @@ public class PlayerStardewData {
     private int lastOvernightShippingMoneyDay = Integer.MIN_VALUE;
     private int lastDailySettlementQuestDay = Integer.MIN_VALUE;
     private int lastDailySettlementMasteryDay = Integer.MIN_VALUE;
+    private int pendingBooksellerNoticeDay = Integer.MIN_VALUE;
 
     // ============ 运气系统 ============
     // 每日运气（per-player），按星露谷日期刷新（由 PlayerStardewDataAPI 惰性刷新）
@@ -431,6 +432,8 @@ public class PlayerStardewData {
                 ? tag.getInt("LastDailySettlementQuestDay") : Integer.MIN_VALUE;
         data.lastDailySettlementMasteryDay = tag.contains("LastDailySettlementMasteryDay")
                 ? tag.getInt("LastDailySettlementMasteryDay") : Integer.MIN_VALUE;
+        data.pendingBooksellerNoticeDay = tag.contains("PendingBooksellerNoticeDay")
+                ? tag.getInt("PendingBooksellerNoticeDay") : Integer.MIN_VALUE;
         if (tag.contains("PendingDailySettlement", 10)) {
             CompoundTag pending = tag.getCompound("PendingDailySettlement");
             List<SkillLevelUp> appliedLevels = new ArrayList<>();
@@ -897,6 +900,7 @@ public class PlayerStardewData {
         tag.putInt("LastOvernightShippingMoneyDay", lastOvernightShippingMoneyDay);
         tag.putInt("LastDailySettlementQuestDay", lastDailySettlementQuestDay);
         tag.putInt("LastDailySettlementMasteryDay", lastDailySettlementMasteryDay);
+        tag.putInt("PendingBooksellerNoticeDay", pendingBooksellerNoticeDay);
         if (pendingDailySettlement != null) {
             CompoundTag pending = new CompoundTag();
             pending.putInt("AbsoluteDay", pendingDailySettlement.absoluteDay());
@@ -3075,6 +3079,7 @@ public class PlayerStardewData {
     public boolean acknowledgePendingDailySettlement(int absoluteDay) {
         if (pendingDailySettlement == null
                 || pendingDailySettlement.absoluteDay() != absoluteDay
+                || pendingDailySettlement.stage() < 12
                 || pendingDailySettlement.completedPayload().isEmpty()) {
             return false;
         }
@@ -3172,6 +3177,33 @@ public class PlayerStardewData {
 
     public boolean isDailySettlementMasteryApplied(int absoluteDay) {
         return lastDailySettlementMasteryDay == absoluteDay;
+    }
+
+    public boolean queueBooksellerNotice(int absoluteDay) {
+        if (absoluteDay <= 0) {
+            throw new IllegalArgumentException("absoluteDay must be positive");
+        }
+        if (pendingBooksellerNoticeDay == absoluteDay) {
+            return false;
+        }
+        pendingBooksellerNoticeDay = absoluteDay;
+        markDirty();
+        return true;
+    }
+
+    public int getPendingBooksellerNoticeDay() {
+        return pendingBooksellerNoticeDay;
+    }
+
+    public boolean consumeBooksellerNotice(int currentAbsoluteDay) {
+        if (pendingBooksellerNoticeDay == Integer.MIN_VALUE
+                || pendingBooksellerNoticeDay > currentAbsoluteDay) {
+            return false;
+        }
+        boolean shouldNotify = pendingBooksellerNoticeDay == currentAbsoluteDay;
+        pendingBooksellerNoticeDay = Integer.MIN_VALUE;
+        markDirty();
+        return shouldNotify;
     }
 
     public record PendingDailySettlement(

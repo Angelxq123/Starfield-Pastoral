@@ -59,6 +59,7 @@ public class PlayerDataEventHandler {
             // 获取或创建玩家数据（会自动从NBT加载）
             PlayerStardewData data = PlayerDataManager.getPlayerData(player);
             data.setLastKnownName(player.getName().getString());
+            com.stardew.craft.book.BooksellerSchedule.onPlayerLogin(player);
             if (!data.getPreferredName().isBlank()) {
                 com.stardew.craft.farm.FarmInstanceRegistry.get()
                         .updateOwnerName(player.getUUID(), data.getPreferredName());

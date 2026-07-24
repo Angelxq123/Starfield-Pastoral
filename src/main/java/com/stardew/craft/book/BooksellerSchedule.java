@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 public final class BooksellerSchedule {
     private static final int[][] POSSIBLE_DAYS = {
@@ -41,12 +42,30 @@ public final class BooksellerSchedule {
     }
 
     public static void onNewDay(ServerLevel level, List<ServerPlayer> players) {
+        onNewDayForPlayers(level, players.stream().map(ServerPlayer::getUUID).toList());
+    }
+
+    public static void onNewDayForPlayers(ServerLevel level, List<UUID> playerIds) {
         if (!isToday(level)) {
             return;
         }
-        Component message = Component.translatable("stardewcraft.bookseller.in_town");
-        for (ServerPlayer player : players) {
-			com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player, message);
+        int absoluteDay = StardewTimeManager.get().getAbsoluteDay();
+        for (UUID playerId : List.copyOf(playerIds)) {
+            com.stardew.craft.player.PlayerDataManager.getPlayerData(playerId)
+                    .queueBooksellerNotice(absoluteDay);
+            ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
+            if (player != null) {
+                onPlayerLogin(player);
+            }
+        }
+    }
+
+    public static void onPlayerLogin(ServerPlayer player) {
+        int absoluteDay = StardewTimeManager.get().getAbsoluteDay();
+        if (com.stardew.craft.player.PlayerDataManager.getPlayerData(player)
+                .consumeBooksellerNotice(absoluteDay)) {
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
+                    player, Component.translatable("stardewcraft.bookseller.in_town"));
         }
     }
 

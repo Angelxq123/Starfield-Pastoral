@@ -313,6 +313,21 @@ public class StardewTimeManager extends SavedData {
         scheduleMailByDate(player, season, day);
     }
 
+    public void scheduleDateTriggeredMailForPlayers(
+            net.minecraft.server.MinecraftServer server,
+            java.util.Collection<java.util.UUID> playerIds,
+            int season,
+            int day) {
+        java.util.Objects.requireNonNull(server, "server");
+        for (java.util.UUID playerId : java.util.List.copyOf(playerIds)) {
+            net.minecraft.server.level.ServerPlayer player =
+                    server.getPlayerList().getPlayer(playerId);
+            if (player != null) {
+                scheduleMailByDate(player, season, day);
+            }
+        }
+    }
+
     private void schedulePersonalMailForAbsoluteDay(net.minecraft.server.level.ServerPlayer player, int globalDays) {
         // 初始化玩家的首次加入天数（用于里程碑/父母信件的相对天数计算）
         com.stardew.craft.player.PlayerStardewData pData =

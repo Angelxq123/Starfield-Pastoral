@@ -418,7 +418,7 @@ class DailySettlementLifecycleContractTest {
         assertTrue(restored.hasPendingProfessionChoices());
         assertEquals(1, backend.questDayStartedCalls);
         assertEquals(1, backend.masteryMorningCalls);
-        assertEquals(3, backend.persistenceWrites);
+        assertEquals(4, backend.persistenceWrites);
         assertTrue(recovered.pendingSettlement(playerId).orElseThrow()
                 .completedPayload().isPresent());
         assertEquals(5, barrier.readyResult(playerId, target.absoluteDay())
@@ -570,19 +570,14 @@ class DailySettlementLifecycleContractTest {
                 List.of(valleyAtStart.id()), Set.of(), List.of(),
                 List.of(mainWorldAtStart.id(), valleyAtStart.id(), valleyLoggedOut.id()),
                 List.of(valleyAtStart.id(), valleyLoggedOut.id()));
-        Map<UUID, AudiencePlayer> onlineAfterStart = Map.of(
-                mainWorldAtStart.id(), mainWorldAtStart,
-                valleyAtStart.id(), valleyAtStart,
-                lateValleyLogin.id(), lateValleyLogin);
-
         assertEquals(
-                List.of(mainWorldAtStart, valleyAtStart),
-                DailySettlementPlanFactory.resolveOnlineAudience(
-                        target.allOnlinePlayerIds(), onlineAfterStart::get));
+                List.of(mainWorldAtStart.id(), valleyAtStart.id(), valleyLoggedOut.id()),
+                target.allOnlinePlayerIds());
         assertEquals(
-                List.of(valleyAtStart),
-                DailySettlementPlanFactory.resolveOnlineAudience(
-                        target.valleyOnlinePlayerIds(), onlineAfterStart::get));
+                List.of(valleyAtStart.id(), valleyLoggedOut.id()),
+                target.valleyOnlinePlayerIds());
+        assertFalse(target.allOnlinePlayerIds().contains(lateValleyLogin.id()));
+        assertFalse(target.valleyOnlinePlayerIds().contains(lateValleyLogin.id()));
         ParsedClass factory = parse(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
         String orders = factory.method("specialOrders", 1).getBody().toString();
@@ -592,14 +587,31 @@ class DailySettlementLifecycleContractTest {
         assertTrue(orders.contains("context.allOnlinePlayerIds()"));
         assertTrue(mail.contains("context.allOnlinePlayerIds()"));
         assertTrue(bookseller.contains("context.valleyOnlinePlayerIds()"));
-        assertTrue(mail.contains("deliverTomorrowMail"));
-        assertFalse(mail.contains("deliverAllTomorrowMail"));
+        assertTrue(orders.contains("onNewDayForPlayers"));
+        assertTrue(bookseller.contains("onNewDayForPlayers"));
+        assertTrue(mail.contains("deliverTomorrowMailForPlayers"));
+        assertFalse(orders.contains("onlinePlayers"));
+        assertFalse(mail.contains("onlinePlayers"));
+        assertFalse(bookseller.contains("onlinePlayers"));
         assertFalse(orders.contains("getPlayers()"));
         assertFalse(mail.contains("getPlayers()"));
         assertFalse(bookseller.contains("getPlayers()"));
         assertFalse(scope.contains("dailyScopeAudience"));
         assertFalse(scope.contains("getPlayerList"));
         assertTrue(scope.contains("context.allOnlinePlayerIds()"));
+
+        PlayerStardewData offlineNotice = new PlayerStardewData(valleyLoggedOut.id());
+        assertTrue(offlineNotice.queueBooksellerNotice(target.absoluteDay()));
+        PlayerStardewData restored = PlayerStardewData.fromNBT(
+                offlineNotice.toNBT(), valleyLoggedOut.id());
+        assertEquals(target.absoluteDay(), restored.getPendingBooksellerNoticeDay());
+        assertTrue(restored.consumeBooksellerNotice(target.absoluteDay()));
+        assertFalse(restored.consumeBooksellerNotice(target.absoluteDay()));
+
+        ParsedClass login = parse(
+                "src/main/java/com/stardew/craft/player/PlayerDataEventHandler.java");
+        assertTrue(login.method("onPlayerLogin", 1).getBody().toString()
+                .contains("BooksellerSchedule.onPlayerLogin"));
     }
 
     @Test
@@ -896,6 +908,49 @@ class DailySettlementLifecycleContractTest {
         assertEquals(1, backend.settlementCalls);
         assertEquals(1, backend.questDayStartedCalls);
         assertEquals(1, backend.masteryMorningCalls);
+    }
+
+    @Test
+    void readyPublicationRetriesFinalCleanupBeforeReadyCanBeAcknowledged() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        PlayerStardewData data = unsettledPlayer(playerId);
+        Map<UUID, PlayerStardewData> playerData = new HashMap<>();
+        playerData.put(playerId, data);
+        FailingReadyCleanupBackend backend = new FailingReadyCleanupBackend(playerData);
+        PlayerDailySettlementService service = new PlayerDailySettlementService(
+                backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(
+                        playerData::get, () -> backend.persistenceWrites++));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), target.playerIds());
+
+        service.settlePlayer(target, playerId);
+        backend.online = true;
+        assertThrows(IllegalStateException.class,
+                () -> service.readyResultOrCreate(target, playerId));
+
+        assertEquals(1, backend.settlementCalls);
+        assertEquals(1, backend.cleanupAttempts);
+        assertTrue(service.pendingSettlement(playerId).orElseThrow()
+                .completedPayload().isPresent());
+        assertFalse(service.hasCompletedReady(playerId, target.absoluteDay()),
+                "a retained payload is not publishable until final cleanup completes");
+        assertFalse(barrier.acknowledge(playerId, target.absoluteDay()));
+
+        DailySettlementBarrier.ReadyResult ready =
+                service.readyResultOrCreate(target, playerId);
+
+        assertEquals(1, backend.settlementCalls,
+                "cleanup retry must reuse the retained payload without repeating settlement");
+        assertEquals(2, backend.cleanupAttempts);
+        assertEquals(12, service.pendingSettlement(playerId).orElseThrow().stage());
+        assertTrue(service.hasCompletedReady(playerId, target.absoluteDay()));
+        assertTrue(barrier.publishReady(playerId, ready));
+        assertTrue(barrier.acknowledge(playerId, target.absoluteDay()));
+        assertTrue(service.acknowledgeReady(playerId, target.absoluteDay()));
+        assertTrue(service.pendingSettlement(playerId).isEmpty());
     }
 
     @Test
@@ -1378,14 +1433,14 @@ class DailySettlementLifecycleContractTest {
     private record AudiencePlayer(UUID id, boolean valley) {
     }
 
-    private static final class RecordingSettlementBackend
+    private static class RecordingSettlementBackend
             implements PlayerDailySettlementService.SettlementBackend {
         private final Map<UUID, PlayerStardewData> playerData;
-        private boolean online;
+        protected boolean online;
         private boolean shippingLedgerAvailable = true;
         private boolean passOutAvailable = true;
-        private int settlementCalls;
-        private int persistenceWrites;
+        protected int settlementCalls;
+        protected int persistenceWrites;
         private int questDayStartedCalls;
         private int masteryMorningCalls;
 
@@ -1479,6 +1534,32 @@ class DailySettlementLifecycleContractTest {
                 checkpoint.accept(progress.atStage(6));
             }
             return Optional.of(new OvernightSettlementPayload(context.absoluteDay(), List.of(), List.of()));
+        }
+    }
+
+    private static final class FailingReadyCleanupBackend
+            extends RecordingSettlementBackend {
+        private int cleanupAttempts;
+
+        private FailingReadyCleanupBackend(Map<UUID, PlayerStardewData> playerData) {
+            super(playerData);
+        }
+
+        @Override
+        public void finalizeSettlement(
+                DailySettlementContext context,
+                UUID playerId,
+                PlayerDailySettlementService.PendingSettlement progress,
+                Consumer<PlayerDailySettlementService.PendingSettlement> checkpoint) {
+            cleanupAttempts++;
+            if (progress.stage() < 10) {
+                progress = progress.atStage(10);
+                checkpoint.accept(progress);
+            }
+            if (cleanupAttempts == 1) {
+                throw new IllegalStateException("injected final cleanup failure");
+            }
+            checkpoint.accept(progress.atStage(12));
         }
     }
 

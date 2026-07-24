@@ -351,26 +351,23 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         }
 
         private void bookseller(DailySettlementContext context) {
-            List<net.minecraft.server.level.ServerPlayer> online = onlinePlayers(
-                    context.valleyOnlinePlayerIds());
-            com.stardew.craft.book.BooksellerSchedule.onNewDay(level(), online);
+            com.stardew.craft.book.BooksellerSchedule.onNewDayForPlayers(
+                    level(), context.valleyOnlinePlayerIds());
             com.stardew.craft.shop.BooksellerEvents.forceCheckNow(level());
         }
 
         private void specialOrders(DailySettlementContext context) {
-            com.stardew.craft.specialorder.SpecialOrderManager.onNewDay(
-                    level(), onlinePlayers(context.allOnlinePlayerIds()));
+            com.stardew.craft.specialorder.SpecialOrderManager.onNewDayForPlayers(
+                    level(), context.allOnlinePlayerIds());
         }
 
         private void mail(DailySettlementContext context) {
-            List<net.minecraft.server.level.ServerPlayer> online = onlinePlayers(
-                    context.allOnlinePlayerIds());
-            com.stardew.craft.mail.MailService.deliverTomorrowMail(server(), online);
+            com.stardew.craft.mail.MailService.deliverTomorrowMailForPlayers(
+                    server(), context.allOnlinePlayerIds());
             com.stardew.craft.time.StardewTimeManager time =
                     com.stardew.craft.time.StardewTimeManager.get();
-            for (net.minecraft.server.level.ServerPlayer player : online) {
-                time.scheduleDateTriggeredMail(player, context.season(), context.day());
-            }
+            time.scheduleDateTriggeredMailForPlayers(
+                    server(), context.allOnlinePlayerIds(), context.season(), context.day());
         }
 
         private DailySettlementWorkUnit publication(DailySettlementContext context) {
@@ -384,12 +381,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                                     time, context.absoluteDay()),
                     () -> com.stardew.craft.event.DimensionEventHandler
                             .onSettlementDatePublished(server(), time));
-        }
-
-        private List<net.minecraft.server.level.ServerPlayer> onlinePlayers(
-                List<UUID> playerIds) {
-            return resolveOnlineAudience(
-                    playerIds, playerId -> server().getPlayerList().getPlayer(playerId));
         }
 
         private synchronized void cleanupDailyProcess() {
@@ -530,17 +521,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 .map(playerId)
                 .map(id -> Objects.requireNonNull(id, "playerId"))
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
-    }
-
-    static <T> List<T> resolveOnlineAudience(
-            List<UUID> playerIds, Function<? super UUID, T> resolver) {
-        Objects.requireNonNull(playerIds, "playerIds");
-        Objects.requireNonNull(resolver, "resolver");
-        return playerIds.stream()
-                .map(playerId -> Objects.requireNonNull(playerId, "playerId"))
-                .map(resolver)
-                .filter(Objects::nonNull)
-                .toList();
     }
 
     static DailySettlementWorkUnit createNonParticipantCleanupWorkUnit(

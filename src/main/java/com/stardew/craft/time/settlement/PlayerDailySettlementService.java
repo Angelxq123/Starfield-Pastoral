@@ -110,6 +110,10 @@ public final class PlayerDailySettlementService {
         backend.finalizeSettlement(
                 context, playerId, progress.orElseThrow(),
                 next -> pending.checkpoint(playerId, next));
+        PendingSettlement finalized = pending.find(playerId).orElse(progress.orElseThrow());
+        if (finalized.stage() < LEVEL_CLEANUP_STAGE) {
+            pending.checkpoint(playerId, finalized.atStage(LEVEL_CLEANUP_STAGE));
+        }
     }
 
     private Optional<OvernightSettlementPayload> settleIfOnline(
@@ -268,7 +272,14 @@ public final class PlayerDailySettlementService {
         DailySettlementBarrier.ReadyResult result = readyResult(
                 playerId, context.absoluteDay());
         if (result != null) {
-            return result;
+            Optional<PendingSettlement> progress = pending.find(playerId);
+            if (progress.isEmpty()) {
+                return result;
+            }
+            if (progress.orElseThrow().completedPayload().isPresent()) {
+                finishPreparedSettlement(context, playerId);
+                return result;
+            }
         }
         pending.save(context, playerId);
         Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
@@ -290,6 +301,7 @@ public final class PlayerDailySettlementService {
         Objects.requireNonNull(playerId, "playerId");
         return pending.find(playerId)
                 .filter(progress -> progress.absoluteDay() == absoluteDay)
+                .filter(progress -> progress.stage() >= LEVEL_CLEANUP_STAGE)
                 .flatMap(PendingSettlement::completedPayload)
                 .isPresent();
     }

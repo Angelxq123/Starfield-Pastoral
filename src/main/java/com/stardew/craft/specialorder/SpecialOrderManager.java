@@ -156,6 +156,15 @@ public final class SpecialOrderManager {
     }
 
     public static void onNewDay(ServerLevel level, List<ServerPlayer> players) {
+        onNewDayForPlayers(level, players.stream().map(ServerPlayer::getUUID).toList());
+    }
+
+    public static void onNewDayForPlayers(ServerLevel level, List<UUID> playerIds) {
+        List<UUID> frozenPlayerIds = List.copyOf(playerIds);
+        List<ServerPlayer> onlinePlayers = frozenPlayerIds.stream()
+                .map(playerId -> level.getServer().getPlayerList().getPlayer(playerId))
+                .filter(java.util.Objects::nonNull)
+                .toList();
         SpecialOrderWorldData data = SpecialOrderWorldData.get(level);
         int today = StardewTimeManager.get().getAbsoluteDay();
         migrateLegacyReturnedDonations(level, data);
@@ -163,8 +172,9 @@ public final class SpecialOrderManager {
         for (SpecialOrderInstance order : new ArrayList<>(data.active())) {
             if (order.accepted() && !order.complete() && order.dueDay() <= today) {
                 SpecialOrderDefinition definition = SpecialOrderDefinitions.get(order.orderId());
-                queueReturnedDonations(level, players, order);
-                cleanupTemporaryOrderState(players, definition);
+                queueReturnedDonationsForPlayers(level, frozenPlayerIds, order);
+                cleanupTemporaryOrderStateForPlayers(
+                        frozenPlayerIds, onlinePlayers, definition);
                 order.setFailed(true);
                 data.active().remove(order);
                 changed = true;
@@ -173,9 +183,12 @@ public final class SpecialOrderManager {
         if (changed) {
             data.setDirty();
         }
-        boolean unlockedForAnyone = isUnlocked() || players.stream().anyMatch(SpecialOrderManager::isUnlockedFor);
-        refreshAvailableIfNeeded(level, true, unlockedForAnyone, mailFlagsFor(players));
-        for (ServerPlayer player : players) {
+        boolean unlockedForAnyone = isUnlocked() || frozenPlayerIds.stream()
+                .map(PlayerDataManager::getPlayerData)
+                .anyMatch(playerData -> playerData.hasMailFlag(BOARD_UNLOCK_FLAG));
+        refreshAvailableIfNeeded(
+                level, true, unlockedForAnyone, mailFlagsForPlayers(frozenPlayerIds));
+        for (ServerPlayer player : onlinePlayers) {
             syncState(player);
         }
     }
@@ -483,6 +496,14 @@ public final class SpecialOrderManager {
         Set<String> flags = new HashSet<>();
         for (ServerPlayer player : players) {
             flags.addAll(PlayerDataManager.getPlayerData(player).getMailFlags());
+        }
+        return flags;
+    }
+
+    private static Set<String> mailFlagsForPlayers(List<UUID> playerIds) {
+        Set<String> flags = new HashSet<>();
+        for (UUID playerId : playerIds) {
+            flags.addAll(PlayerDataManager.getPlayerData(playerId).getMailFlags());
         }
         return flags;
     }
@@ -802,6 +823,23 @@ public final class SpecialOrderManager {
             StardewTimeManager.get().getAbsoluteDay());
     }
 
+    private static void queueReturnedDonationsForPlayers(
+            ServerLevel level, List<UUID> playerIds, SpecialOrderInstance order) {
+        if (order.donatedItems().isEmpty()) {
+            return;
+        }
+        UUID recipient = order.participants().isEmpty()
+                ? (playerIds.isEmpty() ? null : playerIds.get(0))
+                : order.participants().get(0);
+        if (recipient != null) {
+            LostAndFoundService.queueForPlayer(
+                    level,
+                    recipient,
+                    donatedStacks(order.donatedItems()),
+                    StardewTimeManager.get().getAbsoluteDay());
+        }
+    }
+
     public static void migrateQueuedDonations(ServerPlayer player) {
         SpecialOrderWorldData data = SpecialOrderWorldData.get(player.serverLevel());
         List<SpecialOrderInstance.DonatedItem> queued = data.returnedDonations().remove(player.getUUID());
@@ -861,6 +899,22 @@ public final class SpecialOrderManager {
                 data.removeMailFlag(mailFlag);
             }
         }
+    }
+
+    private static void cleanupTemporaryOrderStateForPlayers(
+            List<UUID> playerIds,
+            List<ServerPlayer> onlinePlayers,
+            SpecialOrderDefinition definition) {
+        if (definition == null) {
+            return;
+        }
+        String mailFlag = definition.mailToRemoveOnEnd();
+        if (mailFlag != null && !mailFlag.isBlank()) {
+            for (UUID playerId : playerIds) {
+                PlayerDataManager.getPlayerData(playerId).removeMailFlag(mailFlag);
+            }
+        }
+        cleanupTemporaryOrderState(onlinePlayers, definition);
     }
 
     private static void removeAllFromInventory(ServerPlayer player, Item item) {

@@ -281,24 +281,38 @@ public class MailService {
     public static void deliverTomorrowMail(
             net.minecraft.server.MinecraftServer server,
             java.util.Collection<ServerPlayer> players) {
+        deliverTomorrowMailForPlayers(
+                server, players.stream().map(ServerPlayer::getUUID).toList());
+    }
+
+    public static void deliverTomorrowMailForPlayers(
+            net.minecraft.server.MinecraftServer server,
+            java.util.Collection<java.util.UUID> playerIds) {
         java.util.Objects.requireNonNull(server, "server");
-        java.util.List<ServerPlayer> audience = java.util.List.copyOf(
-                java.util.Objects.requireNonNull(players, "players"));
+        java.util.List<java.util.UUID> audience = java.util.List.copyOf(
+                java.util.Objects.requireNonNull(playerIds, "playerIds"));
         int today = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
         PlayerDataManager manager = PlayerDataManager.get();
         net.minecraft.server.level.ServerLevel stardewLevel =
             server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
-        for (ServerPlayer player : audience) {
-            PlayerStardewData data = manager.getOrCreateData(player.getUUID());
+        for (java.util.UUID playerId : audience) {
+            PlayerStardewData data = manager.getOrCreateData(playerId);
             int beforeMailbox = data.getMailbox().size();
             int beforeTomorrow = data.getMailForTomorrow().size();
             java.util.List<String> flushed = data.deliverTomorrowMail(today);
-            if (data.getMailbox().size() != beforeMailbox
+            boolean changed = data.getMailbox().size() != beforeMailbox
                     || data.getMailForTomorrow().size() != beforeTomorrow
-                    || !flushed.isEmpty()) {
+                    || !flushed.isEmpty();
+            ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+            if (changed) {
+                manager.setDirty();
+            }
+            if (changed && player != null) {
                 PlayerDataEventHandler.syncPlayerData(player, data);
             }
-            dispatchFlushedFlags(player, stardewLevel, flushed);
+            if (player != null) {
+                dispatchFlushedFlags(player, stardewLevel, flushed);
+            }
         }
     }
 

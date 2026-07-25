@@ -257,6 +257,79 @@ class DailySettlementCoordinatorTest {
     }
 
     @Test
+    void coordinatorFailedStartCleanupPreservesAnEarlierReadyBarrier() {
+        UUID oldPlayer = UUID.randomUUID();
+        UUID newPlayer = UUID.randomUUID();
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        DailySettlementAccessGuard accessGuard = new DailySettlementAccessGuard(barrier);
+        DailySettlementBarrier.ReadyResult oldReady = new DailySettlementBarrier.ReadyResult(
+                100, new com.stardew.craft.network.overnight.OvernightSettlementPayload(
+                        100, List.of(), List.of()));
+        barrier.lockAll(100, List.of(oldPlayer));
+        assertTrue(barrier.publishReady(oldPlayer, oldReady));
+        accessGuard.captureAnchor(
+                oldPlayer, net.minecraft.world.level.Level.OVERWORLD,
+                new net.minecraft.world.phys.Vec3(1.0D, 64.0D, 2.0D), 0.0F, 0.0F);
+        AtomicInteger dailyProcessCleanups = new AtomicInteger();
+        DailySettlementPlanFactory.WorkUnitFactory productionEquivalent =
+                new DailySettlementPlanFactory.WorkUnitFactory() {
+                    @Override
+                    public DailySettlementWorkUnit create(
+                            String name, DailySettlementContext context) {
+                        return DailySettlementWorkUnits.atomic(name, () -> {}, () -> {});
+                    }
+
+                    @Override
+                    public void prepareStart(DailySettlementContext context) {
+                        DailySettlementPlanFactory.lockBarrierAtStart(
+                                context, barrier, accessGuard, null,
+                                (playerId, day, locked) -> {
+                                    if (locked) {
+                                        throw new IllegalStateException("start failed");
+                                    }
+                                    return true;
+                                });
+                    }
+
+                    @Override
+                    public void cleanup() {
+                        dailyProcessCleanups.incrementAndGet();
+                    }
+                };
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(() -> 0L), () -> 100L, () -> 10,
+                new DailySettlementPlanFactory(productionEquivalent),
+                DailySettlementCoordinator.LifecycleListener.NOOP,
+                new DailySettlementMetrics(() -> 0L, () -> 0L), () -> true);
+
+        assertThrows(IllegalStateException.class, () -> coordinator.start(
+                new DailySettlementContext(
+                        227, 3, 0, 3, 1560, false, List.of(newPlayer), Set.of())));
+
+        assertFalse(coordinator.isActive());
+        assertEquals(1, dailyProcessCleanups.get());
+        assertTrue(barrier.isLocked(oldPlayer));
+        assertSame(oldReady, barrier.readyResult(oldPlayer, 100));
+        assertTrue(accessGuard.anchor(oldPlayer).isPresent());
+        assertFalse(barrier.isLocked(newPlayer));
+    }
+
+    @Test
+    void productionFailedStartCleanupDoesNotClearBarrierOrAnchors() throws Exception {
+        String source = java.nio.file.Files.readString(java.nio.file.Path.of(
+                System.getProperty("stardewcraft.projectDir"),
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java"));
+        int production = source.indexOf("private static final class ProductionWorkUnitFactory");
+        int cleanup = source.indexOf("public void cleanup()", production);
+        int nextMethod = source.indexOf("private DailySettlementWorkUnit atomic", cleanup);
+        String cleanupBody = source.substring(cleanup, nextMethod);
+
+        assertTrue(cleanupBody.contains("cleanupDailyProcess()"));
+        assertFalse(cleanupBody.contains("accessGuard.clear()"));
+        assertFalse(cleanupBody.contains("barrier.clear()"));
+    }
+
+    @Test
     void sequenceCloseFailureUsesTheChildSubsystemThatActuallyFailed() throws Exception {
         AtomicLong nanos = new AtomicLong();
         DailySettlementMetrics metrics = new DailySettlementMetrics(
@@ -286,6 +359,39 @@ class DailySettlementCoordinatorTest {
                 .get("first_child").permanentFailures());
         assertEquals(0L, metrics.readySummary().subsystems()
                 .get("second_child").permanentFailures());
+    }
+
+    @Test
+    void nestedSequenceCloseFailureUsesTheLeafSubsystemThatActuallyFailed() throws Exception {
+        AtomicLong nanos = new AtomicLong();
+        DailySettlementMetrics metrics = new DailySettlementMetrics(
+                nanos::incrementAndGet, () -> 0L);
+        DailySettlementWorkUnit leaf = DailySettlementWorkUnits.atomic(
+                "leaf_child", () -> {},
+                () -> { throw new IllegalStateException("leaf close"); });
+        leaf.runNext();
+        DailySettlementWorkUnit inner = DailySettlementWorkUnits.sequence(
+                "inner_sequence", List.of(leaf), () -> {});
+        DailySettlementWorkUnit outer = DailySettlementWorkUnits.sequence(
+                "outer_sequence", List.of(inner), () -> {});
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(nanos::incrementAndGet),
+                () -> 100L, () -> 10,
+                (context, builder) -> builder.addPrepare(outer),
+                DailySettlementCoordinator.LifecycleListener.NOOP,
+                metrics,
+                () -> true);
+
+        assertTrue(coordinator.start(new DailySettlementContext(
+                2, 1, 0, 2, 1560, false, List.of(), Set.of())));
+        for (int tick = 0; coordinator.isActive() && tick < 10; tick++) {
+            coordinator.tick();
+        }
+
+        assertEquals(1L, metrics.readySummary().subsystems()
+                .get("leaf_child").permanentFailures());
+        assertFalse(metrics.readySummary().subsystems().containsKey("inner_sequence"));
+        assertFalse(metrics.readySummary().subsystems().containsKey("outer_sequence"));
     }
 
     @Test

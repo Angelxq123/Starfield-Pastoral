@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -148,8 +150,42 @@ class DailySettlementPerformanceTelemetryTest {
         assertTrue(coordinator.contains("metrics.recordOvershoot"));
         assertTrue(chunkManager.contains("recordDailySettlementChunkLeases"));
         assertTrue(chunkManager.contains("measureSynchronousChunkLoad"));
-        assertTrue(metrics.contains("coordinator().isActive()"));
+        assertTrue(chunkManager.contains("withinDailyChunkLoadScope"));
+        int loadMeasurement = metrics.indexOf("measureSynchronousChunkLoad(Supplier<T> load)");
+        int beginMetrics = metrics.indexOf("public void begin(int day)", loadMeasurement);
+        String loadMeasurementBody = metrics.substring(loadMeasurement, beginMetrics);
+        assertFalse(loadMeasurementBody.contains("coordinator().isActive()"));
         assertTrue(readyPublisher.contains("metrics.publishReady"));
+    }
+
+    @Test
+    void onlyLoadsInsideTheCallingThreadsDailyLeaseScopeCountAsDaily() throws Exception {
+        CountDownLatch dailyScopeEntered = new CountDownLatch(1);
+        CountDownLatch outsideLoadFinished = new CountDownLatch(1);
+        AtomicInteger dailyResult = new AtomicInteger();
+        Thread dailyThread = new Thread(() ->
+                DailySettlementMetrics.withinDailyChunkLoadScope(() -> {
+                    dailyScopeEntered.countDown();
+                    try {
+                        assertTrue(outsideLoadFinished.await(10, TimeUnit.SECONDS));
+                    } catch (InterruptedException exception) {
+                        throw new AssertionError(exception);
+                    }
+                    dailyResult.set(DailySettlementMetrics.measureSynchronousChunkLoad(() -> 7));
+                    return null;
+                }));
+        dailyThread.start();
+        assertTrue(dailyScopeEntered.await(10, TimeUnit.SECONDS));
+
+        assertEquals(3, DailySettlementMetrics.measureSynchronousChunkLoad(() -> 3));
+        outsideLoadFinished.countDown();
+        dailyThread.join(10_000L);
+
+        assertFalse(dailyThread.isAlive());
+        assertEquals(7, dailyResult.get());
+        PerformanceSnapshot snapshot = ServerPerformanceRecorder.snapshot();
+        assertEquals(2L, snapshot.counters().get(PerformanceCounter.FARM_SYNC_CHUNK_LOADS));
+        assertEquals(1L, snapshot.counters().get(PerformanceCounter.DAILY_SYNC_CHUNK_LOADS));
     }
 
     @Test

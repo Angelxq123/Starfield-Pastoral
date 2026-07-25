@@ -48,7 +48,7 @@ public class FarmChunkManager {
                 @Override
                 public void load(ServerLevel level, ChunkPos chunk) {
                     DailySettlementMetrics.measureSynchronousChunkLoad(
-                            level.getServer(), () -> level.getChunk(chunk.x, chunk.z));
+                            () -> level.getChunk(chunk.x, chunk.z));
                 }
 
                 @Override
@@ -83,7 +83,8 @@ public class FarmChunkManager {
             }
             if (!newChunks.isEmpty()) {
                 TemporaryChunkLeaseTracker.Lease rootLease =
-                        tracker.acquire(level, newChunks);
+                        DailySettlementMetrics.withinDailyChunkLoadScope(
+                                () -> tracker.acquire(level, newChunks));
                 rootLeases.add(rootLease);
                 heldChunks.addAll(newChunks);
                 if (level instanceof ServerLevel serverLevel) {

@@ -36,8 +36,10 @@ public final class DailySettlementAccessGuard {
                 return false;
             }
             DailySettlementServices.Services services =
-                    DailySettlementServices.getForPlayer(player);
-            return services.accessGuard().isGameplayAllowed(player.getUUID());
+                    DailySettlementServices.find(player.server);
+            return services == null
+                    ? false
+                    : services.accessGuard().isGameplayAllowed(player.getUUID());
         });
     }
 

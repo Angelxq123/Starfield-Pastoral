@@ -274,8 +274,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         @Override
         public void cleanup() {
             cleanupDailyProcess();
-            accessGuard.clear();
-            barrier.clear();
         }
 
         private DailySettlementWorkUnit atomic(

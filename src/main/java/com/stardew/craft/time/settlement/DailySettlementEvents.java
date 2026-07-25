@@ -50,7 +50,7 @@ public final class DailySettlementEvents {
     @net.neoforged.bus.api.SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onTeleport(EntityTeleportEvent event) {
         if (event.getEntity() instanceof ServerPlayer player
-                && accessGuard(player).map(guard -> guard.rejectTeleport(player)).orElse(false)) {
+                && rejectTeleport(player)) {
             event.setCanceled(true);
         }
     }
@@ -159,19 +159,23 @@ public final class DailySettlementEvents {
     }
 
     private static boolean isLocked(ServerPlayer player) {
-        return accessGuard(player)
-                .map(guard -> !guard.isGameplayAllowed(player.getUUID()))
-                .orElse(false);
+        DailySettlementServices.Services services =
+                DailySettlementServices.find(player.server);
+        return services == null
+                || !services.accessGuard().isGameplayAllowed(player.getUUID());
+    }
+
+    private static boolean rejectTeleport(ServerPlayer player) {
+        DailySettlementServices.Services services =
+                DailySettlementServices.find(player.server);
+        return services == null
+                || services.accessGuard().rejectTeleport(player);
     }
 
     private static void rejectInteraction(PlayerInteractEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && isLocked(player)) {
             ((net.neoforged.bus.api.ICancellableEvent) event).setCanceled(true);
         }
-    }
-
-    private static Optional<DailySettlementAccessGuard> accessGuard(ServerPlayer player) {
-        return Optional.of(DailySettlementServices.getForPlayer(player).accessGuard());
     }
 
     private static Optional<DailySettlementAccessGuard> liveAccessGuard(ServerPlayer player) {

@@ -2,6 +2,9 @@ package com.stardew.craft.farm;
 
 import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
 import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
+import com.stardew.craft.server.performance.DailySettlementMetrics;
+import com.stardew.craft.server.performance.PerformanceCounter;
+import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -35,6 +38,11 @@ class FarmChunkManagerTest {
     private static final ChunkPos A = new ChunkPos(1, 2);
     private static final ChunkPos B = new ChunkPos(2, 2);
     private static final ChunkPos C = new ChunkPos(3, 2);
+
+    @org.junit.jupiter.api.BeforeEach
+    void resetPerformanceRecorder() {
+        ServerPerformanceRecorder.reset();
+    }
 
     @Test
     void includesEveryChunkTouchedByFarmBounds() {
@@ -100,6 +108,24 @@ class FarmChunkManagerTest {
         assertTrue(backend.releases.isEmpty());
         scope.close();
         assertEquals(List.of(A, B, C), backend.releases);
+    }
+
+    @Test
+    void onlyDailySettlementScopeAttributesItsActualLoadsToDailyTelemetry() {
+        RecordingBackend backend = new RecordingBackend();
+        backend.measureLoads = true;
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+
+        tracker.acquire(level, List.of(A));
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        scope.lease(List.of(B));
+
+        assertEquals(2L, ServerPerformanceRecorder.counterValue(
+                PerformanceCounter.FARM_SYNC_CHUNK_LOADS));
+        assertEquals(1L, ServerPerformanceRecorder.counterValue(
+                PerformanceCounter.DAILY_SYNC_CHUNK_LOADS));
     }
 
     @Test
@@ -497,6 +523,7 @@ class FarmChunkManagerTest {
         private final Map<ChunkPos, Integer> errorReleaseFailures = new java.util.HashMap<>();
         private final Set<ChunkPos> sharedFailureChunks = new HashSet<>();
         private RuntimeException sharedReleaseFailure;
+        private boolean measureLoads;
 
         @Override
         public boolean acquire(TestLevel level, ChunkPos chunk) {
@@ -506,7 +533,14 @@ class FarmChunkManagerTest {
 
         @Override
         public void load(TestLevel level, ChunkPos chunk) {
-            loads.add(chunk);
+            if (measureLoads) {
+                DailySettlementMetrics.measureSynchronousChunkLoad(() -> {
+                    loads.add(chunk);
+                    return null;
+                });
+            } else {
+                loads.add(chunk);
+            }
         }
 
         @Override

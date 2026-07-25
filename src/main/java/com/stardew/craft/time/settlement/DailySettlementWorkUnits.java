@@ -364,7 +364,7 @@ public final class DailySettlementWorkUnits {
 
         private String safeSubsystemName(DailySettlementWorkUnit child) {
             try {
-                return child.subsystemName();
+                return child.closeFailureSubsystemName();
             } catch (RuntimeException failure) {
                 return child.name();
             }

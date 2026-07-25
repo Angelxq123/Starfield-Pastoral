@@ -10,6 +10,8 @@ import java.util.function.Supplier;
 import net.minecraft.server.MinecraftServer;
 
 public final class DailySettlementMetrics {
+    private static final ThreadLocal<Integer> DAILY_CHUNK_LOAD_SCOPE_DEPTH =
+            ThreadLocal.withInitial(() -> 0);
     private final LongSupplier clock;
     private final LongSupplier syncChunkLoads;
     private final Map<String, MutableSubsystemMetrics> subsystems = new LinkedHashMap<>();
@@ -43,16 +45,25 @@ public final class DailySettlementMetrics {
         return absoluteDay > 0;
     }
 
-    public static <T> T measureSynchronousChunkLoad(
-            MinecraftServer server, Supplier<T> load) {
-        Objects.requireNonNull(server, "server");
+    public static <T> T withinDailyChunkLoadScope(Supplier<T> operation) {
+        Objects.requireNonNull(operation, "operation");
+        int previousDepth = DAILY_CHUNK_LOAD_SCOPE_DEPTH.get();
+        DAILY_CHUNK_LOAD_SCOPE_DEPTH.set(previousDepth + 1);
+        try {
+            return operation.get();
+        } finally {
+            if (previousDepth == 0) {
+                DAILY_CHUNK_LOAD_SCOPE_DEPTH.remove();
+            } else {
+                DAILY_CHUNK_LOAD_SCOPE_DEPTH.set(previousDepth);
+            }
+        }
+    }
+
+    public static <T> T measureSynchronousChunkLoad(Supplier<T> load) {
         Objects.requireNonNull(load, "load");
         ServerPerformanceRecorder.increment(PerformanceCounter.FARM_SYNC_CHUNK_LOADS, 1L);
-        DailySettlementServices.Services services = DailySettlementServices.find(server);
-        boolean settlementActive = services != null
-                && services.coordinator().isActive()
-                && services.metrics().isActive();
-        if (!settlementActive) {
+        if (DAILY_CHUNK_LOAD_SCOPE_DEPTH.get() <= 0) {
             return ServerPerformanceRecorder.measure(
                     PerformanceTiming.FARM_SYNC_CHUNK_LOAD, load);
         }

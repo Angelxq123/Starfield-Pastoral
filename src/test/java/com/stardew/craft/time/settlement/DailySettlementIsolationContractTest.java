@@ -221,11 +221,13 @@ class DailySettlementIsolationContractTest {
     }
 
     @Test
-    void defaultGatedHandlerFailsClosedAndResolvesLiveServices() throws IOException {
+    void defaultGatedHandlerFailsClosedUsingOnlyLiveServices() throws IOException {
         MethodTree gated = parseMethod(
                 sourcePath("time/settlement/DailySettlementAccessGuard.java"),
                 "DailySettlementAccessGuard", "gated", 1);
-        assertTrue(hasInvocation(gated, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(hasInvocation(gated, "DailySettlementServices", "find", "player.server"));
+        assertFalse(hasInvocation(gated, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(normalized(gated.getBody()).contains("services==null?false"));
 
         AtomicReference<Runnable> queuedWork = new AtomicReference<>();
         IPayloadContext context = (IPayloadContext) Proxy.newProxyInstance(
@@ -332,6 +334,13 @@ class DailySettlementIsolationContractTest {
         assertTrue(events.contains("LivingEntityUseItemEvent.Start"));
         assertTrue(events.contains("ItemEntityPickupEvent.Pre"));
         assertFalse(events.contains("onPlayerInteract(PlayerInteractEvent event)"));
+        MethodTree locked = parseMethod(
+                sourcePath("time/settlement/DailySettlementEvents.java"),
+                "DailySettlementEvents", "isLocked", 1);
+        assertTrue(hasInvocation(locked, "DailySettlementServices", "find", "player.server"));
+        assertFalse(hasInvocation(locked, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(normalized(locked.getBody()).contains("services==null"),
+                "missing live services must fail closed without persistence recovery");
         assertTrue(guard.contains("barrier.isLocked(playerId)"));
         assertTrue(guard.contains("player.setDeltaMovement(Vec3.ZERO)"));
         assertTrue(guard.contains("player.teleportTo("));
@@ -384,19 +393,51 @@ class DailySettlementIsolationContractTest {
                 "src/main/java/com/stardew/craft/mixin/ServerContainerClickBarrierMixin.java");
         String mixin = Files.readString(mixinPath);
         assertTrue(mixin.contains("@Mixin(ServerGamePacketListenerImpl.class)"));
-        assertTrue(mixin.contains(
-                "@Inject(method = \"handleContainerClick\", at = @At(\"HEAD\"), cancellable = true)"));
-        MethodTree click = parseMethod(
+        assertFalse(mixin.contains("@Final"));
+        assertFalse(mixin.contains("DailySettlementServices.getForPlayer"));
+        assertFalse(mixin.contains("@At(\"HEAD\")"));
+        assertTrue(mixin.contains("PacketUtils;"));
+        assertTrue(mixin.contains("ensureRunningOnSameThread("));
+        assertTrue(mixin.contains("shift = At.Shift.AFTER"));
+        for (String mutationHandler : List.of(
+                "handlePlayerAction",
+                "handlePickItem",
+                "handleRenameItem",
+                "handleSetBeaconPacket",
+                "handleSelectTrade",
+                "handleContainerSlotStateChanged",
+                "handleSetCarriedItem",
+                "handleContainerClick",
+                "handlePlaceRecipe",
+                "handleContainerButtonClick",
+                "handleSetCreativeModeSlot")) {
+            assertTrue(mixin.contains("\"" + mutationHandler + "\""), mutationHandler);
+        }
+        MethodTree mutationGate = parseMethod(
                 mixinPath, "ServerContainerClickBarrierMixin",
-                "stardewcraft$blockLockedContainerClick", 2);
-        assertEquals("ServerboundContainerClickPacket",
-                click.getParameters().getFirst().getType().toString());
-        assertTrue(hasInvocation(click, "DailySettlementServices", "getForPlayer", "player"));
-        assertTrue(hasInvocation(click, "services.accessGuard()", "isGameplayAllowed",
+                "stardewcraft$blockLockedInventoryMutation", 1);
+        assertTrue(hasInvocation(mutationGate, "DailySettlementServices", "find", "player.server"));
+        assertFalse(hasInvocation(
+                mutationGate, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(hasInvocation(mutationGate, "services.accessGuard()", "isGameplayAllowed",
                 "player.getUUID()"));
-        assertTrue(hasInvocation(click, "services.accessGuard()", "closeContainerIfLocked",
+        assertTrue(hasInvocation(mutationGate, "services.accessGuard()", "closeContainerIfLocked",
                 "player"));
-        assertTrue(hasInvocation(click, "ci", "cancel"));
+        assertTrue(hasInvocation(mutationGate, "ci", "cancel"));
+        assertTrue(normalized(mutationGate.getBody()).contains("services==null"));
+
+        assertTrue(mixin.contains("@ModifyArg"));
+        assertTrue(mixin.contains("method = \"handleEditBook\""));
+        assertTrue(mixin.contains("CompletableFuture;"));
+        assertTrue(mixin.contains("thenAcceptAsync("));
+        MethodTree bookGate = parseMethod(
+                mixinPath, "ServerContainerClickBarrierMixin",
+                "stardewcraft$guardBookMutation", 1);
+        assertTrue(hasInvocation(bookGate, "DailySettlementServices", "find", "player.server"));
+        assertFalse(hasInvocation(
+                bookGate, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(hasInvocation(bookGate, "services.accessGuard()", "isGameplayAllowed",
+                "player.getUUID()"));
 
         MethodTree closeContainer = parseMethod(
                 sourcePath("time/settlement/DailySettlementAccessGuard.java"),
@@ -405,6 +446,24 @@ class DailySettlementIsolationContractTest {
         assertTrue(closeBody.contains("barrier.isLocked(player.getUUID())"));
         assertTrue(closeBody.contains("player.containerMenu!=player.inventoryMenu"));
         assertTrue(hasInvocation(closeContainer, "player", "closeContainer"));
+    }
+
+    @Test
+    void teleportRejectionKeepsTheGuardsInternalRestoreExemption() throws IOException {
+        MethodTree teleport = parseMethod(
+                sourcePath("time/settlement/DailySettlementEvents.java"),
+                "DailySettlementEvents", "onTeleport", 1);
+        assertTrue(hasInvocation(teleport, null, "rejectTeleport", "player"));
+
+        MethodTree rejection = parseMethod(
+                sourcePath("time/settlement/DailySettlementEvents.java"),
+                "DailySettlementEvents", "rejectTeleport", 1);
+        assertTrue(hasInvocation(rejection, "DailySettlementServices", "find", "player.server"));
+        assertFalse(hasInvocation(
+                rejection, "DailySettlementServices", "getForPlayer", "player"));
+        assertTrue(hasInvocation(
+                rejection, "services.accessGuard()", "rejectTeleport", "player"));
+        assertTrue(normalized(rejection.getBody()).contains("services==null"));
     }
 
     @Test

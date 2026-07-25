@@ -132,6 +132,14 @@ class ClientOvernightFlowTest {
         assertTrue(flow.isLocked());
     }
 
+    @Test
+    void barrierOnlyReadyEndsWaitingWithoutOpeningSettlementScreens() {
+        OvernightSettlementPayload barrierOnly = OvernightSettlementPayload.barrierOnly(226);
+
+        assertFalse(barrierOnly.personalSettlement());
+        assertTrue(ClientOvernightHandler.settlementStages(barrierOnly).isEmpty());
+    }
+
     private static OvernightSettlementPayload readyPayload(int absoluteDay) {
         return new OvernightSettlementPayload(
                 absoluteDay, List.of(), List.of(), -1, 0, List.of());

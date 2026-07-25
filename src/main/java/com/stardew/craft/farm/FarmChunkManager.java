@@ -60,7 +60,6 @@ public class FarmChunkManager {
     static final class DailySettlementChunkLeaseScope<L> implements AutoCloseable {
         private final TemporaryChunkLeaseTracker<L> tracker;
         private final L level;
-        private final Set<ChunkPos> heldChunks = new LinkedHashSet<>();
         private final List<TemporaryChunkLeaseTracker.Lease> rootLeases =
                 new ArrayList<>();
         private boolean closed;
@@ -74,26 +73,31 @@ public class FarmChunkManager {
             if (closed) {
                 throw new IllegalStateException("Daily settlement chunk lease scope is closed");
             }
-            LinkedHashSet<ChunkPos> newChunks = new LinkedHashSet<>();
+            LinkedHashSet<ChunkPos> requiredChunks = new LinkedHashSet<>();
             for (ChunkPos chunk : chunks) {
-                ChunkPos required = Objects.requireNonNull(chunk, "chunk");
-                if (!heldChunks.contains(required)) {
-                    newChunks.add(required);
-                }
+                requiredChunks.add(Objects.requireNonNull(chunk, "chunk"));
             }
-            if (!newChunks.isEmpty()) {
-                TemporaryChunkLeaseTracker.Lease rootLease =
-                        DailySettlementMetrics.withinDailyChunkLoadScope(
-                                () -> tracker.acquire(level, newChunks));
-                rootLeases.add(rootLease);
-                heldChunks.addAll(newChunks);
-                if (level instanceof ServerLevel serverLevel) {
-                    com.stardew.craft.server.performance.DailySettlementMetrics
-                            .recordDailySettlementChunkLeases(
-                                    serverLevel.getServer(), newChunks.size());
-                }
+            TemporaryChunkLeaseTracker.Lease rootLease =
+                    DailySettlementMetrics.withinDailyChunkLoadScope(
+                            () -> tracker.acquire(level, requiredChunks));
+            rootLeases.add(rootLease);
+            if (level instanceof ServerLevel serverLevel && !requiredChunks.isEmpty()) {
+                com.stardew.craft.server.performance.DailySettlementMetrics
+                        .recordDailySettlementChunkLeases(
+                                serverLevel.getServer(), requiredChunks.size());
             }
-            return () -> {};
+            return new EntryLease(rootLease);
+        }
+
+        private void closeEntry(TemporaryChunkLeaseTracker.Lease lease) {
+            try {
+                lease.close();
+            } catch (RuntimeException | Error ignored) {
+                return;
+            }
+            synchronized (this) {
+                rootLeases.remove(lease);
+            }
         }
 
         @Override
@@ -123,6 +127,24 @@ public class FarmChunkManager {
                 }
             }
             rethrowUnchecked(failure);
+        }
+
+        private final class EntryLease implements TemporaryChunkLeaseTracker.Lease {
+            private final TemporaryChunkLeaseTracker.Lease delegate;
+            private boolean closed;
+
+            private EntryLease(TemporaryChunkLeaseTracker.Lease delegate) {
+                this.delegate = delegate;
+            }
+
+            @Override
+            public synchronized void close() {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                closeEntry(delegate);
+            }
         }
 
         private static void rethrowUnchecked(@Nullable Throwable failure) {

@@ -93,7 +93,7 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void settlementScopeRetainsDistinctChunksAcrossSequentialEntryLeases() {
+    void settlementScopeReleasesSequentialEntryLeasesImmediately() {
         RecordingBackend backend = new RecordingBackend();
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
         TestLevel level = new TestLevel();
@@ -101,13 +101,14 @@ class FarmChunkManagerTest {
                 new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
 
         scope.lease(List.of(A, B)).close();
+        assertEquals(List.of(A, B), backend.releases);
         scope.lease(List.of(B, C)).close();
 
-        assertEquals(List.of(A, B, C), backend.acquires);
-        assertEquals(List.of(A, B, C), backend.loads);
-        assertTrue(backend.releases.isEmpty());
+        assertEquals(List.of(A, B, B, C), backend.acquires);
+        assertEquals(List.of(A, B, B, C), backend.loads);
+        assertEquals(List.of(A, B, B, C), backend.releases);
         scope.close();
-        assertEquals(List.of(A, B, C), backend.releases);
+        assertEquals(List.of(A, B, B, C), backend.releases);
     }
 
     @Test
@@ -129,7 +130,7 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void overlappingThreeByThreeFootprintsLoadEachDistinctChunkOnce() {
+    void sequentialOverlappingFootprintsReleaseEachEntryBeforeTheNext() {
         RecordingBackend backend = new RecordingBackend();
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
         TestLevel level = new TestLevel();
@@ -141,16 +142,18 @@ class FarmChunkManagerTest {
         distinct.addAll(second);
 
         scope.lease(first).close();
+        assertEquals(new HashSet<>(first), new HashSet<>(backend.releases));
         scope.lease(second).close();
 
         assertEquals(distinct, new HashSet<>(backend.acquires));
-        assertEquals(distinct.size(), backend.acquires.size());
+        assertEquals(first.size() + second.size(), backend.acquires.size());
         assertEquals(distinct, new HashSet<>(backend.loads));
-        assertEquals(distinct.size(), backend.loads.size());
-        assertTrue(backend.releases.isEmpty());
+        assertEquals(first.size() + second.size(), backend.loads.size());
+        assertEquals(distinct, new HashSet<>(backend.releases));
+        assertEquals(first.size() + second.size(), backend.releases.size());
         scope.close();
         assertEquals(distinct, new HashSet<>(backend.releases));
-        assertEquals(distinct.size(), backend.releases.size());
+        assertEquals(first.size() + second.size(), backend.releases.size());
     }
 
     @Test
@@ -212,7 +215,7 @@ class FarmChunkManagerTest {
 
         assertEquals(1, backend.releases.size());
         current.close();
-        assertEquals(1, backend.releases.size());
+        assertEquals(2, backend.releases.size());
         assertEquals(2, backend.acquires.stream().filter(A::equals).count());
         secondScope.close();
         assertEquals(2, backend.releases.size());
@@ -229,8 +232,6 @@ class FarmChunkManagerTest {
         TemporaryChunkLeaseTracker.Lease lease = scope.lease(List.of(A));
 
         assertDoesNotThrow(lease::close);
-        assertTrue(backend.forced.contains(A));
-        assertThrows(RuntimeException.class, scope::close);
         assertTrue(backend.forced.contains(A));
         assertDoesNotThrow(scope::close);
 
@@ -250,8 +251,6 @@ class FarmChunkManagerTest {
 
         assertDoesNotThrow(lease::close);
         assertTrue(backend.forced.contains(A));
-        assertThrows(AssertionError.class, scope::close);
-        assertTrue(backend.forced.contains(A));
         assertDoesNotThrow(scope::close);
 
         assertFalse(backend.forced.contains(A));
@@ -270,7 +269,6 @@ class FarmChunkManagerTest {
 
         assertDoesNotThrow(lease::close);
         assertTrue(backend.forced.contains(A));
-        assertThrows(RuntimeException.class, scope::close);
         assertDoesNotThrow(scope::close);
         assertFalse(backend.forced.contains(A));
 
@@ -322,7 +320,6 @@ class FarmChunkManagerTest {
         assertTrue(work.isComplete());
         assertEquals(1, mutations.get());
         assertTrue(backend.forced.contains(A));
-        assertThrows(RuntimeException.class, scope::close);
         assertDoesNotThrow(scope::close);
         assertFalse(backend.forced.contains(A));
         assertEquals(2, backend.releaseCount(A));
@@ -347,7 +344,6 @@ class FarmChunkManagerTest {
         assertSame(bodyFailure, actual);
         assertEquals(0, actual.getSuppressed().length);
         assertTrue(backend.forced.contains(A));
-        assertThrows(RuntimeException.class, scope::close);
         assertDoesNotThrow(scope::close);
         assertFalse(backend.forced.contains(A));
     }
@@ -377,7 +373,7 @@ class FarmChunkManagerTest {
     }
 
     @Test
-    void cursorFailureReusesRootLeaseUntilRetryOrSkipCompletes() throws Exception {
+    void cursorFailureReleasesEntryLeaseBeforeRetryOrSkip() throws Exception {
         RecordingBackend backend = new RecordingBackend();
         TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
         TestLevel level = new TestLevel();
@@ -394,19 +390,19 @@ class FarmChunkManagerTest {
                 }, () -> {});
 
         assertThrows(RuntimeException.class, work::runNext);
-        assertTrue(backend.forced.contains(A));
+        assertFalse(backend.forced.contains(A));
         assertThrows(RuntimeException.class, work::runNext);
-        assertTrue(backend.forced.contains(A));
+        assertFalse(backend.forced.contains(A));
         work.skipFailedItem();
-        assertTrue(backend.forced.contains(A));
+        assertFalse(backend.forced.contains(A));
         work.runNext();
-        assertTrue(backend.forced.containsAll(Set.of(A, B)));
+        assertTrue(backend.forced.isEmpty());
 
         work.close();
         scope.close();
-        assertEquals(1, backend.releaseCount(A));
+        assertEquals(2, backend.releaseCount(A));
         assertEquals(1, backend.releaseCount(B));
-        assertEquals(1, backend.acquires.stream().filter(A::equals).count());
+        assertEquals(2, backend.acquires.stream().filter(A::equals).count());
         assertEquals(1, backend.acquires.stream().filter(B::equals).count());
     }
 

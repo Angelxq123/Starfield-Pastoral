@@ -4,6 +4,7 @@ import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -171,6 +172,37 @@ class DailySettlementBarrierTest {
         assertTrue(barrier.acknowledge(player, 73));
         assertFalse(barrier.isLocked(player));
         assertNull(barrier.readyResult(player, 73));
+    }
+
+    @Test
+    void barrierOnlyReadyIsExplicitAndKeepsTheMatchingDay() {
+        DailySettlementBarrier.ReadyResult ready =
+                DailySettlementBarrier.ReadyResult.barrierOnly(81);
+
+        assertFalse(ready.personalSettlement());
+        assertEquals(81, ready.absoluteDay());
+        assertEquals(81, ready.payload().absoluteDay());
+        assertTrue(ready.payload().shippedItems().isEmpty());
+        assertTrue(ready.payload().levelUps().isEmpty());
+        assertFalse(ready.payload().hasPassOut());
+        assertTrue(ready.canAcknowledge(false));
+        assertTrue(ready.canAcknowledge(true));
+
+        DailySettlementBarrier.ReadyResult personal =
+                new DailySettlementBarrier.ReadyResult(81, payload(81));
+        assertFalse(personal.canAcknowledge(false));
+        assertTrue(personal.canAcknowledge(true));
+    }
+
+    @Test
+    void lockedPlayerIdsAreFilteredBySettlementDay() {
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        barrier.lockAll(90, List.of(first, second));
+
+        assertEquals(Set.of(first, second), barrier.lockedPlayerIds(90));
+        assertTrue(barrier.lockedPlayerIds(89).isEmpty());
     }
 
     private static OvernightSettlementPayload payload(int absoluteDay) {

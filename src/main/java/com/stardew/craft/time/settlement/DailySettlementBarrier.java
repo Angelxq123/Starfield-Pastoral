@@ -85,6 +85,16 @@ public final class DailySettlementBarrier {
         return locks.getOrDefault(Objects.requireNonNull(playerId, "playerId"), -1);
     }
 
+    public Set<UUID> lockedPlayerIds(int absoluteDay) {
+        if (absoluteDay <= 0) {
+            return Set.of();
+        }
+        return locks.entrySet().stream()
+                .filter(entry -> entry.getValue() == absoluteDay)
+                .map(Map.Entry::getKey)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
     public boolean canCancelSleep(UUID playerId) {
         return !isLocked(playerId);
     }
@@ -164,7 +174,25 @@ public final class DailySettlementBarrier {
         ready.clear();
     }
 
-    public static record ReadyResult(int absoluteDay, OvernightSettlementPayload payload) {
+    public static record ReadyResult(
+            int absoluteDay,
+            OvernightSettlementPayload payload,
+            boolean personalSettlement) {
+        public ReadyResult(int absoluteDay, OvernightSettlementPayload payload) {
+            this(absoluteDay, payload, true);
+        }
+
+        public static ReadyResult barrierOnly(int absoluteDay) {
+            return new ReadyResult(
+                    absoluteDay,
+                    OvernightSettlementPayload.barrierOnly(absoluteDay),
+                    false);
+        }
+
+        public boolean canAcknowledge(boolean personalSettlementCompleted) {
+            return !personalSettlement || personalSettlementCompleted;
+        }
+
         public ReadyResult {
             Objects.requireNonNull(payload, "payload");
             if (absoluteDay <= 0) {

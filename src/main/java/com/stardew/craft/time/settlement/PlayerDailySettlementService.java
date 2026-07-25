@@ -56,14 +56,12 @@ public final class PlayerDailySettlementService {
 
     public boolean participates(ServerPlayer player) {
         Objects.requireNonNull(player, "player");
-        return isInSettlementDimension(player)
-                && com.stardew.craft.farm.FarmInstanceRegistry.get().hasFarm(player.getUUID());
+        return isInSettlementDimension(player);
     }
 
     public boolean requiresNonParticipantCleanup(ServerPlayer player) {
         Objects.requireNonNull(player, "player");
-        return isInSettlementDimension(player)
-                && !com.stardew.craft.farm.FarmInstanceRegistry.get().hasFarm(player.getUUID());
+        return false;
     }
 
     private static boolean isInSettlementDimension(ServerPlayer player) {

@@ -227,7 +227,10 @@ class DailySettlementIsolationContractTest {
                 "DailySettlementAccessGuard", "gated", 1);
         assertTrue(hasInvocation(gated, "DailySettlementServices", "find", "player.server"));
         assertFalse(hasInvocation(gated, "DailySettlementServices", "getForPlayer", "player"));
-        assertTrue(normalized(gated.getBody()).contains("services==null?false"));
+        String body = normalized(gated.getBody());
+        assertTrue(body.contains("OfflineFarmCatchUpService.isPlayerLocked(player)"));
+        assertTrue(body.contains("services!=null"));
+        assertTrue(body.contains("services.accessGuard().isGameplayAllowed(player.getUUID())"));
 
         AtomicReference<Runnable> queuedWork = new AtomicReference<>();
         IPayloadContext context = (IPayloadContext) Proxy.newProxyInstance(

@@ -604,6 +604,77 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
+    void lateLoginJoinsTheActiveBarrierWithoutEnteringTheFrozenRewardAudience() {
+        UUID participant = UUID.randomUUID();
+        UUID lateLogin = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(participant), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), target.playerIds());
+
+        assertTrue(DailySettlementEvents.lockLateJoinForActiveDay(
+                target, barrier, lateLogin));
+
+        assertTrue(barrier.isLocked(lateLogin));
+        assertEquals(target.absoluteDay(), barrier.lockedDay(lateLogin));
+        assertFalse(target.playerIds().contains(lateLogin));
+        assertFalse(DailySettlementEvents.lockLateJoinForActiveDay(
+                target, barrier, lateLogin));
+        assertFalse(DailySettlementEvents.lockLateJoinForActiveDay(
+                target, barrier, participant));
+    }
+
+    @Test
+    void enteringASettlementDimensionJoinsTheActiveBarrierAfterAutomaticRouting()
+            throws Exception {
+        ParsedClass dimension = parse(
+                "src/main/java/com/stardew/craft/event/DimensionEventHandler.java");
+        List<String> changedCalls = invocationNames(
+                dimension.method("onPlayerChangeDimension", 1));
+
+        assertEquals(1, frequency(changedCalls, "onPlayerEnteredSettlementDimension"));
+        assertTrue(changedCalls.indexOf("onPlayerEnteredSettlementDimension")
+                > changedCalls.indexOf("teleportTo"));
+        assertTrue(changedCalls.indexOf("onPlayerEnteredSettlementDimension")
+                > changedCalls.indexOf("teleportPlayerToFloor"));
+
+        ParsedClass events = parse(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementEvents.java");
+        String entry = events.method("onPlayerEnteredSettlementDimension", 1)
+                .getBody().toString();
+        assertTrue(entry.contains("DailySettlementServices.find"));
+        assertTrue(entry.contains("players().participates(player)"));
+        assertTrue(entry.contains("lockLateJoinForActiveDay"));
+        assertTrue(entry.contains("OvernightBarrierPayload"));
+    }
+
+    @Test
+    void readyAckDistinguishesPersonalAndBarrierOnlyResults() throws Exception {
+        ParsedClass ack = parse(
+                "src/main/java/com/stardew/craft/network/overnight/OvernightReadyAckPayload.java");
+        String body = ack.method("handle", 2).getBody().toString();
+
+        assertTrue(body.contains("readyResult"));
+        assertTrue(body.contains("canAcknowledge"));
+        assertTrue(body.contains("hasCompletedReady"));
+        assertTrue(body.contains("personalSettlement"));
+        assertTrue(body.contains("onReadyAcknowledged"));
+    }
+
+    @Test
+    void settlementParticipationDependsOnDimensionInsteadOfFarmOwnership() throws Exception {
+        ParsedClass players = parse(
+                "src/main/java/com/stardew/craft/time/settlement/PlayerDailySettlementService.java");
+        String participates = players.method("participates", 1).getBody().toString();
+        String cleanup = players.method("requiresNonParticipantCleanup", 1)
+                .getBody().toString();
+
+        assertTrue(participates.contains("isInSettlementDimension"));
+        assertFalse(participates.contains("hasFarm"));
+        assertFalse(cleanup.contains("hasFarm"));
+    }
+
+    @Test
     void frozenFarmOwnersDriveFarmCursorAndCavesWithoutRegistryRescans()
             throws Exception {
         ParsedClass time = parse("src/main/java/com/stardew/craft/time/StardewTimeManager.java");

@@ -37,9 +37,10 @@ public final class DailySettlementAccessGuard {
             }
             DailySettlementServices.Services services =
                     DailySettlementServices.find(player.server);
-            return services == null
-                    ? false
-                    : services.accessGuard().isGameplayAllowed(player.getUUID());
+            return !com.stardew.craft.farm.OfflineFarmCatchUpService
+                    .isPlayerLocked(player)
+                    && services != null
+                    && services.accessGuard().isGameplayAllowed(player.getUUID());
         });
     }
 

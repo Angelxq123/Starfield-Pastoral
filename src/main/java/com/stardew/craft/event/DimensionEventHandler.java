@@ -9,6 +9,7 @@ import com.stardew.craft.dimension.StardewValleyPrebuiltRegionInstaller;
 import com.stardew.craft.interior.InteriorSubspaceManager;
 import com.stardew.craft.network.TimeSyncPacket;
 import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.time.settlement.DailySettlementEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -427,6 +428,9 @@ public class DimensionEventHandler {
                 () -> com.stardew.craft.mining.MineFloorGenerator.forceClientLightRefresh(level, floor)
             ));
         }
+
+        DailySettlementEvents.onPlayerEnteredSettlementDimension(
+                (ServerPlayer) event.getEntity());
     }
     
     /**

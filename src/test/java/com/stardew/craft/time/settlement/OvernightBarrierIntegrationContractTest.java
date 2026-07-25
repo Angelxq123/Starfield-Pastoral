@@ -154,10 +154,17 @@ class OvernightBarrierIntegrationContractTest {
     void settlementCodecStartsWithAbsoluteDayAndKeepsLegacyConstructors() throws IOException {
         ClassTree payload = classTree(SETTLEMENT, "OvernightSettlementPayload");
         assertEquals("absoluteDay", recordComponents(payload).getFirst());
-        VariableTree codec = field(payload, "STREAM_CODEC");
-        List<String> references = memberReferences(codec.getInitializer());
-        assertTrue(references.indexOf("absoluteDay") >= 0);
-        assertTrue(references.indexOf("absoluteDay") < references.indexOf("shippedItems"));
+        String source = Files.readString(SETTLEMENT).replaceAll("\\s+", "");
+        int dayEncode = source.indexOf(
+                "ByteBufCodecs.VAR_INT.encode(buffer,payload.absoluteDay())");
+        int shippedEncode = source.indexOf(
+                "shipped.encode(buffer,payload.shippedItems())");
+        int personalEncode = source.indexOf(
+                "ByteBufCodecs.BOOL.encode(buffer,payload.personalSettlement())");
+        assertTrue(dayEncode >= 0);
+        assertTrue(dayEncode < shippedEncode);
+        assertTrue(shippedEncode < personalEncode);
+        assertTrue(source.contains("ByteBufCodecs.BOOL.decode(buffer)"));
         assertTrue(constructors(payload).stream().anyMatch(constructor -> constructor.getParameters().size() == 2));
         assertTrue(constructors(payload).stream().anyMatch(constructor -> constructor.getParameters().size() == 5));
         assertTrue(constructors(payload).stream().anyMatch(constructor -> constructor.getParameters().size() == 3));

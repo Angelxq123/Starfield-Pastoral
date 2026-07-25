@@ -8,6 +8,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -118,9 +119,14 @@ final class DailySettlementReadyPublisher
             operations.prepareHooks(context);
             hooksPrepared = true;
         }
-        for (UUID playerId : context.playerIds()) {
-            retainedResults.computeIfAbsent(
-                    playerId, ignored -> operations.prepareResult(context, playerId));
+        Set<UUID> participants = Set.copyOf(context.playerIds());
+        Set<UUID> lockedPlayers = orderedLockedPlayers(context);
+        for (UUID playerId : lockedPlayers) {
+            retainedResults.computeIfAbsent(playerId, ignored ->
+                    participants.contains(playerId)
+                            ? operations.prepareResult(context, playerId)
+                            : DailySettlementBarrier.ReadyResult.barrierOnly(
+                                    context.absoluteDay()));
         }
         if (!barrierPublished) {
             if (!barrier.publishReadyAll(context.absoluteDay(), retainedResults)) {
@@ -130,7 +136,7 @@ final class DailySettlementReadyPublisher
             }
             barrierPublished = true;
         }
-        for (UUID playerId : context.playerIds()) {
+        for (UUID playerId : lockedPlayers) {
             if (!barrier.isLocked(playerId)) {
                 sent.add(playerId);
                 woken.add(playerId);
@@ -152,6 +158,20 @@ final class DailySettlementReadyPublisher
             DailySettlementMetrics.ReadySummary summary = metrics.completeReady();
             metrics.publishReady(summary);
         }
+    }
+
+    private Set<UUID> orderedLockedPlayers(DailySettlementContext context) {
+        LinkedHashSet<UUID> ordered = new LinkedHashSet<>();
+        for (UUID playerId : context.playerIds()) {
+            if (barrier.lockedDay(playerId) == context.absoluteDay()) {
+                ordered.add(playerId);
+            }
+        }
+        barrier.lockedPlayerIds(context.absoluteDay()).stream()
+                .filter(playerId -> !ordered.contains(playerId))
+                .sorted()
+                .forEach(ordered::add);
+        return ordered;
     }
 
     private void beginDay(int absoluteDay) {

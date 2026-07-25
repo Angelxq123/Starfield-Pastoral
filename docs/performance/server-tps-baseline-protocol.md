@@ -1,120 +1,81 @@
-# Server TPS Baseline Protocol
+# 服务器 TPS 基线测试规程
 
-This document defines the baseline protocol. It does not claim that a live
-baseline has been captured because 30-50 test clients are not available here.
+本文档定义基线测试规程。由于此处无法提供 30-50 个测试客户端，因此本文档不声称已经采集了实时基线数据。
 
-## Target
+## 目标
 
-- 30-50 concurrent players
+- 30-50 名并发玩家
 - 20 TPS
-- Average MSPT <= 35 ms
+- 平均 MSPT <= 35 ms
 - P95 MSPT <= 45 ms
 - P99 MSPT <= 50 ms
 
-## Required Tools
+## 必需工具
 
-- Spark profiler installed on the test server
-- Operator access to `/stardew perf`
-- Each tested StardewCraft commit recorded with `git rev-parse HEAD`
+- 测试服务器已安装 Spark 分析器
+- 拥有执行 `/stardew perf` 的管理员权限
+- 使用 `git rev-parse HEAD` 记录每个受测 StardewCraft 提交
 
-## Run Manifest
+## 运行清单
 
-Choose one exact target player count from 30 through 50. Use that count for
-both the baseline and optimized runs. Record these build-under-test identities
-separately for the baseline and optimized runs:
+从 30 到 50 中选择一个确切的目标玩家人数。基线测试和优化后测试必须使用相同的人数。分别记录基线测试和优化后测试的以下受测构建标识：
 
-- StardewCraft commit
-- Tested StardewCraft mod JAR SHA-256
+- StardewCraft 提交
+- 受测 StardewCraft 模组 JAR 的 SHA-256
 
-Retain these common values for every run:
+每次运行均须保留以下公共信息：
 
-- Minecraft, Java, and Spark versions
-- Server loader and distribution with versions, including NeoForge or Youer as
-  applicable
-- Dependency or modpack identity, version, and hash computed without the
-  StardewCraft JAR; alternatively, a complete mod manifest in which only the
-  StardewCraft entry may differ
-- Hash of all relevant server and mod configuration
-- Complete JVM arguments, server hardware, view distance, and simulation
-  distance
-- Named world snapshot identity and hash
-- Exact scenario script, version, and hash
+- Minecraft、Java 和 Spark 版本
+- 服务器加载器和服务端发行版及其版本，包括适用情况下的 NeoForge 或 Youer
+- 不包含 StardewCraft JAR 的依赖项或整合包标识、版本及哈希；也可以保留一份完整的模组清单，其中仅允许 StardewCraft 条目不同
+- 所有相关服务器配置和模组配置的哈希
+- 完整的 JVM 参数、服务器硬件、视距和模拟距离
+- 已命名世界快照的标识和哈希
+- 准确的场景脚本、版本和哈希
 
-The retained scenario script must define player roles, activity allocation,
-cadence, destination order, repetitions, duration, and objective endpoint.
+保留的场景脚本必须定义玩家角色、活动分配、执行频率、目的地顺序、重复次数、持续时间和客观终点。
 
-## Preparation And Measurement
+## 准备与测量
 
-Use the same named world snapshot and this sequence before every baseline and
-optimized run:
+每次基线测试和优化后测试前，均须使用同一个已命名世界快照并按以下顺序操作：
 
-1. Stop the server and restore the clean named world snapshot.
-2. Start the server and connect the background clients required by the
-   scenario.
-3. Perform no scenario workload during preparation. After all required
-   background clients are ready, wait a fixed 30-second warm-up.
-4. Run `/stardew perf reset`.
-5. Immediately before starting the scripted workload, run
-   `/spark profiler start` without a fixed timeout.
-6. Record the start timestamp and begin the scenario script.
-7. At the objective endpoint, end scripted activity and immediately run
-   `/spark profiler stop`. Record the end timestamp and Spark report URL, then
-   record the complete `/stardew perf status` output.
+1. 停止服务器，并恢复干净的已命名世界快照。
+2. 启动服务器，并连接场景所需的后台客户端。
+3. 准备期间不得执行任何场景负载。所有必需的后台客户端就绪后，固定预热 30 秒。
+4. 执行 `/stardew perf reset`。
+5. 在启动脚本化负载前一刻，执行不设固定超时时间的 `/spark profiler start`。
+6. 记录开始时间戳，并启动场景脚本。
+7. 到达客观终点时，停止脚本化活动并立即执行 `/spark profiler stop`。记录结束时间戳和 Spark 报告 URL，随后记录完整的 `/stardew perf status` 输出。
 
-A comparison is valid only when all environmental, runtime, dependency,
-configuration, world, and scenario values are identical, including the
-warm-up and target count. The build-under-test commit, its JAR SHA-256, and any
-aggregate hash that includes that JAR are excluded from this rule. Rerun any
-trial that departs from the shared controls or player-count requirements.
+只有环境、运行时、依赖项、配置、世界和场景的所有信息均完全相同（包括预热时间和目标人数）时，对比才有效。受测构建的提交、其 JAR SHA-256，以及任何包含该 JAR 的聚合哈希不受此规则限制。任何偏离公共控制条件或玩家人数要求的试验都必须重新运行。
 
-## Scenario A: Steady Multiplayer
+## 场景 A：稳定多人在线
 
-Maintain the exact configured target player count for exactly 300 seconds.
-Allocate players across the public map, farms, mines, interiors, fishing, and
-combat exactly as defined by the retained script. The endpoint is 300 seconds
-after scripted activity begins.
+在恰好 300 秒内维持准确的已配置目标玩家人数。严格按照保留的脚本，将玩家分配到公共地图、农场、矿井、室内、钓鱼和战斗活动中。客观终点为脚本化活动开始后的 300 秒。
 
-## Scenario B: Concurrent Login
+## 场景 B：并发登录
 
-Record the exact background count and total target count; the total must equal
-the background count plus ten reconnect clients. During preparation, connect
-the ten designated reconnect clients once, disconnect them, then complete the
-common 30-second warm-up with only the background clients connected. After
-profiling starts, all ten reconnect clients must begin their connection
-attempts within one ten-second window. The endpoint is when all ten are present
-and a fixed 60-second stabilization interval has completed.
+记录准确的后台玩家人数和总目标人数；总目标人数必须等于后台玩家人数加十个重连客户端。准备期间，先连接一次指定的十个重连客户端，再将其断开，然后仅保留后台客户端在线并完成公共的 30 秒预热。性能分析开始后，全部十个重连客户端必须在同一个十秒窗口内开始尝试连接。客观终点为全部十个客户端均已在线，并完成固定的 60 秒稳定阶段之时。
 
-## Scenario C: Day Rollover
+## 场景 C：日期切换
 
-Record exact occupied and inactive farm counts, with at least ten occupied and
-at least twenty inactive farms in the restored named snapshot. Follow the
-retained sleep and settlement-screen script. The endpoint is 60 seconds after
-the authoritative server day value increments; clients may be required to
-close settlement screens, but screen timing does not determine the endpoint.
+记录准确的活跃农场数和非活跃农场数；恢复的已命名快照中必须至少包含十个活跃农场和二十个非活跃农场。按照保留的睡眠和结算界面脚本执行。客观终点为权威服务端日期值递增后的 60 秒；可以要求客户端关闭结算界面，但界面操作时机不决定客观终点。
 
-## Scenario D: Teleport And Interior Churn
+## 场景 D：传送与室内切换压力
 
-Assign exactly twenty churn clients to repeat the fixed farm -> public map ->
-mine -> interior sequence at the script's fixed cadence and repetition count
-for exactly 300 seconds. Keep all other players in their documented steady
-roles. The endpoint is 300 seconds after the churn sequence begins.
+指定恰好二十个切换客户端，按照脚本规定的固定频率和重复次数，重复执行固定的“农场 -> 公共地图 -> 矿井 -> 室内”顺序，持续恰好 300 秒。所有其他玩家保持各自文档中规定的稳定角色。客观终点为切换序列开始后的 300 秒。
 
-## Capture
+## 采集内容
 
-For every scenario retain:
+每个场景均须保留：
 
-- Start and end timestamps and actual measured duration
-- Configured target count and minimum and maximum online player counts
-- Spark report URL
-- Complete `/stardew perf status` output
-- Sample counts for every reported timing and values for every reported counter
-- Relevant server log warnings or errors
+- 开始与结束时间戳，以及实际测量时长
+- 已配置的目标人数，以及在线玩家人数的最小值和最大值
+- Spark 报告 URL
+- 完整的 `/stardew perf status` 输出
+- 每项已报告计时的样本数，以及每项已报告计数器的值
+- 相关的服务器日志警告或错误
 
-## Interpretation
+## 结果解读
 
-Spark is the authoritative full-scenario source for the average, P95, and P99
-MSPT targets. `ServerPerformanceRecorder` retains `SERVER_TICK` as a rolling
-1,200-sample window, approximately 60 seconds at 20 TPS. Therefore,
-`/stardew perf status` is endpoint and subsystem diagnostic evidence, not a
-five-minute aggregate. Retain and interpret every other timing sample count and
-counter value in the context of its scenario.
+对于平均、P95 和 P99 MSPT 目标，Spark 是整个场景范围内的权威数据来源。`ServerPerformanceRecorder` 将 `SERVER_TICK` 保留为一个包含 1,200 个样本的滚动窗口，在 20 TPS 下约为 60 秒。因此，`/stardew perf status` 是终点和子系统诊断证据，而不是五分钟聚合数据。保留每一项其他计时的样本数和计数器值，并结合其所属场景进行解读。

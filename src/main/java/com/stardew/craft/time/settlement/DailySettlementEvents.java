@@ -3,6 +3,7 @@ package com.stardew.craft.time.settlement;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.network.overnight.OvernightBarrierPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.ItemInteractionResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -18,6 +19,8 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -133,8 +136,14 @@ public final class DailySettlementEvents {
         boolean coordinatorOwns = services.coordinator().context()
                 .map(context -> context.playerIds().contains(player.getUUID()))
                 .orElse(false);
-        resumePlayerSettlement(
+        Optional<DailySettlementBarrier.ReadyResult> recovered = resumePlayerSettlement(
                 services.players(), services.barrier(), player.getUUID(), coordinatorOwns);
+        if (recovered.isEmpty() && services.players().participates(player)) {
+            DailySettlementServices.Services activeServices = services;
+            activeServices.coordinator().context().ifPresent(active ->
+                    lockLateJoinForActiveDay(
+                            active, activeServices.barrier(), player.getUUID()));
+        }
         services.accessGuard().reconnectAnchor(player);
         int absoluteDay = services.barrier().lockedDay(player.getUUID());
         if (absoluteDay <= 0) {
@@ -158,7 +167,64 @@ public final class DailySettlementEvents {
         }
     }
 
+    public static void onPlayerEnteredSettlementDimension(ServerPlayer player) {
+        DailySettlementServices.Services services =
+                DailySettlementServices.find(player.server);
+        if (services == null || !services.players().participates(player)) {
+            return;
+        }
+        services.coordinator().context().ifPresent(active -> {
+            if (!lockLateJoinForActiveDay(
+                    active, services.barrier(), player.getUUID())) {
+                return;
+            }
+            services.accessGuard().reconnectAnchor(player);
+            PacketDistributor.sendToPlayer(
+                    player, new OvernightBarrierPayload(active.absoluteDay(), true));
+        });
+    }
+
+    public static void onReadyAcknowledged(ServerPlayer player) {
+        DailySettlementServices.Services services =
+                DailySettlementServices.find(player.server);
+        if (services == null || !services.players().participates(player)) {
+            return;
+        }
+        services.coordinator().context().ifPresent(active -> {
+            if (!lockLateJoinForActiveDay(
+                    active, services.barrier(), player.getUUID())) {
+                return;
+            }
+            services.accessGuard().reconnectAnchor(player);
+            PacketDistributor.sendToPlayer(
+                    player, new OvernightBarrierPayload(active.absoluteDay(), true));
+        });
+        ServerLevel stardewLevel = player.server.getLevel(
+                com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+        if (stardewLevel != null) {
+            com.stardew.craft.farm.OfflineFarmCatchUp.catchUp(
+                    stardewLevel, player.getUUID());
+        }
+    }
+
+    static boolean lockLateJoinForActiveDay(
+            DailySettlementContext context,
+            DailySettlementBarrier barrier,
+            UUID playerId) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(barrier, "barrier");
+        Objects.requireNonNull(playerId, "playerId");
+        if (context.playerIds().contains(playerId) || barrier.isLocked(playerId)) {
+            return false;
+        }
+        barrier.lockAll(context.absoluteDay(), List.of(playerId));
+        return true;
+    }
+
     private static boolean isLocked(ServerPlayer player) {
+        if (com.stardew.craft.farm.OfflineFarmCatchUpService.isPlayerLocked(player)) {
+            return true;
+        }
         DailySettlementServices.Services services =
                 DailySettlementServices.find(player.server);
         return services == null
@@ -166,6 +232,9 @@ public final class DailySettlementEvents {
     }
 
     private static boolean rejectTeleport(ServerPlayer player) {
+        if (com.stardew.craft.farm.OfflineFarmCatchUpService.isPlayerLocked(player)) {
+            return true;
+        }
         DailySettlementServices.Services services =
                 DailySettlementServices.find(player.server);
         return services == null

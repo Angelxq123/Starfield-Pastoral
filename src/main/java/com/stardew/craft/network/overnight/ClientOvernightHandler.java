@@ -221,6 +221,10 @@ public class ClientOvernightHandler {
         }
 
         PENDING_SCREENS.addAll(screenStack);
+        if (PENDING_SCREENS.isEmpty()) {
+            completeSequence("barrier_only");
+            return;
+        }
         sequenceActive = true;
         StardewCraft.LOGGER.info("[OVERNIGHT_CLIENT] Screen chain size={}, opening first screen: {}",
             PENDING_SCREENS.size(), PENDING_SCREENS.peekFirst().getClass().getSimpleName());
@@ -228,6 +232,9 @@ public class ClientOvernightHandler {
     }
 
     static List<SettlementStage> settlementStages(OvernightSettlementPayload payload) {
+        if (!payload.personalSettlement()) {
+            return List.of();
+        }
         List<SettlementStage> stages = new java.util.ArrayList<>();
         if (payload.hasPassOut()) {
             stages.add(SettlementStage.PASS_OUT_OVERLAY);

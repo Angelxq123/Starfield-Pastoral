@@ -96,6 +96,56 @@ class DailySettlementReadyPublisherTest {
         assertFalse(barrier.isLocked(playerB));
     }
 
+    @Test
+    void dynamicallyLockedLateLoginReceivesBarrierOnlyReadyWithoutPersonalSettlement() {
+        UUID participant = UUID.randomUUID();
+        UUID lateLogin = UUID.randomUUID();
+        DailySettlementContext context = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(participant), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(context.absoluteDay(), List.of(participant, lateLogin));
+        Map<UUID, Integer> settlements = new HashMap<>();
+        Map<UUID, OvernightSettlementPayload> sent = new HashMap<>();
+
+        DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(
+                barrier, new DailySettlementReadyPublisher.Operations() {
+                    @Override
+                    public void prepareHooks(DailySettlementContext target) {
+                    }
+
+                    @Override
+                    public DailySettlementBarrier.ReadyResult prepareResult(
+                            DailySettlementContext target, UUID playerId) {
+                        settlements.merge(playerId, 1, Integer::sum);
+                        return ready(target.absoluteDay());
+                    }
+
+                    @Override
+                    public boolean isOnline(UUID playerId) {
+                        return true;
+                    }
+
+                    @Override
+                    public void send(UUID playerId, OvernightSettlementPayload payload) {
+                        sent.put(playerId, payload);
+                    }
+
+                    @Override
+                    public void wake(UUID playerId) {
+                    }
+                });
+
+        publisher.ready(context);
+
+        assertEquals(Map.of(participant, 1), settlements);
+        assertEquals(Set.of(participant, lateLogin), sent.keySet());
+        assertTrue(barrier.readyResult(participant, 226).personalSettlement());
+        assertFalse(barrier.readyResult(lateLogin, 226).personalSettlement());
+        assertTrue(sent.get(lateLogin).shippedItems().isEmpty());
+        assertTrue(sent.get(lateLogin).levelUps().isEmpty());
+        assertFalse(sent.get(lateLogin).hasPassOut());
+    }
+
     private static DailySettlementBarrier.ReadyResult ready(int absoluteDay) {
         return new DailySettlementBarrier.ReadyResult(
                 absoluteDay,

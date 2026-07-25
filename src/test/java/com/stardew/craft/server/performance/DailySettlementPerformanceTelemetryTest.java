@@ -32,10 +32,12 @@ class DailySettlementPerformanceTelemetryTest {
     @BeforeEach
     void setUp() {
         ServerPerformanceRecorder.reset();
+        ServerPerformanceRecorder.enable();
     }
 
     @AfterEach
     void tearDown() {
+        ServerPerformanceRecorder.disable();
         ServerPerformanceRecorder.reset();
     }
 
@@ -45,7 +47,9 @@ class DailySettlementPerformanceTelemetryTest {
                 "SERVER_TICK", "PLAYER_LOGIN_EVENT", "CONTENT_SNAPSHOT_BUILD",
                 "JEI_CATALOG_BUILD", "FARM_SYNC_CHUNK_LOAD", "DAILY_SYNC_CHUNK_LOAD",
                 "DAILY_SETTLEMENT_TOTAL", "DAILY_SETTLEMENT_TICK",
-                "DAILY_SETTLEMENT_ATOMIC_ITEM", "DAILY_SETTLEMENT_LOCK_TO_READY"),
+                "DAILY_SETTLEMENT_ATOMIC_ITEM", "DAILY_SETTLEMENT_LOCK_TO_READY",
+                "NPC_TICK", "FESTIVAL_TICK", "FISHING_TICK", "CUTSCENE_TRIGGER_SCAN",
+                "CONTENT_SYNC", "FARM_DAILY_PROCESS", "OFFLINE_FARM_CATCH_UP"),
                 java.util.Arrays.stream(PerformanceTiming.values()).map(Enum::name).toList());
         assertEquals(List.of(
                 "CONTENT_SYNC_RECIPIENTS", "CONTENT_SYNC_PACKETS", "CONTENT_REGISTRY_BYTES",
@@ -53,7 +57,9 @@ class DailySettlementPerformanceTelemetryTest {
                 "DAILY_SETTLEMENT_TICKS", "DAILY_SETTLEMENT_ITEMS",
                 "DAILY_SETTLEMENT_CHUNK_LEASES", "DAILY_SETTLEMENT_OVERSHOOTS",
                 "DAILY_SETTLEMENT_RETRIES", "DAILY_SETTLEMENT_PERMANENT_FAILURES",
-                "DAILY_SETTLEMENT_PLAYER_BATCHES", "DAILY_SETTLEMENT_READY_PUBLICATIONS"),
+                "DAILY_SETTLEMENT_PLAYER_BATCHES", "DAILY_SETTLEMENT_READY_PUBLICATIONS",
+                "CONTENT_CACHE_HITS", "CONTENT_CACHE_REBUILDS",
+                "FARM_CATCH_UP_CHUNKS", "FARM_CATCH_UP_OBJECTS"),
                 java.util.Arrays.stream(PerformanceCounter.values()).map(Enum::name).toList());
     }
 

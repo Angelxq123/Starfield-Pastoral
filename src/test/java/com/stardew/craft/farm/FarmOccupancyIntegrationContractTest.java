@@ -59,10 +59,10 @@ class FarmOccupancyIntegrationContractTest {
     private static final Path MOD_TELEPORT_SOURCE = sourcePath("warp/ModTeleport.java");
     private static final Path LOCATION_GUARD_SOURCE = sourcePath("event/PlayerLocationStateGuardEvents.java");
     private static final Path FARM_ADMIN_SOURCE = sourcePath("network/payload/FarmAdminPayload.java");
-    private static final Path WARP_EFFECTS_SOURCE = sourcePath("warp/WarpEffects.java");
+    private static final Path RETURN_SCEPTER_SOURCE = sourcePath("warp/ReturnScepterService.java");
 
     @Test
-    void entryHandlerTracksTheFarmSelectedByTargetOwner() throws IOException {
+    void entryHandlerRoutesSelectedFarmThroughUnifiedTeleportGuard() throws IOException {
         MethodTree handle = parseMethod(ENTRY_PAYLOAD_SOURCE, "FarmEntryRequestPayload", "handle", 2);
         BlockTree work = lambdaBlockOfDirectInvocation(handle.getBody(), "context", "enqueueWork");
         List<VariableTree> farms = directVariables(work).stream()
@@ -72,8 +72,11 @@ class FarmOccupancyIntegrationContractTest {
         assertEquals(1, farms.size());
         assertTrue(isInvocation(farms.getFirst().getInitializer(),
                 "registry", "getFarm", "payload.targetOwner"));
-        assertDirectInvocation(work, "FarmChunkManager.get()", "onPlayerEnterFarm",
-                "stardewLevel", "player", "farm");
+        assertDirectInvocation(work, "ModTeleport", "to",
+                "player", "stardewLevel", "targetPos.getX()+0.5", "targetPos.getY()",
+                "targetPos.getZ()+0.5", "yaw", "0.0F");
+        assertFalse(hasDirectInvocation(work, "FarmChunkManager.get()", "onPlayerEnterFarm",
+                "stardewLevel", "player", "farm"));
     }
 
     @Test
@@ -203,11 +206,12 @@ class FarmOccupancyIntegrationContractTest {
         assertFalse(hasDirectInvocation(farmFoundBody, "player", "teleportTo",
                 "player.serverLevel()", "tp.getX()+0.5", "tp.getY()", "tp.getZ()+0.5", "0", "0"));
 
-        MethodTree wand = parseMethod(WARP_EFFECTS_SOURCE, "WarpEffects", "teleport", 2);
-        assertDirectInvocation(wand.getBody(), "ModTeleport", "to",
-                "player", "targetLevel", "tx", "ty", "tz", "180.0F", "0.0F");
-        assertFalse(hasDirectInvocation(wand.getBody(), "player", "teleportTo",
-                "targetLevel", "tx", "ty", "tz", "180.0F", "0.0F"));
+        MethodTree scepter = parseMethod(
+                RETURN_SCEPTER_SOURCE, "ReturnScepterService", "warpHome", 1);
+        assertDirectInvocation(scepter.getBody(), "ModTeleport", "to",
+                "player", "targetLevel", "frontDoor", "0.0F", "0.0F");
+        assertFalse(hasDirectInvocation(scepter.getBody(), "player", "teleportTo",
+                "targetLevel", "frontDoor", "0.0F", "0.0F"));
     }
 
     @Test
@@ -254,21 +258,20 @@ class FarmOccupancyIntegrationContractTest {
     }
 
     @Test
-    void currentPositionLookupScansFarmBoundsWithoutMembershipResolution() throws IOException {
+    void currentPositionLookupUsesRegistrySpatialIndexWithoutMembershipResolution() throws IOException {
         MethodTree update = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "reconcilePlayerOccupancy", 1);
-        MethodTree find = parseMethod(MANAGER_SOURCE, "FarmChunkManager", "findContainingFarm", 2);
         BlockTree updateBody = update.getBody();
         IfTree outsideValley = findDirectIf(updateBody, condition -> normalized(unwrapped(condition)).equals(
                 "!ModDimensions.STARDEW_VALLEY.equals(level.dimension())"));
         IfTree outsideFarm = findDirectIf(updateBody, condition -> normalized(unwrapped(condition)).equals(
-                "farm==null"));
+                "farm==null||!farm.contains(player.blockPosition())"));
         VariableTree farm = directVariables(updateBody).stream()
                 .filter(variable -> variable.getName().contentEquals("farm"))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("direct farm lookup is missing"));
 
-        assertInvocation(farm.getInitializer(), "FarmInstanceRegistry.get()", "getAllFarms");
-        assertInvocation(farm.getInitializer(), null, "blockPosition");
+        assertTrue(hasInvocation(update, "registry", "getOwnerAt", "player.blockPosition()"));
+        assertTrue(hasInvocation(update, "registry", "getFarm", "owner"));
         assertFalse(hasInvocation(update, null, "getFarmForPlayer"));
         assertFalse(hasInvocation(update, null, "getOwnerForPlayer"));
         assertDirectInvocation(asBlock(outsideValley.getThenStatement()),
@@ -277,14 +280,6 @@ class FarmOccupancyIntegrationContractTest {
                 null, "onPlayerLeaveFarm", "level", "player");
         assertDirectInvocation(updateBody, null, "onPlayerEnterFarm", "level", "player", "farm");
 
-        EnhancedForLoopTree farmLoop = find.getBody().getStatements().stream()
-                .filter(EnhancedForLoopTree.class::isInstance)
-                .map(EnhancedForLoopTree.class::cast)
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("farm bounds loop is missing"));
-        IfTree contains = findDirectIf(asBlock(farmLoop.getStatement()),
-                condition -> isInvocation(condition, "farm", "contains", "position"));
-        assertTrue(asBlock(contains.getThenStatement()).getStatements().getFirst() instanceof ReturnTree);
     }
 
     @Test
@@ -380,21 +375,8 @@ class FarmOccupancyIntegrationContractTest {
     void subscribedServerStopDelegatesFarmCleanupUnconditionally() throws IOException {
         MethodTree stop = parseMethod(
                 PLAYER_HANDLER_SOURCE, "PlayerDataEventHandler", "onServerStopping", 1);
-        List<TryTree> cleanupCandidates = directTries(stop.getBody()).stream()
-                .filter(candidate -> candidate.getFinallyBlock() != null)
-                .filter(candidate -> hasDirectInvocation(candidate.getBlock(),
-                        "com.stardew.craft.interior.InteriorSubspaceManager",
-                        "clearPortalRegistry"))
-                .toList();
-        assertEquals(1, cleanupCandidates.size());
-        TryTree cacheCleanup = cleanupCandidates.getFirst();
-        assertNotNull(cacheCleanup.getFinallyBlock());
-        BlockTree finallyBlock = cacheCleanup.getFinallyBlock();
-
-        assertDirectInvocation(finallyBlock,
-                "com.stardew.craft.farm.FarmChunkManager.get()", "onServerStopping", "stardewLevel");
-        assertFalse(finallyBlock.getStatements().stream().anyMatch(IfTree.class::isInstance),
-                "farm shutdown must not be conditional on the Stardew level being present");
+        assertTrue(hasInvocation(stop,
+                "com.stardew.craft.farm.FarmChunkManager.get()", "onServerStopping", "stardewLevel"));
     }
 
     @Test

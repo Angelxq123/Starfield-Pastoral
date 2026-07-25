@@ -3,6 +3,7 @@ package com.stardew.craft.server.performance;
 import java.util.Map;
 
 public record PerformanceSnapshot(
+    boolean enabled,
     Map<PerformanceTiming, TimingSummary> timings,
     Map<PerformanceCounter, Long> counters,
     DailySettlementMetrics.ReadySummary dailySettlement
@@ -10,7 +11,21 @@ public record PerformanceSnapshot(
     public PerformanceSnapshot(
             Map<PerformanceTiming, TimingSummary> timings,
             Map<PerformanceCounter, Long> counters) {
-        this(timings, counters, null);
+        this(false, timings, counters, null);
+    }
+
+    public PerformanceSnapshot(
+            boolean enabled,
+            Map<PerformanceTiming, TimingSummary> timings,
+            Map<PerformanceCounter, Long> counters) {
+        this(enabled, timings, counters, null);
+    }
+
+    public PerformanceSnapshot(
+            Map<PerformanceTiming, TimingSummary> timings,
+            Map<PerformanceCounter, Long> counters,
+            DailySettlementMetrics.ReadySummary dailySettlement) {
+        this(false, timings, counters, dailySettlement);
     }
 
     public PerformanceSnapshot {

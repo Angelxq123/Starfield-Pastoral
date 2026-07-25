@@ -26,14 +26,21 @@ public final class ClientContentSyncService {
 
     @SubscribeEvent
     public static void onDatapackSync(OnDatapackSyncEvent event) {
+        ServerPerformanceRecorder.measure(PerformanceTiming.CONTENT_SYNC, () -> sync(event));
+    }
+
+    private static void sync(OnDatapackSyncEvent event) {
         MinecraftServer server = event.getPlayerList().getServer();
+        boolean cacheHit = event.getPlayer() != null && SHARED_CONTENT.contains(server);
         ClientContentSnapshotCache.Entry<SharedSnapshot> cached = event.getPlayer() == null
                 ? SHARED_CONTENT.rebuild(server, ClientContentSyncService::buildSharedSnapshot)
                 : SHARED_CONTENT.getOrBuild(server, ClientContentSyncService::buildSharedSnapshot);
+        ServerPerformanceRecorder.increment(cacheHit
+                ? PerformanceCounter.CONTENT_CACHE_HITS
+                : PerformanceCounter.CONTENT_CACHE_REBUILDS, 1L);
         SharedSnapshot shared = cached.value();
         FestivalAvailabilitySyncPayload festivalSnapshot = FestivalAvailabilitySyncPayload.current();
         List<ServerPlayer> recipients = event.getRelevantPlayers().toList();
-
         ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_RECIPIENTS, recipients.size());
 
         for (ServerPlayer player : recipients) {

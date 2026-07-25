@@ -26,6 +26,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "trees",
             "fruit_trees",
             "wild_tree_seeds",
+            "farm_debris",
             "sprinklers",
             "pasture_grass",
             "animals",
@@ -243,7 +244,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "daily_process_scope" -> atomic(name, () -> beginDailyProcess(context));
                 case "festival_season_prep" -> atomic(name, () -> festivalAndSeason(context));
                 case "weather_npc_reset" -> atomic(name, () -> weatherAndNpcs(context));
-                case "crops", "trees", "fruit_trees", "wild_tree_seeds",
+                case "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
                         "sprinklers", "pasture_grass", "animals", "fish_ponds",
                         "public_forage", "forest_farm_forage", "artifact_spots",
                         "quarry", "coal_forest", "farm_caves" -> prepared(name);
@@ -345,7 +346,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 throw new IllegalStateException("World snapshots are already prepared");
             }
             for (String name : List.of(
-                    "crops", "trees", "fruit_trees", "wild_tree_seeds",
+                    "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
                     "sprinklers", "pasture_grass", "animals", "fish_ponds",
                     "public_forage", "forest_farm_forage", "artifact_spots",
                     "quarry", "coal_forest", "farm_caves")) {
@@ -364,10 +365,12 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                         .createDailyWorkUnit(level(), context);
                 case "wild_tree_seeds" -> com.stardew.craft.manager.WildTreeSeedManager.get(level())
                         .createDailyWorkUnit(level(), context);
+                case "farm_debris" -> com.stardew.craft.farm.FarmDebrisDailyService
+                        .createDailyWorkUnit(level(), context, frozenFarms);
                 case "sprinklers" -> com.stardew.craft.manager.SprinklerManager.get(level())
                         .createDailyWorkUnit(level(), context);
                 case "pasture_grass" -> com.stardew.craft.manager.PastureGrassGrowthManager.get(level())
-                        .createDailyWorkUnit(level(), context);
+                        .createDailyWorkUnit(level(), context, frozenFarms);
                 case "animals" -> com.stardew.craft.manager.AnimalGrowthManager.get(level())
                         .createDailyWorkUnit(level(), context);
                 case "fish_ponds" -> com.stardew.craft.fishpond.service.FishPondDailyUpdateService

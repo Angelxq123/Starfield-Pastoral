@@ -127,7 +127,14 @@ class RollingTimingWindowTest {
             PerformanceTiming.DAILY_SETTLEMENT_TOTAL,
             PerformanceTiming.DAILY_SETTLEMENT_TICK,
             PerformanceTiming.DAILY_SETTLEMENT_ATOMIC_ITEM,
-            PerformanceTiming.DAILY_SETTLEMENT_LOCK_TO_READY
+            PerformanceTiming.DAILY_SETTLEMENT_LOCK_TO_READY,
+            PerformanceTiming.NPC_TICK,
+            PerformanceTiming.FESTIVAL_TICK,
+            PerformanceTiming.FISHING_TICK,
+            PerformanceTiming.CUTSCENE_TRIGGER_SCAN,
+            PerformanceTiming.CONTENT_SYNC,
+            PerformanceTiming.FARM_DAILY_PROCESS,
+            PerformanceTiming.OFFLINE_FARM_CATCH_UP
         }, PerformanceTiming.values());
     }
 }

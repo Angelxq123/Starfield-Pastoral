@@ -15,6 +15,10 @@ public final class PerformanceCommand {
         dispatcher.register(Commands.literal("stardew")
             .then(Commands.literal("perf")
                 .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("start")
+                    .executes(context -> start(context.getSource())))
+                .then(Commands.literal("stop")
+                    .executes(context -> stop(context.getSource())))
                 .then(Commands.literal("status")
                     .executes(context -> status(context.getSource())))
                 .then(Commands.literal("reset")
@@ -25,6 +29,18 @@ public final class PerformanceCommand {
         for (String line : PerformanceReportFormatter.format(ServerPerformanceRecorder.snapshot())) {
             source.sendSuccess(() -> Component.literal(line), false);
         }
+        return 1;
+    }
+
+    private static int start(CommandSourceStack source) {
+        ServerPerformanceRecorder.enable();
+        source.sendSuccess(() -> Component.literal("Stardew performance profiling started"), false);
+        return 1;
+    }
+
+    private static int stop(CommandSourceStack source) {
+        ServerPerformanceRecorder.disable();
+        source.sendSuccess(() -> Component.literal("Stardew performance profiling stopped"), false);
         return 1;
     }
 

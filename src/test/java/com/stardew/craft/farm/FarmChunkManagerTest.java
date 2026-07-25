@@ -42,6 +42,13 @@ class FarmChunkManagerTest {
     @org.junit.jupiter.api.BeforeEach
     void resetPerformanceRecorder() {
         ServerPerformanceRecorder.reset();
+        ServerPerformanceRecorder.enable();
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void disablePerformanceRecorder() {
+        ServerPerformanceRecorder.disable();
+        ServerPerformanceRecorder.reset();
     }
 
     @Test

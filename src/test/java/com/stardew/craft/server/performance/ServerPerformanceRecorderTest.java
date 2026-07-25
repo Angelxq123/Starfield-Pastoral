@@ -23,10 +23,12 @@ class ServerPerformanceRecorderTest {
     @BeforeEach
     void setUp() {
         ServerPerformanceRecorder.reset();
+        ServerPerformanceRecorder.enable();
     }
 
     @AfterEach
     void tearDown() {
+        ServerPerformanceRecorder.disable();
         ServerPerformanceRecorder.reset();
     }
 
@@ -46,8 +48,40 @@ class ServerPerformanceRecorderTest {
             PerformanceCounter.DAILY_SETTLEMENT_RETRIES,
             PerformanceCounter.DAILY_SETTLEMENT_PERMANENT_FAILURES,
             PerformanceCounter.DAILY_SETTLEMENT_PLAYER_BATCHES,
-            PerformanceCounter.DAILY_SETTLEMENT_READY_PUBLICATIONS
+            PerformanceCounter.DAILY_SETTLEMENT_READY_PUBLICATIONS,
+            PerformanceCounter.CONTENT_CACHE_HITS,
+            PerformanceCounter.CONTENT_CACHE_REBUILDS,
+            PerformanceCounter.FARM_CATCH_UP_CHUNKS,
+            PerformanceCounter.FARM_CATCH_UP_OBJECTS
         }, PerformanceCounter.values());
+    }
+
+    @Test
+    void disabledProfilerSkipsOptionalSamplesAndCounters() {
+        ServerPerformanceRecorder.disable();
+
+        long startedAt = ServerPerformanceRecorder.startTiming();
+        ServerPerformanceRecorder.finishTiming(PerformanceTiming.NPC_TICK, startedAt);
+        ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS, 1L);
+
+        PerformanceSnapshot snapshot = ServerPerformanceRecorder.snapshot();
+        assertFalse(snapshot.enabled());
+        assertEquals(0L, snapshot.timings().get(PerformanceTiming.NPC_TICK).sampleCount());
+        assertEquals(0L, snapshot.counters().get(PerformanceCounter.CONTENT_SYNC_PACKETS));
+    }
+
+    @Test
+    void enableResetsOldSamplesAndAllowsLowOverheadTimingApi() {
+        ServerPerformanceRecorder.record(PerformanceTiming.SERVER_TICK, 1L);
+        ServerPerformanceRecorder.enable();
+
+        long startedAt = ServerPerformanceRecorder.startTiming();
+        ServerPerformanceRecorder.finishTiming(PerformanceTiming.NPC_TICK, startedAt);
+
+        PerformanceSnapshot snapshot = ServerPerformanceRecorder.snapshot();
+        assertTrue(snapshot.enabled());
+        assertEquals(0L, snapshot.timings().get(PerformanceTiming.SERVER_TICK).sampleCount());
+        assertEquals(1L, snapshot.timings().get(PerformanceTiming.NPC_TICK).sampleCount());
     }
 
     @Test

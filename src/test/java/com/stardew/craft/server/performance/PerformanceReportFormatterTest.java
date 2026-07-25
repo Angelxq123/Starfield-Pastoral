@@ -32,7 +32,7 @@ class PerformanceReportFormatterTest {
         List<String> lines = PerformanceReportFormatter.format(new PerformanceSnapshot(timings, counters));
 
         assertEquals(List.of(
-            "Stardew server performance",
+            "Stardew server performance (profiling disabled)",
             "SERVER_TICK samples=20 avg=12.500ms p95=30.000ms p99=40.000ms max=40.000ms",
             "PLAYER_LOGIN_EVENT samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "CONTENT_SNAPSHOT_BUILD samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
@@ -43,6 +43,13 @@ class PerformanceReportFormatterTest {
             "DAILY_SETTLEMENT_TICK samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "DAILY_SETTLEMENT_ATOMIC_ITEM samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "DAILY_SETTLEMENT_LOCK_TO_READY samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "NPC_TICK samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "FESTIVAL_TICK samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "FISHING_TICK samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "CUTSCENE_TRIGGER_SCAN samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "CONTENT_SYNC samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "FARM_DAILY_PROCESS samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
+            "OFFLINE_FARM_CATCH_UP samples=0 avg=0.000ms p95=0.000ms p99=0.000ms max=0.000ms",
             "CONTENT_SYNC_RECIPIENTS=0",
             "CONTENT_SYNC_PACKETS=16",
             "CONTENT_REGISTRY_BYTES=0",
@@ -56,7 +63,11 @@ class PerformanceReportFormatterTest {
             "DAILY_SETTLEMENT_RETRIES=0",
             "DAILY_SETTLEMENT_PERMANENT_FAILURES=0",
             "DAILY_SETTLEMENT_PLAYER_BATCHES=0",
-            "DAILY_SETTLEMENT_READY_PUBLICATIONS=0"
+            "DAILY_SETTLEMENT_READY_PUBLICATIONS=0",
+            "CONTENT_CACHE_HITS=0",
+            "CONTENT_CACHE_REBUILDS=0",
+            "FARM_CATCH_UP_CHUNKS=0",
+            "FARM_CATCH_UP_OBJECTS=0"
         ), lines);
     }
 
@@ -67,7 +78,7 @@ class PerformanceReportFormatterTest {
         );
 
         assertEquals(1 + PerformanceTiming.values().length + PerformanceCounter.values().length, lines.size());
-        assertEquals("Stardew server performance", lines.get(0));
+        assertEquals("Stardew server performance (profiling disabled)", lines.get(0));
         for (int index = 0; index < PerformanceTiming.values().length; index++) {
             assertEquals(
                 PerformanceTiming.values()[index]
@@ -135,6 +146,8 @@ class PerformanceReportFormatterTest {
         assertNotNull(perf);
         assertNotNull(perf.getChild("status"));
         assertNotNull(perf.getChild("reset"));
+        assertNotNull(perf.getChild("start"));
+        assertNotNull(perf.getChild("stop"));
     }
 
     private static void assertUtilityClass(Class<?> type) {

@@ -24,10 +24,12 @@ class ServerPerformanceEventsTest {
     @BeforeEach
     void resetStateBeforeTest() {
         resetState();
+        ServerPerformanceRecorder.enable();
     }
 
     @AfterEach
     void resetStateAfterTest() {
+        ServerPerformanceRecorder.disable();
         resetState();
     }
 

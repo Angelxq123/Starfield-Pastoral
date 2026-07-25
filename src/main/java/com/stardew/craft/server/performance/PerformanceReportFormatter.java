@@ -13,7 +13,8 @@ public final class PerformanceReportFormatter {
     public static List<String> format(PerformanceSnapshot snapshot) {
         Objects.requireNonNull(snapshot, "snapshot");
         List<String> lines = new ArrayList<>();
-        lines.add("Stardew server performance");
+        lines.add("Stardew server performance (profiling "
+                + (snapshot.enabled() ? "enabled" : "disabled") + ")");
 
         for (PerformanceTiming timing : PerformanceTiming.values()) {
             TimingSummary summary = snapshot.timings().getOrDefault(timing, TimingSummary.ZERO);

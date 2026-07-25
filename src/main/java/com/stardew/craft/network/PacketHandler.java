@@ -89,7 +89,7 @@ public class PacketHandler {
         // 0.5 API stabilization changes equipment sync from registry IDs to complete ItemStacks,
         // adds server-authoritative client content snapshots, and synchronizes collective pause state.
         // Reject mixed old/new clients explicitly.
-        final PayloadRegistrar registrar = event.registrar("4");
+        final PayloadRegistrar registrar = event.registrar("5");
         
         // 客户端 -> 服务端
         registrar.playToServer(
@@ -1160,6 +1160,19 @@ public class PacketHandler {
         );
 
         registrar.playToClient(
+            com.stardew.craft.network.payload.OpenGoldClockQuestionPayload.TYPE,
+            com.stardew.craft.network.payload.OpenGoldClockQuestionPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.OpenGoldClockQuestionPayload::handle
+        );
+
+        registrar.playToServer(
+            com.stardew.craft.network.payload.GoldClockQuestionResponsePayload.TYPE,
+            com.stardew.craft.network.payload.GoldClockQuestionResponsePayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                com.stardew.craft.network.payload.GoldClockQuestionResponsePayload::handle)
+        );
+
+        registrar.playToClient(
             com.stardew.craft.network.payload.PlaySecretNote21BushEventPayload.TYPE,
             com.stardew.craft.network.payload.PlaySecretNote21BushEventPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.PlaySecretNote21BushEventPayload::handle
@@ -2066,28 +2079,6 @@ public class PacketHandler {
             com.stardew.craft.network.payload.WorkbenchCraftResultPayload.TYPE,
             com.stardew.craft.network.payload.WorkbenchCraftResultPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.WorkbenchCraftResultPayload::handle
-        );
-
-        // ── Warp Wand ────────────────────────────────────────
-        registrar.playToClient(
-            com.stardew.craft.network.payload.WarpWandSyncPayload.TYPE,
-            com.stardew.craft.network.payload.WarpWandSyncPayload.STREAM_CODEC,
-            com.stardew.craft.network.payload.WarpWandSyncPayload::handle
-        );
-        registrar.playToClient(
-            com.stardew.craft.network.payload.OpenWarpWheelPayload.TYPE,
-            com.stardew.craft.network.payload.OpenWarpWheelPayload.STREAM_CODEC,
-            com.stardew.craft.network.payload.OpenWarpWheelPayload::handle
-        );
-        registrar.playToServer(
-            com.stardew.craft.network.payload.WarpWandTeleportPayload.TYPE,
-            com.stardew.craft.network.payload.WarpWandTeleportPayload.STREAM_CODEC,
-            DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.WarpWandTeleportPayload::handle)
-        );
-        registrar.playToServer(
-            com.stardew.craft.network.payload.WarpWandUnlockPayload.TYPE,
-            com.stardew.craft.network.payload.WarpWandUnlockPayload.STREAM_CODEC,
-            DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.WarpWandUnlockPayload::handle)
         );
 
         // ── Data Registry Sync (Artisan / Preserves / Fishing / NPC Events) ──

@@ -17,6 +17,7 @@ public final class ServerPerformanceRecorder {
         new EnumMap<>(PerformanceTiming.class);
     private static final long[] COUNTERS = new long[PerformanceCounter.values().length];
     private static DailySettlementMetrics.ReadySummary dailySettlement;
+    private static boolean enabled;
 
     static {
         for (PerformanceTiming timing : PerformanceTiming.values()) {
@@ -32,6 +33,9 @@ public final class ServerPerformanceRecorder {
      */
     public static void record(PerformanceTiming timing, long nanoseconds) {
         Objects.requireNonNull(timing, "timing");
+        if (!enabled) {
+            return;
+        }
         TIMINGS.get(timing).record(nanoseconds);
     }
 
@@ -41,7 +45,7 @@ public final class ServerPerformanceRecorder {
      */
     public static void increment(PerformanceCounter counter, long amount) {
         Objects.requireNonNull(counter, "counter");
-        if (amount <= 0L) {
+        if (!enabled || amount <= 0L) {
             return;
         }
 
@@ -68,6 +72,9 @@ public final class ServerPerformanceRecorder {
     public static <T> T measure(PerformanceTiming timing, Supplier<T> operation) {
         Objects.requireNonNull(timing, "timing");
         Objects.requireNonNull(operation, "operation");
+        if (!enabled) {
+            return operation.get();
+        }
         long startedAt = System.nanoTime();
         try {
             return operation.get();
@@ -82,6 +89,10 @@ public final class ServerPerformanceRecorder {
     public static void measure(PerformanceTiming timing, Runnable operation) {
         Objects.requireNonNull(timing, "timing");
         Objects.requireNonNull(operation, "operation");
+        if (!enabled) {
+            operation.run();
+            return;
+        }
         long startedAt = System.nanoTime();
         try {
             operation.run();
@@ -105,7 +116,32 @@ public final class ServerPerformanceRecorder {
         for (PerformanceCounter counter : PerformanceCounter.values()) {
             counterSnapshots.put(counter, COUNTERS[counter.ordinal()]);
         }
-        return new PerformanceSnapshot(timingSnapshots, counterSnapshots, dailySettlement);
+        return new PerformanceSnapshot(enabled, timingSnapshots, counterSnapshots, dailySettlement);
+    }
+
+    public static boolean isEnabled() {
+        return enabled;
+    }
+
+    public static long startTiming() {
+        return enabled ? System.nanoTime() : 0L;
+    }
+
+    public static void finishTiming(PerformanceTiming timing, long startedAt) {
+        Objects.requireNonNull(timing, "timing");
+        if (startedAt == 0L) {
+            return;
+        }
+        record(timing, Math.max(0L, System.nanoTime() - startedAt));
+    }
+
+    public static void enable() {
+        reset();
+        enabled = true;
+    }
+
+    public static void disable() {
+        enabled = false;
     }
 
     /**

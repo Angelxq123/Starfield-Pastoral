@@ -1,6 +1,9 @@
 package com.stardew.craft.farm;
 
 import com.stardew.craft.core.FarmAreaResolver;
+import com.stardew.craft.server.performance.PerformanceCounter;
+import com.stardew.craft.server.performance.PerformanceTiming;
+import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

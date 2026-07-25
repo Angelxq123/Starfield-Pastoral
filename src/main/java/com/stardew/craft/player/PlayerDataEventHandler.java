@@ -13,6 +13,7 @@ import com.stardew.craft.mining.MiningDataManager;
 import com.stardew.craft.mining.MiningPlayerData;
 import com.stardew.craft.network.PlayerDataSyncPacket;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -849,10 +850,15 @@ public class PlayerDataEventHandler {
             com.stardew.craft.interior.InteriorSubspaceManager.clearPortalRegistry();
             com.stardew.craft.block.shape.ModelVoxelShapeCache.clearAll();
             com.stardew.craft.npc.data.NpcContentFilter.clearCache();
-        } finally {
-            net.minecraft.server.level.ServerLevel stardewLevel =
-                    event.getServer().getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+        } catch (RuntimeException exception) {
+            StardewCraft.LOGGER.error("Error clearing server caches on server stop", exception);
+        }
+
+        ServerLevel stardewLevel = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
+        try {
             com.stardew.craft.farm.FarmChunkManager.get().onServerStopping(stardewLevel);
+        } catch (RuntimeException exception) {
+            StardewCraft.LOGGER.error("Error releasing temporary farm chunks on server stop", exception);
         }
     }
     

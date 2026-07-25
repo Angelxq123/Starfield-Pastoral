@@ -129,11 +129,11 @@ class FarmSystemDailyWorkUnitTest {
     @Test
     void grassEligibilityIsCollectedExactlyOnceAtCreationAndNeverByTheConsumerGraph() throws IOException {
         ParsedClass parsed = parse(SYSTEMS.get(2));
-        MethodTree create = parsed.method("createDailyWorkUnit", 2);
+        MethodTree create = parsed.method("createDailyWorkUnit", 3);
         MethodTree item = parsed.method("processPastureGrassDay", -1);
 
+        assertEquals(1, invocationsNamed(create.getBody(), "deferred").size());
         assertEquals(1, invocationsNamed(create.getBody(), "collectNearbyPastureGrass").size());
-        assertCursorUsesSnapshot(create, "grassSnapshot", "processPastureGrassDay");
         assertTrue(reachableMethods(parsed, List.of(item)).stream()
                         .allMatch(method -> invocationsNamed(
                                 method.getBody(), "collectNearbyPastureGrass").isEmpty()),
@@ -344,6 +344,9 @@ class FarmSystemDailyWorkUnitTest {
     void cursorConsumersReceiveWorldSeedAndContextAbsoluteDayAndReachExpectedItemHelpers()
             throws IOException {
         for (SystemContract system : SYSTEMS) {
+            if (system.className().equals("PastureGrassGrowthManager")) {
+                continue;
+            }
             ParsedClass parsed = parse(system);
             MethodTree create = parsed.method("createDailyWorkUnit", 2);
             MethodTree item = parsed.method(system.itemMethod(), -1);
@@ -357,6 +360,14 @@ class FarmSystemDailyWorkUnitTest {
                     system.className() + " cursor must pass captured seed/day into its item helper");
             assertTrue(reachableMethods(parsed, List.of(item)).contains(item));
         }
+
+        ParsedClass grass = parse(SYSTEMS.get(2));
+        MethodTree item = grass.method("processPastureGrassDay", -1);
+        List<MethodInvocationTree> seeded = invocationsNamed(item.getBody(), "forPosition");
+        assertEquals(1, seeded.size());
+        assertEquals("level.getSeed()", seeded.getFirst().getArguments().get(0).toString());
+        assertEquals("context.absoluteDay()", seeded.getFirst().getArguments().get(1).toString());
+        assertEquals("pos", seeded.getFirst().getArguments().get(3).toString());
     }
 
     @Test
@@ -409,6 +420,9 @@ class FarmSystemDailyWorkUnitTest {
     @Test
     void reachableCursorCodeUsesOnlySeededObjectDailyRandomStreams() throws IOException {
         for (SystemContract system : SYSTEMS) {
+            if (system.className().equals("PastureGrassGrowthManager")) {
+                continue;
+            }
             ParsedClass parsed = parse(system);
             MethodTree create = parsed.method("createDailyWorkUnit", 2);
             List<MethodTree> roots = new ArrayList<>();
@@ -432,6 +446,18 @@ class FarmSystemDailyWorkUnitTest {
             MethodTree item = parsed.method(system.itemMethod(), -1);
             assertDerivedRandomCall(item, system);
             assertAllReachableDailyRandomCalls(system, reachable);
+        }
+
+        ParsedClass grass = parse(SYSTEMS.get(2));
+        for (String methodName : List.of("createSpawnTasks", "processSpawnTask", "processPastureGrassDay")) {
+            MethodTree method = grass.method(methodName, -1);
+            assertTrue(invocationsNamed(method.getBody(), "getRandom").isEmpty());
+            assertTrue(invocationsNamed(method.getBody(), "createUnseeded").isEmpty());
+            assertFalse(scan(method.getBody(), MemberSelectTree.class).stream()
+                    .anyMatch(FarmSystemDailyWorkUnitTest::isLevelRandomAccess));
+            assertFalse(scan(method.getBody(), MethodInvocationTree.class).stream()
+                    .filter(call -> call.getMethodSelect().toString().startsWith("DailySettlementRandom."))
+                    .toList().isEmpty(), methodName + " must derive deterministic daily randomness");
         }
     }
 
@@ -479,7 +505,8 @@ class FarmSystemDailyWorkUnitTest {
     @Test
     void activeOwnershipIsRecoveredOnCreationFailureAndClose() throws IOException {
         for (SystemContract system : SYSTEMS) {
-            MethodTree create = parse(system).method("createDailyWorkUnit", 2);
+            MethodTree create = parse(system).method("createDailyWorkUnit",
+                    system.className().equals("PastureGrassGrowthManager") ? 3 : 2);
             List<TryTree> tries = scan(create.getBody(), TryTree.class);
 
             assertFalse(scan(create.getBody(), IfTree.class).isEmpty());

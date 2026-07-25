@@ -236,6 +236,19 @@ class ClientContentSnapshotCacheTest {
     }
 
     @Test
+    void containsUsesOwnerIdentityAndRequiresPublishedEntry() {
+        ClientContentSnapshotCache<AlwaysEqualOwner, String> cache = new ClientContentSnapshotCache<>();
+        AlwaysEqualOwner owner = new AlwaysEqualOwner();
+        AlwaysEqualOwner equalOwner = new AlwaysEqualOwner();
+
+        assertFalse(cache.contains(owner));
+        cache.getOrBuild(owner, generation -> "snapshot");
+
+        assertTrue(cache.contains(owner));
+        assertFalse(cache.contains(equalOwner));
+    }
+
+    @Test
     void rejectsNullOwnersAndBuilders() {
         ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
         Object owner = new Object();

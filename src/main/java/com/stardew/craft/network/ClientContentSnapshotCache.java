@@ -10,6 +10,10 @@ final class ClientContentSnapshotCache<K, V> {
     private long generation;
     private boolean building;
 
+    boolean contains(K owner) {
+        return this.owner == Objects.requireNonNull(owner, "owner") && entry != null;
+    }
+
     Entry<V> getOrBuild(K owner, LongFunction<V> builder) {
         rejectReentrantBuild();
         Objects.requireNonNull(owner, "owner");

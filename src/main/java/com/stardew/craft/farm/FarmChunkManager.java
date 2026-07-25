@@ -187,7 +187,6 @@ public class FarmChunkManager {
         transition.previous().ifPresent(previous ->
             StardewCraft.LOGGER.debug("[FARM_CHUNK] Player {} left farm slot {}, players={}",
                 player.getName().getString(), previous.slot(), previous.count()));
-
         StardewCraft.LOGGER.debug("[FARM_CHUNK] Player {} entered farm slot {}, players={}",
                 player.getName().getString(), transition.slot(), transition.count());
     }
@@ -200,9 +199,10 @@ public class FarmChunkManager {
             return;
         }
 
-        FarmInstance farm = findContainingFarm(
-            FarmInstanceRegistry.get().getAllFarms(), player.blockPosition());
-        if (farm == null) {
+        FarmInstanceRegistry registry = FarmInstanceRegistry.get();
+        UUID owner = registry.getOwnerAt(player.blockPosition());
+        FarmInstance farm = owner == null ? null : registry.getFarm(owner);
+        if (farm == null || !farm.contains(player.blockPosition())) {
             onPlayerLeaveFarm(level, player);
             return;
         }

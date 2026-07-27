@@ -38,6 +38,8 @@ class OfflineFarmCatchUpContractTest {
         assertTrue(service.contains("createPendingJob("));
         assertTrue(service.contains("Catch-upjobcreationexceededtickbudget"));
         assertTrue(service.contains("getOwnerForPlayer(playerId)"));
+        assertTrue(service.contains("if(job.farm.getLastOnlineDay()>=job.targetDay)"),
+                "a settlement-completed farm must discard its stale catch-up job");
     }
 
     @Test

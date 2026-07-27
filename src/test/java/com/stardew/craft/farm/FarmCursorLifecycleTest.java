@@ -91,7 +91,7 @@ class FarmCursorLifecycleTest {
                 "createFarm", UUID.class, String.class, String.class, FarmType.class);
         assertTrue(Modifier.isPublic(api.getModifiers()));
 
-        MethodTree create = parseMethod(REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarm", 4);
+        MethodTree create = parseMethod(REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarm", 5);
         List<VariableTree> timeManagers = directVariables(create.getBody()).stream()
                 .filter(variable -> isInvocation(
                         variable.getInitializer(), "StardewTimeManager", "get"))
@@ -111,17 +111,17 @@ class FarmCursorLifecycleTest {
         assertTrue(returns.getFirst().getExpression() instanceof MethodInvocationTree);
         MethodInvocationTree delegation = (MethodInvocationTree) returns.getFirst().getExpression();
         assertTrue(isInvocationNamed(delegation, null, "createFarmAtDate"));
-        assertEquals(6, delegation.getArguments().size());
-        assertTrue(isInvocation(delegation.getArguments().get(4),
-                managerName, "getAbsoluteDay"));
+        assertEquals(7, delegation.getArguments().size());
         assertTrue(isInvocation(delegation.getArguments().get(5),
+                managerName, "getAbsoluteDay"));
+        assertTrue(isInvocation(delegation.getArguments().get(6),
                 managerName, "getCurrentSeason"));
     }
 
     @Test
     void explicitCreationInitializesBothCursorsBeforePublication() throws IOException {
         MethodTree create = parseMethod(
-                REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarmAtDate", 6);
+                REGISTRY_SOURCE, "FarmInstanceRegistry", "createFarmAtDate", 7);
         BlockTree body = create.getBody();
         int daySetter = directInvocationIndex(
                 body, "instance", "setLastOnlineDay", "absoluteDay");
@@ -183,20 +183,26 @@ class FarmCursorLifecycleTest {
     }
 
     @Test
-    void transferFarmDirectlyCopiesBothExistingCursorValues() throws IOException {
+    void transferFarmCopiesAllFarmStateThroughTheSharedTransferHelper() throws IOException {
         MethodTree transfer = parseMethod(REGISTRY_SOURCE, "FarmInstanceRegistry", "transferFarm", 3);
         List<MethodInvocationTree> directCalls = directInvocations(transfer.getBody());
-        MethodInvocationTree daySetter = singleInvocation(
-                directCalls, "transferred", "setLastOnlineDay");
-        MethodInvocationTree seasonSetter = singleInvocation(
-                directCalls, "transferred", "setLastOnlineSeason");
+        MethodInvocationTree copy = singleInvocation(
+                directCalls, "transferred", "copyTransferStateFrom");
+        assertEquals(List.of("farm"), copy.getArguments().stream()
+                .map(Object::toString).toList());
 
-        assertEquals(1, daySetter.getArguments().size());
-        assertTrue(isInvocation(daySetter.getArguments().getFirst(),
-                "farm", "getLastOnlineDay"));
-        assertEquals(1, seasonSetter.getArguments().size());
-        assertTrue(isInvocation(seasonSetter.getArguments().getFirst(),
-                "farm", "getLastOnlineSeason"));
+        FarmInstance source = new FarmInstance(
+                UUID.randomUUID(), "Leah", "Forest", 1,
+                new BlockPos(0, 64, 0), FarmType.STANDARD);
+        source.setLastOnlineDay(73);
+        source.setLastOnlineSeason(3);
+        FarmInstance transferred = new FarmInstance(
+                UUID.randomUUID(), "Robin", "Forest", 1,
+                new BlockPos(0, 64, 0), FarmType.STANDARD);
+        transferred.copyTransferStateFrom(source);
+
+        assertEquals(73, transferred.getLastOnlineDay());
+        assertEquals(3, transferred.getLastOnlineSeason());
     }
 
     @Test

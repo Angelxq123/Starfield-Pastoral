@@ -22,7 +22,6 @@
     "ServerChunkCacheStardewPauseMixin",
     "LevelWeatherStateMixin",
     "ServerLevelSkeletonHorseTrapMixin",
-    "ManagedAnimalEntityLoadMixin",
     "DoorBlockMasteryCollisionMixin"
   ],
   "client": [

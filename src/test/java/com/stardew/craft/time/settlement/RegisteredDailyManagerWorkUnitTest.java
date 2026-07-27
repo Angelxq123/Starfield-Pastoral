@@ -460,7 +460,7 @@ class RegisteredDailyManagerWorkUnitTest {
     @Test
     void managerEntryMethodsRetainBusinessMutationsAndDirtyRegistrationCleanup() throws IOException {
         MethodTree crop = parseMethod(MANAGERS.get(0), "processCropDay", 2);
-        assertCalls(crop, "growCropOneDay", "setDirty", "tryRoll", "removeCrop");
+        assertCalls(crop, "growOneDay", "setDirty", "tryRoll", "removeCrop");
         assertTrue(crop.toString().contains("MOISTURE"));
 
         MethodTree tree = parseMethod(MANAGERS.get(1), "processRegisteredSaplingDay", 3);

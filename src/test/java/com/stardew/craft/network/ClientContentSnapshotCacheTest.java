@@ -159,7 +159,7 @@ class ClientContentSnapshotCacheTest {
     }
 
     @Test
-    void failedBuildRemovesStaleEntryAndRetryReusesGeneration() {
+    void failedBuildKeepsTheLastCompleteSnapshotAndGeneration() {
         ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
         Object firstOwner = new Object();
         Object secondOwner = new Object();
@@ -174,16 +174,16 @@ class ClientContentSnapshotCacheTest {
             })
         );
         ClientContentSnapshotCache.Entry<String> retried = cache.getOrBuild(
-            firstOwner, generation -> "retry-" + generation);
+            firstOwner, generation -> "unexpected-" + generation);
 
         assertSame(failure, thrown);
-        assertFalse(first == retried);
-        assertEquals(2L, retried.generation());
-        assertEquals("retry-2", retried.value());
+        assertSame(first, retried);
+        assertEquals(1L, retried.generation());
+        assertEquals("first", retried.value());
     }
 
     @Test
-    void nullBuildRemovesStaleEntryAndLaterCallRetries() {
+    void nullBuildKeepsTheLastCompleteSnapshot() {
         ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
         Object owner = new Object();
         ClientContentSnapshotCache.Entry<String> first = cache.getOrBuild(owner, generation -> "first");
@@ -196,9 +196,9 @@ class ClientContentSnapshotCacheTest {
             owner, generation -> "retry-" + generation);
 
         assertEquals("value", thrown.getMessage());
-        assertFalse(first == retried);
-        assertEquals(2L, retried.generation());
-        assertEquals("retry-2", retried.value());
+        assertSame(first, retried);
+        assertEquals(1L, retried.generation());
+        assertEquals("first", retried.value());
     }
 
     @Test
@@ -293,6 +293,24 @@ class ClientContentSnapshotCacheTest {
             NullPointerException.class,
             () -> new ClientContentSnapshotCache.Entry<>(1L, null)
         ).getMessage());
+    }
+
+    @Test
+    void failedRefreshKeepsTheLastCompleteSnapshot() {
+        ClientContentSnapshotCache<Object, String> cache = new ClientContentSnapshotCache<>();
+        Object owner = new Object();
+        var committed = cache.getOrBuild(owner, generation -> "committed-" + generation);
+
+        assertThrows(IllegalStateException.class,
+                () -> cache.rebuild(owner, generation -> {
+                    throw new IllegalStateException("candidate failed");
+                }));
+
+        assertTrue(cache.contains(owner));
+        assertSame(committed, cache.getOrBuild(owner, generation -> "unexpected"));
+        var replacement = cache.rebuild(owner, generation -> "replacement-" + generation);
+        assertEquals(2L, replacement.generation());
+        assertEquals("replacement-2", replacement.value());
     }
 
     private static final class AlwaysEqualOwner {

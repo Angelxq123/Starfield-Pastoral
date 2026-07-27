@@ -2,6 +2,8 @@ package com.stardew.craft.manager;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.api.v1.world.StardewForageZoneDefinition;
+import com.stardew.craft.api.v1.world.StardewRegion;
+import com.stardew.craft.api.v1.world.StardewRegions;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.nature.ForageBlock;
 import com.stardew.craft.time.StardewTimeManager;
@@ -86,7 +88,8 @@ public final class ForageSpawnService {
             int minDailySpawn,
             int maxDailySpawn,
             int maxSpawnedAtOnce,
-            SurfaceType surface
+            SurfaceType surface,
+            StardewRegion preciseRegion
     ) {}
 
     /** 表面要求：NATURAL = 星露谷室外自然可刷地表；SAND = 必须露天沙子。 */
@@ -158,7 +161,8 @@ public final class ForageSpawnService {
             scans.add(PublicAreaDailyWorkUnits.rectangle(
                     "forage_count_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
-                    (x, z) -> existing.addAndGet(countForageColumn(level, rect, x, z)),
+                    (x, z) -> existing.addAndGet(
+                            countForageColumn(level, zone, rect, x, z)),
                     () -> existing.get() >= zone.maxSpawnedAtOnce,
                     () -> {}));
         }
@@ -240,6 +244,7 @@ public final class ForageSpawnService {
             surfaceState = level.getBlockState(surfacePos);
         }
         if (!rect.containsSurfaceY(surfacePos.getY())) return false;
+        if (!insidePreciseRegion(level, zone, surfacePos)) return false;
         BlockPos placePos = surfacePos.above();
         if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) return false;
         if (!canPlaceForage(level, surfacePos, placePos, zone.surface)) return false;
@@ -285,7 +290,11 @@ public final class ForageSpawnService {
                     definition.maxDailySpawn(),
                     definition.maxSpawnedAtOnce(),
                     definition.surface() == StardewForageZoneDefinition.Surface.SAND
-                            ? SurfaceType.SAND : SurfaceType.NATURAL));
+                            ? SurfaceType.SAND : SurfaceType.NATURAL,
+                    StardewRegions.get(registered.getKey())
+                            .filter(region -> region.dimension().equals(
+                                    level.dimension().location()))
+                            .orElse(null)));
         }
         return List.copyOf(result);
     }
@@ -367,11 +376,20 @@ public final class ForageSpawnService {
         return state.canBeReplaced();
     }
 
-    private static int countForageColumn(ServerLevel level, ZoneRect rect, int x, int z) {
+    private static int countForageColumn(
+            ServerLevel level, ForageZone zone, ZoneRect rect, int x, int z) {
         if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return 0;
         int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
         if (!rect.containsSurfaceY(surfaceY)) return 0;
+        if (!insidePreciseRegion(level, zone, new BlockPos(x, surfaceY, z))) return 0;
         return countForageAtColumn(level, x, z);
+    }
+
+    private static boolean insidePreciseRegion(
+            ServerLevel level, ForageZone zone, BlockPos position) {
+        return zone.preciseRegion == null
+                || zone.preciseRegion.contains(
+                        level.dimension().location(), position);
     }
 
     private static int countForageAtColumn(ServerLevel level, int x, int z) {
@@ -485,11 +503,14 @@ public final class ForageSpawnService {
         }
 
         List<DeferredBlock<Block>> possibleForage = FOREST_FARM_FORAGE.get(season);
+        if (possibleForage.isEmpty()) {
+            return DailySettlementWorkUnits.sequence(
+                    "forest_farm_forage_daily", List.of(), () -> {});
+        }
         List<ForestFarmDailyEntry> farmSnapshot = new ArrayList<>();
         for (com.stardew.craft.farm.FarmInstance farm
                 : com.stardew.craft.farm.FarmInstanceRegistry.get().getAllFarms()) {
-            if (farm.getFarmType() != com.stardew.craft.farm.FarmType.FOREST) continue;
-            com.stardew.craft.farm.FarmType.FarmLayout layout = farm.getFarmType().getLayout();
+            com.stardew.craft.api.v1.farm.StardewFarmLayout layout = farm.getFarmLayout();
             if (layout == null || layout.forageZoneMin() == null || layout.forageZoneMax() == null) continue;
             BlockPos zoneMin = farm.getOrigin().offset(layout.forageZoneMin());
             BlockPos zoneMax = farm.getOrigin().offset(layout.forageZoneMax());

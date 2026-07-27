@@ -52,7 +52,7 @@ class DailySettlementChunkLeaseTest {
     private static final Path MANAGERS = PROJECT.resolve("src/main/java/com/stardew/craft/manager");
     private static final List<ManagerMethod> LEASED_MUTATIONS = List.of(
             new ManagerMethod("CropGrowthManager", "processCropDay", 2, "leasePosition",
-                    List.of("isLoaded", "getBlockState", "removeCrop", "growCropOneDay", "tryRoll")),
+                    List.of("isLoaded", "getBlockState", "removeCrop", "growOneDay", "tryRoll")),
             new ManagerMethod("SprinklerManager", "processSprinklerDay", 2, "leasePosition",
                     List.of("isLoaded", "getBlockState", "removeSprinkler", "waterNow")),
             new ManagerMethod("TreeGrowthManager", "processRegisteredSaplingDay", 3, "leasePosition",
@@ -64,9 +64,9 @@ class DailySettlementChunkLeaseTest {
                     List.of("isLoaded", "getBlockState", "tryMigrateGeneratedTreeMarker", "isFullTree",
                             "tryPlaceSapling", "addSapling")),
             new ManagerMethod("AnimalGrowthManager", "processAnimalDay", -1, "leaseBounds",
-                    List.of("applyDayUpdate")),
+                    List.of("resolveBuildingUtilities")),
             new ManagerMethod("AnimalGrowthManager", "processReproductionDay", -1, "leaseBounds",
-                    List.of("createAnimal")),
+                    List.of("queueAnimalBirth")),
             new ManagerMethod("AnimalGrowthManager", "syncAnimalEntityDay", -1, "leaseBounds",
                     List.of("syncOne")));
 
@@ -151,16 +151,16 @@ class DailySettlementChunkLeaseTest {
             throws IOException {
         ParsedClass animal = parseManager("AnimalGrowthManager");
         MethodTree create = animal.method("createDailyWorkUnit", 2);
-        VariableTree finalizeWork = uniqueVariable(create, "finalizeWork");
-        MethodInvocationTree finalizeCursor = asInvocation(finalizeWork.getInitializer());
+        VariableTree entityWork = uniqueVariable(create, "entityWork");
+        MethodInvocationTree finalizeCursor = asInvocation(entityWork.getInitializer());
         assertMemberCall(finalizeCursor, "DailySettlementWorkUnits", "cursor", 5);
-        assertStringLiteral(finalizeCursor.getArguments().getFirst(), "animal_daily_finalize");
+        assertStringLiteral(finalizeCursor.getArguments().getFirst(), "animal_entity_sync");
         assertIdentifier(finalizeCursor.getArguments().get(1), "animalSnapshot");
         LambdaExpressionTree finalizeConsumer = asLambda(finalizeCursor.getArguments().get(3));
         MethodInvocationTree finalizeCall = asInvocation(finalizeConsumer.getBody());
         assertUnqualifiedCall(finalizeCall, "syncAnimalEntityDay", 3);
         assertIdentifiers(finalizeCall.getArguments(), "level", "worldData", "animalId");
-        assertFalse(invocations(animal.type()).stream()
+        assertFalse(invocations(create).stream()
                 .anyMatch(call -> methodName(call).equals("syncAll")));
 
         ParsedClass service = parse(
@@ -178,7 +178,7 @@ class DailySettlementChunkLeaseTest {
     }
 
     @Test
-    void animalFinalizeBindsAllBuildingStatesAndRemovesOrphansPerItem() throws IOException {
+    void animalFinalizeBindsAllBuildingStatesAndPreservesOrphanRecords() throws IOException {
         ParsedClass animal = parseManager("AnimalGrowthManager");
         MethodTree sync = animal.method("syncAnimalEntityDay", -1);
         VariableTree building = uniqueVariable(sync, "building");
@@ -196,10 +196,17 @@ class DailySettlementChunkLeaseTest {
         assertDirectReturnsOnly(keepInactive.getThenStatement());
         IfTree removeOrphan = dispositionBranch(sync, "REMOVE_ORPHAN");
         BlockTree removeBlock = asBlock(removeOrphan.getThenStatement());
-        MethodInvocationTree removeOrphanCall = uniqueInvocation(removeBlock, "removeOrphanAnimal");
-        assertUnqualifiedCall(removeOrphanCall, "removeOrphanAnimal", 3);
-        assertIdentifiers(removeOrphanCall.getArguments(), "level", "worldData", "record");
+        TryTree orphanLease = scan(removeBlock, TryTree.class).stream()
+                .filter(tree -> methodName(resourceInvocation(tree)).equals("leasePosition"))
+                .findFirst().orElseThrow();
+        MethodInvocationTree removeLoaded = uniqueInvocation(orphanLease.getBlock(), "removeLoaded");
+        assertMemberCall(removeLoaded, "AnimalEntitySyncService", "removeLoaded", 2);
+        assertIdentifier(removeLoaded.getArguments().get(0), "level");
+        assertIdentifier(removeLoaded.getArguments().get(1), "animalId");
         assertEquals(Tree.Kind.RETURN, removeBlock.getStatements().getLast().getKind());
+        assertTrue(invocations(sync.getBody()).stream()
+                        .noneMatch(call -> methodName(call).equals("removeAnimal")),
+                "official 0.5.3 quarantine behavior must preserve authoritative orphan records");
 
         TryTree activeLease = leaseTry(sync, "leaseBounds");
         assertTrue(statementIndex(sync, keepInactive) < statementIndex(sync, removeOrphan));
@@ -207,91 +214,37 @@ class DailySettlementChunkLeaseTest {
         MethodInvocationTree syncOne = uniqueInvocation(activeLease.getBlock(), "syncOne");
         assertMemberCall(syncOne, "AnimalEntitySyncService", "syncOne", 3);
         assertIdentifiers(syncOne.getArguments(), "level", "worldData", "record");
-
-        MethodTree remove = animal.method("removeOrphanAnimal", -1);
-        IfTree entityBranch = identifierNotNullBranch(remove, "entity");
-        VariableTree entityPos = uniqueVariable(entityBranch.getThenStatement(), "entityPos");
-        MethodInvocationTree blockPosition = asInvocation(entityPos.getInitializer());
-        assertMemberCall(blockPosition, "entity", "blockPosition", 0);
-        TryTree leaseTry = leaseTry(remove, "leasePosition");
-        assertTrue(scan(entityBranch.getThenStatement(), TryTree.class).contains(leaseTry));
-        MethodInvocationTree leaseCall = resourceInvocation(leaseTry);
-        assertMemberCall(leaseCall,
-                "com.stardew.craft.farm.FarmDailyProcessHelper", "leasePosition", 3);
-        assertIdentifier(leaseCall.getArguments().get(0), "level");
-        assertIdentifier(leaseCall.getArguments().get(1), "entityPos");
-        assertIntLiteral(leaseCall.getArguments().get(2), 0);
-        MethodInvocationTree removeLoaded = uniqueInvocation(leaseTry.getBlock(), "removeLoaded");
-        assertMemberCall(removeLoaded, "AnimalEntitySyncService", "removeLoaded", 2);
-        assertIdentifier(removeLoaded.getArguments().get(0), "level");
-        assertRecordIdCall(removeLoaded.getArguments().get(1));
-
-        IfTree removeRecord = invocationConditionBranch(remove, "worldData", "removeAnimal");
-        MethodInvocationTree removeAnimal = asInvocation(unwrap(removeRecord.getCondition()));
-        assertRecordIdCall(removeAnimal.getArguments().getFirst());
-        assertTrue(statementIndex(remove, entityBranch) < statementIndex(remove, removeRecord),
-                "data removal must occur after the optional entity cleanup branch");
     }
 
     @Test
-    void reproductionDefersNewbornProjectionUntilAStableCursorAfterCreation() throws IOException {
+    void reproductionUsesOneFrozenFarmPerCursorItemAndQueuesBirthInsideLease() throws IOException {
         ParsedClass animal = parseManager("AnimalGrowthManager");
         MethodTree create = animal.method("createDailyWorkUnit", 2);
-        VariableTree newbornIds = uniqueVariable(create, "newbornSyncIds");
-        assertListOfLong(newbornIds.getType());
-        NewClassTree idsInitializer = asNewClass(newbornIds.getInitializer());
-        assertEquals("ArrayList", rawTypeName(idsInitializer.getIdentifier()));
+        VariableTree snapshot = uniqueVariable(create, "reproductionSnapshot");
+        assertTrue(snapshot.getInitializer().toString().contains("snapshotReproductionFarms"));
 
         VariableTree reproductionWork = uniqueVariable(create, "reproductionWork");
         MethodInvocationTree reproductionCursor = asInvocation(reproductionWork.getInitializer());
+        assertIdentifier(reproductionCursor.getArguments().get(1), "reproductionSnapshot");
         LambdaExpressionTree reproductionConsumer =
                 asLambda(reproductionCursor.getArguments().get(3));
         MethodInvocationTree reproductionCall = asInvocation(reproductionConsumer.getBody());
-        assertUnqualifiedCall(reproductionCall, "processReproductionDay", 6);
-        assertIdentifier(reproductionCall.getArguments().getLast(), "newbornSyncIds");
+        assertUnqualifiedCall(reproductionCall, "processReproductionDay", 4);
 
         MethodTree reproduction = animal.method("processReproductionDay", -1);
-        VariableTree newbornParameter = reproduction.getParameters().getLast();
-        assertEquals("newbornSyncIds", newbornParameter.getName().toString());
-        assertListOfLong(newbornParameter.getType());
         TryTree reproductionLease = leaseTry(reproduction, "leaseBounds");
-        VariableTree newborn = uniqueVariable(reproductionLease.getBlock(), "newborn");
-        MethodInvocationTree createAnimal = asInvocation(newborn.getInitializer());
-        assertMemberCall(createAnimal, "worldData", "createAnimal", 4);
-        MethodInvocationTree add = uniqueInvocation(reproductionLease.getBlock(), "add");
-        assertMemberCall(add, "newbornSyncIds", "add", 1);
-        assertNoArgMemberCall(add.getArguments().getFirst(), "newborn", "animalId");
-        assertTrue(statementIndex(reproductionLease.getBlock(), newborn)
-                        < containingStatementIndex(reproductionLease.getBlock(), add),
-                "newborn ID must be queued after createAnimal returns");
+        MethodInvocationTree queueBirth = uniqueInvocation(reproductionLease.getBlock(), "queueAnimalBirth");
+        assertMemberCall(queueBirth, "worldData", "queueAnimalBirth", 5);
         assertTrue(invocations(reproduction).stream()
                         .noneMatch(call -> methodName(call).equals("syncOne")),
-                "reproduction must leave projection work to the deferred cursor");
-
-        VariableTree finalizeWork = uniqueVariable(create, "finalizeWork");
-        MethodInvocationTree finalizeCursor = asInvocation(finalizeWork.getInitializer());
-        assertIdentifier(finalizeCursor.getArguments().get(1), "animalSnapshot");
-
-        VariableTree newbornWork = uniqueVariable(create, "newbornSyncWork");
-        MethodInvocationTree deferred = asInvocation(newbornWork.getInitializer());
-        assertMemberCall(deferred, "DailySettlementWorkUnits", "deferred", 2);
-        assertStringLiteral(deferred.getArguments().getFirst(), "animal_newborn_sync");
-        LambdaExpressionTree factory = asLambda(deferred.getArguments().get(1));
-        MethodInvocationTree newbornCursor = asInvocation(factory.getBody());
-        assertMemberCall(newbornCursor, "DailySettlementWorkUnits", "cursor", 5);
-        assertIdentifier(newbornCursor.getArguments().get(1), "newbornSyncIds");
-        LambdaExpressionTree newbornConsumer = asLambda(newbornCursor.getArguments().get(3));
-        assertEquals(List.of("animalId"), newbornConsumer.getParameters().stream()
-                .map(parameter -> parameter.getName().toString()).toList());
-        MethodInvocationTree newbornSync = asInvocation(newbornConsumer.getBody());
-        assertUnqualifiedCall(newbornSync, "syncAnimalEntityDay", 3);
-        assertIdentifiers(newbornSync.getArguments(), "level", "worldData", "animalId");
+                "reproduction must leave projection work to later lifecycle handling");
 
         MethodInvocationTree sequence = uniqueInvocation(create, "sequence");
         MethodInvocationTree children = asInvocation(sequence.getArguments().get(1));
-        assertMemberCall(children, "List", "of", 5);
+        assertMemberCall(children, "List", "of", 7);
         assertIdentifiers(children.getArguments(),
-                "animalWork", "reproductionWork", "finalizeWork", "newbornSyncWork", "publishWork");
+                "constructionWork", "animalWork", "reproductionWork", "reproductionPublishWork",
+                "projectionWork", "entityWork", "publishWork");
     }
 
     @Test

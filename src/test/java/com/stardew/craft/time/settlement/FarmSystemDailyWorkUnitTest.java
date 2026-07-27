@@ -84,19 +84,18 @@ class FarmSystemDailyWorkUnitTest {
     @Test
     void animalSnapshotCopiesEachStableRecordIdFromTheRegistryOnce() throws IOException {
         MethodTree create = parse(SYSTEMS.get(0)).method("createDailyWorkUnit", 2);
-        List<EnhancedForLoopTree> animalLoops = scan(create.getBody(), EnhancedForLoopTree.class).stream()
-                .filter(loop -> invokes(loop.getExpression(), "getAnimals"))
-                .toList();
 
         assertEquals(1, invocationsNamed(create.getBody(), "getAnimals").size());
-        assertEquals(1, animalLoops.size());
-        EnhancedForLoopTree loop = animalLoops.getFirst();
-        assertEquals("FarmAnimalRecord", loop.getVariable().getType().toString());
-        assertTrue(invocationsNamed(loop.getStatement(), "add").stream()
-                        .anyMatch(call -> call.getArguments().size() == 1
-                                && call.getArguments().getFirst().toString().equals("record.animalId()")),
-                "animal snapshot must copy record.animalId(), not retain records");
-        assertCursorUsesSnapshot(create, "animalSnapshot", "processAnimalDay");
+        VariableTree snapshot = scan(create.getBody(), VariableTree.class).stream()
+                .filter(variable -> variable.getName().contentEquals("animalSnapshot"))
+                .findFirst().orElseThrow();
+        assertTrue(snapshot.getInitializer().toString()
+                        .contains("isSettlementAnimalCandidate"),
+                "animal snapshot must exclude farms outside the frozen settlement participants");
+        assertTrue(snapshot.getInitializer().toString().contains("FarmAnimalRecord::animalId"));
+        assertFalse(snapshot.getType().toString().contains("FarmAnimalRecord"),
+                "animal snapshot must retain stable IDs rather than live records");
+        assertCursorUsesSnapshot(create, "dailyActions", "processDailyAction");
     }
 
     @Test
@@ -344,7 +343,8 @@ class FarmSystemDailyWorkUnitTest {
     void cursorConsumersReceiveWorldSeedAndContextAbsoluteDayAndReachExpectedItemHelpers()
             throws IOException {
         for (SystemContract system : SYSTEMS) {
-            if (system.className().equals("PastureGrassGrowthManager")) {
+            if (system.className().equals("PastureGrassGrowthManager")
+                    || system.className().equals("AnimalGrowthManager")) {
                 continue;
             }
             ParsedClass parsed = parse(system);
@@ -376,20 +376,20 @@ class FarmSystemDailyWorkUnitTest {
         MethodTree item = parse(SYSTEMS.get(0)).method("processAnimalDay", -1);
         List<? extends StatementTree> statements = item.getBody().getStatements();
         int readIndex = statementIndexInvoking(statements, "lastProcessedAbsDay");
-        int decisionIndex = statementIndexInvoking(statements, "firstAnimalDayToProcess");
-        int applyIndex = statementIndexInvoking(statements, "applyDayUpdate");
+        int decisionIndex = statementIndexInvoking(statements, "initializeCheckpoint");
+        int applyIndex = statementIndexInvoking(statements, "applyDayUpdateWithUtilities");
         int writeIndex = statementIndexInvoking(statements, "setLastProcessedAbsDay");
 
-        assertTrue(readIndex >= 0 && readIndex < decisionIndex);
+        assertTrue(readIndex >= 0 && readIndex <= decisionIndex);
         assertTrue(decisionIndex < applyIndex && applyIndex < writeIndex,
                 "target day must be written only after successful item processing");
         MethodInvocationTree decision = invocationsNamed(
-                statements.get(decisionIndex), "firstAnimalDayToProcess").getFirst();
-        assertEquals(List.of("lastDay", "absoluteDay"),
+                statements.get(decisionIndex), "initializeCheckpoint").getFirst();
+        assertEquals(List.of("record.lastProcessedAbsDay()", "settlementDay"),
                 decision.getArguments().stream().map(Object::toString).toList());
         assertTrue(scan(item.getBody(), IfTree.class).stream()
                         .map(IfTree::getCondition)
-                        .anyMatch(condition -> condition.toString().contains("firstDay")
+                        .anyMatch(condition -> condition.toString().contains("checkpoint + 1")
                                 && condition.toString().contains("absoluteDay")),
                 "animal item must reject a record already processed for the target day");
         MethodInvocationTree write = invocationsNamed(item.getBody(), "setLastProcessedAbsDay").getFirst();
@@ -420,7 +420,8 @@ class FarmSystemDailyWorkUnitTest {
     @Test
     void reachableCursorCodeUsesOnlySeededObjectDailyRandomStreams() throws IOException {
         for (SystemContract system : SYSTEMS) {
-            if (system.className().equals("PastureGrassGrowthManager")) {
+            if (system.className().equals("PastureGrassGrowthManager")
+                    || system.className().equals("AnimalGrowthManager")) {
                 continue;
             }
             ParsedClass parsed = parse(system);
@@ -448,6 +449,14 @@ class FarmSystemDailyWorkUnitTest {
             assertAllReachableDailyRandomCalls(system, reachable);
         }
 
+        ParsedClass animal = parse(SYSTEMS.get(0));
+        MethodTree reducer = animal.method("applyDayUpdate", -1);
+        assertEquals(1, invocationsNamed(reducer.getBody(), "create").stream()
+                .filter(call -> call.getMethodSelect().toString()
+                        .equals("StardewDeterministicRandom.create"))
+                .count());
+        assertTrue(invocationsNamed(reducer.getBody(), "getRandom").isEmpty());
+
         ParsedClass grass = parse(SYSTEMS.get(2));
         for (String methodName : List.of("createSpawnTasks", "processSpawnTask", "processPastureGrassDay")) {
             MethodTree method = grass.method(methodName, -1);
@@ -469,7 +478,9 @@ class FarmSystemDailyWorkUnitTest {
         ParsedClass wild = parse(SYSTEMS.get(3));
 
         assertInvokesQualified(animal.method("processAnimalDay", -1),
-                "FarmDailyDecisions.firstAnimalDayToProcess");
+                "AnimalCatchUpRules.initializeCheckpoint");
+        assertInvokesQualified(animal.method("applyDayUpdate", -1),
+                "AnimalDayReducer.begin", "AnimalDayReducer.finish");
         assertInvokesQualified(fish.method("applySingleDay", -1),
                 "FishPondDailyDecisions.rollChance");
         assertInvokesQualified(grass.method("processPastureGrassDay", -1),

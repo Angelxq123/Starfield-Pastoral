@@ -1,6 +1,9 @@
 package com.stardew.craft.manager;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.api.v1.agriculture.StardewCropRuntimeAdapter;
+import com.stardew.craft.api.v1.agriculture.StardewCropState;
+import com.stardew.craft.api.v1.internal.crop.StardewCropRuntimeRegistry;
 import com.stardew.craft.block.crop.StardewCropBlock;
 import com.stardew.craft.manager.FertilizerManager;
 import com.stardew.craft.time.StardewTimeManager;
@@ -278,22 +281,27 @@ public class CropGrowthManager extends SavedData {
 
             BlockState state = level.getBlockState(pos);
             Block block = state.getBlock();
-            if (!(block instanceof StardewCropBlock cropBlock)) {
+            boolean coreCrop = block instanceof StardewCropBlock;
+            StardewCropState runtimeCrop = coreCrop
+                    ? StardewCropRuntimeRegistry.inspect(level, pos)
+                    : StardewCropRuntimeRegistry.inspectAddon(level, pos);
+            if (runtimeCrop == null) {
                 removeCrop(level, pos);
                 return;
             }
 
-            CropGrowthState growthState = cropStates.computeIfAbsent(
-                    globalPos, ignored -> new CropGrowthState());
-            BlockState belowState = level.getBlockState(pos.below());
-            boolean isWatered = false;
-            if (belowState.getBlock() instanceof FarmBlock) {
-                int moisture = belowState.getValue(FarmBlock.MOISTURE);
-                isWatered = moisture > 0;
-            }
-
-            cropBlock.growCropOneDay(level, pos, state, isWatered, growthState);
+            boolean isWatered = runtimeCrop.soilPositions().stream()
+                    .map(level::getBlockState)
+                    .anyMatch(soil -> soil.getBlock() instanceof FarmBlock
+                            && soil.getValue(FarmBlock.MOISTURE) > 0);
+            StardewCropRuntimeAdapter.DailyResult result =
+                    StardewCropRuntimeRegistry.growOneDay(
+                            level, pos, isWatered, false);
             setDirty();
+            if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) {
+                removeCrop(level, pos);
+                return;
+            }
 
             BlockState afterGrow = level.getBlockState(pos);
             if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck

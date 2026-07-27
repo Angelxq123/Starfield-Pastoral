@@ -56,6 +56,7 @@ class DailySettlementPlanOrderTest {
                 item(DailySettlementPhase.WORLD_BATCHES, "coal_forest"),
                 item(DailySettlementPhase.WORLD_BATCHES, "secret_woods_entrance"),
                 item(DailySettlementPhase.WORLD_BATCHES, "farm_caves"),
+                item(DailySettlementPhase.WORLD_BATCHES, "addon_farm_tasks"),
 
                 item(DailySettlementPhase.PLAYER_BATCHES, "player_daily_settlement"),
 
@@ -91,8 +92,8 @@ class DailySettlementPlanOrderTest {
         assertEquals(1, names.stream().filter("shipping_bin_flush"::equals).count());
         assertEquals(1, names.stream().filter("player_daily_settlement"::equals).count());
         assertEquals(0, names.subList(names.indexOf("date_publication") + 1, names.size()).size());
-        assertEquals(21, names.indexOf("player_daily_settlement"));
-        assertEquals(23, names.indexOf("farm_cursor"));
+        assertEquals(22, names.indexOf("player_daily_settlement"));
+        assertEquals(24, names.indexOf("farm_cursor"));
         assertEquals(0, names.indexOf("shipping_bin_flush"));
     }
 

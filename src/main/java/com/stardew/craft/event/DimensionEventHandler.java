@@ -475,9 +475,12 @@ public class DimensionEventHandler {
         if (miningLevel != null) {
             miningLevel.setDayTime(virtualDayTime);
         }
-
         if (simulationPaused || settlementActive) {
             return;
+        }
+        if (server.getTickCount() % 5 == 0) {
+            com.stardew.craft.manager.AnimalGrowthManager.get(serverLevel)
+                    .continueCatchUp(serverLevel);
         }
 
         // 检查是否有玩家在星露谷相关维度

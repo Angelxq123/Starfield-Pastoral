@@ -1,5 +1,8 @@
 package com.stardew.craft.fishpond.service;
 
+import com.stardew.craft.api.v1.fishpond.StardewFishPondDailyContext;
+import com.stardew.craft.api.v1.internal.fishpond.StardewFishPondEventRegistry;
+import com.stardew.craft.api.v1.internal.fishpond.StardewFishPondSnapshots;
 import com.stardew.craft.blockentity.FishPondBucketBlockEntity;
 import com.stardew.craft.fishpond.data.FishPondWorldData;
 import com.stardew.craft.fishpond.model.FishPondRecord;
@@ -116,7 +119,7 @@ public final class FishPondDailyUpdateService {
         if (pond == null || !dimensionId.equals(pond.dimensionId())) {
             return;
         }
-        if (applySingleDay(level, worldData, pond, random)) {
+        if (applySingleDay(level, worldData, pond, absoluteDay, random)) {
             anyChanged.set(true);
         }
     }
@@ -151,7 +154,7 @@ public final class FishPondDailyUpdateService {
                 RandomSource random = DailySettlementRandom.forId(
                         level.getSeed(), startDay + i, "fish_pond",
                         FishPondDailyDecisions.stableId(pond.pondId()));
-                if (applySingleDay(level, worldData, pond, random)) {
+                if (applySingleDay(level, worldData, pond, startDay + i, random)) {
                     anyColorChanged = true;
                 }
             }
@@ -165,6 +168,7 @@ public final class FishPondDailyUpdateService {
     private static boolean applySingleDay(ServerLevel level,
                                           FishPondWorldData worldData,
                                           FishPondRecord pond,
+                                          int absoluteDay,
                                           RandomSource random) {
         if (pond.currentPopulation() <= 0 || pond.fishTypeId().isBlank()) {
             return false;
@@ -236,6 +240,11 @@ public final class FishPondDailyUpdateService {
             worldData.markChanged();
             FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
         }
+        StardewFishPondEventRegistry.announceDaily(
+            new StardewFishPondDailyContext(
+                level,
+                absoluteDay,
+                StardewFishPondSnapshots.from(level, pond)));
         return changed;
     }
 

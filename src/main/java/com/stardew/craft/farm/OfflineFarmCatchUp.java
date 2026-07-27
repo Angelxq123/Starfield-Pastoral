@@ -1,6 +1,7 @@
 package com.stardew.craft.farm;
 
-import com.stardew.craft.block.crop.StardewCropBlock;
+import com.stardew.craft.api.v1.agriculture.StardewCropRuntimeAdapter;
+import com.stardew.craft.api.v1.internal.crop.StardewCropRuntimeRegistry;
 import com.stardew.craft.manager.CropGrowthManager;
 import com.stardew.craft.manager.TreeGrowthManager;
 import com.stardew.craft.server.performance.PerformanceCounter;
@@ -39,14 +40,12 @@ public final class OfflineFarmCatchUp {
         if (!level.isLoaded(blockPos)) {
             return;
         }
-        BlockState state = level.getBlockState(blockPos);
-        if (!(state.getBlock() instanceof StardewCropBlock crop)) {
-            return;
-        }
-        CropGrowthManager.CropGrowthState growthState =
-                manager.getOrCreateGrowthState(position);
-        crop.growCropOneDay(level, blockPos, state, true, growthState);
+        StardewCropRuntimeAdapter.DailyResult result =
+                StardewCropRuntimeRegistry.growOneDay(level, blockPos, true, true);
         manager.setDirty();
+        if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) {
+            manager.removeCrop(level, blockPos);
+        }
     }
 
     static void growTreeOneDay(

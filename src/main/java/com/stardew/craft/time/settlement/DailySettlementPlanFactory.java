@@ -37,7 +37,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "quarry",
             "coal_forest",
             "secret_woods_entrance",
-            "farm_caves");
+            "farm_caves",
+            "addon_farm_tasks");
     private static final List<String> PLAYERS = List.of("player_daily_settlement");
     private static final List<String> COMMIT = List.of(
             "weather_forecast",
@@ -247,7 +248,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
                         "sprinklers", "pasture_grass", "animals", "fish_ponds",
                         "public_forage", "forest_farm_forage", "artifact_spots",
-                        "quarry", "coal_forest", "farm_caves" -> prepared(name);
+                        "quarry", "coal_forest", "farm_caves", "addon_farm_tasks" -> prepared(name);
                 case "secret_woods_entrance" -> atomic(name, () ->
                         com.stardew.craft.manager.SecretWoodsAccessManager.ensureEntranceReady(level()));
                 case "player_daily_settlement" -> players.createDailyWorkUnit(context);
@@ -349,7 +350,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
                     "sprinklers", "pasture_grass", "animals", "fish_ponds",
                     "public_forage", "forest_farm_forage", "artifact_spots",
-                    "quarry", "coal_forest", "farm_caves")) {
+                    "quarry", "coal_forest", "farm_caves", "addon_farm_tasks")) {
                 preparedWorld.put(name, createWorldSnapshot(name, context));
             }
         }
@@ -386,6 +387,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "coal_forest" -> com.stardew.craft.manager.CoalForestClumpSpawnService
                         .createDailyWorkUnit(level(), context);
                 case "farm_caves" -> com.stardew.craft.manager.FarmCaveDailyService
+                        .createDailyWorkUnit(level(), context, frozenFarms);
+                case "addon_farm_tasks" -> com.stardew.craft.farm.AddonFarmDailyTaskService
                         .createDailyWorkUnit(level(), context, frozenFarms);
                 default -> throw new IllegalArgumentException("Unknown world snapshot: " + name);
             };

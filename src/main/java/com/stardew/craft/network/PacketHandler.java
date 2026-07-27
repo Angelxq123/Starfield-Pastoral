@@ -4,6 +4,9 @@ import com.stardew.craft.time.settlement.DailySettlementAccessGuard;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.network.event.RegisterConfigurationTasksEvent;
+import net.minecraft.network.chat.Component;
+import com.stardew.craft.api.v1.internal.network.StardewNetworkCapabilityRegistry;
 import com.stardew.craft.fishing.network.FishingStartPayload;
 import com.stardew.craft.fishing.network.FishingResultPayload;
 import com.stardew.craft.fishing.network.FishingCatchVisualPayload;
@@ -87,9 +90,20 @@ public class PacketHandler {
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
         // 0.5 API stabilization changes equipment sync from registry IDs to complete ItemStacks,
-        // adds server-authoritative client content snapshots, and synchronizes collective pause state.
+        // adds server-authoritative client content snapshots, synchronizes collective pause state,
+        // and binds building purchases to stable catalog IDs plus a server-issued revision.
         // Reject mixed old/new clients explicitly.
         final PayloadRegistrar registrar = event.registrar("5");
+
+        final PayloadRegistrar capabilityRegistrar = registrar.optional();
+        capabilityRegistrar.configurationToClient(
+                CapabilityHelloPayload.TYPE,
+                CapabilityHelloPayload.STREAM_CODEC,
+                CapabilityHelloPayload::handle);
+        capabilityRegistrar.configurationToServer(
+                CapabilityAckPayload.TYPE,
+                CapabilityAckPayload.STREAM_CODEC,
+                CapabilityAckPayload::handle);
         
         // 客户端 -> 服务端
         registrar.playToServer(
@@ -887,6 +901,12 @@ public class PacketHandler {
         );
 
         registrar.playToClient(
+            com.stardew.craft.network.payload.AnimalQueryDetailsPayload.TYPE,
+            com.stardew.craft.network.payload.AnimalQueryDetailsPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.AnimalQueryDetailsPayload::handle
+        );
+
+        registrar.playToClient(
             com.stardew.craft.network.payload.OpenAnimalMoveHomeScreenPayload.TYPE,
             com.stardew.craft.network.payload.OpenAnimalMoveHomeScreenPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.OpenAnimalMoveHomeScreenPayload::handle
@@ -915,6 +935,11 @@ public class PacketHandler {
             com.stardew.craft.network.payload.OpenShopScreenPayload.TYPE,
             com.stardew.craft.network.payload.OpenShopScreenPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.OpenShopScreenPayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.network.payload.ShopCostSnapshotPayload.TYPE,
+            com.stardew.craft.network.payload.ShopCostSnapshotPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.ShopCostSnapshotPayload::handle
         );
         registrar.playToClient(
             com.stardew.craft.network.payload.OpenFairStrengthGamePayload.TYPE,
@@ -980,6 +1005,18 @@ public class PacketHandler {
             com.stardew.craft.network.payload.ShopPurchasePayload.TYPE,
             com.stardew.craft.network.payload.ShopPurchasePayload.STREAM_CODEC,
             DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.ShopPurchasePayload::handle)
+        );
+        capabilityRegistrar.playToServer(
+            com.stardew.craft.network.payload.ShopPurchaseRequestPayload.TYPE,
+            com.stardew.craft.network.payload.ShopPurchaseRequestPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                    com.stardew.craft.network.payload.ShopPurchaseRequestPayload::handle)
+        );
+        registrar.playToServer(
+            com.stardew.craft.network.payload.ShopCostRequestPayload.TYPE,
+            com.stardew.craft.network.payload.ShopCostRequestPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                    com.stardew.craft.network.payload.ShopCostRequestPayload::handle)
         );
         registrar.playToClient(
             com.stardew.craft.network.payload.ShopPurchaseResultPayload.TYPE,
@@ -1360,6 +1397,19 @@ public class PacketHandler {
             DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.TotemNamingSubmitPayload::handle)
         );
 
+        registrar.playToClient(
+            com.stardew.craft.network.payload.OpenAnimalBirthNamingPayload.TYPE,
+            com.stardew.craft.network.payload.OpenAnimalBirthNamingPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.OpenAnimalBirthNamingPayload::handle
+        );
+
+        registrar.playToServer(
+            com.stardew.craft.network.payload.AnimalBirthNamingSubmitPayload.TYPE,
+            com.stardew.craft.network.payload.AnimalBirthNamingSubmitPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                    com.stardew.craft.network.payload.AnimalBirthNamingSubmitPayload::handle)
+        );
+
         // Farm selection screen (S→C)
         registrar.playToClient(
             com.stardew.craft.network.payload.OpenFarmSelectionPayload.TYPE,
@@ -1599,6 +1649,11 @@ public class PacketHandler {
             com.stardew.craft.network.payload.FestivalHudStatePayload.TYPE,
             com.stardew.craft.network.payload.FestivalHudStatePayload.STREAM_CODEC,
             com.stardew.craft.network.payload.FestivalHudStatePayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.network.payload.FestivalSessionsSyncPayload.TYPE,
+            com.stardew.craft.network.payload.FestivalSessionsSyncPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.FestivalSessionsSyncPayload::handle
         );
         registrar.playToClient(
             com.stardew.craft.network.payload.FestivalCurrencyHudStatePayload.TYPE,
@@ -2171,5 +2226,21 @@ public class PacketHandler {
             com.stardew.craft.joja.network.CloseJojaCDMenuPayload.STREAM_CODEC,
             DailySettlementAccessGuard.gated(com.stardew.craft.joja.network.CloseJojaCDMenuPayload::handle)
         );
+    }
+
+    public static void registerConfigurationTasks(
+            RegisterConfigurationTasksEvent event
+    ) {
+        if (event.getListener().hasChannel(CapabilityHelloPayload.TYPE)
+                && event.getListener().hasChannel(
+                        CapabilityAckPayload.TYPE)) {
+            event.register(new CapabilityNegotiationTask());
+        } else if (StardewNetworkCapabilityRegistry
+                .hasRequiredRemoteCapabilities()) {
+            event.getListener().disconnect(Component.literal(
+                    "This server requires StardewCraft client capabilities, "
+                            + "but the client does not support capability "
+                            + "negotiation."));
+        }
     }
 }

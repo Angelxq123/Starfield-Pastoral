@@ -13,6 +13,8 @@ import com.stardew.craft.command.MuseumDebugCommand;
 import com.stardew.craft.command.AnimalDebugCommand;
 import com.stardew.craft.command.ActorCommand;
 import com.stardew.craft.command.DecorationDebugCommand;
+import com.stardew.craft.command.ExtensionDebugCommand;
+import com.stardew.craft.command.StateMaintenanceCommand;
 import com.stardew.craft.command.PlayerDataCommand;
 import com.stardew.craft.command.PerformanceCommand;
 import com.stardew.craft.command.QuestDebugCommand;
@@ -52,6 +54,8 @@ public class CommandEventHandler {
         AnimalDebugCommand.register(event.getDispatcher());
         ActorCommand.register(event.getDispatcher());
         DecorationDebugCommand.register(event.getDispatcher());
+        ExtensionDebugCommand.register(event.getDispatcher());
+        StateMaintenanceCommand.register(event.getDispatcher());
         OvernightDebugCommand.register(event.getDispatcher());
         NpcDebugCommand.register(event.getDispatcher());
         ShopDebugCommand.register(event.getDispatcher());

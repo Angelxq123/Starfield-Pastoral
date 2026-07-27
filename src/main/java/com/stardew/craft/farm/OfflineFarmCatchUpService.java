@@ -229,6 +229,13 @@ public final class OfflineFarmCatchUpService {
             if (job == null) {
                 continue;
             }
+            if (job.farm.getLastOnlineDay() >= job.targetDay) {
+                jobsByOwner.remove(owner);
+                StardewCraft.LOGGER.info(
+                        "[FARM-CATCHUP] Discarded stale catch-up job for farm {} at day {}",
+                        owner, job.farm.getLastOnlineDay());
+                continue;
+            }
             processed++;
             try {
                 job.cursor.runNext();
@@ -299,7 +306,6 @@ public final class OfflineFarmCatchUpService {
 
     private static final class ActiveJob {
         private final ServerLevel level;
-        @SuppressWarnings("unused")
         private final FarmInstance farm;
         private final OfflineFarmCatchUpCursor<GlobalPos> cursor;
         private final int targetDay;

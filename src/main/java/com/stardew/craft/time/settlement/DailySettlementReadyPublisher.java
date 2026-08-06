@@ -25,6 +25,7 @@ final class DailySettlementReadyPublisher
     private final Set<UUID> woken = new java.util.HashSet<>();
     private int retainedDay = -1;
     private boolean hooksPrepared;
+    private boolean deliveryPrepared;
     private boolean barrierPublished;
 
     DailySettlementReadyPublisher(
@@ -68,7 +69,10 @@ final class DailySettlementReadyPublisher
 
             @Override
             public void send(UUID playerId, OvernightSettlementPayload payload) {
-                PacketDistributor.sendToPlayer(requirePlayer(playerId), payload);
+                ServerPlayer player = requirePlayer(playerId);
+                com.stardew.craft.time.StardewTimePauseService
+                        .beginOvernightSettlement(player);
+                PacketDistributor.sendToPlayer(player, payload);
             }
 
             @Override
@@ -77,13 +81,26 @@ final class DailySettlementReadyPublisher
                         .enqueueAtNightSettlement(requirePlayer(playerId));
             }
 
-            private ServerPlayer player(UUID playerId) {
-                MinecraftServer current = reference.get();
-                if (current == null) {
-                    throw new IllegalStateException(
-                            "Daily settlement server is no longer available");
+            @Override
+            public void prepareDelivery(
+                    DailySettlementContext context,
+                    Map<UUID, DailySettlementBarrier.ReadyResult> results) {
+                MinecraftServer current = server();
+                for (Map.Entry<UUID, DailySettlementBarrier.ReadyResult> entry
+                        : results.entrySet()) {
+                    OvernightSettlementPayload payload = entry.getValue().payload();
+                    if (payload.personalSettlement()) {
+                        com.stardew.craft.network.overnight.OvernightSettlementTracker
+                                .storePendingSettlement(
+                                        current, entry.getKey(), payload);
+                    }
                 }
-                return current.getPlayerList().getPlayer(playerId);
+                com.stardew.craft.player.PlayerDataManager.get().setDirty();
+                current.saveEverything(true, false, false);
+            }
+
+            private ServerPlayer player(UUID playerId) {
+                return server().getPlayerList().getPlayer(playerId);
             }
 
             private ServerPlayer requirePlayer(UUID playerId) {
@@ -94,6 +111,15 @@ final class DailySettlementReadyPublisher
                                     + playerId);
                 }
                 return player;
+            }
+
+            private MinecraftServer server() {
+                MinecraftServer current = reference.get();
+                if (current == null) {
+                    throw new IllegalStateException(
+                            "Daily settlement server is no longer available");
+                }
+                return current;
             }
         }, Objects.requireNonNull(metrics, "metrics"));
     }
@@ -127,6 +153,10 @@ final class DailySettlementReadyPublisher
                             ? operations.prepareResult(context, playerId)
                             : DailySettlementBarrier.ReadyResult.barrierOnly(
                                     context.absoluteDay()));
+        }
+        if (!deliveryPrepared) {
+            operations.prepareDelivery(context, Map.copyOf(retainedResults));
+            deliveryPrepared = true;
         }
         if (!barrierPublished) {
             if (!barrier.publishReadyAll(context.absoluteDay(), retainedResults)) {
@@ -183,11 +213,17 @@ final class DailySettlementReadyPublisher
         sent.clear();
         woken.clear();
         hooksPrepared = false;
+        deliveryPrepared = false;
         barrierPublished = false;
     }
 
     interface Operations {
         void prepareHooks(DailySettlementContext context);
+
+        default void prepareDelivery(
+                DailySettlementContext context,
+                Map<UUID, DailySettlementBarrier.ReadyResult> results) {
+        }
 
         DailySettlementBarrier.ReadyResult prepareResult(
                 DailySettlementContext context, UUID playerId);

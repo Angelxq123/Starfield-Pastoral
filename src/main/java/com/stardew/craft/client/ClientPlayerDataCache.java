@@ -24,6 +24,7 @@ public class ClientPlayerDataCache {
     private static float energy = 270.0f;
     private static int maxEnergy = 270;
     private static int baseMaxEnergy = 270;
+    private static boolean exhausted = false;
     private static int money = 500;  // 默认500金币
     private static int[] experience = new int[5];
     private static int[] skillLevels = new int[5];
@@ -41,12 +42,15 @@ public class ClientPlayerDataCache {
     private static int ticketPrizesClaimed = 0;
     private static int specialOrderPrizeTickets = 0;
     private static int fairStarTokens = 0;
+    private static int clubCoins = 0;
     private static int maxMineFloorReached = 0;
     private static int firstJoinDay = -1;
     private static String winterStarRecipient = "";
     private static int gender = -1;
     private static String preferredName = "";
     private static String favoriteThing = "";
+    private static int lostBooksFound = 0;
+    private static final List<LostBookMarker> lostBookMarkers = new ArrayList<>();
 
     // 临时Buff（客户端显示/计算用）
     private static int tempFishingLevelBonus = 0;
@@ -98,16 +102,42 @@ public class ClientPlayerDataCache {
         baseMaxEnergy = nbt.contains("MaxEnergy") ? nbt.getInt("MaxEnergy") : 270;
         tempMaxEnergyBonus = nbt.contains("TempMaxEnergyBonus") ? nbt.getInt("TempMaxEnergyBonus") : 0;
         maxEnergy = baseMaxEnergy + tempMaxEnergyBonus;
+        exhausted = nbt.getBoolean("Exhausted");
         money = nbt.getInt("Money");
         maxMineFloorReached = nbt.contains("MaxMineFloorReached") ? Math.max(0, nbt.getInt("MaxMineFloorReached")) : 0;
         ticketPrizesClaimed = nbt.contains("TicketPrizesClaimed") ? Math.max(0, nbt.getInt("TicketPrizesClaimed")) : 0;
         specialOrderPrizeTickets = nbt.contains("SpecialOrderPrizeTickets") ? Math.max(0, nbt.getInt("SpecialOrderPrizeTickets")) : 0;
         fairStarTokens = nbt.contains("FairStarTokens") ? Math.max(0, nbt.getInt("FairStarTokens")) : 0;
+        clubCoins = nbt.contains("ClubCoins") ? Math.max(0, nbt.getInt("ClubCoins")) : 0;
         firstJoinDay = nbt.contains("FirstJoinDay") ? nbt.getInt("FirstJoinDay") : -1;
         winterStarRecipient = nbt.contains("WinterStarRecipient") ? nbt.getString("WinterStarRecipient") : "";
         gender = nbt.contains("Gender") ? Math.max(-1, Math.min(1, nbt.getInt("Gender"))) : -1;
         preferredName = nbt.contains("PreferredName") ? nbt.getString("PreferredName").trim() : "";
         favoriteThing = nbt.contains("FavoriteThing") ? nbt.getString("FavoriteThing").trim() : "";
+        lostBooksFound = nbt.contains("LostBooksFound")
+                ? Math.max(0, nbt.getInt("LostBooksFound"))
+                : 0;
+        lostBookMarkers.clear();
+        if (nbt.contains("LostBookInteractions", Tag.TAG_LIST)) {
+            ListTag markers = nbt.getList("LostBookInteractions", Tag.TAG_COMPOUND);
+            for (int i = 0; i < markers.size(); i++) {
+                CompoundTag marker = markers.getCompound(i);
+                String bookId = marker.getString("BookId");
+                String readFlag = marker.getString("ReadFlag");
+                String dimension = marker.getString("Dimension");
+                if (bookId.isBlank() || readFlag.isBlank() || dimension.isBlank()) {
+                    continue;
+                }
+                lostBookMarkers.add(new LostBookMarker(
+                        bookId,
+                        readFlag,
+                        dimension,
+                        Math.max(0, marker.getInt("UnlockAt")),
+                        marker.getInt("X"),
+                        marker.getInt("Y"),
+                        marker.getInt("Z")));
+            }
+        }
 
         tempFishingLevelBonus = nbt.contains("TempFishingLevelBonus") ? nbt.getInt("TempFishingLevelBonus") : 0;
         tempLuckBonus = nbt.contains("TempLuckBonus") ? nbt.getInt("TempLuckBonus") : 0;
@@ -296,6 +326,22 @@ public class ClientPlayerDataCache {
     public static int getHealth() {
         return health;
     }
+
+    public static void updateVitals(
+            int updatedHealth,
+            int updatedMaxHealth,
+            float updatedEnergy,
+            int updatedBaseMaxEnergy,
+            boolean updatedExhausted
+    ) {
+        maxHealth = Math.max(1, updatedMaxHealth);
+        health = Math.max(0, Math.min(updatedHealth, maxHealth));
+        baseMaxEnergy = Math.max(1, updatedBaseMaxEnergy);
+        maxEnergy = baseMaxEnergy + tempMaxEnergyBonus;
+        energy = Math.max(-16.0F, Math.min(updatedEnergy, maxEnergy));
+        exhausted = updatedExhausted;
+        syncedFromServer = true;
+    }
     
     public static int getMaxHealth() {
         return maxHealth;
@@ -307,6 +353,10 @@ public class ClientPlayerDataCache {
     
     public static int getMaxEnergy() {
         return maxEnergy;
+    }
+
+    public static boolean isExhausted() {
+        return exhausted;
     }
 
     public static int getBaseMaxEnergy() {
@@ -327,6 +377,10 @@ public class ClientPlayerDataCache {
 
     public static int getFairStarTokens() {
         return Math.max(0, fairStarTokens);
+    }
+
+    public static int getClubCoins() {
+        return Math.max(0, clubCoins);
     }
 
     public static String getFarmName() {
@@ -482,8 +536,23 @@ public class ClientPlayerDataCache {
         return flag != null && mailFlags.contains(flag);
     }
 
+    /** Optimistic local mirror for vanilla $1 dialogue flags. */
+    public static void markMailFlagLocal(String flag) {
+        if (flag != null && !flag.isBlank()) {
+            mailFlags.add(flag);
+        }
+    }
+
     public static java.util.Set<String> getMailFlags() {
         return new java.util.HashSet<>(mailFlags);
+    }
+
+    public static int getLostBooksFound() {
+        return lostBooksFound;
+    }
+
+    public static List<LostBookMarker> getLostBookMarkers() {
+        return List.copyOf(lostBookMarkers);
     }
 
     public static String getWinterStarRecipient() {
@@ -589,6 +658,7 @@ public class ClientPlayerDataCache {
         energy = 270.0f;
         maxEnergy = 270;
         baseMaxEnergy = 270;
+        exhausted = false;
         money = 0;
         experience = new int[5];
         skillLevels = new int[5];
@@ -603,11 +673,14 @@ public class ClientPlayerDataCache {
         ticketPrizesClaimed = 0;
         specialOrderPrizeTickets = 0;
         fairStarTokens = 0;
+        clubCoins = 0;
         com.stardew.craft.client.hud.FestivalCurrencyHudState.reset();
         maxMineFloorReached = 0;
         gender = -1;
         preferredName = "";
         favoriteThing = "";
+        lostBooksFound = 0;
+        lostBookMarkers.clear();
         hasFarm = false;
         farmName = "";
         farmOwnerUuid = "";
@@ -671,5 +744,16 @@ public class ClientPlayerDataCache {
     }
 
     private record CosmeticAppearance(String hat, String shirt, String pants) {
+    }
+
+    public record LostBookMarker(
+            String bookId,
+            String readFlag,
+            String dimension,
+            int unlockAt,
+            int x,
+            int y,
+            int z
+    ) {
     }
 }

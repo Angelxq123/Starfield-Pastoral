@@ -1,6 +1,9 @@
 package com.stardew.craft.combat.skill;
 
+import com.stardew.craft.combat.network.WindSpirePayload;
+import com.stardew.craft.combat.skill.runtime.SkillInstance;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,22 +20,108 @@ public final class WindSpireTracker {
         if (player == null || durationTicks <= 0) {
             return;
         }
-        ACTIVE.put(player.getUUID(), nowTick + durationTicks);
+        start(player.getUUID(), nowTick, durationTicks);
+    }
+
+    public static void startDuringBegin(
+            SkillInstance instance,
+            ServerPlayer player,
+            long nowTick,
+            int durationTicks
+    ) {
+        if (player == null || durationTicks <= 0) {
+            return;
+        }
+        UUID playerId = player.getUUID();
+        long replacementEndTick = nowTick + durationTicks;
+        Long previousEndTick = ACTIVE.put(playerId, replacementEndTick);
+        instance.registerBeginFailureCleanup(() -> {
+            if (!ACTIVE.remove(playerId, replacementEndTick)) {
+                return;
+            }
+            if (previousEndTick == null) {
+                PacketDistributor.sendToPlayer(
+                        player,
+                        new WindSpirePayload(false, 0)
+                );
+                return;
+            }
+            ACTIVE.put(playerId, previousEndTick);
+            int remainingTicks = (int) Math.max(
+                    0L,
+                    previousEndTick - nowTick
+            );
+            PacketDistributor.sendToPlayer(
+                    player,
+                    new WindSpirePayload(true, remainingTicks)
+            );
+        });
     }
 
     public static float getCritChanceBonus(ServerPlayer player, long nowTick) {
         if (player == null) {
             return 0.0f;
         }
-        Long endTick = ACTIVE.get(player.getUUID());
+        return getCritChanceBonus(player.getUUID(), nowTick);
+    }
+
+    /**
+     * The authored gale bonus applies to normal attacks only.
+     */
+    public static float getCritChanceBonus(
+            ServerPlayer player,
+            SkillContext context,
+            long nowTick
+    ) {
+        if (player == null) {
+            return 0.0f;
+        }
+        return getCritChanceBonus(player.getUUID(), context, nowTick);
+    }
+
+    static void start(UUID playerId, long nowTick, int durationTicks) {
+        if (playerId == null || durationTicks <= 0) {
+            return;
+        }
+        ACTIVE.put(playerId, nowTick + durationTicks);
+    }
+
+    static float getCritChanceBonus(UUID playerId, long nowTick) {
+        Long endTick = ACTIVE.get(playerId);
         if (endTick == null) {
             return 0.0f;
         }
-        if (nowTick > endTick) {
-            ACTIVE.remove(player.getUUID());
+        if (expireIfPast(playerId, nowTick)) {
             return 0.0f;
         }
         return CRIT_BONUS;
+    }
+
+    static float getCritChanceBonus(
+            UUID playerId,
+            SkillContext context,
+            long nowTick
+    ) {
+        if (context == null || !"normal".equals(context.getSkillId())) {
+            return 0.0f;
+        }
+        return getCritChanceBonus(playerId, nowTick);
+    }
+
+    public static void tick(ServerPlayer player, long nowTick) {
+        if (player != null && expireIfPast(player.getUUID(), nowTick)) {
+            PacketDistributor.sendToPlayer(
+                    player,
+                    new WindSpirePayload(false, 0)
+            );
+        }
+    }
+
+    static boolean expireIfPast(UUID playerId, long nowTick) {
+        Long endTick = ACTIVE.get(playerId);
+        return endTick != null
+                && nowTick > endTick
+                && ACTIVE.remove(playerId, endTick);
     }
 
     /** Clean up state when a player logs out to prevent memory leaks. */

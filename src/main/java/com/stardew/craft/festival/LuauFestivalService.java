@@ -237,7 +237,8 @@ public final class LuauFestivalService {
             if (mainEventActive) {
                 MAIN_EVENT_CUTSCENE_PARTICIPANTS.add(player.getUUID());
                 MAIN_EVENT_CUTSCENE_DONE.remove(player.getUUID());
-                ServerCutsceneTracker.startEvent(player, MAIN_EVENT_CUTSCENE_ID + "_" + mainEventReaction);
+                ActiveFestivalHandlers.startCutsceneOrRecover(
+                        player, MAIN_EVENT_CUTSCENE_ID + "_" + mainEventReaction);
             }
             return;
         }
@@ -249,7 +250,7 @@ public final class LuauFestivalService {
             return;
         }
         PENDING_SOUP_HAND.remove(player.getUUID());
-        CONFIRM_STATE.clearPlayerDialogs(player.getUUID());
+        CONFIRM_STATE.clearPlayer(player.getUUID());
         LAST_OUTSIDE_ENTRY.remove(player.getUUID());
         LAST_INSIDE_ENTRY.remove(player.getUUID());
         if (!EXIT_VOTE_PARTICIPANTS.isEmpty()) {
@@ -353,7 +354,7 @@ public final class LuauFestivalService {
     }
 
     public static boolean tryOpenSoupContribution(ServerPlayer player, BlockPos clickedPos, InteractionHand hand) {
-        if (player == null || clickedPos == null || hand == null || !SOUP_CAULDRON_ZONE.contains(Vec3.atCenterOf(clickedPos)) || !isParticipant(player)) {
+        if (hand == null || !canInteractWithSoup(player, clickedPos)) {
             return false;
         }
         if (LUAU_INGREDIENTS.containsKey(player.getUUID())) {
@@ -372,6 +373,13 @@ public final class LuauFestivalService {
         PENDING_SOUP_HAND.put(player.getUUID(), hand);
         PacketDistributor.sendToPlayer(player, new OpenFestivalConfirmPayload(OpenFestivalConfirmPayload.Action.LUAU_ADD_SOUP));
         return true;
+    }
+
+    public static boolean canInteractWithSoup(ServerPlayer player, BlockPos clickedPos) {
+        return player != null
+            && clickedPos != null
+            && isParticipant(player)
+            && SOUP_CAULDRON_ZONE.contains(Vec3.atCenterOf(clickedPos));
     }
 
     public static boolean hasPendingSoupContribution(ServerPlayer player, InteractionHand hand) {
@@ -394,12 +402,12 @@ public final class LuauFestivalService {
             player.displayClientMessage(Component.translatable("message.stardewcraft.festival.luau.start_vote_waiting", voteCount, voters.size()), true);
             return true;
         }
-        CONFIRM_STATE.prompt(player, OpenFestivalConfirmPayload.Action.LUAU_START);
+        CONFIRM_STATE.reprompt(player, OpenFestivalConfirmPayload.Action.LUAU_START);
         return true;
     }
 
     public static boolean tryOpenPierreFestivalShop(ServerPlayer player) {
-        if (player == null || !PIERRE_SHOP_ZONE.contains(player.position()) || !isParticipant(player)) {
+        if (!canOpenPierreFestivalShop(player)) {
             return false;
         }
         ShopRegistry.ShopDefinition shop = ShopRegistry.get(SHOP_ID);
@@ -418,6 +426,12 @@ public final class LuauFestivalService {
             new ArrayList<>(shop.acceptedSellTypes())
         ));
         return true;
+    }
+
+    public static boolean canOpenPierreFestivalShop(ServerPlayer player) {
+        return player != null
+            && isParticipant(player)
+            && PIERRE_SHOP_ZONE.contains(player.position());
     }
 
     public static String resolveDialogueKey(ServerPlayer player, String npcId) {
@@ -624,11 +638,11 @@ public final class LuauFestivalService {
         if (player == null || !isParticipant(player) || mainEventActive) {
             return;
         }
-        if (START_VOTE_PARTICIPANTS.isEmpty()) {
-            START_VOTE_PARTICIPANTS.addAll(onlineParticipants(player.serverLevel()).stream().map(ServerPlayer::getUUID).toList());
-        }
-        START_VOTES.retainAll(START_VOTE_PARTICIPANTS);
-        START_VOTES.add(player.getUUID());
+        List<ServerPlayer> online = onlineParticipants(player.serverLevel());
+        CONFIRM_STATE.castVote(
+                OpenFestivalConfirmPayload.Action.LUAU_START,
+                player.getUUID(),
+                online.stream().map(ServerPlayer::getUUID).toList());
         checkStartVote(player.serverLevel());
     }
 
@@ -683,18 +697,28 @@ public final class LuauFestivalService {
         if (participants.isEmpty()) {
             return;
         }
+        int reaction = calculateGovernorReaction(level);
+        String eventId = MAIN_EVENT_CUTSCENE_ID + "_" + reaction;
+        if (!participants.stream().allMatch(participant ->
+                ServerCutsceneTracker.canStartEvent(participant, eventId))) {
+            CONFIRM_STATE.clearDialog(OpenFestivalConfirmPayload.Action.LUAU_START);
+            CONFIRM_STATE.clearVote(OpenFestivalConfirmPayload.Action.LUAU_START);
+            for (ServerPlayer participant : participants) {
+                participant.displayClientMessage(Component.translatable(
+                        "message.stardewcraft.festival.luau.unavailable"), true);
+            }
+            return;
+        }
         mainEventActive = true;
         CONFIRM_STATE.clearDialog(OpenFestivalConfirmPayload.Action.LUAU_START);
         CONFIRM_STATE.clearVote(OpenFestivalConfirmPayload.Action.LUAU_START);
         setSessionPhase(level, FestivalSessionPhase.MAIN_EVENT);
-        int reaction = calculateGovernorReaction(level);
         mainEventReaction = reaction;
         MAIN_EVENT_CUTSCENE_PARTICIPANTS.clear();
         MAIN_EVENT_CUTSCENE_PARTICIPANTS.addAll(participants.stream().map(ServerPlayer::getUUID).toList());
         MAIN_EVENT_CUTSCENE_DONE.clear();
-        String eventId = MAIN_EVENT_CUTSCENE_ID + "_" + reaction;
         for (ServerPlayer participant : participants) {
-            ServerCutsceneTracker.startEvent(participant, eventId);
+            ActiveFestivalHandlers.startCutsceneOrRecover(participant, eventId);
         }
     }
 

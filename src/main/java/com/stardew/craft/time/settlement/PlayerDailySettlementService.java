@@ -246,7 +246,11 @@ public final class PlayerDailySettlementService {
                 List.copyOf(levelUps),
                 passOutType,
                 moneyLost,
-                lostItems);
+                lostItems,
+                OvernightSettlementPayload.OvernightContext.forTargetDate(
+                        context.year(), context.season(), context.day(),
+                        context.previousWeather()),
+                true);
     }
 
     public DailySettlementBarrier.ReadyResult readyResult(UUID playerId, int absoluteDay) {
@@ -488,14 +492,16 @@ public final class PlayerDailySettlementService {
                         && scheduled.season() == context.season()
                         && scheduled.day() == context.day()
                         && scheduled.sleepMinute() == context.sleepMinute()
-                        && scheduled.seasonChanged() == context.seasonChanged()) {
+                        && scheduled.seasonChanged() == context.seasonChanged()
+                        && scheduled.previousWeather().equals(context.previousWeather())) {
                     return;
                 }
             }
             PlayerStardewData.PendingDailySettlement scheduled =
                     new PlayerStardewData.PendingDailySettlement(
                             context.absoluteDay(), context.year(), context.season(), context.day(),
-                            context.sleepMinute(), context.seasonChanged());
+                            context.sleepMinute(), context.seasonChanged(),
+                            context.previousWeather(), 0, List.of(), Optional.empty());
             if (data(playerId).schedulePendingDailySettlement(scheduled)) {
                 markPersistent.run();
             }
@@ -513,7 +519,8 @@ public final class PlayerDailySettlementService {
             PlayerStardewData.PendingDailySettlement scheduled =
                     new PlayerStardewData.PendingDailySettlement(
                             progress.absoluteDay(), progress.year(), progress.season(), progress.day(),
-                            progress.sleepMinute(), progress.seasonChanged(), progress.stage(),
+                            progress.sleepMinute(), progress.seasonChanged(),
+                            progress.previousWeather(), progress.stage(),
                             progress.appliedLevels(), progress.completedPayload());
             if (data(playerId).updatePendingDailySettlement(scheduled)) {
                 markPersistent.run();
@@ -530,7 +537,8 @@ public final class PlayerDailySettlementService {
                     new PlayerStardewData.PendingDailySettlement(
                             existing.absoluteDay(), existing.year(), existing.season(),
                             existing.day(), existing.sleepMinute(), existing.seasonChanged(),
-                            existing.stage(), existing.appliedLevels(), Optional.of(payload));
+                            existing.previousWeather(), existing.stage(),
+                            existing.appliedLevels(), Optional.of(payload));
             if (data(playerId).updatePendingDailySettlement(completed)) {
                 markPersistent.run();
             }
@@ -557,6 +565,7 @@ public final class PlayerDailySettlementService {
             int day,
             int sleepMinute,
             boolean seasonChanged,
+            String previousWeather,
             int stage,
             List<PlayerStardewData.SkillLevelUp> appliedLevels,
             Optional<OvernightSettlementPayload> completedPayload) {
@@ -569,21 +578,37 @@ public final class PlayerDailySettlementService {
                 int sleepMinute,
                 boolean seasonChanged) {
             this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
-                    0, List.of(), Optional.empty());
+                    "Sun", 0, List.of(), Optional.empty());
+        }
+
+        PendingSettlement(
+                int absoluteDay,
+                int year,
+                int season,
+                int day,
+                int sleepMinute,
+                boolean seasonChanged,
+                int stage,
+                List<PlayerStardewData.SkillLevelUp> appliedLevels,
+                Optional<OvernightSettlementPayload> completedPayload) {
+            this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                    "Sun", stage, appliedLevels, completedPayload);
         }
 
         private static PendingSettlement fromData(
                 PlayerStardewData.PendingDailySettlement pending) {
             return new PendingSettlement(
                     pending.absoluteDay(), pending.year(), pending.season(), pending.day(),
-                    pending.sleepMinute(), pending.seasonChanged(), pending.stage(),
+                    pending.sleepMinute(), pending.seasonChanged(),
+                    pending.previousWeather(), pending.stage(),
                     pending.appliedLevels(), pending.completedPayload());
         }
 
         private DailySettlementContext context(UUID playerId) {
             return new DailySettlementContext(
                     absoluteDay, year, season, day, sleepMinute, seasonChanged,
-                    List.of(playerId), Set.of());
+                    List.of(playerId), Set.of(), List.of(), List.of(playerId),
+                    List.of(playerId), previousWeather);
         }
 
         PendingSettlement atStage(int nextStage) {
@@ -594,12 +619,15 @@ public final class PlayerDailySettlementService {
                 int nextStage, List<PlayerStardewData.SkillLevelUp> nextLevels) {
             return new PendingSettlement(
                     absoluteDay, year, season, day, sleepMinute, seasonChanged,
-                    nextStage, List.copyOf(nextLevels), completedPayload);
+                    previousWeather, nextStage, List.copyOf(nextLevels), completedPayload);
         }
 
         PendingSettlement {
             appliedLevels = List.copyOf(Objects.requireNonNull(appliedLevels, "appliedLevels"));
             completedPayload = Objects.requireNonNull(completedPayload, "completedPayload");
+            previousWeather = previousWeather == null || previousWeather.isBlank()
+                    ? "Sun"
+                    : previousWeather;
         }
     }
 

@@ -2,11 +2,7 @@ package com.stardew.craft.combat.skill;
 
 import com.stardew.craft.combat.network.ObsidianResonanceSyncPayload;
 import com.stardew.craft.item.weapon.IStardewWeapon;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -19,7 +15,9 @@ import java.util.UUID;
  */
 public final class ObsidianResonanceTracker {
 
-    private static final int CHARGE_TICKS = 7 * 20;
+    public static final int CHARGE_TICKS = 7 * 20;
+    public static final float BONUS_DAMAGE_MULTIPLIER = 0.70F;
+    public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
 
     private static final class State {
         private long nextReadyTick;
@@ -74,39 +72,34 @@ public final class ObsidianResonanceTracker {
         return state.charged;
     }
 
-    @SuppressWarnings("null")
-    public static void consumeAndStrike(ServerPlayer player, LivingEntity target, long nowTick, boolean firstCrit) {
-        if (!hasObsidianEdge(player)) {
+    public static boolean consumeCharge(
+            ServerPlayer player,
+            long nowTick
+    ) {
+        if (player == null || !hasObsidianEdge(player)) {
+            if (player == null) {
+                return false;
+            }
             ACTIVE.remove(player.getUUID());
-            return;
+            return false;
         }
         State state = ACTIVE.get(player.getUUID());
         if (state == null || !state.charged) {
-            return;
+            return false;
         }
         state.charged = false;
         state.nextReadyTick = nowTick + CHARGE_TICKS;
         PacketDistributor.sendToPlayer(player, new ObsidianResonanceSyncPayload(true, CHARGE_TICKS, CHARGE_TICKS));
+        return true;
+    }
 
-        SkillContext context = SkillContext.builder()
-            .skillId("obsidian_resonance")
-            .tier(SkillContext.SkillTier.MINOR)
-            .damageMultiplier(0.7f)
-            .guaranteedCrit(firstCrit)
-            .build();
-        WeaponSkillContextStore.setPending(player, context, nowTick + 5);
-
-        target.invulnerableTime = 0;
-        target.hurtTime = 0;
-        target.hurt(player.damageSources().playerAttack(player), 1.0F);
-
-        if (player.level() != null) {
-            player.level().playSound(null, target.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME,
-                SoundSource.PLAYERS, 0.5f, 1.6f);
-            player.level().addParticle(ParticleTypes.CRIT,
-                target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
-                0.0, 0.05, 0.0);
-        }
+    public static SkillContext createBonusContext(boolean guaranteedCrit) {
+        return SkillContext.builder()
+                .skillId("obsidian_resonance")
+                .tier(SkillContext.SkillTier.MINOR)
+                .damageMultiplier(BONUS_DAMAGE_MULTIPLIER)
+                .guaranteedCrit(guaranteedCrit)
+                .build();
     }
 
     private static boolean hasObsidianEdge(ServerPlayer player) {

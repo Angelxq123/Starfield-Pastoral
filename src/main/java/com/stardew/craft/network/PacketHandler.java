@@ -17,6 +17,7 @@ import com.stardew.craft.fishing.network.FishingBitePromptPayload;
 import com.stardew.craft.fishing.network.FishingHookedAnimPayload;
 import com.stardew.craft.combat.network.DamageNumberPayload;
 import com.stardew.craft.combat.network.WeaponSkillAnimPayload;
+import com.stardew.craft.combat.network.WeaponSkillImpactPayload;
 import com.stardew.craft.combat.network.WeaponSkillCounterAnimPayload;
 import com.stardew.craft.combat.network.SkillFailFeedbackPayload;
 import com.stardew.craft.combat.network.SilverSaberFoldbackPayload;
@@ -91,9 +92,11 @@ public class PacketHandler {
     public static void register(RegisterPayloadHandlersEvent event) {
         // 0.5 API stabilization changes equipment sync from registry IDs to complete ItemStacks,
         // adds server-authoritative client content snapshots, synchronizes collective pause state,
-        // and binds building purchases to stable catalog IDs plus a server-issued revision.
+        // binds building purchases to stable catalog IDs plus a server-issued revision, and
+        // separates overnight collapse presentation from the final multiplayer settlement,
+        // including the pre-2AM multiplayer return-to-bed acknowledgement.
         // Reject mixed old/new clients explicitly.
-        final PayloadRegistrar registrar = event.registrar("5");
+        final PayloadRegistrar registrar = event.registrar("11");
 
         final PayloadRegistrar capabilityRegistrar = registrar.optional();
         capabilityRegistrar.configurationToClient(
@@ -191,6 +194,13 @@ public class PacketHandler {
         );
 
         registrar.playToServer(
+            com.stardew.craft.network.payload.MapInteractionHintRequestPayload.TYPE,
+            com.stardew.craft.network.payload.MapInteractionHintRequestPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                com.stardew.craft.network.payload.MapInteractionHintRequestPayload::handle)
+        );
+
+        registrar.playToServer(
             com.stardew.craft.network.payload.WardrobeActionPayload.TYPE,
             com.stardew.craft.network.payload.WardrobeActionPayload.STREAM_CODEC,
             DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.WardrobeActionPayload::handle)
@@ -210,6 +220,18 @@ public class PacketHandler {
         );
 
         registrar.playToClient(
+            com.stardew.craft.network.payload.RequestClientGuiStatePayload.TYPE,
+            com.stardew.craft.network.payload.RequestClientGuiStatePayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.RequestClientGuiStatePayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.payload.PlayerVitalsSyncPayload.TYPE,
+            com.stardew.craft.network.payload.PlayerVitalsSyncPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.PlayerVitalsSyncPayload::handle
+        );
+
+        registrar.playToClient(
             com.stardew.craft.network.payload.HudHintPayload.TYPE,
             com.stardew.craft.network.payload.HudHintPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.HudHintPayload::handle
@@ -219,6 +241,17 @@ public class PacketHandler {
             com.stardew.craft.network.payload.PassOutPayload.TYPE,
             com.stardew.craft.network.payload.PassOutPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.PassOutPayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.payload.CombatRescueOutcomePayload.TYPE,
+            com.stardew.craft.network.payload.CombatRescueOutcomePayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.CombatRescueOutcomePayload::handle
+        );
+        registrar.playToServer(
+            com.stardew.craft.network.payload.CombatRescueOutcomeAckPayload.TYPE,
+            com.stardew.craft.network.payload.CombatRescueOutcomeAckPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.CombatRescueOutcomeAckPayload::handle
         );
 
         registrar.playToClient(
@@ -243,6 +276,12 @@ public class PacketHandler {
             com.stardew.craft.network.payload.PointPlanSyncPayload.TYPE,
             com.stardew.craft.network.payload.PointPlanSyncPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.PointPlanSyncPayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.payload.MapInteractionHintPayload.TYPE,
+            com.stardew.craft.network.payload.MapInteractionHintPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.MapInteractionHintPayload::handle
         );
 
         registrar.playToClient(
@@ -485,6 +524,12 @@ public class PacketHandler {
             WeaponSkillAnimPayload.TYPE,
             WeaponSkillAnimPayload.STREAM_CODEC,
             WeaponSkillAnimPayload::handle
+        );
+
+        registrar.playToClient(
+            WeaponSkillImpactPayload.TYPE,
+            WeaponSkillImpactPayload.STREAM_CODEC,
+            WeaponSkillImpactPayload::handle
         );
 
         registrar.playToClient(
@@ -1190,6 +1235,13 @@ public class PacketHandler {
             com.stardew.craft.network.payload.OpenNpcDialogueScreenPayload::handle
         );
 
+        registrar.playToServer(
+            com.stardew.craft.network.payload.MarkNpcDialogueFlagPayload.TYPE,
+            com.stardew.craft.network.payload.MarkNpcDialogueFlagPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                com.stardew.craft.network.payload.MarkNpcDialogueFlagPayload::handle)
+        );
+
         registrar.playToClient(
             com.stardew.craft.network.payload.OpenSecretNote20QuestionPayload.TYPE,
             com.stardew.craft.network.payload.OpenSecretNote20QuestionPayload.STREAM_CODEC,
@@ -1272,6 +1324,23 @@ public class PacketHandler {
             com.stardew.craft.network.payload.PrizeTicketClaimPayload.STREAM_CODEC,
             DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.PrizeTicketClaimPayload::handle)
         );
+
+        registrar.playToServer(
+            com.stardew.craft.network.payload.CasinoGameActionPayload.TYPE,
+            com.stardew.craft.network.payload.CasinoGameActionPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                com.stardew.craft.network.payload.CasinoGameActionPayload::handle)
+        );
+        registrar.playToClient(
+            com.stardew.craft.network.payload.CasinoGameStatePayload.TYPE,
+            com.stardew.craft.network.payload.CasinoGameStatePayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.CasinoGameStatePayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.network.payload.OpenCalicoJackPromptPayload.TYPE,
+            com.stardew.craft.network.payload.OpenCalicoJackPromptPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.OpenCalicoJackPromptPayload::handle
+        );
         registrar.playToClient(
             com.stardew.craft.network.payload.PrizeTicketClaimResultPayload.TYPE,
             com.stardew.craft.network.payload.PrizeTicketClaimResultPayload.STREAM_CODEC,
@@ -1312,6 +1381,24 @@ public class PacketHandler {
             com.stardew.craft.network.payload.OvernightProfessionChoicePayload.TYPE,
             com.stardew.craft.network.payload.OvernightProfessionChoicePayload.STREAM_CODEC,
             DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.OvernightProfessionChoicePayload::handle)
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.overnight.OvernightCollapseStartPayload.TYPE,
+            com.stardew.craft.network.overnight.OvernightCollapseStartPayload.STREAM_CODEC,
+            com.stardew.craft.network.overnight.OvernightCollapseStartPayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.overnight.OvernightCollapseReturnToBedPayload.TYPE,
+            com.stardew.craft.network.overnight.OvernightCollapseReturnToBedPayload.STREAM_CODEC,
+            com.stardew.craft.network.overnight.OvernightCollapseReturnToBedPayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.overnight.OvernightCollapseCancelPayload.TYPE,
+            com.stardew.craft.network.overnight.OvernightCollapseCancelPayload.STREAM_CODEC,
+            com.stardew.craft.network.overnight.OvernightCollapseCancelPayload::handle
         );
 
         registrar.playToClient(
@@ -2193,6 +2280,16 @@ public class PacketHandler {
             com.stardew.craft.cutscene.network.CutsceneAnchorPayload.TYPE,
             com.stardew.craft.cutscene.network.CutsceneAnchorPayload.STREAM_CODEC,
             com.stardew.craft.cutscene.network.CutsceneAnchorPayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.cutscene.network.CombatRescuePreparePayload.TYPE,
+            com.stardew.craft.cutscene.network.CombatRescuePreparePayload.STREAM_CODEC,
+            com.stardew.craft.cutscene.network.CombatRescuePreparePayload::handle
+        );
+        registrar.playToServer(
+            com.stardew.craft.cutscene.network.CombatRescueReadyPayload.TYPE,
+            com.stardew.craft.cutscene.network.CombatRescueReadyPayload.STREAM_CODEC,
+            com.stardew.craft.cutscene.network.CombatRescueReadyPayload::handle
         );
         registrar.playToServer(
             com.stardew.craft.cutscene.network.NotifyCutsceneStartPayload.TYPE,

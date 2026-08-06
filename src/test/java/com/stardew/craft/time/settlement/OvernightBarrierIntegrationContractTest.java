@@ -48,6 +48,8 @@ class OvernightBarrierIntegrationContractTest {
     private static final Path PROJECT = Path.of(System.getProperty("stardewcraft.projectDir", "."));
     private static final Path SCREEN = source("client/gui/overnight/SleepWaitingOverlayScreen.java");
     private static final Path CLIENT_HANDLER = source("network/overnight/ClientOvernightHandler.java");
+    private static final Path COLLAPSE_CLIENT_STATE =
+            source("network/overnight/OvernightCollapseClientState.java");
     private static final Path SETTLEMENT = source("network/overnight/OvernightSettlementPayload.java");
     private static final Path CANCEL = source("network/payload/SleepCancelPayload.java");
     private static final Path ACK = source("network/overnight/OvernightReadyAckPayload.java");
@@ -70,14 +72,17 @@ class OvernightBarrierIntegrationContractTest {
 
     @Test
     void clientLogoutEventDelegatesToTheSingleConnectionResetMethod() throws IOException {
-        MethodTree logout = method(CLIENT_HANDLER, "ClientOvernightHandler", "onClientLogout", 1);
+        MethodTree logout = method(
+                COLLAPSE_CLIENT_STATE, "OvernightCollapseClientState", "onLogout", 1);
         assertEquals("ClientPlayerNetworkEvent.LoggingOut",
                 logout.getParameters().getFirst().getType().toString());
         assertTrue(logout.getModifiers().getAnnotations().stream()
                 .anyMatch(annotation -> annotation.getAnnotationType().toString().equals("SubscribeEvent")));
-        assertEquals(1, logout.getBody().getStatements().size(),
-                "logout handler must only delegate connection-state cleanup");
-        assertTrue(hasInvocation(logout.getBody().getStatements().getFirst(), "resetConnectionState"));
+        assertEquals(2, logout.getBody().getStatements().size(),
+                "logout handler must only clear collapse and settlement session state");
+        assertTrue(hasInvocation(logout.getBody(), "resetSession"));
+        assertTrue(hasInvocationWithSelect(
+                logout.getBody(), "ClientOvernightHandler.resetSession"));
         assertFalse(hasInvocation(logout.getBody(), "sendToServer"));
         assertFalse(hasInvocation(logout.getBody(), "setScreen"));
     }

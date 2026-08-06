@@ -3,6 +3,7 @@ package com.stardew.craft.network.payload;
 import com.stardew.craft.StardewCraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -29,13 +30,33 @@ public record OpenNpcDialogueScreenPayload(
         String translateKey,
         int friendshipPoints,
         String afterCloseItemId,
-        boolean garbleDwarvish
+        boolean garbleDwarvish,
+        List<String> answeredDialogueIds
 ) implements CustomPacketPayload {
     public static final String DIRECT_DIALOGUE_PREFIX = "__direct_dialogue::";
 
+    /** Encodes literal text for the existing client-side NPC dialogue pipeline. */
+    public static String directText(String text) {
+        return DIRECT_DIALOGUE_PREFIX + encodeDirectDialogue(text);
+    }
+
     /** Convenience: no afterClose action, no garble. */
     public OpenNpcDialogueScreenPayload(String npcId, String translateKey, int friendshipPoints) {
-        this(npcId, translateKey, friendshipPoints, "", false);
+        this(npcId, translateKey, friendshipPoints, "", false, List.of());
+    }
+
+    public OpenNpcDialogueScreenPayload(
+            String npcId,
+            String translateKey,
+            int friendshipPoints,
+            String afterCloseItemId,
+            boolean garbleDwarvish
+    ) {
+        this(npcId, translateKey, friendshipPoints, afterCloseItemId, garbleDwarvish, List.of());
+    }
+
+    public OpenNpcDialogueScreenPayload {
+        answeredDialogueIds = answeredDialogueIds == null ? List.of() : List.copyOf(answeredDialogueIds);
     }
 
     @SuppressWarnings("null")
@@ -46,13 +67,16 @@ public record OpenNpcDialogueScreenPayload(
     public static final StreamCodec<FriendlyByteBuf, OpenNpcDialogueScreenPayload> STREAM_CODEC = StreamCodec.of(
         (buf, payload) -> {
             buf.writeUtf(payload.npcId(), 64);
-            buf.writeUtf(payload.translateKey(), 512);
+            buf.writeUtf(payload.translateKey(), 32767);
             buf.writeInt(payload.friendshipPoints());
             buf.writeUtf(payload.afterCloseItemId(), 256);
             buf.writeBoolean(payload.garbleDwarvish());
+            ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list())
+                    .encode(buf, payload.answeredDialogueIds());
         },
         buf -> new OpenNpcDialogueScreenPayload(
-            buf.readUtf(64), buf.readUtf(512), buf.readInt(), buf.readUtf(256), buf.readBoolean())
+            buf.readUtf(64), buf.readUtf(32767), buf.readInt(), buf.readUtf(256), buf.readBoolean(),
+            ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()).decode(buf))
     );
 
     @Override
@@ -85,14 +109,17 @@ public record OpenNpcDialogueScreenPayload(
         }
 
         String trueKey = rawKey.substring(i);
-        String displayText = rawTranslation(trueKey);
+        String displayText = resolveClientTextSource(trueKey);
 
         String finalDisplayText = prefixBuilder.toString() + displayText;
+        finalDisplayText = resolvePreviouslyAnsweredQuestion(
+                finalDisplayText, payload.npcId(), payload.answeredDialogueIds());
 
         // Resolve player profile tokens (@, gender branches, %favorite, etc.).
         String accountName = mc.player.getGameProfile() != null ? mc.player.getGameProfile().getName() : "player";
         String playerName = com.stardew.craft.client.ClientPlayerDataCache.getPlayerDisplayName(accountName);
-        finalDisplayText = resolvePlayerDialogueText(finalDisplayText, playerName);
+        finalDisplayText = resolvePlayerDialogueText(
+                finalDisplayText, playerName, payload.answeredDialogueIds());
 
         // SDV parity: garble resolved text to Dwarvish if player can't understand
         if (payload.garbleDwarvish()) {
@@ -119,6 +146,51 @@ public record OpenNpcDialogueScreenPayload(
         }
 
         mc.setScreen(screen);
+    }
+
+    /** Mirrors Dialogue.parseDialogueString's already-seen $q redirect. */
+    static String resolvePreviouslyAnsweredQuestion(
+            String text,
+            String npcId,
+            List<String> answeredDialogueIds
+    ) {
+        if (text == null || answeredDialogueIds == null || answeredDialogueIds.isEmpty()) {
+            return text;
+        }
+        int questionIndex = text.indexOf("$q ");
+        if (questionIndex < 0) {
+            return text;
+        }
+        int headerEnd = text.indexOf('#', questionIndex);
+        if (headerEnd < 0) {
+            return text;
+        }
+        String[] header = text.substring(questionIndex + 3, headerEnd).trim().split("\\s+");
+        if (header.length < 2 || header[0].equals("-1")) {
+            return text;
+        }
+        boolean seen = false;
+        for (String id : header[0].split("/")) {
+            if (answeredDialogueIds.contains(id)) {
+                seen = true;
+                break;
+            }
+        }
+        if (!seen) {
+            return text;
+        }
+
+        String beforeQuestion = text.substring(0, questionIndex);
+        String redirect = header[1];
+        if (redirect.equals("null") || npcId == null || npcId.isBlank()) {
+            return beforeQuestion;
+        }
+        String translationKey = "stardewcraft.npc."
+                + npcId.toLowerCase(Locale.ROOT)
+                + "."
+                + redirect.toLowerCase(Locale.ROOT);
+        String redirectedText = rawTranslation(translationKey);
+        return redirectedText.equals(translationKey) ? beforeQuestion : redirectedText;
     }
 
     /**
@@ -165,6 +237,14 @@ public record OpenNpcDialogueScreenPayload(
 
     /** Applies the shared player-dependent dialogue pipeline for NPC and cutscene text. */
     public static String resolvePlayerDialogueText(String text, String fallbackPlayerName) {
+        return resolvePlayerDialogueText(text, fallbackPlayerName, List.of());
+    }
+
+    public static String resolvePlayerDialogueText(
+            String text,
+            String fallbackPlayerName,
+            List<String> answeredDialogueIds
+    ) {
         String fallback = fallbackPlayerName == null || fallbackPlayerName.isBlank()
                 ? "player" : fallbackPlayerName;
         String playerName = com.stardew.craft.client.ClientPlayerDataCache.getPlayerDisplayName(fallback);
@@ -172,7 +252,7 @@ public record OpenNpcDialogueScreenPayload(
         String resolved = text == null ? "" : text.replace("@", playerName);
         resolved = resolveInlineGenderTokens(resolved, male);
         resolved = resolveGenderSplit(resolved, male);
-        resolved = resolveDialogueCommands(resolved);
+        resolved = resolveDialogueCommands(resolved, answeredDialogueIds);
         return resolvePercentTokens(resolved, playerName);
     }
 
@@ -210,6 +290,10 @@ public record OpenNpcDialogueScreenPayload(
      * Preserves {@code $q/$r} blocks untouched (parseChunks handles those).
      */
     public static String resolveDialogueCommands(String text) {
+        return resolveDialogueCommands(text, List.of());
+    }
+
+    public static String resolveDialogueCommands(String text, List<String> answeredDialogueIds) {
         if (text == null || text.isEmpty()) return text;
 
         // SDV || random dialogue selection: pick one alternative at random
@@ -223,7 +307,7 @@ public record OpenNpcDialogueScreenPayload(
             }
             if (text.contains("||")) {
                 String[] alternatives = text.split("\\|\\|");
-                text = alternatives[ThreadLocalRandom.current().nextInt(alternatives.length)].trim();
+                text = alternatives[Math.floorMod(dialogueWeekIndex(), alternatives.length)].trim();
             }
             if (!qSafe.isEmpty()) {
                 text = text + qSafe;
@@ -245,7 +329,7 @@ public record OpenNpcDialogueScreenPayload(
 
         // Process #-delimited segments with $ commands
         if (text.contains("#")) {
-            text = processHashSegments(text);
+            text = processHashSegments(text, answeredDialogueIds == null ? List.of() : answeredDialogueIds);
         }
 
         // Handle remaining $k (kill/truncate) within $b segments
@@ -306,7 +390,7 @@ public record OpenNpcDialogueScreenPayload(
      * Process #-delimited segments, resolving $c/$d/$p/$1/$query commands.
      * Returns text with # replaced by $b page breaks.
      */
-    private static String processHashSegments(String text) {
+    private static String processHashSegments(String text, List<String> answeredDialogueIds) {
         String[] segments = text.split("#", -1);
         List<String> output = new ArrayList<>();
         ThreadLocalRandom rng = ThreadLocalRandom.current();
@@ -336,26 +420,20 @@ public record OpenNpcDialogueScreenPayload(
 
             // ── $1 <mailId> — one-time dialogue → show first-time text ──
             if (seg.matches("\\$1\\s+\\w+")) {
-                i++; // skip $1 tag
-                while (i < segments.length) {
-                    String s = segments[i].trim();
-                    if (s.equals("$e") || s.startsWith("$e ")) { i++; break; }
-                    String clean = s;
-                    int kIdx = clean.indexOf("$k");
-                    if (kIdx >= 0) {
-                        clean = clean.substring(0, kIdx).trim();
-                        if (!clean.isEmpty()) output.add(clean);
-                        i++;
-                        // skip to $e
-                        while (i < segments.length && !segments[i].trim().startsWith("$e")) i++;
-                        if (i < segments.length) i++; // skip $e
-                        break;
-                    }
-                    if (!clean.isEmpty()) output.add(clean);
-                    i++;
+                String messageId = seg.substring(3).trim().split("\\s+", 2)[0];
+                if (com.stardew.craft.client.ClientPlayerDataCache.hasMailFlag(messageId)) {
+                    // Dialogue.cs: skip command, first-time line and $e, then
+                    // continue parsing every fallback page.
+                    i += 3;
+                    continue;
                 }
-                // skip fallback text after $e (one segment)
-                if (i < segments.length) i++;
+                if (i + 1 < segments.length) {
+                    output.add(segments[i + 1]);
+                }
+                com.stardew.craft.client.ClientPlayerDataCache.markMailFlagLocal(messageId);
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        new MarkNpcDialogueFlagPayload(messageId));
+                i = segments.length;
                 continue;
             }
 
@@ -364,8 +442,7 @@ public record OpenNpcDialogueScreenPayload(
                 String state = seg.substring(3).trim().toLowerCase(Locale.ROOT);
                 i++; // skip command
                 if (i < segments.length) {
-                    // joja → false; cc/bus/kent → true
-                    boolean condTrue = !state.equals("joja");
+                    boolean condTrue = dialogueWorldState(state);
                     output.add(pickPipeBranch(segments[i], condTrue));
                     i++;
                 }
@@ -373,10 +450,18 @@ public record OpenNpcDialogueScreenPayload(
             }
 
             // ── $p <ids> — prerequisite check → default to first branch ──
-            if (seg.matches("\\$p\\s+[\\d,]+")) {
+            if (seg.matches("\\$p\\s+[\\d\\s,]+")) {
+                String[] prerequisiteIds = seg.substring(3).trim().split("[\\s,]+");
+                boolean answered = false;
+                for (String prerequisiteId : prerequisiteIds) {
+                    if (answeredDialogueIds.contains(prerequisiteId)) {
+                        answered = true;
+                        break;
+                    }
+                }
                 i++; // skip command
                 if (i < segments.length) {
-                    output.add(pickPipeBranch(segments[i], true));
+                    output.add(pickPipeBranch(segments[i], answered));
                     i++;
                 }
                 continue;
@@ -406,6 +491,39 @@ public record OpenNpcDialogueScreenPayload(
         }
 
         return String.join("$b", output);
+    }
+
+    private static int dialogueWeekIndex() {
+        com.stardew.craft.time.StardewTimeManager time =
+                com.stardew.craft.client.hud.StardewTimeHud.getClientTimeCache();
+        if (time == null) {
+            return 0;
+        }
+        int daysPlayed = Math.max(0,
+                (time.getCurrentYear() - 1) * 112
+                        + time.getCurrentSeason() * 28
+                        + time.getCurrentDay() - 1);
+        return daysPlayed / 7;
+    }
+
+    private static boolean dialogueWorldState(String state) {
+        return switch (state) {
+            case "joja" -> !com.stardew.craft.client.ClientPlayerDataCache.hasMailFlag(
+                    com.stardew.craft.communitycenter.state.CCStoryFlags.CC_IS_COMPLETE);
+            case "cc", "communitycenter" ->
+                    com.stardew.craft.client.ClientPlayerDataCache.hasMailFlag(
+                            com.stardew.craft.communitycenter.state.CCStoryFlags.CC_DOOR_UNLOCKED)
+                            && !com.stardew.craft.client.ClientPlayerDataCache.hasMailFlag(
+                                    com.stardew.craft.communitycenter.state.CCStoryFlags.JOJA_MEMBER);
+            case "bus" -> com.stardew.craft.client.ClientPlayerDataCache.hasMailFlag(
+                    com.stardew.craft.communitycenter.state.CCStoryFlags.CC_VAULT);
+            case "kent" -> {
+                com.stardew.craft.time.StardewTimeManager time =
+                        com.stardew.craft.client.hud.StardewTimeHud.getClientTimeCache();
+                yield time != null && time.getCurrentYear() >= 2;
+            }
+            default -> false;
+        };
     }
 
     /**
@@ -558,6 +676,9 @@ public record OpenNpcDialogueScreenPayload(
     /** Resolve either a serialized Component or a normal translation key on the client. */
     public static String resolveClientTextSource(String source) {
         if (source == null || source.isBlank()) return "";
+        if (source.startsWith(DIRECT_DIALOGUE_PREFIX)) {
+            return rawTranslation(source);
+        }
         String trimmed = source.trim();
         if (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith("\"")) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
@@ -570,11 +691,7 @@ public record OpenNpcDialogueScreenPayload(
                 }
             }
         }
-        if (source.startsWith("event.") || source.startsWith("stardewcraft.")
-                || source.startsWith("message.")) {
-            return rawTranslation(source);
-        }
-        return source;
+        return rawTranslation(source);
     }
 
     private static String getClientSeason() {

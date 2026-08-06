@@ -264,9 +264,10 @@ class DailySettlementLifecycleContractTest {
         assertEquals(1, frequency(calls, "captureNextDay"));
         assertEquals(1, frequency(calls, "start"));
         assertTrue(body.contains("::participates"));
-        assertFalse(calls.contains("getAllFarms"));
+        assertTrue(calls.contains("getAllFarms"));
         assertTrue(body.contains("farmOwnerAudience"));
         assertTrue(body.contains("getOwnerForPlayer"));
+        assertTrue(body.contains("shouldSettleFarm"));
         assertTrue(body.contains("Set.copyOf"));
         assertFalse(body.contains("currentDay++"));
         assertFalse(body.contains("currentDay ="));
@@ -274,7 +275,8 @@ class DailySettlementLifecycleContractTest {
         assertFalse(body.contains("currentYear ="));
         assertFalse(body.contains("currentTime ="));
         assertFalse(body.contains("GrowthManager"));
-        assertFalse(body.contains("WeatherManager"));
+        assertTrue(body.contains("WeatherManager.getCurrentWeather"));
+        assertFalse(body.contains("applyWeatherForNewDay"));
         assertFalse(body.contains("MailService"));
         assertFalse(body.contains("SpecialOrderManager"));
         assertFalse(body.contains("ShippingBinBlockEntity"));
@@ -287,6 +289,8 @@ class DailySettlementLifecycleContractTest {
         assertEquals(1, frequency(invocationNames(dimension.method("advanceToNextMorning", 3)),
                 "advanceDayWithSleepTime"));
         assertTrue(invocationNames(dimension.method("requestPassOutAdvance", 1))
+                .contains("schedulePassOutAdvance"));
+        assertTrue(invocationNames(dimension.method("schedulePassOutAdvance", 4))
                 .contains("advanceToNextMorning"));
         assertTrue(invocationNames(dimension.method("requestSleepAdvance", 3))
                 .contains("advanceToNextMorning"));
@@ -679,10 +683,11 @@ class DailySettlementLifecycleContractTest {
             throws Exception {
         ParsedClass time = parse("src/main/java/com/stardew/craft/time/StardewTimeManager.java");
         String advance = time.method("advanceDayWithSleepTime", 1).getBody().toString();
-        assertFalse(advance.contains("getAllFarms()"),
-                "offline farms must not enter this rollover");
+        assertTrue(advance.contains("getAllFarms()"),
+                "farms visited during the settled day must enter this rollover");
         assertTrue(advance.contains("farmOwnerAudience"));
         assertTrue(advance.contains("getOwnerForPlayer"));
+        assertTrue(advance.contains("shouldSettleFarm"));
 
         ParsedClass factory = parse(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
@@ -824,7 +829,8 @@ class DailySettlementLifecycleContractTest {
         assertTrue(service.pendingSettlement(playerId).isPresent(),
                 "an interrupted online batch must remain recoverable");
 
-        PlayerStardewData restored = PlayerStardewData.fromNBT(data.toNBT(), playerId);
+        PlayerStardewData restored = PlayerStardewData.fromNBT(
+                data.toNBT(REGISTRIES), playerId, REGISTRIES);
         assertEquals(2, restored.getPendingDailySettlement().orElseThrow().stage());
         playerData.put(playerId, restored);
         backend.data = restored;
@@ -845,6 +851,34 @@ class DailySettlementLifecycleContractTest {
         assertEquals(1, backend.masteryMorningCalls);
         assertEquals(620, restored.getMoney());
         assertEquals(120, restored.getTotalShippingGold());
+    }
+
+    @Test
+    void completedSettlementRoundTripPreservesOfficialContextAndBarrierSemantics() {
+        UUID playerId = UUID.randomUUID();
+        PlayerStardewData data = new PlayerStardewData(playerId);
+        OvernightSettlementPayload.OvernightContext overnightContext =
+                OvernightSettlementPayload.OvernightContext.forTargetDate(
+                        3, 0, 2, "Rain");
+        OvernightSettlementPayload payload = new OvernightSettlementPayload(
+                226, List.of(), List.of(), -1, 0, List.of(),
+                overnightContext, false);
+        assertTrue(data.schedulePendingDailySettlement(
+                new PlayerStardewData.PendingDailySettlement(
+                        226, 3, 0, 2, 1_560, false, "Rain", 12,
+                        List.of(), Optional.of(payload))));
+
+        PlayerStardewData restored = PlayerStardewData.fromNBT(
+                data.toNBT(REGISTRIES), playerId, REGISTRIES);
+        PlayerStardewData.PendingDailySettlement restoredPending =
+                restored.getPendingDailySettlement().orElseThrow();
+        OvernightSettlementPayload restoredPayload =
+                restoredPending.completedPayload().orElseThrow();
+
+        assertEquals("Rain", restoredPending.previousWeather());
+        assertEquals(226, restoredPayload.absoluteDay());
+        assertEquals(overnightContext, restoredPayload.context());
+        assertFalse(restoredPayload.personalSettlement());
     }
 
     @Test
@@ -1520,6 +1554,7 @@ class DailySettlementLifecycleContractTest {
                 case "syncPlayer" -> null;
                 case "applyQuest" -> once("quest", () -> questApplications++);
                 case "applyMastery" -> once("mastery", () -> masteryApplications++);
+                case "previousWeather" -> "Sun";
                 case "passOutResult" -> new PassOutService.PassOutResult(
                         PassOutService.PassOutType.EXHAUSTION_2AM, 25, List.of(), absoluteDay);
                 case "consumeShipping" -> {

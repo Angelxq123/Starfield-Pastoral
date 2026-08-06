@@ -56,6 +56,8 @@ class DailySettlementIsolationContractTest {
     private static final Set<String> UNGATED_SERVER_PAYLOADS = Set.of(
             "com.stardew.craft.network.payload.SleepCancelPayload",
             "com.stardew.craft.network.overnight.OvernightReadyAckPayload",
+            "com.stardew.craft.network.payload.CombatRescueOutcomeAckPayload",
+            "com.stardew.craft.cutscene.network.CombatRescueReadyPayload",
             "com.stardew.craft.network.payload.StardewPauseStatePayload");
 
     @Test

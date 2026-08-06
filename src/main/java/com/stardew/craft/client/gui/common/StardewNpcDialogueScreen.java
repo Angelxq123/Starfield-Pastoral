@@ -2,6 +2,7 @@ package com.stardew.craft.client.gui.common;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.NpcDisplayNames;
+import com.stardew.craft.client.gui.StardewCollectivePauseScreen;
 import com.stardew.craft.sound.ModSounds;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.Util;
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
 
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
-public class StardewNpcDialogueScreen extends Screen {
+public class StardewNpcDialogueScreen extends Screen implements StardewCollectivePauseScreen {
     private static final Pattern NUMERIC_EMOTION = Pattern.compile("\\$([0-9]+)");
     private static final String[] PERCENT_TOKENS = new String[] {
         "%adj", "%noun", "%place", "%spouse", "%name", "%firstnameletter", "%time", "%band", "%book", "%pet",
@@ -45,8 +46,9 @@ public class StardewNpcDialogueScreen extends Screen {
     private final List<DialoguePage> pages = new ArrayList<>();
     private StardewRenderMapping mapping;
     
-    private record NpcResponseAction(int scoreDelta, String nextNodeId, String responseText) {}
+    private record NpcResponseAction(String answerId, int scoreDelta, String nextNodeId, String responseText) {}
     private final List<NpcResponseAction> questionResponses = new ArrayList<>();
+    private boolean questionScreenOpened;
 
     private int pageIndex;
     private int characterIndexInDialogue;
@@ -103,6 +105,7 @@ public class StardewNpcDialogueScreen extends Screen {
         super.init();
         recomputeLayout();
         rebuildPages();
+        this.questionScreenOpened = false;
         this.pageIndex = 0;
         this.characterIndexInDialogue = 0;
         this.characterAdvanceTimer = 90;
@@ -138,6 +141,7 @@ public class StardewNpcDialogueScreen extends Screen {
 
         String current = currentPage().text();
         if (characterIndexInDialogue >= current.length()) {
+            openQuestionResponsesIfReady();
             return;
         }
 
@@ -152,6 +156,7 @@ public class StardewNpcDialogueScreen extends Screen {
                 playUiSound(ModSounds.DIALOGUE_CHARACTER.get(), 1.0f, 1.0f);
             }
         }
+        openQuestionResponsesIfReady();
     }
 
     @Override
@@ -238,34 +243,47 @@ public class StardewNpcDialogueScreen extends Screen {
             return;
         }
 
-        playUiSound(ModSounds.SMALL_SELECT.get(), 1.0f, 1.0f);
-        
         if (!questionResponses.isEmpty()) {
-            List<Component> options = new ArrayList<>();
-            for (NpcResponseAction action : questionResponses) {
-                options.add(Component.literal(action.responseText()));
-            }
-            StardewQuestionDialogSpec spec = StardewQuestionDialogSpec.of(
-                Component.literal(""),
-                options,
-                (answerIndex) -> {
-                    if (answerIndex >= 0 && answerIndex < questionResponses.size()) {
-                        NpcResponseAction picked = questionResponses.get(answerIndex);
-                        net.minecraft.client.Minecraft.getInstance().setScreen(null);
-                        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                            new com.stardew.craft.network.payload.AnswerNpcQuestionPayload(
-                                npcId, picked.nextNodeId(), picked.scoreDelta()
-                            )
-                        );
-                    }
-                },
-                -1
-            );
-            net.minecraft.client.Minecraft.getInstance().setScreen(StardewConfirmDialogScreen.createQuestionDialog(spec));
+            openQuestionResponsesIfReady();
             return;
         }
 
+        playUiSound(ModSounds.SMALL_SELECT.get(), 1.0f, 1.0f);
         beginOutro();
+    }
+
+    private void openQuestionResponsesIfReady() {
+        if (questionScreenOpened
+                || questionResponses.isEmpty()
+                || pageIndex + 1 < pages.size()
+                || characterIndexInDialogue < currentPage().text().length()) {
+            return;
+        }
+        net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+        if (minecraft.screen != this) {
+            return;
+        }
+        questionScreenOpened = true;
+        List<Component> options = new ArrayList<>();
+        for (NpcResponseAction action : questionResponses) {
+            options.add(Component.literal(action.responseText()));
+        }
+        StardewQuestionDialogSpec spec = StardewQuestionDialogSpec.of(
+            Component.literal(currentPage().text()),
+            options,
+            (answerIndex) -> {
+                if (answerIndex >= 0 && answerIndex < questionResponses.size()) {
+                    NpcResponseAction picked = questionResponses.get(answerIndex);
+                    net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        new com.stardew.craft.network.payload.AnswerNpcQuestionPayload(
+                            npcId, picked.nextNodeId(), picked.scoreDelta(), picked.answerId()
+                        )
+                    );
+                }
+            },
+            -1
+        );
+        minecraft.setScreen(StardewConfirmDialogScreen.createDialogueContinuation(spec));
     }
 
     private void beginOutro() {
@@ -395,12 +413,13 @@ public class StardewNpcDialogueScreen extends Screen {
                     if (tokens.length >= 3) {
                         int scoreDelta = 0;
                         try { scoreDelta = Integer.parseInt(tokens[1]); } catch (NumberFormatException ignored) {}
+                        String answerId = tokens[0];
                         String nextNodeId = tokens[2];
                         
                         int rHash2 = remain.indexOf("#$r", rHash1);
                         if (rHash2 == -1) rHash2 = remain.length();
                         String responseText = remain.substring(rHash1 + 1, rHash2).trim();
-                        questionResponses.add(new NpcResponseAction(scoreDelta, nextNodeId, responseText));
+                        questionResponses.add(new NpcResponseAction(answerId, scoreDelta, nextNodeId, responseText));
                         remain = remain.substring(rHash2);
                     } else {
                         break;
@@ -504,7 +523,7 @@ public class StardewNpcDialogueScreen extends Screen {
         StringBuilder pageBuilder = new StringBuilder();
         for (String word : words) {
             String candidate = pageBuilder.length() == 0 ? word : pageBuilder + " " + word;
-            int lineCount = this.font.split(Component.literal(candidate), wrapWidth).size();
+            int lineCount = DialogueTextWrapper.wrap(this.font, candidate, wrapWidth).size();
             if (lineCount > maxLines && pageBuilder.length() > 0) {
                 out.add(new DialoguePage(pageBuilder.toString().trim(), chunk.showPortrait(), chunk.portraitIndex()));
                 pageBuilder.setLength(0);
@@ -543,13 +562,13 @@ public class StardewNpcDialogueScreen extends Screen {
         Component visible = Component.literal(all.substring(0, end));
         float scale = textScale();
         int unscaledWrap = Math.max(1, Math.round(wrap / scale));
-        List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(visible, unscaledWrap);
+        List<String> lines = DialogueTextWrapper.wrap(this.font, visible.getString(), unscaledWrap);
 
         graphics.pose().pushPose();
         graphics.pose().translate(textX, textY, 0.0f);
         graphics.pose().scale(scale, scale, 1.0f);
         int drawY = 0;
-        for (net.minecraft.util.FormattedCharSequence line : lines) {
+        for (String line : lines) {
             graphics.drawString(this.font, line, 0, drawY, 0x2E251A, false);
             drawY += this.font.lineHeight;
         }

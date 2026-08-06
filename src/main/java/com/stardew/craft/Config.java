@@ -46,7 +46,6 @@ public final class Config {
     public static final ModConfigSpec.BooleanValue COOP_REQUIRE_ENCLOSED = COOP_MANAGER.REQUIRE_ENCLOSED;
     public static final ModConfigSpec.BooleanValue COOP_REQUIRE_DOOR = COOP_MANAGER.REQUIRE_DOOR;
     public static final ModConfigSpec.IntValue COOP_MIN_DOOR_COUNT = COOP_MANAGER.MIN_DOOR_COUNT;
-    public static final ModConfigSpec.BooleanValue COOP_DEV_HINTS = COOP_MANAGER.DEV_HINTS;
     public static final ModConfigSpec.IntValue COOP_T1_FEED_TROUGH = COOP_MANAGER.TIER1.FEED_TROUGH;
     public static final ModConfigSpec.IntValue COOP_T1_AUTOFEED_TROUGH = COOP_MANAGER.TIER1.AUTOFEED_TROUGH;
     public static final ModConfigSpec.IntValue COOP_T1_HAY_HOPPER = COOP_MANAGER.TIER1.HAY_HOPPER;
@@ -69,7 +68,6 @@ public final class Config {
     public static final ModConfigSpec.BooleanValue BARN_REQUIRE_ENCLOSED = BARN_MANAGER.REQUIRE_ENCLOSED;
     public static final ModConfigSpec.BooleanValue BARN_REQUIRE_DOOR = BARN_MANAGER.REQUIRE_DOOR;
     public static final ModConfigSpec.IntValue BARN_MIN_DOOR_COUNT = BARN_MANAGER.MIN_DOOR_COUNT;
-    public static final ModConfigSpec.BooleanValue BARN_DEV_HINTS = BARN_MANAGER.DEV_HINTS;
     public static final ModConfigSpec.IntValue BARN_T1_FEED_TROUGH = BARN_MANAGER.TIER1.FEED_TROUGH;
     public static final ModConfigSpec.IntValue BARN_T1_AUTOFEED_TROUGH = BARN_MANAGER.TIER1.AUTOFEED_TROUGH;
     public static final ModConfigSpec.IntValue BARN_T1_HAY_HOPPER = BARN_MANAGER.TIER1.HAY_HOPPER;
@@ -289,7 +287,6 @@ public final class Config {
         public final ModConfigSpec.BooleanValue REQUIRE_ENCLOSED;
         public final ModConfigSpec.BooleanValue REQUIRE_DOOR;
         public final ModConfigSpec.IntValue MIN_DOOR_COUNT;
-        public final ModConfigSpec.BooleanValue DEV_HINTS;
         public final Tier TIER1;
         public final Tier TIER2;
         public final Tier TIER3;
@@ -328,11 +325,6 @@ public final class Config {
                     .comment("Minimum number of doors/fence gates required on building boundary")
                     .translation(prefix + ".min_door_count")
                     .defineInRange("minDoorCount", 1, 0, 8);
-
-            DEV_HINTS = builder
-                    .comment("Show detailed validation hints in development environment")
-                    .translation(prefix + ".validation_hints")
-                    .define("devHints", true);
 
             TIER1 = new Tier(builder, prefix, "tier1", tier1);
             TIER2 = new Tier(builder, prefix, "tier2", tier2);
@@ -387,9 +379,9 @@ public final class Config {
             LADDER_BASE_CHANCE = builder
                     .comment("Base chance for a mine ladder to appear after breaking a countable mine stone.",
                             "The final chance also includes stones-left, luck, enemy-clear, and buff modifiers.",
-                            "Value is a decimal chance: 0.012 means 1.2%.")
+                            "The Stardew Valley base value is 0.02 (2%).")
                     .translation("config.stardewcraft.mining.ladder_base_chance")
-                    .defineInRange("ladderBaseChance", 0.012D, 0.0D, 1.0D);
+                    .defineInRange("ladderBaseChance", 0.02D, 0.0D, 1.0D);
             builder.pop();
         }
     }

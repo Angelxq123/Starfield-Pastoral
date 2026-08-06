@@ -1,5 +1,6 @@
 package com.stardew.craft.client.gui.common;
 
+import com.stardew.craft.client.gui.StardewCollectivePauseScreen;
 import com.stardew.craft.sound.ModSounds;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,7 +16,7 @@ import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
-public class StardewObjectDialogueScreen extends Screen {
+public class StardewObjectDialogueScreen extends Screen implements StardewCollectivePauseScreen {
     private static final int TEXT_COLOR = 0x221122;
 
     private final List<Component> rawMessages;
@@ -269,9 +270,9 @@ public class StardewObjectDialogueScreen extends Screen {
         int maxWidth = mapping.ui(1200);
         int minWidth = mapping.ui(256);
         int wrapWidth = Math.max(1, Math.round((maxWidth - mapping.ui(16)) / textScale()));
-        List<net.minecraft.util.FormattedCharSequence> lines = splitLines(Component.literal(text), wrapWidth);
+        List<String> lines = splitLines(Component.literal(text), wrapWidth);
         int maxLineWidth = 1;
-        for (net.minecraft.util.FormattedCharSequence line : lines) {
+        for (String line : lines) {
             maxLineWidth = Math.max(maxLineWidth, this.font.width(line));
         }
         int textWidth = Math.round(maxLineWidth * textScale());
@@ -286,9 +287,9 @@ public class StardewObjectDialogueScreen extends Screen {
         int end = Math.max(0, Math.min(characterIndexInDialogue, all.length()));
         Component visible = Component.literal(all.substring(0, end));
         int wrapWidth = Math.max(1, Math.round((boxWidth - mapping.ui(16)) / textScale()));
-        List<net.minecraft.util.FormattedCharSequence> lines = splitLines(visible, wrapWidth);
+        List<String> lines = splitLines(visible, wrapWidth);
         int maxLineWidth = 0;
-        for (net.minecraft.util.FormattedCharSequence line : lines) {
+        for (String line : lines) {
             maxLineWidth = Math.max(maxLineWidth, this.font.width(line));
         }
 
@@ -299,27 +300,15 @@ public class StardewObjectDialogueScreen extends Screen {
         graphics.pose().pushPose();
         graphics.pose().scale(scale, scale, 1.0f);
         int drawY = y;
-        for (net.minecraft.util.FormattedCharSequence line : lines) {
+        for (String line : lines) {
             graphics.drawString(this.font, line, x, drawY, TEXT_COLOR, false);
             drawY += this.font.lineHeight;
         }
         graphics.pose().popPose();
     }
 
-    private List<net.minecraft.util.FormattedCharSequence> splitLines(Component text, int wrapWidth) {
-        List<net.minecraft.util.FormattedCharSequence> out = new ArrayList<>();
-        for (String rawLine : splitRawLines(text.getString())) {
-            if (rawLine.isEmpty()) {
-                out.add(net.minecraft.util.FormattedCharSequence.EMPTY);
-            } else {
-                out.addAll(this.font.split(Component.literal(rawLine), wrapWidth));
-            }
-        }
-        return out.isEmpty() ? List.of(net.minecraft.util.FormattedCharSequence.EMPTY) : out;
-    }
-
-    private List<String> splitRawLines(String text) {
-        return List.of(text.split("\n", -1));
+    private List<String> splitLines(Component text, int wrapWidth) {
+        return DialogueTextWrapper.wrap(this.font, text.getString(), wrapWidth);
     }
 
     private void drawContinueOrCloseIcon(GuiGraphics graphics) {

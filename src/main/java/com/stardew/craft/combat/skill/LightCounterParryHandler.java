@@ -1,25 +1,21 @@
 package com.stardew.craft.combat.skill;
 
-import com.stardew.craft.StardewCraft;
+import com.stardew.craft.combat.skill.handler.LightCounterSkillHandler;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
-@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class LightCounterParryHandler {
 
     private LightCounterParryHandler() {}
 
     @SuppressWarnings("null")
-    @SubscribeEvent
     public static void onPlayerHurt(LivingIncomingDamageEvent event) {
-        if (!(event.getEntity() instanceof Player player)) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
 
@@ -27,19 +23,25 @@ public final class LightCounterParryHandler {
         if (level.isClientSide) {
             return;
         }
-
-        long nowTick = level.getGameTime();
-        if (!LightCounterParryState.isActive(player, nowTick)) {
+        if (event.getAmount() <= 0.0f) {
             return;
         }
 
-        String weaponId = LightCounterParryState.getWeaponId(player);
+        long nowTick = level.getGameTime();
+        LightCounterSkillHandler.CounterActivation activation =
+                LightCounterSkillHandler.consumeParry(
+                        player,
+                        nowTick
+                ).orElse(null);
+        if (activation == null) {
+            return;
+        }
+
+        String weaponId = activation.weaponId();
         if (weaponId == null || weaponId.isEmpty()) {
             return;
         }
-
-        // Consume the parry window
-        LightCounterParryState.clear(player);
+        WeaponDamageSnapshot weaponSnapshot = activation.weaponSnapshot();
 
         // Reduce incoming damage to 40%
         event.setAmount(event.getAmount() * 0.4f);
@@ -53,17 +55,34 @@ public final class LightCounterParryHandler {
                     .tier(SkillContext.SkillTier.MINOR)
                     .damageMultiplier(1.2f)
                     .build();
-            WeaponSkillContextStore.setPending(player, context, nowTick + 5);
-            player.attack(attacker);
+            if (weaponSnapshot == null) {
+                WeaponSkillDamage.apply(
+                        player,
+                        attacker,
+                        context,
+                        nowTick + 5,
+                        WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
+                        WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
+                );
+            } else {
+                WeaponSkillDamage.apply(
+                        player,
+                        attacker,
+                        context,
+                        weaponSnapshot,
+                        nowTick + 5,
+                        WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
+                        WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
+                );
+            }
         }
 
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            WeaponSkillAnimationDispatcher.sendCounterAnim(
-                    serverPlayer,
-                    weaponId,
-                    "light_counter_counter",
-                    LightCounterParryState.COUNTER_ANIM_TICKS
-            );
-        }
+        WeaponSkillAnimationDispatcher.sendCounterAnim(
+                player,
+                weaponId,
+                "light_counter_counter",
+                LightCounterSkillHandler.COUNTER_ANIM_TICKS
+        );
     }
+
 }

@@ -3,15 +3,22 @@ package com.stardew.craft.combat.equipment;
 import com.stardew.craft.item.equipment.RingType;
 import com.stardew.craft.item.equipment.CombinedRingData;
 import com.stardew.craft.item.equipment.StardewRingItem;
+import com.stardew.craft.combat.CombatHealing;
+import com.stardew.craft.combat.CombatTargetRules;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewData;
 import com.stardew.craft.player.PlayerDataEventHandler;
+import com.stardew.craft.player.PlayerStardewDataAPI;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import java.util.ArrayList;
@@ -25,13 +32,21 @@ import java.util.List;
 @SuppressWarnings("null")
 public class RingEffectHandler {
 
-    @SubscribeEvent
+    @SubscribeEvent(
+            priority = EventPriority.LOWEST,
+            receiveCanceled = true
+    )
     public static void onMobKilled(LivingDeathEvent event) {
-        if (event.getSource() == null || !(event.getSource().getEntity() instanceof ServerPlayer player)) {
+        if (event.isCanceled()
+                || event.getSource() == null
+                || !(event.getSource().getEntity()
+                instanceof ServerPlayer player)) {
             return;
         }
         LivingEntity killed = event.getEntity();
-        if (killed instanceof ServerPlayer) return; // don't trigger on player kills
+        if (!CombatTargetRules.isCombatMonster(killed)) {
+            return;
+        }
 
         PlayerStardewData data = PlayerDataManager.getPlayerData(player);
         List<RingType> equippedRings = getEquippedRingTypes(data);
@@ -45,15 +60,13 @@ public class RingEffectHandler {
         switch (ring) {
             case VAMPIRE_RING -> {
                 // +2 HP on monster kill
-                int newHealth = Math.min(data.getHealth() + 2, data.getMaxHealth());
-                data.setHealth(newHealth);
-                PlayerDataEventHandler.syncPlayerData(player, data);
+                CombatHealing.heal(player, 2.0F);
             }
             case SOUL_SAPPER_RING -> {
                 // +4 stamina (energy) on monster kill
                 float newEnergy = Math.min(data.getEnergy() + 4.0f, data.getMaxEnergy());
                 data.setEnergy(newEnergy);
-                PlayerDataEventHandler.syncPlayerData(player, data);
+                PlayerDataEventHandler.syncPlayerVitals(player, data);
             }
             case SAVAGE_RING -> {
                 // +2 speed buff for 3 seconds on monster kill (use MC speed effect)
@@ -61,10 +74,16 @@ public class RingEffectHandler {
                         net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 60, 1, false, true));
             }
             case WARRIOR_RING -> {
-                // 10% chance: warrior energy (attack buff) for 5 seconds
-                if (player.getRandom().nextFloat() < 0.10f) {
-                    player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                            net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, 100, 0, false, true));
+                float luckLevel = PlayerStardewDataAPI.getLuckBuffLevel(player);
+                if (player.getRandom().nextFloat() < CombatRingRules.warriorTriggerChance(luckLevel)) {
+                    // SDV buff 20: +10 Attack for 5 seconds.
+                    PlayerStardewDataAPI.applyAttackBuff(player, 10, 100);
+                    player.playNotifySound(
+                            com.stardew.craft.sound.ModSounds.WARRIOR.get(),
+                            SoundSource.PLAYERS,
+                            1.0f,
+                            1.0f
+                    );
                 }
             }
             case NAPALM_RING -> {
@@ -73,9 +92,18 @@ public class RingEffectHandler {
                         2.0f, false, net.minecraft.world.level.Level.ExplosionInteraction.NONE);
             }
             case HOT_JAVA_RING -> {
-                // Drop coffee on monster kill (25% chance)
                 if (player.getRandom().nextFloat() < 0.25f) {
-                    // TODO: drop coffee item once beverages are implemented
+                    killed.spawnAtLocation(new ItemStack(com.stardew.craft.item.ModItems.COFFEE.get()));
+                } else if (player.getRandom().nextFloat() < 0.10f) {
+                    Item espresso = BuiltInRegistries.ITEM.get(
+                            ResourceLocation.fromNamespaceAndPath(
+                                    com.stardew.craft.StardewCraft.MODID,
+                                    "triple_shot_espresso"
+                            )
+                    );
+                    if (espresso != Items.AIR) {
+                        killed.spawnAtLocation(new ItemStack(espresso));
+                    }
                 }
             }
             default -> {}
@@ -83,7 +111,8 @@ public class RingEffectHandler {
     }
 
     /**
-     * Get the RingTypes currently equipped by a player (0-2 entries).
+     * Get the RingTypes currently equipped by a player. Combined rings contribute
+     * both component types.
      */
     public static List<RingType> getEquippedRingTypes(PlayerStardewData data) {
         List<RingType> result = new ArrayList<>(2);
@@ -111,37 +140,6 @@ public class RingEffectHandler {
     }
 
     /**
-     * Calculate total attack multiplier from equipped rings (Ruby Ring = +10%, Iridium Band = +10%).
-     * Returns 1.0 if no multiplier rings are equipped.
-     */
-    public static float getAttackMultiplier(PlayerStardewData data) {
-        float mult = 1.0f;
-        mult += getAttackMultFromRing(data.getEquippedLeftRing());
-        mult += getAttackMultFromRing(data.getEquippedRightRing());
-        return mult;
-    }
-
-    private static float getAttackMultFromRing(String itemId) {
-        if (itemId == null || itemId.isEmpty()) return 0f;
-        if (CombinedRingData.isEncodedEquipmentSlot(itemId)) {
-            float total = 0f;
-            for (net.minecraft.world.item.ItemStack ringStack : CombinedRingData.splitEquipmentSlot(itemId)) {
-                if (ringStack.getItem() instanceof StardewRingItem ring) {
-                    total += ring.getRingType().getAttackMultiplier();
-                }
-            }
-            return total;
-        }
-        ResourceLocation rl = ResourceLocation.tryParse(itemId);
-        if (rl == null) return 0f;
-        Item item = BuiltInRegistries.ITEM.get(rl);
-        if (item instanceof StardewRingItem ring) {
-            return ring.getRingType().getAttackMultiplier();
-        }
-        return 0f;
-    }
-
-    /**
      * 坚韧戒指：是否应减半负面效果持续时间。
      */
     public static boolean hasSturdy(ServerPlayer player) {
@@ -150,7 +148,7 @@ public class RingEffectHandler {
     }
 
     /**
-     * 盗贼戒指：是否应加倍怪物掉落。
+     * 盗贼戒指：是否应额外重掷怪物基础掉落表。
      */
     public static boolean hasBurglar(ServerPlayer player) {
         EquipmentStats stats = EquipmentResolver.getMergedStats(player);

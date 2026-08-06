@@ -7,6 +7,7 @@ import com.stardew.craft.api.v1.internal.farm.StardewFarmSnapshots;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.blockentity.MushroomBoxBlockEntity;
 import com.stardew.craft.farm.FarmCaveChoice;
+import com.stardew.craft.farm.FarmDailyProcessHelper;
 import com.stardew.craft.farm.FarmInstance;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.interior.InteriorSubspaceManager;
@@ -169,29 +170,36 @@ public final class FarmCaveDailyService {
             int absoluteDay,
             AtomicInteger fruitCount,
             AtomicInteger mushroomCount) {
-        if (!isFarmCaveLoadedNow(level, entry.caveOrigin())) {
-            return;
-        }
-        RandomSource random = DailySettlementRandom.forId(
-                worldSeed, absoluteDay, "farm_cave", stableUuid(entry.ownerId()));
-        StardewFarmCaveDailyHandlers.Context addonContext =
-                new StardewFarmCaveDailyHandlers.Context(
-                        level,
-                        StardewFarmSnapshots.from(entry.farm()),
-                        entry.caveOrigin(),
-                        random);
-        if (StardewFarmCaveDailyRegistry.runHandlers(addonContext)
-                == StardewFarmCaveDailyHandlers.Result.SKIP_DEFAULT) {
-            return;
-        }
-        if (entry.choice() == FarmCaveChoice.NONE) {
-            return;
-        }
-        if (entry.choice() == FarmCaveChoice.FRUIT_BATS) {
-            fruitCount.addAndGet(processFruitBats(
-                    level, entry.farm(), entry.caveOrigin(), random));
-        } else if (entry.choice() == FarmCaveChoice.MUSHROOMS) {
-            mushroomCount.addAndGet(processMushrooms(level, entry.caveOrigin(), random));
+        BlockPos caveMax = entry.caveOrigin().offset(
+                InteriorSubspaceManager.FARM_CAVE_SCHEM_W - 1,
+                0,
+                InteriorSubspaceManager.FARM_CAVE_SCHEM_L - 1);
+        try (var lease = FarmDailyProcessHelper.leaseBounds(
+                level, entry.caveOrigin(), caveMax)) {
+            if (!isFarmCaveLoadedNow(level, entry.caveOrigin())) {
+                return;
+            }
+            RandomSource random = DailySettlementRandom.forId(
+                    worldSeed, absoluteDay, "farm_cave", stableUuid(entry.ownerId()));
+            StardewFarmCaveDailyHandlers.Context addonContext =
+                    new StardewFarmCaveDailyHandlers.Context(
+                            level,
+                            StardewFarmSnapshots.from(entry.farm()),
+                            entry.caveOrigin(),
+                            random);
+            if (StardewFarmCaveDailyRegistry.runHandlers(addonContext)
+                    == StardewFarmCaveDailyHandlers.Result.SKIP_DEFAULT) {
+                return;
+            }
+            if (entry.choice() == FarmCaveChoice.NONE) {
+                return;
+            }
+            if (entry.choice() == FarmCaveChoice.FRUIT_BATS) {
+                fruitCount.addAndGet(processFruitBats(
+                        level, entry.farm(), entry.caveOrigin(), random));
+            } else if (entry.choice() == FarmCaveChoice.MUSHROOMS) {
+                mushroomCount.addAndGet(processMushrooms(level, entry.caveOrigin(), random));
+            }
         }
     }
 

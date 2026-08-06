@@ -16,7 +16,8 @@ public record DailySettlementContext(
         Set<UUID> farmOwnerIds,
         List<UUID> nonParticipantCleanupIds,
         List<UUID> allOnlinePlayerIds,
-        List<UUID> valleyOnlinePlayerIds) {
+        List<UUID> valleyOnlinePlayerIds,
+        String previousWeather) {
 
     public DailySettlementContext(
             int absoluteDay,
@@ -28,7 +29,7 @@ public record DailySettlementContext(
             List<UUID> playerIds,
             Set<UUID> farmOwnerIds) {
         this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
-                playerIds, farmOwnerIds, List.of(), playerIds, playerIds);
+                playerIds, farmOwnerIds, List.of(), playerIds, playerIds, "Sun");
     }
 
     public DailySettlementContext(
@@ -44,7 +45,24 @@ public record DailySettlementContext(
         this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
                 playerIds, farmOwnerIds, nonParticipantCleanupIds,
                 combinedAudience(playerIds, nonParticipantCleanupIds),
-                combinedAudience(playerIds, nonParticipantCleanupIds));
+                combinedAudience(playerIds, nonParticipantCleanupIds), "Sun");
+    }
+
+    public DailySettlementContext(
+            int absoluteDay,
+            int year,
+            int season,
+            int day,
+            int sleepMinute,
+            boolean seasonChanged,
+            List<UUID> playerIds,
+            Set<UUID> farmOwnerIds,
+            List<UUID> nonParticipantCleanupIds,
+            List<UUID> allOnlinePlayerIds,
+            List<UUID> valleyOnlinePlayerIds) {
+        this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                playerIds, farmOwnerIds, nonParticipantCleanupIds,
+                allOnlinePlayerIds, valleyOnlinePlayerIds, "Sun");
     }
 
     public DailySettlementContext {
@@ -53,6 +71,9 @@ public record DailySettlementContext(
         Objects.requireNonNull(nonParticipantCleanupIds, "nonParticipantCleanupIds");
         Objects.requireNonNull(allOnlinePlayerIds, "allOnlinePlayerIds");
         Objects.requireNonNull(valleyOnlinePlayerIds, "valleyOnlinePlayerIds");
+        previousWeather = previousWeather == null || previousWeather.isBlank()
+                ? "Sun"
+                : previousWeather;
         if (year < 1) {
             throw new IllegalArgumentException("year must be at least 1");
         }

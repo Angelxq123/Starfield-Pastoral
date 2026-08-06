@@ -253,7 +253,7 @@ class DailySettlementChunkLeaseTest {
         ParsedClass helper = parse(
                 PROJECT.resolve("src/main/java/com/stardew/craft/farm/FarmDailyProcessHelper.java"),
                 "FarmDailyProcessHelper");
-        MethodTree begin = helper.method("beginDailyProcess", 2);
+        MethodTree begin = helper.method("beginDailyProcess", 3);
         MethodTree end = helper.method("endDailyProcess", 1);
         assertTrue(invocations(begin).stream().anyMatch(call ->
                 methodName(call).equals("beginDailySettlementChunkLeaseScope")));

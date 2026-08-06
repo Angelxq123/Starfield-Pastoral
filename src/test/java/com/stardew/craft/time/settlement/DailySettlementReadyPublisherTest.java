@@ -31,6 +31,7 @@ class DailySettlementReadyPublisherTest {
         Map<UUID, Integer> wakes = new HashMap<>();
         Set<UUID> pending = new HashSet<>();
         int[] hookCalls = {0};
+        int[] deliveryCalls = {0};
 
         DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(
                 barrier, new DailySettlementReadyPublisher.Operations() {
@@ -48,6 +49,14 @@ class DailySettlementReadyPublisherTest {
                     }
 
                     @Override
+                    public void prepareDelivery(
+                            DailySettlementContext target,
+                            Map<UUID, DailySettlementBarrier.ReadyResult> results) {
+                        deliveryCalls[0]++;
+                        assertEquals(Set.of(playerA, playerB), results.keySet());
+                    }
+
+                    @Override
                     public boolean isOnline(UUID playerId) {
                         return true;
                     }
@@ -55,6 +64,7 @@ class DailySettlementReadyPublisherTest {
                     @Override
                     public void send(
                             UUID playerId, OvernightSettlementPayload payload) {
+                        assertEquals(1, deliveryCalls[0]);
                         sends.merge(playerId, 1, Integer::sum);
                         if (playerId.equals(playerA)) {
                             assertTrue(barrier.acknowledge(
@@ -90,6 +100,7 @@ class DailySettlementReadyPublisherTest {
         assertEquals(Map.of(playerA, 1, playerB, 1), sends);
         assertEquals(Map.of(playerA, 1, playerB, 2), wakes);
         assertEquals(1, hookCalls[0]);
+        assertEquals(1, deliveryCalls[0]);
         assertTrue(barrier.acknowledge(playerB, context.absoluteDay()));
         pending.remove(playerB);
         assertTrue(pending.isEmpty());

@@ -58,24 +58,9 @@ public final class FarmDebrisDailyService {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(frozenFarms, "frozenFarms");
         if (context.season() == 3) {
-            return new DebrisWorkUnit(level, context, List.of());
+            return new DebrisWorkUnit(level, context, Map.of());
         }
-
-        int spreadAttempts = adjustedAttemptCount(
-                WeatherManager.isRaining(level), context.day(), context.season() == 1 ? 30 : 20);
-        int randomAttempts = context.day() == 1
-                ? adjustedAttemptCount(WeatherManager.isRaining(level), context.day(), 20) : 0;
-        int springAttempts = context.day() == 1 && context.season() == 0
-                && context.absoluteDay() > 1
-                ? adjustedAttemptCount(WeatherManager.isRaining(level), context.day(), 40) : 0;
-
-        List<FarmState> farms = frozenFarms.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(java.util.Comparator.comparing(UUID::toString)))
-                .map(entry -> new FarmState(
-                        entry.getKey(), entry.getValue(), spreadAttempts, randomAttempts, springAttempts))
-                .filter(state -> state.farm.isInitialized() && !state.farm.hasActiveGoldClock())
-                .toList();
-        return new DebrisWorkUnit(level, context, farms);
+        return new DebrisWorkUnit(level, context, Map.copyOf(frozenFarms));
     }
 
     private static Map<UUID, FarmInstance> snapshotOnlineFarms(ServerLevel level) {
@@ -99,48 +84,55 @@ public final class FarmDebrisDailyService {
 
     private static void spawnRandomDebrisAttempt(
             ServerLevel level, FarmInstance farm, boolean weedsOnly, int season, RandomSource random) {
-        BlockPos target = findRandomEmptyPlace(level, farm, random);
-        if (target == null) {
-            return;
-        }
-        StardewFarmSnapshot farmSnapshot = StardewFarmSnapshots.from(farm);
-        boolean debrisRoll = random.nextBoolean();
-        BlockState placed = debrisRoll && !weedsOnly
-                ? randomDebrisState(random)
-                : ModBlocks.WILD_WEEDS.get().defaultBlockState()
-                        .setValue(WildWeedsBlock.SEASON, season)
-                        .setValue(WildWeedsBlock.VARIANT, random.nextInt(3));
-        if (random.nextDouble() < 0.05D) {
-            com.stardew.craft.tree.WildTrees.Def[] trees = {
-                    com.stardew.craft.tree.WildTrees.OAK,
-                    com.stardew.craft.tree.WildTrees.MAPLE,
-                    com.stardew.craft.tree.WildTrees.PINE
-            };
-            com.stardew.craft.tree.WildTrees.Def tree = trees[random.nextInt(trees.length)];
-            BlockState sapling = (random.nextInt(3) == 0
-                    ? tree.sapling0().get() : tree.sapling1().get()).defaultBlockState();
-            sapling = StardewFarmDebrisPlacementRegistry.resolve(
+        BlockPos min = farm.getFarmBoundsMin();
+        BlockPos max = farm.getFarmBoundsMax();
+        int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
+        int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
+        try (var lease = FarmDailyProcessHelper.leasePosition(
+                level, new BlockPos(x, min.getY(), z), 0)) {
+            BlockPos target = findRandomEmptyPlace(level, farm, x, z);
+            if (target == null) {
+                return;
+            }
+            StardewFarmSnapshot farmSnapshot = StardewFarmSnapshots.from(farm);
+            boolean debrisRoll = random.nextBoolean();
+            BlockState placed = debrisRoll && !weedsOnly
+                    ? randomDebrisState(random)
+                    : ModBlocks.WILD_WEEDS.get().defaultBlockState()
+                            .setValue(WildWeedsBlock.SEASON, season)
+                            .setValue(WildWeedsBlock.VARIANT, random.nextInt(3));
+            if (random.nextDouble() < 0.05D) {
+                com.stardew.craft.tree.WildTrees.Def[] trees = {
+                        com.stardew.craft.tree.WildTrees.OAK,
+                        com.stardew.craft.tree.WildTrees.MAPLE,
+                        com.stardew.craft.tree.WildTrees.PINE
+                };
+                com.stardew.craft.tree.WildTrees.Def tree = trees[random.nextInt(trees.length)];
+                BlockState sapling = (random.nextInt(3) == 0
+                        ? tree.sapling0().get() : tree.sapling1().get()).defaultBlockState();
+                sapling = StardewFarmDebrisPlacementRegistry.resolve(
+                        new StardewFarmDebrisPlacements.Context(
+                                level,
+                                farmSnapshot,
+                                target,
+                                sapling,
+                                StardewFarmDebrisPlacements.Stage.YOUNG_TREE,
+                                random));
+                if (sapling.canSurvive(level, target)) {
+                    level.setBlock(target, sapling, 3);
+                    return;
+                }
+            }
+            placed = StardewFarmDebrisPlacementRegistry.resolve(
                     new StardewFarmDebrisPlacements.Context(
                             level,
                             farmSnapshot,
                             target,
-                            sapling,
-                            StardewFarmDebrisPlacements.Stage.YOUNG_TREE,
+                            placed,
+                            StardewFarmDebrisPlacements.Stage.DEBRIS,
                             random));
-            if (sapling.canSurvive(level, target)) {
-                level.setBlock(target, sapling, 3);
-                return;
-            }
+            level.setBlock(target, placed, 3);
         }
-        placed = StardewFarmDebrisPlacementRegistry.resolve(
-                new StardewFarmDebrisPlacements.Context(
-                        level,
-                        farmSnapshot,
-                        target,
-                        placed,
-                        StardewFarmDebrisPlacements.Stage.DEBRIS,
-                        random));
-        level.setBlock(target, placed, 3);
     }
 
     private static void spreadFromExistingDebrisAttempt(
@@ -159,55 +151,61 @@ public final class FarmDebrisDailyService {
             dz = random.nextInt(3) - 1;
         } while (dx == 0 && dz == 0);
         BlockPos source = farmObjects.get(random.nextInt(farmObjects.size()));
-        BlockState sourceState = level.getBlockState(source);
-        Block sourceBlock = sourceState.getBlock();
-        if (!isSpreadSource(sourceState)) {
-            return;
-        }
-        BlockPos target = findDebrisPlaceNear(level, farm, source.offset(dx, 0, dz));
-        if (target == null || level.getBlockEntity(target) != null
-                || !canDebrisReplace(level, target, level.getBlockState(target))) {
-            return;
-        }
-        BlockState placed;
-        if (sourceBlock instanceof WildWeedsBlock) {
-            random.nextBoolean();
-            placed = ModBlocks.WILD_WEEDS.get().defaultBlockState()
-                    .setValue(WildWeedsBlock.SEASON, season)
-                    .setValue(WildWeedsBlock.VARIANT, random.nextInt(3));
-        } else {
-            if (!random.nextBoolean()) {
+        try (var lease = FarmDailyProcessHelper.leasePosition(level, source, 1)) {
+            BlockState sourceState = level.getBlockState(source);
+            Block sourceBlock = sourceState.getBlock();
+            if (!isSpreadSource(sourceState)) {
                 return;
             }
-            placed = switch (random.nextInt(4)) {
-                case 0, 1 -> fallenLogState(random);
-                case 2 -> ModBlocks.EARTH_SHALE.get().defaultBlockState();
-                default -> ModBlocks.MOSSY_SANDSTONE.get().defaultBlockState();
-            };
-        }
-        if (StardewCropRuntime.inspect(level, target) != null
-                && !StardewCropRuntime.remove(
-                        level, target, StardewCropRemovalCause.FARM_DEBRIS)) {
-            return;
-        }
-        clearTilledGroundBelow(level, target);
-        level.setBlock(target, placed, 3);
-        if (!farmObjects.contains(target)) {
-            farmObjects.add(target.immutable());
+            BlockPos target = findDebrisPlaceNear(level, farm, source.offset(dx, 0, dz));
+            if (target == null || level.getBlockEntity(target) != null
+                    || !canDebrisReplace(level, target, level.getBlockState(target))) {
+                return;
+            }
+            BlockState placed;
+            if (sourceBlock instanceof WildWeedsBlock) {
+                random.nextBoolean();
+                placed = ModBlocks.WILD_WEEDS.get().defaultBlockState()
+                        .setValue(WildWeedsBlock.SEASON, season)
+                        .setValue(WildWeedsBlock.VARIANT, random.nextInt(3));
+            } else {
+                if (!random.nextBoolean()) {
+                    return;
+                }
+                placed = switch (random.nextInt(4)) {
+                    case 0, 1 -> fallenLogState(random);
+                    case 2 -> ModBlocks.EARTH_SHALE.get().defaultBlockState();
+                    default -> ModBlocks.MOSSY_SANDSTONE.get().defaultBlockState();
+                };
+            }
+            if (StardewCropRuntime.inspect(level, target) != null
+                    && !StardewCropRuntime.remove(
+                            level, target, StardewCropRemovalCause.FARM_DEBRIS)) {
+                return;
+            }
+            clearTilledGroundBelow(level, target);
+            level.setBlock(target, placed, 3);
+            if (!farmObjects.contains(target)) {
+                farmObjects.add(target.immutable());
+            }
         }
     }
 
     private static void collectFarmObjectAt(
             ServerLevel level, FarmInstance farm, List<BlockPos> objects, int x, int z) {
-        BlockPos top = findTopBlock(level, x, z,
-                farm.getFarmBoundsMin().getY(), farm.getFarmBoundsMax().getY());
-        if (top == null) {
-            return;
-        }
-        BlockState state = level.getBlockState(top);
-        Block block = state.getBlock();
-        if (isSpreadSource(state) || block instanceof FenceBlock || level.getBlockEntity(top) != null) {
-            objects.add(top.immutable());
+        try (var lease = FarmDailyProcessHelper.leasePosition(
+                level, new BlockPos(x, farm.getFarmBoundsMin().getY(), z), 0)) {
+            BlockPos top = findTopBlock(level, x, z,
+                    farm.getFarmBoundsMin().getY(), farm.getFarmBoundsMax().getY());
+            if (top == null) {
+                return;
+            }
+            BlockState state = level.getBlockState(top);
+            Block block = state.getBlock();
+            if (isSpreadSource(state) || block instanceof FenceBlock
+                    || level.getBlockEntity(top) != null) {
+                objects.add(top.immutable());
+            }
         }
     }
 
@@ -236,15 +234,17 @@ public final class FarmDebrisDailyService {
     private static final class DebrisWorkUnit implements DailySettlementWorkUnit {
         private final ServerLevel level;
         private final DailySettlementContext context;
-        private final List<FarmState> farms;
+        private final Map<UUID, FarmInstance> frozenFarms;
+        private List<FarmState> farms;
         private int farmIndex;
 
         private DebrisWorkUnit(
-                ServerLevel level, DailySettlementContext context, List<FarmState> farms) {
+                ServerLevel level,
+                DailySettlementContext context,
+                Map<UUID, FarmInstance> frozenFarms) {
             this.level = level;
             this.context = context;
-            this.farms = List.copyOf(farms);
-            advanceCompletedFarms();
+            this.frozenFarms = Map.copyOf(frozenFarms);
         }
 
         @Override
@@ -260,6 +260,7 @@ public final class FarmDebrisDailyService {
 
         @Override
         public boolean isComplete() {
+            initializeFarms();
             advanceCompletedFarms();
             return farmIndex >= farms.size();
         }
@@ -302,6 +303,7 @@ public final class FarmDebrisDailyService {
         }
 
         private FarmState currentFarm() {
+            initializeFarms();
             advanceCompletedFarms();
             if (farmIndex >= farms.size()) {
                 throw new IllegalStateException("Farm debris work is complete");
@@ -315,6 +317,33 @@ public final class FarmDebrisDailyService {
             }
         }
 
+        private void initializeFarms() {
+            if (farms != null) {
+                return;
+            }
+            if (frozenFarms.isEmpty()) {
+                farms = List.of();
+                return;
+            }
+            boolean raining = WeatherManager.isRaining(level);
+            int spreadAttempts = adjustedAttemptCount(
+                    raining, context.day(), context.season() == 1 ? 30 : 20);
+            int randomAttempts = context.day() == 1
+                    ? adjustedAttemptCount(raining, context.day(), 20) : 0;
+            int springAttempts = context.day() == 1 && context.season() == 0
+                    && context.absoluteDay() > 1
+                    ? adjustedAttemptCount(raining, context.day(), 40) : 0;
+            farms = frozenFarms.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey(
+                            java.util.Comparator.comparing(UUID::toString)))
+                    .map(entry -> new FarmState(
+                            entry.getKey(), entry.getValue(),
+                            spreadAttempts, randomAttempts, springAttempts))
+                    .filter(state -> state.farm.isInitialized()
+                            && !state.farm.hasActiveGoldClock())
+                    .toList();
+        }
+
         private static long stableStepId(UUID ownerId, FarmDebrisCursor.Step step) {
             long phase = (long) step.phase().ordinal() << 56;
             return ownerId.getMostSignificantBits() ^ ownerId.getLeastSignificantBits()
@@ -323,11 +352,10 @@ public final class FarmDebrisDailyService {
     }
 
     @Nullable
-    private static BlockPos findRandomEmptyPlace(ServerLevel level, FarmInstance farm, RandomSource random) {
+    private static BlockPos findRandomEmptyPlace(
+            ServerLevel level, FarmInstance farm, int x, int z) {
         BlockPos min = farm.getFarmBoundsMin();
         BlockPos max = farm.getFarmBoundsMax();
-        int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
-        int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
         BlockPos top = findTopBlock(level, x, z, min.getY(), max.getY());
         if (top == null || !isDiggableFarmGround(level.getBlockState(top).getBlock())
                 || level.getBlockState(top).is(Blocks.FARMLAND)) {

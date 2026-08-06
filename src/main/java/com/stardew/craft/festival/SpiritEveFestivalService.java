@@ -261,9 +261,12 @@ public final class SpiritEveFestivalService {
         if (player == null) {
             return;
         }
-        CONFIRM_STATE.clearPlayerDialogs(player.getUUID());
+        CONFIRM_STATE.clearPlayer(player.getUUID());
         LAST_OUTSIDE_ENTRY.remove(player.getUUID());
         LAST_INSIDE_ENTRY.remove(player.getUUID());
+        if (!EXIT_VOTE_PARTICIPANTS.isEmpty()) {
+            checkExitVote(player.serverLevel());
+        }
     }
 
     public static void markFestivalDialogueSeen(ServerPlayer player, String npcId) {
@@ -340,7 +343,7 @@ public final class SpiritEveFestivalService {
     }
 
     public static boolean tryOpenGoldenPumpkinChest(ServerPlayer player, BlockPos pos) {
-        if (player == null || pos == null || !GOLDEN_PUMPKIN_CHEST_POS.equals(pos) || !isParticipant(player)) {
+        if (!canOpenGoldenPumpkinChest(player, pos)) {
             return false;
         }
         ensureRewardProps(player.serverLevel());
@@ -348,20 +351,31 @@ public final class SpiritEveFestivalService {
         return true;
     }
 
+    public static boolean canOpenGoldenPumpkinChest(ServerPlayer player, BlockPos pos) {
+        return player != null
+            && GOLDEN_PUMPKIN_CHEST_POS.equals(pos)
+            && isParticipant(player);
+    }
+
     public static boolean tryUseShortcutMinecart(ServerPlayer player, MinecartStationEntity minecart) {
-        if (player == null || minecart == null) {
+        if (!canUseShortcutMinecart(player, minecart)) {
             return false;
         }
         String stationId = minecart.getStationId();
-        boolean spiritEveMinecart = SHORTCUT_MINECART_ID.equals(stationId) || RETURN_MINECART_ID.equals(stationId);
-        if (!spiritEveMinecart) {
-            return false;
-        }
         if (RETURN_MINECART_ID.equals(stationId) || !isParticipant(player)) {
             return true;
         }
         sendShortcutQuestion(player);
         return true;
+    }
+
+    public static boolean canUseShortcutMinecart(ServerPlayer player, MinecartStationEntity minecart) {
+        if (player == null || minecart == null) {
+            return false;
+        }
+        String stationId = minecart.getStationId();
+        return RETURN_MINECART_ID.equals(stationId)
+            || SHORTCUT_MINECART_ID.equals(stationId);
     }
 
     public static void handleQuestionResponse(ServerPlayer player, String context, String choiceId) {

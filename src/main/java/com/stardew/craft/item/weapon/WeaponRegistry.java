@@ -2,6 +2,8 @@ package com.stardew.craft.item.weapon;
 
 import com.stardew.craft.combat.WeaponType;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +38,6 @@ public class WeaponRegistry {
                         .cooldown(5)
                         .icon(WeaponIcons.SKILL_RUSTY_SWORD_1)
                         .build())
-            .loreKey("stardewcraft.weapon.rusty_sword.lore")
                 .build());
 
         register(WeaponData.builder("steel_smallsword")
@@ -93,7 +94,6 @@ public class WeaponRegistry {
                 .cooldown(5)
                 .icon(WeaponIcons.SKILL_PIRATE_SWORD_1)
                 .build())
-            .loreKey("stardewcraft.weapon.pirate_sword.lore")
             .build());
 
         register(WeaponData.builder("silver_saber")
@@ -101,6 +101,7 @@ public class WeaponRegistry {
             .level(2)
             .damage(8, 15)
             .defense(1)
+            .precision(1)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("silver_foldback")
                 .nameKey("stardewcraft.weapon.skill.silver_foldback")
@@ -139,6 +140,7 @@ public class WeaponRegistry {
             .damage(8, 18)
             .speed(2)
             .defense(1)
+            .precision(5)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("forest_blessing")
                 .nameKey("stardewcraft.weapon.skill.forest_blessing")
@@ -159,7 +161,7 @@ public class WeaponRegistry {
             .damage(12, 25)
             .speed(-2)
             .defense(1)
-            .weight(3)
+            .knockback(1.2)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("steel_spine_fury")
                 .nameKey("stardewcraft.weapon.skill.steel_spine_fury")
@@ -180,7 +182,8 @@ public class WeaponRegistry {
             .level(4)
             .damage(20, 20) // 极度稳定
             .speed(4)
-            .weight(2)
+            .knockback(0.8)
+            .precision(5)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("meowmere_shot")
                 .nameKey("stardewcraft.weapon.skill.meowmere_shot")
@@ -204,7 +207,6 @@ public class WeaponRegistry {
                 .cooldown(15) // 15秒冷却
                 .icon(WeaponIcons.SKILL_MEOWMERE_2)
                 .build())
-            .loreKey("stardewcraft.weapon.meowmere.lore")
             .build());
 
         // Lv.5 - 中级
@@ -213,7 +215,8 @@ public class WeaponRegistry {
             .level(5)
             .damage(20, 30)
             .speed(4)
-            .weight(2)
+            .knockback(0.8)
+            .precision(5)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("bone_fracture")
                 .nameKey("stardewcraft.weapon.skill.bone_fracture")
@@ -234,7 +237,7 @@ public class WeaponRegistry {
             .damage(20, 32)
             .speed(-4)
             .defense(2)
-            .weight(3)
+            .knockback(1.3)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("claymore_foldback")
                 .nameKey("stardewcraft.weapon.skill.claymore_foldback")
@@ -254,7 +257,8 @@ public class WeaponRegistry {
             .damage(18, 35)
             .speed(-1)
             .defense(2)
-            .weight(4)
+            .knockback(1.4)
+            .precision(6)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("tide_mark")
                 .nameKey("stardewcraft.weapon.skill.tide_mark")
@@ -285,6 +289,7 @@ public class WeaponRegistry {
             .level(5)
             .damage(22, 29)
             .defense(1)
+            .precision(10)
             .critChance(0.00)
             .skill1(WeaponSkillData.builder("templar_vow")
                 .nameKey("stardewcraft.weapon.skill.templar_vow")
@@ -316,6 +321,7 @@ public class WeaponRegistry {
             .level(6)
             .damage(20, 30)
             .speed(2)
+            .precision(9)
             .critChance(0.04)
             .skill1(WeaponSkillData.builder("insect_eye_stance")
                 .nameKey("stardewcraft.weapon.skill.insect_eye_stance")
@@ -348,7 +354,7 @@ public class WeaponRegistry {
             .damage(30, 45)
             .speed(-1)
             .critChance(0.02)
-            .critPower(1.1)
+            .critMultiplier(3.2)
             .skill1(WeaponSkillData.builder("obsidian_resonance")
                 .nameKey("stardewcraft.weapon.skill.obsidian_resonance")
                 .descriptionKeys(
@@ -380,7 +386,7 @@ public class WeaponRegistry {
             .damage(26, 42)
             .speed(-2)
             .defense(1)
-            .weight(2)
+            .knockback(1.1)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("ossified_mark")
                 .nameKey("stardewcraft.weapon.skill.ossified_mark")
@@ -444,7 +450,7 @@ public class WeaponRegistry {
             .damage(29, 44)
             .speed(-3)
             .defense(3)
-            .weight(3)
+            .knockback(1.2)
             .critChance(0.02)
             .skill1(WeaponSkillData.builder("tempered_quench")
                 .nameKey("stardewcraft.weapon.skill.tempered_quench")
@@ -476,7 +482,7 @@ public class WeaponRegistry {
             .damage(26, 42)
             .defense(4)
             .critChance(0.02)
-            .critPower(1.1)
+            .critMultiplier(3.2)
             .skill1(WeaponSkillData.builder("yeti_tooth_mark")
                 .nameKey("stardewcraft.weapon.skill.yeti_tooth_mark")
                 .descriptionKeys(
@@ -506,8 +512,9 @@ public class WeaponRegistry {
             .level(8)
             .damage(28, 46)
             .speed(4)
+            .precision(5)
             .critChance(0.02)
-            .critPower(1.2)
+            .critMultiplier(3.4)
             .skill1(WeaponSkillData.builder("steel_falchion_line")
                 .nameKey("stardewcraft.weapon.skill.steel_falchion_line")
                 .descriptionKeys(
@@ -538,7 +545,7 @@ public class WeaponRegistry {
             .level(9)
             .damage(30, 45)
             .speed(-5)
-            .weight(5)
+            .knockback(1.5)
             .critChance(0.04)
             .skill1(WeaponSkillData.builder("dark_sword_blood_debt")
                 .nameKey("stardewcraft.weapon.skill.dark_sword_blood_debt")
@@ -570,9 +577,9 @@ public class WeaponRegistry {
             .level(10)
             .damage(55, 64)
             .defense(3)
-            .weight(3)
+            .knockback(1.2)
             .critChance(0.015)
-            .critPower(1.25)
+            .critMultiplier(3.5)
             .skill1(WeaponSkillData.builder("lava_katana_brand")
                 .nameKey("stardewcraft.weapon.skill.lava_katana_brand")
                 .descriptionKeys(
@@ -604,7 +611,7 @@ public class WeaponRegistry {
             .level(13)
             .damage(75, 90)
             .critChance(0.02)
-            .critPower(1.50)
+            .critMultiplier(4.0)
             .skill1(WeaponSkillData.builder("dragon_breath_thrust")
                 .nameKey("stardewcraft.weapon.skill.dragon_breath_thrust")
                 .descriptionKeys(
@@ -743,7 +750,7 @@ public class WeaponRegistry {
             .level(1)
             .damage(1, 3)
             .critChance(0.04)
-            .critPower(1.02)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("carving_thrust")
                 .nameKey("stardewcraft.weapon.skill.carving_thrust")
                 .descriptionKeys(
@@ -763,7 +770,7 @@ public class WeaponRegistry {
             .level(1)
             .damage(2, 4)
             .critChance(0.03)
-            .critPower(1.02)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("iron_dirk_thrust")
                 .nameKey("stardewcraft.weapon.skill.iron_dirk_thrust")
                 .descriptionKeys(
@@ -783,8 +790,8 @@ public class WeaponRegistry {
             .level(1)
             .damage(1, 5)
             .critChance(0.02)
-            .critPower(1.10)
-            .weight(5)
+            .critMultiplier(3.2)
+            .knockback(1.0)
             .skill1(WeaponSkillData.builder("wind_spire_thrust")
                 .nameKey("stardewcraft.weapon.skill.wind_spire_thrust")
                 .descriptionKeys(
@@ -803,8 +810,9 @@ public class WeaponRegistry {
             .type(WeaponType.DAGGER)
             .level(2)
             .damage(3, 5)
+            .precision(5)
             .critChance(0.04)
-            .critPower(1.02)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("elf_blade_leaf")
                 .nameKey("stardewcraft.weapon.skill.elf_blade_leaf")
                 .descriptionKeys(
@@ -823,8 +831,9 @@ public class WeaponRegistry {
             .type(WeaponType.DAGGER)
             .level(4)
             .damage(7, 12)
+            .precision(5)
             .critChance(0.04)
-            .critPower(1.25)
+            .critMultiplier(3.5)
             .skill1(WeaponSkillData.builder("burglar_shank")
                 .nameKey("stardewcraft.weapon.skill.burglar_shank")
                 .descriptionKeys(
@@ -843,9 +852,10 @@ public class WeaponRegistry {
             .type(WeaponType.DAGGER)
             .level(4)
             .damage(4, 10)
+            .precision(10)
             .critChance(0.03)
-            .critPower(1.50)
-            .weight(5)
+            .critMultiplier(4.0)
+            .knockback(1.0)
             .skill1(WeaponSkillData.builder("crystal_dagger_layer")
                 .nameKey("stardewcraft.weapon.skill.crystal_dagger_layer")
                 .descriptionKeys(
@@ -864,7 +874,7 @@ public class WeaponRegistry {
             .level(4)
             .damage(10, 20)
             .critChance(0.04)
-            .critPower(1.25)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("shadow_dagger_execute")
                 .nameKey("stardewcraft.weapon.skill.shadow_dagger_execute")
                 .descriptionKeys(
@@ -883,8 +893,9 @@ public class WeaponRegistry {
             .type(WeaponType.DAGGER)
             .level(8)
             .damage(24, 30)
+            .precision(8)
             .critChance(0.06)
-            .critPower(1.40)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("wicked_kris_venom_ripple")
                 .nameKey("stardewcraft.weapon.skill.wicked_kris_venom_ripple")
                 .descriptionKeys(
@@ -916,9 +927,10 @@ public class WeaponRegistry {
             .level(8)
             .damage(30, 40)
             .speed(1)
-            .weight(5)
+            .rawSpeed(3)
+            .knockback(1.0)
             .critChance(0.02)
-            .critPower(1.40)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("galaxy_dagger_starstab")
                 .nameKey("stardewcraft.weapon.skill.galaxy_dagger_starstab")
                 .descriptionKeys(
@@ -949,10 +961,11 @@ public class WeaponRegistry {
             .level(11)
             .damage(32, 38)
             .speed(1)
+            .rawSpeed(3)
             .defense(6)
-            .weight(5)
+            .knockback(1.0)
             .critChance(0.03)
-            .critPower(1.25)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("dwarf_dagger_thrust")
                 .nameKey("stardewcraft.weapon.skill.dwarf_dagger_thrust")
                 .descriptionKeys(
@@ -984,7 +997,7 @@ public class WeaponRegistry {
             .level(12)
             .damage(20, 35)
             .critChance(0.10)
-            .critPower(3.00)
+            .critMultiplier(7.0)
             .skill1(WeaponSkillData.builder("iridium_needle_thrust")
                 .nameKey("stardewcraft.weapon.skill.iridium_needle_thrust")
                 .descriptionKeys(
@@ -1017,8 +1030,8 @@ public class WeaponRegistry {
             .level(12)
             .damage(40, 50)
             .critChance(0.05)
-            .critPower(2.00)
-            .weight(5)
+            .critMultiplier(5.0)
+            .knockback(1.0)
             .skill1(WeaponSkillData.builder("dragontooth_shiv_stab")
                 .nameKey("stardewcraft.weapon.skill.dragontooth_shiv_stab")
                 .descriptionKeys(
@@ -1050,10 +1063,11 @@ public class WeaponRegistry {
             .level(16)
             .damage(50, 70)
             .speed(1)
+            .rawSpeed(3)
             .defense(3)
-            .weight(5)
+            .knockback(1.0)
             .critChance(0.06)
-            .critPower(2.00)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("infinity_dagger_singularity_stab")
                 .nameKey("stardewcraft.weapon.skill.infinity_dagger_singularity_stab")
                 .descriptionKeys(
@@ -1083,8 +1097,9 @@ public class WeaponRegistry {
             .type(WeaponType.DAGGER)
             .level(5)
             .damage(15, 26)
+            .precision(8)
             .critChance(0.02)
-            .critPower(1.10)
+            .critMultiplier(3.0)
             .skill1(WeaponSkillData.builder("fishcatch_thrust")
                 .nameKey("stardewcraft.weapon.skill.fishcatch_thrust")
                 .descriptionKeys(
@@ -1115,18 +1130,20 @@ public class WeaponRegistry {
             .type(WeaponType.DAGGER)
             .level(12)
             .damage(24, 30)
-            .weight(0.5)
+            .knockback(0.5)
+            .precision(8)
             .critChance(0.06)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
 
         register(WeaponData.builder("abbys_planchette")
             .type(WeaponType.DAGGER)
             .level(12)
             .damage(24, 30)
-            .weight(0.5)
+            .knockback(0.5)
+            .precision(8)
             .critChance(0.06)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
 
         // ============== 棍棒武器 ==============
@@ -1154,62 +1171,63 @@ public class WeaponRegistry {
             .type(WeaponType.CLUB)
             .level(12)
             .damage(40, 55)
-            .speed(-12)
-            .weight(1.5)
+            .speed(-2)
+            .knockback(1.5)
             .critChance(0.02)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
         register(WeaponData.builder("sams_old_guitar")
             .type(WeaponType.CLUB)
             .level(12)
             .damage(40, 55)
-            .speed(-12)
-            .weight(1.5)
+            .speed(-2)
+            .knockback(1.5)
             .critChance(0.02)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
         register(WeaponData.builder("marus_wrench")
             .type(WeaponType.CLUB)
             .level(12)
             .damage(40, 55)
-            .speed(-12)
-            .weight(1.5)
+            .speed(-2)
+            .knockback(1.5)
             .critChance(0.02)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
         register(WeaponData.builder("harveys_mallet")
             .type(WeaponType.CLUB)
             .level(12)
             .damage(40, 55)
-            .speed(-12)
-            .weight(1.5)
+            .speed(-2)
+            .knockback(1.5)
             .critChance(0.02)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
         register(WeaponData.builder("pennys_fryer")
             .type(WeaponType.CLUB)
             .level(12)
             .damage(40, 55)
-            .speed(-12)
-            .weight(1.5)
+            .speed(-2)
+            .knockback(1.5)
             .critChance(0.02)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
         register(WeaponData.builder("sebs_lost_mace")
             .type(WeaponType.CLUB)
             .level(12)
             .damage(40, 55)
-            .speed(-12)
-            .weight(1.5)
+            .speed(-2)
+            .knockback(1.5)
             .critChance(0.02)
-            .critPower(3.0)
+            .critMultiplier(3.0)
             .build());
 
         register(WeaponData.builder("galaxy_hammer")
             .type(WeaponType.CLUB)
             .level(13)
             .damage(70, 90)
-            .speed(-2)
+            .speed(2)
+            .knockback(1.0)
             .critChance(0.02)
             .build());
 
@@ -1217,34 +1235,38 @@ public class WeaponRegistry {
             .type(WeaponType.CLUB)
             .level(17)
             .damage(100, 120)
-            .speed(-2)
+            .speed(2)
             .defense(1)
+            .knockback(1.0)
             .critChance(0.02)
             .build());
         register(WeaponData.builder("leahs_whittler")
             .type(WeaponType.SWORD)
             .level(12)
             .damage(30, 45)
-            .speed(-2)
-            .weight(1.0)
+            .speed(-1)
+            .knockback(1.0)
             .critChance(0.02)
-            .critPower(3.2)
+            .critMultiplier(3.2)
             .build());
         register(WeaponData.builder("haleys_iron")
             .type(WeaponType.SWORD)
             .level(12)
             .damage(30, 45)
-            .speed(-2)
-            .weight(1.0)
+            .speed(-1)
+            .knockback(1.0)
             .critChance(0.02)
-            .critPower(3.2)
+            .critMultiplier(3.2)
             .build());
         
         // TODO: 后续添加更多武器
     }
     
     private static void register(WeaponData data) {
-        WEAPONS.put(data.getId(), data);
+        WeaponData previous = WEAPONS.putIfAbsent(data.getId(), data);
+        if (previous != null) {
+            throw new IllegalStateException("Duplicate weapon id: " + data.getId());
+        }
     }
     
     /**
@@ -1264,7 +1286,14 @@ public class WeaponRegistry {
     /**
      * 获取所有武器ID
      */
-    public static Iterable<String> getAllIds() {
-        return WEAPONS.keySet();
+    public static Collection<String> getAllIds() {
+        return Collections.unmodifiableSet(WEAPONS.keySet());
+    }
+
+    /**
+     * Immutable view used by validation, tooling and data generation.
+     */
+    public static Collection<WeaponData> getAll() {
+        return Collections.unmodifiableCollection(WEAPONS.values());
     }
 }

@@ -2,6 +2,7 @@ package com.stardew.craft.manager;
 
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.nature.PastureGrassBlock;
+import com.stardew.craft.farm.FarmDailyProcessHelper;
 import com.stardew.craft.farm.FarmInstance;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.time.StardewTimeManager;
@@ -138,26 +139,34 @@ public class PastureGrassGrowthManager extends SavedData {
         RandomSource random = DailySettlementRandom.forId(
                 level.getSeed(), context.absoluteDay(), "pasture_grass_spawn", stableId);
         if (task.springPlacement) {
-            BlockPos place = findRandomGrassPlace(level, task.farm, random);
-            if (place != null) {
-                placeGrass(level, place, 4, random);
+            BlockPos column = randomFarmColumn(task.farm, random);
+            try (var lease = FarmDailyProcessHelper.leasePosition(level, column, 0)) {
+                BlockPos place = findRandomGrassPlace(
+                        level, task.farm, column.getX(), column.getZ());
+                if (place != null) {
+                    placeGrass(level, place, 4, random);
+                }
             }
             return;
         }
 
         for (int tries = 0; tries < 3; tries++) {
-            BlockPos place = findRandomGrassPlace(level, task.farm, random);
-            boolean grass = random.nextDouble() < 0.15D;
-            boolean treeRoll = !grass && random.nextDouble() < 0.35D;
-            if (treeRoll) {
-                if (random.nextDouble() < 0.25D) {
-                    canceledDailySpawns.add(task.ownerId);
-                    return;
+            BlockPos column = randomFarmColumn(task.farm, random);
+            try (var lease = FarmDailyProcessHelper.leasePosition(level, column, 0)) {
+                BlockPos place = findRandomGrassPlace(
+                        level, task.farm, column.getX(), column.getZ());
+                boolean grass = random.nextDouble() < 0.15D;
+                boolean treeRoll = !grass && random.nextDouble() < 0.35D;
+                if (treeRoll) {
+                    if (random.nextDouble() < 0.25D) {
+                        canceledDailySpawns.add(task.ownerId);
+                        return;
+                    }
+                    continue;
                 }
-                continue;
-            }
-            if (grass && place != null) {
-                placeGrass(level, place, random.nextInt(2) + 1, random);
+                if (grass && place != null) {
+                    placeGrass(level, place, random.nextInt(2) + 1, random);
+                }
             }
         }
     }
@@ -169,45 +178,49 @@ public class PastureGrassGrowthManager extends SavedData {
             int pass,
             Set<Long> knownPositions,
             List<BlockPos> grassPositions) {
-        if (!level.isLoaded(pos)) {
-            return;
-        }
-        BlockState grass = level.getBlockState(pos);
-        if (!(grass.getBlock() instanceof PastureGrassBlock)) {
-            return;
-        }
-        if (context.season() == 3) {
-            level.removeBlock(pos, false);
-            return;
-        }
-
-        RandomSource random = DailySettlementRandom.forPosition(
-                level.getSeed(), context.absoluteDay(), "pasture_grass_" + pass, pos);
-        if (!FarmDailyDecisions.rollGrassSource(random)) {
-            return;
-        }
-        int clumps = grass.getValue(PastureGrassBlock.CLUMPS);
-        if (clumps < 4) {
-            int grown = Math.min(4, clumps + random.nextInt(3));
-            if (grown != clumps) {
-                level.setBlock(pos, grass.setValue(PastureGrassBlock.CLUMPS, grown), Block.UPDATE_ALL);
+        try (var lease = FarmDailyProcessHelper.leasePosition(level, pos, 1)) {
+            if (!level.isLoaded(pos)) {
+                return;
             }
-            return;
-        }
-
-        for (BlockPos neighbor : List.of(pos.north(), pos.south(), pos.east(), pos.west())) {
-            if (!level.isLoaded(neighbor) || !FarmDailyDecisions.rollGrassNeighbor(random)
-                    || !level.getBlockState(neighbor).isAir()) {
-                continue;
+            BlockState grass = level.getBlockState(pos);
+            if (!(grass.getBlock() instanceof PastureGrassBlock)) {
+                return;
             }
-            BlockState spread = grass.getBlock().defaultBlockState()
-                    .setValue(PastureGrassBlock.VARIANT, FarmDailyDecisions.rollGrassVariant(random))
-                    .setValue(PastureGrassBlock.CLUMPS, random.nextInt(2) + 1);
-            if (isDiggableFarmGround(level.getBlockState(neighbor.below()).getBlock())
-                    && spread.canSurvive(level, neighbor)) {
-                level.setBlock(neighbor, spread, Block.UPDATE_ALL);
-                if (knownPositions.add(neighbor.asLong())) {
-                    grassPositions.add(neighbor.immutable());
+            if (context.season() == 3) {
+                level.removeBlock(pos, false);
+                return;
+            }
+
+            RandomSource random = DailySettlementRandom.forPosition(
+                    level.getSeed(), context.absoluteDay(), "pasture_grass_" + pass, pos);
+            if (!FarmDailyDecisions.rollGrassSource(random)) {
+                return;
+            }
+            int clumps = grass.getValue(PastureGrassBlock.CLUMPS);
+            if (clumps < 4) {
+                int grown = Math.min(4, clumps + random.nextInt(3));
+                if (grown != clumps) {
+                    level.setBlock(pos,
+                            grass.setValue(PastureGrassBlock.CLUMPS, grown), Block.UPDATE_ALL);
+                }
+                return;
+            }
+
+            for (BlockPos neighbor : List.of(pos.north(), pos.south(), pos.east(), pos.west())) {
+                if (!level.isLoaded(neighbor) || !FarmDailyDecisions.rollGrassNeighbor(random)
+                        || !level.getBlockState(neighbor).isAir()) {
+                    continue;
+                }
+                BlockState spread = grass.getBlock().defaultBlockState()
+                        .setValue(PastureGrassBlock.VARIANT,
+                                FarmDailyDecisions.rollGrassVariant(random))
+                        .setValue(PastureGrassBlock.CLUMPS, random.nextInt(2) + 1);
+                if (isDiggableFarmGround(level.getBlockState(neighbor.below()).getBlock())
+                        && spread.canSurvive(level, neighbor)) {
+                    level.setBlock(neighbor, spread, Block.UPDATE_ALL);
+                    if (knownPositions.add(neighbor.asLong())) {
+                        grassPositions.add(neighbor.immutable());
+                    }
                 }
             }
         }
@@ -225,11 +238,9 @@ public class PastureGrassGrowthManager extends SavedData {
 
     @Nullable
     private static BlockPos findRandomGrassPlace(
-            ServerLevel level, FarmInstance farm, RandomSource random) {
+            ServerLevel level, FarmInstance farm, int x, int z) {
         BlockPos min = farm.getFarmBoundsMin();
         BlockPos max = farm.getFarmBoundsMax();
-        int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
-        int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
         for (int y = max.getY(); y >= min.getY(); y--) {
             BlockPos ground = new BlockPos(x, y, z);
             if (!level.isLoaded(ground)) {
@@ -246,6 +257,14 @@ public class PastureGrassGrowthManager extends SavedData {
         return null;
     }
 
+    private static BlockPos randomFarmColumn(FarmInstance farm, RandomSource random) {
+        BlockPos min = farm.getFarmBoundsMin();
+        BlockPos max = farm.getFarmBoundsMax();
+        int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
+        int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
+        return new BlockPos(x, min.getY(), z);
+    }
+
     private static boolean isDiggableFarmGround(Block block) {
         return block == ModBlocks.YELLOW_DIRT.get() || block == Blocks.GRASS_BLOCK;
     }
@@ -257,27 +276,31 @@ public class PastureGrassGrowthManager extends SavedData {
         for (FarmInstance farm : farms) {
             BlockPos min = farm.getFarmBoundsMin();
             BlockPos max = farm.getFarmBoundsMax();
-            for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
-                for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
-                    long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
-                    if (!scannedChunks.add(key) || !level.hasChunk(cx, cz)) {
-                        continue;
-                    }
-                    int minX = Math.max(min.getX(), cx << 4);
-                    int maxX = Math.min(max.getX(), (cx << 4) + 15);
-                    int minZ = Math.max(min.getZ(), cz << 4);
-                    int maxZ = Math.min(max.getZ(), (cz << 4) + 15);
-                    for (int x = minX; x <= maxX; x++) {
-                        for (int z = minZ; z <= maxZ; z++) {
-                            int top = level.getHeight(
-                                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                                    x, z);
-                            int minY = Math.max(min.getY(), top - 3);
-                            int maxY = Math.min(max.getY(), top + 1);
-                            for (int y = minY; y <= maxY; y++) {
-                                BlockPos pos = new BlockPos(x, y, z);
-                                if (level.getBlockState(pos).getBlock() instanceof PastureGrassBlock) {
-                                    results.add(pos.immutable());
+            try (var lease = FarmDailyProcessHelper.leaseBounds(level, min, max)) {
+                for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
+                    for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
+                        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
+                        if (!scannedChunks.add(key)) {
+                            continue;
+                        }
+                        int minX = Math.max(min.getX(), cx << 4);
+                        int maxX = Math.min(max.getX(), (cx << 4) + 15);
+                        int minZ = Math.max(min.getZ(), cz << 4);
+                        int maxZ = Math.min(max.getZ(), (cz << 4) + 15);
+                        for (int x = minX; x <= maxX; x++) {
+                            for (int z = minZ; z <= maxZ; z++) {
+                                int top = level.getHeight(
+                                        net.minecraft.world.level.levelgen.Heightmap.Types
+                                                .MOTION_BLOCKING_NO_LEAVES,
+                                        x, z);
+                                int minY = Math.max(min.getY(), top - 3);
+                                int maxY = Math.min(max.getY(), top + 1);
+                                for (int y = minY; y <= maxY; y++) {
+                                    BlockPos pos = new BlockPos(x, y, z);
+                                    if (level.getBlockState(pos).getBlock()
+                                            instanceof PastureGrassBlock) {
+                                        results.add(pos.immutable());
+                                    }
                                 }
                             }
                         }

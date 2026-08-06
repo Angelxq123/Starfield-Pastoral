@@ -38,9 +38,23 @@ final class DailySettlementCommitHooks {
             public void mail(List<UUID> playerIds, int absoluteDay) {
                 com.stardew.craft.mail.MailService.deliverTomorrowMailForPlayers(
                         server(), playerIds, absoluteDay);
+                for (UUID playerId : playerIds) {
+                    net.minecraft.server.level.ServerPlayer player =
+                            server().getPlayerList().getPlayer(playerId);
+                    if (player != null) {
+                        com.stardew.craft.npc.runtime.NpcFriendshipMailService.onNewDay(player);
+                    }
+                }
                 com.stardew.craft.time.StardewTimeManager.get()
                         .scheduleDateTriggeredMailForPlayers(
                                 server(), playerIds, absoluteDay);
+                for (UUID playerId : playerIds) {
+                    net.minecraft.server.level.ServerPlayer player =
+                            server().getPlayerList().getPlayer(playerId);
+                    if (player != null) {
+                        com.stardew.craft.npc.runtime.NpcFriendshipRecipeMailService.onNewDay(player);
+                    }
+                }
             }
 
             @Override

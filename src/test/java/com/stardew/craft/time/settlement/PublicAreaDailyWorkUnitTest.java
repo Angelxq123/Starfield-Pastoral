@@ -425,6 +425,9 @@ class PublicAreaDailyWorkUnitTest {
         assertTrue(factory.toString().contains("FarmCaveDailyEntry"));
         assertTrue(invocationsNamed(factory, "processFarmCave").size() == 1);
         assertFalse(hasLoop(item), "the cursor item delegates one snapshotted farm without a farm loop");
+        assertTrue(scan(item, TryTree.class).stream()
+                        .anyMatch(tree -> invocationsNamed(tree, "leaseBounds").size() == 1),
+                "each farm cave item must release its temporary cave chunk lease");
         assertTrue(invocationsNamed(item, "processFruitBats").size()
                 + invocationsNamed(item, "processMushrooms").size() >= 2);
     }

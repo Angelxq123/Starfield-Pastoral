@@ -97,6 +97,7 @@ public class AnimalGrowthManager extends SavedData {
     private BuildingUtilityContext activeBuildingUtilityContext =
             BuildingUtilityContext.EMPTY;
     private boolean dailyProcessing;
+    private Integer activeOvernightTimeMinutes;
 
     private sealed interface AnimalDailyAction
             permits AnimalDayAction, AutomaticFeedAction {
@@ -192,9 +193,20 @@ public class AnimalGrowthManager extends SavedData {
     }
 
     public void growDaily(ServerLevel level) {
+        growDaily(level, StardewTimeManager.get().getCurrentTime());
+    }
+
+    /** Runs the source overnight transition using the actual sleep time. */
+    public void growDaily(ServerLevel level, int timeWentToSleepMinutes) {
+        DailySettlementContext current =
+                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get());
+        DailySettlementContext context = new DailySettlementContext(
+                current.absoluteDay(), current.year(), current.season(), current.day(),
+                timeWentToSleepMinutes, current.seasonChanged(), current.playerIds(),
+                current.farmOwnerIds(), current.nonParticipantCleanupIds(),
+                current.allOnlinePlayerIds(), current.valleyOnlinePlayerIds());
         DailySettlementWorkUnits.drain(createDailyWorkUnit(
-                level,
-                DailySettlementContextFactory.captureCurrentDay(StardewTimeManager.get())));
+                level, context));
     }
 
     public DailySettlementWorkUnit createDailyWorkUnit(
@@ -207,6 +219,7 @@ public class AnimalGrowthManager extends SavedData {
             throw new IllegalStateException("Animal daily work is already active");
         }
         dailyProcessing = true;
+        activeOvernightTimeMinutes = context.sleepMinute();
         try {
             AnimalWorldData worldData = AnimalWorldData.get(level);
             List<Long> animalSnapshot = worldData.getAnimals().stream()
@@ -508,6 +521,7 @@ public class AnimalGrowthManager extends SavedData {
     }
 
     private void finishDailyProcessing() {
+        activeOvernightTimeMinutes = null;
         dailyProcessing = false;
     }
 
@@ -648,13 +662,14 @@ public class AnimalGrowthManager extends SavedData {
             if (player == null) {
                 continue;
             }
-            player.sendSystemMessage(Component.translatable(
-                    "stardewcraft.manager.construction.completed",
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
+                    player,
                     Component.translatable(
-                            "stardewcraft.manager.building."
-                                    + building.buildingType()
-                                            .family()),
-                    building.buildingType().tier()));
+                            "stardewcraft.manager.construction.completed",
+                            Component.translatable(
+                                    "stardewcraft.manager.building."
+                                            + building.buildingType().family()),
+                            building.buildingType().tier()));
             String sourceName =
                     building.buildingType().family()
                             .equalsIgnoreCase("coop")
@@ -1045,13 +1060,16 @@ public class AnimalGrowthManager extends SavedData {
                         definition,
                         reducerState(record),
                         homeSituation,
-                        toSourceClockTime(StardewTimeManager.get().getCurrentTime())
+                        activeSourceClockTime()
                 )
         );
         applyReducerState(record, begin.state());
         if (begin.returnedHomeEarly()) {
             teleportAnimalInsideBuilding(level, record, building);
-            return false;
+            begin = AnimalDayReducer.continueAfterOpenDoorReturn(
+                    definition, begin, activeSourceClockTime());
+            applyReducerState(record, begin.state());
+            animalOutdoors = false;
         }
 
         // Preserve the established extension point after cooldown/home processing and before
@@ -1554,6 +1572,13 @@ public class AnimalGrowthManager extends SavedData {
         int hours = Math.max(0, minutesSinceMidnight) / 60;
         int minutes = Math.max(0, minutesSinceMidnight) % 60;
         return hours * 100 + minutes;
+    }
+
+    private int activeSourceClockTime() {
+        int minutes = activeOvernightTimeMinutes == null
+                ? StardewTimeManager.get().getCurrentTime()
+                : activeOvernightTimeMinutes;
+        return toSourceClockTime(minutes);
     }
 
     private RandomSource reproductionRandom(UUID farmOwner, int absoluteDaysPlayed) {

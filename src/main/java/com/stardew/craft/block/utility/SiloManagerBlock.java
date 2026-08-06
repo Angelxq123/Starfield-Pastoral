@@ -163,7 +163,19 @@ public class SiloManagerBlock extends Block {
                 .canOperateBuilding(serverPlayer.getUUID(), owner)) {
             refundRelocationItem(stack, serverLevel, pos, serverPlayer);
             serverLevel.removeBlock(pos, false);
-            serverPlayer.sendSystemMessage(Component.translatable("message.stardew_craft.manager.relocate_owner_mismatch"));
+            com.stardew.craft.network.ObjectDialogueService.show(
+                    serverPlayer,
+                    "message.stardew_craft.manager.relocate_owner_mismatch");
+            return;
+        }
+        java.util.UUID destinationOwner = com.stardew.craft.farm.FarmResourceOwnership
+                .resolveManageableOwner(serverLevel, pos, serverPlayer);
+        if (destinationOwner == null || !destinationOwner.toString().equals(owner)) {
+            refundRelocationItem(stack, serverLevel, pos, serverPlayer);
+            serverLevel.removeBlock(pos, false);
+            com.stardew.craft.network.ObjectDialogueService.show(
+                    serverPlayer,
+                    "message.stardew_craft.manager.relocate_owner_mismatch");
             return;
         }
 
@@ -171,8 +183,13 @@ public class SiloManagerBlock extends Block {
         if (!validation.success()) {
             refundRelocationItem(stack, serverLevel, pos, serverPlayer);
             serverLevel.removeBlock(pos, false);
-            serverPlayer.sendSystemMessage(Component.translatable("stardewcraft.manager.relocation.failed",
-                    Component.translatable("block.stardewcraft.silo_manager"), validation.message()));
+            com.stardew.craft.network.ObjectDialogueService.show(
+                    serverPlayer,
+                    Component.translatable(
+                            "stardewcraft.manager.relocation.failed",
+                            Component.translatable(
+                                    "block.stardewcraft.silo_manager"),
+                            validation.message()));
             return;
         }
 
@@ -191,7 +208,6 @@ public class SiloManagerBlock extends Block {
         );
 
         if (moved) {
-            serverPlayer.sendSystemMessage(Component.translatable("message.stardew_craft.manager.relocate_pending"));
             return;
         }
 
@@ -217,11 +233,16 @@ public class SiloManagerBlock extends Block {
     }
 
     public static boolean tryBuild(ServerLevel level, BlockPos managerPos, Player player) {
-        AnimalWorldData data = AnimalWorldData.get(level);
-        java.util.UUID owner = com.stardew.craft.core.FarmAreaResolver.getOwnerAt(managerPos);
-        if (owner == null) {
-            owner = player.getUUID();
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return false;
         }
+        java.util.UUID owner = com.stardew.craft.farm.FarmResourceOwnership
+                .resolveManageableOwner(level, managerPos, serverPlayer);
+        if (owner == null) {
+            return false;
+        }
+        AnimalWorldData data = AnimalWorldData.get(level);
+        data.reconcileFarmOwnership(level);
         Optional<AnimalBuildingRecord> existingOpt = data.findBuildingByManagerAnyOwner(
             level.dimension().location().toString(),
             "silo",
@@ -229,21 +250,17 @@ public class SiloManagerBlock extends Block {
         );
 
         if (existingOpt.isPresent()) {
-            player.sendSystemMessage(Component.translatable("stardewcraft.manager.building.already_built",
-                    Component.translatable("stardewcraft.manager.building.silo")));
             return false;
         }
 
         SiloManagerValidationService.ValidationResult validation = SiloManagerValidationService.validate(level, managerPos);
         if (!validation.success()) {
-            player.sendSystemMessage(Component.translatable("stardewcraft.manager.validation.failed",
-                    Component.translatable("block.stardewcraft.silo_manager"), validation.message()));
             level.playSound(null, managerPos, SoundEvents.VILLAGER_NO, SoundSource.BLOCKS, 0.8f, 1.0f);
             return false;
         }
 
         AnimalBuildingType targetType = AnimalBuildingType.SILO_TIER_1;
-        String buildingId = data.createOrUpdateBuildingAtManager(
+        data.createOrUpdateBuildingAtManager(
             level,
             targetType,
             owner,
@@ -259,8 +276,6 @@ public class SiloManagerBlock extends Block {
             Collections.emptySet()
         );
 
-        player.sendSystemMessage(Component.translatable("stardewcraft.manager.building.created",
-                Component.translatable("stardewcraft.manager.building.silo"), 1, buildingId));
         level.playSound(null, managerPos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.6f, 1.1f);
 
         // 通知任务系统：建筑已建造
@@ -292,6 +307,7 @@ public class SiloManagerBlock extends Block {
 
     public static boolean tryDemolishBuilding(ServerLevel level, BlockPos managerPos, ServerPlayer player) {
         AnimalWorldData data = AnimalWorldData.get(level);
+        data.reconcileFarmOwnership(level);
         Optional<AnimalBuildingRecord> existingOpt = data.findBuildingByManagerAnyOwner(
             level.dimension().location().toString(),
             "silo",
@@ -299,17 +315,18 @@ public class SiloManagerBlock extends Block {
         );
 
         if (existingOpt.isEmpty()) {
-            player.sendSystemMessage(Component.translatable("message.stardew_craft.manager.no_building"));
             return false;
         }
 
         AnimalBuildingRecord existing = existingOpt.get();
         if (!com.stardew.craft.farm.FarmInstanceRegistry.get()
                 .canOperateBuilding(player.getUUID(), existing.ownerPlayerUuid())) {
-            player.sendSystemMessage(Component.translatable("message.stardew_craft.manager.relocate_owner_mismatch"));
+            com.stardew.craft.network.ObjectDialogueService.show(
+                    player,
+                    "message.stardew_craft.manager.relocate_owner_mismatch");
             return false;
         }
-        int removedAnimals = data.demolishBuildingAndRemoveAnimals(existing.buildingId());
+        data.demolishBuildingAndRemoveAnimals(existing.buildingId());
 
         BlockState state = level.getBlockState(managerPos);
         level.levelEvent(2001, managerPos, Block.getId(state));
@@ -317,12 +334,12 @@ public class SiloManagerBlock extends Block {
         popResource(level, managerPos, new ItemStack(ModBlocks.SILO_MANAGER.get()));
         level.playSound(null, managerPos, SoundEvents.ITEM_BREAK, SoundSource.BLOCKS, 0.8f, 1.0f);
 
-        player.sendSystemMessage(Component.translatable("message.stardew_craft.manager.demolished", removedAnimals));
         return true;
     }
 
     public static boolean tryRelocateManager(ServerLevel level, BlockPos managerPos, ServerPlayer player) {
         AnimalWorldData data = AnimalWorldData.get(level);
+        data.reconcileFarmOwnership(level);
         Optional<AnimalBuildingRecord> existingOpt = data.findBuildingByManagerAnyOwner(
             level.dimension().location().toString(),
             "silo",
@@ -330,14 +347,15 @@ public class SiloManagerBlock extends Block {
         );
 
         if (existingOpt.isEmpty()) {
-            player.sendSystemMessage(Component.translatable("message.stardew_craft.manager.no_building"));
             return false;
         }
 
         AnimalBuildingRecord existing = existingOpt.get();
         if (!com.stardew.craft.farm.FarmInstanceRegistry.get()
                 .canOperateBuilding(player.getUUID(), existing.ownerPlayerUuid())) {
-            player.sendSystemMessage(Component.translatable("message.stardew_craft.manager.relocate_owner_mismatch"));
+            com.stardew.craft.network.ObjectDialogueService.show(
+                    player,
+                    "message.stardew_craft.manager.relocate_owner_mismatch");
             return false;
         }
         data.deactivateBuildingForRelocation(existing.buildingId());
@@ -362,7 +380,6 @@ public class SiloManagerBlock extends Block {
         level.levelEvent(2001, managerPos, Block.getId(state));
         level.removeBlock(managerPos, false);
         level.playSound(null, managerPos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.6f, 1.0f);
-        player.sendSystemMessage(Component.translatable("message.stardew_craft.manager.relocate_pickup"));
         return true;
     }
 }

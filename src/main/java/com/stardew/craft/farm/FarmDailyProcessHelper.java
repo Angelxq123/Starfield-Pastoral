@@ -1,9 +1,6 @@
 package com.stardew.craft.farm;
 
 import com.stardew.craft.core.FarmAreaResolver;
-import com.stardew.craft.server.performance.PerformanceCounter;
-import com.stardew.craft.server.performance.PerformanceTiming;
-import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +14,7 @@ import java.util.UUID;
 
 /**
  * 农场相关 SavedData 日处理工具。
- * 核心原则：「只处理在线玩家的农场 + 公共区域」。
+ * 核心原则：「只处理本次冻结的活跃农场 + 公共区域」。
  *
  * 位置数据天然按坐标区分（因为每个农场在不同的网格槽位），
  * 不需要将 Map 改为 per-UUID 嵌套结构。
@@ -34,6 +31,8 @@ public final class FarmDailyProcessHelper {
 
     /** 日结算期间缓存的在线玩家 UUID 集合，避免对每个位置线性搜索玩家列表 */
     private static Set<UUID> cachedOnlinePlayers;
+    /** 本次冻结的活跃农场 owner，包含当天被访客进入的农场。 */
+    private static Set<UUID> cachedActiveFarmOwners;
     private static ServerLevel dailySettlementLevel;
     private static FarmChunkManager.DailySettlementChunkLeaseScope<ServerLevel>
             dailySettlementLeaseScope;
@@ -46,12 +45,36 @@ public final class FarmDailyProcessHelper {
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
             onlinePlayers.add(player.getUUID());
         }
-        beginDailyProcess(level, onlinePlayers);
+        Set<UUID> activeOwners = new HashSet<>();
+        int dayBeingSettled = OfflineFarmCatchUp.computeAbsoluteDay();
+        for (FarmInstance farm : FarmInstanceRegistry.get().getAllFarms()) {
+            if (shouldSettleFarm(farm, onlinePlayers, dayBeingSettled)) {
+                activeOwners.add(farm.getOwnerUUID());
+            }
+        }
+        beginDailyProcess(level, onlinePlayers, activeOwners);
     }
 
     public static void beginDailyProcess(ServerLevel level, Collection<UUID> playerIds) {
+        Set<UUID> owners = new HashSet<>();
+        int dayBeingSettled = OfflineFarmCatchUp.computeAbsoluteDay();
+        Set<UUID> frozenPlayers = Set.copyOf(playerIds);
+        for (FarmInstance farm : FarmInstanceRegistry.get().getAllFarms()) {
+            if (shouldSettleFarm(farm, frozenPlayers, dayBeingSettled)) {
+                owners.add(farm.getOwnerUUID());
+            }
+        }
+        beginDailyProcess(level, frozenPlayers, owners);
+    }
+
+    public static void beginDailyProcess(
+            ServerLevel level,
+            Collection<UUID> playerIds,
+            Collection<UUID> farmOwnerIds
+    ) {
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(playerIds, "playerIds");
+        Objects.requireNonNull(farmOwnerIds, "farmOwnerIds");
         if (dailySettlementLeaseScope != null) {
             throw new IllegalStateException("Daily settlement process is already active");
         }
@@ -61,6 +84,7 @@ public final class FarmDailyProcessHelper {
                 .beginDailySettlementChunkLeaseScope(level);
         try {
             cachedOnlinePlayers = Set.copyOf(playerIds);
+            cachedActiveFarmOwners = Set.copyOf(farmOwnerIds);
             // 递减在线玩家农场的跨季宽限倒计时
             tickGracePeriods(level);
         } catch (RuntimeException | Error exception) {
@@ -90,6 +114,7 @@ public final class FarmDailyProcessHelper {
         } finally {
             dailySettlementLeaseScope = null;
             dailySettlementLevel = null;
+            cachedActiveFarmOwners = null;
             cachedOnlinePlayers = null;
         }
     }
@@ -111,6 +136,9 @@ public final class FarmDailyProcessHelper {
         // 检查 owner 或任一成员是否在线
         FarmInstance farm = FarmInstanceRegistry.get().getFarm(owner);
         if (farm == null) return false;
+        if (cachedActiveFarmOwners != null) {
+            return cachedActiveFarmOwners.contains(owner);
+        }
         if (cachedOnlinePlayers != null) {
             for (UUID farmer : farm.getAllFarmers()) {
                 if (cachedOnlinePlayers.contains(farmer)) {
@@ -129,6 +157,9 @@ public final class FarmDailyProcessHelper {
     public static boolean shouldProcessFarmForPlayer(ServerLevel level, UUID playerId) {
         FarmInstance farm = FarmInstanceRegistry.get().getFarmForPlayer(playerId);
         if (farm == null) return false;
+        if (cachedActiveFarmOwners != null) {
+            return cachedActiveFarmOwners.contains(farm.getOwnerUUID());
+        }
         for (UUID farmer : farm.getAllFarmers()) {
             if (cachedOnlinePlayers != null
                     ? cachedOnlinePlayers.contains(farmer)
@@ -167,6 +198,9 @@ public final class FarmDailyProcessHelper {
      * 获取当前所有有在线成员的农场 owner UUID 集合。
      */
     public static Set<UUID> getOnlineFarmOwners(ServerLevel level) {
+        if (cachedActiveFarmOwners != null) {
+            return Set.copyOf(cachedActiveFarmOwners);
+        }
         Set<UUID> owners = new HashSet<>();
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
             UUID ownerUUID = FarmInstanceRegistry.get().getOwnerForPlayer(player.getUUID());
@@ -175,6 +209,22 @@ public final class FarmDailyProcessHelper {
             }
         }
         return owners;
+    }
+
+    public static boolean shouldSettleFarm(
+            FarmInstance farm,
+            Set<UUID> onlinePlayers,
+            int dayBeingSettled
+    ) {
+        if (farm.wasActiveOnDay(dayBeingSettled)) {
+            return true;
+        }
+        for (UUID farmer : farm.getAllFarmers()) {
+            if (onlinePlayers.contains(farmer)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -199,16 +249,13 @@ public final class FarmDailyProcessHelper {
             int remaining = farm.getGraceDaysLeft();
             if (remaining <= 0) continue;
 
-            // 检查是否有任一成员在线
-            boolean anyOnline = false;
-            for (UUID farmer : farm.getAllFarmers()) {
-                if (cachedOnlinePlayers != null ? cachedOnlinePlayers.contains(farmer)
-                        : level.getServer().getPlayerList().getPlayer(farmer) != null) {
-                    anyOnline = true;
-                    break;
-                }
-            }
-            if (!anyOnline) continue;
+            boolean active = cachedActiveFarmOwners != null
+                    ? cachedActiveFarmOwners.contains(farm.getOwnerUUID())
+                    : farm.getAllFarmers().stream().anyMatch(farmer ->
+                            cachedOnlinePlayers != null
+                                    ? cachedOnlinePlayers.contains(farmer)
+                                    : level.getServer().getPlayerList().getPlayer(farmer) != null);
+            if (!active) continue;
 
             remaining--;
             farm.setGraceDaysLeft(remaining);
@@ -219,11 +266,13 @@ public final class FarmDailyProcessHelper {
                 ServerPlayer p = level.getServer().getPlayerList().getPlayer(farmer);
                 if (p == null) continue;
                 if (remaining > 0) {
-                    p.sendSystemMessage(
+                    com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
+                            p,
                             net.minecraft.network.chat.Component.translatable(
                                     "stardewcraft.farm.grace_period.remaining", remaining));
                 } else {
-                    p.sendSystemMessage(
+                    com.stardew.craft.network.GlobalHudMessagePayload.sendTo(
+                            p,
                             net.minecraft.network.chat.Component.translatable(
                                     "stardewcraft.farm.grace_period.expired"));
                 }

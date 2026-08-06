@@ -86,11 +86,9 @@ class ClientOvernightFlowTest {
         assertFalse(flow.isLocked());
         assertEquals(List.of(226), gateway.acknowledgedDays);
         assertEquals(List.of(
-                        ClientOvernightHandler.SettlementStage.PASS_OUT_OVERLAY,
-                        ClientOvernightHandler.SettlementStage.PASS_OUT_SUMMARY,
                         ClientOvernightHandler.SettlementStage.LEVEL_UP,
                         ClientOvernightHandler.SettlementStage.LEVEL_UP,
-                        ClientOvernightHandler.SettlementStage.SHIPPING),
+                        ClientOvernightHandler.SettlementStage.SAVE),
                 gateway.startedStages);
 
         assertTrue(flow.handleDismissInput());

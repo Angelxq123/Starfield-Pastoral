@@ -180,6 +180,11 @@ public class FarmChunkManager {
     public void onPlayerEnterFarm(ServerLevel level, ServerPlayer player, FarmInstance farm) {
         int slot = farm.getSlotIndex();
         FarmOccupancyTracker.Transition transition = occupancy.enter(player.getUUID(), slot);
+        int absoluteDay = OfflineFarmCatchUp.computeAbsoluteDay();
+        if (!farm.wasActiveOnDay(absoluteDay)) {
+            farm.markActiveOnDay(absoluteDay);
+            FarmInstanceRegistry.get().setDirty();
+        }
 
         if (!transition.changed()) {
             return;

@@ -21,6 +21,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "daily_process_scope");
     private static final List<String> WORLD = List.of(
             "festival_season_prep",
+            "npc_friendship_daily",
+            "npc_dialogue_events",
+            "npc_dialogue_topics",
             "weather_npc_reset",
             "crops",
             "trees",
@@ -244,6 +247,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                         context, playerId -> cleanupNonParticipant(context, playerId));
                 case "daily_process_scope" -> atomic(name, () -> beginDailyProcess(context));
                 case "festival_season_prep" -> atomic(name, () -> festivalAndSeason(context));
+                case "npc_friendship_daily" -> atomic(name, () -> friendshipDaily(context));
+                case "npc_dialogue_events" -> atomic(name, this::dialogueEventsDaily);
+                case "npc_dialogue_topics" -> atomic(name, () -> dialogueTopicsDaily(context));
                 case "weather_npc_reset" -> atomic(name, () -> weatherAndNpcs(context));
                 case "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
                         "sprinklers", "pasture_grass", "animals", "fish_ponds",
@@ -317,7 +323,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         private void beginDailyProcess(DailySettlementContext context) {
             ServerLevel level = level();
             com.stardew.craft.farm.FarmDailyProcessHelper.beginDailyProcess(
-                    level, context.allOnlinePlayerIds());
+                    level, context.allOnlinePlayerIds(), context.farmOwnerIds());
             activeLevel = level;
             dailyProcessActive = true;
             try {
@@ -431,6 +437,22 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             com.stardew.craft.weather.WeatherManager.applyWeatherForNewDay(
                     level(), context.day(), seasonName(context.season()), context.absoluteDay());
             com.stardew.craft.npc.runtime.NpcSpawnManager.resetScheduledNpcsForNewDay(level());
+        }
+
+        private void friendshipDaily(DailySettlementContext context) {
+            com.stardew.craft.npc.runtime.NpcFriendshipDailyService.onNewDay(
+                    server().overworld(), context.absoluteDay() - 1, context.absoluteDay());
+        }
+
+        private void dialogueEventsDaily() {
+            com.stardew.craft.npc.runtime.NpcDialogueEventData.get(server()).onNewDay();
+        }
+
+        private void dialogueTopicsDaily(DailySettlementContext context) {
+            int previousAbsoluteDay = Math.max(1, context.absoluteDay() - 1);
+            int previousYear = (previousAbsoluteDay - 1) / 112 + 1;
+            com.stardew.craft.npc.runtime.NpcDialogueTopicService.onNewDay(
+                    server(), context.previousWeather(), previousYear);
         }
 
         private void forecast(DailySettlementContext context) {

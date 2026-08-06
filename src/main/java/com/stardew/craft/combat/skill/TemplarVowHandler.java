@@ -1,23 +1,19 @@
 package com.stardew.craft.combat.skill;
 
-import com.stardew.craft.StardewCraft;
+import com.stardew.craft.combat.skill.handler.TemplarVowSkillHandler;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
-@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class TemplarVowHandler {
 
     private TemplarVowHandler() {}
 
     @SuppressWarnings("null")
-    @SubscribeEvent
     public static void onPlayerHurt(LivingIncomingDamageEvent event) {
         if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
             return;
@@ -27,9 +23,17 @@ public final class TemplarVowHandler {
         if (level.isClientSide) {
             return;
         }
+        if (event.getAmount() <= 0.0f) {
+            return;
+        }
 
         long nowTick = level.getGameTime();
-        if (!TemplarVowTracker.isActive(player, nowTick)) {
+        TemplarVowSkillHandler.CounterActivation activation =
+                TemplarVowSkillHandler.consumeCounter(
+                        player,
+                        nowTick
+                ).orElse(null);
+        if (activation == null) {
             return;
         }
 
@@ -40,15 +44,35 @@ public final class TemplarVowHandler {
 
         Entity src = event.getSource().getEntity();
         if (src instanceof LivingEntity attacker && attacker.isAlive()) {
-            SkillContext context = SkillContext.builder()
-                .skillId("templar_vow")
-                .tier(SkillContext.SkillTier.MINOR)
-                .damageMultiplier(1.1f)
-                .build();
-            WeaponSkillContextStore.setPending(player, context, nowTick + 5);
-            player.attack(attacker);
+            SkillContext context = TemplarVowSkillHandler.createStrikeContext(
+                    TemplarVowSkillHandler.COUNTER_DAMAGE_MULTIPLIER
+            );
+            WeaponDamageSnapshot weaponSnapshot =
+                    activation.weaponSnapshot();
+            long expireTick = nowTick
+                    + TemplarVowSkillHandler.HIT_CONTEXT_LIFETIME_TICKS;
+            if (weaponSnapshot == null) {
+                WeaponSkillDamage.apply(
+                        player,
+                        attacker,
+                        context,
+                        expireTick,
+                        WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
+                        WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
+                );
+            } else {
+                WeaponSkillDamage.apply(
+                        player,
+                        attacker,
+                        context,
+                        weaponSnapshot,
+                        expireTick,
+                        WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
+                        WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
+                );
+            }
         }
 
-        TemplarVowTracker.endNow(player, nowTick);
+        TemplarVowSkillHandler.finishCounter(player, nowTick);
     }
 }

@@ -55,9 +55,12 @@ class FarmSystemDailyWorkUnitTest {
     private static final Path PROJECT = Path.of(System.getProperty("stardewcraft.projectDir", "."));
     private static final long WORLD_SEED = 0x1357_9BDF_2468_ACEL;
     private static final int TARGET_DAY = 83;
+    private static final SystemContract FARM_DEBRIS = new SystemContract(
+            "farm/FarmDebrisDailyService.java", "FarmDebrisDailyService",
+            "onNewDay", 1, "runNext", "forId", "farm_debris", "step");
     private static final List<SystemContract> SYSTEMS = List.of(
             new SystemContract("manager/AnimalGrowthManager.java", "AnimalGrowthManager",
-                    "growDaily", 1, "processAnimalDay", "forId", "animal_growth", "animalId"),
+                    "growDaily", 2, "processAnimalDay", "forId", "animal_growth", "animalId"),
             new SystemContract("fishpond/service/FishPondDailyUpdateService.java", "FishPondDailyUpdateService",
                     "onNewDay", 1, "processPondDay", "forId", "fish_pond", "entry.stableId()"),
             new SystemContract("manager/PastureGrassGrowthManager.java", "PastureGrassGrowthManager",
@@ -137,6 +140,33 @@ class FarmSystemDailyWorkUnitTest {
                         .allMatch(method -> invocationsNamed(
                                 method.getBody(), "collectNearbyPastureGrass").isEmpty()),
                 "grass cursor consumer must not recollect eligible positions");
+    }
+
+    @Test
+    void farmWorldItemsHoldTemporaryChunkLeasesWhileAccessingBlocks() throws IOException {
+        ParsedClass debris = parse(FARM_DEBRIS);
+        assertScopedLease(debris.method("collectFarmObjectAt", -1), "leasePosition");
+        assertScopedLease(debris.method("spreadFromExistingDebrisAttempt", -1), "leasePosition");
+        assertScopedLease(debris.method("spawnRandomDebrisAttempt", -1), "leasePosition");
+
+        ParsedClass grass = parse(SYSTEMS.get(2));
+        assertScopedLease(grass.method("processSpawnTask", -1), "leasePosition");
+        assertScopedLease(grass.method("collectNearbyPastureGrass", -1), "leaseBounds");
+        assertScopedLease(grass.method("processPastureGrassDay", -1), "leasePosition");
+    }
+
+    @Test
+    void farmDebrisReadsNewDayWeatherOnlyWhenItsWorldWorkBegins() throws IOException {
+        ParsedClass debris = parse(FARM_DEBRIS);
+        MethodTree create = debris.method("createDailyWorkUnit", 3);
+        MethodTree initialize = debris.nestedMethod("initializeFarms", 0);
+        MethodTree completionProbe = debris.nestedMethod("isComplete", 0);
+
+        assertTrue(invocationsNamed(create.getBody(), "isRaining").isEmpty(),
+                "PREPARE-time factory must not read the previous night's live weather");
+        assertEquals(1, invocationsNamed(initialize.getBody(), "isRaining").size());
+        assertEquals(1, invocationsNamed(completionProbe.getBody(), "initializeFarms").size(),
+                "weather-dependent debris attempts must initialize when the work unit starts");
     }
 
     @Test
@@ -887,6 +917,12 @@ class FarmSystemDailyWorkUnitTest {
                 .toList();
     }
 
+    private static void assertScopedLease(MethodTree method, String leaseMethod) {
+        assertTrue(scan(method.getBody(), TryTree.class).stream()
+                        .anyMatch(tree -> invocationsNamed(tree, leaseMethod).size() == 1),
+                method.getName() + " must close its " + leaseMethod + " lease after one item");
+    }
+
     private static boolean invokes(Tree tree, String name) {
         return !invocationsNamed(tree, name).isEmpty();
     }
@@ -956,6 +992,14 @@ class FarmSystemDailyWorkUnitTest {
                     .filter(candidate -> parameterCount < 0
                             || candidate.getParameters().size() == parameterCount)
                     .toList();
+        }
+
+        private MethodTree nestedMethod(String name, int parameterCount) {
+            return scan(classTree, MethodTree.class).stream()
+                    .filter(candidate -> candidate.getName().contentEquals(name))
+                    .filter(candidate -> candidate.getParameters().size() == parameterCount)
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("nested method is missing: " + name));
         }
     }
 }

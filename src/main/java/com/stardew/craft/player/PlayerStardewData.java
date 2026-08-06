@@ -36,6 +36,7 @@ import com.stardew.craft.quest.QuestManager;
 @SuppressWarnings("null")
 public class PlayerStardewData {
     private static final float MIN_ENERGY = -16.0F;
+    private static final int CURRENT_RECIPE_UNLOCK_MIGRATION_VERSION = 1;
     
     // 玩家UUID
     private UUID playerUUID;
@@ -59,6 +60,7 @@ public class PlayerStardewData {
     private int money;               // 金币数量
     private long totalMoneyEarned;    // SDV totalMoneyEarned：累计赚到的金币（不随花费减少）
     private int fairStarTokens;       // SDV Farmer.festivalScore：Stardew Valley Fair 星星币
+    private int clubCoins;            // SDV Farmer.clubCoins：赌场齐币
     private int lastFairGrillBurgerDateKey; // Fall 16 fair grill: one Survival Burger per player per day
     
     // ============ 技能系统 ============
@@ -102,6 +104,8 @@ public class PlayerStardewData {
     private final List<Integer> pendingDateTriggeredMailDays = new ArrayList<>();
     private final List<String> pendingMailDeliveryEffects = new ArrayList<>();
     private final List<String> pendingSpecialOrderItemCleanups = new ArrayList<>();
+    private boolean fullSyncDirty;   // 客户端是否需要完整玩家数据
+    private boolean vitalsSyncDirty; // 客户端是否只需要生命/能量快速同步
 
     // ============ 运气系统 ============
     // 每日运气（per-player），按星露谷日期刷新（由 PlayerStardewDataAPI 惰性刷新）
@@ -144,6 +148,7 @@ public class PlayerStardewData {
     // ============ 配方解锁 ============
     private final Set<String> unlockedRecipes = new HashSet<>();
     private final Map<String, Integer> recipeCraftCounts = new HashMap<>();
+    private int recipeUnlockMigrationVersion;
     private int queenOfSauceWatchDay = -1;
     private String queenOfSauceRecipeId = "";
 
@@ -195,6 +200,10 @@ public class PlayerStardewData {
 
     // ============ 邮件标记（SDV mailReceived parity） ============
     private final Set<String> mailFlags = new HashSet<>();
+
+    // ============ 地图文本阅读记录 ============
+    // 使用 map interaction 的命名空间 ID，避免坐标调整后丢失阅读状态。
+    private final Set<String> readMapInteractions = new HashSet<>();
 
     // ============ 邮箱系统（SDV mailbox / mailForTomorrow parity） ============
     // mailbox: 当前可读的邮件ID队列（SDV Farmer.mailbox）
@@ -267,6 +276,8 @@ public class PlayerStardewData {
     private boolean passedOutFromCombat;
     // 上次死亡丢失的物品（供 Marlon 物品找回商店使用）
     private final List<net.minecraft.world.item.ItemStack> itemsLostLastDeath = new ArrayList<>();
+    // Last confirmed Stardew bed, equivalent to Farmer.lastSleepPoint.
+    private net.minecraft.core.BlockPos lastSleepPoint;
     
     // 经验值升级表（根据星露谷物语）
     private static final int[] EXP_TO_LEVEL = {
@@ -296,10 +307,13 @@ public class PlayerStardewData {
         this.exhausted = false;
         this.money = 500;  // 初始金币
         this.fairStarTokens = 0;
+        this.clubCoins = 0;
         this.lastFairGrillBurgerDateKey = -1;
         this.totalMoneyEarned = 500L;
         this.lastSyncTime = System.currentTimeMillis();
         this.dirty = false;
+        this.fullSyncDirty = false;
+        this.vitalsSyncDirty = false;
 
         this.dailyLuck = 0.0;
         this.dailyLuckDateKey = -1;
@@ -350,6 +364,7 @@ public class PlayerStardewData {
         data.exhausted = tag.getBoolean("Exhausted");
         data.money = tag.contains("Money") ? tag.getInt("Money") : 500;
         data.fairStarTokens = tag.contains("FairStarTokens") ? Math.max(0, tag.getInt("FairStarTokens")) : 0;
+        data.clubCoins = tag.contains("ClubCoins") ? Math.max(0, tag.getInt("ClubCoins")) : 0;
         data.lastFairGrillBurgerDateKey = tag.contains("LastFairGrillBurgerDateKey") ? tag.getInt("LastFairGrillBurgerDateKey") : -1;
         data.totalMoneyEarned = tag.contains("TotalMoneyEarned")
             ? Math.max(0L, tag.getLong("TotalMoneyEarned"))
@@ -361,11 +376,25 @@ public class PlayerStardewData {
 
         // 晕倒/死亡系统
         data.passedOutFromCombat = tag.getBoolean("PassedOutFromCombat");
+        if (tag.contains("LastSleepPoint", Tag.TAG_LONG)) {
+            data.lastSleepPoint = net.minecraft.core.BlockPos.of(tag.getLong("LastSleepPoint"));
+        }
         data.itemsLostLastDeath.clear();
         if (tag.contains("ItemsLostLastDeath")) {
             ListTag lostItemsTag = tag.getList("ItemsLostLastDeath", 10); // 10 = CompoundTag
             for (int li = 0; li < lostItemsTag.size(); li++) {
                 CompoundTag itemTag = lostItemsTag.getCompound(li);
+                if (registries != null && itemTag.contains("Stack", Tag.TAG_COMPOUND)) {
+                    net.minecraft.world.item.ItemStack stack =
+                            net.minecraft.world.item.ItemStack.parse(
+                                    registries, itemTag.getCompound("Stack"))
+                                    .orElse(net.minecraft.world.item.ItemStack.EMPTY);
+                    if (!stack.isEmpty()) {
+                        data.itemsLostLastDeath.add(stack);
+                    }
+                    continue;
+                }
+                // Legacy migration: old saves stored only registry ID + count.
                 var itemRL = ResourceLocation.tryParse(itemTag.getString("Id"));
                 if (itemRL != null && net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(itemRL)) {
                     net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(itemRL);
@@ -465,6 +494,9 @@ public class PlayerStardewData {
                     pending.getInt("Day"),
                     pending.getInt("SleepMinute"),
                     pending.getBoolean("SeasonChanged"),
+                    pending.contains("PreviousWeather", Tag.TAG_STRING)
+                            ? pending.getString("PreviousWeather")
+                            : "Sun",
                     pending.getInt("Stage"),
                     appliedLevels,
                     loadCompletedSettlementPayload(pending, registries));
@@ -553,6 +585,9 @@ public class PlayerStardewData {
                 }
             }
         }
+        data.recipeUnlockMigrationVersion = tag.contains("RecipeUnlockMigrationVersion")
+                ? Math.max(0, tag.getInt("RecipeUnlockMigrationVersion"))
+                : 0;
         data.queenOfSauceWatchDay = tag.contains("QueenOfSauceWatchDay") ? tag.getInt("QueenOfSauceWatchDay") : -1;
         data.queenOfSauceRecipeId = tag.contains("QueenOfSauceRecipeId") ? tag.getString("QueenOfSauceRecipeId") : "";
         data.unlockedWallpaperStyles.add(DecorationStyleRegistry.getDefaultStyleId(DecorationType.WALLPAPER));
@@ -662,6 +697,16 @@ public class PlayerStardewData {
             for (int i = 0; i < mailList.size(); i++) {
                 String flag = mailList.getString(i);
                 if (!flag.isBlank()) data.mailFlags.add(flag);
+            }
+        }
+
+        if (tag.contains("ReadMapInteractions", Tag.TAG_LIST)) {
+            ListTag readList = tag.getList("ReadMapInteractions", Tag.TAG_STRING);
+            for (int i = 0; i < readList.size(); i++) {
+                String interactionId = readList.getString(i);
+                if (!interactionId.isBlank()) {
+                    data.readMapInteractions.add(interactionId);
+                }
             }
         }
 
@@ -855,6 +900,7 @@ public class PlayerStardewData {
         tag.putBoolean("Exhausted", exhausted);
         tag.putInt("Money", money);
         tag.putInt("FairStarTokens", fairStarTokens);
+        tag.putInt("ClubCoins", clubCoins);
         tag.putInt("LastFairGrillBurgerDateKey", lastFairGrillBurgerDateKey);
         tag.putLong("TotalMoneyEarned", totalMoneyEarned);
         tag.putString("LastKnownName", lastKnownName == null ? "" : lastKnownName);
@@ -864,12 +910,23 @@ public class PlayerStardewData {
 
         // 晕倒/死亡系统
         tag.putBoolean("PassedOutFromCombat", passedOutFromCombat);
+        if (lastSleepPoint != null) {
+            tag.putLong("LastSleepPoint", lastSleepPoint.asLong());
+        }
         if (!itemsLostLastDeath.isEmpty()) {
             ListTag lostItemsTag = new ListTag();
             for (net.minecraft.world.item.ItemStack stack : itemsLostLastDeath) {
                 CompoundTag itemTag = new CompoundTag();
-                itemTag.putString("Id", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-                itemTag.putInt("Count", stack.getCount());
+                if (registries != null) {
+                    itemTag.put("Stack", stack.save(registries));
+                } else {
+                    // Tests and legacy callers may intentionally have no
+                    // registry provider. Preserve the old lossless-enough
+                    // fallback instead of failing the entire player save.
+                    itemTag.putString("Id", net.minecraft.core.registries.BuiltInRegistries.ITEM
+                            .getKey(stack.getItem()).toString());
+                    itemTag.putInt("Count", stack.getCount());
+                }
                 lostItemsTag.add(itemTag);
             }
             tag.put("ItemsLostLastDeath", lostItemsTag);
@@ -924,6 +981,7 @@ public class PlayerStardewData {
             pending.putInt("Day", pendingDailySettlement.day());
             pending.putInt("SleepMinute", pendingDailySettlement.sleepMinute());
             pending.putBoolean("SeasonChanged", pendingDailySettlement.seasonChanged());
+            pending.putString("PreviousWeather", pendingDailySettlement.previousWeather());
             pending.putInt("Stage", pendingDailySettlement.stage());
             ListTag appliedLevels = new ListTag();
             for (SkillLevelUp levelUp : pendingDailySettlement.appliedLevels()) {
@@ -1013,6 +1071,7 @@ public class PlayerStardewData {
             recipeCraftCountsTag.add(recipeTag);
         }
         tag.put("RecipeCraftCounts", recipeCraftCountsTag);
+        tag.putInt("RecipeUnlockMigrationVersion", recipeUnlockMigrationVersion);
         tag.putInt("QueenOfSauceWatchDay", queenOfSauceWatchDay);
         tag.putString("QueenOfSauceRecipeId", queenOfSauceRecipeId == null ? "" : queenOfSauceRecipeId);
 
@@ -1106,6 +1165,15 @@ public class PlayerStardewData {
                 mailList.add(StringTag.valueOf(flag));
             }
             tag.put("MailFlags", mailList);
+        }
+
+        if (!readMapInteractions.isEmpty()) {
+            ListTag readList = new ListTag();
+            readMapInteractions.stream()
+                    .sorted()
+                    .map(StringTag::valueOf)
+                    .forEach(readList::add);
+            tag.put("ReadMapInteractions", readList);
         }
 
         // 邮箱队列
@@ -1366,7 +1434,22 @@ public class PlayerStardewData {
      * 此方法只处理职业选择提示并返回列表供升级动画使用。
      */
     public List<SkillLevelUp> applyPendingSkillLevelUps() {
-        List<SkillLevelUp> applied = new ArrayList<>(pendingNewLevels);
+        // SDV has one Farmer.newLevels queue for both ordinary level-up pages
+        // and missed/respec profession choices. Keep already-pending profession
+        // prompts in the presentation queue too, otherwise an empty shipping
+        // night can skip straight to SaveGameMenu with no way to answer them.
+        List<SkillLevelUp> applied = new ArrayList<>();
+        for (ProfessionChoicePrompt prompt : pendingProfessionChoices) {
+            addPresentedLevel(applied, prompt.skill(), prompt.level());
+        }
+        for (SkillLevelUp levelUp : pendingNewLevels) {
+            if (levelUp.newLevel() == 10
+                    && !hasLevel5Profession(levelUp.skill())
+                    && !containsLevelUp(applied, levelUp.skill(), 5)) {
+                addPresentedLevel(applied, levelUp.skill(), 5);
+            }
+            addPresentedLevel(applied, levelUp.skill(), levelUp.newLevel());
+        }
 
         for (SkillLevelUp levelUp : applied) {
             SkillType skill = levelUp.skill();
@@ -1374,9 +1457,17 @@ public class PlayerStardewData {
             if (level == 5 && !hasLevel5Profession(skill) && !hasPendingProfessionChoice(skill, 5)) {
                 pendingProfessionChoices.add(new ProfessionChoicePrompt(skill, 5));
             }
-            if (level == 10 && hasLevel5Profession(skill) && !hasLevel10Profession(skill) && !hasPendingProfessionChoice(skill, 10)) {
+            if (level == 10 && !hasLevel10Profession(skill) && !hasPendingProfessionChoice(skill, 10)) {
                 pendingProfessionChoices.add(new ProfessionChoicePrompt(skill, 10));
             }
+        }
+
+        // Equivalent to LevelUpMenu.AddMissedProfessionChoices. This also
+        // repairs old saves where a profession prompt survived but its
+        // presentation entry was lost.
+        repairMissingProfessionChoices();
+        for (ProfessionChoicePrompt prompt : pendingProfessionChoices) {
+            addPresentedLevel(applied, prompt.skill(), prompt.level());
         }
 
         pendingNewLevels.clear();
@@ -1384,6 +1475,21 @@ public class PlayerStardewData {
             markDirty();
         }
         return applied;
+    }
+
+    private static void addPresentedLevel(List<SkillLevelUp> levels, SkillType skill, int level) {
+        if (!containsLevelUp(levels, skill, level)) {
+            levels.add(new SkillLevelUp(skill, level));
+        }
+    }
+
+    private static boolean containsLevelUp(List<SkillLevelUp> levels, SkillType skill, int level) {
+        for (SkillLevelUp levelUp : levels) {
+            if (levelUp.skill() == skill && levelUp.newLevel() == level) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
@@ -1646,14 +1752,17 @@ public class PlayerStardewData {
     }
 
     public void repairMissingProfessionChoices() {
-        pendingProfessionChoices.removeIf(prompt -> getRawSkillLevel(prompt.skill()) < prompt.level());
+        pendingProfessionChoices.removeIf(prompt ->
+                getRawSkillLevel(prompt.skill()) < prompt.level()
+                        || (prompt.level() == 5 && hasLevel5Profession(prompt.skill()))
+                        || (prompt.level() == 10 && hasLevel10Profession(prompt.skill())));
 
         for (SkillType skill : SkillType.values()) {
             int rawLevel = getRawSkillLevel(skill);
             if (rawLevel >= 5 && !hasLevel5Profession(skill) && !hasPendingProfessionChoice(skill, 5)) {
                 pendingProfessionChoices.add(new ProfessionChoicePrompt(skill, 5));
             }
-            if (rawLevel >= 10 && hasLevel5Profession(skill) && !hasLevel10Profession(skill) && !hasPendingProfessionChoice(skill, 10)) {
+            if (rawLevel >= 10 && !hasLevel10Profession(skill) && !hasPendingProfessionChoice(skill, 10)) {
                 pendingProfessionChoices.add(new ProfessionChoicePrompt(skill, 10));
             }
         }
@@ -1676,15 +1785,17 @@ public class PlayerStardewData {
     public boolean consumeEnergy(float amount) {
         if (amount <= 0) return true;
 
-        boolean enough = energy >= amount;
+        if (energy < amount) {
+            return false;
+        }
         energy = clampEnergy(energy - amount);
 
         if (energy <= 0) {
             exhausted = true;
         }
 
-        markDirty();
-        return enough;
+        markVitalsDirty();
+        return true;
     }
     
     /**
@@ -1696,7 +1807,17 @@ public class PlayerStardewData {
         // 恢复到0以上时解除疲惫（需要其他方式治愈）
         // 注意：星露谷中疲惫状态不会自动解除
         
-        markDirty();
+        markVitalsDirty();
+    }
+
+    /** Restores both values changed by a failed begin-time energy payment. */
+    public void rollbackEnergyPayment(
+            float amount,
+            boolean exhaustedBefore
+    ) {
+        energy = clampEnergy(energy + Math.max(0.0F, amount));
+        exhausted = exhaustedBefore;
+        markVitalsDirty();
     }
     
     /**
@@ -1704,7 +1825,7 @@ public class PlayerStardewData {
      */
     public void cureExhaustion() {
         exhausted = false;
-        markDirty();
+        markVitalsDirty();
     }
     
     /**
@@ -1791,33 +1912,43 @@ public class PlayerStardewData {
         markDirty();
     }
     public void clearItemsLostLastDeath() { itemsLostLastDeath.clear(); markDirty(); }
+
+    public java.util.Optional<net.minecraft.core.BlockPos> getLastSleepPoint() {
+        return java.util.Optional.ofNullable(lastSleepPoint);
+    }
+
+    public void setLastSleepPoint(net.minecraft.core.BlockPos point) {
+        lastSleepPoint = point == null ? null : point.immutable();
+        markDirty();
+    }
     
     public UUID getPlayerUUID() { return playerUUID; }
     
     public int getHealth() { return health; }
     public void setHealth(int health) { 
         this.health = Math.max(0, Math.min(health, maxHealth));
-        markDirty();
+        markVitalsDirty();
     }
     
     public int getMaxHealth() { return maxHealth; }
     public void setMaxHealth(int maxHealth) {
         this.maxHealth = Math.max(100, maxHealth);
         this.health = Math.min(this.health, this.maxHealth);
-        markDirty();
+        markVitalsDirty();
     }
     
     public float getEnergy() { return energy; }
     public void setEnergy(float energy) {
         this.energy = clampEnergy(energy);
-        markDirty();
+        markVitalsDirty();
     }
     
     public int getMaxEnergy() { return getEffectiveMaxEnergy(); }
+    public int getBaseMaxEnergy() { return maxEnergy; }
     public void setMaxEnergy(int maxEnergy) {
         this.maxEnergy = Math.max(270, maxEnergy);
         this.energy = Math.min(this.energy, getEffectiveMaxEnergy());
-        markDirty();
+        markVitalsDirty();
     }
 
     public int getStardropsConsumed() { return stardropsConsumed; }
@@ -1837,7 +1968,11 @@ public class PlayerStardewData {
     
     public int getMoney() { return money; }
     public void setMoney(int money) {
-        this.money = Math.max(0, money);
+        int normalizedMoney = Math.max(0, money);
+        if (this.money == normalizedMoney) {
+            return;
+        }
+        this.money = normalizedMoney;
         markDirty();
     }
 
@@ -1864,6 +1999,35 @@ public class PlayerStardewData {
             return false;
         }
         fairStarTokens -= amount;
+        markDirty();
+        return true;
+    }
+
+    public int getClubCoins() {
+        return Math.max(0, clubCoins);
+    }
+
+    public void setClubCoins(int value) {
+        clubCoins = Math.max(0, value);
+        markDirty();
+    }
+
+    public int addClubCoins(int amount) {
+        if (amount != 0) {
+            clubCoins = Math.max(0, clubCoins + amount);
+            markDirty();
+        }
+        return clubCoins;
+    }
+
+    public boolean consumeClubCoins(int amount) {
+        if (amount <= 0) {
+            return true;
+        }
+        if (clubCoins < amount) {
+            return false;
+        }
+        clubCoins -= amount;
         markDirty();
         return true;
     }
@@ -2029,6 +2193,20 @@ public class PlayerStardewData {
             markDirty();
         }
         return changed;
+    }
+
+    /**
+     * Repairs recipe grants made by older StardewCraft data without touching later purchases.
+     */
+    public boolean applyRecipeUnlockMigrations() {
+        if (recipeUnlockMigrationVersion >= CURRENT_RECIPE_UNLOCK_MIGRATION_VERSION) {
+            return false;
+        }
+        // Source Data/CraftingRecipes marks Fish Smoker as null (shop-only), not default.
+        unlockedRecipes.remove(RecipeIdNormalizer.storageId("fish_smoker"));
+        recipeUnlockMigrationVersion = CURRENT_RECIPE_UNLOCK_MIGRATION_VERSION;
+        markDirty();
+        return true;
     }
 
     public boolean hasWatchedQueenOfSauceOnDay(int dayKey) {
@@ -2457,6 +2635,23 @@ public class PlayerStardewData {
     public void addMailFlag(String flag) { if (mailFlags.add(flag)) markDirty(); }
     public void removeMailFlag(String flag) { if (mailFlags.remove(flag)) markDirty(); }
 
+    // ──── Map interaction read state ────
+    public Set<String> getReadMapInteractions() {
+        return Collections.unmodifiableSet(readMapInteractions);
+    }
+
+    public boolean hasReadMapInteraction(ResourceLocation interactionId) {
+        return interactionId != null
+                && readMapInteractions.contains(interactionId.toString());
+    }
+
+    public void markMapInteractionRead(ResourceLocation interactionId) {
+        if (interactionId != null
+                && readMapInteractions.add(interactionId.toString())) {
+            markDirty();
+        }
+    }
+
     // ──── Mailbox Queue (SDV Farmer.mailbox parity) ────
     public List<String> getMailbox() { return Collections.unmodifiableList(mailbox); }
     public boolean hasMailInMailbox() { return !mailbox.isEmpty(); }
@@ -2475,6 +2670,12 @@ public class PlayerStardewData {
             mailbox.add(mailId);
             markDirty();
         }
+    }
+
+    /** Vanilla's daily friendship-letter path appends directly and may repeat unread mail. */
+    public void addRecurringFriendshipMailToMailbox(String mailId) {
+        mailbox.add(mailId);
+        markDirty();
     }
 
     // ──── Mail For Tomorrow (SDV Farmer.mailForTomorrow parity) ────
@@ -3343,6 +3544,7 @@ public class PlayerStardewData {
             int day,
             int sleepMinute,
             boolean seasonChanged,
+            String previousWeather,
             int stage,
             List<SkillLevelUp> appliedLevels,
             Optional<OvernightSettlementPayload> completedPayload) {
@@ -3354,7 +3556,8 @@ public class PlayerStardewData {
                 int day,
                 int sleepMinute,
                 boolean seasonChanged) {
-            this(absoluteDay, year, season, day, sleepMinute, seasonChanged, 0, List.of());
+            this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                    "Sun", 0, List.of(), Optional.empty());
         }
 
         public PendingDailySettlement(
@@ -3367,7 +3570,21 @@ public class PlayerStardewData {
                 int stage,
                 List<SkillLevelUp> appliedLevels) {
             this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
-                    stage, appliedLevels, Optional.empty());
+                    "Sun", stage, appliedLevels, Optional.empty());
+        }
+
+        public PendingDailySettlement(
+                int absoluteDay,
+                int year,
+                int season,
+                int day,
+                int sleepMinute,
+                boolean seasonChanged,
+                int stage,
+                List<SkillLevelUp> appliedLevels,
+                Optional<OvernightSettlementPayload> completedPayload) {
+            this(absoluteDay, year, season, day, sleepMinute, seasonChanged,
+                    "Sun", stage, appliedLevels, completedPayload);
         }
 
         public PendingDailySettlement {
@@ -3379,6 +3596,9 @@ public class PlayerStardewData {
             if (stage < 0 || stage > 12) {
                 throw new IllegalArgumentException("Invalid pending daily settlement stage");
             }
+            previousWeather = previousWeather == null || previousWeather.isBlank()
+                    ? "Sun"
+                    : previousWeather;
             appliedLevels = List.copyOf(Objects.requireNonNull(appliedLevels, "appliedLevels"));
             completedPayload = Objects.requireNonNull(completedPayload, "completedPayload")
                     .map(PlayerStardewData::copySettlementPayload);
@@ -3424,10 +3644,29 @@ public class PlayerStardewData {
                 lostItems.add(stack);
             }
         }
+        int absoluteDay = saved.contains("AbsoluteDay", Tag.TAG_INT)
+                ? saved.getInt("AbsoluteDay")
+                : pending.getInt("AbsoluteDay");
+        OvernightSettlementPayload.OvernightContext context;
+        if (saved.contains("Context", Tag.TAG_COMPOUND)) {
+            CompoundTag rawContext = saved.getCompound("Context");
+            context = new OvernightSettlementPayload.OvernightContext(
+                    rawContext.getInt("PreviousDay"),
+                    rawContext.getInt("PreviousSeason"),
+                    rawContext.getInt("PreviousYear"),
+                    rawContext.getInt("NewDay"),
+                    rawContext.getInt("NewSeason"),
+                    rawContext.getInt("NewYear"),
+                    rawContext.getString("PreviousWeather"));
+        } else {
+            context = OvernightSettlementPayload.OvernightContext.forAbsoluteDay(absoluteDay);
+        }
         return Optional.of(new OvernightSettlementPayload(
-                saved.getInt("AbsoluteDay"), List.copyOf(shippedItems), List.copyOf(levelUps),
+                absoluteDay, List.copyOf(shippedItems), List.copyOf(levelUps),
                 saved.getInt("PassOutType"), saved.getInt("PassOutMoneyLost"),
-                List.copyOf(lostItems)));
+                List.copyOf(lostItems), context,
+                !saved.contains("PersonalSettlement", Tag.TAG_BYTE)
+                        || saved.getBoolean("PersonalSettlement")));
     }
 
     private static CompoundTag saveSettlementPayload(
@@ -3435,8 +3674,19 @@ public class PlayerStardewData {
             net.minecraft.core.HolderLookup.Provider registries) {
         CompoundTag saved = new CompoundTag();
         saved.putInt("AbsoluteDay", payload.absoluteDay());
+        saved.putBoolean("PersonalSettlement", payload.personalSettlement());
         saved.putInt("PassOutType", payload.passOutType());
         saved.putInt("PassOutMoneyLost", payload.passOutMoneyLost());
+        OvernightSettlementPayload.OvernightContext context = payload.context();
+        CompoundTag contextTag = new CompoundTag();
+        contextTag.putInt("PreviousDay", context.previousDay());
+        contextTag.putInt("PreviousSeason", context.previousSeason());
+        contextTag.putInt("PreviousYear", context.previousYear());
+        contextTag.putInt("NewDay", context.newDay());
+        contextTag.putInt("NewSeason", context.newSeason());
+        contextTag.putInt("NewYear", context.newYear());
+        contextTag.putString("PreviousWeather", context.previousWeather());
+        saved.put("Context", contextTag);
         ListTag shipped = new ListTag();
         for (OvernightSettlementPayload.ShippedItem item : payload.shippedItems()) {
             CompoundTag entry = new CompoundTag();
@@ -3475,7 +3725,8 @@ public class PlayerStardewData {
                 .toList();
         return new OvernightSettlementPayload(
                 payload.absoluteDay(), shipped, List.copyOf(payload.levelUps()),
-                payload.passOutType(), payload.passOutMoneyLost(), lost);
+                payload.passOutType(), payload.passOutMoneyLost(), lost,
+                payload.context(), payload.personalSettlement());
     }
 
     public List<SkillLevelUp> applyPendingSkillLevelUpsForSettlement() {
@@ -3507,9 +3758,36 @@ public class PlayerStardewData {
     }
     
     public void markDirty() {
+        markPersistentDirty();
+        this.fullSyncDirty = true;
+        com.stardew.craft.leaderboard.LeaderboardService.invalidateCache();
+    }
+
+    private void markVitalsDirty() {
+        markPersistentDirty();
+        this.vitalsSyncDirty = true;
+    }
+
+    private void markPersistentDirty() {
         this.dirty = true;
         this.lastSyncTime = System.currentTimeMillis();
-        com.stardew.craft.leaderboard.LeaderboardService.invalidateCache();
+    }
+
+    public boolean isFullSyncDirty() {
+        return fullSyncDirty;
+    }
+
+    public boolean isVitalsSyncDirty() {
+        return vitalsSyncDirty;
+    }
+
+    public void markFullSyncClean() {
+        this.fullSyncDirty = false;
+        this.vitalsSyncDirty = false;
+    }
+
+    public void markVitalsSyncClean() {
+        this.vitalsSyncDirty = false;
     }
     
     public void markClean() {

@@ -41,6 +41,20 @@ public final class DailySettlementContextFactory {
             Collection<UUID> nonParticipantCleanupIds,
             Collection<UUID> allOnlinePlayerIds,
             Collection<UUID> valleyOnlinePlayerIds) {
+        return captureNextDay(
+                time, sleepMinute, players, farms, nonParticipantCleanupIds,
+                allOnlinePlayerIds, valleyOnlinePlayerIds, "Sun");
+    }
+
+    public static DailySettlementContext captureNextDay(
+            StardewTimeManager time,
+            int sleepMinute,
+            Collection<UUID> players,
+            Collection<UUID> farms,
+            Collection<UUID> nonParticipantCleanupIds,
+            Collection<UUID> allOnlinePlayerIds,
+            Collection<UUID> valleyOnlinePlayerIds,
+            String previousWeather) {
         Objects.requireNonNull(time, "time");
         Objects.requireNonNull(players, "players");
         Objects.requireNonNull(farms, "farms");
@@ -61,7 +75,8 @@ public final class DailySettlementContextFactory {
                 Set.copyOf(farms),
                 List.copyOf(nonParticipantCleanupIds),
                 List.copyOf(allOnlinePlayerIds),
-                List.copyOf(valleyOnlinePlayerIds));
+                List.copyOf(valleyOnlinePlayerIds),
+                previousWeather);
     }
 
     public static DailySettlementContext captureCurrentDay(StardewTimeManager time) {
@@ -107,7 +122,8 @@ public final class DailySettlementContextFactory {
                 context.farmOwnerIds(),
                 context.nonParticipantCleanupIds(),
                 context.allOnlinePlayerIds(),
-                context.valleyOnlinePlayerIds());
+                context.valleyOnlinePlayerIds(),
+                context.previousWeather());
     }
 
     private static DailySettlementContext withDate(
@@ -123,7 +139,8 @@ public final class DailySettlementContextFactory {
                 context.farmOwnerIds(),
                 context.nonParticipantCleanupIds(),
                 context.allOnlinePlayerIds(),
-                context.valleyOnlinePlayerIds());
+                context.valleyOnlinePlayerIds(),
+                context.previousWeather());
     }
 
     private static TargetDate after(int year, int season, int day) {

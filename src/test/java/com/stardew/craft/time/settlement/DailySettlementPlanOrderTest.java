@@ -39,6 +39,9 @@ class DailySettlementPlanOrderTest {
                 item(DailySettlementPhase.PREPARE, "daily_process_scope"),
 
                 item(DailySettlementPhase.WORLD_BATCHES, "festival_season_prep"),
+                item(DailySettlementPhase.WORLD_BATCHES, "npc_friendship_daily"),
+                item(DailySettlementPhase.WORLD_BATCHES, "npc_dialogue_events"),
+                item(DailySettlementPhase.WORLD_BATCHES, "npc_dialogue_topics"),
                 item(DailySettlementPhase.WORLD_BATCHES, "weather_npc_reset"),
                 item(DailySettlementPhase.WORLD_BATCHES, "crops"),
                 item(DailySettlementPhase.WORLD_BATCHES, "trees"),
@@ -92,8 +95,8 @@ class DailySettlementPlanOrderTest {
         assertEquals(1, names.stream().filter("shipping_bin_flush"::equals).count());
         assertEquals(1, names.stream().filter("player_daily_settlement"::equals).count());
         assertEquals(0, names.subList(names.indexOf("date_publication") + 1, names.size()).size());
-        assertEquals(22, names.indexOf("player_daily_settlement"));
-        assertEquals(24, names.indexOf("farm_cursor"));
+        assertEquals(25, names.indexOf("player_daily_settlement"));
+        assertEquals(27, names.indexOf("farm_cursor"));
         assertEquals(0, names.indexOf("shipping_bin_flush"));
     }
 

@@ -1,6 +1,18 @@
 # Disable autocrlf on generated files, they always generate with LF
 # Add any extra files or paths here to make git stop saying they
 # are changed when only line endings change.
+src/main/java/com/stardew/craft/cutscene/server/ServerCutsceneTracker.java text eol=lf
+src/main/java/com/stardew/craft/entity/bomb/StardewBombEntity.java text eol=lf
+src/main/java/com/stardew/craft/combat/BuiltinWeaponPassiveAppliedHitRules.java text eol=lf
+src/main/java/com/stardew/craft/combat/DamageNumberContextStore.java text eol=lf
+src/main/java/com/stardew/craft/combat/WeaponCombatEvents.java text eol=lf
+src/main/java/com/stardew/craft/combat/equipment/CrossDimensionNativeAttackHandler.java text eol=lf
+src/main/java/com/stardew/craft/combat/skill/WeaponSkillCooldowns.java text eol=lf
+src/main/java/com/stardew/craft/combat/skill/WickedKrisPoisonTracker.java text eol=lf
+src/main/java/com/stardew/craft/combat/skill/handler/DwarfFortressExecutionState.java text eol=lf
+src/main/java/com/stardew/craft/combat/skill/handler/InsectEyeStanceExecutionState.java text eol=lf
+src/main/java/com/stardew/craft/mixin/PlayerSweepAttackMixin.java text eol=lf
+src/main/java/com/stardew/craft/player/PlayerDataEventHandler.java text eol=lf
 src/generated/**/.cache/cache text eol=lf
 src/generated/**/*.json text eol=lf
 源文件/音频文件/Wave[[:space:]]Bank.xwb filter=lfs diff=lfs merge=lfs -text

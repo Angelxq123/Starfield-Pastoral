@@ -62,8 +62,8 @@ class DailySettlementIsolationContractTest {
 
     @Test
     void productionBudgetAndItemLimitUseTheDeclaredConfiguration() throws IOException {
-        assertEquals(4, Config.DAILY_SETTLEMENT_BUDGET_MILLIS.get());
-        assertEquals(256, Config.DAILY_SETTLEMENT_ITEM_LIMIT.get());
+        assertEquals(4, Config.DAILY_SETTLEMENT_BUDGET_MILLIS.getDefault());
+        assertEquals(256, Config.DAILY_SETTLEMENT_ITEM_LIMIT.getDefault());
 
         String services = source("src/main/java/com/stardew/craft/time/settlement/DailySettlementServices.java");
         assertTrue(services.contains("Config.DAILY_SETTLEMENT_BUDGET_MILLIS.get()"));

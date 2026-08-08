@@ -1,5 +1,6 @@
 package com.stardew.craft.manager;
 
+import com.stardew.craft.block.nature.PastureGrassBlock;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
@@ -28,7 +29,8 @@ final class FarmDailyDecisions {
     }
 
     static int rollGrassVariant(RandomSource random) {
-        return Objects.requireNonNull(random, "random").nextInt(3);
+        return Objects.requireNonNull(random, "random")
+                .nextInt(PastureGrassBlock.VISUAL_VARIANT_COUNT);
     }
 
     static boolean rollWildSeed(RandomSource random, float chance) {

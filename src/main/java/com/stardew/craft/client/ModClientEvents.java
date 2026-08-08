@@ -1,5 +1,7 @@
 package com.stardew.craft.client;
 
+import com.stardew.craft.client.font.StardewFonts;
+
 import com.stardew.craft.Config;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.economy.sell.ProfessionSellPriceService;
@@ -34,6 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
@@ -54,6 +57,13 @@ import java.util.Locale;
 public class ModClientEvents {
 
     private static final Pattern NEWLINE_SPLIT = Pattern.compile("(?:\\\\n|\\n)");
+
+    @SubscribeEvent
+    public static void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        com.stardew.craft.communitycenter.cutscene.ScreenFade.clear();
+        com.stardew.craft.client.AnimalOverviewClientCache.reset();
+    }
+
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
@@ -574,6 +584,7 @@ public class ModClientEvents {
         while (ModKeyMappings.GAME_MENU.consumeClick()) {
             if (mc.screen == null) {
                 PacketDistributor.sendToServer(new RequestNpcFriendshipOverviewPayload());
+                PacketDistributor.sendToServer(new com.stardew.craft.network.payload.RequestAnimalOverviewPayload());
                 PacketDistributor.sendToServer(new com.stardew.craft.network.payload.OpenStardewGameMenuPayload());
             }
         }
@@ -733,7 +744,7 @@ public class ModClientEvents {
         }
 
         GuiGraphics gg = event.getGuiGraphics();
-        Font font = mc.font;
+        Font font = StardewFonts.small();
 
         StardewHudLayout.Placement placement = StardewHudLayout.current(
                 Config.HudElement.WEAPON_SKILLS, gg.guiWidth(), gg.guiHeight());
@@ -772,12 +783,12 @@ public class ModClientEvents {
         graphics.pose().scale(scale, scale, 1.0F);
         int index = 0;
         if (data.getSkill1() != null) {
-            drawSkillHud(graphics, mc.font, player, weaponItem.getWeaponId(), data.getSkill1(),
+            drawSkillHud(graphics, StardewFonts.small(), player, weaponItem.getWeaponId(), data.getSkill1(),
                     22, 20, ModKeyMappings.SKILL_MINOR);
             index++;
         }
         if (data.getSkill2() != null) {
-            drawSkillHud(graphics, mc.font, player, weaponItem.getWeaponId(), data.getSkill2(),
+            drawSkillHud(graphics, StardewFonts.small(), player, weaponItem.getWeaponId(), data.getSkill2(),
                     22, 20 + 46 * index, ModKeyMappings.SKILL_MAJOR);
         }
         graphics.pose().popPose();

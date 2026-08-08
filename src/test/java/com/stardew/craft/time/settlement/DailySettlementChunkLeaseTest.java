@@ -241,9 +241,9 @@ class DailySettlementChunkLeaseTest {
 
         MethodInvocationTree sequence = uniqueInvocation(create, "sequence");
         MethodInvocationTree children = asInvocation(sequence.getArguments().get(1));
-        assertMemberCall(children, "List", "of", 7);
+        assertMemberCall(children, "List", "of", 6);
         assertIdentifiers(children.getArguments(),
-                "constructionWork", "animalWork", "reproductionWork", "reproductionPublishWork",
+                "animalWork", "reproductionWork", "reproductionPublishWork",
                 "projectionWork", "entityWork", "publishWork");
     }
 

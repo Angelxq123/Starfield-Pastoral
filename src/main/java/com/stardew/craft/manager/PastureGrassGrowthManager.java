@@ -229,7 +229,8 @@ public class PastureGrassGrowthManager extends SavedData {
     private static void placeGrass(
             ServerLevel level, BlockPos pos, int clumps, RandomSource random) {
         BlockState grass = ModBlocks.PASTURE_GRASS.get().defaultBlockState()
-                .setValue(PastureGrassBlock.VARIANT, random.nextInt(3))
+                .setValue(PastureGrassBlock.VARIANT,
+                        random.nextInt(PastureGrassBlock.VISUAL_VARIANT_COUNT))
                 .setValue(PastureGrassBlock.CLUMPS, clumps);
         if (grass.canSurvive(level, pos)) {
             level.setBlock(pos, grass, Block.UPDATE_ALL);

@@ -170,6 +170,18 @@ class FarmSystemDailyWorkUnitTest {
     }
 
     @Test
+    void grassVariantRollCoversAllFourOfficialVisualVariants() throws Exception {
+        Set<Integer> variants = new HashSet<>();
+        RandomSource random = RandomSource.create(0x55F1_2026L);
+        for (int attempt = 0; attempt < 256; attempt++) {
+            variants.add((int) invokeFarmDecision(
+                    "rollGrassVariant", new Class<?>[]{RandomSource.class}, random));
+        }
+
+        assertEquals(Set.of(0, 1, 2, 3), variants);
+    }
+
+    @Test
     void wildSnapshotCopiesOnlyStablePositionAndExpectedIdentity() throws IOException {
         MethodTree create = parse(SYSTEMS.get(3)).method("createDailyWorkUnit", 2);
         List<NewClassTree> snapshots = scan(create.getBody(), NewClassTree.class).stream()

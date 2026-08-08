@@ -25,6 +25,10 @@
     "DoorBlockMasteryCollisionMixin"
   ],
   "client": [
+    "FontFontSetAccessor",
+    "FontSetProvidersAccessor",
+    "StardewFontManagerMixin",
+    "StardewFontTextureFilterMixin",
     "GuiGraphicsStackCountScaleMixin",
     "FishingHookRendererLineOriginMixin",
     "FishingHookRendererBiteDipMixin",
@@ -48,7 +52,9 @@
     "ClientWeatherPacketMixin",
     "MultiPlayerGameModeInteractionMixin",
     "AbstractContainerScreenSlotHitMixin",
-    "DoorBlockMasteryCollisionClientMixin"
+    "DoorBlockMasteryCollisionClientMixin",
+    "GardenPotCropRenderMixin",
+    "GardenPotVanillaCropShapeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

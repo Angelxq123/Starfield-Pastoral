@@ -872,18 +872,8 @@ public class PacketHandler {
             FertilizerSyncPacket.TYPE,
             FertilizerSyncPacket.STREAM_CODEC,
             (packet, context) -> {
-                context.enqueueWork(() -> {
-                    if (packet.fertilizerType() != null) {
-                        var type = packet.getFertilizerType();
-                        if (type != null) {
-                            com.stardew.craft.client.ClientFertilizerCache.setFertilizer(packet.pos(), type);
-                            com.stardew.craft.StardewCraft.LOGGER.info("Client received fertilizer sync: {} at {}", type.getSerializedName(), packet.pos());
-                        }
-                    } else {
-                        com.stardew.craft.client.ClientFertilizerCache.removeFertilizer(packet.pos());
-                        com.stardew.craft.StardewCraft.LOGGER.info("Client removed fertilizer at {}", packet.pos());
-                    }
-                });
+                context.enqueueWork(() ->
+                        com.stardew.craft.client.FertilizerClientSync.apply(packet));
             }
         );
 
@@ -1205,6 +1195,13 @@ public class PacketHandler {
             DailySettlementAccessGuard.gated(com.stardew.craft.network.payload.RequestNpcFriendshipOverviewPayload::handle)
         );
 
+        registrar.playToServer(
+            com.stardew.craft.network.payload.RequestAnimalOverviewPayload.TYPE,
+            com.stardew.craft.network.payload.RequestAnimalOverviewPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(
+                    com.stardew.craft.network.payload.RequestAnimalOverviewPayload::handle)
+        );
+
         registrar.playToClient(
             com.stardew.craft.network.payload.OpenSleepConfirmScreenPayload.TYPE,
             com.stardew.craft.network.payload.OpenSleepConfirmScreenPayload.STREAM_CODEC,
@@ -1354,6 +1351,12 @@ public class PacketHandler {
         );
 
         registrar.playToClient(
+            com.stardew.craft.network.payload.SyncAnimalOverviewPayload.TYPE,
+            com.stardew.craft.network.payload.SyncAnimalOverviewPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.SyncAnimalOverviewPayload::handle
+        );
+
+        registrar.playToClient(
             com.stardew.craft.network.payload.SyncNpcFriendshipStatusPayload.TYPE,
             com.stardew.craft.network.payload.SyncNpcFriendshipStatusPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.SyncNpcFriendshipStatusPayload::handle
@@ -1375,6 +1378,12 @@ public class PacketHandler {
             com.stardew.craft.network.payload.SleepVoteUpdatePayload.TYPE,
             com.stardew.craft.network.payload.SleepVoteUpdatePayload.STREAM_CODEC,
             com.stardew.craft.network.payload.SleepVoteUpdatePayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.payload.SleepFadeRestorePayload.TYPE,
+            com.stardew.craft.network.payload.SleepFadeRestorePayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.SleepFadeRestorePayload::handle
         );
 
         registrar.playToServer(

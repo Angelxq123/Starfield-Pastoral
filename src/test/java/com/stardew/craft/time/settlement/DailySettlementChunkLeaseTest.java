@@ -51,23 +51,23 @@ class DailySettlementChunkLeaseTest {
     private static final Path PROJECT = Path.of(System.getProperty("stardewcraft.projectDir", "."));
     private static final Path MANAGERS = PROJECT.resolve("src/main/java/com/stardew/craft/manager");
     private static final List<ManagerMethod> LEASED_MUTATIONS = List.of(
-            new ManagerMethod("CropGrowthManager", "processCropDay", 2, "leasePosition",
+            new ManagerMethod("CropGrowthManager", "processCropDay", 2, "lease",
                     List.of("isLoaded", "getBlockState", "removeCrop", "growOneDay", "tryRoll")),
-            new ManagerMethod("SprinklerManager", "processSprinklerDay", 2, "leasePosition",
+            new ManagerMethod("SprinklerManager", "processSprinklerDay", 2, "lease",
                     List.of("isLoaded", "getBlockState", "removeSprinkler", "waterNow")),
-            new ManagerMethod("TreeGrowthManager", "processRegisteredSaplingDay", 3, "leasePosition",
+            new ManagerMethod("TreeGrowthManager", "processRegisteredSaplingDay", 3, "lease",
                     List.of("isLoaded", "getBlockState", "removeSapling", "processSaplingDay")),
-            new ManagerMethod("FruitTreeGrowthManager", "processRegisteredTreeDay", 2, "leasePosition",
+            new ManagerMethod("FruitTreeGrowthManager", "processRegisteredTreeDay", 2, "lease",
                     List.of("isLoaded", "getBlockState", "removeSapling", "processSaplingDay",
                             "removeMatureTree", "processMatureTreeDay")),
-            new ManagerMethod("WildTreeSeedManager", "processTreeDay", 4, "leasePosition",
+            new ManagerMethod("WildTreeSeedManager", "processTreeDay", 4, "lease",
                     List.of("isLoaded", "getBlockState", "tryMigrateGeneratedTreeMarker", "isFullTree",
                             "tryPlaceSapling", "addSapling")),
-            new ManagerMethod("AnimalGrowthManager", "processAnimalDay", -1, "leaseBounds",
+            new ManagerMethod("AnimalGrowthManager", "processAnimalDay", -1, "lease",
                     List.of("resolveBuildingUtilities")),
             new ManagerMethod("AnimalGrowthManager", "processReproductionDay", -1, "leaseBounds",
                     List.of("queueAnimalBirth")),
-            new ManagerMethod("AnimalGrowthManager", "syncAnimalEntityDay", -1, "leaseBounds",
+            new ManagerMethod("AnimalGrowthManager", "syncAnimalEntityDay", -1, "lease",
                     List.of("syncOne")));
 
     @Test
@@ -79,32 +79,101 @@ class DailySettlementChunkLeaseTest {
 
     @Test
     void cropLeaseCoversGiantCropFootprint() throws IOException {
-        assertPositionLease("CropGrowthManager", "processCropDay", 2, 1);
+        ParsedClass crop = parseManager("CropGrowthManager");
+        MethodTree create = crop.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("reusingPositionLease(level, 1)"));
+        assertTrue(createBody.contains("globalPositionLeaseOrder(1)"));
+        assertTrue(createBody.contains("closeDailyLease"));
+
+        MethodTree process = crop.method("processCropDay", 2);
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry(process, "lease"));
+        assertEquals(List.of("pos"),
+                leaseCall.getArguments().stream().map(Object::toString).toList());
+
+        MethodTree finish = crop.method("finishDailyProcessing", 0);
+        assertTrue(invocations(finish).stream()
+                .anyMatch(call -> methodName(call).equals("closeDailyLease")));
     }
 
     @Test
     void sprinklerLeaseCoversIridiumWateringFootprint() throws IOException {
-        assertPositionLease("SprinklerManager", "processSprinklerDay", 2, 2);
+        ParsedClass sprinkler = parseManager("SprinklerManager");
+        MethodTree create = sprinkler.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("reusingPositionLease(level, 2)"));
+        assertTrue(createBody.contains("globalPositionLeaseOrder(2)"));
+
+        MethodTree process = sprinkler.method("processSprinklerDay", 2);
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry(process, "lease"));
+        assertEquals(List.of("pos"),
+                leaseCall.getArguments().stream().map(Object::toString).toList());
+
+        MethodTree finish = sprinkler.method("finishDailyProcessing", 0);
+        assertTrue(invocations(finish).stream()
+                .anyMatch(call -> methodName(call).equals("close")));
     }
 
     @Test
-    void treeLeaseKeepsExistingStructureRadius() throws IOException {
-        assertPositionLease("TreeGrowthManager", "processRegisteredSaplingDay", 3, 8);
+    void treeLeaseKeepsExistingStructureRadiusAndReusesLocalFootprints() throws IOException {
+        ParsedClass tree = parseManager("TreeGrowthManager");
+        MethodTree create = tree.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("reusingPositionLease(level, 8)"));
+        assertTrue(createBody.contains("globalPositionLeaseOrder(8)"));
+
+        MethodTree process = tree.method("processRegisteredSaplingDay", 3);
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry(process, "lease"));
+        assertEquals(List.of("pos"),
+                leaseCall.getArguments().stream().map(Object::toString).toList());
+
+        MethodTree finish = tree.method("finishDailyProcessing", 0);
+        assertTrue(invocations(finish).stream()
+                .anyMatch(call -> methodName(call).equals("close")));
     }
 
     @Test
     void fruitTreeLeaseKeepsExistingStructureRadius() throws IOException {
-        assertPositionLease("FruitTreeGrowthManager", "processRegisteredTreeDay", 2, 8);
+        ParsedClass fruit = parseManager("FruitTreeGrowthManager");
+        MethodTree create = fruit.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("reusingPositionLease(level, 8)"));
+        assertTrue(createBody.contains("globalPositionLeaseOrder(8)"));
+
+        MethodTree matureCreate = fruit.method("createMatureDailyWorkUnit", 1);
+        assertTrue(matureCreate.getBody().toString().contains("globalPositionLeaseOrder(8)"));
+
+        MethodTree process = fruit.method("processRegisteredTreeDay", 2);
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry(process, "lease"));
+        assertEquals(List.of("pos"),
+                leaseCall.getArguments().stream().map(Object::toString).toList());
+
+        MethodTree finish = fruit.method("finishDailyProcessing", 0);
+        assertTrue(invocations(finish).stream()
+                .anyMatch(call -> methodName(call).equals("close")));
     }
 
     @Test
     void wildTreeLeaseKeepsExistingStructureRadius() throws IOException {
-        assertPositionLease("WildTreeSeedManager", "processTreeDay", 4, 8);
+        ParsedClass wild = parseManager("WildTreeSeedManager");
+        MethodTree create = wild.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("reusingPositionLease(level, 8)"));
+        assertTrue(createBody.contains("globalPositionLeaseOrder(8)"));
+
+        MethodTree process = wild.method("processTreeDay", 4);
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry(process, "lease"));
+        assertEquals(List.of("pos"),
+                leaseCall.getArguments().stream().map(Object::toString).toList());
+
+        MethodTree finish = wild.method("finishDailyProcessing", 0);
+        assertTrue(invocations(finish).stream()
+                .anyMatch(call -> methodName(call).equals("close")));
     }
 
     @Test
     void animalProcessLeaseCoversDoorFallbackBounds() throws IOException {
-        assertExpandedAnimalLease("processAnimalDay");
+        assertReusableAnimalLease("processAnimalDay");
     }
 
     @Test
@@ -114,7 +183,7 @@ class DailySettlementChunkLeaseTest {
 
     @Test
     void animalFinalizeLeaseCoversDoorFallbackBounds() throws IOException {
-        assertExpandedAnimalLease("syncAnimalEntityDay");
+        assertReusableAnimalLease("syncAnimalEntityDay");
     }
 
     @Test
@@ -138,7 +207,9 @@ class DailySettlementChunkLeaseTest {
             String body = method.getBody().toString();
             int eligibilityIndex = body.indexOf(contract.className().equals("AnimalGrowthManager")
                     ? "shouldProcessBuildingToday" : "shouldProcessPosition");
-            int leaseIndex = body.indexOf(contract.leaseMethod());
+            int leaseIndex = contract.leaseMethod().equals("lease")
+                    ? body.indexOf(".lease(")
+                    : body.indexOf(contract.leaseMethod());
             assertTrue(eligibilityIndex >= 0 && eligibilityIndex < leaseIndex,
                     contract.className() + "." + contract.methodName()
                             + " must filter eligibility before acquiring");
@@ -155,11 +226,12 @@ class DailySettlementChunkLeaseTest {
         MethodInvocationTree finalizeCursor = asInvocation(entityWork.getInitializer());
         assertMemberCall(finalizeCursor, "DailySettlementWorkUnits", "cursor", 5);
         assertStringLiteral(finalizeCursor.getArguments().getFirst(), "animal_entity_sync");
-        assertIdentifier(finalizeCursor.getArguments().get(1), "animalSnapshot");
+        assertIdentifier(finalizeCursor.getArguments().get(1), "entitySnapshot");
         LambdaExpressionTree finalizeConsumer = asLambda(finalizeCursor.getArguments().get(3));
         MethodInvocationTree finalizeCall = asInvocation(finalizeConsumer.getBody());
-        assertUnqualifiedCall(finalizeCall, "syncAnimalEntityDay", 3);
-        assertIdentifiers(finalizeCall.getArguments(), "level", "worldData", "animalId");
+        assertUnqualifiedCall(finalizeCall, "syncAnimalEntityDay", 4);
+        assertIdentifiers(finalizeCall.getArguments(),
+                "level", "worldData", "animalId", "activeEntityDailyLease");
         assertFalse(invocations(create).stream()
                 .anyMatch(call -> methodName(call).equals("syncAll")));
 
@@ -175,6 +247,41 @@ class DailySettlementChunkLeaseTest {
         assertTrue(calls.contains("spawnEntityForRecord"));
         assertTrue(calls.contains("applyAuthoritativeState"));
         assertFalse(calls.contains("syncAll"));
+    }
+
+    @Test
+    void animalEntitySyncReusesBuildingBoundsLeaseAcrossCursorItems() throws IOException {
+        ParsedClass animal = parseManager("AnimalGrowthManager");
+        MethodTree create = animal.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("reusingBoundsLease(level)"));
+        assertTrue(createBody.contains("closeEntityDailyLease"));
+
+        MethodTree sync = animal.method("syncAnimalEntityDay", -1);
+        String syncBody = sync.getBody().toString();
+        assertTrue(syncBody.contains("entityLeaseCursor.lease("));
+        assertTrue(syncBody.contains("new BlockPos(building.minX() - 1"));
+
+        MethodTree finish = animal.method("finishDailyProcessing", 0);
+        assertTrue(finish.getBody().toString().contains("closeEntityDailyLease"));
+    }
+
+    @Test
+    void animalGrowthAndFeedReuseBuildingBoundsLeaseAcrossActionCursor() throws IOException {
+        ParsedClass animal = parseManager("AnimalGrowthManager");
+        MethodTree create = animal.method("createDailyWorkUnit", 2);
+        String createBody = create.getBody().toString();
+        assertTrue(createBody.contains("activeActionDailyLease"));
+        assertTrue(createBody.contains("closeActionDailyLease"));
+
+        MethodTree process = animal.method("processAnimalDay", -1);
+        assertTrue(process.getBody().toString().contains("actionLeaseCursor.lease("));
+
+        MethodTree feed = animal.method("processAutomaticFeedDay", -1);
+        assertTrue(feed.getBody().toString().contains("actionLeaseCursor.lease("));
+
+        MethodTree finish = animal.method("finishDailyProcessing", 0);
+        assertTrue(finish.getBody().toString().contains("closeActionDailyLease"));
     }
 
     @Test
@@ -208,7 +315,7 @@ class DailySettlementChunkLeaseTest {
                         .noneMatch(call -> methodName(call).equals("removeAnimal")),
                 "official 0.5.3 quarantine behavior must preserve authoritative orphan records");
 
-        TryTree activeLease = leaseTry(sync, "leaseBounds");
+        TryTree activeLease = leaseTry(sync, "lease");
         assertTrue(statementIndex(sync, keepInactive) < statementIndex(sync, removeOrphan));
         assertTrue(statementIndex(sync, removeOrphan) < statementIndex(sync, activeLease));
         MethodInvocationTree syncOne = uniqueInvocation(activeLease.getBlock(), "syncOne");
@@ -294,6 +401,17 @@ class DailySettlementChunkLeaseTest {
                 "new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1)"),
                 leaseCall.getArguments().stream().map(Object::toString).toList(),
                 methodName + " must cover the legacy door scan without loading unrelated chunks");
+    }
+
+    private static void assertReusableAnimalLease(String methodName) throws IOException {
+        MethodTree method = parseManager("AnimalGrowthManager").method(methodName, -1);
+        TryTree leaseTry = leaseTry(method, "lease");
+        MethodInvocationTree leaseCall = resourceInvocation(leaseTry);
+        assertEquals(List.of(
+                "new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1)",
+                "new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1)"),
+                leaseCall.getArguments().stream().map(Object::toString).toList(),
+                methodName + " must reuse the full building bounds lease");
     }
 
     private static String settlementDisposition(boolean active, boolean includingInactive) {

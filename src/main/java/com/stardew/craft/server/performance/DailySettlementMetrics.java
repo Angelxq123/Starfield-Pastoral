@@ -3,8 +3,10 @@ package com.stardew.craft.server.performance;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.time.settlement.DailySettlementServices;
 import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 import net.minecraft.server.MinecraftServer;
@@ -15,6 +17,7 @@ public final class DailySettlementMetrics {
     private final LongSupplier clock;
     private final LongSupplier syncChunkLoads;
     private final Map<String, MutableSubsystemMetrics> subsystems = new LinkedHashMap<>();
+    private final Set<String> warnedOvershootSubsystems = new HashSet<>();
 
     private int absoluteDay = -1;
     private long startedAt;
@@ -91,6 +94,7 @@ public final class DailySettlementMetrics {
         readySummary = null;
         published = false;
         subsystems.clear();
+        warnedOvershootSubsystems.clear();
     }
 
     public long beginTick() {
@@ -178,10 +182,13 @@ public final class DailySettlementMetrics {
         worstOvershootNanos = Math.max(worstOvershootNanos, overshootNanos);
         ServerPerformanceRecorder.increment(
                 PerformanceCounter.DAILY_SETTLEMENT_OVERSHOOTS, 1L);
-        StardewCraft.LOGGER.warn(
-                "[DAILY] settlement budget overshoot unit={} overshoot={}ns",
-                subsystemName,
-                overshootNanos);
+        if (warnedOvershootSubsystems.add(subsystemName)) {
+            StardewCraft.LOGGER.warn(
+                    "[DAILY] settlement budget overshoot unit={} overshoot={}ns "
+                            + "(further overshoots are summarized)",
+                    subsystemName,
+                    overshootNanos);
+        }
     }
 
     public void markLocked() {
@@ -261,6 +268,7 @@ public final class DailySettlementMetrics {
         readySummary = null;
         published = false;
         subsystems.clear();
+        warnedOvershootSubsystems.clear();
     }
 
     public static void recordDailySettlementChunkLeases(

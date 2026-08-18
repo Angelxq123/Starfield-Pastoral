@@ -21,6 +21,10 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -28,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class CoalForestClumpSpawnService {
     private static final String INIT_DATA_ID = "stardewcraft_coal_forest_clumps_init";
     private static final int CLEAR_MAX_Y = CoalForestArea.MAX_Y + 8;
@@ -38,6 +43,8 @@ public final class CoalForestClumpSpawnService {
             new BlockPos(-237, 68, 5),
             new BlockPos(-212, 68, 35),
             new BlockPos(-223, 68, 35));
+    private static final int INITIAL_COLUMNS_PER_TICK = 64;
+    private static InitialSpawnJob initialSpawnJob;
 
     private CoalForestClumpSpawnService() {
     }
@@ -122,73 +129,103 @@ public final class CoalForestClumpSpawnService {
             return;
         }
 
-        List<ChunkPos> forcedChunks = forceRegionChunks(level);
-        int spawned;
-        try {
-            spawned = runInitialSpawn(level);
-        } finally {
-            releaseRegionChunks(level, forcedChunks);
-        }
-        if (initialSpawnComplete(spawned)) {
-            data.setInitialized(true);
+        if (initialSpawnJob == null) {
+            initialSpawnJob = new InitialSpawnJob(level);
+            StardewCraft.LOGGER.info(
+                    "[SECRET_WOODS] Scheduled gradual initial stump spawn");
         }
     }
 
-    private static int runInitialSpawn(ServerLevel level) {
-        clearExistingInitial(level);
-        RandomSource random = level.getRandom();
-        int spawned = 0;
-        for (BlockPos pos : LARGE_STUMP_POSITIONS) {
-            if (tryPlaceAt(level, random, ModBlocks.LARGE_STUMP.get(), pos)) {
-                spawned++;
-            } else {
-                StardewCraft.LOGGER.warn("[SECRET_WOODS] Failed to place large stump at {}", pos);
+    @SubscribeEvent
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)
+                || initialSpawnJob == null
+                || initialSpawnJob.level != level) {
+            return;
+        }
+        tickInitialSpawn(initialSpawnJob);
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        if (initialSpawnJob != null) {
+            releaseInitialChunks(initialSpawnJob);
+            initialSpawnJob = null;
+        }
+    }
+
+    private static void tickInitialSpawn(InitialSpawnJob job) {
+        if (job.cursor.hasChunkRequest()) {
+            ChunkPos chunk = job.cursor.pollChunkRequest();
+            job.requiredChunks.add(chunk);
+            if (!job.level.getForcedChunks().contains(chunk.toLong())
+                    && job.level.setChunkForced(chunk.x, chunk.z, true)) {
+                job.ownedChunks.add(chunk);
+            }
+            return;
+        }
+        for (ChunkPos chunk : job.requiredChunks) {
+            if (job.level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
+                return;
             }
         }
-        StardewCraft.LOGGER.info("[SECRET_WOODS] Initial stump spawn: largeStump={}/{}",
+
+        int processed = 0;
+        while (processed < INITIAL_COLUMNS_PER_TICK && job.cursor.hasColumn()) {
+            InitialRegionWorkCursor.Column column = job.cursor.currentColumn();
+            processClearColumn(job.level, column.x(), column.z());
+            job.cursor.advanceColumn();
+            processed++;
+        }
+        if (job.cursor.hasColumn()) {
+            return;
+        }
+
+        int spawned = 0;
+        for (BlockPos pos : LARGE_STUMP_POSITIONS) {
+            if (tryPlaceAt(job.level, job.random, ModBlocks.LARGE_STUMP.get(), pos)) {
+                spawned++;
+            } else {
+                StardewCraft.LOGGER.warn(
+                        "[SECRET_WOODS] Failed to place large stump at {}", pos);
+            }
+        }
+        if (initialSpawnComplete(spawned)) {
+            CoalForestClumpInitData data = job.level.getDataStorage().computeIfAbsent(
+                    CoalForestClumpInitData.factory(), INIT_DATA_ID);
+            data.setInitialized(true);
+        }
+        StardewCraft.LOGGER.info("[SECRET_WOODS] Gradual initial stump spawn: largeStump={}/{}",
                 spawned, LARGE_STUMP_POSITIONS.size());
-        return spawned;
+        releaseInitialChunks(job);
+        initialSpawnJob = null;
     }
 
     private static boolean initialSpawnComplete(int spawned) {
         return spawned > 0;
     }
 
-    private static List<ChunkPos> forceRegionChunks(ServerLevel level) {
-        List<ChunkPos> newlyForced = new ArrayList<>();
-        try {
-            int minChunkX = CoalForestArea.MIN_X >> 4;
-            int maxChunkX = CoalForestArea.MAX_X >> 4;
-            int minChunkZ = CoalForestArea.MIN_Z >> 4;
-            int maxChunkZ = CoalForestArea.MAX_Z >> 4;
-            for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-                for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                    long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
-                    if (!level.getForcedChunks().contains(chunkKey)) {
-                        level.setChunkForced(chunkX, chunkZ, true);
-                        newlyForced.add(new ChunkPos(chunkX, chunkZ));
-                    }
-                    level.getChunk(chunkX, chunkZ);
-                }
-            }
-            return List.copyOf(newlyForced);
-        } catch (RuntimeException | Error failure) {
-            releaseRegionChunks(level, newlyForced);
-            throw failure;
+    private static void releaseInitialChunks(InitialSpawnJob job) {
+        for (ChunkPos chunk : job.ownedChunks) {
+            job.level.setChunkForced(chunk.x, chunk.z, false);
         }
+        job.ownedChunks.clear();
     }
 
-    private static void releaseRegionChunks(ServerLevel level, List<ChunkPos> forcedChunks) {
-        for (ChunkPos chunk : forcedChunks) {
-            level.setChunkForced(chunk.x, chunk.z, false);
-        }
-    }
+    private static final class InitialSpawnJob {
+        private final ServerLevel level;
+        private final InitialRegionWorkCursor cursor = new InitialRegionWorkCursor(
+                CoalForestArea.MIN_X,
+                CoalForestArea.MAX_X,
+                CoalForestArea.MIN_Z,
+                CoalForestArea.MAX_Z);
+        private final List<ChunkPos> requiredChunks = new ArrayList<>();
+        private final List<ChunkPos> ownedChunks = new ArrayList<>();
+        private final RandomSource random;
 
-    private static void clearExistingInitial(ServerLevel level) {
-        for (int x = CoalForestArea.MIN_X; x <= CoalForestArea.MAX_X; x++) {
-            for (int z = CoalForestArea.MIN_Z; z <= CoalForestArea.MAX_Z; z++) {
-                processClearColumn(level, x, z);
-            }
+        private InitialSpawnJob(ServerLevel level) {
+            this.level = level;
+            this.random = level.getRandom();
         }
     }
 

@@ -17,6 +17,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.ChunkWatchEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 @EventBusSubscriber(modid = StardewCraft.MODID)
@@ -28,22 +29,24 @@ public final class FishPondGameplayEvents {
     }
 
     @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            FishPondColorSyncService.sendFullSnapshot(player, player.serverLevel());
+    public static void onChunkSent(ChunkWatchEvent.Sent event) {
+        ServerPlayer player = event.getPlayer();
+        ServerLevel level = event.getLevel();
+        if (player.serverLevel() == level) {
+            FishPondColorSyncService.sendChunkSnapshot(player, level, event.getPos());
         }
     }
 
     @SubscribeEvent
-    public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            FishPondColorSyncService.sendFullSnapshot(player, player.serverLevel());
-        }
+    public static void onChunkUnwatched(ChunkWatchEvent.UnWatch event) {
+        FishPondColorSyncService.clearChunk(
+                event.getPlayer(), event.getLevel(), event.getPos());
     }
 
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)
+                || level.players().isEmpty()
                 || com.stardew.craft.time.StardewTimePauseService.shouldPauseLevel(level)
                 || level.getGameTime() % ITEM_SCAN_INTERVAL != 0L) {
             return;
@@ -51,8 +54,6 @@ public final class FishPondGameplayEvents {
 
         FishPondWorldData worldData = FishPondWorldData.get(level);
         String dimensionId = level.dimension().location().toString();
-        boolean anyChanged = false;
-
         for (FishPondRecord pond : worldData.getPonds()) {
             if (!dimensionId.equals(pond.dimensionId())) {
                 continue;
@@ -60,16 +61,20 @@ public final class FishPondGameplayEvents {
             if (pond.waterCells().isEmpty()) {
                 continue;
             }
-            if (tickPond(level, worldData, pond)) {
-                anyChanged = true;
+            if (!isPondChunkLoaded(level, pond)) {
+                continue;
             }
+            tickPond(level, worldData, pond);
             com.stardew.craft.blockentity.FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
             tickAmbientJump(level, pond);
         }
+    }
 
-        if (anyChanged) {
-            FishPondColorSyncService.broadcastSnapshot(level);
-        }
+    private static boolean isPondChunkLoaded(ServerLevel level, FishPondRecord pond) {
+        BlockPos bucketPos = pond.bucketPos();
+        return level.getChunkSource().getChunkNow(
+                bucketPos.getX() >> 4,
+                bucketPos.getZ() >> 4) != null;
     }
 
     private static boolean tickPond(ServerLevel level, FishPondWorldData worldData, FishPondRecord pond) {

@@ -1079,6 +1079,7 @@ public final class InteriorSubspaceManager {
     private static final int RELEASE_DELAY_TICKS = 100;
     /** 释放 tick 计数器 */
     private static int releaseTickCounter = 0;
+    private static boolean playerInteriorReloadStarted = false;
 
     /**
      * 每 tick 调用一次（由 InteriorSubspaceLifecycleEvents.onLevelTick 调用）。
@@ -1117,14 +1118,23 @@ public final class InteriorSubspaceManager {
             return;
         }
         if (batchPlacementIndex >= FIXED_STRUCTURES.size()) {
-            // 所有建筑放置完成，执行后续初始化
+            PlayerInteriorAllocator allocator = PlayerInteriorAllocator.get(level);
+            if (!playerInteriorReloadStarted) {
+                resetChunkPreloadState();
+                ensurePortalInteractions(level);
+                migrateFarmAndGreenhousePortals(level);
+                allocator.reloadAllPlaced(level);
+                playerInteriorReloadStarted = true;
+                return;
+            }
+            if (!allocator.tickReloadAllPlaced(level)) {
+                return;
+            }
+
+            // Publish the layout version only after every player-owned structure is restored.
             batchPlacementInProgress = false;
             batchPlacementIndex = 0;
-            resetChunkPreloadState();
-
-            ensurePortalInteractions(level);
-            migrateFarmAndGreenhousePortals(level);
-            PlayerInteriorAllocator.get(level).reloadAllPlaced(level);
+            playerInteriorReloadStarted = false;
             restoreMuseumExhibitStands(level);
 
             InteriorSubspaceSavedData data = InteriorSubspaceSavedData.get(level);

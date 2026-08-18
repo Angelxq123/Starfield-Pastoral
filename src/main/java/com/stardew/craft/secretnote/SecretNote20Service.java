@@ -30,9 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Vanilla secret note 20: trade a rabbit's foot to the truck driver for the Special Charm. */
@@ -119,21 +117,6 @@ public final class SecretNote20Service {
 
         Entity entity = EntityType.loadEntityRecursive(tag, level, loaded -> loaded);
         if (entity != null) level.addFreshEntity(entity);
-    }
-
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) ensureInteractions(level);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) ensureInteractions(player.serverLevel());
-    }
-
-    @SubscribeEvent
-    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) ensureInteractions(player.serverLevel());
     }
 
     @SubscribeEvent

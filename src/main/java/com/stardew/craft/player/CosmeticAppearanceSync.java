@@ -1,6 +1,7 @@
 package com.stardew.craft.player;
 
 import com.stardew.craft.network.payload.CosmeticAppearanceSyncPayload;
+import com.stardew.craft.network.payload.CosmeticAppearanceBatchSyncPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -17,8 +18,22 @@ public final class CosmeticAppearanceSync {
     }
 
     public static void syncAllTo(ServerPlayer recipient) {
+        java.util.List<CosmeticAppearanceBatchSyncPayload.Appearance> appearances =
+                new java.util.ArrayList<>();
         for (ServerPlayer subject : recipient.server.getPlayerList().getPlayers()) {
-            sendToPlayer(recipient, subject, PlayerDataManager.getPlayerData(subject));
+            if (subject == recipient) {
+                continue;
+            }
+            PlayerStardewData data = PlayerDataManager.getPlayerData(subject);
+            appearances.add(new CosmeticAppearanceBatchSyncPayload.Appearance(
+                    subject.getUUID(),
+                    data.getEquippedHat(),
+                    data.getEquippedShirt(),
+                    data.getEquippedPants()));
+        }
+        if (!appearances.isEmpty()) {
+            PacketDistributor.sendToPlayer(recipient,
+                    new CosmeticAppearanceBatchSyncPayload(appearances));
         }
     }
 

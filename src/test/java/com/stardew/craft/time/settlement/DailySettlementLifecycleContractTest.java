@@ -283,7 +283,7 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void sleepPassOutAndVanillaCompletionShareTheSingleAdvanceEntry() throws Exception {
+    void customVotesOwnSleepAdvanceWhileVanillaCompletionOnlySuppressesItsClock() throws Exception {
         ParsedClass dimension = parse("src/main/java/com/stardew/craft/event/DimensionEventHandler.java");
 
         assertEquals(1, frequency(invocationNames(dimension.method("advanceToNextMorning", 3)),
@@ -294,8 +294,10 @@ class DailySettlementLifecycleContractTest {
                 .contains("advanceToNextMorning"));
         assertTrue(invocationNames(dimension.method("requestSleepAdvance", 3))
                 .contains("advanceToNextMorning"));
-        assertTrue(invocationNames(dimension.method("onSleepFinished", 1))
+        assertFalse(invocationNames(dimension.method("onSleepFinished", 1))
                 .contains("advanceToNextMorning"));
+        assertTrue(invocationNames(dimension.method("onSleepFinished", 1))
+                .contains("setTimeAddition"));
     }
 
     @Test
@@ -1253,13 +1255,40 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
-    void prepareScopeCreatesWorldSnapshotsBeforeTheBarrierCanLock() throws Exception {
+    void prepareScopeCreatesWorldSnapshotsAsSeparateBudgetedItems() throws Exception {
         ParsedClass factory = parse(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
-        List<String> calls = invocationNames(factory.method("beginDailyProcess", 1));
+        String source = source(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
+        String scope = factory.method("createDailyProcessScope", 1).getBody().toString();
+        String begin = factory.method("beginDailyProcess", 1).getBody().toString();
+        String prepareOne = factory.method("prepareWorldSnapshot", 2).getBody().toString();
 
-        assertTrue(calls.indexOf("beginDailyProcess") >= 0);
-        assertTrue(calls.indexOf("beginDailyProcess") < calls.indexOf("prepareWorldSnapshots"));
+        assertTrue(source.contains(
+                "case \"daily_process_scope\" -> createDailyProcessScope(context)"));
+        assertTrue(scope.contains("DailySettlementWorkUnits.sequence"));
+        assertTrue(scope.contains("daily_process_scope_begin"));
+        assertTrue(scope.contains("snapshot_"));
+        assertFalse(begin.contains("prepareWorldSnapshots"),
+                "opening the daily scope must not build every snapshot in one atomic item");
+        assertTrue(prepareOne.contains("preparedWorld.put"));
+        assertTrue(prepareOne.contains("createWorldSnapshot"));
+    }
+
+    @Test
+    void weatherResetSeparatesWeatherFromDeferredNpcCursor() throws Exception {
+        ParsedClass factory = parse(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
+        String source = source(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementPlanFactory.java");
+        String reset = factory.method("createWeatherAndNpcWorkUnit", 1).getBody().toString();
+
+        assertTrue(source.contains(
+                "case \"weather_npc_reset\" -> createWeatherAndNpcWorkUnit(context)"));
+        assertTrue(reset.contains("DailySettlementWorkUnits.sequence"));
+        assertTrue(reset.contains("weather_npc_reset_weather"));
+        assertTrue(reset.contains("npc_daily_reset"));
+        assertTrue(reset.contains("DailySettlementWorkUnits.deferred"));
     }
 
     @Test

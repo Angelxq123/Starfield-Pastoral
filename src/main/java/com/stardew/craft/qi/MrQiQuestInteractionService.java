@@ -1,6 +1,5 @@
 package com.stardew.craft.qi;
 
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.decor.MapDecorWallThinBlock;
 import com.stardew.craft.blockentity.PortalTriggerBlockEntity;
@@ -19,16 +18,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 
 /** Authored world integration for the original Mr. Qi scavenger-hunt interactions. */
-@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class MrQiQuestInteractionService {
     public static final BlockPos TUNNEL_SAFE_POS = new BlockPos(-123, 65, -67);
     public static final BlockPos SAND_DRAGON_POS = new BlockPos(-244, 68, -165);
@@ -122,27 +116,6 @@ public final class MrQiQuestInteractionService {
             case SHIP -> player.playNotifySound(ModSounds.SHIP.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
             case COIN -> player.playNotifySound(ModSounds.COIN.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
             case EAT -> player.playNotifySound(ModSounds.EAT.get(), SoundSource.BLOCKS, 1.0F, 1.0F);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) {
-            install(level);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            install(player.serverLevel());
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            install(player.serverLevel());
         }
     }
 }

@@ -137,11 +137,6 @@ public final class SleepVoteTracker {
         MinecraftServer server = player.server;
         int totalStardewPlayers = countStardewPlayers(server);
 
-        if (totalStardewPlayers <= 1) {
-            // 单人直接推进
-            return true;
-        }
-
         int afkTimeout = server.getGameRules().getInt(ModGameRules.RULE_STARDEW_AFK_TIMEOUT);
         int activeCount = countActiveStardewPlayers(server, afkTimeout);
         int votedCount = countCurrentVotes(server);
@@ -151,20 +146,17 @@ public final class SleepVoteTracker {
         StardewCraft.LOGGER.info("[SleepVote] {}/{} voted, need {} ({}% of {} active, {} total, afk={}s)",
                 votedCount, activeCount, required, sleepPct, activeCount, totalStardewPlayers, afkTimeout);
 
-        if (!broadcastProgress) {
-            return votedCount >= required;
-        }
+        if (broadcastProgress) {
+            // 先发送有效进度，保证随后打开的结算屏不会使用默认 0/0。
+            broadcastVoteProgress(server, votedCount, required);
 
-        // 广播投票进度给所有星露谷维度玩家（原版床界面下通过 action bar 可见）
-        broadcastVoteProgress(server, votedCount, required);
-
-        // 通知所有人投票进度
-        Component progressMsg = Component.translatable("stardewcraft.sleep.vote.progress",
-                        votedCount, required)
-                .withStyle(ChatFormatting.YELLOW);
-        for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-            if (isInStardewDimension(sp)) {
-                sp.displayClientMessage(progressMsg, true);
+            Component progressMsg = Component.translatable("stardewcraft.sleep.vote.progress",
+                            votedCount, required)
+                    .withStyle(ChatFormatting.YELLOW);
+            for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+                if (isInStardewDimension(sp)) {
+                    sp.displayClientMessage(progressMsg, true);
+                }
             }
         }
 

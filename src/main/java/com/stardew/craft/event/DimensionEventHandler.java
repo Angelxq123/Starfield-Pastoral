@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.animal.Parrot;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.BedBlock;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -65,6 +66,51 @@ public class DimensionEventHandler {
     private static boolean twoAMWarned = false;      // 2:00 警告
     private static int lastAnimalTenMinuteDayKey = Integer.MIN_VALUE;
     private static int lastAnimalTenMinuteSlot = Integer.MIN_VALUE;
+    private static final FarmEntryTeleportQueue<ServerLevel, ServerPlayer> FARM_ENTRY_TELEPORTS =
+            new FarmEntryTeleportQueue<>(new FarmEntryTeleportQueue.Backend<>() {
+                @Override
+                public boolean acquire(ServerLevel level, ChunkPos chunk) {
+                    if (level.getForcedChunks().contains(chunk.toLong())) {
+                        return false;
+                    }
+                    return level.setChunkForced(chunk.x, chunk.z, true);
+                }
+
+                @Override
+                public boolean isLoaded(ServerLevel level, ChunkPos chunk) {
+                    return level.getChunkSource().getChunkNow(chunk.x, chunk.z) != null;
+                }
+
+                @Override
+                public boolean isValid(
+                        java.util.UUID playerId,
+                        ServerLevel level,
+                        ServerPlayer player
+                ) {
+                    return player.serverLevel() == level
+                            && player.server.getPlayerList().getPlayer(playerId) == player;
+                }
+
+                @Override
+                public void teleport(ServerLevel level, ServerPlayer player, BlockPos target) {
+                    player.closeContainer();
+                    player.stopUsingItem();
+                    player.teleportTo(
+                            level,
+                            target.getX() + 0.5D,
+                            target.getY(),
+                            target.getZ() + 0.5D,
+                            player.getYRot(),
+                            player.getXRot());
+                    com.stardew.craft.farm.FarmChunkManager.get()
+                            .reconcilePlayerOccupancy(player);
+                }
+
+                @Override
+                public void release(ServerLevel level, ChunkPos chunk) {
+                    level.setChunkForced(chunk.x, chunk.z, false);
+                }
+            }, 8);
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
@@ -75,6 +121,7 @@ public class DimensionEventHandler {
         twoAMWarned = false;
         SleepVoteTracker.clearVotes();
         com.stardew.craft.player.PassOutService.clearRuntimeState();
+        FARM_ENTRY_TELEPORTS.clear();
     }
 
     @SuppressWarnings("null")
@@ -220,10 +267,6 @@ public class DimensionEventHandler {
         if (bedPos == null || !isSleepAnchor(player, bedPos)) {
             return false;
         }
-        if (!player.isSleeping()) {
-            return false;
-        }
-
         // 多人投票：只有所有 Stardew 维度玩家都投票后才推进
         if (SleepVoteTracker.castVote(player, sleepMinute)) {
             int effectiveSleepMinute = SleepVoteTracker.getLatestSleepMinute();
@@ -450,8 +493,11 @@ public class DimensionEventHandler {
             com.stardew.craft.quest.StardewQuestEvents.fireWarped(player, location);
 
             if (ModDimensions.STARDEW_VALLEY.equals(event.getTo())) {
+                boolean farmTeleportQueued = false;
+                boolean skipAutoTeleport;
                 // 如果是 CrossDimensionTeleporter 主动传送（如巫师塔入口），不覆盖目标位置
-                if (!com.stardew.craft.interior.CrossDimensionTeleporter.consumeSkipAutoTeleport(player.getUUID())) {
+                if (!(skipAutoTeleport = com.stardew.craft.interior.CrossDimensionTeleporter
+                        .consumeSkipAutoTeleport(player.getUUID()))) {
                     // 查询玩家的农场出生点
                     com.stardew.craft.farm.FarmInstanceRegistry registry = com.stardew.craft.farm.FarmInstanceRegistry.get();
                     net.minecraft.core.BlockPos spawnPos = registry.getFarmSpawnPoint(player.getUUID());
@@ -459,21 +505,17 @@ public class DimensionEventHandler {
                         StardewCraft.LOGGER.warn("[DIMENSION] Player {} entered Stardew Valley without a farm spawn; skipping farm auto-teleport.",
                                 player.getName().getString());
                     } else {
-                        // 传送前清理
-                        player.closeContainer();
-                        player.stopUsingItem();
-
-                        preloadChunksAround(level, spawnPos, 2);
-                        player.teleportTo(level, spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, player.getYRot(), player.getXRot());
+                        FARM_ENTRY_TELEPORTS.enqueue(
+                                player.getUUID(), level, player, spawnPos);
+                        farmTeleportQueued = true;
                     }
                 }
 
-                com.stardew.craft.farm.FarmChunkManager.get()
-                        .reconcilePlayerOccupancy(player);
+                if (!farmTeleportQueued) {
+                    com.stardew.craft.farm.FarmChunkManager.get()
+                            .reconcilePlayerOccupancy(player);
+                }
 
-                // 把各 ensurePlaced() 分散到后续 tick 执行，防止同帧堆叠触发 watchdog。
-                // 每个任务本身有 SavedData 版本检查，已完成的会立即跳过（< 1ms）。
-                scheduleDeferredInit(level);
             }
 
             // 发送星露谷虚拟时间包（不修改全局 GameRule）
@@ -570,6 +612,12 @@ public class DimensionEventHandler {
         // 只在星露谷维度处理（矿井维度会自动跟随）
         if (!ModDimensions.STARDEW_VALLEY.equals(serverLevel.dimension())) {
             return;
+        }
+
+        try {
+            FARM_ENTRY_TELEPORTS.tick();
+        } catch (RuntimeException exception) {
+            StardewCraft.LOGGER.error("[DIMENSION] Failed to finish queued farm entry teleport", exception);
         }
 
         var server = serverLevel.getServer();
@@ -743,9 +791,11 @@ public class DimensionEventHandler {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
 
         if (level.dimension() == ModDimensions.STARDEW_VALLEY) {
-            StardewTimeManager timeManager = StardewTimeManager.get();
-            SleepVoteTracker.clearVotes();
-            advanceToNextMorning(level, timeManager.getCurrentTime(), "vanilla_sleep_finished");
+            // The custom confirmation vote owns Stardew's shared day advance.
+            // Vanilla reaches this hook as soon as the third body enters a bed,
+            // before that player's confirmation packet can arrive.
+            SleepInteractionHandler.preserveVotesForVanillaWake(level.players());
+            event.setTimeAddition(level.getDayTime());
         }
     }
 
@@ -813,16 +863,6 @@ public class DimensionEventHandler {
                 }
             }
             
-        }
-    }
-
-    private static void preloadChunksAround(ServerLevel level, net.minecraft.core.BlockPos center, int radiusChunks) {
-        int centerChunkX = center.getX() >> 4;
-        int centerChunkZ = center.getZ() >> 4;
-        for (int dz = -radiusChunks; dz <= radiusChunks; dz++) {
-            for (int dx = -radiusChunks; dx <= radiusChunks; dx++) {
-                level.getChunk(centerChunkX + dx, centerChunkZ + dz);
-            }
         }
     }
 

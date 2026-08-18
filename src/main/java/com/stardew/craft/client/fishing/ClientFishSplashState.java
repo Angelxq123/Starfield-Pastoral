@@ -25,6 +25,14 @@ public final class ClientFishSplashState {
 		SPLASHES.putAll(snapshot);
 	}
 
+	public static void replaceChunk(int chunkX, int chunkZ, Map<String, BlockPos> snapshot) {
+		SPLASHES.entrySet().removeIf(entry -> {
+			BlockPos pos = entry.getValue();
+			return (pos.getX() >> 4) == chunkX && (pos.getZ() >> 4) == chunkZ;
+		});
+		SPLASHES.putAll(snapshot);
+	}
+
 	public static void put(String key, BlockPos pos) {
 		SPLASHES.put(key, pos);
 	}

@@ -6,6 +6,7 @@ import com.stardew.craft.entity.ModEntities;
 import com.stardew.craft.entity.npc.StardewNpcEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -50,9 +51,17 @@ public final class JojaNpcEvents {
 
     private static final Spawn[] SPAWNS = { MORRIS, JOJA_CASHIER };
 
+    private static final List<ChunkPos> FIXED_SPAWN_CHUNKS = List.of(
+            new ChunkPos(MORRIS.blockPos()),
+            new ChunkPos(JOJA_CASHIER.blockPos()));
+
     private static int tickCounter = 0;
 
     private JojaNpcEvents() {}
+
+    public static List<ChunkPos> fixedSpawnChunks() {
+        return FIXED_SPAWN_CHUNKS;
+    }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
@@ -65,13 +74,15 @@ public final class JojaNpcEvents {
         if (com.stardew.craft.time.StardewTimePauseService.isPaused(event.getServer())) return;
 
         for (Spawn s : SPAWNS) {
-            loadSpawnChunk(level, s);
-            ensureSingleEntity(level, s);
+            if (isSpawnChunkLoaded(level, s)) {
+                ensureSingleEntity(level, s);
+            }
         }
     }
 
-    private static void loadSpawnChunk(ServerLevel level, Spawn s) {
-        level.getChunk(s.blockPos().getX() >> 4, s.blockPos().getZ() >> 4);
+    private static boolean isSpawnChunkLoaded(ServerLevel level, Spawn spawn) {
+        BlockPos pos = spawn.blockPos();
+        return level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null;
     }
 
     /** 位置偏离目标超过此距离（方块）时，不信 teleportTo，直接 discard + 新建。 */
@@ -199,7 +210,9 @@ public final class JojaNpcEvents {
     public static void forceCheckNow(ServerLevel level) {
         if (level == null) return;
         for (Spawn s : SPAWNS) {
-            ensureSingleEntity(level, s);
+            if (isSpawnChunkLoaded(level, s)) {
+                ensureSingleEntity(level, s);
+            }
         }
     }
 }

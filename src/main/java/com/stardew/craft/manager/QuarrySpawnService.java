@@ -19,7 +19,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -49,6 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
     * <p>采石场区域：X ∈ [155, 194]，Z ∈ [-140, -101]，只在 Y=80..81 的裸露采石场土面生成。
  */
 @SuppressWarnings("null")
+@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class QuarrySpawnService {
 
     private static final String INIT_DATA_ID = "stardewcraft_quarry_init";
@@ -60,6 +66,8 @@ public final class QuarrySpawnService {
     private static final int AREA_MAX_Z = -101;
     private static final int FLOOR_MIN_Y = 80;
     private static final int FLOOR_MAX_Y = 81;
+    private static final int INITIAL_COLUMNS_PER_TICK = 128;
+    private static InitialSpawnJob initialSpawnJob;
 
 
     private QuarrySpawnService() {}
@@ -134,50 +142,101 @@ public final class QuarrySpawnService {
                 QuarryInitData.factory(), INIT_DATA_ID);
         if (data.isInitialized()) return;
 
-        StardewCraft.LOGGER.info("[QUARRY] Running initial dense spawn (year={}, fillChance={})", year, INITIAL_FILL_CHANCE);
+        if (initialSpawnJob == null) {
+            initialSpawnJob = new InitialSpawnJob(level);
+            StardewCraft.LOGGER.info(
+                    "[QUARRY] Scheduled gradual initial dense spawn (year={}, fillChance={})",
+                    year,
+                    INITIAL_FILL_CHANCE);
+        }
+    }
 
-        // 强制加载采石场覆盖的区块，保证 setBlock 不被 chunk unloaded 跳过。
-        java.util.List<long[]> forced = forceQuarryChunks(level);
+    @SubscribeEvent
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)
+                || initialSpawnJob == null
+                || initialSpawnJob.level != level) {
+            return;
+        }
+        tickInitialSpawn(initialSpawnJob);
+    }
 
-        try {
-            RandomSource r = level.getRandom();
-            int placed = 0, attempts = 0;
-            // 全图逐格扫描：每个砂土格按概率独立滚一次，拿到 SDV 级别的密度
-            for (int x = AREA_MIN_X; x <= AREA_MAX_X; x++) {
-                for (int z = AREA_MIN_Z; z <= AREA_MAX_Z; z++) {
-                    if (r.nextDouble() > INITIAL_FILL_CHANCE) continue;
-                    attempts++;
-                    if (trySpawnAt(level, r, x, z)) placed++;
-                }
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        if (initialSpawnJob != null) {
+            releaseInitialChunks(initialSpawnJob);
+            initialSpawnJob = null;
+        }
+    }
+
+    private static void tickInitialSpawn(InitialSpawnJob job) {
+        if (job.cursor.hasChunkRequest()) {
+            ChunkPos chunk = job.cursor.pollChunkRequest();
+            job.requiredChunks.add(chunk);
+            if (!job.level.getForcedChunks().contains(chunk.toLong())
+                    && job.level.setChunkForced(chunk.x, chunk.z, true)) {
+                job.ownedChunks.add(chunk);
             }
-            StardewCraft.LOGGER.info("[QUARRY] Initial dense spawn done: attempts={} placed={}", attempts, placed);
-            if (placed <= 0) {
-                StardewCraft.LOGGER.warn("[QUARRY] Initial dense spawn placed nothing; leaving initialization pending for retry");
+            return;
+        }
+        for (ChunkPos chunk : job.requiredChunks) {
+            if (job.level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
                 return;
             }
-        } finally {
-            releaseQuarryChunks(level, forced);
         }
-        data.markInitialized();
-    }
 
-    private static java.util.List<long[]> forceQuarryChunks(ServerLevel level) {
-        java.util.List<long[]> forced = new java.util.ArrayList<>();
-        int cxMin = AREA_MIN_X >> 4, cxMax = AREA_MAX_X >> 4;
-        int czMin = AREA_MIN_Z >> 4, czMax = AREA_MAX_Z >> 4;
-        for (int cx = cxMin; cx <= cxMax; cx++) {
-            for (int cz = czMin; cz <= czMax; cz++) {
-                level.setChunkForced(cx, cz, true);
-                level.getChunk(cx, cz);
-                forced.add(new long[]{cx, cz});
+        int processed = 0;
+        while (processed < INITIAL_COLUMNS_PER_TICK && job.cursor.hasColumn()) {
+            InitialRegionWorkCursor.Column column = job.cursor.currentColumn();
+            if (job.random.nextDouble() <= INITIAL_FILL_CHANCE) {
+                job.attempts++;
+                if (trySpawnAt(job.level, job.random, column.x(), column.z())) {
+                    job.placed++;
+                }
             }
+            job.cursor.advanceColumn();
+            processed++;
         }
-        return forced;
+        if (job.cursor.hasColumn()) {
+            return;
+        }
+
+        if (job.placed > 0) {
+            QuarryInitData data = job.level.getDataStorage().computeIfAbsent(
+                    QuarryInitData.factory(), INIT_DATA_ID);
+            data.markInitialized();
+        } else {
+            StardewCraft.LOGGER.warn(
+                    "[QUARRY] Initial dense spawn placed nothing; leaving initialization pending for retry");
+        }
+        StardewCraft.LOGGER.info(
+                "[QUARRY] Gradual initial dense spawn done: attempts={} placed={}",
+                job.attempts,
+                job.placed);
+        releaseInitialChunks(job);
+        initialSpawnJob = null;
     }
 
-    private static void releaseQuarryChunks(ServerLevel level, java.util.List<long[]> forced) {
-        for (long[] chunk : forced) {
-            level.setChunkForced((int) chunk[0], (int) chunk[1], false);
+    private static void releaseInitialChunks(InitialSpawnJob job) {
+        for (ChunkPos chunk : job.ownedChunks) {
+            job.level.setChunkForced(chunk.x, chunk.z, false);
+        }
+        job.ownedChunks.clear();
+    }
+
+    private static final class InitialSpawnJob {
+        private final ServerLevel level;
+        private final InitialRegionWorkCursor cursor = new InitialRegionWorkCursor(
+                AREA_MIN_X, AREA_MAX_X, AREA_MIN_Z, AREA_MAX_Z);
+        private final List<ChunkPos> requiredChunks = new ArrayList<>();
+        private final List<ChunkPos> ownedChunks = new ArrayList<>();
+        private final RandomSource random;
+        private int attempts;
+        private int placed;
+
+        private InitialSpawnJob(ServerLevel level) {
+            this.level = level;
+            this.random = level.getRandom();
         }
     }
 

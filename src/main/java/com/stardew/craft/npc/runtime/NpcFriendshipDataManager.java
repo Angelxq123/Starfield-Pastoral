@@ -6,6 +6,9 @@ import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -102,40 +105,91 @@ public final class NpcFriendshipDataManager extends SavedData {
             ToIntFunction<String> maxPoints
     ) {
         boolean changed = false;
-        for (Map<String, FriendshipState> npcMap : playerState.values()) {
-            for (Map.Entry<String, FriendshipState> entry : npcMap.entrySet()) {
-                String npcId = entry.getKey();
-                FriendshipState state = entry.getValue();
-                boolean known = knownNpc.test(npcId);
-
-                int beforePoints = state.points();
-                if (known) {
-                    int delta = NpcFriendshipDailyService.calculateDailyFriendshipDelta(
-                            beforePoints,
-                            state.lastTalkDayKey() == previousDayKey,
-                            datableNpc.test(npcId)
-                    );
-                    if (delta != 0) {
-                        state.addPoints(delta, maxPoints.applyAsInt(npcId));
-                    }
-                }
-
-                if (state.lastGiftWeekKey() != newWeekKey) {
-                    // Farmer.updateFriendshipGifts: giving both weekly gifts grants
-                    // +10 friendship when the next Sunday begins.
-                    if (known && state.giftsThisWeek() >= 2) {
-                        state.addPoints(10, maxPoints.applyAsInt(npcId));
-                    }
-                    state.normalizeGiftWeek(newWeekKey);
-                    changed = true;
-                }
-                changed |= state.points() != beforePoints;
-            }
-        }
-        if (changed) {
-            setDirty();
+        for (UUID playerId : playerIdsSnapshot()) {
+            changed |= settlePlayerNewDay(
+                    playerId,
+                    previousDayKey,
+                    newWeekKey,
+                    knownNpc,
+                    datableNpc,
+                    maxPoints);
         }
         return changed;
+    }
+
+    List<UUID> playerIdsSnapshot() {
+        return playerState.keySet().stream()
+                .sorted(Comparator.comparing(UUID::toString))
+                .toList();
+    }
+
+    boolean settlePlayerNewDay(
+            UUID playerId,
+            int previousDayKey,
+            int newWeekKey,
+            Predicate<String> knownNpc,
+            Predicate<String> datableNpc,
+            ToIntFunction<String> maxPoints
+    ) {
+        Map<String, FriendshipState> npcMap = playerState.get(playerId);
+        if (npcMap == null || npcMap.isEmpty()) {
+            return false;
+        }
+
+        List<DailyFriendshipUpdate> updates = new ArrayList<>();
+        for (Map.Entry<String, FriendshipState> entry : npcMap.entrySet()) {
+            String npcId = entry.getKey();
+            FriendshipState state = entry.getValue();
+            boolean known = knownNpc.test(npcId);
+            int nextPoints = state.points();
+
+            if (known) {
+                int delta = NpcFriendshipDailyService.calculateDailyFriendshipDelta(
+                        nextPoints,
+                        state.lastTalkDayKey() == previousDayKey,
+                        datableNpc.test(npcId));
+                if (delta != 0) {
+                    nextPoints = clampPoints(
+                            nextPoints + delta, maxPoints.applyAsInt(npcId));
+                }
+            }
+
+            boolean normalizeGiftWeek = state.lastGiftWeekKey() != newWeekKey;
+            if (normalizeGiftWeek && known && state.giftsThisWeek() >= 2) {
+                nextPoints = clampPoints(
+                        nextPoints + 10, maxPoints.applyAsInt(npcId));
+            }
+            if (nextPoints != state.points() || normalizeGiftWeek) {
+                updates.add(new DailyFriendshipUpdate(
+                        state, nextPoints, normalizeGiftWeek, newWeekKey));
+            }
+        }
+
+        if (updates.isEmpty()) {
+            return false;
+        }
+        updates.forEach(DailyFriendshipUpdate::apply);
+        setDirty();
+        return true;
+    }
+
+    private static int clampPoints(int points, int maxPoints) {
+        return Math.max(0, Math.min(points, maxPoints));
+    }
+
+    private record DailyFriendshipUpdate(
+            FriendshipState state,
+            int points,
+            boolean normalizeGiftWeek,
+            int newWeekKey
+    ) {
+        private void apply() {
+            state.points = points;
+            if (normalizeGiftWeek) {
+                state.giftsThisWeek = 0;
+                state.lastGiftWeekKey = newWeekKey;
+            }
+        }
     }
 
     public static NpcFriendshipDataManager load(CompoundTag tag, HolderLookup.Provider provider) {

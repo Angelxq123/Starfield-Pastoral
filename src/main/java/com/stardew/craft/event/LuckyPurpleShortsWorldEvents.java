@@ -28,9 +28,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +46,6 @@ public final class LuckyPurpleShortsWorldEvents {
     private static final BlockPos BASEMENT_SHORTS_POS = new BlockPos(81, 44, 32);
     private static final BlockPos BASEMENT_EXIT_PORTAL_POS = new BlockPos(68, 44, 20);
     private static final AABB LEWIS_BASEMENT_BOUNDS = new AABB(64, 43, 19, 84, 49, 36);
-    private static final AABB FULL_STARDEW_LEVEL_BOUNDS = new AABB(-30_000_000, -64, -30_000_000, 30_000_000, 320, 30_000_000);
     private static final Set<UUID> BASEMENT_COLLECTED_THIS_VISIT = ConcurrentHashMap.newKeySet();
     private static long lastBasementCleanupTick = -1L;
 
@@ -83,7 +83,6 @@ public final class LuckyPurpleShortsWorldEvents {
         if (player.serverLevel().dimension() != ModDimensions.STARDEW_VALLEY) {
             return;
         }
-        ensurePlaced(player.serverLevel());
         sendBlockFor(player, MARNIE_SHORTS_POS, canSeeMarnieShorts(player));
         sendBlockFor(player, BASEMENT_SHORTS_POS, canSeeBasementShorts(player));
     }
@@ -95,13 +94,6 @@ public final class LuckyPurpleShortsWorldEvents {
         ensureShortsBlock(level, MARNIE_SHORTS_POS);
         ensureShortsBlock(level, BASEMENT_SHORTS_POS);
         ensureBasementExitPortal(level);
-    }
-
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) {
-            ensurePlaced(level);
-        }
     }
 
     @SubscribeEvent
@@ -251,13 +243,19 @@ public final class LuckyPurpleShortsWorldEvents {
             return;
         }
 
-        var monsters = level.getEntitiesOfClass(LuckyPurpleShortsMonsterEntity.class, FULL_STARDEW_LEVEL_BOUNDS);
-        for (LuckyPurpleShortsMonsterEntity monster : monsters) {
-            monster.discard();
+        List<LuckyPurpleShortsMonsterEntity> monsters = new ArrayList<>();
+        for (var entity : level.getAllEntities()) {
+            if (entity instanceof LuckyPurpleShortsMonsterEntity monster) {
+                monsters.add(monster);
+            }
         }
+        monsters.forEach(LuckyPurpleShortsMonsterEntity::discard);
     }
 
     private static void sendBlockFor(ServerPlayer player, BlockPos pos, boolean visible) {
+        if (player.serverLevel().getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) == null) {
+            return;
+        }
         BlockState state = visible ? player.serverLevel().getBlockState(pos) : Blocks.AIR.defaultBlockState();
         player.connection.send(new ClientboundBlockUpdatePacket(pos, state));
     }

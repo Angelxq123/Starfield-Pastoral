@@ -40,6 +40,7 @@ public class PlayerInteriorAllocator extends SavedData {
     private final Set<UUID> ghPlaced = new HashSet<>();
     /** 已放置农场洞穴室内结构的玩家集合 */
     private final Set<UUID> cavePlaced = new HashSet<>();
+    private final PlayerInteriorReloadQueue reloadQueue = new PlayerInteriorReloadQueue();
 
     // ── 静态访问 ──
 
@@ -164,38 +165,79 @@ public class PlayerInteriorAllocator extends SavedData {
      * 布局版本变更后重新加载所有已分配的 per-player 结构。
      * 由 {@link InteriorSubspaceManager#ensureLoaded} 在静态结构加载后调用。
      */
-    public void reloadAllPlaced(ServerLevel level) {        var ccData = com.stardew.craft.communitycenter.state.CommunityCenterSavedData.get();
-        for (UUID uuid : new ArrayList<>(ccPlaced)) {
-            BlockPos origin = getCCOrigin(uuid);
-            StructureLoader.loadAndPlaceWithResult(level, InteriorSubspaceManager.CC_RUINS_PATH, origin);
-            // 重新应用该玩家已完成区域的 refurbished 方块
-            for (int areaId = 0; areaId <= 5; areaId++) {
-                if (ccData.isAreaComplete(uuid, areaId)) {
-                    com.stardew.craft.communitycenter.restore.AreaRestoreHandler.restoreArea(level, areaId, origin);
-                }
+    public void reloadAllPlaced(ServerLevel level) {
+        reloadQueue.reset(ccPlaced, ghPlaced, cavePlaced);
+        StardewCraft.LOGGER.info(
+                "[INTERIOR-ALLOC] Scheduled {} per-player interiors for gradual reload",
+                reloadQueue.size());
+    }
+
+    /**
+     * Reloads at most one player-owned structure. Returns true only on a later
+     * tick after the queue has drained, keeping layout-version publication separate.
+     */
+    public boolean tickReloadAllPlaced(ServerLevel level) {
+        PlayerInteriorReloadQueue.Work work = reloadQueue.peek();
+        if (work == null) {
+            return true;
+        }
+
+        UUID uuid = work.playerId();
+        boolean reloaded = switch (work.kind()) {
+            case COMMUNITY_CENTER -> reloadCommunityCenter(level, uuid);
+            case GREENHOUSE -> reloadGreenhouse(level, uuid);
+            case FARM_CAVE -> reloadFarmCave(level, uuid);
+        };
+        if (reloaded) {
+            reloadQueue.removeFirst();
+        }
+        return false;
+    }
+
+    private boolean reloadCommunityCenter(ServerLevel level, UUID uuid) {
+        BlockPos origin = getCCOrigin(uuid);
+        if (!StructureLoader.loadAndPlaceWithResult(
+                level, InteriorSubspaceManager.CC_RUINS_PATH, origin)) {
+            return false;
+        }
+        var ccData = com.stardew.craft.communitycenter.state.CommunityCenterSavedData.get();
+        for (int areaId = 0; areaId <= 5; areaId++) {
+            if (ccData.isAreaComplete(uuid, areaId)) {
+                com.stardew.craft.communitycenter.restore.AreaRestoreHandler
+                        .restoreArea(level, areaId, origin);
             }
-            // 如果全部完成，覆盖放置整体 refurbished 版
-            if (ccData.areAllAreasComplete(uuid)) {
-                com.stardew.craft.communitycenter.restore.AreaRestoreHandler.restoreAllRemaining(level, origin);
-            }
-            InteriorSubspaceManager.ensureCommunityCenterExitPortal(level, origin);
-            com.stardew.craft.communitycenter.JunimoNotePlacer.ensureJunimoNotes(level, uuid, origin);
-            forceChunksForCC(level, origin, true);
         }
-        for (UUID uuid : new ArrayList<>(ghPlaced)) {
-            BlockPos origin = getGreenhouseOrigin(uuid);
-            StructureLoader.loadAndPlaceWithResult(level, InteriorSubspaceManager.GREENHOUSE_INTERIOR_PATH, origin);
-            spawnGHExitPortals(level, origin);
-            forceChunksForGH(level, origin, true);
+        if (ccData.areAllAreasComplete(uuid)) {
+            com.stardew.craft.communitycenter.restore.AreaRestoreHandler
+                    .restoreAllRemaining(level, origin);
         }
-        for (UUID uuid : new ArrayList<>(cavePlaced)) {
-            BlockPos origin = getCaveOrigin(uuid);
-            StructureLoader.loadAndPlaceWithResult(level, InteriorSubspaceManager.FARM_CAVE_PATH, origin);
-            spawnCaveExitPortals(level, origin);
-            forceChunksForCave(level, origin, true);
+        InteriorSubspaceManager.ensureCommunityCenterExitPortal(level, origin);
+        com.stardew.craft.communitycenter.JunimoNotePlacer
+                .ensureJunimoNotes(level, uuid, origin);
+        forceChunksForCC(level, origin, true);
+        return true;
+    }
+
+    private boolean reloadGreenhouse(ServerLevel level, UUID uuid) {
+        BlockPos origin = getGreenhouseOrigin(uuid);
+        if (!StructureLoader.loadAndPlaceWithResult(
+                level, InteriorSubspaceManager.GREENHOUSE_INTERIOR_PATH, origin)) {
+            return false;
         }
-        StardewCraft.LOGGER.info("[INTERIOR-ALLOC] Reloaded {} CC + {} GH per-player structures",
-            ccPlaced.size(), ghPlaced.size());
+        spawnGHExitPortals(level, origin);
+        forceChunksForGH(level, origin, true);
+        return true;
+    }
+
+    private boolean reloadFarmCave(ServerLevel level, UUID uuid) {
+        BlockPos origin = getCaveOrigin(uuid);
+        if (!StructureLoader.loadAndPlaceWithResult(
+                level, InteriorSubspaceManager.FARM_CAVE_PATH, origin)) {
+            return false;
+        }
+        spawnCaveExitPortals(level, origin);
+        forceChunksForCave(level, origin, true);
+        return true;
     }
 
     // ── 坐标查询 ──

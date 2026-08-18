@@ -26,15 +26,6 @@ public class MuseumDonationSyncEvents {
     }
 
     @SubscribeEvent
-    public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        // Museum is in a separate interior dimension; stand data is keyed by dimension so
-        // re-sync whenever the player crosses dimensions, otherwise stands appear empty.
-        if (event.getEntity() instanceof ServerPlayer player) {
-            syncToPlayer(player);
-        }
-    }
-
-    @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             syncToPlayer(player);

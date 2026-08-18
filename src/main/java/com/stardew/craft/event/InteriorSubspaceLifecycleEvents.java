@@ -36,7 +36,10 @@ public class InteriorSubspaceLifecycleEvents {
 
         // 沙漠区域 schem 放置
         DesertMapBootstrap.ensureLoaded(stardew, "server_started");
-        com.stardew.craft.desert.DesertGalaxyPillarBootstrap.ensurePlaced(stardew, "server_started");
+
+        // 固定公共区域只在服务器启动阶段初始化。各任务自行异步申请所需区块，
+        // 分 tick 完成后释放票据，避免把首次进入星露谷的玩家变成重任务触发器。
+        DimensionEventHandler.scheduleDeferredInit(stardew);
     }
 
     /**
@@ -66,11 +69,6 @@ public class InteriorSubspaceLifecycleEvents {
         }
 
         InteriorSubspaceManager.ensureLoaded(player.serverLevel(), "enter_stardew_dimension");
-        InteriorSubspaceManager.replaceAllPortalsIfReady(player.serverLevel(), "enter_stardew_dimension_safety_net");
-
-        // 沙漠区域 schem 放置（老存档首次进入时触发）
-        DesertMapBootstrap.ensureLoaded(player.serverLevel(), "enter_stardew_dimension");
-        com.stardew.craft.desert.DesertGalaxyPillarBootstrap.ensurePlaced(player.serverLevel(), "enter_stardew_dimension");
     }
 
     @SubscribeEvent

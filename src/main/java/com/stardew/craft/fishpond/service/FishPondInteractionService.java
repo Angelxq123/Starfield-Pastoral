@@ -129,11 +129,12 @@ public final class FishPondInteractionService {
             return ItemStack.EMPTY;
         }
 
+        int previousColor = pond.waterColor();
         pond.setCurrentPopulation(Math.max(0, pond.currentPopulation() - 1));
         pond.setWaterColor(FishPondDataService.get().resolveWaterColor(pond));
         worldData.markChanged();
         FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
-        FishPondColorSyncService.broadcastSnapshot(level);
+        syncWaterColorIfChanged(level, pond, previousColor);
         return new ItemStack(BuiltInRegistries.ITEM.get(fishId));
     }
 
@@ -169,6 +170,7 @@ public final class FishPondInteractionService {
             return ItemAbsorbResult.POND_FULL;
         }
 
+        int previousColor = pond.waterColor();
         if (pondEmpty) {
             pond.setFishTypeId(itemId);
             pond.setMaxPopulation(maxPopulation);
@@ -181,7 +183,7 @@ public final class FishPondInteractionService {
         pond.setWaterColor(pondData.resolveWaterColor(pond));
         FishPondWorldData.get(level).markChanged();
         FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
-        FishPondColorSyncService.broadcastSnapshot(level);
+        syncWaterColorIfChanged(level, pond, previousColor);
 
         consumeItemEntity(level, itemEntity, stack, 1);
         return ItemAbsorbResult.FISH_ACCEPTED;
@@ -203,6 +205,7 @@ public final class FishPondInteractionService {
             return ItemAbsorbResult.IGNORED;
         }
 
+        int previousColor = pond.waterColor();
         String completedItem = pond.neededItemId();
         pond.setNeededItemCount(Math.max(0, pond.neededItemCount() - consumed));
         ServerPlayer responsiblePlayer = null;
@@ -218,7 +221,7 @@ public final class FishPondInteractionService {
         pond.setWaterColor(FishPondDataService.get().resolveWaterColor(pond));
         FishPondWorldData.get(level).markChanged();
         FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
-        FishPondColorSyncService.broadcastSnapshot(level);
+        syncWaterColorIfChanged(level, pond, previousColor);
 
         consumeItemEntity(level, itemEntity, stack, consumed);
         if (completedRequest) {
@@ -257,6 +260,16 @@ public final class FishPondInteractionService {
             itemEntity.discard();
         } else {
             itemEntity.setItem(stack);
+        }
+    }
+
+    private static void syncWaterColorIfChanged(
+            ServerLevel level,
+            FishPondRecord pond,
+            int previousColor
+    ) {
+        if (previousColor != pond.waterColor()) {
+            FishPondColorSyncService.syncPond(level, pond);
         }
     }
 

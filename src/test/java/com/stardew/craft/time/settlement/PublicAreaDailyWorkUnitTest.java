@@ -321,17 +321,22 @@ class PublicAreaDailyWorkUnitTest {
     }
 
     @Test
-    void coalForestInitializationMarksOnlyACompletedAttemptAndAlwaysReleasesChunks()
+    void coalForestInitializationSchedulesNonblockingWorkAndAlwaysReleasesOwnedChunks()
             throws Exception {
         ParsedClass coal = parse("CoalForestClumpSpawnService.java", "CoalForestClumpSpawnService");
         MethodTree initial = coal.method("ensureInitialSpawn", 1);
-        List<TryTree> tries = scan(initial, TryTree.class);
-        assertEquals(1, tries.size());
-        TryTree guarded = tries.getFirst();
-        assertTrue(invocationsNamed(guarded.getFinallyBlock(), "releaseRegionChunks").size() == 1);
-        assertEquals(1, invocationsNamed(initial, "runInitialSpawn").size());
+        MethodTree tick = coal.method("tickInitialSpawn", 1);
+        MethodTree stopped = coal.method("onServerStopped", 1);
 
-        List<IfTree> completionGuards = scan(initial, IfTree.class).stream()
+        assertEquals(1, scan(initial, NewClassTree.class).stream()
+                .filter(created -> created.getIdentifier().toString().equals("InitialSpawnJob"))
+                .count());
+        assertTrue(invocationsNamed(tick, "releaseInitialChunks").size() == 1);
+        assertTrue(invocationsNamed(stopped, "releaseInitialChunks").size() == 1);
+        assertTrue(invocationsNamed(initial, "getChunk").isEmpty());
+        assertTrue(invocationsNamed(tick, "getChunk").isEmpty());
+
+        List<IfTree> completionGuards = scan(tick, IfTree.class).stream()
                 .filter(candidate -> invocationsNamed(candidate.getThenStatement(), "setInitialized").size() == 1)
                 .toList();
         assertEquals(1, completionGuards.size(), "initialization mark must be success-guarded");

@@ -47,6 +47,7 @@ public class TreeGrowthManager extends SavedData {
 	private final Set<GlobalPos> fertilizedSaplings = ConcurrentHashMap.newKeySet();
 
 	private boolean isProcessing = false;
+	private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingPositionLease activeDailyLease;
 	private final Set<GlobalPos> pendingAdds = new HashSet<>();
 	private final Set<GlobalPos> pendingRemoves = new HashSet<>();
 
@@ -132,7 +133,11 @@ public class TreeGrowthManager extends SavedData {
 		Objects.requireNonNull(context, "context");
 		isProcessing = true;
 		try {
+			activeDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+					.reusingPositionLease(level, 8);
 			List<GlobalPos> snapshot = new ArrayList<>(saplingPositions);
+			snapshot.sort(com.stardew.craft.farm.FarmDailyProcessHelper
+					.globalPositionLeaseOrder(8));
 			return DailySettlementWorkUnits.cursor(
 					"tree_growth",
 					snapshot,
@@ -157,8 +162,9 @@ public class TreeGrowthManager extends SavedData {
 		if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
 			return;
 		}
-		try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
-				.leasePosition(level, pos, 8)) {
+		var leaseCursor = Objects.requireNonNull(
+				activeDailyLease, "tree daily chunk lease");
+		try (var lease = leaseCursor.lease(pos)) {
 			if (!level.isLoaded(pos)) {
 				return;
 			}
@@ -172,8 +178,16 @@ public class TreeGrowthManager extends SavedData {
 	}
 
 	private void finishDailyProcessing() {
-		isProcessing = false;
-		applyPendingChanges();
+		var lease = activeDailyLease;
+		activeDailyLease = null;
+		try {
+			if (lease != null) {
+				lease.close();
+			}
+		} finally {
+			isProcessing = false;
+			applyPendingChanges();
+		}
 	}
 
 	private static String dailyItemIdentity(GlobalPos globalPos) {

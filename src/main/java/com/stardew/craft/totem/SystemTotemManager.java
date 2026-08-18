@@ -13,14 +13,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.level.LevelEvent;
 
 /**
  * 系统图腾柱管理器 — 在星露谷维度加载时确保主地图系统柱存在。
  */
-@EventBusSubscriber(modid = StardewCraft.MODID)
 public class SystemTotemManager {
 
     /** 旧版农场系统柱：农场现在是玩家实例，不再属于主地图固定系统柱。 */
@@ -43,10 +39,8 @@ public class SystemTotemManager {
     private static final BlockPos POS_BEACH = new BlockPos(44, 60, 93);
     private static final BlockPos POS_DESERT = new BlockPos(-203, 64, -157);
 
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
+    public static void installFixedTotems(ServerLevel level) {
+        if (level == null || !level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
 
         removeOldFarmSystemPole(level);
         removeOldMountainSystemPoles(level);

@@ -120,6 +120,7 @@ class RollingTimingWindowTest {
         assertArrayEquals(new PerformanceTiming[] {
             PerformanceTiming.SERVER_TICK,
             PerformanceTiming.PLAYER_LOGIN_EVENT,
+            PerformanceTiming.PLAYER_LOGIN_SYNC_STAGE,
             PerformanceTiming.CONTENT_SNAPSHOT_BUILD,
             PerformanceTiming.JEI_CATALOG_BUILD,
             PerformanceTiming.FARM_SYNC_CHUNK_LOAD,

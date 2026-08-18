@@ -23,20 +23,56 @@ import java.util.Optional;
  * If {@code fullSnapshot=false}, each entry is a diff:
  * {@code Optional.empty()} = remove that locationKey, present = add/replace.
  */
-public record FishSplashSyncPayload(boolean fullSnapshot, Map<String, Optional<BlockPos>> entries)
+public record FishSplashSyncPayload(
+		boolean fullSnapshot,
+		boolean chunkSnapshot,
+		int chunkX,
+		int chunkZ,
+		Map<String, Optional<BlockPos>> entries)
 		implements CustomPacketPayload {
 
 	public static final Type<FishSplashSyncPayload> TYPE = new Type<>(
 			ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "fish_splash_sync"));
 
-	public static final StreamCodec<ByteBuf, FishSplashSyncPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.BOOL, FishSplashSyncPayload::fullSnapshot,
-			ByteBufCodecs.<ByteBuf, String, Optional<BlockPos>, Map<String, Optional<BlockPos>>>map(
-					LinkedHashMap::new,
-					ByteBufCodecs.STRING_UTF8,
-					BlockPos.STREAM_CODEC.apply(ByteBufCodecs::optional)),
-			FishSplashSyncPayload::entries,
-			FishSplashSyncPayload::new);
+	public static final StreamCodec<ByteBuf, FishSplashSyncPayload> STREAM_CODEC =
+			new StreamCodec<>() {
+				@Override
+				public FishSplashSyncPayload decode(ByteBuf buf) {
+					boolean fullSnapshot = buf.readBoolean();
+					boolean chunkSnapshot = buf.readBoolean();
+					int chunkX = ByteBufCodecs.INT.decode(buf);
+					int chunkZ = ByteBufCodecs.INT.decode(buf);
+					int entryCount = ByteBufCodecs.VAR_INT.decode(buf);
+					Map<String, Optional<BlockPos>> entries = new LinkedHashMap<>(entryCount);
+					for (int index = 0; index < entryCount; index++) {
+						String key = ByteBufCodecs.STRING_UTF8.decode(buf);
+						Optional<BlockPos> pos = buf.readBoolean()
+								? Optional.of(BlockPos.STREAM_CODEC.decode(buf))
+								: Optional.empty();
+						entries.put(key, pos);
+					}
+					return new FishSplashSyncPayload(
+							fullSnapshot, chunkSnapshot, chunkX, chunkZ, entries);
+				}
+
+				@Override
+				public void encode(ByteBuf buf, FishSplashSyncPayload payload) {
+					buf.writeBoolean(payload.fullSnapshot);
+					buf.writeBoolean(payload.chunkSnapshot);
+					ByteBufCodecs.INT.encode(buf, payload.chunkX);
+					ByteBufCodecs.INT.encode(buf, payload.chunkZ);
+					ByteBufCodecs.VAR_INT.encode(buf, payload.entries.size());
+					for (Map.Entry<String, Optional<BlockPos>> entry : payload.entries.entrySet()) {
+						ByteBufCodecs.STRING_UTF8.encode(buf, entry.getKey());
+						buf.writeBoolean(entry.getValue().isPresent());
+						entry.getValue().ifPresent(pos -> BlockPos.STREAM_CODEC.encode(buf, pos));
+					}
+				}
+			};
+
+	public FishSplashSyncPayload {
+		entries = Map.copyOf(entries);
+	}
 
 	/** Convenience: build a snapshot payload from a present-only map. */
 	public static FishSplashSyncPayload snapshot(Map<String, BlockPos> snapshot) {
@@ -44,7 +80,19 @@ public record FishSplashSyncPayload(boolean fullSnapshot, Map<String, Optional<B
 		for (Map.Entry<String, BlockPos> e : snapshot.entrySet()) {
 			wrapped.put(e.getKey(), Optional.of(e.getValue()));
 		}
-		return new FishSplashSyncPayload(true, wrapped);
+		return new FishSplashSyncPayload(true, false, 0, 0, wrapped);
+	}
+
+	public static FishSplashSyncPayload chunkSnapshot(
+			int chunkX,
+			int chunkZ,
+			Map<String, BlockPos> snapshot
+	) {
+		LinkedHashMap<String, Optional<BlockPos>> wrapped = new LinkedHashMap<>(snapshot.size());
+		for (Map.Entry<String, BlockPos> entry : snapshot.entrySet()) {
+			wrapped.put(entry.getKey(), Optional.of(entry.getValue()));
+		}
+		return new FishSplashSyncPayload(false, true, chunkX, chunkZ, wrapped);
 	}
 
 	/** Convenience: build a diff payload (additions + removals). */
@@ -56,7 +104,7 @@ public record FishSplashSyncPayload(boolean fullSnapshot, Map<String, Optional<B
 		for (String key : removals) {
 			wrapped.put(key, Optional.empty());
 		}
-		return new FishSplashSyncPayload(false, wrapped);
+		return new FishSplashSyncPayload(false, false, 0, 0, wrapped);
 	}
 
 	@Override
@@ -73,6 +121,12 @@ public record FishSplashSyncPayload(boolean fullSnapshot, Map<String, Optional<B
 					e.getValue().ifPresent(v -> flat.put(e.getKey(), v));
 				}
 				ClientFishSplashState.replaceAll(flat);
+			} else if (payload.chunkSnapshot) {
+				LinkedHashMap<String, BlockPos> flat = new LinkedHashMap<>(payload.entries.size());
+				for (Map.Entry<String, Optional<BlockPos>> entry : payload.entries.entrySet()) {
+					entry.getValue().ifPresent(pos -> flat.put(entry.getKey(), pos));
+				}
+				ClientFishSplashState.replaceChunk(payload.chunkX, payload.chunkZ, flat);
 			} else {
 				for (Map.Entry<String, Optional<BlockPos>> e : payload.entries.entrySet()) {
 					if (e.getValue().isEmpty()) {

@@ -216,10 +216,13 @@ public class FishPondManagerMenu extends AbstractContainerMenu {
             return false;
         }
         FishPondRecord pond = pondOpt.get();
+        int previousColor = pond.waterColor();
         pond.clearPondContents();
         worldData.markChanged();
         FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
-        FishPondColorSyncService.broadcastSnapshot(level);
+        if (previousColor != pond.waterColor()) {
+            FishPondColorSyncService.syncPond(level, pond);
+        }
         return true;
     }
 

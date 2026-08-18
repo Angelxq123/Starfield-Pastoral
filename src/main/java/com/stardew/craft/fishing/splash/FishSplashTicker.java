@@ -91,8 +91,13 @@ public final class FishSplashTicker {
 			ServerPlayer anchor = attempt.getValue();
 			BlockPos chosen = pickSplashTile(stardew, anchor.blockPosition(), key, r);
 			if (chosen != null) {
-				state.put(key, new FishSplashState.Entry(chosen, nowMin));
-				FishSplashState.broadcastChange(stardew, key, chosen);
+				FishSplashState.Entry previous =
+						state.put(key, new FishSplashState.Entry(chosen, nowMin));
+				FishSplashState.syncChange(
+						stardew,
+						key,
+						previous == null ? null : previous.pos(),
+						chosen);
 			}
 		}
 	}
@@ -121,8 +126,12 @@ public final class FishSplashTicker {
 			}
 		}
 		for (String key : toRemove) {
-			state.remove(key);
-			FishSplashState.broadcastChange(stardew, key, null);
+			FishSplashState.Entry removed = state.remove(key);
+			FishSplashState.syncChange(
+					stardew,
+					key,
+					removed == null ? null : removed.pos(),
+					null);
 		}
 	}
 

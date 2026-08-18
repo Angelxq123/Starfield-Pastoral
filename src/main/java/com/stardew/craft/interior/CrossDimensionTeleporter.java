@@ -14,14 +14,26 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * respawn, etc.).
  */
 @SuppressWarnings({"null", "unused"})
+@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class CrossDimensionTeleporter {
 
     private static final String PLAYER_LAST_PORTAL_TICK = "stardewcraft_last_portal_tick";
@@ -55,6 +68,19 @@ public final class CrossDimensionTeleporter {
 
     // 星露谷维度的巫师塔室外坐标
     private static final BlockPos STARDEW_WIZARD_OUTDOOR_POS = new BlockPos(-179, 69, 51);
+    private static final List<ChunkPos> WIZARD_INTERIOR_WARMUP_CHUNKS = List.of(
+            new ChunkPos(-12, 3),
+            new ChunkPos(-11, 3),
+            new ChunkPos(-12, 4),
+            new ChunkPos(-11, 4));
+    private static final Set<ChunkPos> OWNED_WIZARD_WARMUP_CHUNKS = new LinkedHashSet<>();
+    private static final Set<UUID> PENDING_WIZARD_ENTRIES = ConcurrentHashMap.newKeySet();
+    private static final Map<UUID, PendingWizardReturn> PENDING_WIZARD_RETURNS = new ConcurrentHashMap<>();
+    private static final int MAX_WIZARD_RETURNS_PER_TICK = 8;
+    private static final int WIZARD_RETURN_TIMEOUT_TICKS = 200;
+    private static final int WIZARD_INTERIOR_VIEW_DISTANCE = 2;
+    private static ServerLevel wizardWarmupLevel;
+    private static boolean wizardWarmupReadyLogged;
 
     private CrossDimensionTeleporter() {}
 
@@ -69,6 +95,56 @@ public final class CrossDimensionTeleporter {
     /** 外部调用：标记该玩家下次进入星露谷维度时跳过自动传送 */
     public static void markSkipAutoTeleport(UUID uuid) {
         SKIP_AUTO_TELEPORT.add(uuid);
+    }
+
+    static List<ChunkPos> wizardInteriorWarmupChunks() {
+        return WIZARD_INTERIOR_WARMUP_CHUNKS;
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onServerStarted(ServerStartedEvent event) {
+        ServerLevel stardewLevel = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
+        if (stardewLevel != null) {
+            startWizardWarmup(stardewLevel);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        processPendingWizardReturns(event);
+
+        ServerLevel level = wizardWarmupLevel;
+        if (level == null || !areWizardWarmupChunksReady(level)) {
+            return;
+        }
+        if (!wizardWarmupReadyLogged) {
+            wizardWarmupReadyLogged = true;
+            StardewCraft.LOGGER.info(
+                    "[WIZARD] Interior warmup ready ({} chunks)",
+                    WIZARD_INTERIOR_WARMUP_CHUNKS.size());
+        }
+
+        int completed = 0;
+        for (UUID playerId : new ArrayList<>(PENDING_WIZARD_ENTRIES)) {
+            if (completed >= 8) {
+                break;
+            }
+            PENDING_WIZARD_ENTRIES.remove(playerId);
+            ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerId);
+            if (player == null || !Level.OVERWORLD.equals(player.level().dimension())) {
+                continue;
+            }
+            completeOverworldToWizardInterior(player, level);
+            completed++;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        releaseWizardWarmup();
+        clearPendingWizardReturns();
+        PENDING_WIZARD_ENTRIES.clear();
+        SKIP_AUTO_TELEPORT.clear();
     }
 
     /**
@@ -89,28 +165,16 @@ public final class CrossDimensionTeleporter {
             return;
         }
 
-        // 确保巫师塔内部已加载
-        InteriorSubspaceManager.ensureLoaded(stardewLevel, "wizard_overworld_portal");
+        startWizardWarmup(stardewLevel);
+        if (areWizardWarmupChunksReady(stardewLevel)) {
+            completeOverworldToWizardInterior(player, stardewLevel);
+            return;
+        }
 
-        BlockPos spawnAbs = WIZARD_TOWER_ORIGIN.offset(WIZARD_TOWER_INDOOR_SPAWN_OFFSET);
-
-        // 传送前清理
-        player.closeContainer();
-        player.stopUsingItem();
-
-        // 跨维度传送到巫师塔内部 — ModTeleport 自动跳过维度拦截
-        ModTeleport.to(player, stardewLevel,
-            spawnAbs.getX() + 0.5, spawnAbs.getY(), spawnAbs.getZ() + 0.5,
-            180.0F, 0.0F);
-
-        // 设置室内标志 + 夜视
-        applyInteriorEnter(player);
-        markCooldown(player);
-
-        // 强制触发 NPC 系统初始化，确保巫师立刻出现
-        com.stardew.craft.npc.NpcSystem.forceTickNow(stardewLevel);
-
-        StardewCraft.LOGGER.info("[WIZARD] {} teleported from overworld to wizard tower interior", player.getName().getString());
+        PENDING_WIZARD_ENTRIES.add(player.getUUID());
+        StardewCraft.LOGGER.info(
+                "[WIZARD] Queued {} until the interior warmup is ready",
+                player.getName().getString());
     }
 
     /**
@@ -119,6 +183,7 @@ public final class CrossDimensionTeleporter {
      */
     public static void wizardInteriorToOverworld(ServerPlayer player) {
         if (checkCooldown(player)) return;
+        if (PENDING_WIZARD_RETURNS.containsKey(player.getUUID())) return;
 
         PlayerStardewData data = PlayerDataManager.getPlayerData(player);
         BlockPos returnPos = data.getOverworldReturnPos();
@@ -134,20 +199,51 @@ public final class CrossDimensionTeleporter {
             return;
         }
 
+        ChunkPos returnChunk = new ChunkPos(returnPos);
+        if (overworld.getChunkSource().getChunkNow(returnChunk.x, returnChunk.z) != null) {
+            completeWizardInteriorToOverworld(
+                    player, overworld, returnPos, player.getYRot(), player.getXRot());
+            return;
+        }
+
+        boolean owned = !overworld.getForcedChunks().contains(returnChunk.toLong())
+                && overworld.setChunkForced(returnChunk.x, returnChunk.z, true);
+        PENDING_WIZARD_RETURNS.put(
+                player.getUUID(),
+                new PendingWizardReturn(
+                        overworld,
+                        returnPos.immutable(),
+                        returnChunk,
+                        player.getYRot(),
+                        player.getXRot(),
+                        owned,
+                        player.server.getTickCount()));
+        StardewCraft.LOGGER.info(
+                "[WIZARD] Queued {}'s overworld return until chunk {} is ready",
+                player.getName().getString(), returnChunk);
+    }
+
+    private static void completeWizardInteriorToOverworld(
+            ServerPlayer player,
+            ServerLevel overworld,
+            BlockPos returnPos,
+            float yaw,
+            float pitch
+    ) {
         // 传送前清理
         player.closeContainer();
         player.stopUsingItem();
 
         ModTeleport.to(player, overworld,
             returnPos.getX() + 0.5, returnPos.getY(), returnPos.getZ() + 0.5,
-            player.getYRot(), player.getXRot());
+            yaw, pitch);
 
         // 清除室内标志
         applyInteriorExit(player);
         markCooldown(player);
 
         // 清理来源数据
-        data.setWizardSourceDimension(null);
+        PlayerDataManager.getPlayerData(player).setWizardSourceDimension(null);
 
         StardewCraft.LOGGER.info("[WIZARD] {} teleported from wizard tower interior back to overworld at {}", player.getName().getString(), returnPos);
     }
@@ -231,6 +327,141 @@ public final class CrossDimensionTeleporter {
     }
 
     // ──── Internal helpers ────
+
+    private static void startWizardWarmup(ServerLevel level) {
+        if (wizardWarmupLevel == level) {
+            return;
+        }
+        wizardWarmupLevel = level;
+        wizardWarmupReadyLogged = false;
+        OWNED_WIZARD_WARMUP_CHUNKS.clear();
+        for (ChunkPos chunk : WIZARD_INTERIOR_WARMUP_CHUNKS) {
+            if (!level.getForcedChunks().contains(chunk.toLong())
+                    && level.setChunkForced(chunk.x, chunk.z, true)) {
+                OWNED_WIZARD_WARMUP_CHUNKS.add(chunk);
+            }
+        }
+        StardewCraft.LOGGER.info(
+                "[WIZARD] Started interior warmup ({} chunks)",
+                WIZARD_INTERIOR_WARMUP_CHUNKS.size());
+    }
+
+    private static boolean areWizardWarmupChunksReady(ServerLevel level) {
+        for (ChunkPos chunk : WIZARD_INTERIOR_WARMUP_CHUNKS) {
+            if (level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void completeOverworldToWizardInterior(
+            ServerPlayer player,
+            ServerLevel stardewLevel
+    ) {
+        BlockPos spawnAbs = WIZARD_TOWER_ORIGIN.offset(WIZARD_TOWER_INDOOR_SPAWN_OFFSET);
+        player.closeContainer();
+        player.stopUsingItem();
+        ModTeleport.to(
+                player,
+                stardewLevel,
+                spawnAbs.getX() + 0.5D,
+                spawnAbs.getY(),
+                spawnAbs.getZ() + 0.5D,
+                180.0F,
+                0.0F);
+        applyInteriorEnter(player);
+        markCooldown(player);
+        com.stardew.craft.npc.runtime.NpcSpawnManager.forceSpawnNpc("wizard");
+        StardewCraft.LOGGER.info(
+                "[WIZARD] {} teleported from overworld to wizard tower interior",
+                player.getName().getString());
+    }
+
+    private static void releaseWizardWarmup() {
+        ServerLevel level = wizardWarmupLevel;
+        if (level != null) {
+            for (ChunkPos chunk : OWNED_WIZARD_WARMUP_CHUNKS) {
+                level.setChunkForced(chunk.x, chunk.z, false);
+            }
+        }
+        OWNED_WIZARD_WARMUP_CHUNKS.clear();
+        wizardWarmupLevel = null;
+        wizardWarmupReadyLogged = false;
+    }
+
+    private static void processPendingWizardReturns(ServerTickEvent.Post event) {
+        int completed = 0;
+        int currentTick = event.getServer().getTickCount();
+        for (Map.Entry<UUID, PendingWizardReturn> entry
+                : new ArrayList<>(PENDING_WIZARD_RETURNS.entrySet())) {
+            if (completed >= MAX_WIZARD_RETURNS_PER_TICK) {
+                break;
+            }
+
+            UUID playerId = entry.getKey();
+            PendingWizardReturn pending = entry.getValue();
+            ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerId);
+            if (player == null || !ModDimensions.STARDEW_VALLEY.equals(player.level().dimension())) {
+                if (PENDING_WIZARD_RETURNS.remove(playerId, pending)) {
+                    releasePendingWizardReturn(pending);
+                }
+                continue;
+            }
+            if (currentTick - pending.queuedAtTick() >= WIZARD_RETURN_TIMEOUT_TICKS) {
+                if (PENDING_WIZARD_RETURNS.remove(playerId, pending)) {
+                    releasePendingWizardReturn(pending);
+                    StardewCraft.LOGGER.warn(
+                            "[WIZARD] Timed out waiting for {}'s overworld return chunk {}",
+                            player.getName().getString(), pending.chunk());
+                }
+                continue;
+            }
+            if (pending.level().getChunkSource().getChunkNow(
+                    pending.chunk().x, pending.chunk().z) == null) {
+                continue;
+            }
+            if (!PENDING_WIZARD_RETURNS.remove(playerId, pending)) {
+                continue;
+            }
+
+            try {
+                completeWizardInteriorToOverworld(
+                        player,
+                        pending.level(),
+                        pending.returnPos(),
+                        pending.yaw(),
+                        pending.pitch());
+            } finally {
+                releasePendingWizardReturn(pending);
+            }
+            completed++;
+        }
+    }
+
+    private static void clearPendingWizardReturns() {
+        for (PendingWizardReturn pending : PENDING_WIZARD_RETURNS.values()) {
+            releasePendingWizardReturn(pending);
+        }
+        PENDING_WIZARD_RETURNS.clear();
+    }
+
+    private static void releasePendingWizardReturn(PendingWizardReturn pending) {
+        if (pending.owned()) {
+            pending.level().setChunkForced(pending.chunk().x, pending.chunk().z, false);
+        }
+    }
+
+    private record PendingWizardReturn(
+            ServerLevel level,
+            BlockPos returnPos,
+            ChunkPos chunk,
+            float yaw,
+            float pitch,
+            boolean owned,
+            int queuedAtTick
+    ) {
+    }
 
     /**
      * 首次到达星露谷时在玩家面前放置一个装有初始物资的木箱。
@@ -361,9 +592,23 @@ public final class CrossDimensionTeleporter {
 
     private static void applyInteriorEnter(ServerPlayer player) {
         com.stardew.craft.event.InteriorPortalInteractionEvents.markInteriorEnter(player);
+        applyWizardInteriorChunkTrackingView(player);
     }
 
     private static void applyInteriorExit(ServerPlayer player) {
         com.stardew.craft.event.InteriorPortalInteractionEvents.clearInteriorState(player);
+        restoreDefaultChunkTrackingView(player);
+    }
+
+    private static void applyWizardInteriorChunkTrackingView(ServerPlayer player) {
+        player.setChunkTrackingView(ChunkTrackingView.of(
+                player.chunkPosition(), WIZARD_INTERIOR_VIEW_DISTANCE));
+    }
+
+    private static void restoreDefaultChunkTrackingView(ServerPlayer player) {
+        int viewDistance = Math.max(
+                WIZARD_INTERIOR_VIEW_DISTANCE,
+                player.server.getPlayerList().getViewDistance());
+        player.setChunkTrackingView(ChunkTrackingView.of(player.chunkPosition(), viewDistance));
     }
 }

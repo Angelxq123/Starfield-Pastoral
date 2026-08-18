@@ -3,7 +3,7 @@ package com.stardew.craft.api.v1.communitycenter;
 import com.stardew.craft.communitycenter.data.BundleDefinition;
 import com.stardew.craft.communitycenter.menu.BundleMenu;
 import com.stardew.craft.communitycenter.network.BundleClaimRewardPayload;
-import com.stardew.craft.communitycenter.network.BundleSyncPayload;
+import com.stardew.craft.communitycenter.network.BundleProgressDeltaPayload;
 import com.stardew.craft.communitycenter.state.CommunityCenterSavedData;
 import com.stardew.craft.api.v1.internal.communitycenter.StardewCommunityCenterVariantRegistry;
 import com.stardew.craft.api.v1.internal.communitycenter.StardewCommunityCenterRewardRegistry;
@@ -32,7 +32,7 @@ public final class StardewCommunityCenterActions {
             return Result.REJECTED;
         }
         player.containerMenu.broadcastChanges();
-        BundleSyncPayload.sendFullSync(player);
+        BundleProgressDeltaPayload.send(player, bundleId);
         return Result.SUCCESS;
     }
 
@@ -53,6 +53,10 @@ public final class StardewCommunityCenterActions {
             return Result.REJECTED;
         }
         player.containerMenu.broadcastChanges();
+        CommunityCenterSavedData data = CommunityCenterSavedData.get(player.serverLevel());
+        if (data.isSlotComplete(player.getUUID(), bundleId, ingredientSlot)) {
+            BundleProgressDeltaPayload.send(player, bundleId);
+        }
         return Result.SUCCESS;
     }
 
@@ -65,7 +69,7 @@ public final class StardewCommunityCenterActions {
             return Result.REJECTED;
         }
         player.containerMenu.broadcastChanges();
-        BundleSyncPayload.sendFullSync(player);
+        BundleProgressDeltaPayload.send(player, bundleId);
         return Result.SUCCESS;
     }
 
@@ -92,7 +96,7 @@ public final class StardewCommunityCenterActions {
             player.drop(reward, false);
         }
         data.setRewardAvailable(player.getUUID(), bundleId, false);
-        BundleSyncPayload.sendFullSync(player);
+        BundleProgressDeltaPayload.send(player, bundleId);
         return Result.SUCCESS;
     }
 

@@ -66,6 +66,7 @@ public class WildTreeSeedManager extends SavedData {
 	private final Map<GlobalPos, Entry> pendingAdds = new HashMap<>();
 	private final Set<GlobalPos> pendingRemoves = new HashSet<>();
 	private boolean processing;
+	private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingPositionLease activeDailyLease;
 
 	@SuppressWarnings("null")
 	public static WildTreeSeedManager get(ServerLevel level) {
@@ -200,15 +201,21 @@ public class WildTreeSeedManager extends SavedData {
 		Objects.requireNonNull(context, "context");
 		processing = true;
 		try {
+			activeDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+					.reusingPositionLease(level, 8);
 			List<DailyTreeEntry> treeSnapshot = new ArrayList<>(entries.size());
 			for (GlobalPos globalPos : new ArrayList<>(entries.keySet())) {
 				Entry entry = entries.get(globalPos);
 				if (entry != null) {
 					treeSnapshot.add(new DailyTreeEntry(
-							globalPos,
-							entry.treeId));
+						globalPos,
+						entry.treeId));
 				}
 			}
+			treeSnapshot.sort(java.util.Comparator.comparing(
+					DailyTreeEntry::globalPos,
+					com.stardew.craft.farm.FarmDailyProcessHelper
+							.globalPositionLeaseOrder(8)));
 			long worldSeed = level.getSeed();
 			int absoluteDay = context.absoluteDay();
 			return DailySettlementWorkUnits.cursor(
@@ -239,8 +246,9 @@ public class WildTreeSeedManager extends SavedData {
 			return;
 		}
 
-		try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
-				.leasePosition(level, pos, 8)) {
+		var leaseCursor = Objects.requireNonNull(
+				activeDailyLease, "wild tree seed daily chunk lease");
+		try (var lease = leaseCursor.lease(pos)) {
 			if (!level.isLoaded(pos)) {
 				return;
 			}
@@ -298,8 +306,16 @@ public class WildTreeSeedManager extends SavedData {
 	}
 
 	private void finishDailyProcessing() {
-		processing = false;
-		applyPendingChanges();
+		var lease = activeDailyLease;
+		activeDailyLease = null;
+		try {
+			if (lease != null) {
+				lease.close();
+			}
+		} finally {
+			processing = false;
+			applyPendingChanges();
+		}
 	}
 
 	private void applyPendingChanges() {

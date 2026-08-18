@@ -14,6 +14,8 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.List;
@@ -28,8 +30,14 @@ public final class BooksellerEvents {
     private static final double SCAN_RADIUS = 6.0;
 
     private static int tickCounter = 0;
+    private static final MerchantChunkLease CHUNK_LEASE = new MerchantChunkLease(POS);
 
     private BooksellerEvents() {
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onServerStarted(ServerStartedEvent event) {
+        CHUNK_LEASE.clearLegacyTicket(event.getServer().getLevel(ModDimensions.STARDEW_VALLEY));
     }
 
     @SubscribeEvent
@@ -41,6 +49,7 @@ public final class BooksellerEvents {
 
         ServerLevel level = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
         if (level == null || level.players().isEmpty()) {
+            CHUNK_LEASE.release();
             return;
         }
         if (com.stardew.craft.time.StardewTimePauseService.isPaused(event.getServer())) {
@@ -48,26 +57,20 @@ public final class BooksellerEvents {
         }
 
         if (!BooksellerSchedule.isToday(level)) {
-            releaseSpawnChunk(level);
+            CHUNK_LEASE.release();
             removeManagedEntities(level);
             return;
         }
 
-        loadSpawnChunk(level);
+        if (!CHUNK_LEASE.request(level)) {
+            return;
+        }
         ensureSingleEntity(level);
     }
 
-    private static void loadSpawnChunk(ServerLevel level) {
-        int chunkX = POS.getX() >> 4;
-        int chunkZ = POS.getZ() >> 4;
-        level.setChunkForced(chunkX, chunkZ, true);
-        level.getChunk(chunkX, chunkZ);
-    }
-
-    private static void releaseSpawnChunk(ServerLevel level) {
-        int chunkX = POS.getX() >> 4;
-        int chunkZ = POS.getZ() >> 4;
-        level.setChunkForced(chunkX, chunkZ, false);
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        CHUNK_LEASE.release();
     }
 
     private static void removeManagedEntities(ServerLevel level) {
@@ -133,12 +136,13 @@ public final class BooksellerEvents {
             return;
         }
         if (!BooksellerSchedule.isToday(level)) {
-            releaseSpawnChunk(level);
+            CHUNK_LEASE.release();
             removeManagedEntities(level);
             return;
         }
-        loadSpawnChunk(level);
-        ensureSingleEntity(level);
+        if (CHUNK_LEASE.request(level)) {
+            ensureSingleEntity(level);
+        }
     }
 
     private static void forceHoldPose(BooksellerEntity entity) {

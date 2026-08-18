@@ -27,11 +27,6 @@ import java.util.Map;
 
 @SuppressWarnings("null")
 public final class NpcDebugCommand {
-    private static final net.minecraft.world.phys.AABB GLOBAL_NPC_SCAN = new net.minecraft.world.phys.AABB(
-        -30_000_000D, -2_048D, -30_000_000D,
-        30_000_000D, 4_096D, 30_000_000D
-    );
-
     private NpcDebugCommand() {
     }
 
@@ -105,12 +100,7 @@ public final class NpcDebugCommand {
     }
 
     private static void sendNpcSummary(CommandSourceStack source, ServerLevel level, String npcId, NpcRuntimeState state) {
-        List<StardewNpcEntity> entities = level.getEntitiesOfClass(
-            StardewNpcEntity.class,
-            GLOBAL_NPC_SCAN,
-            entity -> npcId.equals(entity.getNpcId())
-        );
-
+        List<StardewNpcEntity> entities = findLoadedNpcs(level, npcId);
         StardewNpcEntity entity = entities.isEmpty() ? null : entities.get(0);
         Vec3 defaultPosition = entity != null ? entity.position() : Vec3.atCenterOf(level.getSharedSpawnPos());
         NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, defaultPosition);
@@ -127,12 +117,7 @@ public final class NpcDebugCommand {
     }
 
     private static void sendNpcDetails(CommandSourceStack source, ServerLevel level, String npcId, NpcRuntimeState state) {
-        List<StardewNpcEntity> entities = level.getEntitiesOfClass(
-            StardewNpcEntity.class,
-            GLOBAL_NPC_SCAN,
-            entity -> npcId.equals(entity.getNpcId())
-        );
-
+        List<StardewNpcEntity> entities = findLoadedNpcs(level, npcId);
         StardewNpcEntity entity = entities.isEmpty() ? null : entities.get(0);
         Vec3 defaultPosition = entity != null ? entity.position() : Vec3.atCenterOf(level.getSharedSpawnPos());
         NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, defaultPosition);
@@ -291,6 +276,18 @@ public final class NpcDebugCommand {
                 )), false);
             }
         }
+    }
+
+    private static List<StardewNpcEntity> findLoadedNpcs(ServerLevel level, String npcId) {
+        List<StardewNpcEntity> matches = new ArrayList<>();
+        for (var entity : level.getAllEntities()) {
+            if (entity instanceof StardewNpcEntity npc
+                    && npcId.equals(npc.getNpcId())
+                    && npc.isAlive()) {
+                matches.add(npc);
+            }
+        }
+        return matches;
     }
 
     private static String formatVec(Vec3 v) {

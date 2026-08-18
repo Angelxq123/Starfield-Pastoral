@@ -116,7 +116,7 @@ public class FishPondManagerBlock extends Block {
         }
 
         BlockPos bucketPos = validation.scan().bucketPositions().iterator().next();
-        worldData.createOrUpdatePondAtManager(
+        String pondId = worldData.createOrUpdatePondAtManager(
             level,
             farmOwner,
             managerPos,
@@ -131,7 +131,10 @@ public class FishPondManagerBlock extends Block {
             validation.scan().maxZ()
         );
         FishPondWaterService.rebindPondWater(level, existingOwn.orElse(null), validation.scan().waterCells());
-        FishPondColorSyncService.broadcastSnapshot(level);
+        com.stardew.craft.fishpond.model.FishPondRecord updated =
+                worldData.getPond(pondId).orElseThrow();
+        FishPondColorSyncService.syncPondChange(
+                level, existingOwn.orElse(null), updated);
 
         return true;
     }
@@ -154,7 +157,7 @@ public class FishPondManagerBlock extends Block {
         }
 
         FishPondWaterService.removePondWater(level, removed.get());
-        FishPondColorSyncService.broadcastSnapshot(level);
+        FishPondColorSyncService.syncPondChange(level, removed.get(), null);
         BlockState state = level.getBlockState(managerPos);
         level.levelEvent(2001, managerPos, Block.getId(state));
         level.removeBlock(managerPos, false);

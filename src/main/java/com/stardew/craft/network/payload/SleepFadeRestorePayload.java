@@ -36,6 +36,8 @@ public record SleepFadeRestorePayload() implements CustomPacketPayload {
     @net.neoforged.api.distmarker.OnlyIn(
             net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient() {
+        com.stardew.craft.network.overnight.ClientOvernightHandler
+                .receiveCancellationAccepted();
         com.stardew.craft.cutscene.runtime.EventScreenFade
                 .startFadeFromBlack(FADE_TICKS);
     }

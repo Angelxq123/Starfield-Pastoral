@@ -384,26 +384,26 @@ class RegisteredDailyManagerWorkUnitTest {
     }
 
     @Test
-    void cropSequencesFarmlandAtomicAfterEntriesAndNeverFromClose() throws IOException {
+    void cropSequencesFarmlandByChunkAfterEntriesAndNeverFromClose() throws IOException {
         ManagerContract crop = MANAGERS.getFirst();
         MethodTree create = parseMethod(crop, "createDailyWorkUnit", 2);
         List<VariableTree> variables = scan(create, VariableTree.class);
         int cursor = variableIndexWithInvocation(variables, "cursor");
-        int atomic = variableIndexWithInvocation(variables, "atomic");
-        assertTrue(cursor >= 0 && cursor < atomic);
-        VariableTree atomicVariable = variables.get(atomic);
-        assertTrue(atomicVariable.getInitializer().toString().contains("dryAllFarmland"));
-        assertTrue(atomicVariable.getInitializer().toString().contains("farmland_scan"));
+        int farmland = variableIndexWithInvocation(variables, "createFarmlandScanWorkUnit");
+        assertTrue(cursor >= 0 && cursor < farmland);
+        VariableTree farmlandVariable = variables.get(farmland);
         MethodInvocationTree sequence = invocations(create).stream()
                 .filter(call -> methodName(call).equals("sequence"))
                 .findFirst().orElseThrow();
         assertTrue(sequence.getArguments().stream().anyMatch(argument -> argument.toString().contains(
-                variables.get(cursor).getName() + ", " + atomicVariable.getName())));
-        List<LambdaExpressionTree> lambdas = scan(create, LambdaExpressionTree.class);
-        assertTrue(lambdas.stream().filter(lambda -> lambda.toString().contains("dryAllFarmland")).count() == 1);
-        assertFalse(lambdas.stream()
-                .filter(lambda -> lambda.toString().contains(crop.cleanupMethod()))
-                .anyMatch(lambda -> lambda.toString().contains("dryAllFarmland")));
+                variables.get(cursor).getName() + ", " + farmlandVariable.getName())));
+        assertTrue(farmlandVariable.getInitializer().toString().contains("createFarmlandScanWorkUnit"));
+        assertFalse(create.toString().contains("dryAllFarmland"));
+        MethodTree farmlandFactory = parseMethod(crop, "createFarmlandScanWorkUnit", 1);
+        assertTrue(farmlandFactory.getBody().toString().contains("farmland_scan"));
+        assertTrue(invocations(farmlandFactory).stream()
+                .anyMatch(call -> methodName(call).equals("cursor")));
+        assertTrue(farmlandFactory.getBody().toString().contains("dryFarmlandChunk"));
     }
 
     @Test

@@ -67,6 +67,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -98,6 +99,10 @@ public class AnimalGrowthManager extends SavedData {
             BuildingUtilityContext.EMPTY;
     private boolean dailyProcessing;
     private Integer activeOvernightTimeMinutes;
+    private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingBoundsLease
+            activeActionDailyLease;
+    private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingBoundsLease
+            activeEntityDailyLease;
 
     private sealed interface AnimalDailyAction
             permits AnimalDayAction, AutomaticFeedAction {
@@ -227,6 +232,13 @@ public class AnimalGrowthManager extends SavedData {
                             level, worldData, record, context.absoluteDay()))
                     .map(FarmAnimalRecord::animalId)
                     .toList();
+            List<Long> entitySnapshot = new ArrayList<>(animalSnapshot);
+            entitySnapshot.sort(Comparator
+                    .comparing((Long animalId) -> worldData.getAnimal(animalId)
+                            .map(record -> record.buildingId() == null
+                                    ? "" : record.buildingId())
+                            .orElse(""))
+                    .thenComparingLong(Long::longValue));
             List<String> buildingSnapshot = worldData.getBuildingsIncludingInactive().stream()
                     .filter(building -> isSettlementBuildingCandidate(
                             level, building, context.absoluteDay()))
@@ -242,13 +254,20 @@ public class AnimalGrowthManager extends SavedData {
                             : List.of();
             Map<String, BuildingUtilityContext> utilityContexts = new HashMap<>();
 
+            activeActionDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+                    .reusingBoundsLease(level);
             DailySettlementWorkUnit animalWork = DailySettlementWorkUnits.cursor(
                     "animal_growth",
                     dailyActions,
                     AnimalDailyAction::identity,
                     action -> processDailyAction(
-                            level, worldData, action, context.absoluteDay(), utilityContexts),
-                    () -> {});
+                            level,
+                            worldData,
+                            action,
+                            context.absoluteDay(),
+                            utilityContexts,
+                            activeActionDailyLease),
+                    this::closeActionDailyLease);
             DailySettlementWorkUnit reproductionWork = DailySettlementWorkUnits.cursor(
                     "animal_reproduction",
                     reproductionSnapshot,
@@ -267,12 +286,15 @@ public class AnimalGrowthManager extends SavedData {
                     buildingId -> projectPendingProduceForBuilding(
                             level, worldData, buildingId),
                     () -> {});
+            activeEntityDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+                    .reusingBoundsLease(level);
             DailySettlementWorkUnit entityWork = DailySettlementWorkUnits.cursor(
                     "animal_entity_sync",
-                    animalSnapshot,
+                    entitySnapshot,
                     Object::toString,
-                    animalId -> syncAnimalEntityDay(level, worldData, animalId),
-                    () -> {});
+                    animalId -> syncAnimalEntityDay(
+                            level, worldData, animalId, activeEntityDailyLease),
+                    this::closeEntityDailyLease);
             DailySettlementWorkUnit publishWork = DailySettlementWorkUnits.atomic(
                     "animal_daily_publish",
                     () -> finalizeAnimalDay(level, worldData),
@@ -332,7 +354,8 @@ public class AnimalGrowthManager extends SavedData {
             AnimalWorldData worldData,
             AnimalDailyAction action,
             int settlementDay,
-            Map<String, BuildingUtilityContext> utilityContexts
+            Map<String, BuildingUtilityContext> utilityContexts,
+            com.stardew.craft.farm.FarmDailyProcessHelper.ReusingBoundsLease actionLeaseCursor
     ) {
         if (action instanceof AnimalDayAction animalDay) {
             processAnimalDay(
@@ -341,7 +364,8 @@ public class AnimalGrowthManager extends SavedData {
                     animalDay.animalId(),
                     animalDay.absoluteDay(),
                     settlementDay,
-                    utilityContexts);
+                    utilityContexts,
+                    actionLeaseCursor);
             return;
         }
         AutomaticFeedAction automaticFeed = (AutomaticFeedAction) action;
@@ -350,7 +374,8 @@ public class AnimalGrowthManager extends SavedData {
                 worldData,
                 automaticFeed.buildingId(),
                 automaticFeed.absoluteDay(),
-                utilityContexts);
+                utilityContexts,
+                actionLeaseCursor);
     }
 
     private void processAnimalDay(
@@ -359,7 +384,8 @@ public class AnimalGrowthManager extends SavedData {
             long animalId,
             int absoluteDay,
             int settlementDay,
-            Map<String, BuildingUtilityContext> utilityContexts
+            Map<String, BuildingUtilityContext> utilityContexts,
+            com.stardew.craft.farm.FarmDailyProcessHelper.ReusingBoundsLease actionLeaseCursor
     ) {
         FarmAnimalRecord record = worldData.getAnimal(animalId).orElse(null);
         if (record == null) {
@@ -388,8 +414,8 @@ public class AnimalGrowthManager extends SavedData {
                     absoluteDay < settlementDay,
                     utilityContext);
         } else {
-            try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
-                    level,
+            Objects.requireNonNull(actionLeaseCursor, "animal action daily chunk lease");
+            try (var lease = actionLeaseCursor.lease(
                     new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
                     new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
                 utilityContext = utilityContexts.computeIfAbsent(
@@ -414,14 +440,15 @@ public class AnimalGrowthManager extends SavedData {
             AnimalWorldData worldData,
             String buildingId,
             int absoluteDay,
-            Map<String, BuildingUtilityContext> utilityContexts
+            Map<String, BuildingUtilityContext> utilityContexts,
+            com.stardew.craft.farm.FarmDailyProcessHelper.ReusingBoundsLease actionLeaseCursor
     ) {
         AnimalBuildingRecord building = worldData.getBuilding(buildingId).orElse(null);
         if (building == null || !shouldProcessBuildingToday(level, building)) {
             return;
         }
-        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
-                level,
+        Objects.requireNonNull(actionLeaseCursor, "animal action daily chunk lease");
+        try (var lease = actionLeaseCursor.lease(
                 new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
                 new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
             completeAutomaticFeedPassIfReady(
@@ -471,7 +498,8 @@ public class AnimalGrowthManager extends SavedData {
     private void syncAnimalEntityDay(
             ServerLevel level,
             AnimalWorldData worldData,
-            long animalId
+            long animalId,
+            com.stardew.craft.farm.FarmDailyProcessHelper.ReusingBoundsLease entityLeaseCursor
     ) {
         FarmAnimalRecord record = worldData.getAnimal(animalId).orElse(null);
         if (record == null || record.buildingId() == null || record.buildingId().isBlank()) {
@@ -501,8 +529,8 @@ public class AnimalGrowthManager extends SavedData {
                 || !shouldProcessBuildingToday(level, building)) {
             return;
         }
-        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
-                level,
+        Objects.requireNonNull(entityLeaseCursor, "animal entity daily chunk lease");
+        try (var lease = entityLeaseCursor.lease(
                 new BlockPos(building.minX() - 1, building.minY(), building.minZ() - 1),
                 new BlockPos(building.maxX() + 1, building.maxY(), building.maxZ() + 1))) {
             AnimalEntitySyncService.syncOne(level, worldData, record);
@@ -516,8 +544,32 @@ public class AnimalGrowthManager extends SavedData {
     }
 
     private void finishDailyProcessing() {
-        activeOvernightTimeMinutes = null;
-        dailyProcessing = false;
+        try {
+            closeActionDailyLease();
+        } finally {
+            try {
+                closeEntityDailyLease();
+            } finally {
+                activeOvernightTimeMinutes = null;
+                dailyProcessing = false;
+            }
+        }
+    }
+
+    private void closeActionDailyLease() {
+        var lease = activeActionDailyLease;
+        activeActionDailyLease = null;
+        if (lease != null) {
+            lease.close();
+        }
+    }
+
+    private void closeEntityDailyLease() {
+        var lease = activeEntityDailyLease;
+        activeEntityDailyLease = null;
+        if (lease != null) {
+            lease.close();
+        }
     }
 
     /**

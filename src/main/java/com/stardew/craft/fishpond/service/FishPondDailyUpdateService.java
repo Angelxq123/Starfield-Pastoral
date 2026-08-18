@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FishPondDailyUpdateService {
     private static final int QUEST_BASE_EXP = 20;
@@ -77,21 +76,24 @@ public final class FishPondDailyUpdateService {
             }
             long worldSeed = level.getSeed();
             int absoluteDay = context.absoluteDay();
-            AtomicBoolean anyChanged = new AtomicBoolean();
+            Set<String> changedPondIds = new HashSet<>();
             DailySettlementWorkUnit pondWork = DailySettlementWorkUnits.cursor(
                     "fish_pond_daily",
                     pondSnapshot,
                     PondDailyEntry::pondId,
                     entry -> processPondDay(
-                            level, worldData, entry, worldSeed, absoluteDay, dimensionId, anyChanged),
+                            level, worldData, entry, worldSeed, absoluteDay, dimensionId,
+                            changedPondIds),
                     () -> {});
             DailySettlementWorkUnit syncWork = DailySettlementWorkUnits.cursor(
                     "fish_pond_daily_sync",
                     List.of("sync"),
                     value -> value,
                     value -> {
-                        if (anyChanged.get()) {
-                            FishPondColorSyncService.broadcastSnapshot(level);
+                        for (String pondId : changedPondIds) {
+                            worldData.getPond(pondId)
+                                    .ifPresent(pond -> FishPondColorSyncService.syncPond(
+                                            level, pond));
                         }
                     },
                     () -> {});
@@ -112,15 +114,17 @@ public final class FishPondDailyUpdateService {
             long worldSeed,
             int absoluteDay,
             String dimensionId,
-            AtomicBoolean anyChanged) {
+            Set<String> changedPondIds) {
         RandomSource random = DailySettlementRandom.forId(
                 worldSeed, absoluteDay, "fish_pond", entry.stableId());
         FishPondRecord pond = worldData.getPond(entry.pondId()).orElse(null);
         if (pond == null || !dimensionId.equals(pond.dimensionId())) {
             return;
         }
-        if (applySingleDay(level, worldData, pond, absoluteDay, random)) {
-            anyChanged.set(true);
+        int previousColor = pond.waterColor();
+        applySingleDay(level, worldData, pond, absoluteDay, random);
+        if (previousColor != pond.waterColor()) {
+            changedPondIds.add(pond.pondId());
         }
     }
 
@@ -142,8 +146,6 @@ public final class FishPondDailyUpdateService {
         FishPondWorldData worldData = FishPondWorldData.get(level);
         worldData.reconcileFarmOwnership(level);
         String dimensionId = level.dimension().location().toString();
-        boolean anyColorChanged = false;
-
         for (FishPondRecord pond : worldData.getPonds()) {
             if (!dimensionId.equals(pond.dimensionId())) {
                 continue;
@@ -151,18 +153,16 @@ public final class FishPondDailyUpdateService {
             if (center != null && !isNearPond(center, pond, 5)) {
                 continue;
             }
+            int previousColor = pond.waterColor();
             for (int i = 0; i < days; i++) {
                 RandomSource random = DailySettlementRandom.forId(
                         level.getSeed(), startDay + i, "fish_pond",
                         FishPondDailyDecisions.stableId(pond.pondId()));
-                if (applySingleDay(level, worldData, pond, startDay + i, random)) {
-                    anyColorChanged = true;
-                }
+                applySingleDay(level, worldData, pond, startDay + i, random);
             }
-        }
-
-        if (anyColorChanged) {
-            FishPondColorSyncService.broadcastSnapshot(level);
+            if (previousColor != pond.waterColor()) {
+                FishPondColorSyncService.syncPond(level, pond);
+            }
         }
     }
 
@@ -320,7 +320,6 @@ public final class FishPondDailyUpdateService {
         }
 
         FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
-        FishPondColorSyncService.broadcastSnapshot(level);
         broadcastHappyFishJump(level, pond);
     }
 

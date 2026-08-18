@@ -26,6 +26,8 @@ import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Map;
+import java.util.Collection;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,6 +39,7 @@ public final class SleepInteractionHandler {
 
     /** 玩家右键床后暂存的床位置，确认睡觉时取出使用 */
     private static final Map<UUID, BlockPos> pendingBedPositions = new ConcurrentHashMap<>();
+    private static final Set<UUID> preserveVoteOnNextWake = ConcurrentHashMap.newKeySet();
 
     /** 保存玩家待确认的床位置 */
     public static void storePendingBedPos(ServerPlayer player, BlockPos bedPos) {
@@ -51,6 +54,15 @@ public final class SleepInteractionHandler {
     /** 清除所有暂存的床位置 */
     public static void clearAllPendingBedPositions() {
         pendingBedPositions.clear();
+        preserveVoteOnNextWake.clear();
+    }
+
+    public static void preserveVotesForVanillaWake(Collection<ServerPlayer> players) {
+        for (ServerPlayer player : players) {
+            if (player.isSleeping()) {
+                preserveVoteOnNextWake.add(player.getUUID());
+            }
+        }
     }
 
     /**
@@ -80,6 +92,9 @@ public final class SleepInteractionHandler {
         if (!event.updateLevel() || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        if (preserveVoteOnNextWake.remove(player.getUUID())) {
+            return;
+        }
         consumePendingBedPos(player);
         if (SleepVoteTracker.hasVoted(player)) {
             SleepVoteTracker.revokeVoteAndBroadcast(player);
@@ -95,6 +110,7 @@ public final class SleepInteractionHandler {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        preserveVoteOnNextWake.remove(player.getUUID());
         if (event.getHand() != InteractionHand.MAIN_HAND) {
             return;
         }

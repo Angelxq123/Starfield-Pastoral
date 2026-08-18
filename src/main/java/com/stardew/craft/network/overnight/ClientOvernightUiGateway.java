@@ -30,6 +30,11 @@ final class ClientOvernightUiGateway implements ClientOvernightFlow.UiGateway {
         client.startLegacy(payload);
     }
 
+    @Override
+    public void requestCancelWaiting() {
+        client.requestCancelWaiting();
+    }
+
     interface ClientAccess {
         boolean isPlayerSleeping();
 
@@ -40,5 +45,7 @@ final class ClientOvernightUiGateway implements ClientOvernightFlow.UiGateway {
         void acknowledgeAndStart(int absoluteDay, OvernightSettlementPayload payload);
 
         void startLegacy(OvernightSettlementPayload payload);
+
+        void requestCancelWaiting();
     }
 }

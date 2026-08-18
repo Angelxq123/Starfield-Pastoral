@@ -57,6 +57,9 @@ class OvernightBarrierIntegrationContractTest {
     private static final Path PACKETS = source("network/PacketHandler.java");
     private static final Path BARRIER = source("time/settlement/DailySettlementBarrier.java");
     private static final Path SERVICES = source("time/settlement/DailySettlementServices.java");
+    private static final Path SLEEP_VOTES = source("event/SleepVoteTracker.java");
+    private static final Path SLEEP_HANDLER = source("event/SleepInteractionHandler.java");
+    private static final Path DIMENSION = source("event/DimensionEventHandler.java");
 
     @Test
     void waitingScreenRoutesAllInputThroughTheBarrierGate() throws IOException {
@@ -68,6 +71,45 @@ class OvernightBarrierIntegrationContractTest {
         MethodTree gate = method(SCREEN, "SleepWaitingOverlayScreen", "handleDismissInput", 0);
         assertTrue(hasInvocationWithSelect(
                 gate.getBody(), "ClientOvernightHandler.handleWaitingInput"));
+    }
+
+    @Test
+    void singlePlayerSleepPublishesValidProgressBeforeSettlementLocks() throws IOException {
+        String source = Files.readString(SLEEP_VOTES).replaceAll("\\s+", "");
+        int methodStart = source.indexOf("castVoteInternal(ServerPlayerplayer,intsleepMinute,booleanbroadcastProgress)");
+        int methodEnd = source.indexOf("publicstaticintgetLatestSleepMinute()", methodStart);
+        String method = source.substring(methodStart, methodEnd);
+
+        assertFalse(method.contains("if(totalStardewPlayers<=1){returntrue;}"));
+        int progress = method.indexOf("broadcastVoteProgress(server,votedCount,required)");
+        int result = method.indexOf("returnvotedCount>=required");
+        assertTrue(progress >= 0 && progress < result,
+                "the client must receive 1/1 before the barrier opens its waiting screen");
+    }
+
+    @Test
+    void waitingScreenHasCancelableVoteButtonBeforeBarrierLock() throws IOException {
+        MethodTree init = method(SCREEN, "SleepWaitingOverlayScreen", "init", 0);
+        MethodTree mouse = method(SCREEN, "SleepWaitingOverlayScreen", "mouseClicked", 3);
+        String screen = Files.readString(SCREEN);
+
+        assertTrue(hasInvocation(init.getBody(), "addRenderableWidget"));
+        assertTrue(screen.contains("ClientOvernightHandler.requestCancelWaiting()"));
+        assertTrue(screen.contains("ClientOvernightHandler.canCancelWaiting()"));
+        assertTrue(hasInvocationWithSelect(mouse.getBody(), "super.mouseClicked"));
+    }
+
+    @Test
+    void vanillaWakeCannotConsumeCustomVotesBeforeThirdConfirmation() throws IOException {
+        MethodTree finished = method(DIMENSION, "DimensionEventHandler", "onSleepFinished", 1);
+        MethodTree request = method(DIMENSION, "DimensionEventHandler", "requestSleepAdvance", 3);
+        String wakeHandler = Files.readString(SLEEP_HANDLER).replaceAll("\\s+", "");
+
+        assertTrue(hasInvocation(finished.getBody(), "setTimeAddition"));
+        assertTrue(hasInvocation(finished.getBody(), "preserveVotesForVanillaWake"));
+        assertFalse(hasInvocation(finished.getBody(), "advanceToNextMorning"));
+        assertFalse(request.getBody().toString().contains("!player.isSleeping()"));
+        assertTrue(wakeHandler.contains("if(preserveVoteOnNextWake.remove(player.getUUID()))"));
     }
 
     @Test

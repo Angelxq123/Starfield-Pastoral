@@ -43,6 +43,11 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "farm_caves",
             "addon_farm_tasks");
     private static final List<String> PLAYERS = List.of("player_daily_settlement");
+    private static final List<String> WORLD_SNAPSHOTS = List.of(
+            "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
+            "sprinklers", "pasture_grass", "animals", "fish_ponds",
+            "public_forage", "forest_farm_forage", "artifact_spots",
+            "quarry", "coal_forest", "farm_caves", "addon_farm_tasks");
     private static final List<String> COMMIT = List.of(
             "weather_forecast",
             "farm_cursor",
@@ -245,12 +250,17 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                         com.stardew.craft.blockentity.ShippingBinBlockEntity::flushAllForOvernight);
                 case "non_participant_cleanup" -> createNonParticipantCleanupWorkUnit(
                         context, playerId -> cleanupNonParticipant(context, playerId));
-                case "daily_process_scope" -> atomic(name, () -> beginDailyProcess(context));
+                case "daily_process_scope" -> createDailyProcessScope(context);
                 case "festival_season_prep" -> atomic(name, () -> festivalAndSeason(context));
-                case "npc_friendship_daily" -> atomic(name, () -> friendshipDaily(context));
-                case "npc_dialogue_events" -> atomic(name, this::dialogueEventsDaily);
+                case "npc_friendship_daily" ->
+                        com.stardew.craft.npc.runtime.NpcFriendshipDailyService
+                                .createDailyWorkUnit(
+                                        level(),
+                                        context.absoluteDay() - 1,
+                                        context.absoluteDay());
+                case "npc_dialogue_events" -> createDialogueEventsDaily();
                 case "npc_dialogue_topics" -> atomic(name, () -> dialogueTopicsDaily(context));
-                case "weather_npc_reset" -> atomic(name, () -> weatherAndNpcs(context));
+                case "weather_npc_reset" -> createWeatherAndNpcWorkUnit(context);
                 case "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
                         "sprinklers", "pasture_grass", "animals", "fish_ponds",
                         "public_forage", "forest_farm_forage", "artifact_spots",
@@ -309,6 +319,21 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             });
         }
 
+        private DailySettlementWorkUnit createDailyProcessScope(
+                DailySettlementContext context) {
+            List<DailySettlementWorkUnit> stages = new ArrayList<>(
+                    WORLD_SNAPSHOTS.size() + 1);
+            stages.add(atomic(
+                    "daily_process_scope_begin", () -> beginDailyProcess(context)));
+            for (String name : WORLD_SNAPSHOTS) {
+                stages.add(atomic(
+                        "snapshot_" + name,
+                        () -> prepareWorldSnapshot(name, context)));
+            }
+            return DailySettlementWorkUnits.sequence(
+                    "daily_process_scope", stages, () -> {});
+        }
+
         private ServerLevel level() {
             ServerLevel level = activeLevel;
             if (level == null) {
@@ -326,18 +351,6 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     level, context.allOnlinePlayerIds(), context.farmOwnerIds());
             activeLevel = level;
             dailyProcessActive = true;
-            try {
-                prepareWorldSnapshots(context);
-            } catch (RuntimeException | Error failure) {
-                try {
-                    cleanupDailyProcess();
-                } catch (RuntimeException | Error cleanupFailure) {
-                    if (cleanupFailure != failure) {
-                        failure.addSuppressed(cleanupFailure);
-                    }
-                }
-                throw failure;
-            }
         }
 
         private void cleanupNonParticipant(
@@ -348,17 +361,16 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                     playerId, context.absoluteDay());
         }
 
-        private void prepareWorldSnapshots(DailySettlementContext context) {
-            if (!preparedWorld.isEmpty()) {
-                throw new IllegalStateException("World snapshots are already prepared");
+        private void prepareWorldSnapshot(
+                String name, DailySettlementContext context) {
+            if (!dailyProcessActive) {
+                throw new IllegalStateException(
+                        "Daily process scope is not active for snapshot " + name);
             }
-            for (String name : List.of(
-                    "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
-                    "sprinklers", "pasture_grass", "animals", "fish_ponds",
-                    "public_forage", "forest_farm_forage", "artifact_spots",
-                    "quarry", "coal_forest", "farm_caves", "addon_farm_tasks")) {
-                preparedWorld.put(name, createWorldSnapshot(name, context));
+            if (preparedWorld.containsKey(name)) {
+                throw new IllegalStateException("World snapshot is already prepared: " + name);
             }
+            preparedWorld.put(name, createWorldSnapshot(name, context));
         }
 
         private DailySettlementWorkUnit createWorldSnapshot(
@@ -433,19 +445,32 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             }
         }
 
-        private void weatherAndNpcs(DailySettlementContext context) {
-            com.stardew.craft.weather.WeatherManager.applyWeatherForNewDay(
-                    level(), context.day(), seasonName(context.season()), context.absoluteDay());
-            com.stardew.craft.npc.runtime.NpcSpawnManager.resetScheduledNpcsForNewDay(level());
+        private DailySettlementWorkUnit createWeatherAndNpcWorkUnit(
+                DailySettlementContext context) {
+            DailySettlementWorkUnit weather = atomic(
+                    "weather_npc_reset_weather",
+                    () -> com.stardew.craft.weather.WeatherManager.applyWeatherForNewDay(
+                            level(), context.day(), seasonName(context.season()),
+                            context.absoluteDay()));
+            DailySettlementWorkUnit npcReset = DailySettlementWorkUnits.deferred(
+                    "npc_daily_reset",
+                    () -> com.stardew.craft.npc.runtime.NpcSpawnManager
+                            .createScheduledNpcResetWorkUnit(level()));
+            return DailySettlementWorkUnits.sequence(
+                    "weather_npc_reset",
+                    List.of(weather, npcReset),
+                    () -> {});
         }
 
-        private void friendshipDaily(DailySettlementContext context) {
-            com.stardew.craft.npc.runtime.NpcFriendshipDailyService.onNewDay(
-                    server().overworld(), context.absoluteDay() - 1, context.absoluteDay());
-        }
-
-        private void dialogueEventsDaily() {
-            com.stardew.craft.npc.runtime.NpcDialogueEventData.get(server()).onNewDay();
+        private DailySettlementWorkUnit createDialogueEventsDaily() {
+            com.stardew.craft.npc.runtime.NpcDialogueEventData events =
+                    com.stardew.craft.npc.runtime.NpcDialogueEventData.get(server());
+            return DailySettlementWorkUnits.cursor(
+                    "npc_dialogue_events",
+                    events.playerIdsSnapshot(),
+                    UUID::toString,
+                    events::onNewDay,
+                    () -> {});
         }
 
         private void dialogueTopicsDaily(DailySettlementContext context) {

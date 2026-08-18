@@ -89,6 +89,13 @@ public class FarmChunkManager {
             return new EntryLease(rootLease);
         }
 
+        synchronized ReusingChunkLease<L> reusingLease() {
+            if (closed) {
+                throw new IllegalStateException("Daily settlement chunk lease scope is closed");
+            }
+            return new ReusingChunkLease<>(this);
+        }
+
         private void closeEntry(TemporaryChunkLeaseTracker.Lease lease) {
             try {
                 lease.close();
@@ -156,6 +163,52 @@ public class FarmChunkManager {
             }
         }
 
+    }
+
+    static final class ReusingChunkLease<L> implements AutoCloseable {
+        private static final TemporaryChunkLeaseTracker.Lease ENTRY_LEASE = () -> {};
+
+        private final DailySettlementChunkLeaseScope<L> scope;
+        private Set<ChunkPos> activeChunks = Set.of();
+        private TemporaryChunkLeaseTracker.Lease activeLease;
+        private boolean closed;
+
+        private ReusingChunkLease(DailySettlementChunkLeaseScope<L> scope) {
+            this.scope = Objects.requireNonNull(scope, "scope");
+        }
+
+        synchronized TemporaryChunkLeaseTracker.Lease lease(Collection<ChunkPos> chunks) {
+            if (closed) {
+                throw new IllegalStateException("Reusable chunk lease is closed");
+            }
+            Set<ChunkPos> requiredChunks = Collections.unmodifiableSet(
+                    new LinkedHashSet<>(chunks));
+            if (activeLease != null && activeChunks.equals(requiredChunks)) {
+                return ENTRY_LEASE;
+            }
+
+            TemporaryChunkLeaseTracker.Lease nextLease = scope.lease(requiredChunks);
+            TemporaryChunkLeaseTracker.Lease previousLease = activeLease;
+            activeLease = nextLease;
+            activeChunks = requiredChunks;
+            if (previousLease != null) {
+                previousLease.close();
+            }
+            return ENTRY_LEASE;
+        }
+
+        @Override
+        public synchronized void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            activeChunks = Set.of();
+            if (activeLease != null) {
+                activeLease.close();
+                activeLease = null;
+            }
+        }
     }
 
     private static final class TemporaryFarmLoad {

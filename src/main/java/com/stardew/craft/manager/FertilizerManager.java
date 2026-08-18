@@ -100,8 +100,8 @@ public class FertilizerManager extends SavedData {
     public boolean hasFertilizer(Level level, BlockPos pos) {
         return getFertilizer(level, pos) != null;
     }
-    
-    /** Syncs fertilizer within the player's configured chunk view distance. */
+
+    /** Syncs non-empty fertilizer chunks within the player's configured view distance. */
     public void syncAllFertilizersToPlayer(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         ResourceKey<Level> dimKey = level.dimension();
@@ -158,6 +158,9 @@ public class FertilizerManager extends SavedData {
             snapshot.add(syncEntry(gpos.pos(), entry.getValue()));
         }
         invalidPositions.forEach(pos -> removeFertilizer(level, pos));
+        if (snapshot.isEmpty()) {
+            return;
+        }
         sortSyncEntries(snapshot);
         PacketDistributor.sendToPlayer(
                 player,

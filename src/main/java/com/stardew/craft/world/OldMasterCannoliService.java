@@ -20,13 +20,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 
 /** Per-player Old Master Cannoli Statue reward with a lightweight source-inspired effect. */
-@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class OldMasterCannoliService {
     public static final String TARGET_ID = "old_master_cannoli";
     public static final String MARKER_TAG = "stardewcraft_interaction:old_master_cannoli";
@@ -114,20 +109,5 @@ public final class OldMasterCannoliService {
         if (level.getBlockEntity(pos) instanceof PortalTriggerBlockEntity blockEntity) {
             blockEntity.configure(TARGET_ID, MARKER_TAG);
         }
-    }
-
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) install(level);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) install(player.serverLevel());
-    }
-
-    @SubscribeEvent
-    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) install(player.serverLevel());
     }
 }

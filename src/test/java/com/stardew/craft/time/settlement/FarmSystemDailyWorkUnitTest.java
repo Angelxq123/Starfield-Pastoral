@@ -129,13 +129,16 @@ class FarmSystemDailyWorkUnitTest {
     }
 
     @Test
-    void grassEligibilityIsCollectedExactlyOnceAtCreationAndNeverByTheConsumerGraph() throws IOException {
+    void grassEligibilityIsCollectedByChunkCursorBeforeGrowth() throws IOException {
         ParsedClass parsed = parse(SYSTEMS.get(2));
         MethodTree create = parsed.method("createDailyWorkUnit", 3);
         MethodTree item = parsed.method("processPastureGrassDay", -1);
 
         assertEquals(1, invocationsNamed(create.getBody(), "deferred").size());
-        assertEquals(1, invocationsNamed(create.getBody(), "collectNearbyPastureGrass").size());
+        assertTrue(invocationsNamed(create.getBody(), "collectNearbyPastureGrass").isEmpty());
+        assertEquals(1, invocationsNamed(create.getBody(), "createPastureScanTasks").size());
+        assertTrue(create.getBody().toString().contains("pasture_grass_scan"));
+        assertTrue(create.getBody().toString().contains("scanPastureGrassChunk"));
         assertTrue(reachableMethods(parsed, List.of(item)).stream()
                         .allMatch(method -> invocationsNamed(
                                 method.getBody(), "collectNearbyPastureGrass").isEmpty()),
@@ -145,14 +148,21 @@ class FarmSystemDailyWorkUnitTest {
     @Test
     void farmWorldItemsHoldTemporaryChunkLeasesWhileAccessingBlocks() throws IOException {
         ParsedClass debris = parse(FARM_DEBRIS);
-        assertScopedLease(debris.method("collectFarmObjectAt", -1), "leasePosition");
+        assertTrue(invocationsNamed(
+                        debris.method("collectFarmObjectAt", -1).getBody(), "leasePosition").isEmpty(),
+                "debris scanning must reuse its current chunk lease instead of loading per column");
+        assertEquals(1, invocationsNamed(
+                        debris.nestedMethod("ensureScanLease", 3).getBody(), "leasePosition").size());
+        assertTrue(invocationsNamed(
+                        debris.nestedMethod("close", 0).getBody(), "releaseScanLease").size() >= 1,
+                "closing the work unit must release an in-progress scan lease");
         assertScopedLease(debris.method("spreadFromExistingDebrisAttempt", -1), "leasePosition");
         assertScopedLease(debris.method("spawnRandomDebrisAttempt", -1), "leasePosition");
 
         ParsedClass grass = parse(SYSTEMS.get(2));
         assertScopedLease(grass.method("processSpawnTask", -1), "leasePosition");
-        assertScopedLease(grass.method("collectNearbyPastureGrass", -1), "leaseBounds");
-        assertScopedLease(grass.method("processPastureGrassDay", -1), "leasePosition");
+        assertScopedLease(grass.method("scanPastureGrassChunk", -1), "leaseBounds");
+        assertScopedLease(grass.method("processPastureGrassDay", -1), "lease");
     }
 
     @Test

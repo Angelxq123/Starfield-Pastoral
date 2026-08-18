@@ -164,6 +164,29 @@ class FarmChunkManagerTest {
     }
 
     @Test
+    void reusableSettlementLeaseKeepsOverlapLoadedAcrossSequentialItems() {
+        RecordingBackend backend = new RecordingBackend();
+        TemporaryChunkLeaseTracker<TestLevel> tracker = new TemporaryChunkLeaseTracker<>(backend);
+        TestLevel level = new TestLevel();
+        FarmChunkManager.DailySettlementChunkLeaseScope<TestLevel> scope =
+                new FarmChunkManager.DailySettlementChunkLeaseScope<>(tracker, level);
+        FarmChunkManager.ReusingChunkLease<TestLevel> reusable = scope.reusingLease();
+
+        reusable.lease(List.of(A, B)).close();
+        reusable.lease(List.of(A, B)).close();
+        reusable.lease(List.of(B, C)).close();
+
+        assertEquals(List.of(A, B, C), backend.acquires);
+        assertEquals(List.of(A, B, C), backend.loads);
+        assertEquals(List.of(A), backend.releases);
+
+        reusable.close();
+        assertEquals(List.of(A, B, C), backend.releases);
+        scope.close();
+        assertEquals(List.of(A, B, C), backend.releases);
+    }
+
+    @Test
     void settlementScopeLeavesPreforcedAndExternalLeaseChunksOwned() {
         RecordingBackend backend = new RecordingBackend();
         backend.forced.add(C);

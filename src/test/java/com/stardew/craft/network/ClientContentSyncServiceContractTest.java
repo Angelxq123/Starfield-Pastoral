@@ -38,6 +38,7 @@ class ClientContentSyncServiceContractTest {
                 new Class<?>[]{
                         DataRegistrySyncPayload.class,
                         int.class,
+                        com.stardew.craft.cutscene.network.SyncEventRegistryPayload.class,
                         MailIndexSyncPayload.class,
                         JeiCatalogSyncPayload.SharedCatalog.class
                 },
@@ -70,7 +71,7 @@ class ClientContentSyncServiceContractTest {
     }
 
     @Test
-    void sharedBuildMeasuresRegistrySizeMailAndGlobalJeiTogetherOnce() throws IOException {
+    void sharedBuildMeasuresRegistrySizeCutscenesMailAndGlobalJeiTogetherOnce() throws IOException {
         String source = normalizedSource();
         String builder = substringBetween(
                 source,
@@ -83,6 +84,7 @@ class ClientContentSyncServiceContractTest {
                 "ServerPerformanceRecorder.measure(PerformanceTiming.CONTENT_SNAPSHOT_BUILD,()->{",
                 "DataRegistrySyncPayloadregistry=DataRegistrySyncPayload.current();",
                 "registry.estimatedEncodedBytes()",
+                "SyncEventRegistryPayload.current()",
                 "MailIndexSyncPayload.current()",
                 "JeiCatalogSyncPayload.currentSharedCatalog()",
                 "});");
@@ -112,29 +114,42 @@ class ClientContentSyncServiceContractTest {
         assertTrue(snapshot.contains("Objects.requireNonNull(registry,\"registry\")"));
         assertTrue(snapshot.contains("if(registryEncodedBytes<0)"));
         assertTrue(snapshot.contains("thrownewIllegalArgumentException("));
+        assertTrue(snapshot.contains("Objects.requireNonNull(cutscenes,\"cutscenes\")"));
         assertTrue(snapshot.contains("Objects.requireNonNull(mail,\"mail\")"));
         assertTrue(snapshot.contains("Objects.requireNonNull(jeiCatalog,\"jeiCatalog\")"));
     }
 
     @Test
-    void perRecipientOperationsPreserveSendOrderAndCountCompletedCalls() throws IOException {
-        String loop = normalizedRecipientLoop();
+    void stagedOperationsPreserveSendOrderAndCountCompletedCalls() throws IOException {
+        String source = normalizedSource();
+        String staged = substringBetween(
+                source,
+                "privatebooleansendNext(ServerPlayerplayer)",
+                "thrownewIllegalStateException(\"Unknowncontentsyncstage\"+stage);");
 
-        assertOrdered(loop,
+        assertOrdered(staged,
                 "PacketDistributor.sendToPlayer(player,shared.registry());",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_REGISTRY_BYTES,"
                         + "shared.registryEncodedBytes());",
+                "stage=SyncStage.CUTSCENES;",
+                "PacketDistributor.sendToPlayer(player,shared.cutscenes());",
+                "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);",
+                "stage=SyncStage.MAIL;",
                 "PacketDistributor.sendToPlayer(player,shared.mail());",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);",
-                "PacketDistributor.sendToPlayer(player,festivalSnapshot);",
+                "stage=SyncStage.FESTIVAL;",
+                "PacketDistributor.sendToPlayer(player,festival);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);",
+                "stage=SyncStage.JEI;",
                 "JeiCatalogSyncPayloadjeiSnapshot=ServerPerformanceRecorder.measure(",
                 "PerformanceTiming.JEI_CATALOG_BUILD,"
                         + "()->JeiCatalogSyncPayload.current(player,shared.jeiCatalog()));",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.JEI_CATALOG_ENTRIES,",
                 "PacketDistributor.sendToPlayer(player,jeiSnapshot);",
                 "ServerPerformanceRecorder.increment(PerformanceCounter.CONTENT_SYNC_PACKETS,1L);");
+
+        assertFalse(datapackSyncHandler().contains("PacketDistributor.sendToPlayer"));
     }
 
     @Test
@@ -183,14 +198,6 @@ class ClientContentSyncServiceContractTest {
                 source,
                 "publicstaticvoidonDatapackSync(OnDatapackSyncEventevent)",
                 "privatestaticSharedSnapshotbuildSharedSnapshot(longgeneration)");
-    }
-
-    private static String normalizedRecipientLoop() throws IOException {
-        String source = normalizedSource();
-        int loopStart = source.indexOf("for(ServerPlayerplayer:recipients)");
-        int loopEnd = source.indexOf("StardewCraft.LOGGER.info", loopStart);
-        assertTrue(loopStart >= 0 && loopEnd > loopStart, "recipient loop is missing");
-        return source.substring(loopStart, loopEnd);
     }
 
     private static String normalizedSource() throws IOException {

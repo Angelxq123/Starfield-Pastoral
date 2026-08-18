@@ -44,7 +44,8 @@ class DailySettlementPerformanceTelemetryTest {
     @Test
     void enumsExposeEverySettlementTimingAndCounterWithoutRemovingExistingOnes() {
         assertEquals(List.of(
-                "SERVER_TICK", "PLAYER_LOGIN_EVENT", "CONTENT_SNAPSHOT_BUILD",
+                "SERVER_TICK", "PLAYER_LOGIN_EVENT", "PLAYER_LOGIN_SYNC_STAGE",
+                "CONTENT_SNAPSHOT_BUILD",
                 "JEI_CATALOG_BUILD", "FARM_SYNC_CHUNK_LOAD", "DAILY_SYNC_CHUNK_LOAD",
                 "DAILY_SETTLEMENT_TOTAL", "DAILY_SETTLEMENT_TICK",
                 "DAILY_SETTLEMENT_ATOMIC_ITEM", "DAILY_SETTLEMENT_LOCK_TO_READY",
@@ -53,7 +54,10 @@ class DailySettlementPerformanceTelemetryTest {
                 java.util.Arrays.stream(PerformanceTiming.values()).map(Enum::name).toList());
         assertEquals(List.of(
                 "CONTENT_SYNC_RECIPIENTS", "CONTENT_SYNC_PACKETS", "CONTENT_REGISTRY_BYTES",
-                "JEI_CATALOG_ENTRIES", "FARM_SYNC_CHUNK_LOADS", "DAILY_SYNC_CHUNK_LOADS",
+                "JEI_CATALOG_ENTRIES", "PLAYER_FULL_SYNC_REQUESTS", "PLAYER_FULL_SYNC_SENT",
+                "PLAYER_FULL_SYNC_SKIPPED", "PLAYER_LOGIN_SYNC_ENQUEUED",
+                "PLAYER_LOGIN_SYNC_STAGES", "PLAYER_LOGIN_SYNC_COMPLETED",
+                "FARM_SYNC_CHUNK_LOADS", "DAILY_SYNC_CHUNK_LOADS",
                 "DAILY_SETTLEMENT_TICKS", "DAILY_SETTLEMENT_ITEMS",
                 "DAILY_SETTLEMENT_CHUNK_LEASES", "DAILY_SETTLEMENT_OVERSHOOTS",
                 "DAILY_SETTLEMENT_RETRIES", "DAILY_SETTLEMENT_PERMANENT_FAILURES",
@@ -138,6 +142,23 @@ class DailySettlementPerformanceTelemetryTest {
                 "playerBatches=0 lockToReady=4.000ms")));
         assertTrue(lines.stream().anyMatch(line -> line.equals(
                 "DAILY_SETTLEMENT_SUBSYSTEM name=mail cumulative=2.000ms items=1 retries=0 permanentFailures=0")));
+    }
+
+    @Test
+    void repeatedOvershootsStayCountedButWarningsAreRateLimitedPerSubsystem()
+            throws IOException {
+        DailySettlementMetrics metrics = new DailySettlementMetrics(clock::get, syncChunkLoads::get);
+        metrics.begin(2);
+        metrics.recordOvershoot("farm_debris", 100L);
+        metrics.recordOvershoot("farm_debris", 300L);
+
+        DailySettlementMetrics.ReadySummary summary = metrics.completeReady();
+        assertEquals(2L, summary.overshootCount());
+        assertEquals(300L, summary.worstOvershootNanos());
+
+        String source = source(
+                "src/main/java/com/stardew/craft/server/performance/DailySettlementMetrics.java");
+        assertTrue(source.contains("warnedOvershootSubsystems.add(subsystemName)"));
     }
 
     @Test

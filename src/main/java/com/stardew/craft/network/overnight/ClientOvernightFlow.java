@@ -79,6 +79,28 @@ final class ClientOvernightFlow {
         return startReadySequence(currentAbsoluteDay);
     }
 
+    boolean canCancelWaiting() {
+        return !locked;
+    }
+
+    boolean requestCancelWaiting() {
+        if (!canCancelWaiting()) {
+            return false;
+        }
+        ui.requestCancelWaiting();
+        return true;
+    }
+
+    void receiveCancellationAccepted() {
+        if (locked) {
+            return;
+        }
+        votedCount = 0;
+        requiredCount = 0;
+        pendingReadyPayload = null;
+        currentAbsoluteDay = -1;
+    }
+
     boolean startReadySequence(int absoluteDay) {
         if (!locked || absoluteDay != currentAbsoluteDay || !isReady()) {
             return false;
@@ -123,5 +145,7 @@ final class ClientOvernightFlow {
         void acknowledgeAndStart(int absoluteDay, OvernightSettlementPayload payload);
 
         void startLegacy(OvernightSettlementPayload payload);
+
+        void requestCancelWaiting();
     }
 }

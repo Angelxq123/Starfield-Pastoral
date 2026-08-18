@@ -9,6 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -44,15 +45,18 @@ public class FishSplashState extends SavedData {
 		return byLocationKey.get(locationKey);
 	}
 
-	public void put(String locationKey, Entry entry) {
-		byLocationKey.put(locationKey, entry);
+	public @Nullable Entry put(String locationKey, Entry entry) {
+		Entry previous = byLocationKey.put(locationKey, entry);
 		setDirty();
+		return previous;
 	}
 
-	public void remove(String locationKey) {
-		if (byLocationKey.remove(locationKey) != null) {
+	public @Nullable Entry remove(String locationKey) {
+		Entry removed = byLocationKey.remove(locationKey);
+		if (removed != null) {
 			setDirty();
 		}
+		return removed;
 	}
 
 	/**
@@ -123,23 +127,62 @@ public class FishSplashState extends SavedData {
 
 	// ─── sync ────────────────────────────────────────────────────────────
 
-	/** Send the full snapshot to a single player (login / dim-change). */
-	public void sendFullSnapshot(ServerPlayer player) {
+	public void sendChunkSnapshot(ServerPlayer player, ChunkPos chunkPos) {
 		Map<String, BlockPos> snapshot = new LinkedHashMap<>();
-		byLocationKey.forEach((k, v) -> snapshot.put(k, v.pos()));
-		PacketDistributor.sendToPlayer(player, FishSplashSyncPayload.snapshot(snapshot));
+		for (Map.Entry<String, Entry> entry : byLocationKey.entrySet()) {
+			BlockPos pos = entry.getValue().pos();
+			if ((pos.getX() >> 4) == chunkPos.x && (pos.getZ() >> 4) == chunkPos.z) {
+				snapshot.put(entry.getKey(), pos);
+			}
+		}
+		if (snapshot.isEmpty()) {
+			return;
+		}
+		PacketDistributor.sendToPlayer(player, FishSplashSyncPayload.chunkSnapshot(
+				chunkPos.x, chunkPos.z, snapshot));
 	}
 
-	/** Push a single change (add or remove) to every player in the Stardew dim. */
-	public static void broadcastChange(ServerLevel stardewLevel, String locationKey, @Nullable BlockPos posOrNull) {
-		FishSplashSyncPayload payload;
-		if (posOrNull != null) {
-			payload = FishSplashSyncPayload.diff(java.util.Map.of(locationKey, posOrNull), java.util.Set.of());
-		} else {
-			payload = FishSplashSyncPayload.diff(java.util.Map.of(), java.util.Set.of(locationKey));
+	public void clearChunk(ServerPlayer player, ChunkPos chunkPos) {
+		boolean hasSplash = byLocationKey.values().stream()
+				.map(Entry::pos)
+				.anyMatch(pos -> (pos.getX() >> 4) == chunkPos.x
+						&& (pos.getZ() >> 4) == chunkPos.z);
+		if (!hasSplash) {
+			return;
 		}
-		for (ServerPlayer p : stardewLevel.players()) {
-			PacketDistributor.sendToPlayer(p, payload);
+		PacketDistributor.sendToPlayer(player, FishSplashSyncPayload.chunkSnapshot(
+				chunkPos.x, chunkPos.z, Map.of()));
+	}
+
+	public static void syncChange(
+			ServerLevel stardewLevel,
+			String locationKey,
+			@Nullable BlockPos previousPos,
+			@Nullable BlockPos currentPos
+	) {
+		ChunkPos previousChunk = previousPos == null ? null : new ChunkPos(previousPos);
+		ChunkPos currentChunk = currentPos == null ? null : new ChunkPos(currentPos);
+		if (previousChunk != null && currentChunk != null
+				&& previousChunk.equals(currentChunk)) {
+			PacketDistributor.sendToPlayersTrackingChunk(
+					stardewLevel,
+					currentChunk,
+					FishSplashSyncPayload.diff(
+							Map.of(locationKey, currentPos), java.util.Set.of()));
+			return;
+		}
+		if (previousChunk != null) {
+			PacketDistributor.sendToPlayersTrackingChunk(
+					stardewLevel,
+					previousChunk,
+					FishSplashSyncPayload.diff(Map.of(), java.util.Set.of(locationKey)));
+		}
+		if (currentChunk != null) {
+			PacketDistributor.sendToPlayersTrackingChunk(
+					stardewLevel,
+					currentChunk,
+					FishSplashSyncPayload.diff(
+							Map.of(locationKey, currentPos), java.util.Set.of()));
 		}
 	}
 }

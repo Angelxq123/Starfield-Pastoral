@@ -2027,6 +2027,11 @@ public class PacketHandler {
             com.stardew.craft.network.payload.CosmeticAppearanceSyncPayload.STREAM_CODEC,
             com.stardew.craft.network.payload.CosmeticAppearanceSyncPayload::handle
         );
+        registrar.playToClient(
+            com.stardew.craft.network.payload.CosmeticAppearanceBatchSyncPayload.TYPE,
+            com.stardew.craft.network.payload.CosmeticAppearanceBatchSyncPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.CosmeticAppearanceBatchSyncPayload::handle
+        );
 
         // Furniture Catalogue
         registrar.playToServer(
@@ -2126,9 +2131,19 @@ public class PacketHandler {
             DailySettlementAccessGuard.gated(com.stardew.craft.communitycenter.network.BundlePurchasePayload::handle)
         );
         registrar.playToClient(
+            com.stardew.craft.communitycenter.network.BundleDefinitionSyncPayload.TYPE,
+            com.stardew.craft.communitycenter.network.BundleDefinitionSyncPayload.STREAM_CODEC,
+            com.stardew.craft.communitycenter.network.BundleDefinitionSyncPayload::handle
+        );
+        registrar.playToClient(
             com.stardew.craft.communitycenter.network.BundleSyncPayload.TYPE,
             com.stardew.craft.communitycenter.network.BundleSyncPayload.STREAM_CODEC,
             com.stardew.craft.communitycenter.network.BundleSyncPayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.communitycenter.network.BundleProgressDeltaPayload.TYPE,
+            com.stardew.craft.communitycenter.network.BundleProgressDeltaPayload.STREAM_CODEC,
+            com.stardew.craft.communitycenter.network.BundleProgressDeltaPayload::handle
         );
         registrar.playToClient(
             com.stardew.craft.communitycenter.network.CcOriginPayload.TYPE,

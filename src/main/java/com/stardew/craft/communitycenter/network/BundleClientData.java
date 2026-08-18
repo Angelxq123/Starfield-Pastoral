@@ -38,9 +38,29 @@ public final class BundleClientData {
     }
 
     public void update(Map<Integer, boolean[]> newSlots, boolean[] newAreas, Map<Integer, Boolean> newRewards, boolean canRead) {
-        boolean firstProgressSync = !displayStarsInitialized;
         bundleSlots.clear();
         bundleSlots.putAll(newSlots);
+
+        applySharedProgress(newAreas, newRewards, canRead);
+    }
+
+    public void applyProgressDelta(
+            int bundleId,
+            boolean[] newSlots,
+            boolean[] newAreas,
+            Map<Integer, Boolean> newRewards,
+            boolean canRead
+    ) {
+        bundleSlots.put(bundleId, newSlots.clone());
+        applySharedProgress(newAreas, newRewards, canRead);
+    }
+
+    private void applySharedProgress(
+            boolean[] newAreas,
+            Map<Integer, Boolean> newRewards,
+            boolean canRead
+    ) {
+        boolean firstProgressSync = !displayStarsInitialized;
 
         System.arraycopy(newAreas, 0, areasComplete, 0, Math.min(newAreas.length, 7));
 

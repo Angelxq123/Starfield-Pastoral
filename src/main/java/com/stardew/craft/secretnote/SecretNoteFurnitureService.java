@@ -26,7 +26,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /** Source-parity world rewards revealed by vanilla secret notes 13 and 14. */
@@ -199,24 +198,19 @@ public final class SecretNoteFurnitureService {
         if (!isStardewLevel(player.serverLevel())) {
             return;
         }
-        ensureStoneJunimoPlaced(player.serverLevel());
         boolean visible = canClaimStoneJunimo(PlayerDataManager.getPlayerData(player));
         sendBlockFor(player, STONE_JUNIMO_POS, visible);
         sendBlockFor(player, STONE_JUNIMO_POS.above(), visible);
     }
 
     private static void sendBlockFor(ServerPlayer player, BlockPos pos, boolean visible) {
+        if (player.serverLevel().getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) == null) {
+            return;
+        }
         BlockState state = visible
                 ? player.serverLevel().getBlockState(pos)
                 : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         player.connection.send(new ClientboundBlockUpdatePacket(pos, state));
-    }
-
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) {
-            ensureStoneJunimoPlaced(level);
-        }
     }
 
     @SubscribeEvent

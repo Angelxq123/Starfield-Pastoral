@@ -90,6 +90,10 @@ public final class NpcDialogueEventData extends SavedData {
         return state == null ? Set.of() : Set.copyOf(state.answeredDialogueIds);
     }
 
+    public List<UUID> playerIdsSnapshot() {
+        return List.copyOf(players.keySet());
+    }
+
     public void markDialogueAnswer(UUID playerId, String answerId) {
         if (playerId == null || answerId == null || answerId.isBlank()) {
             return;
@@ -107,6 +111,13 @@ public final class NpcDialogueEventData extends SavedData {
             changed |= state.onNewDay();
         }
         if (changed) {
+            setDirty();
+        }
+    }
+
+    public void onNewDay(UUID playerId) {
+        PlayerState state = players.get(playerId);
+        if (state != null && state.onNewDay()) {
             setDirty();
         }
     }

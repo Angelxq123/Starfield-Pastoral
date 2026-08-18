@@ -23,6 +23,10 @@ import com.stardew.craft.mining.MineRewardClaimManager;
 import com.stardew.craft.mining.MiningDataManager;
 import com.stardew.craft.mining.MiningPlayerData;
 import com.stardew.craft.network.PlayerDataSyncPacket;
+import com.stardew.craft.network.PlayerLoginSyncService;
+import com.stardew.craft.network.payload.EquipmentSyncPayload;
+import com.stardew.craft.server.performance.PerformanceCounter;
+import com.stardew.craft.server.performance.ServerPerformanceRecorder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -51,7 +55,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 @EventBusSubscriber(modid = StardewCraft.MODID)
 @SuppressWarnings("null")
 public class PlayerDataEventHandler {
-    
+    private static final PlayerDataSyncSnapshotCache FULL_SYNC_SNAPSHOTS =
+            new PlayerDataSyncSnapshotCache();
+
     private static int tickCounter = 0;
     private static final int AUTO_SAVE_INTERVAL = 6000; // 5分钟 (6000 ticks)
     private static final double MAGNET_DIRECT_PICKUP_DISTANCE = 1.35D;
@@ -65,6 +71,7 @@ public class PlayerDataEventHandler {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            FULL_SYNC_SNAPSHOTS.clear(player.getUUID());
             com.stardew.craft.time.settlement.DailySettlementEvents.onPlayerLogin(player);
             // Recover shop purchases that were paid for but not placed before disconnect/restart.
             com.stardew.craft.network.payload.ShopPickupPayload.deliverAllPending(player);
@@ -108,7 +115,6 @@ public class PlayerDataEventHandler {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                         new com.stardew.craft.network.payload.OpenPlayerProfileSetupPayload());
             }
-            CosmeticAppearanceSync.syncAllTo(player);
             CosmeticAppearanceSync.broadcast(player, data);
             JoinAnnouncementService.schedule(player);
 
@@ -151,43 +157,9 @@ public class PlayerDataEventHandler {
             // Re-sync active festival client state after login. HUD/music are client-local,
             // so persistent participation tags alone are not enough after reconnect.
             com.stardew.craft.festival.ActiveFestivalHandlers.onPlayerLogin(player);
-            com.stardew.craft.api.v1.internal.festival
-                    .StardewFestivalSessionSyncService.syncToPlayer(player);
 
-            // 同步社区中心 bundle 数据到客户端 (星盘渲染等需要)
-            com.stardew.craft.communitycenter.network.BundleSyncPayload.sendFullSync(player);
-
-            // 同步淘金点 — 否则玩家上次下线时已生成的点位重新登录后看不见，
-            // 必须等下一次 10-min tick 重新生成才能看到。
-            try {
-                if (player.level() instanceof net.minecraft.server.level.ServerLevel sl) {
-                    com.stardew.craft.communitycenter.reward.panning.OrePanPointManager
-                            .get(sl).syncToClient(player);
-                }
-            } catch (Exception ex) {
-                StardewCraft.LOGGER.warn("Failed to push initial ore-pan point on login: {}", ex.getMessage());
-            }
-
-            // 同步气泡（fish splash points）
-            try {
-                if (player.level() instanceof net.minecraft.server.level.ServerLevel sl) {
-                    com.stardew.craft.fishing.splash.FishSplashState fs =
-                            com.stardew.craft.fishing.splash.FishSplashState.getStardewState(sl);
-                    if (fs != null) fs.sendFullSnapshot(player);
-                }
-            } catch (Exception ex) {
-                StardewCraft.LOGGER.warn("Failed to push initial fish splash points on login: {}", ex.getMessage());
-            }
-
-            // 同步 NPC 好感度概览到客户端 — 否则 EventTriggerChecker 因为
-            // NpcFriendshipClientCache.isSynced()==false 永远跑不起来，
-            // 玩家进入触发区域的剧情（lewis_cc_tour / willy_fishing_rod /
-            // marlon_mine_intro 等）会被无声卡住直到玩家手动打开社交菜单。
-            try {
-                com.stardew.craft.network.payload.RequestNpcFriendshipOverviewPayload.sendOverviewTo(player);
-            } catch (Exception ex) {
-                StardewCraft.LOGGER.warn("Failed to push initial NPC friendship overview on login: {}", ex.getMessage());
-            }
+            // 分阶段发送玩家专属快照，避免多人同时登录时集中编码和发包。
+            PlayerLoginSyncService.enqueue(player);
 
             try {
                 com.stardew.craft.npc.runtime.NpcFriendshipRewardService.applyAllEligibleRewards(player);
@@ -195,19 +167,11 @@ public class PlayerDataEventHandler {
                 StardewCraft.LOGGER.warn("Failed to apply NPC friendship rewards on login: {}", ex.getMessage());
             }
 
-            // 同步任务日志到客户端
-            com.stardew.craft.quest.QuestManager qm = data.getQuestManager();
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                com.stardew.craft.quest.network.QuestLogSyncPayload.fromQuests(
-                    qm.getQuestLog(), qm.getBillboardQuestsDone(), qm.getDailyQuestCompletedDays()));
-            com.stardew.craft.specialorder.SpecialOrderManager.syncState(player);
-
-            // 如果玩家登录时已在星露谷维度，复用维度进入时的分帧初始化队列。
-            // （PlayerChangedDimensionEvent 在这种情况下不会触发）
+            // 如果玩家登录时已在星露谷维度，只恢复玩家占用状态。
+            // 固定公共区域已在服务器启动阶段预加载和初始化。
             if (player.serverLevel().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
                 com.stardew.craft.farm.FarmChunkManager.get()
                         .reconcilePlayerOccupancy(player);
-                com.stardew.craft.event.DimensionEventHandler.scheduleDeferredInit(player.serverLevel());
             }
 
             // 多人农场：离线追赶——批量推进离线期间的作物/树苗生长
@@ -373,6 +337,7 @@ public class PlayerDataEventHandler {
                 PlayerDataManager.get().setDirty();
                 StardewCraft.LOGGER.info("Player {} logged out, saved Stardew data", player.getName().getString());
             }
+            FULL_SYNC_SNAPSHOTS.clear(player.getUUID());
         }
     }
     
@@ -1021,6 +986,7 @@ public class PlayerDataEventHandler {
      */
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
+        FULL_SYNC_SNAPSHOTS.clearAll();
         com.stardew.craft.time.settlement.DailySettlementServices.remove(event.getServer());
         try {
             PlayerDataManager manager = PlayerDataManager.get();
@@ -1054,6 +1020,7 @@ public class PlayerDataEventHandler {
      */
     @SuppressWarnings("null")
     public static void syncPlayerData(ServerPlayer player, PlayerStardewData data) {
+        ServerPerformanceRecorder.increment(PerformanceCounter.PLAYER_FULL_SYNC_REQUESTS, 1L);
         data.setMoney(com.stardew.craft.money.SharedMoneyService.getMoney(player));
         PlayerDataSyncPacket packet = PlayerDataSyncPacket.fromPlayerData(data);
         // Inject farm name into sync NBT so client can resolve %farm placeholder
@@ -1101,9 +1068,7 @@ public class PlayerDataEventHandler {
             }
         }
         packet.data().put("LostBookInteractions", lostBookInteractions);
-        PacketDistributor.sendToPlayer(player, packet);
-        // sync equipment slots
-        PacketDistributor.sendToPlayer(player, new com.stardew.craft.network.payload.EquipmentSyncPayload(
+        EquipmentSyncPayload equipment = new EquipmentSyncPayload(
                 data.getEquippedLeftRingStack(),
                 data.getEquippedRightRingStack(),
                 data.getEquippedBootsStack(),
@@ -1111,8 +1076,45 @@ public class PlayerDataEventHandler {
                 data.getEquippedHat(),
                 data.getEquippedShirt(),
                 data.getEquippedPants()
-        ));
+        );
+        CompoundTag snapshot = buildFullSyncSnapshot(player, packet, equipment);
+        if (FULL_SYNC_SNAPSHOTS.shouldSend(player.getUUID(), snapshot)) {
+            PacketDistributor.sendToPlayer(player, packet);
+            PacketDistributor.sendToPlayer(player, equipment);
+            ServerPerformanceRecorder.increment(PerformanceCounter.PLAYER_FULL_SYNC_SENT, 1L);
+        } else {
+            ServerPerformanceRecorder.increment(PerformanceCounter.PLAYER_FULL_SYNC_SKIPPED, 1L);
+        }
         data.markFullSyncClean();
+    }
+
+    private static CompoundTag buildFullSyncSnapshot(
+            ServerPlayer player,
+            PlayerDataSyncPacket packet,
+            EquipmentSyncPayload equipment
+    ) {
+        CompoundTag snapshot = packet.data().copy();
+        CompoundTag equipmentTag = new CompoundTag();
+        putEquipmentStack(player, equipmentTag, "LeftRing", equipment.leftRing());
+        putEquipmentStack(player, equipmentTag, "RightRing", equipment.rightRing());
+        putEquipmentStack(player, equipmentTag, "Boots", equipment.boots());
+        putEquipmentStack(player, equipmentTag, "Trinket", equipment.trinket());
+        equipmentTag.putString("Hat", equipment.hat());
+        equipmentTag.putString("Shirt", equipment.shirt());
+        equipmentTag.putString("Pants", equipment.pants());
+        snapshot.put("SyncEquipment", equipmentTag);
+        return snapshot;
+    }
+
+    private static void putEquipmentStack(
+            ServerPlayer player,
+            CompoundTag tag,
+            String key,
+            ItemStack stack
+    ) {
+        if (!stack.isEmpty()) {
+            tag.put(key, stack.save(player.registryAccess()));
+        }
     }
 
     /**

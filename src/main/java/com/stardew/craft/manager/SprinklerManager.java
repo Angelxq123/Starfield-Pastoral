@@ -35,6 +35,7 @@ public class SprinklerManager extends SavedData {
     }
 
     private boolean isProcessing = false;
+    private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingPositionLease activeDailyLease;
     private final Set<GlobalPos> pendingAdds = new HashSet<>();
     private final Set<GlobalPos> pendingRemoves = new HashSet<>();
 
@@ -103,7 +104,11 @@ public class SprinklerManager extends SavedData {
         Objects.requireNonNull(context, "context");
         isProcessing = true;
         try {
+            activeDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+                    .reusingPositionLease(level, 2);
             List<GlobalPos> snapshot = new ArrayList<>(sprinklerPositions);
+            snapshot.sort(com.stardew.craft.farm.FarmDailyProcessHelper
+                    .globalPositionLeaseOrder(2));
             return DailySettlementWorkUnits.cursor(
                     "sprinkler_watering",
                     snapshot,
@@ -124,8 +129,9 @@ public class SprinklerManager extends SavedData {
         if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
             return;
         }
-        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
-                .leasePosition(level, pos, 2)) {
+        var leaseCursor = Objects.requireNonNull(
+                activeDailyLease, "sprinkler daily chunk lease");
+        try (var lease = leaseCursor.lease(pos)) {
             if (!level.isLoaded(pos)) {
                 return;
             }
@@ -139,8 +145,16 @@ public class SprinklerManager extends SavedData {
     }
 
     private void finishDailyProcessing() {
-        isProcessing = false;
-        applyPendingChanges();
+        var lease = activeDailyLease;
+        activeDailyLease = null;
+        try {
+            if (lease != null) {
+                lease.close();
+            }
+        } finally {
+            isProcessing = false;
+            applyPendingChanges();
+        }
     }
 
     private static String dailyItemIdentity(GlobalPos globalPos) {

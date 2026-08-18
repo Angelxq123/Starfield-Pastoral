@@ -61,6 +61,7 @@ public class CropGrowthManager extends SavedData {
 
     // 防止在遍历时被 onRemove/onPlace 修改导致 ConcurrentModificationException
     private boolean isProcessing = false;
+    private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingPositionLease activeDailyLease;
     private final Set<GlobalPos> pendingAdds = new HashSet<>();
     private final Set<GlobalPos> pendingRemoves = new HashSet<>();
 
@@ -242,18 +243,18 @@ public class CropGrowthManager extends SavedData {
         Objects.requireNonNull(context, "context");
         isProcessing = true;
         try {
+            activeDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+                    .reusingPositionLease(level, 1);
             List<GlobalPos> snapshot = new java.util.ArrayList<>(cropPositions);
+            snapshot.sort(com.stardew.craft.farm.FarmDailyProcessHelper
+                    .globalPositionLeaseOrder(1));
             DailySettlementWorkUnit cropEntries = DailySettlementWorkUnits.cursor(
                     "crop_growth",
                     snapshot,
                     CropGrowthManager::dailyItemIdentity,
                     globalPos -> processCropDay(level, globalPos),
-                    () -> {});
-            // Atomic hotspot: a later shared scan/deterministic-random task will split this work.
-            DailySettlementWorkUnit farmlandScan = DailySettlementWorkUnits.atomic(
-                    "farmland_scan",
-                    () -> dryAllFarmland(level),
-                    () -> {});
+                    this::closeDailyLease);
+            DailySettlementWorkUnit farmlandScan = createFarmlandScanWorkUnit(level);
             return DailySettlementWorkUnits.sequence(
                     "crop_daily",
                     List.of(cropEntries, farmlandScan),
@@ -273,8 +274,9 @@ public class CropGrowthManager extends SavedData {
         if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
             return;
         }
-        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
-                .leasePosition(level, pos, 1)) {
+        var leaseCursor = Objects.requireNonNull(
+                activeDailyLease, "crop daily chunk lease");
+        try (var lease = leaseCursor.lease(pos)) {
             if (!level.isLoaded(pos)) {
                 return;
             }
@@ -313,8 +315,20 @@ public class CropGrowthManager extends SavedData {
     }
 
     private void finishDailyProcessing() {
-        isProcessing = false;
-        applyPendingChanges();
+        try {
+            closeDailyLease();
+        } finally {
+            isProcessing = false;
+            applyPendingChanges();
+        }
+    }
+
+    private void closeDailyLease() {
+        var lease = activeDailyLease;
+        activeDailyLease = null;
+        if (lease != null) {
+            lease.close();
+        }
     }
 
     private static String dailyItemIdentity(GlobalPos globalPos) {
@@ -362,129 +376,126 @@ public class CropGrowthManager extends SavedData {
         }
     }
     
+    private DailySettlementWorkUnit createFarmlandScanWorkUnit(ServerLevel level) {
+        java.util.List<Long> chunkSnapshot = new java.util.ArrayList<>(
+                collectFarmlandChunkKeys(level));
+        return DailySettlementWorkUnits.cursor(
+                "farmland_scan",
+                chunkSnapshot,
+                key -> Long.toString(key),
+                key -> dryFarmlandChunk(level, key),
+                () -> {});
+    }
+
     @SuppressWarnings("null")
-    private void dryAllFarmland(ServerLevel level) {
-            FertilizerManager fertilizerManager = FertilizerManager.get(level);
-         // SDV 平价：每天午夜扫描整个维度的耕地。
-         // 农场区域：10% 衰退；非农场区域（小镇/沙漠等公共区）：必定还原为黄土。
-         // 仅"小镇/沙漠等公共区"也产生过耕地（旧版本未拦截或创造模式），所以必须扫描。
-         // 收集需要扫描的区块：在线玩家农场 + 已注册作物所在区块 + 所有当前已加载的本维度区块。
-         java.util.Set<Long> chunkKeys = new java.util.HashSet<>();
-
-         // 1. 在线玩家农场区块
-         com.stardew.craft.farm.FarmInstanceRegistry farmReg = com.stardew.craft.farm.FarmInstanceRegistry.get();
-         for (net.minecraft.server.level.ServerPlayer player : level.players()) {
-             com.stardew.craft.farm.FarmInstance farm = farmReg.getFarmForPlayer(player.getUUID());
-             if (farm == null) continue;
-             BlockPos min = farm.getFarmBoundsMin();
-             BlockPos max = farm.getFarmBoundsMax();
-             int minCX = min.getX() >> 4;
-             int maxCX = max.getX() >> 4;
-             int minCZ = min.getZ() >> 4;
-             int maxCZ = max.getZ() >> 4;
-             for (int cx = minCX; cx <= maxCX; cx++) {
-                 for (int cz = minCZ; cz <= maxCZ; cz++) {
-                     chunkKeys.add(net.minecraft.world.level.ChunkPos.asLong(cx, cz));
-                 }
-             }
-         }
-
-         // 2. 已注册作物所在区块（覆盖温室等区域）
-         for (GlobalPos gp : cropPositions) {
-             if (gp.dimension() != level.dimension()) continue;
-             BlockPos pos = gp.pos();
-             chunkKeys.add(net.minecraft.world.level.ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4));
-         }
-
-         // 3. 公共区域（小镇/沙漠等非农场）锄出过的耕地所在区块 —
-         //    HoeItem 在锄成耕地时若位置不属于任何农场，会注册到 publicTilledChunks，
-         //    保证次日扫描必能 100% 还原（SDV 同款行为）。
-         for (long key : publicTilledChunks) {
-             chunkKeys.add(key);
-         }
-
-         // 3. 加载并处理
-         java.util.Set<net.minecraft.world.level.chunk.LevelChunk> chunksToProcess = new java.util.HashSet<>();
-         for (long key : chunkKeys) {
-             int cx = net.minecraft.world.level.ChunkPos.getX(key);
-             int cz = net.minecraft.world.level.ChunkPos.getZ(key);
-             net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
-             if (chunk != null) {
-                 chunksToProcess.add(chunk);
-             }
-         }
-
-         // 3. 遍历并干燥
-         for (net.minecraft.world.level.chunk.LevelChunk chunk : chunksToProcess) {
-            net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
-            for (int i = 0; i < sections.length; i++) {
-                net.minecraft.world.level.chunk.LevelChunkSection section = sections[i];
-                if (section.hasOnlyAir()) continue;
-                if (!section.getStates().maybeHas((state) -> state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock)) {
-                    continue;
+    private java.util.Set<Long> collectFarmlandChunkKeys(ServerLevel level) {
+        // Keep the existing target set: active farms, registered crops, and public tilled chunks.
+        java.util.Set<Long> chunkKeys = new java.util.HashSet<>();
+        com.stardew.craft.farm.FarmInstanceRegistry farmReg =
+                com.stardew.craft.farm.FarmInstanceRegistry.get();
+        for (net.minecraft.server.level.ServerPlayer player : level.players()) {
+            com.stardew.craft.farm.FarmInstance farm = farmReg.getFarmForPlayer(player.getUUID());
+            if (farm == null) {
+                continue;
+            }
+            BlockPos min = farm.getFarmBoundsMin();
+            BlockPos max = farm.getFarmBoundsMax();
+            int minCX = min.getX() >> 4;
+            int maxCX = max.getX() >> 4;
+            int minCZ = min.getZ() >> 4;
+            int maxCZ = max.getZ() >> 4;
+            for (int cx = minCX; cx <= maxCX; cx++) {
+                for (int cz = minCZ; cz <= maxCZ; cz++) {
+                    chunkKeys.add(net.minecraft.world.level.ChunkPos.asLong(cx, cz));
                 }
+            }
+        }
+        for (GlobalPos gp : cropPositions) {
+            if (gp.dimension() != level.dimension()) {
+                continue;
+            }
+            BlockPos pos = gp.pos();
+            chunkKeys.add(net.minecraft.world.level.ChunkPos.asLong(
+                    pos.getX() >> 4, pos.getZ() >> 4));
+        }
+        chunkKeys.addAll(publicTilledChunks);
+        return chunkKeys;
+    }
 
-                int bottomY = chunk.getSectionYFromSectionIndex(i) << 4;
+    @SuppressWarnings("null")
+    private void dryFarmlandChunk(ServerLevel level, long key) {
+        FertilizerManager fertilizerManager = FertilizerManager.get(level);
+        int cx = net.minecraft.world.level.ChunkPos.getX(key);
+        int cz = net.minecraft.world.level.ChunkPos.getZ(key);
+        net.minecraft.world.level.chunk.LevelChunk chunk =
+                level.getChunkSource().getChunk(cx, cz, false);
+        if (chunk == null) {
+            return;
+        }
 
-                for (int x = 0; x < 16; x++) {
-                    for (int y = 0; y < 16; y++) {
-                        for (int z = 0; z < 16; z++) {
-                            BlockState state = section.getBlockState(x, y, z);
-                            if (state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock) {
-                                BlockPos realPos = new BlockPos(
-                                        chunk.getPos().getMinBlockX() + x,
-                                        bottomY + y,
-                                        chunk.getPos().getMinBlockZ() + z
-                                );
+        net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
+        for (int i = 0; i < sections.length; i++) {
+            net.minecraft.world.level.chunk.LevelChunkSection section = sections[i];
+            if (section.hasOnlyAir()
+                    || !section.getStates().maybeHas(
+                            state -> state.getBlock()
+                                    instanceof net.minecraft.world.level.block.FarmBlock)) {
+                continue;
+            }
 
-                                // SDV parity: 非农场区域的耕地过夜恢复为泥土
-                                // 仅当上方没有作物 / forage 时才恢复（有作物或采集物说明是合法种植区，可保土）
-                                // 温室内部豁免 — 温室是合法种植区域
-                                boolean permanentContainer = state.getBlock()
-                                        instanceof com.stardew.craft.block.utility.GardenPotBlock;
-                                if (!permanentContainer
-                                    && com.stardew.craft.core.FarmAreaResolver.isInStardewButNotFarm(level, realPos)
-                                    && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, realPos)) {
-                                    BlockState above = level.getBlockState(realPos.above());
-                                    if (!isSoilProtectingBlock(above)) {
-                                        // 在还原为黄土前，清理该位置残留的肥料数据，避免下次再耕后无法施肥
-                                        fertilizerManager.removeFertilizer(level, realPos);
-                                        level.setBlock(realPos,
-                                            com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
-                                        continue;
-                                    }
-                                }
-
-                                // SDV parity: 农场区域的空耕地每日 10% 概率回退为黄土
-                                // SDV GameLocation.GetDirtDecayChance: Farm/IslandWest → 0.1
-                                // 温室 0%（已在上面豁免），有作物 / forage 不衰退
-                                if (!permanentContainer
-                                    && !com.stardew.craft.core.FarmAreaResolver.isInStardewButNotFarm(level, realPos)
-                                    && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, realPos)) {
-                                    BlockState above = level.getBlockState(realPos.above());
-                                    if (!isSoilProtectingBlock(above)
-                                            && level.random.nextFloat() < 0.1f) {
-                                        // 在还原为黄土前，清理该位置残留的肥料数据，避免下次再耕后无法施肥
-                                        fertilizerManager.removeFertilizer(level, realPos);
-                                        level.setBlock(realPos,
-                                            com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
-                                        continue;
-                                    }
-                                }
-
-                                @SuppressWarnings("null")
-                                int moisture = state.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE);
-                                if (moisture > 0) {
-                                    // 保水土壤：按概率过夜保留水分（对齐 Stardew 的 retaining soil 概念）
-                                    float retain = fertilizerManager.getWaterRetention(level, realPos);
-                                    if (retain > 0f && level.random.nextFloat() < retain) {
-                                        continue;
-                                    }
-
-                                    // 默认：设为干燥
-                                    level.setBlock(realPos, state.setValue(net.minecraft.world.level.block.FarmBlock.MOISTURE, 0), 2);
-                                }
+            int bottomY = chunk.getSectionYFromSectionIndex(i) << 4;
+            for (int x = 0; x < 16; x++) {
+                for (int y = 0; y < 16; y++) {
+                    for (int z = 0; z < 16; z++) {
+                        BlockState state = section.getBlockState(x, y, z);
+                        if (!(state.getBlock()
+                                instanceof net.minecraft.world.level.block.FarmBlock)) {
+                            continue;
+                        }
+                        BlockPos realPos = new BlockPos(
+                                chunk.getPos().getMinBlockX() + x,
+                                bottomY + y,
+                                chunk.getPos().getMinBlockZ() + z);
+                        boolean permanentContainer = state.getBlock()
+                                instanceof com.stardew.craft.block.utility.GardenPotBlock;
+                        boolean publicArea = com.stardew.craft.core.FarmAreaResolver
+                                .isInStardewButNotFarm(level, realPos);
+                        boolean greenhouse = com.stardew.craft.greenhouse.GreenhouseManager
+                                .isInGreenhouseInterior(level, realPos);
+                        if (!permanentContainer && publicArea && !greenhouse) {
+                            BlockState above = level.getBlockState(realPos.above());
+                            if (!isSoilProtectingBlock(above)) {
+                                fertilizerManager.removeFertilizer(level, realPos);
+                                level.setBlock(realPos,
+                                        com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()
+                                                .defaultBlockState(),
+                                        Block.UPDATE_ALL);
+                                continue;
                             }
+                        }
+                        if (!permanentContainer && !publicArea && !greenhouse) {
+                            BlockState above = level.getBlockState(realPos.above());
+                            if (!isSoilProtectingBlock(above)
+                                    && level.random.nextFloat() < 0.1f) {
+                                fertilizerManager.removeFertilizer(level, realPos);
+                                level.setBlock(realPos,
+                                        com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()
+                                                .defaultBlockState(),
+                                        Block.UPDATE_ALL);
+                                continue;
+                            }
+                        }
+                        int moisture = state.getValue(
+                                net.minecraft.world.level.block.FarmBlock.MOISTURE);
+                        if (moisture > 0) {
+                            float retain = fertilizerManager.getWaterRetention(level, realPos);
+                            if (retain > 0f && level.random.nextFloat() < retain) {
+                                continue;
+                            }
+                            level.setBlock(realPos,
+                                    state.setValue(
+                                            net.minecraft.world.level.block.FarmBlock.MOISTURE, 0),
+                                    2);
                         }
                     }
                 }

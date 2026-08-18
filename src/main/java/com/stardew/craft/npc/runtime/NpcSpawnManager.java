@@ -8,9 +8,10 @@ import com.stardew.craft.entity.ModEntities;
 import com.stardew.craft.entity.npc.StardewNpcEntity;
 import com.stardew.craft.npc.data.NpcCapabilityProfile;
 import com.stardew.craft.npc.data.NpcDataRegistry;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
@@ -28,13 +29,13 @@ import java.util.UUID;
 public final class NpcSpawnManager {
     private static final int FULL_SWEEP_INTERVAL_TICKS = 200;
     private static final int SPAWN_CHECK_INTERVAL_TICKS = 20;
+    private static final int MAX_SPAWN_CHECKS_PER_TICK = 2;
     private static final int RESPAWN_CONFIRM_MISSES = 10;
     private static final int RESPAWN_COOLDOWN_TICKS = 400;
     private static final int TRACKED_ENTITY_RECOVERY_MISSES = 30;
     private static final Set<String> FORCE_SPAWN_IDS = java.util.Collections.synchronizedSet(new HashSet<>());
     private static final Set<String> SUPPRESSED_SPAWN_IDS = java.util.Collections.synchronizedSet(new HashSet<>());
-    private static final AABB GLOBAL_NPC_SCAN = new AABB(-3.0E7, -2048.0, -3.0E7, 3.0E7, 4096.0, 3.0E7);
-
+    private static final NpcSpawnWorkQueue SPAWN_WORK_QUEUE = new NpcSpawnWorkQueue();
     /** NPCs that live in the mining dimension instead of Stardew Valley. */
     private static final Set<String> MINING_DIM_NPC_IDS = Set.of("dwarf");
 
@@ -102,8 +103,14 @@ public final class NpcSpawnManager {
      */
     private static List<StardewNpcEntity> getCachedAllNpcs(ServerLevel level) {
         long gameTime = level.getGameTime();
-        if (gameTime - cachedScanGameTime >= 10) {
-            cachedAllNpcs = level.getEntitiesOfClass(StardewNpcEntity.class, GLOBAL_NPC_SCAN);
+        if (cachedScanGameTime == Long.MIN_VALUE || gameTime - cachedScanGameTime >= 10) {
+            List<StardewNpcEntity> loadedNpcs = new ArrayList<>();
+            for (var entity : level.getAllEntities()) {
+                if (entity instanceof StardewNpcEntity npc) {
+                    loadedNpcs.add(npc);
+                }
+            }
+            cachedAllNpcs = List.copyOf(loadedNpcs);
             cachedScanGameTime = gameTime;
         }
         return cachedAllNpcs;
@@ -200,8 +207,12 @@ public final class NpcSpawnManager {
      * snap loaded scheduled NPCs back to their resolved morning schedule target.
      */
     public static void resetScheduledNpcsForNewDay(ServerLevel level) {
+        DailySettlementWorkUnits.drain(createScheduledNpcResetWorkUnit(level));
+    }
+
+    public static DailySettlementWorkUnit createScheduledNpcResetWorkUnit(ServerLevel level) {
         if (level == null || !ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
-            return;
+            return DailySettlementWorkUnits.atomic("npc_daily_reset", () -> {}, () -> {});
         }
 
         ensureServerContext(level);
@@ -213,8 +224,7 @@ public final class NpcSpawnManager {
         Map<String, NpcRuntimeState> runtimeStates = NpcRuntimeDataManager.get(level).states();
         Vec3 sharedSpawn = Vec3.atCenterOf(level.getSharedSpawnPos());
 
-        int moved = 0;
-        int skipped = 0;
+        List<DailyNpcResetCandidate> candidates = new ArrayList<>();
         for (Map.Entry<String, NpcCapabilityProfile> entry : NpcDataRegistry.capabilities().entrySet()) {
             NpcCapabilityProfile profile = entry.getValue();
             if (profile == null || !profile.implemented()) {
@@ -237,12 +247,12 @@ public final class NpcSpawnManager {
 
             NpcRuntimeState state = runtimeStates.get(npcId);
             if (state == null) {
-                skipped++;
+                candidates.add(new DailyNpcResetCandidate(npcId, null, null, null));
                 continue;
             }
             NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, sharedSpawn);
             if (target == null || target.position() == null) {
-                skipped++;
+                candidates.add(new DailyNpcResetCandidate(npcId, state, null, null));
                 continue;
             }
 
@@ -251,21 +261,52 @@ public final class NpcSpawnManager {
                 npc = loadedByNpcId.get(npcId);
             }
             if (npc == null || npc.isRemoved() || !npc.isAlive()) {
-                skipped++;
+                candidates.add(new DailyNpcResetCandidate(npcId, state, target, null));
                 continue;
             }
 
-            NpcChunkForceManager.ensureRouteTargetChunkForced(level, npcId, target.position());
-            moveNpcToScheduleTarget(level, npc, target.position(), state);
-            TRACKED_NPC_UUIDS.put(npcId, npc.getUUID());
-            TRACKED_MISS_COUNTS.put(npcId, 0);
-            NpcCentralMovementService.resetMovementPlan(npcId);
-            moved++;
+            candidates.add(new DailyNpcResetCandidate(npcId, state, target, npc));
         }
 
-        if (moved > 0 || skipped > 0) {
-            StardewCraft.LOGGER.info("[NPC_DAILY_RESET] reset scheduled NPCs for new day: moved={}, skipped={}", moved, skipped);
-        }
+        int[] moved = {0};
+        int[] skipped = {0};
+        return DailySettlementWorkUnits.cursor(
+                "npc_daily_reset",
+                candidates,
+                DailyNpcResetCandidate::npcId,
+                candidate -> {
+                    if (candidate.npc() == null
+                            || candidate.target() == null
+                            || candidate.state() == null) {
+                        skipped[0]++;
+                        return;
+                    }
+                    NpcChunkForceManager.ensureRouteTargetChunkForced(
+                            level, candidate.npcId(), candidate.target().position());
+                    moveNpcToScheduleTarget(
+                            level,
+                            candidate.npc(),
+                            candidate.target().position(),
+                            candidate.state());
+                    TRACKED_NPC_UUIDS.put(candidate.npcId(), candidate.npc().getUUID());
+                    TRACKED_MISS_COUNTS.put(candidate.npcId(), 0);
+                    NpcCentralMovementService.resetMovementPlan(candidate.npcId());
+                    moved[0]++;
+                },
+                () -> {
+                    if (moved[0] > 0 || skipped[0] > 0) {
+                        StardewCraft.LOGGER.info(
+                                "[NPC_DAILY_RESET] reset scheduled NPCs for new day: moved={}, skipped={}",
+                                moved[0], skipped[0]);
+                    }
+                });
+    }
+
+    private record DailyNpcResetCandidate(
+            String npcId,
+            NpcRuntimeState state,
+            NpcScheduleRuntimeService.TargetPoint target,
+            StardewNpcEntity npc) {
     }
 
     /**
@@ -375,7 +416,18 @@ public final class NpcSpawnManager {
             });
         }
 
-        if (tickCounter % SPAWN_CHECK_INTERVAL_TICKS != 0 && FORCE_SPAWN_IDS.isEmpty()) {
+        boolean scheduledCheck = tickCounter % SPAWN_CHECK_INTERVAL_TICKS == 0;
+        if (scheduledCheck) {
+            SPAWN_WORK_QUEUE.enqueueScheduled(implementedIds);
+        }
+
+        List<String> forcedIds;
+        synchronized (FORCE_SPAWN_IDS) {
+            forcedIds = List.copyOf(FORCE_SPAWN_IDS);
+        }
+        SPAWN_WORK_QUEUE.prioritize(forcedIds);
+        Set<String> workIds = Set.copyOf(SPAWN_WORK_QUEUE.drain(MAX_SPAWN_CHECKS_PER_TICK));
+        if (workIds.isEmpty()) {
             return;
         }
 
@@ -387,6 +439,9 @@ public final class NpcSpawnManager {
                 continue;
             }
             String npcId = canonicalNpcId(profile.npcId());
+            if (!workIds.contains(npcId)) {
+                continue;
+            }
             // Skip NPCs that belong in the mining dimension
             if (MINING_DIM_NPC_IDS.contains(npcId)) {
                 continue;
@@ -1179,6 +1234,7 @@ public final class NpcSpawnManager {
         LAST_SPAWN_GAME_TIME.clear();
         SUPPRESSED_SPAWN_IDS.clear();
         FORCE_SPAWN_IDS.clear();
+        SPAWN_WORK_QUEUE.clear();
         FESTIVAL_SPAWN_TARGETS.clear();
         cachedScanGameTime = Long.MIN_VALUE;
         cachedAllNpcs = List.of();

@@ -1,5 +1,6 @@
 package com.stardew.craft.npc.runtime;
 
+import com.stardew.craft.StardewCraft;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.farm.FarmInstance;
 import com.stardew.craft.farm.FarmInstanceRegistry;
@@ -12,18 +13,29 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.ArrayDeque;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@EventBusSubscriber(modid = StardewCraft.MODID)
 public final class FarmCancellationService {
     private static final Map<UUID, PendingCancellation> PENDING = new ConcurrentHashMap<>();
+    private static final Map<UUID, CleanupJob> CLEANUP_BY_OWNER = new ConcurrentHashMap<>();
+    private static final ArrayDeque<UUID> CLEANUP_ORDER = new ArrayDeque<>();
+    private static final int MAX_BLOCKS_PER_TICK = 1024;
+    private static final long MAX_NANOS_PER_TICK = 2_000_000L;
 
     private FarmCancellationService() {
     }
@@ -94,47 +106,172 @@ public final class FarmCancellationService {
             return;
         }
 
+        if (CLEANUP_BY_OWNER.containsKey(ownerId)) {
+            return;
+        }
         Set<UUID> members = new LinkedHashSet<>(farm.getAllFarmers());
-        clearFarmArea(stardewLevel, farm);
-        GreenhouseManager.get(stardewLevel).clearForOwner(ownerId);
-        FarmPermissionManager.get().clearAllForOwner(ownerId);
-        registry.deleteFarm(ownerId);
+        CLEANUP_BY_OWNER.put(
+                ownerId,
+                new CleanupJob(stardewLevel, farm, members));
+        CLEANUP_ORDER.addLast(ownerId);
+        StardewCraft.LOGGER.info(
+                "[FARM-CANCEL] Scheduled gradual farm cleanup for {}", ownerId);
+    }
 
-        for (UUID memberId : members) {
-            ServerPlayer member = actor.server.getPlayerList().getPlayer(memberId);
-            if (member != null) {
-                com.stardew.craft.player.PlayerDataEventHandler.syncPlayerData(
-                    member, com.stardew.craft.player.PlayerDataManager.getPlayerData(member));
-                PacketDistributor.sendToPlayer(member, new OpenFarmSelectionPayload());
-                member.displayClientMessage(Component.translatable("stardewcraft.lewis.farm_cancel.completed"), false);
+    @SubscribeEvent
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)
+                || !ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
+            return;
+        }
+        UUID ownerId = CLEANUP_ORDER.peekFirst();
+        if (ownerId == null) {
+            return;
+        }
+        CleanupJob job = CLEANUP_BY_OWNER.get(ownerId);
+        if (job == null) {
+            CLEANUP_ORDER.removeFirst();
+            return;
+        }
+        if (job.level != level) {
+            return;
+        }
+
+        FarmInstance registered = FarmInstanceRegistry.get().getFarm(ownerId);
+        if (registered != job.farm) {
+            removeJob(ownerId, job);
+            return;
+        }
+
+        try {
+            tickCleanup(job);
+            if (job.cursor.isComplete()) {
+                finishCancellation(ownerId, job);
+                removeJob(ownerId, job);
             }
+        } catch (RuntimeException exception) {
+            StardewCraft.LOGGER.error(
+                    "[FARM-CANCEL] Gradual cleanup failed for {} and will retry",
+                    ownerId,
+                    exception);
         }
     }
 
-    private static void clearFarmArea(ServerLevel level, FarmInstance farm) {
-        BlockPos min = farm.getFarmBoundsMin();
-        BlockPos max = farm.getFarmBoundsMax();
-        for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
-            for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
-                level.getChunk(cx, cz);
-            }
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        PENDING.clear();
+        for (CleanupJob job : CLEANUP_BY_OWNER.values()) {
+            releaseCurrentChunk(job);
+        }
+        CLEANUP_BY_OWNER.clear();
+        CLEANUP_ORDER.clear();
+    }
+
+    private static void tickCleanup(CleanupJob job) {
+        ChunkPos chunk = job.cursor.currentChunk();
+        if (!job.chunkRequested) {
+            job.ownedTicket = !job.level.getForcedChunks().contains(chunk.toLong())
+                    && job.level.setChunkForced(chunk.x, chunk.z, true);
+            job.chunkRequested = true;
+            return;
+        }
+        if (job.level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
+            return;
+        }
+        if (!job.entitiesCleared) {
+            clearEntitiesInCurrentChunk(job, chunk);
+            job.entitiesCleared = true;
         }
 
-        AABB bounds = new AABB(min.getX(), min.getY(), min.getZ(), max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0);
-        for (Entity entity : level.getEntities((Entity) null, bounds, entity -> !(entity instanceof ServerPlayer))) {
+        long deadline = System.nanoTime() + MAX_NANOS_PER_TICK;
+        int processed = 0;
+        while (processed < MAX_BLOCKS_PER_TICK
+                && System.nanoTime() < deadline
+                && job.cursor.hasBlockInCurrentChunk()) {
+            BlockPos pos = job.cursor.currentBlock();
+            if (!job.level.getBlockState(pos).isAir()) {
+                job.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 18);
+            }
+            job.cursor.advanceBlock();
+            processed++;
+        }
+
+        if (!job.cursor.hasBlockInCurrentChunk()) {
+            releaseCurrentChunk(job);
+            job.cursor.advanceChunk();
+        }
+    }
+
+    private static void clearEntitiesInCurrentChunk(CleanupJob job, ChunkPos chunk) {
+        BlockPos min = job.farm.getFarmBoundsMin();
+        BlockPos max = job.farm.getFarmBoundsMax();
+        int minX = Math.max(min.getX(), chunk.getMinBlockX());
+        int maxX = Math.min(max.getX(), chunk.getMaxBlockX());
+        int minZ = Math.max(min.getZ(), chunk.getMinBlockZ());
+        int maxZ = Math.min(max.getZ(), chunk.getMaxBlockZ());
+        AABB bounds = new AABB(
+                minX, min.getY(), minZ,
+                maxX + 1.0D, max.getY() + 1.0D, maxZ + 1.0D);
+        for (Entity entity : job.level.getEntities(
+                (Entity) null,
+                bounds,
+                entity -> !(entity instanceof ServerPlayer))) {
             entity.discard();
         }
+    }
 
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int y = min.getY(); y <= max.getY(); y++) {
-            for (int z = min.getZ(); z <= max.getZ(); z++) {
-                for (int x = min.getX(); x <= max.getX(); x++) {
-                    pos.set(x, y, z);
-                    if (!level.getBlockState(pos).isAir()) {
-                        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 18);
-                    }
-                }
+    private static void finishCancellation(UUID ownerId, CleanupJob job) {
+        GreenhouseManager.get(job.level).clearForOwner(ownerId);
+        FarmPermissionManager.get().clearAllForOwner(ownerId);
+        FarmInstanceRegistry.get().deleteFarm(ownerId);
+
+        for (UUID memberId : job.members) {
+            ServerPlayer member = job.level.getServer().getPlayerList().getPlayer(memberId);
+            if (member != null) {
+                com.stardew.craft.player.PlayerDataEventHandler.syncPlayerData(
+                        member,
+                        com.stardew.craft.player.PlayerDataManager.getPlayerData(member));
+                PacketDistributor.sendToPlayer(member, new OpenFarmSelectionPayload());
+                member.displayClientMessage(
+                        Component.translatable("stardewcraft.lewis.farm_cancel.completed"),
+                        false);
             }
+        }
+        StardewCraft.LOGGER.info(
+                "[FARM-CANCEL] Gradual farm cleanup completed for {}", ownerId);
+    }
+
+    private static void removeJob(UUID ownerId, CleanupJob job) {
+        releaseCurrentChunk(job);
+        CLEANUP_BY_OWNER.remove(ownerId, job);
+        CLEANUP_ORDER.remove(ownerId);
+    }
+
+    private static void releaseCurrentChunk(CleanupJob job) {
+        if (job.ownedTicket && job.chunkRequested && !job.cursor.isComplete()) {
+            ChunkPos chunk = job.cursor.currentChunk();
+            job.level.setChunkForced(chunk.x, chunk.z, false);
+        }
+        job.chunkRequested = false;
+        job.ownedTicket = false;
+        job.entitiesCleared = false;
+    }
+
+    private static final class CleanupJob {
+        private final ServerLevel level;
+        private final FarmInstance farm;
+        private final Set<UUID> members;
+        private final FarmAreaClearCursor cursor;
+        private boolean chunkRequested;
+        private boolean ownedTicket;
+        private boolean entitiesCleared;
+
+        private CleanupJob(ServerLevel level, FarmInstance farm, Set<UUID> members) {
+            this.level = level;
+            this.farm = farm;
+            this.members = Set.copyOf(members);
+            this.cursor = new FarmAreaClearCursor(
+                    farm.getFarmBoundsMin(), farm.getFarmBoundsMax());
         }
     }
 

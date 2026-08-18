@@ -138,6 +138,22 @@ class ClientOvernightFlowTest {
         assertTrue(ClientOvernightHandler.settlementStages(barrierOnly).isEmpty());
     }
 
+    @Test
+    void voteCanBeCancelledUntilTheSettlementBarrierLocks() {
+        RecordingGateway gateway = new RecordingGateway();
+        ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
+
+        assertTrue(flow.canCancelWaiting());
+        assertTrue(flow.requestCancelWaiting());
+        assertEquals(1, gateway.cancelRequests);
+
+        flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
+
+        assertFalse(flow.canCancelWaiting());
+        assertFalse(flow.requestCancelWaiting());
+        assertEquals(1, gateway.cancelRequests);
+    }
+
     private static OvernightSettlementPayload readyPayload(int absoluteDay) {
         return new OvernightSettlementPayload(
                 absoluteDay, List.of(), List.of(), -1, 0, List.of());
@@ -148,6 +164,7 @@ class ClientOvernightFlowTest {
         private int waitingOpens;
         private int votedCount;
         private int requiredCount;
+        private int cancelRequests;
         private final List<Integer> acknowledgedDays = new ArrayList<>();
         private List<ClientOvernightHandler.SettlementStage> startedStages = List.of();
 
@@ -173,6 +190,11 @@ class ClientOvernightFlowTest {
         @Override
         public void startLegacy(OvernightSettlementPayload payload) {
             startedStages = ClientOvernightHandler.settlementStages(payload);
+        }
+
+        @Override
+        public void requestCancelWaiting() {
+            cancelRequests++;
         }
     }
 
@@ -203,6 +225,10 @@ class ClientOvernightFlowTest {
 
         @Override
         public void startLegacy(OvernightSettlementPayload payload) {
+        }
+
+        @Override
+        public void requestCancelWaiting() {
         }
     }
 }

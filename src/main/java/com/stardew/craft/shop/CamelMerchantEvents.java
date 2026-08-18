@@ -16,6 +16,8 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -49,8 +51,14 @@ public final class CamelMerchantEvents {
     private static final double SCAN_RADIUS = 6.0;
 
     private static int tickCounter = 0;
+    private static final MerchantChunkLease CHUNK_LEASE = new MerchantChunkLease(POS);
 
     private CamelMerchantEvents() {}
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onServerStarted(ServerStartedEvent event) {
+        CHUNK_LEASE.clearLegacyTicket(event.getServer().getLevel(ModDimensions.STARDEW_VALLEY));
+    }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
@@ -58,19 +66,19 @@ public final class CamelMerchantEvents {
         tickCounter = 0;
 
         ServerLevel level = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
-        if (level == null) return;
-        if (level.players().isEmpty()) return;
+        if (level == null || level.players().isEmpty()) {
+            CHUNK_LEASE.release();
+            return;
+        }
         if (com.stardew.craft.time.StardewTimePauseService.isPaused(event.getServer())) return;
 
-        loadSpawnChunk(level);
+        if (!CHUNK_LEASE.request(level)) return;
         ensureSingleEntity(level);
     }
 
-    private static void loadSpawnChunk(ServerLevel level) {
-        int chunkX = POS.getX() >> 4;
-        int chunkZ = POS.getZ() >> 4;
-        level.setChunkForced(chunkX, chunkZ, true);
-        level.getChunk(chunkX, chunkZ);
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        CHUNK_LEASE.release();
     }
 
     private static void ensureSingleEntity(ServerLevel level) {
@@ -151,8 +159,9 @@ public final class CamelMerchantEvents {
         if (level == null) {
             return;
         }
-        loadSpawnChunk(level);
-        ensureSingleEntity(level);
+        if (CHUNK_LEASE.request(level)) {
+            ensureSingleEntity(level);
+        }
     }
 
     /** 每个 tick 强制把实体锁死在固定位置/朝向 + 各种状态位上，防止任何外力扰动。 */

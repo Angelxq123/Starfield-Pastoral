@@ -7114,6 +7114,7 @@
   "stardewcraft.sleep.vote.progress": "Waiting for sleep... (%s/%s)",
   "stardewcraft.sleep.waiting": "Waiting for other players...",
   "stardewcraft.sleep.waiting.progress": "%s/%s players ready",
+  "stardewcraft.sleep.cancel": "Cancel Sleep",
   "stardewcraft.sofa.color_tooltip": "Color %s",
   "stardewcraft.stone_chest.color_picker": "Chest Color",
   "stardewcraft.stone_chest.color_tooltip": "Color #%s",

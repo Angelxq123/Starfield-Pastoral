@@ -26,7 +26,13 @@ final class FarmDebrisCursor {
     private final int spreadAttempts;
     private final int randomAttempts;
     private final int springAttempts;
+    private final int minChunkX;
+    private final int maxChunkX;
+    private final int minChunkZ;
+    private final int maxChunkZ;
     private Phase phase;
+    private int chunkX;
+    private int chunkZ;
     private int x;
     private int z;
     private int attempt;
@@ -46,8 +52,13 @@ final class FarmDebrisCursor {
         this.spreadAttempts = requireNonNegative(spreadAttempts, "spreadAttempts");
         this.randomAttempts = requireNonNegative(randomAttempts, "randomAttempts");
         this.springAttempts = requireNonNegative(springAttempts, "springAttempts");
-        x = minX;
-        z = minZ;
+        minChunkX = minX >> 4;
+        maxChunkX = maxX >> 4;
+        minChunkZ = minZ >> 4;
+        maxChunkZ = maxZ >> 4;
+        chunkX = minChunkX;
+        chunkZ = minChunkZ;
+        resetScanCoordinates();
         phase = minX <= maxX && minZ <= maxZ ? Phase.SCAN : Phase.COMPLETE;
         normalizePhase();
     }
@@ -72,11 +83,20 @@ final class FarmDebrisCursor {
             throw new IllegalStateException("Farm debris cursor is complete");
         }
         if (phase == Phase.SCAN) {
-            if (z < maxZ) {
+            int chunkMaxX = Math.min(maxX, (chunkX << 4) + 15);
+            int chunkMaxZ = Math.min(maxZ, (chunkZ << 4) + 15);
+            if (z < chunkMaxZ) {
                 z++;
-            } else if (x < maxX) {
+            } else if (x < chunkMaxX) {
                 x++;
-                z = minZ;
+                z = Math.max(minZ, chunkZ << 4);
+            } else if (chunkZ < maxChunkZ) {
+                chunkZ++;
+                resetScanCoordinates();
+            } else if (chunkX < maxChunkX) {
+                chunkX++;
+                chunkZ = minChunkZ;
+                resetScanCoordinates();
             } else {
                 phase = Phase.SPREAD;
                 attempt = 0;
@@ -85,6 +105,11 @@ final class FarmDebrisCursor {
             attempt++;
         }
         normalizePhase();
+    }
+
+    private void resetScanCoordinates() {
+        x = Math.max(minX, chunkX << 4);
+        z = Math.max(minZ, chunkZ << 4);
     }
 
     void skipSpread() {

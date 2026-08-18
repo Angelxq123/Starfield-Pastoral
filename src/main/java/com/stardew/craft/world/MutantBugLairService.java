@@ -80,18 +80,22 @@ public final class MutantBugLairService {
     private MutantBugLairService() {
     }
 
+    /** Installs fixed lair portals and the reward chest after startup warmup has loaded their chunks. */
+    public static void initializeLoadedFixedContent(ServerLevel level) {
+        if (level == null || !ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
+            return;
+        }
+        bindLevel(level);
+        ensureInstalled(level);
+    }
+
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)
                 || !ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
             return;
         }
-        if (activeLevel.get() != level) {
-            activeLevel = new WeakReference<>(level);
-            lastMaintenanceTick = Long.MIN_VALUE;
-            portalsInstalled = false;
-            weedsInitialized = false;
-        }
+        bindLevel(level);
         if (level.getGameTime() == lastMaintenanceTick
                 || level.getGameTime() % MAINTENANCE_INTERVAL != 0) {
             return;
@@ -110,6 +114,16 @@ public final class MutantBugLairService {
             weedsInitialized = true;
         }
         maintainMonsters(level, players);
+    }
+
+    private static void bindLevel(ServerLevel level) {
+        if (activeLevel.get() == level) {
+            return;
+        }
+        activeLevel = new WeakReference<>(level);
+        lastMaintenanceTick = Long.MIN_VALUE;
+        portalsInstalled = false;
+        weedsInitialized = false;
     }
 
     public static void enter(ServerPlayer player) {
@@ -180,7 +194,11 @@ public final class MutantBugLairService {
     }
 
     private static void ensureRewardChest(ServerLevel level) {
-        level.getChunkAt(REWARD_CHEST_POS);
+        if (level.getChunkSource().getChunkNow(
+                REWARD_CHEST_POS.getX() >> 4,
+                REWARD_CHEST_POS.getZ() >> 4) == null) {
+            return;
+        }
         BlockState state = level.getBlockState(REWARD_CHEST_POS);
         if (!state.is(ModBlocks.WOODEN_CHEST.get())) {
             state = ModBlocks.WOODEN_CHEST.get().defaultBlockState()

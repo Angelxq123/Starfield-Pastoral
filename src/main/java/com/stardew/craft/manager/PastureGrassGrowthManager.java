@@ -81,16 +81,25 @@ public class PastureGrassGrowthManager extends SavedData {
                     SpawnTask::identity,
                     task -> processSpawnTask(level, context, task, canceledDailySpawns),
                     () -> {});
+            List<BlockPos> grassPositions = new ArrayList<>();
+            List<PastureScanTask> scanTasks = createPastureScanTasks(farms);
+            DailySettlementWorkUnit scan = DailySettlementWorkUnits.cursor(
+                    "pasture_grass_scan",
+                    scanTasks,
+                    PastureScanTask::identity,
+                    task -> scanPastureGrassChunk(level, task, grassPositions),
+                    () -> {});
             DailySettlementWorkUnit growth = DailySettlementWorkUnits.deferred(
                     "pasture_grass_growth",
                     () -> new PastureGrowthWorkUnit(
                             level,
                             context,
-                            collectNearbyPastureGrass(level, farms),
+                            grassPositions,
                             context.season() == 0 && context.day() == 1
                                     && context.absoluteDay() > 1 ? 41 : 1));
             return DailySettlementWorkUnits.sequence(
-                    "pasture_grass", List.of(spawns, growth), this::finishDailyProcessing);
+                    "pasture_grass", List.of(spawns, scan, growth),
+                    this::finishDailyProcessing);
         } catch (RuntimeException | Error exception) {
             finishDailyProcessing();
             throw exception;
@@ -177,8 +186,9 @@ public class PastureGrassGrowthManager extends SavedData {
             DailySettlementContext context,
             int pass,
             Set<Long> knownPositions,
-            List<BlockPos> grassPositions) {
-        try (var lease = FarmDailyProcessHelper.leasePosition(level, pos, 1)) {
+            List<BlockPos> grassPositions,
+            FarmDailyProcessHelper.ReusingPositionLease leaseCursor) {
+        try (var lease = leaseCursor.lease(pos)) {
             if (!level.isLoaded(pos)) {
                 return;
             }
@@ -270,46 +280,54 @@ public class PastureGrassGrowthManager extends SavedData {
         return block == ModBlocks.YELLOW_DIRT.get() || block == Blocks.GRASS_BLOCK;
     }
 
-    private static List<BlockPos> collectNearbyPastureGrass(
-            ServerLevel level, List<FarmInstance> farms) {
+    private static List<PastureScanTask> createPastureScanTasks(List<FarmInstance> farms) {
         Set<Long> scannedChunks = new HashSet<>();
-        List<BlockPos> results = new ArrayList<>();
+        List<PastureScanTask> tasks = new ArrayList<>();
         for (FarmInstance farm : farms) {
             BlockPos min = farm.getFarmBoundsMin();
             BlockPos max = farm.getFarmBoundsMax();
-            try (var lease = FarmDailyProcessHelper.leaseBounds(level, min, max)) {
-                for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
-                    for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
-                        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
-                        if (!scannedChunks.add(key)) {
-                            continue;
-                        }
-                        int minX = Math.max(min.getX(), cx << 4);
-                        int maxX = Math.min(max.getX(), (cx << 4) + 15);
-                        int minZ = Math.max(min.getZ(), cz << 4);
-                        int maxZ = Math.min(max.getZ(), (cz << 4) + 15);
-                        for (int x = minX; x <= maxX; x++) {
-                            for (int z = minZ; z <= maxZ; z++) {
-                                int top = level.getHeight(
-                                        net.minecraft.world.level.levelgen.Heightmap.Types
-                                                .MOTION_BLOCKING_NO_LEAVES,
-                                        x, z);
-                                int minY = Math.max(min.getY(), top - 3);
-                                int maxY = Math.min(max.getY(), top + 1);
-                                for (int y = minY; y <= maxY; y++) {
-                                    BlockPos pos = new BlockPos(x, y, z);
-                                    if (level.getBlockState(pos).getBlock()
-                                            instanceof PastureGrassBlock) {
-                                        results.add(pos.immutable());
-                                    }
-                                }
-                            }
+            for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
+                for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
+                    long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
+                    if (scannedChunks.add(key)) {
+                        tasks.add(new PastureScanTask(farm, cx, cz));
+                    }
+                }
+            }
+        }
+        return List.copyOf(tasks);
+    }
+
+    private static void scanPastureGrassChunk(
+            ServerLevel level,
+            PastureScanTask task,
+            List<BlockPos> results) {
+        BlockPos farmMin = task.farm().getFarmBoundsMin();
+        BlockPos farmMax = task.farm().getFarmBoundsMax();
+        int minX = Math.max(farmMin.getX(), task.chunkX() << 4);
+        int maxX = Math.min(farmMax.getX(), (task.chunkX() << 4) + 15);
+        int minZ = Math.max(farmMin.getZ(), task.chunkZ() << 4);
+        int maxZ = Math.min(farmMax.getZ(), (task.chunkZ() << 4) + 15);
+        BlockPos leaseMin = new BlockPos(minX, farmMin.getY(), minZ);
+        BlockPos leaseMax = new BlockPos(maxX, farmMax.getY(), maxZ);
+        try (var lease = FarmDailyProcessHelper.leaseBounds(level, leaseMin, leaseMax)) {
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    int top = level.getHeight(
+                            net.minecraft.world.level.levelgen.Heightmap.Types
+                                    .MOTION_BLOCKING_NO_LEAVES,
+                            x, z);
+                    int minY = Math.max(farmMin.getY(), top - 3);
+                    int maxY = Math.min(farmMax.getY(), top + 1);
+                    for (int y = minY; y <= maxY; y++) {
+                        BlockPos pos = new BlockPos(x, y, z);
+                        if (level.getBlockState(pos).getBlock() instanceof PastureGrassBlock) {
+                            results.add(pos.immutable());
                         }
                     }
                 }
             }
         }
-        return results;
     }
 
     private static Map<UUID, FarmInstance> snapshotOnlineFarms(ServerLevel level) {
@@ -342,15 +360,23 @@ public class PastureGrassGrowthManager extends SavedData {
         }
     }
 
+    private record PastureScanTask(FarmInstance farm, int chunkX, int chunkZ) {
+        private String identity() {
+            return farm.getOwnerUUID() + ":" + chunkX + "," + chunkZ;
+        }
+    }
+
     private static final class PastureGrowthWorkUnit implements DailySettlementWorkUnit {
         private final ServerLevel level;
         private final DailySettlementContext context;
         private final List<BlockPos> positions;
         private final Set<Long> knownPositions;
         private final int totalPasses;
+        private final FarmDailyProcessHelper.ReusingPositionLease leaseCursor;
         private int pass;
         private int cursor;
         private int passLimit;
+        private boolean closed;
 
         private PastureGrowthWorkUnit(
                 ServerLevel level,
@@ -360,9 +386,11 @@ public class PastureGrassGrowthManager extends SavedData {
             this.level = level;
             this.context = context;
             this.positions = new ArrayList<>(positions);
+            this.positions.sort(FarmDailyProcessHelper.positionLeaseOrder(1));
             knownPositions = new HashSet<>();
             positions.forEach(pos -> knownPositions.add(pos.asLong()));
             this.totalPasses = totalPasses;
+            leaseCursor = FarmDailyProcessHelper.reusingPositionLease(level, 1);
             passLimit = positions.size();
             normalizePass();
         }
@@ -388,7 +416,8 @@ public class PastureGrassGrowthManager extends SavedData {
         public void runNext() {
             requireCurrent();
             processPastureGrassDay(
-                    level, positions.get(cursor), context, pass, knownPositions, positions);
+                    level, positions.get(cursor), context, pass, knownPositions, positions,
+                    leaseCursor);
             cursor++;
             normalizePass();
         }
@@ -398,6 +427,15 @@ public class PastureGrassGrowthManager extends SavedData {
             requireCurrent();
             cursor++;
             normalizePass();
+        }
+
+        @Override
+        public void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            leaseCursor.close();
         }
 
         private void normalizePass() {

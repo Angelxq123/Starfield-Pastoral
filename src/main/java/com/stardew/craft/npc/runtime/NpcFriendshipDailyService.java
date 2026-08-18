@@ -3,7 +3,12 @@ package com.stardew.craft.npc.runtime;
 import com.stardew.craft.api.v1.npc.StardewNpcProfiles;
 import com.stardew.craft.npc.data.NpcCapabilityProfile;
 import com.stardew.craft.npc.data.NpcDataRegistry;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnit;
+import com.stardew.craft.time.settlement.DailySettlementWorkUnits;
 import net.minecraft.server.level.ServerLevel;
+
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Source-parity friendship settlement for the non-romance friendship stage.
@@ -16,13 +21,26 @@ public final class NpcFriendshipDailyService {
     }
 
     public static void onNewDay(ServerLevel level, int previousDayKey, int newDayKey) {
-        NpcFriendshipDataManager.get(level).settleNewDay(
-                previousDayKey,
-                newDayKey / 7,
-                NpcFriendshipDailyService::isKnownNpc,
-                NpcFriendshipDailyService::isDatableNpc,
-                NpcInteractionService::getMaxFriendshipPointsFor
-        );
+        DailySettlementWorkUnits.drain(createDailyWorkUnit(
+                level, previousDayKey, newDayKey));
+    }
+
+    public static DailySettlementWorkUnit createDailyWorkUnit(
+            ServerLevel level, int previousDayKey, int newDayKey) {
+        Objects.requireNonNull(level, "level");
+        NpcFriendshipDataManager manager = NpcFriendshipDataManager.get(level);
+        return DailySettlementWorkUnits.cursor(
+                "npc_friendship_daily",
+                manager.playerIdsSnapshot(),
+                UUID::toString,
+                playerId -> manager.settlePlayerNewDay(
+                        playerId,
+                        previousDayKey,
+                        newDayKey / 7,
+                        NpcFriendshipDailyService::isKnownNpc,
+                        NpcFriendshipDailyService::isDatableNpc,
+                        NpcInteractionService::getMaxFriendshipPointsFor),
+                () -> {});
     }
 
     static int calculateDailyFriendshipDelta(int points, boolean talkedYesterday, boolean datable) {

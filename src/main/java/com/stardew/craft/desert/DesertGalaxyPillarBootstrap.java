@@ -27,6 +27,11 @@ public final class DesertGalaxyPillarBootstrap {
         if (!ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
             return;
         }
+        if (level.getChunkSource().getChunkNow(
+                RITUAL_TRIGGER_POS.getX() >> 4,
+                RITUAL_TRIGGER_POS.getZ() >> 4) == null) {
+            return;
+        }
 
         if (pillarsPresent(level)) {
             return;
@@ -52,8 +57,6 @@ public final class DesertGalaxyPillarBootstrap {
     }
 
     private static void placePillar(ServerLevel level, BlockPos pos, Direction facing) {
-        level.getChunkAt(pos);
-
         Block block = ModBlocks.GALAXY_PILLAR.get();
         BlockState state = block.defaultBlockState()
                 .setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)

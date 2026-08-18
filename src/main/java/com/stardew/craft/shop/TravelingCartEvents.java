@@ -19,6 +19,8 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -33,8 +35,14 @@ public final class TravelingCartEvents {
     private static final int CHECK_INTERVAL_TICKS = 40;
     private static final double SCAN_RADIUS = 8.0;
     private static int tickCounter = 0;
+    private static final MerchantChunkLease CHUNK_LEASE = new MerchantChunkLease(POS);
 
     private TravelingCartEvents() {
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onServerStarted(ServerStartedEvent event) {
+        CHUNK_LEASE.clearLegacyTicket(event.getServer().getLevel(ModDimensions.STARDEW_VALLEY));
     }
 
     @SubscribeEvent
@@ -45,10 +53,8 @@ public final class TravelingCartEvents {
         tickCounter = 0;
 
         ServerLevel level = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
-        if (level == null) {
-            return;
-        }
-        if (level.players().isEmpty()) {
+        if (level == null || level.players().isEmpty()) {
+            CHUNK_LEASE.release();
             return;
         }
         if (com.stardew.craft.time.StardewTimePauseService.isPaused(event.getServer())) {
@@ -63,13 +69,14 @@ public final class TravelingCartEvents {
         manager.processDay(time.getAbsoluteDay(), guaranteeVisitDay, time.getCurrentYear());
 
         if (!visitDay) {
-            setSpawnChunkForced(level, false);
+            CHUNK_LEASE.release();
             removeManagedEntity(level, manager);
             return;
         }
 
-        setSpawnChunkForced(level, true);
-        loadSpawnChunk(level);
+        if (!CHUNK_LEASE.request(level)) {
+            return;
+        }
         ensureSingleEntity(level, manager);
     }
 
@@ -84,12 +91,9 @@ public final class TravelingCartEvents {
                 && time.getCurrentDay() <= 17;
     }
 
-    private static void loadSpawnChunk(ServerLevel level) {
-        level.getChunk(POS.getX() >> 4, POS.getZ() >> 4);
-    }
-
-    private static void setSpawnChunkForced(ServerLevel level, boolean forced) {
-        level.setChunkForced(POS.getX() >> 4, POS.getZ() >> 4, forced);
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        CHUNK_LEASE.release();
     }
 
     private static boolean canOpenShopNow() {
@@ -191,14 +195,14 @@ public final class TravelingCartEvents {
         manager.processDay(time.getAbsoluteDay(), visitDay, time.getCurrentYear());
 
         if (!visitDay) {
-            setSpawnChunkForced(level, false);
+            CHUNK_LEASE.release();
             removeManagedEntity(level, manager);
             return;
         }
 
-        setSpawnChunkForced(level, true);
-        loadSpawnChunk(level);
-        ensureSingleEntity(level, manager);
+        if (CHUNK_LEASE.request(level)) {
+            ensureSingleEntity(level, manager);
+        }
     }
 
     private static void forceHoldPose(TravelingCartEntity entity) {

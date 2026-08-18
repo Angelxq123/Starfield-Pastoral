@@ -41,6 +41,7 @@ public class FruitTreeGrowthManager extends SavedData {
     private final Map<GlobalPos, SaplingEntry> saplings = new ConcurrentHashMap<>();
     private final Set<GlobalPos> matureTrees = ConcurrentHashMap.newKeySet();
     private boolean processing;
+    private com.stardew.craft.farm.FarmDailyProcessHelper.ReusingPositionLease activeDailyLease;
     private final Set<GlobalPos> pendingSaplingRemoves = new HashSet<>();
     private final Set<GlobalPos> pendingMatureRemoves = new HashSet<>();
 
@@ -142,6 +143,8 @@ public class FruitTreeGrowthManager extends SavedData {
         Objects.requireNonNull(context, "context");
         processing = true;
         try {
+            activeDailyLease = com.stardew.craft.farm.FarmDailyProcessHelper
+                    .reusingPositionLease(level, 8);
             List<DailyTreeEntry> saplingSnapshot = new ArrayList<>(saplings.size());
             for (Map.Entry<GlobalPos, SaplingEntry> entry : new ArrayList<>(saplings.entrySet())) {
                 SaplingEntry sapling = entry.getValue();
@@ -151,6 +154,10 @@ public class FruitTreeGrowthManager extends SavedData {
                         sapling.type,
                         sapling.daysRemaining));
             }
+            saplingSnapshot.sort(java.util.Comparator.comparing(
+                    DailyTreeEntry::globalPos,
+                    com.stardew.craft.farm.FarmDailyProcessHelper
+                            .globalPositionLeaseOrder(8)));
             DailySettlementWorkUnit saplingWork = DailySettlementWorkUnits.cursor(
                     "fruit_tree_growth",
                     saplingSnapshot,
@@ -176,6 +183,10 @@ public class FruitTreeGrowthManager extends SavedData {
             matureSnapshot.add(new DailyTreeEntry(
                     DailyTreeKind.MATURE, globalPos, null, 0));
         }
+        matureSnapshot.sort(java.util.Comparator.comparing(
+                DailyTreeEntry::globalPos,
+                com.stardew.craft.farm.FarmDailyProcessHelper
+                        .globalPositionLeaseOrder(8)));
         return DailySettlementWorkUnits.cursor(
                 "fruit_tree_mature_growth",
                 matureSnapshot,
@@ -193,8 +204,9 @@ public class FruitTreeGrowthManager extends SavedData {
         if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
             return;
         }
-        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper
-                .leasePosition(level, pos, 8)) {
+        var leaseCursor = Objects.requireNonNull(
+                activeDailyLease, "fruit tree daily chunk lease");
+        try (var lease = leaseCursor.lease(pos)) {
             if (!level.isLoaded(pos)) {
                 return;
             }
@@ -221,8 +233,16 @@ public class FruitTreeGrowthManager extends SavedData {
     }
 
     private void finishDailyProcessing() {
-        processing = false;
-        applyPendingRemoves();
+        var lease = activeDailyLease;
+        activeDailyLease = null;
+        try {
+            if (lease != null) {
+                lease.close();
+            }
+        } finally {
+            processing = false;
+            applyPendingRemoves();
+        }
     }
 
     private static String dailyItemIdentity(DailyTreeEntry entry) {

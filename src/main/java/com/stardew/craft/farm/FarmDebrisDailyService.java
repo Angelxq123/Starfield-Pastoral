@@ -21,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FenceBlock;
@@ -193,19 +194,16 @@ public final class FarmDebrisDailyService {
 
     private static void collectFarmObjectAt(
             ServerLevel level, FarmInstance farm, List<BlockPos> objects, int x, int z) {
-        try (var lease = FarmDailyProcessHelper.leasePosition(
-                level, new BlockPos(x, farm.getFarmBoundsMin().getY(), z), 0)) {
-            BlockPos top = findTopBlock(level, x, z,
-                    farm.getFarmBoundsMin().getY(), farm.getFarmBoundsMax().getY());
-            if (top == null) {
-                return;
-            }
-            BlockState state = level.getBlockState(top);
-            Block block = state.getBlock();
-            if (isSpreadSource(state) || block instanceof FenceBlock
-                    || level.getBlockEntity(top) != null) {
-                objects.add(top.immutable());
-            }
+        BlockPos top = findTopBlock(level, x, z,
+                farm.getFarmBoundsMin().getY(), farm.getFarmBoundsMax().getY());
+        if (top == null) {
+            return;
+        }
+        BlockState state = level.getBlockState(top);
+        Block block = state.getBlock();
+        if (isSpreadSource(state) || block instanceof FenceBlock
+                || level.getBlockEntity(top) != null) {
+            objects.add(top.immutable());
         }
     }
 
@@ -214,6 +212,8 @@ public final class FarmDebrisDailyService {
         private final FarmInstance farm;
         private final FarmDebrisCursor cursor;
         private final List<BlockPos> objects = new ArrayList<>();
+        private FarmDailyProcessHelper.Lease scanLease;
+        private long scanChunkKey = Long.MIN_VALUE;
 
         private FarmState(
                 UUID ownerId,
@@ -228,6 +228,26 @@ public final class FarmDebrisDailyService {
             cursor = new FarmDebrisCursor(
                     min.getX(), max.getX(), min.getZ(), max.getZ(),
                     spreadAttempts, randomAttempts, springAttempts);
+        }
+
+        private void ensureScanLease(ServerLevel level, int x, int z) {
+            long chunkKey = ChunkPos.asLong(x >> 4, z >> 4);
+            if (scanLease != null && scanChunkKey == chunkKey) {
+                return;
+            }
+            releaseScanLease();
+            scanLease = FarmDailyProcessHelper.leasePosition(
+                    level, new BlockPos(x, farm.getFarmBoundsMin().getY(), z), 0);
+            scanChunkKey = chunkKey;
+        }
+
+        private void releaseScanLease() {
+            FarmDailyProcessHelper.Lease lease = scanLease;
+            scanLease = null;
+            scanChunkKey = Long.MIN_VALUE;
+            if (lease != null) {
+                lease.close();
+            }
         }
     }
 
@@ -276,6 +296,7 @@ public final class FarmDebrisDailyService {
             }
 
             if (step.phase() == FarmDebrisCursor.Phase.SCAN) {
+                state.ensureScanLease(level, step.x(), step.z());
                 collectFarmObjectAt(level, state.farm, state.objects, step.x(), step.z());
             } else {
                 RandomSource random = DailySettlementRandom.forId(
@@ -313,7 +334,18 @@ public final class FarmDebrisDailyService {
 
         private void advanceCompletedFarms() {
             while (farmIndex < farms.size() && farms.get(farmIndex).cursor.isComplete()) {
+                farms.get(farmIndex).releaseScanLease();
                 farmIndex++;
+            }
+        }
+
+        @Override
+        public void close() {
+            if (farms == null) {
+                return;
+            }
+            for (FarmState state : farms) {
+                state.releaseScanLease();
             }
         }
 

@@ -2,12 +2,14 @@ package com.stardew.craft.farm;
 
 import com.stardew.craft.core.FarmAreaResolver;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -183,6 +185,90 @@ public final class FarmDailyProcessHelper {
                         Objects.requireNonNull(min, "min"),
                         Objects.requireNonNull(max, "max")));
         return lease::close;
+    }
+
+    public static ReusingPositionLease reusingPositionLease(
+            ServerLevel level, int radius) {
+        return new ReusingPositionLease(
+                Math.max(0, radius),
+                requireLeaseScope(level).reusingLease());
+    }
+
+    public static ReusingBoundsLease reusingBoundsLease(ServerLevel level) {
+        return new ReusingBoundsLease(requireLeaseScope(level).reusingLease());
+    }
+
+    public static Comparator<GlobalPos> globalPositionLeaseOrder(int radius) {
+        return Comparator
+                .comparing((GlobalPos position) ->
+                        position.dimension().location().toString())
+                .thenComparing(GlobalPos::pos, positionLeaseOrder(radius));
+    }
+
+    public static Comparator<BlockPos> positionLeaseOrder(int radius) {
+        int safeRadius = Math.max(0, radius);
+        return Comparator
+                .comparingInt((BlockPos position) -> minChunk(position.getX(), safeRadius))
+                .thenComparingInt(position -> maxChunk(position.getX(), safeRadius))
+                .thenComparingInt(position -> minChunk(position.getZ(), safeRadius))
+                .thenComparingInt(position -> maxChunk(position.getZ(), safeRadius))
+                .thenComparingInt(BlockPos::getX)
+                .thenComparingInt(BlockPos::getZ)
+                .thenComparingInt(BlockPos::getY);
+    }
+
+    private static int minChunk(int coordinate, int radius) {
+        return (coordinate - radius) >> 4;
+    }
+
+    private static int maxChunk(int coordinate, int radius) {
+        return (coordinate + radius) >> 4;
+    }
+
+    public static final class ReusingPositionLease implements AutoCloseable {
+        private final int radius;
+        private final FarmChunkManager.ReusingChunkLease<ServerLevel> delegate;
+
+        private ReusingPositionLease(
+                int radius,
+                FarmChunkManager.ReusingChunkLease<ServerLevel> delegate) {
+            this.radius = radius;
+            this.delegate = delegate;
+        }
+
+        public Lease lease(BlockPos pos) {
+            TemporaryChunkLeaseTracker.Lease lease = delegate.lease(
+                    FarmChunkManager.chunkPositionsForPosition(
+                            Objects.requireNonNull(pos, "pos"), radius));
+            return lease::close;
+        }
+
+        @Override
+        public void close() {
+            delegate.close();
+        }
+    }
+
+    public static final class ReusingBoundsLease implements AutoCloseable {
+        private final FarmChunkManager.ReusingChunkLease<ServerLevel> delegate;
+
+        private ReusingBoundsLease(
+                FarmChunkManager.ReusingChunkLease<ServerLevel> delegate) {
+            this.delegate = delegate;
+        }
+
+        public Lease lease(BlockPos min, BlockPos max) {
+            TemporaryChunkLeaseTracker.Lease lease = delegate.lease(
+                    FarmChunkManager.chunkPositionsForBounds(
+                            Objects.requireNonNull(min, "min"),
+                            Objects.requireNonNull(max, "max")));
+            return lease::close;
+        }
+
+        @Override
+        public void close() {
+            delegate.close();
+        }
     }
 
     private static FarmChunkManager.DailySettlementChunkLeaseScope<ServerLevel>

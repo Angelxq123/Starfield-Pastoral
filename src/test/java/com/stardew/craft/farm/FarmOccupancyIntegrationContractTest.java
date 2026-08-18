@@ -229,7 +229,7 @@ class FarmOccupancyIntegrationContractTest {
     }
 
     @Test
-    void dimensionLifecycleLeavesAndReconcilesAfterOptionalAutoRouting() throws IOException {
+    void dimensionLifecycleLeavesAndReconcilesAfterOptionalOrDeferredAutoRouting() throws IOException {
         MethodTree changed = parseMethod(
                 DIMENSION_HANDLER_SOURCE, "DimensionEventHandler", "onPlayerChangeDimension", 1);
         IfTree leaveValley = findDirectIf(changed.getBody(), condition -> isInvocation(
@@ -248,13 +248,18 @@ class FarmOccupancyIntegrationContractTest {
         BlockTree valleyBody = asBlock(enterValley.getThenStatement());
         int autoRoute = statementIndex(valleyBody, statement -> statement instanceof IfTree candidate
                 && hasInvocation(candidate.getCondition(), null, "consumeSkipAutoTeleport", "player.getUUID()"));
-        int reconcile = statementIndex(valleyBody, statement -> isDirectInvocation(
-                statement, "com.stardew.craft.farm.FarmChunkManager.get()",
-                "reconcilePlayerOccupancy", "player"));
+        int reconcileGuard = statementIndex(valleyBody, statement -> statement instanceof IfTree candidate
+                && normalized(unwrapped(candidate.getCondition())).equals("!farmTeleportQueued")
+                && hasInvocation(candidate.getThenStatement(),
+                        "com.stardew.craft.farm.FarmChunkManager.get()",
+                        "reconcilePlayerOccupancy", "player"));
 
         assertTrue(autoRoute >= 0, "Stardew entry must retain optional auto-routing");
-        assertTrue(reconcile > autoRoute,
-                "occupancy reconciliation must run after auto-routing and outside its condition");
+        assertTrue(reconcileGuard > autoRoute,
+                "non-deferred occupancy reconciliation must run after optional auto-routing");
+        assertTrue(hasInvocation(changed, "FARM_ENTRY_TELEPORTS", "enqueue",
+                "player.getUUID()", "level", "player", "spawnPos"),
+                "farm auto-routing must enqueue the deferred center-chunk teleport");
     }
 
     @Test

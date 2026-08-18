@@ -68,6 +68,12 @@ public class ClientOvernightHandler {
                 public void startLegacy(OvernightSettlementPayload payload) {
                     OvernightCollapseClientState.acceptSettlement(payload);
                 }
+
+                @Override
+                public void requestCancelWaiting() {
+                    PacketDistributor.sendToServer(
+                            new com.stardew.craft.network.payload.SleepCancelPayload());
+                }
             }));
     private static boolean sequenceActive;
 
@@ -128,6 +134,22 @@ public class ClientOvernightHandler {
 
     public static boolean handleWaitingInput() {
         return FLOW.handleDismissInput();
+    }
+
+    public static boolean canCancelWaiting() {
+        return FLOW.canCancelWaiting();
+    }
+
+    public static boolean requestCancelWaiting() {
+        return FLOW.requestCancelWaiting();
+    }
+
+    public static void receiveCancellationAccepted() {
+        FLOW.receiveCancellationAccepted();
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!FLOW.isLocked() && minecraft.screen instanceof SleepWaitingOverlayScreen) {
+            minecraft.setScreen(null);
+        }
     }
 
     public static boolean startReadySequence(int absoluteDay) {

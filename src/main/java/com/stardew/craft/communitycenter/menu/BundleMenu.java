@@ -6,7 +6,6 @@ import com.stardew.craft.api.v1.internal.communitycenter.StardewCommunityCenterR
 import com.stardew.craft.communitycenter.data.BundleIngredient;
 import com.stardew.craft.communitycenter.data.BundleItemResolver;
 import com.stardew.craft.communitycenter.junimo.JunimoSpawner;
-import com.stardew.craft.communitycenter.network.BundleSyncPayload;
 import com.stardew.craft.communitycenter.restore.CCAreaRegistry;
 import com.stardew.craft.communitycenter.state.CCStoryFlags;
 import com.stardew.craft.communitycenter.state.CommunityCenterSavedData;
@@ -302,8 +301,6 @@ public class BundleMenu extends AbstractContainerMenu {
             data.setRewardAvailable(uuid, def.bundleId(), false);
         }
 
-        // 同步到客户端
-        com.stardew.craft.communitycenter.network.BundleSyncPayload.sendFullSync(sp);
     }
 
     /**
@@ -459,7 +456,6 @@ public class BundleMenu extends AbstractContainerMenu {
             resetPartialDonation();
 
             checkBundleCompletion(player, bundleId, def, data);
-            BundleSyncPayload.sendFullSync(player);
         }
 
         return true;

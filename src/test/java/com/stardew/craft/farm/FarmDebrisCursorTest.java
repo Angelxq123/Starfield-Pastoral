@@ -3,7 +3,9 @@ package com.stardew.craft.farm;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -45,5 +47,30 @@ class FarmDebrisCursorTest {
 
         assertTrue(cursor.isComplete());
         assertFalse(cursor.hasCurrent());
+    }
+
+    @Test
+    void scansEachChunkInOneContiguousRun() {
+        FarmDebrisCursor cursor = new FarmDebrisCursor(0, 17, 0, 17, 0, 0, 0);
+        List<Long> chunkRuns = new ArrayList<>();
+        long previous = Long.MIN_VALUE;
+
+        while (!cursor.isComplete()) {
+            FarmDebrisCursor.Step step = cursor.current();
+            if (step.phase() != FarmDebrisCursor.Phase.SCAN) {
+                break;
+            }
+            long chunk = net.minecraft.world.level.ChunkPos.asLong(
+                    step.x() >> 4, step.z() >> 4);
+            if (chunk != previous) {
+                chunkRuns.add(chunk);
+                previous = chunk;
+            }
+            cursor.advance();
+        }
+
+        assertEquals(4, chunkRuns.size());
+        assertEquals(4, new LinkedHashSet<>(chunkRuns).size(),
+                "a scan must never return to a chunk after releasing its lease");
     }
 }

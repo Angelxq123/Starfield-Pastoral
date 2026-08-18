@@ -1,7 +1,6 @@
 package com.stardew.craft.block.utility;
 
 import com.stardew.craft.fishpond.data.FishPondWorldData;
-import com.stardew.craft.fishpond.service.FishPondColorSyncService;
 import com.stardew.craft.fishpond.service.FishPondInteractionService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -25,11 +24,8 @@ public class FishPondWaterBlock extends LiquidBlock {
         if (level instanceof ServerLevel serverLevel && entity instanceof ItemEntity itemEntity) {
             FishPondWorldData worldData = FishPondWorldData.get(serverLevel);
             worldData.findPondContainingWater(serverLevel.dimension().location().toString(), pos)
-                .ifPresent(pond -> {
-                    if (FishPondInteractionService.absorbItemEntity(serverLevel, pond, itemEntity).changedState()) {
-                        FishPondColorSyncService.broadcastSnapshot(serverLevel);
-                    }
-                });
+                .ifPresent(pond -> FishPondInteractionService.absorbItemEntity(
+                        serverLevel, pond, itemEntity));
         }
         super.entityInside(state, level, pos, entity);
     }

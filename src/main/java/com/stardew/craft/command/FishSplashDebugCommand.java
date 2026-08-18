@@ -95,8 +95,13 @@ public final class FishSplashDebugCommand {
 
 		FishSplashState state = FishSplashState.get(stardew);
 		int nowMin = absoluteMinutes();
-		state.put(key, new FishSplashState.Entry(chosen, nowMin));
-		FishSplashState.broadcastChange(stardew, key, chosen);
+		FishSplashState.Entry previous =
+				state.put(key, new FishSplashState.Entry(chosen, nowMin));
+		FishSplashState.syncChange(
+				stardew,
+				key,
+				previous == null ? null : previous.pos(),
+				chosen);
 
 		final BlockPos chosenF = chosen;
 		final String keyF = key;
@@ -134,8 +139,12 @@ public final class FishSplashDebugCommand {
 		FishSplashState state = FishSplashState.get(stardew);
 		java.util.List<String> keys = new java.util.ArrayList<>(state.view().keySet());
 		for (String k : keys) {
-			state.remove(k);
-			FishSplashState.broadcastChange(stardew, k, null);
+			FishSplashState.Entry removed = state.remove(k);
+			FishSplashState.syncChange(
+					stardew,
+					k,
+					removed == null ? null : removed.pos(),
+					null);
 		}
 		ctx.getSource().sendSuccess(() -> Component.literal("[splash] Cleared " + keys.size() + " entries"), true);
 		return keys.size();

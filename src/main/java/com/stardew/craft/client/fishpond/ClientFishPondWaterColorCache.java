@@ -9,6 +9,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Collections;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -53,12 +54,67 @@ public final class ClientFishPondWaterColorCache {
         return changedCells;
     }
 
+    public static void replaceChunk(
+            String dimensionId,
+            int chunkX,
+            int chunkZ,
+            Map<BlockPos, Integer> colors
+    ) {
+        Map<Long, Integer> dimensionColors = COLORS_BY_DIMENSION.computeIfAbsent(
+                dimensionId, ignored -> new LinkedHashMap<>());
+        LinkedHashSet<BlockPos> changedCells = new LinkedHashSet<>();
+        java.util.Iterator<Map.Entry<Long, Integer>> iterator =
+                dimensionColors.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Long, Integer> entry = iterator.next();
+            BlockPos pos = BlockPos.of(entry.getKey());
+            if ((pos.getX() >> 4) == chunkX && (pos.getZ() >> 4) == chunkZ) {
+                iterator.remove();
+                changedCells.add(pos);
+            }
+        }
+        for (Map.Entry<BlockPos, Integer> entry : colors.entrySet()) {
+            Integer previous = dimensionColors.put(entry.getKey().asLong(), entry.getValue());
+            if (!Objects.equals(previous, entry.getValue())) {
+                changedCells.add(entry.getKey());
+            } else {
+                changedCells.remove(entry.getKey());
+            }
+        }
+        rerenderChangedCells(dimensionId, changedCells);
+    }
+
+    public static void applyDelta(
+            String dimensionId,
+            Map<BlockPos, Integer> colors,
+            Collection<BlockPos> removedCells
+    ) {
+        Map<Long, Integer> dimensionColors = COLORS_BY_DIMENSION.computeIfAbsent(
+                dimensionId, ignored -> new LinkedHashMap<>());
+        LinkedHashSet<BlockPos> changedCells = new LinkedHashSet<>();
+        for (BlockPos pos : removedCells) {
+            if (dimensionColors.remove(pos.asLong()) != null) {
+                changedCells.add(pos);
+            }
+        }
+        for (Map.Entry<BlockPos, Integer> entry : colors.entrySet()) {
+            Integer previous = dimensionColors.put(entry.getKey().asLong(), entry.getValue());
+            if (!Objects.equals(previous, entry.getValue())) {
+                changedCells.add(entry.getKey());
+            }
+        }
+        rerenderChangedCells(dimensionId, changedCells);
+    }
+
     private static void rerenderChangedCells(String dimensionId, Set<BlockPos> changedCells) {
         if (changedCells.isEmpty()) {
             return;
         }
 
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft == null) {
+            return;
+        }
         Level level = minecraft.level;
         if (level == null || !dimensionId.equals(level.dimension().location().toString())) {
             return;

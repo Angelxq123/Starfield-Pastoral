@@ -1526,6 +1526,14 @@
       }
     ]
   },
+  "music_ragtime": {
+    "sounds": [
+      {
+        "name": "stardewcraft:music/ragtime",
+        "stream": true
+      }
+    ]
+  },
   "music_distant_banjo": {
     "sounds": [
       {
@@ -1539,6 +1547,22 @@
       {
         "name": "stardewcraft:music/clubloop",
         "stream": true
+      }
+    ]
+  },
+  "music_sunroom": {
+    "sounds": [
+      {
+        "name": "stardewcraft:music/sunroom",
+        "stream": true
+      }
+    ]
+  },
+  "babbling_brook": {
+    "sounds": [
+      {
+        "name": "stardewcraft:ambient/babbling_brook",
+        "stream": false
       }
     ]
   },

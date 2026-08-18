@@ -46,6 +46,7 @@ class DailySettlementPlanOrderTest {
                 item(DailySettlementPhase.WORLD_BATCHES, "crops"),
                 item(DailySettlementPhase.WORLD_BATCHES, "trees"),
                 item(DailySettlementPhase.WORLD_BATCHES, "fruit_trees"),
+                item(DailySettlementPhase.WORLD_BATCHES, "tea_bushes"),
                 item(DailySettlementPhase.WORLD_BATCHES, "wild_tree_seeds"),
                 item(DailySettlementPhase.WORLD_BATCHES, "farm_debris"),
                 item(DailySettlementPhase.WORLD_BATCHES, "sprinklers"),
@@ -95,8 +96,8 @@ class DailySettlementPlanOrderTest {
         assertEquals(1, names.stream().filter("shipping_bin_flush"::equals).count());
         assertEquals(1, names.stream().filter("player_daily_settlement"::equals).count());
         assertEquals(0, names.subList(names.indexOf("date_publication") + 1, names.size()).size());
-        assertEquals(25, names.indexOf("player_daily_settlement"));
-        assertEquals(27, names.indexOf("farm_cursor"));
+        assertEquals(26, names.indexOf("player_daily_settlement"));
+        assertEquals(28, names.indexOf("farm_cursor"));
         assertEquals(0, names.indexOf("shipping_bin_flush"));
     }
 

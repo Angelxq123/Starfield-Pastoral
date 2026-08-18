@@ -4,6 +4,7 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.blockentity.WoodenChestBlockEntity;
 import com.stardew.craft.network.payload.StarterChestHintPayload;
+import com.stardew.craft.network.payload.NpcVisibilityPayload;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.network.ObjectDialogueService;
@@ -175,6 +176,11 @@ public final class CrossDimensionTeleporter {
         StardewCraft.LOGGER.info(
                 "[WIZARD] Queued {} until the interior warmup is ready",
                 player.getName().getString());
+
+
+
+
+
     }
 
     /**
@@ -373,6 +379,8 @@ public final class CrossDimensionTeleporter {
         applyInteriorEnter(player);
         markCooldown(player);
         com.stardew.craft.npc.runtime.NpcSpawnManager.forceSpawnNpc("wizard");
+        // Recover from an interrupted cutscene that left the client-side wizard hidden.
+        PacketDistributor.sendToPlayer(player, new NpcVisibilityPayload("wizard", false));
         StardewCraft.LOGGER.info(
                 "[WIZARD] {} teleported from overworld to wizard tower interior",
                 player.getName().getString());

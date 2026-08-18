@@ -84,6 +84,7 @@ import com.stardew.craft.network.payload.OpenSofaColorScreenPayload;
 import com.stardew.craft.network.payload.StoneChestColorSelectPayload;
 import com.stardew.craft.network.payload.TableClothColorSyncPayload;
 import com.stardew.craft.network.payload.WoodenChestColorSelectPayload;
+import com.stardew.craft.network.payload.SunroomTeaBushActionPayload;
 
 @SuppressWarnings("null")
 public class PacketHandler {
@@ -113,6 +114,12 @@ public class PacketHandler {
             GrowCropsPayload.TYPE,
             GrowCropsPayload.STREAM_CODEC,
             DailySettlementAccessGuard.gated(GrowCropsPayload::handle)
+        );
+
+        registrar.playToServer(
+            SunroomTeaBushActionPayload.TYPE,
+            SunroomTeaBushActionPayload.STREAM_CODEC,
+            DailySettlementAccessGuard.gated(SunroomTeaBushActionPayload::handle)
         );
 
         registrar.playToServer(

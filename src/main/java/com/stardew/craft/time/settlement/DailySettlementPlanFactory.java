@@ -28,6 +28,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "crops",
             "trees",
             "fruit_trees",
+            "tea_bushes",
             "wild_tree_seeds",
             "farm_debris",
             "sprinklers",
@@ -44,7 +45,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "addon_farm_tasks");
     private static final List<String> PLAYERS = List.of("player_daily_settlement");
     private static final List<String> WORLD_SNAPSHOTS = List.of(
-            "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
+            "crops", "trees", "fruit_trees", "tea_bushes", "wild_tree_seeds", "farm_debris",
             "sprinklers", "pasture_grass", "animals", "fish_ponds",
             "public_forage", "forest_farm_forage", "artifact_spots",
             "quarry", "coal_forest", "farm_caves", "addon_farm_tasks");
@@ -261,7 +262,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "npc_dialogue_events" -> createDialogueEventsDaily();
                 case "npc_dialogue_topics" -> atomic(name, () -> dialogueTopicsDaily(context));
                 case "weather_npc_reset" -> createWeatherAndNpcWorkUnit(context);
-                case "crops", "trees", "fruit_trees", "wild_tree_seeds", "farm_debris",
+                case "crops", "trees", "fruit_trees", "tea_bushes", "wild_tree_seeds", "farm_debris",
                         "sprinklers", "pasture_grass", "animals", "fish_ponds",
                         "public_forage", "forest_farm_forage", "artifact_spots",
                         "quarry", "coal_forest", "farm_caves", "addon_farm_tasks" -> prepared(name);
@@ -381,6 +382,8 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "trees" -> com.stardew.craft.manager.TreeGrowthManager.get(level())
                         .createDailyWorkUnit(level(), context);
                 case "fruit_trees" -> com.stardew.craft.manager.FruitTreeGrowthManager.get(level())
+                        .createDailyWorkUnit(level(), context);
+                case "tea_bushes" -> com.stardew.craft.manager.TeaBushManager.get(level())
                         .createDailyWorkUnit(level(), context);
                 case "wild_tree_seeds" -> com.stardew.craft.manager.WildTreeSeedManager.get(level())
                         .createDailyWorkUnit(level(), context);

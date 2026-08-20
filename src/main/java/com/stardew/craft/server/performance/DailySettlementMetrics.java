@@ -1,5 +1,6 @@
 package com.stardew.craft.server.performance;
 
+import com.stardew.craft.Config;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.time.settlement.DailySettlementServices;
 import java.util.LinkedHashMap;
@@ -182,7 +183,8 @@ public final class DailySettlementMetrics {
         worstOvershootNanos = Math.max(worstOvershootNanos, overshootNanos);
         ServerPerformanceRecorder.increment(
                 PerformanceCounter.DAILY_SETTLEMENT_OVERSHOOTS, 1L);
-        if (warnedOvershootSubsystems.add(subsystemName)) {
+        if (Config.isSettlementDebugLoggingEnabled()
+                && warnedOvershootSubsystems.add(subsystemName)) {
             StardewCraft.LOGGER.warn(
                     "[DAILY] settlement budget overshoot unit={} overshoot={}ns "
                             + "(further overshoots are summarized)",
@@ -246,21 +248,23 @@ public final class DailySettlementMetrics {
         ServerPerformanceRecorder.publishDailySettlement(summary);
         ServerPerformanceRecorder.increment(
                 PerformanceCounter.DAILY_SETTLEMENT_READY_PUBLICATIONS, 1L);
-        StardewCraft.LOGGER.info(
-                "[DAILY] READY day={} wall={}ns ticks={} maxTick={}ns leases={} "
-                        + "syncChunkLoads={} overshoots={} worstOvershoot={}ns "
-                        + "playerBatches={} lockToReady={}ns subsystems={}",
-                summary.absoluteDay(),
-                summary.totalWallNanos(),
-                summary.tickCount(),
-                summary.maxPerTickWorkNanos(),
-                summary.leaseCount(),
-                summary.syncChunkLoadDelta(),
-                summary.overshootCount(),
-                summary.worstOvershootNanos(),
-                summary.playerBatchCount(),
-                summary.lockToReadyNanos(),
-                summary.subsystems());
+        if (Config.isSettlementDebugLoggingEnabled()) {
+            StardewCraft.LOGGER.info(
+                    "[DAILY] READY day={} wall={}ns ticks={} maxTick={}ns leases={} "
+                            + "syncChunkLoads={} overshoots={} worstOvershoot={}ns "
+                            + "playerBatches={} lockToReady={}ns subsystems={}",
+                    summary.absoluteDay(),
+                    summary.totalWallNanos(),
+                    summary.tickCount(),
+                    summary.maxPerTickWorkNanos(),
+                    summary.leaseCount(),
+                    summary.syncChunkLoadDelta(),
+                    summary.overshootCount(),
+                    summary.worstOvershootNanos(),
+                    summary.playerBatchCount(),
+                    summary.lockToReadyNanos(),
+                    summary.subsystems());
+        }
     }
 
     public void abort() {

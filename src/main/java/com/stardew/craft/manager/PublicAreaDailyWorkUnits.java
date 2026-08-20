@@ -89,6 +89,86 @@ public final class PublicAreaDailyWorkUnits {
         };
     }
 
+    /**
+     * Creates a resumable cursor over the chunks intersecting a block rectangle.
+     * The consumer is responsible for using only already-loaded chunks.
+     */
+    public static DailySettlementWorkUnit chunkRectangle(
+            String name,
+            int minX,
+            int minZ,
+            int maxX,
+            int maxZ,
+            ChunkConsumer consumer,
+            BooleanSupplier stopEarly,
+            Runnable onClose) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(consumer, "consumer");
+        Objects.requireNonNull(stopEarly, "stopEarly");
+        Objects.requireNonNull(onClose, "onClose");
+        if (maxX < minX || maxZ < minZ) {
+            throw new IllegalArgumentException("rectangle bounds must be ordered");
+        }
+
+        int minChunkX = minX >> 4;
+        int minChunkZ = minZ >> 4;
+        int width = (maxX >> 4) - minChunkX + 1;
+        int itemCount = Math.multiplyExact(width, (maxZ >> 4) - minChunkZ + 1);
+        return new DailySettlementWorkUnit() {
+            private int cursor;
+            private boolean closed;
+
+            @Override
+            public String name() {
+                return name;
+            }
+
+            @Override
+            public String currentItemIdentity() {
+                if (isComplete()) {
+                    return name;
+                }
+                return name + ":" + (minChunkX + cursor % width)
+                        + "," + (minChunkZ + cursor / width);
+            }
+
+            @Override
+            public boolean isComplete() {
+                return cursor >= itemCount || stopEarly.getAsBoolean();
+            }
+
+            @Override
+            public void runNext() {
+                requireCurrentItem();
+                int chunkX = minChunkX + cursor % width;
+                int chunkZ = minChunkZ + cursor / width;
+                consumer.accept(chunkX, chunkZ);
+                cursor++;
+            }
+
+            @Override
+            public void skipFailedItem() {
+                requireCurrentItem();
+                cursor++;
+            }
+
+            @Override
+            public synchronized void close() {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                onClose.run();
+            }
+
+            private void requireCurrentItem() {
+                if (isComplete()) {
+                    throw new IllegalStateException("Work unit is already complete: " + name);
+                }
+            }
+        };
+    }
+
     public static DailySettlementWorkUnit forageAttempts(
             String name,
             int slots,
@@ -380,6 +460,11 @@ public final class PublicAreaDailyWorkUnits {
     @FunctionalInterface
     public interface PlacementAttempt {
         boolean tryPlace(int x, int z);
+    }
+
+    @FunctionalInterface
+    public interface ChunkConsumer {
+        void accept(int chunkX, int chunkZ);
     }
 
     @FunctionalInterface

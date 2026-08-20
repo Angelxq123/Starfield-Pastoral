@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:block/cross",
+  "parent": "stardewcraft:block/template/cutout_cross",
   "textures": {
     "cross": "stardewcraft:item/fruit/mango",
     "particle": "stardewcraft:item/fruit/mango"

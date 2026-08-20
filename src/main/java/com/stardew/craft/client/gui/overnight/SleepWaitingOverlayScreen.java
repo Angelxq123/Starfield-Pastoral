@@ -28,6 +28,7 @@ public class SleepWaitingOverlayScreen extends Screen {
     private int requiredCount;
     private Button cancelButton;
     private boolean cancelRequested;
+    private boolean settlementReady;
 
     public SleepWaitingOverlayScreen(int votedCount, int requiredCount) {
         super(Component.empty());
@@ -41,6 +42,11 @@ public class SleepWaitingOverlayScreen extends Screen {
     public void updateProgress(int votedCount, int requiredCount) {
         this.votedCount = votedCount;
         this.requiredCount = requiredCount;
+    }
+
+    public void markSettlementReady() {
+        settlementReady = true;
+        updateCancelButton();
     }
 
     @Override
@@ -62,6 +68,10 @@ public class SleepWaitingOverlayScreen extends Screen {
     public void tick() {
         ticksOpen++;
         updateCancelButton();
+        if (ticksOpen == FADE_IN_TICKS || ticksOpen % 200 == 0) {
+            ClientOvernightHandler.logWaitingHeartbeat(
+                    ticksOpen, votedCount, requiredCount, settlementReady);
+        }
     }
 
     @Override
@@ -79,14 +89,21 @@ public class SleepWaitingOverlayScreen extends Screen {
         // 黑屏后显示文字
         if (ticksOpen >= FADE_IN_TICKS) {
             int textMaxWidth = Math.max(1, width - 32);
-            // "等待其他玩家…"
-            Component waitingText = Component.translatable("stardewcraft.sleep.waiting");
+            Component waitingText = Component.translatable(settlementReady
+                    ? "stardewcraft.sleep.ready"
+                    : "stardewcraft.sleep.waiting");
             GuiText.drawWrappedCentered(graphics, font, waitingText, width / 2, height / 2 - 22, textMaxWidth, 0xFFFFFFFF, false, 2);
 
             // 投票进度 "X/Y 位玩家已准备好"
             Component progressText = Component.translatable("stardewcraft.sleep.waiting.progress",
                     votedCount, requiredCount);
             GuiText.drawCenteredClamped(graphics, font, progressText, width / 2, height / 2 + 4, textMaxWidth, 0xFFCCCCCC, false);
+
+            if (settlementReady) {
+                Component hintText = Component.translatable("stardewcraft.sleep.ready.hint");
+                GuiText.drawCenteredClamped(graphics, font, hintText, width / 2,
+                        height / 2 + 26, textMaxWidth, 0xFFFFFFFF, false);
+            }
 
         }
         super.render(graphics, mouseX, mouseY, partialTick);

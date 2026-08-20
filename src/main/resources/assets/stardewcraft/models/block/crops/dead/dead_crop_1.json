@@ -1,7 +1,8 @@
 ﻿{
-    "parent":  "minecraft:block/cross",
+    "parent":  "stardewcraft:block/template/cutout_cross",
     "textures":  {
                      "cross":  "stardewcraft:item/crops/dead/dead_crop_1",
                      "particle":  "stardewcraft:item/crops/dead/dead_crop_1"
-                 }
+                 },
+  "render_type": "minecraft:cutout"
 }

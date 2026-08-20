@@ -128,6 +128,12 @@ public final class DailySettlementEvents {
                 PacketDistributor.sendToPlayer(
                         player, new OvernightBarrierPayload(absoluteDay, true));
                 PacketDistributor.sendToPlayer(player, recovered.payload());
+                StardewCraft.LOGGER.info(
+                        "[OVERNIGHT_SERVER] Recovered settlement on login player={} day={} personal={} shipped={} levels={}",
+                        player.getGameProfile().getName(), absoluteDay,
+                        recovered.payload().personalSettlement(),
+                        recovered.payload().shippedItems().size(),
+                        recovered.payload().levelUps().size());
                 com.stardew.craft.cutscene.server.WakeUpEventScheduler
                         .enqueueAtNightSettlement(player);
             }
@@ -154,7 +160,17 @@ public final class DailySettlementEvents {
         DailySettlementBarrier.ReadyResult ready =
                 services.barrier().readyResult(player.getUUID(), absoluteDay);
         if (ready != null) {
+            StardewCraft.LOGGER.info(
+                    "[OVERNIGHT_SERVER] Recovered settlement on login player={} day={} personal={} shipped={} levels={}",
+                    player.getGameProfile().getName(), absoluteDay,
+                    ready.payload().personalSettlement(),
+                    ready.payload().shippedItems().size(),
+                    ready.payload().levelUps().size());
             PacketDistributor.sendToPlayer(player, ready.payload());
+        } else {
+            StardewCraft.LOGGER.info(
+                    "[OVERNIGHT_SERVER] Re-sent settlement barrier on login player={} day={} waitingForReady=true",
+                    player.getGameProfile().getName(), absoluteDay);
         }
     }
 

@@ -4,12 +4,14 @@ import java.util.Objects;
 
 final class ClientOvernightFlow {
     private final UiGateway ui;
-    private int currentAbsoluteDay = -1;
+    private int lockedAbsoluteDay = -1;
     private int lastAcknowledgedAbsoluteDay = -1;
     private int votedCount;
     private int requiredCount;
-    private boolean locked;
     private OvernightSettlementPayload pendingReadyPayload;
+    private boolean worldReady;
+    private boolean settlementStarted;
+    private boolean settlementSequenceFinished;
 
     ClientOvernightFlow(UiGateway ui) {
         this.ui = Objects.requireNonNull(ui, "ui");
@@ -25,62 +27,79 @@ final class ClientOvernightFlow {
 
     void receiveBarrierState(OvernightBarrierPayload payload) {
         Objects.requireNonNull(payload, "payload");
-        if (payload.absoluteDay() <= lastAcknowledgedAbsoluteDay) {
+        int absoluteDay = payload.absoluteDay();
+        if (absoluteDay <= lastAcknowledgedAbsoluteDay
+                || absoluteDay <= 0
+                || (isLocked() && absoluteDay < lockedAbsoluteDay)) {
             return;
         }
-        if (payload.absoluteDay() <= 0
-                || (locked && payload.absoluteDay() < currentAbsoluteDay)) {
-            return;
-        }
-        if (!locked || payload.absoluteDay() > currentAbsoluteDay) {
-            currentAbsoluteDay = payload.absoluteDay();
-            locked = payload.locked();
+        if (!payload.locked()) {
+            lockedAbsoluteDay = -1;
             pendingReadyPayload = null;
-            if (!locked) {
-                currentAbsoluteDay = -1;
-            } else {
-                ui.showWaiting(votedCount, requiredCount);
-            }
+            worldReady = false;
+            settlementStarted = false;
             return;
         }
-        if (currentAbsoluteDay != payload.absoluteDay()) {
-            return;
-        }
-        locked = payload.locked();
-        if (!locked) {
-            currentAbsoluteDay = -1;
+        if (absoluteDay > lockedAbsoluteDay) {
             pendingReadyPayload = null;
-        } else {
-            ui.showWaiting(votedCount, requiredCount);
+            worldReady = false;
+            settlementStarted = false;
         }
+        lockedAbsoluteDay = absoluteDay;
+        ui.showPrelude(absoluteDay, votedCount, requiredCount);
     }
 
     void receiveSettlement(OvernightSettlementPayload payload) {
         Objects.requireNonNull(payload, "payload");
         if (payload.absoluteDay() < 0) {
-            if (!locked) {
+            if (!isLocked()) {
                 ui.startLegacy(payload);
             }
             return;
         }
-        if (!locked || payload.absoluteDay() != currentAbsoluteDay) {
+        if (payload.absoluteDay() <= lastAcknowledgedAbsoluteDay
+                || (isLocked() && payload.absoluteDay() < lockedAbsoluteDay)) {
             return;
+        }
+        if (payload.absoluteDay() > lockedAbsoluteDay) {
+            lockedAbsoluteDay = payload.absoluteDay();
+            pendingReadyPayload = null;
+            // A dated settlement without a barrier is a legacy/reconnect packet.
+            // There is no separate world-ready gate in that protocol.
+            worldReady = true;
+            settlementStarted = false;
         }
         if (pendingReadyPayload == null) {
             pendingReadyPayload = payload;
-            ui.showWaiting(votedCount, requiredCount);
+            ui.showReady(votedCount, requiredCount);
+            startReadySequence(lockedAbsoluteDay);
+        }
+    }
+
+    void receiveWorldReady(OvernightWorldReadyPayload payload) {
+        Objects.requireNonNull(payload, "payload");
+        if (!isLocked() || payload.absoluteDay() != lockedAbsoluteDay
+                || payload.absoluteDay() <= lastAcknowledgedAbsoluteDay) {
+            return;
+        }
+        worldReady = true;
+        if (settlementStarted && settlementSequenceFinished) {
+            finishSettlementSequence();
         }
     }
 
     boolean handleDismissInput() {
-        if (!isReady()) {
+        if (!isReady() || !worldReady) {
             return true;
         }
-        return startReadySequence(currentAbsoluteDay);
+        if (settlementStarted) {
+            return true;
+        }
+        return startReadySequence(lockedAbsoluteDay);
     }
 
     boolean canCancelWaiting() {
-        return !locked;
+        return !isLocked();
     }
 
     boolean requestCancelWaiting() {
@@ -92,49 +111,75 @@ final class ClientOvernightFlow {
     }
 
     void receiveCancellationAccepted() {
-        if (locked) {
+        if (isLocked()) {
             return;
         }
         votedCount = 0;
         requiredCount = 0;
         pendingReadyPayload = null;
-        currentAbsoluteDay = -1;
+        lockedAbsoluteDay = -1;
+        worldReady = false;
+        settlementStarted = false;
     }
 
     boolean startReadySequence(int absoluteDay) {
-        if (!locked || absoluteDay != currentAbsoluteDay || !isReady()) {
+        if (absoluteDay != lockedAbsoluteDay || !isReady()
+                || settlementStarted) {
             return false;
         }
         OvernightSettlementPayload payload = pendingReadyPayload;
-        lastAcknowledgedAbsoluteDay = absoluteDay;
-        locked = false;
-        currentAbsoluteDay = -1;
-        pendingReadyPayload = null;
-        ui.acknowledgeAndStart(absoluteDay, payload);
+        settlementStarted = true;
+        ui.startSettlement(absoluteDay, payload);
         return true;
     }
 
+    boolean finishSettlementSequence() {
+        if (!settlementStarted || !settlementSequenceFinished
+                || !worldReady || !isReady()) {
+            return false;
+        }
+        int absoluteDay = lockedAbsoluteDay;
+        ui.acknowledgeSettlement(absoluteDay);
+        lastAcknowledgedAbsoluteDay = absoluteDay;
+        lockedAbsoluteDay = -1;
+        pendingReadyPayload = null;
+        worldReady = false;
+        settlementStarted = false;
+        settlementSequenceFinished = false;
+        return true;
+    }
+
+    void markSettlementSequenceFinished() {
+        settlementSequenceFinished = true;
+    }
+
     boolean isLocked() {
-        return locked;
+        return lockedAbsoluteDay > 0;
     }
 
     boolean isReady() {
-        return locked
+        return isLocked()
                 && pendingReadyPayload != null
-                && pendingReadyPayload.absoluteDay() == currentAbsoluteDay;
+                && pendingReadyPayload.absoluteDay() == lockedAbsoluteDay;
+    }
+
+    boolean isWorldReady() {
+        return worldReady;
     }
 
     int currentAbsoluteDay() {
-        return currentAbsoluteDay;
+        return lockedAbsoluteDay;
     }
 
     void resetConnectionState() {
-        currentAbsoluteDay = -1;
-        locked = false;
+        lockedAbsoluteDay = -1;
         pendingReadyPayload = null;
         lastAcknowledgedAbsoluteDay = -1;
         votedCount = 0;
         requiredCount = 0;
+        worldReady = false;
+        settlementStarted = false;
+        settlementSequenceFinished = false;
     }
 
     interface UiGateway {
@@ -142,7 +187,13 @@ final class ClientOvernightFlow {
 
         void showWaiting(int votedCount, int requiredCount);
 
-        void acknowledgeAndStart(int absoluteDay, OvernightSettlementPayload payload);
+        void showPrelude(int absoluteDay, int votedCount, int requiredCount);
+
+        void showReady(int votedCount, int requiredCount);
+
+        void startSettlement(int absoluteDay, OvernightSettlementPayload payload);
+
+        void acknowledgeSettlement(int absoluteDay);
 
         void startLegacy(OvernightSettlementPayload payload);
 

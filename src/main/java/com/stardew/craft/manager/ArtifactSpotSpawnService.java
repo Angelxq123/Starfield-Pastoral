@@ -18,6 +18,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -175,14 +176,14 @@ public final class ArtifactSpotSpawnService {
         List<DailySettlementWorkUnit> scans = new ArrayList<>(zone.rects.length);
         for (int index = 0; index < zone.rects.length; index++) {
             ZoneRect rect = zone.rects[index];
-            scans.add(PublicAreaDailyWorkUnits.rectangle(
+            scans.add(PublicAreaDailyWorkUnits.chunkRectangle(
                     "artifact_scan_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
-                    (x, z) -> existing.addAndGet(processArtifactColumn(
+                    (chunkX, chunkZ) -> existing.addAndGet(processArtifactChunk(
                             level,
                             rect,
-                            x,
-                            z,
+                            chunkX,
+                            chunkZ,
                             zone.surface,
                             zone.surface == SurfaceKind.YELLOW_DIRT,
                             worldSeed,
@@ -209,14 +210,14 @@ public final class ArtifactSpotSpawnService {
             int absoluteDay) {
         ZoneRect rect = farm.rect();
         AtomicInteger existing = new AtomicInteger();
-        DailySettlementWorkUnit scan = PublicAreaDailyWorkUnits.rectangle(
+        DailySettlementWorkUnit scan = PublicAreaDailyWorkUnits.chunkRectangle(
                 "artifact_farm_scan_" + farm.ownerId(),
                 rect.minX, rect.minZ, rect.maxX, rect.maxZ,
-                (x, z) -> existing.addAndGet(processArtifactColumn(
+                (chunkX, chunkZ) -> existing.addAndGet(processArtifactChunk(
                         level,
                         rect,
-                        x,
-                        z,
+                        chunkX,
+                        chunkZ,
                         SurfaceKind.YELLOW_DIRT,
                         false,
                         worldSeed,
@@ -293,24 +294,30 @@ public final class ArtifactSpotSpawnService {
         List<DailySettlementWorkUnit> chanceScans = new ArrayList<>(zone.rects.length);
         for (int index = 0; index < zone.rects.length; index++) {
             ZoneRect rect = zone.rects[index];
-            chanceScans.add(PublicAreaDailyWorkUnits.cappedRectangle(
+            chanceScans.add(PublicAreaDailyWorkUnits.chunkRectangle(
                     "artifact_sand_chance_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
-                    remaining,
-                    (x, z) -> {
-                        RandomSource random = DailySettlementRandom.forPosition(
-                                worldSeed,
-                                absoluteDay,
-                                "artifact_sand_chance_" + zone.name,
-                                new BlockPos(x, 0, z));
-                        if (random.nextDouble() >= chance) return false;
-                        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return false;
-                        if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) return false;
-                        if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
-                            placed.incrementAndGet();
-                            return true;
+                    (chunkX, chunkZ) -> {
+                        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(
+                                level, chunkX << 4, chunkZ << 4)) return;
+                        int minX = Math.max(rect.minX, chunkX << 4);
+                        int maxX = Math.min(rect.maxX, (chunkX << 4) + 15);
+                        int minZ = Math.max(rect.minZ, chunkZ << 4);
+                        int maxZ = Math.min(rect.maxZ, (chunkZ << 4) + 15);
+                        for (int z = minZ; z <= maxZ && placed.get() < remaining; z++) {
+                            for (int x = minX; x <= maxX && placed.get() < remaining; x++) {
+                                RandomSource random = DailySettlementRandom.forPosition(
+                                        worldSeed,
+                                        absoluteDay,
+                                        "artifact_sand_chance_" + zone.name,
+                                        new BlockPos(x, 0, z));
+                                if (random.nextDouble() >= chance) continue;
+                                if (chunkAlreadyHasSpot(level, chunkX, chunkZ, zone.surface)) continue;
+                                if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
+                                    placed.incrementAndGet();
+                                }
+                            }
                         }
-                        return false;
                     },
                     () -> placed.get() >= remaining,
                     () -> {}));
@@ -323,20 +330,29 @@ public final class ArtifactSpotSpawnService {
         List<DailySettlementWorkUnit> fallbackScans = new ArrayList<>(zone.rects.length);
         for (int index = 0; index < zone.rects.length; index++) {
             ZoneRect rect = zone.rects[index];
-            fallbackScans.add(PublicAreaDailyWorkUnits.rectangle(
+            fallbackScans.add(PublicAreaDailyWorkUnits.chunkRectangle(
                     "artifact_sand_fallback_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
-                    (x, z) -> {
-                        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return;
-                        if (!canSpawnArtifactSpot(level, x, z, zone.surface)) return;
-                        long score = DailySettlementRandom.forPosition(
-                                worldSeed,
-                                absoluteDay,
-                                "artifact_sand_fallback_" + zone.name,
-                                new BlockPos(x, 0, z)).nextLong();
-                        if (Long.compareUnsigned(score, bestScore.get()) < 0) {
-                            bestScore.set(score);
-                            fallback.set(new BlockPos(x, 0, z));
+                    (chunkX, chunkZ) -> {
+                        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(
+                                level, chunkX << 4, chunkZ << 4)) return;
+                        int minX = Math.max(rect.minX, chunkX << 4);
+                        int maxX = Math.min(rect.maxX, (chunkX << 4) + 15);
+                        int minZ = Math.max(rect.minZ, chunkZ << 4);
+                        int maxZ = Math.min(rect.maxZ, (chunkZ << 4) + 15);
+                        for (int z = minZ; z <= maxZ; z++) {
+                            for (int x = minX; x <= maxX; x++) {
+                                if (!canSpawnArtifactSpot(level, x, z, zone.surface)) continue;
+                                long score = DailySettlementRandom.forPosition(
+                                        worldSeed,
+                                        absoluteDay,
+                                        "artifact_sand_fallback_" + zone.name,
+                                        new BlockPos(x, 0, z)).nextLong();
+                                if (Long.compareUnsigned(score, bestScore.get()) < 0) {
+                                    bestScore.set(score);
+                                    fallback.set(new BlockPos(x, 0, z));
+                                }
+                            }
                         }
                     },
                     () -> placed.get() > 0 || existing > 0,
@@ -392,6 +408,51 @@ public final class ArtifactSpotSpawnService {
             return 1;
         }
         return 0;
+    }
+
+    private static int processArtifactChunk(
+            ServerLevel level,
+            ZoneRect rect,
+            int chunkX,
+            int chunkZ,
+            SurfaceKind surface,
+            boolean revertFarmland,
+            long worldSeed,
+            int absoluteDay,
+            String randomSubsystem) {
+        LevelChunk chunk = level.getChunkSource().getChunkNow(chunkX, chunkZ);
+        if (chunk == null) {
+            return 0;
+        }
+
+        Block spotBlock = spotBlockFor(surface);
+        if (!revertFarmland) {
+            boolean possibleSpot = false;
+            for (LevelChunkSection section : chunk.getSections()) {
+                if (!section.hasOnlyAir()
+                        && section.getStates().maybeHas(state -> state.is(spotBlock))) {
+                    possibleSpot = true;
+                    break;
+                }
+            }
+            if (!possibleSpot) {
+                return 0;
+            }
+        }
+
+        int minX = Math.max(rect.minX, chunk.getPos().getMinBlockX());
+        int maxX = Math.min(rect.maxX, chunk.getPos().getMaxBlockX());
+        int minZ = Math.max(rect.minZ, chunk.getPos().getMinBlockZ());
+        int maxZ = Math.min(rect.maxZ, chunk.getPos().getMaxBlockZ());
+        int existing = 0;
+        for (int z = minZ; z <= maxZ; z++) {
+            for (int x = minX; x <= maxX; x++) {
+                existing += processArtifactColumn(
+                        level, rect, x, z, surface, revertFarmland,
+                        worldSeed, absoluteDay, randomSubsystem);
+            }
+        }
+        return existing;
     }
 
     private static void attemptZoneArtifactSpawn(

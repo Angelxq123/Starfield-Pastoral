@@ -9,6 +9,15 @@ package com.stardew.craft.client.gui.overnight;
  * row while preserving the original date-plaque-over-black ordering.</p>
  */
 final class ShippingMenuFadeTimeline {
+    static final int INTRO_DURATION_MS = 3_500;
+    static final int OUTRO_FADE_DURATION_MS = 350;
+    static final int OUTRO_DATE_PAUSE_MS = 250;
+    static final int SAVE_MARGIN_MS = 200;
+    static final int SAVE_COMPLETE_PAUSE_MS = 500;
+    static final int FINAL_OUTRO_DURATION_MS = 500;
+    static final int MORNING_SOUND_DELAY_MS = 600;
+    static final float DAY_PLAQUE_SPEED = 0.9F;
+
     static final int VANILLA_ITEM_DECORATION_Z = 200;
     static final int CONTENT_BLACKOUT_Z = 10_000;
     static final int OUTRO_FOREGROUND_Z = 11_000;
@@ -36,6 +45,38 @@ final class ShippingMenuFadeTimeline {
         return alphaByte << 24;
     }
 
+    static int advanceResultReveal(
+            int remainingMs,
+            int deltaMs,
+            float speed,
+            boolean awaitingSettlement
+    ) {
+        if (awaitingSettlement) {
+            return remainingMs;
+        }
+        return remainingMs - scaledDelta(deltaMs, speed);
+    }
+
+    static int advanceBackgroundReveal(int remainingMs, int deltaMs, int speed) {
+        return Math.max(0, remainingMs - scaledDelta(deltaMs, speed));
+    }
+
+    static int starScrollOffset(long elapsedMs, int tileWidth) {
+        if (tileWidth <= 0) {
+            return 0;
+        }
+        long pixels = Math.max(0L, elapsedMs) / 250L;
+        return (int) (pixels % tileWidth);
+    }
+
+    static int fixedOutroDurationMs() {
+        return OUTRO_FADE_DURATION_MS
+                + OUTRO_DATE_PAUSE_MS
+                + SAVE_MARGIN_MS
+                + SAVE_COMPLETE_PAUSE_MS
+                + FINAL_OUTRO_DURATION_MS;
+    }
+
     static boolean hasSafeLayerOrdering() {
         return CONTENT_BLACKOUT_Z > VANILLA_ITEM_DECORATION_Z
             && OUTRO_FOREGROUND_Z > CONTENT_BLACKOUT_Z
@@ -44,5 +85,9 @@ final class ShippingMenuFadeTimeline {
 
     private static float clamp(float value) {
         return Math.max(0.0F, Math.min(1.0F, value));
+    }
+
+    private static int scaledDelta(int deltaMs, float speed) {
+        return Math.round(Math.max(0, deltaMs) * Math.max(0.0F, speed));
     }
 }

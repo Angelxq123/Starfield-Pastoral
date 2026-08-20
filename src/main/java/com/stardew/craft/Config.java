@@ -32,10 +32,21 @@ public final class Config {
     public static final ModConfigSpec.BooleanValue SHOW_COMMUNITY_ANNOUNCEMENT = SERVER.SHOW_COMMUNITY_ANNOUNCEMENT;
     public static final ModConfigSpec.IntValue DAILY_SETTLEMENT_BUDGET_MILLIS =
             SERVER.DAILY_SETTLEMENT_BUDGET_MILLIS;
+    public static final ModConfigSpec.IntValue DAILY_SETTLEMENT_ACTIVE_BUDGET_MILLIS =
+            SERVER.DAILY_SETTLEMENT_ACTIVE_BUDGET_MILLIS;
     public static final ModConfigSpec.IntValue DAILY_SETTLEMENT_ITEM_LIMIT =
             SERVER.DAILY_SETTLEMENT_ITEM_LIMIT;
 
     private Config() {
+    }
+
+    /** Routine settlement diagnostics stay quiet until the server config is loaded. */
+    public static boolean isSettlementDebugLoggingEnabled() {
+        try {
+            return SERVER.DEBUG.get();
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
     }
 
     public static final class Client {
@@ -142,7 +153,9 @@ public final class Config {
         public final ModConfigSpec.BooleanValue ENABLE_UPDATE_CHECKS;
         public final ModConfigSpec.BooleanValue SHOW_COMMUNITY_ANNOUNCEMENT;
         public final ModConfigSpec.IntValue DAILY_SETTLEMENT_BUDGET_MILLIS;
+        public final ModConfigSpec.IntValue DAILY_SETTLEMENT_ACTIVE_BUDGET_MILLIS;
         public final ModConfigSpec.IntValue DAILY_SETTLEMENT_ITEM_LIMIT;
+        public final ModConfigSpec.BooleanValue DEBUG;
         public final ModConfigSpec.BooleanValue LEGACY_COMMON_IMPORTED;
 
         private Server(ModConfigSpec.Builder builder) {
@@ -160,9 +173,17 @@ public final class Config {
             builder.pop();
 
             builder.push("performance");
+            DEBUG = builder
+                    .comment("Enable routine daily settlement diagnostics in the server log.",
+                            "Errors and permanent failures are still logged when this is false.")
+                    .define("debug", false);
             DAILY_SETTLEMENT_BUDGET_MILLIS = builder
                     .comment("Maximum daily settlement work time per server tick in milliseconds.")
                     .defineInRange("dailySettlementBudgetMillis", 4, 1, 10);
+            DAILY_SETTLEMENT_ACTIVE_BUDGET_MILLIS = builder
+                    .comment("Daily settlement work time per server tick while players are locked.",
+                            "A slightly larger budget shortens the sleep wait without running settlement asynchronously.")
+                    .defineInRange("dailySettlementActiveBudgetMillis", 6, 1, 10);
             DAILY_SETTLEMENT_ITEM_LIMIT = builder
                     .comment("Maximum daily settlement work items processed per server tick.")
                     .defineInRange("dailySettlementItemLimit", 256, 1, 4096);

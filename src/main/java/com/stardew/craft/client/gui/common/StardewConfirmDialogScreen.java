@@ -74,9 +74,6 @@ public class StardewConfirmDialogScreen extends Screen implements StardewCollect
                     Component.translatable("stardewcraft.sleep.confirm.no")
                 ),
                 index -> {
-                    if (index == 0) {
-                        com.stardew.craft.cutscene.runtime.EventScreenFade.startFadeToBlack(12);
-                    }
                     PacketDistributor.sendToServer(new SleepConfirmChoicePayload(index == 0, currentMinute));
                     // 确认后关闭对话框；服务端会调用 startSleeping → 客户端自动弹出原版 InBedChatScreen
                 },

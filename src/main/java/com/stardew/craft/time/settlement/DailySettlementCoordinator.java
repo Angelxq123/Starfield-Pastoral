@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.StardewCraft;
 import com.stardew.craft.server.performance.DailySettlementMetrics;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -29,7 +30,9 @@ public final class DailySettlementCoordinator {
     private SettlementPlan plan;
     private int unitCursor;
     private int consecutiveFailures;
+    private int readyFailureCount;
     private boolean readyNotified;
+    private boolean playerResultsNotified;
 
     public DailySettlementCoordinator(
             BudgetedWorkRunner runner,
@@ -117,7 +120,9 @@ public final class DailySettlementCoordinator {
         plan = createdPlan;
         unitCursor = 0;
         consecutiveFailures = 0;
+        readyFailureCount = 0;
         readyNotified = false;
+        playerResultsNotified = false;
         phase = DailySettlementPhase.PREPARE;
         safePhaseChanged();
         return true;
@@ -150,48 +155,84 @@ public final class DailySettlementCoordinator {
             return 0L;
         }
 
-        DailySettlementWorkUnit unit = advanceToWork();
-        if (unit == null) {
-            return 0L;
-        }
-        if (unit.isComplete()) {
-            completeCurrentUnit(unit);
-            return 0L;
-        }
+        long tickBudget = -1L;
+        int tickItemLimit = -1;
+        long elapsedNanos = 0L;
+        int processedItems = 0;
 
-        long tickBudget = budgetNanos.getAsLong();
-        int tickItemLimit = itemLimit.getAsInt();
-        if (tickBudget <= 0L) {
-            throw new IllegalArgumentException("budgetNanos must be positive");
-        }
-        if (tickItemLimit <= 0) {
-            throw new IllegalArgumentException("itemLimit must be positive");
-        }
-        int effectiveItemLimit = consecutiveFailures > 0
-                ? Math.min(tickItemLimit, 1)
-                : tickItemLimit;
-        String budgetSubsystemName = unit.subsystemName();
-        GuardedWorkUnit guardedUnit = new GuardedWorkUnit(
-                unit, context, metrics, phase == DailySettlementPhase.PLAYER_BATCHES);
-        BudgetedWorkRunner.TickResult result;
-        try {
-            result = runGuarded(guardedUnit, tickBudget, effectiveItemLimit);
-        } catch (WorkItemExecutionException failure) {
+        while (phase != DailySettlementPhase.IDLE
+                && phase != DailySettlementPhase.READY) {
+            if ((phase == DailySettlementPhase.WORLD_BATCHES
+                    || phase == DailySettlementPhase.COMMIT)
+                    && !playerResultsNotified) {
+                if (!notifyPlayerResults()) {
+                    break;
+                }
+                continue;
+            }
+            DailySettlementWorkUnit unit = advanceToWork();
+            if (unit == null) {
+                break;
+            }
+            if (unit.isComplete()) {
+                completeCurrentUnit(unit);
+                continue;
+            }
+
+            if (tickBudget < 0L) {
+                tickBudget = budgetNanos.getAsLong();
+                tickItemLimit = itemLimit.getAsInt();
+                if (tickBudget <= 0L) {
+                    throw new IllegalArgumentException("budgetNanos must be positive");
+                }
+                if (tickItemLimit <= 0) {
+                    throw new IllegalArgumentException("itemLimit must be positive");
+                }
+            }
+
+            long remainingBudget = tickBudget - elapsedNanos;
+            int remainingItems = tickItemLimit - processedItems;
+            if (remainingBudget <= 0L || remainingItems <= 0) {
+                break;
+            }
+
+            int effectiveItemLimit = consecutiveFailures > 0
+                    ? Math.min(remainingItems, 1)
+                    : remainingItems;
+            String budgetSubsystemName = unit.subsystemName();
+            GuardedWorkUnit guardedUnit = new GuardedWorkUnit(
+                    unit, context, metrics,
+                    phase == DailySettlementPhase.PLAYER_BATCHES);
+            BudgetedWorkRunner.TickResult result;
+            try {
+                result = runGuarded(guardedUnit, remainingBudget, effectiveItemLimit);
+            } catch (WorkItemExecutionException failure) {
+                elapsedNanos += guardedUnit.elapsedNanos();
+                processedItems += guardedUnit.successfulRuns();
+                resetFailuresAfterProgress(guardedUnit);
+                handleItemFailure(unit);
+                break;
+            } catch (RuntimeException | Error failure) {
+                resetFailuresAfterProgress(guardedUnit);
+                throw failure;
+            }
+
+            elapsedNanos += result.elapsedNanos();
+            processedItems += result.processedItems();
             resetFailuresAfterProgress(guardedUnit);
-            handleItemFailure(unit);
-            return guardedUnit.elapsedNanos();
-        } catch (RuntimeException | Error failure) {
-            resetFailuresAfterProgress(guardedUnit);
-            throw failure;
+            if (result.complete()) {
+                completeCurrentUnit(unit, budgetSubsystemName);
+            }
+            if (result.overshootNanos() > 0L) {
+                metrics.recordOvershoot(budgetSubsystemName, result.overshootNanos());
+            }
+            if (!result.complete()
+                    || elapsedNanos >= tickBudget
+                    || processedItems >= tickItemLimit) {
+                break;
+            }
         }
-        resetFailuresAfterProgress(guardedUnit);
-        if (result.complete()) {
-            completeCurrentUnit(unit, budgetSubsystemName);
-        }
-        if (result.overshootNanos() > 0L) {
-            metrics.recordOvershoot(budgetSubsystemName, result.overshootNanos());
-        }
-        return result.elapsedNanos();
+        return elapsedNanos;
     }
 
     public boolean drain() {
@@ -226,6 +267,12 @@ public final class DailySettlementCoordinator {
                         metrics.completeReady();
                     }
                     resetToIdle();
+                }
+                continue;
+            }
+            if (phase == DailySettlementPhase.COMMIT && !playerResultsNotified) {
+                if (!notifyPlayerResults()) {
+                    continue;
                 }
                 continue;
             }
@@ -339,9 +386,9 @@ public final class DailySettlementCoordinator {
 
     private void enterNextPhase() {
         phase = switch (phase) {
-            case PREPARE -> DailySettlementPhase.WORLD_BATCHES;
-            case WORLD_BATCHES -> DailySettlementPhase.PLAYER_BATCHES;
-            case PLAYER_BATCHES -> DailySettlementPhase.COMMIT;
+            case PREPARE -> DailySettlementPhase.PLAYER_BATCHES;
+            case PLAYER_BATCHES -> DailySettlementPhase.WORLD_BATCHES;
+            case WORLD_BATCHES -> DailySettlementPhase.COMMIT;
             case COMMIT -> DailySettlementPhase.READY;
             case IDLE, READY -> throw new IllegalStateException(
                     "Cannot advance settlement phase from " + phase);
@@ -349,6 +396,22 @@ public final class DailySettlementCoordinator {
         unitCursor = 0;
         consecutiveFailures = 0;
         safePhaseChanged();
+    }
+
+    private boolean notifyPlayerResults() {
+        try {
+            listener.playerResultsReady(context);
+            playerResultsNotified = true;
+            return true;
+        } catch (RuntimeException | Error failure) {
+            if (!playerResultsNotified) {
+                StardewCraft.LOGGER.error(
+                        "[DAILY] Player settlement publication failed day={}; "
+                                + "retrying on next server tick",
+                        context == null ? -1 : context.absoluteDay(), failure);
+            }
+            return false;
+        }
     }
 
     private void safePhaseChanged() {
@@ -365,8 +428,26 @@ public final class DailySettlementCoordinator {
         try {
             listener.ready(context);
             readyNotified = true;
+            if (readyFailureCount > 0) {
+                StardewCraft.LOGGER.info(
+                        "[DAILY] Settlement READY publication recovered day={} attempts={}",
+                        context == null ? -1 : context.absoluteDay(),
+                        readyFailureCount + 1);
+            }
             return true;
-        } catch (RuntimeException | Error ignored) {
+        } catch (RuntimeException | Error failure) {
+            readyFailureCount++;
+            // READY is retried on the next server tick, but never silently: a failed
+            // publisher otherwise leaves clients on the waiting overlay indefinitely.
+            if (readyFailureCount == 1 || readyFailureCount % 40 == 0) {
+                StardewCraft.LOGGER.error(
+                        "[DAILY] Settlement READY publication failed day={} attempt={} "
+                                + "phase={}; retrying on next server tick",
+                        context == null ? -1 : context.absoluteDay(),
+                        readyFailureCount,
+                        phase,
+                        failure);
+            }
             return false;
         }
     }
@@ -437,7 +518,9 @@ public final class DailySettlementCoordinator {
         plan = null;
         unitCursor = 0;
         consecutiveFailures = 0;
+        readyFailureCount = 0;
         readyNotified = false;
+        playerResultsNotified = false;
         closedUnits.clear();
     }
 
@@ -637,6 +720,10 @@ public final class DailySettlementCoordinator {
     public interface LifecycleListener {
         LifecycleListener NOOP = new LifecycleListener() {
             @Override
+            public void playerResultsReady(DailySettlementContext context) {
+            }
+
+            @Override
             public void phaseChanged(
                     DailySettlementContext context, DailySettlementPhase phase) {
             }
@@ -656,6 +743,9 @@ public final class DailySettlementCoordinator {
         };
 
         void phaseChanged(DailySettlementContext context, DailySettlementPhase phase);
+
+        default void playerResultsReady(DailySettlementContext context) {
+        }
 
         void itemFailure(
                 DailySettlementContext context,

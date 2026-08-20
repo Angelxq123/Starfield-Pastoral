@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FarmDebrisCursorTest {
 
     @Test
-    void yieldsOneColumnThenOneAttemptPerStepInStablePhaseOrder() {
+    void yieldsOneChunkThenOneAttemptPerStepInStablePhaseOrder() {
         FarmDebrisCursor cursor = new FarmDebrisCursor(10, 11, 20, 21, 2, 1, 1);
         List<String> steps = new ArrayList<>();
 
@@ -24,7 +24,7 @@ class FarmDebrisCursorTest {
         }
 
         assertEquals(List.of(
-                "scan:10:20", "scan:10:21", "scan:11:20", "scan:11:21",
+                "scan:10:20",
                 "spread:0", "spread:1", "random:0", "spring_random:0",
                 "spring_weeds:0"), steps);
     }

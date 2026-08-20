@@ -1,7 +1,8 @@
 {
-  "parent": "minecraft:block/cross",
+  "parent": "stardewcraft:block/template/cutout_cross",
   "textures": {
     "cross": "stardewcraft:block/crops/spring/rice_shoot_stage3_top",
     "particle": "stardewcraft:block/crops/spring/rice_shoot_stage3_top"
-  }
+  },
+  "render_type": "minecraft:cutout"
 }

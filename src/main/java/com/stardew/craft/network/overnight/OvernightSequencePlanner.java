@@ -13,7 +13,11 @@ public final class OvernightSequencePlanner {
         for (int i = 0; i < Math.max(0, levelUpCount); i++) {
             stages.add(Stage.LEVEL_UP);
         }
-        stages.add(hasShippedItems ? Stage.SHIPPING : Stage.SAVE);
+        // Keep the Stardew night transition even on zero-shipment days. The
+        // shipping screen owns the full moon/date/fade presentation and safely
+        // renders an empty summary; the short save-only screen made READY look
+        // like a stalled black fade.
+        stages.add(Stage.SHIPPING);
         return List.copyOf(stages);
     }
 

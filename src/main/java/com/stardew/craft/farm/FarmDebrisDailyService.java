@@ -207,6 +207,23 @@ public final class FarmDebrisDailyService {
         }
     }
 
+    private static void scanFarmChunk(
+            ServerLevel level, FarmInstance farm, List<BlockPos> objects, int blockX, int blockZ) {
+        BlockPos farmMin = farm.getFarmBoundsMin();
+        BlockPos farmMax = farm.getFarmBoundsMax();
+        int chunkMinX = (blockX >> 4) << 4;
+        int chunkMinZ = (blockZ >> 4) << 4;
+        int minX = Math.max(farmMin.getX(), chunkMinX);
+        int maxX = Math.min(farmMax.getX(), chunkMinX + 15);
+        int minZ = Math.max(farmMin.getZ(), chunkMinZ);
+        int maxZ = Math.min(farmMax.getZ(), chunkMinZ + 15);
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                collectFarmObjectAt(level, farm, objects, x, z);
+            }
+        }
+    }
+
     private static final class FarmState {
         private final UUID ownerId;
         private final FarmInstance farm;
@@ -297,7 +314,7 @@ public final class FarmDebrisDailyService {
 
             if (step.phase() == FarmDebrisCursor.Phase.SCAN) {
                 state.ensureScanLease(level, step.x(), step.z());
-                collectFarmObjectAt(level, state.farm, state.objects, step.x(), step.z());
+                scanFarmChunk(level, state.farm, state.objects, step.x(), step.z());
             } else {
                 RandomSource random = DailySettlementRandom.forId(
                         level.getSeed(), context.absoluteDay(), "farm_debris",

@@ -2313,6 +2313,11 @@ public class PacketHandler {
             com.stardew.craft.cutscene.network.CutsceneAnchorPayload::handle
         );
         registrar.playToClient(
+            com.stardew.craft.network.overnight.OvernightWorldReadyPayload.TYPE,
+            com.stardew.craft.network.overnight.OvernightWorldReadyPayload.STREAM_CODEC,
+            com.stardew.craft.network.overnight.OvernightWorldReadyPayload::handle
+        );
+        registrar.playToClient(
             com.stardew.craft.cutscene.network.CombatRescuePreparePayload.TYPE,
             com.stardew.craft.cutscene.network.CombatRescuePreparePayload.STREAM_CODEC,
             com.stardew.craft.cutscene.network.CombatRescuePreparePayload::handle

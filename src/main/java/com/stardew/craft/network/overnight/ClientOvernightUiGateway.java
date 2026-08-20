@@ -20,9 +20,24 @@ final class ClientOvernightUiGateway implements ClientOvernightFlow.UiGateway {
     }
 
     @Override
-    public void acknowledgeAndStart(
+    public void showPrelude(int absoluteDay, int votedCount, int requiredCount) {
+        client.showPrelude(absoluteDay, votedCount, requiredCount);
+    }
+
+    @Override
+    public void showReady(int votedCount, int requiredCount) {
+        client.showReady(votedCount, requiredCount);
+    }
+
+    @Override
+    public void startSettlement(
             int absoluteDay, OvernightSettlementPayload payload) {
-        client.acknowledgeAndStart(absoluteDay, payload);
+        client.startSettlement(absoluteDay, payload);
+    }
+
+    @Override
+    public void acknowledgeSettlement(int absoluteDay) {
+        client.acknowledgeSettlement(absoluteDay);
     }
 
     @Override
@@ -42,7 +57,13 @@ final class ClientOvernightUiGateway implements ClientOvernightFlow.UiGateway {
 
         void showWaiting(int votedCount, int requiredCount);
 
-        void acknowledgeAndStart(int absoluteDay, OvernightSettlementPayload payload);
+        void showPrelude(int absoluteDay, int votedCount, int requiredCount);
+
+        void showReady(int votedCount, int requiredCount);
+
+        void startSettlement(int absoluteDay, OvernightSettlementPayload payload);
+
+        void acknowledgeSettlement(int absoluteDay);
 
         void startLegacy(OvernightSettlementPayload payload);
 

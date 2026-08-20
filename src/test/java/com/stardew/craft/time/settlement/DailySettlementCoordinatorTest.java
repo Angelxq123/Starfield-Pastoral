@@ -439,11 +439,52 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(List.of(
                 DailySettlementPhase.PREPARE,
-                DailySettlementPhase.WORLD_BATCHES,
                 DailySettlementPhase.PLAYER_BATCHES,
+                DailySettlementPhase.WORLD_BATCHES,
                 DailySettlementPhase.COMMIT,
                 DailySettlementPhase.READY), listener.phases);
         assertEquals(List.of(context()), listener.readyContexts);
+    }
+
+    @Test
+    void publishesPlayerResultsBeforeCommitWorkFinishes() {
+        List<String> order = new ArrayList<>();
+        DailySettlementCoordinator.LifecycleListener listener =
+                new DailySettlementCoordinator.LifecycleListener() {
+                    @Override
+                    public void phaseChanged(
+                            DailySettlementContext context, DailySettlementPhase phase) {
+                    }
+
+                    @Override
+                    public void playerResultsReady(DailySettlementContext context) {
+                        order.add("player-ready");
+                    }
+
+                    @Override
+                    public void itemFailure(
+                            DailySettlementContext context, String unitName,
+                            String itemIdentity, int attempt, boolean permanent) {
+                    }
+
+                    @Override
+                    public void ready(DailySettlementContext context) {
+                        order.add("world-ready");
+                    }
+                };
+        DailySettlementCoordinator coordinator = coordinator(ignored ->
+                new DailySettlementCoordinator.SettlementPlan(
+                        List.of(), List.of(),
+                         List.of(DailySettlementWorkUnits.atomic(
+                                 "players", () -> order.add("players"), () -> {})),
+                         List.of(DailySettlementWorkUnits.atomic(
+                                 "commit", () -> order.add("commit"), () -> {}))),
+                listener);
+
+        coordinator.start(context());
+        coordinator.drain();
+
+        assertEquals(List.of("players", "player-ready", "commit", "world-ready"), order);
     }
 
     @Test
@@ -672,6 +713,30 @@ class DailySettlementCoordinatorTest {
         limitCoordinator.tick();
 
         assertEquals(List.of("a"), limitProcessed);
+    }
+
+    @Test
+    void oneTickUsesItsRemainingBudgetAcrossSmallCompletedWorkUnits() {
+        List<String> processed = new ArrayList<>();
+        DailySettlementWorkUnit first = DailySettlementWorkUnits.atomic(
+                "first", () -> processed.add("first"), () -> {});
+        DailySettlementWorkUnit second = DailySettlementWorkUnits.atomic(
+                "second", () -> processed.add("second"), () -> {});
+        DailySettlementWorkUnit third = DailySettlementWorkUnits.atomic(
+                "third", () -> processed.add("third"), () -> {});
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(new StepClock(1L)),
+                () -> 100L,
+                () -> 10,
+                planFactory(ignored -> new DailySettlementCoordinator.SettlementPlan(
+                        List.of(first, second), List.of(third), List.of(), List.of())),
+                DailySettlementCoordinator.LifecycleListener.NOOP);
+        coordinator.start(context());
+
+        coordinator.tick();
+
+        assertEquals(List.of("first", "second", "third"), processed);
+        assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
     }
 
     @Test
@@ -970,7 +1035,7 @@ class DailySettlementCoordinatorTest {
 
         assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertEquals(List.of(
-                "phase:PREPARE", "phase:WORLD_BATCHES", "phase:PLAYER_BATCHES",
+                "phase:PREPARE", "phase:PLAYER_BATCHES", "phase:WORLD_BATCHES",
                 "phase:COMMIT", "commit", "close", "phase:READY", "ready"), events);
     }
 

@@ -1,5 +1,6 @@
 package com.stardew.craft.npc.runtime;
 
+import com.stardew.craft.Config;
 import com.stardew.craft.StardewCraft;
 import com.google.gson.JsonObject;
 import com.stardew.craft.core.ModDimensions;
@@ -299,7 +300,8 @@ public final class NpcSpawnManager {
                     moved[0]++;
                 },
                 () -> {
-                    if (moved[0] > 0 || skipped[0] > 0) {
+                    if (Config.isSettlementDebugLoggingEnabled()
+                            && (moved[0] > 0 || skipped[0] > 0)) {
                         StardewCraft.LOGGER.info(
                                 "[NPC_DAILY_RESET] reset scheduled NPCs for new day: moved={}, skipped={}",
                                 moved[0], skipped[0]);

@@ -9,6 +9,7 @@ import com.stardew.craft.sound.ModSounds;
 import com.stardew.craft.weather.ClientWeatherCache;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
@@ -25,17 +26,30 @@ import java.util.concurrent.ThreadLocalRandom;
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
 public class ShippingMenuScreen extends Screen {
-    private static final int INTRO_DURATION = 3500;
-    private static final int OUTRO_FADE_DURATION = 800;
-    private static final int OUTRO_DATE_PAUSE = 700;
-    private static final int SAVE_MARGIN = 500;
-    private static final int SAVE_COMPLETE_PAUSE = 1500;
-    private static final int FINAL_OUTRO_DURATION = 2000;
+    private static final int INTRO_DURATION = ShippingMenuFadeTimeline.INTRO_DURATION_MS;
+    private static final float SETTLEMENT_REVEAL_SPEED = 0.75F;
+    private static final int OUTRO_FADE_DURATION =
+            ShippingMenuFadeTimeline.OUTRO_FADE_DURATION_MS;
+    private static final int OUTRO_DATE_PAUSE =
+            ShippingMenuFadeTimeline.OUTRO_DATE_PAUSE_MS;
+    private static final int SAVE_MARGIN = ShippingMenuFadeTimeline.SAVE_MARGIN_MS;
+    private static final int SAVE_COMPLETE_PAUSE =
+            ShippingMenuFadeTimeline.SAVE_COMPLETE_PAUSE_MS;
+    private static final int FINAL_OUTRO_DURATION =
+            ShippingMenuFadeTimeline.FINAL_OUTRO_DURATION_MS;
 
-    private final List<OvernightSettlementPayload.ShippedItem> shippedItems;
-    private final OvernightSettlementPayload.OvernightContext context;
+    private List<OvernightSettlementPayload.ShippedItem> shippedItems;
+    private OvernightSettlementPayload.OvernightContext context;
+    private boolean awaitingSettlement;
+    private boolean waitingForVote;
+    private int votedCount;
+    private int requiredCount;
+    private Button cancelButton;
+    private boolean cancelRequested;
 
     private int introTimer = INTRO_DURATION;
+    private int backgroundRevealTimer = INTRO_DURATION;
+    private long sceneElapsedMs;
     private long lastTime;
 
     private int[] categoryTotals = new int[6];
@@ -58,6 +72,7 @@ public class ShippingMenuScreen extends Screen {
     private boolean newDayPlaque;
     private boolean savedYet;
     private boolean saveCompleteSoundPlayed;
+    private long outroStartedAtMs;
     private int sparklingAmplitude = 32;
     private float sparklingOffsetDecay = 1.0F;
     private float sparklingFrameRemainder;
@@ -84,18 +99,127 @@ public class ShippingMenuScreen extends Screen {
             OvernightSettlementPayload.OvernightContext context,
             List<Screen> siblingScreens
     ) {
+        this(shippedItems, context, siblingScreens, false);
+    }
+
+    private ShippingMenuScreen(
+            List<OvernightSettlementPayload.ShippedItem> shippedItems,
+            OvernightSettlementPayload.OvernightContext context,
+            List<Screen> siblingScreens,
+            boolean awaitingSettlement
+    ) {
+        this(shippedItems, context, siblingScreens, awaitingSettlement,
+                false, 0, 0);
+    }
+
+    private ShippingMenuScreen(
+            List<OvernightSettlementPayload.ShippedItem> shippedItems,
+            OvernightSettlementPayload.OvernightContext context,
+            List<Screen> siblingScreens,
+            boolean awaitingSettlement,
+            boolean waitingForVote,
+            int votedCount,
+            int requiredCount
+    ) {
         super(Component.translatable("stardewcraft.shipping.title"));
-        this.shippedItems = shippedItems;
+        this.shippedItems = List.copyOf(shippedItems);
         this.context = context;
         this.siblingScreens = siblingScreens;
+        this.awaitingSettlement = awaitingSettlement;
+        this.waitingForVote = waitingForVote;
+        this.votedCount = votedCount;
+        this.requiredCount = requiredCount;
+        if (waitingForVote || awaitingSettlement) {
+            backgroundRevealTimer = 0;
+        }
+        resetItemSummary();
+        configureOriginalShippingMusic();
+    }
+
+    public static ShippingMenuScreen createPrelude(int absoluteDay) {
+        return new ShippingMenuScreen(
+                List.of(),
+                OvernightSettlementPayload.OvernightContext.forAbsoluteDay(absoluteDay),
+                null,
+                true);
+    }
+
+    public static ShippingMenuScreen createVotePrelude(
+            int votedCount, int requiredCount) {
+        return new ShippingMenuScreen(
+                List.of(),
+                OvernightSettlementPayload.OvernightContext.forAbsoluteDay(1),
+                null,
+                false,
+                true,
+                votedCount,
+                requiredCount);
+    }
+
+    public boolean isAwaitingSettlement() {
+        return awaitingSettlement;
+    }
+
+    public boolean isWaitingScreen() {
+        return waitingForVote || awaitingSettlement;
+    }
+
+    public boolean isVotePrelude() {
+        return waitingForVote;
+    }
+
+    public boolean isWaitingForDay(int absoluteDay) {
+        return waitingForVote || (awaitingSettlement
+                && context.absoluteDay() == absoluteDay);
+    }
+
+    public boolean isPreludeForDay(int absoluteDay) {
+        return isWaitingForDay(absoluteDay);
+    }
+
+    public void updateVoteProgress(int votedCount, int requiredCount) {
+        this.votedCount = votedCount;
+        this.requiredCount = requiredCount;
+        updateCancelButton();
+    }
+
+    public void beginSettlementWait(int absoluteDay) {
+        context = OvernightSettlementPayload.OvernightContext
+                .forAbsoluteDay(absoluteDay);
+        waitingForVote = false;
+        awaitingSettlement = true;
+        cancelRequested = true;
+        backgroundRevealTimer = 0;
+        updateCancelButton();
+    }
+
+    public void acceptSettlement(OvernightSettlementPayload payload) {
+        if (!awaitingSettlement || payload.absoluteDay() != context.absoluteDay()) {
+            throw new IllegalStateException(
+                    "Shipping prelude day does not match settlement payload");
+        }
+        shippedItems = List.copyOf(payload.shippedItems());
+        context = payload.context();
+        awaitingSettlement = false;
+        waitingForVote = false;
+        introTimer = INTRO_DURATION;
+        backgroundRevealTimer = 0;
+        currentPage = -1;
+        currentTab = 0;
+        resetItemSummary();
+        StardewMusicManager.releaseCutsceneOverride();
+        configureOriginalShippingMusic();
+    }
+
+    private void resetItemSummary() {
+        categoryTotals = new int[6];
+        categoryDials = new MoneyDial[6];
         this.categoryItems = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
             this.categoryItems.add(new ArrayList<>());
             this.categoryDials[i] = new MoneyDial(7, i == 5);
         }
-        
         parseItems();
-        configureOriginalShippingMusic();
     }
 
     private void configureOriginalShippingMusic() {
@@ -165,10 +289,38 @@ public class ShippingMenuScreen extends Screen {
     protected void init() {
         super.init();
         this.lastTime = System.currentTimeMillis();
+        if (waitingForVote) {
+            cancelButton = addRenderableWidget(Button.builder(
+                    Component.translatable("stardewcraft.sleep.cancel"),
+                    button -> requestCancel())
+                    .bounds(width / 2 - 60, height / 2 + px(64), 120, 20)
+                    .build());
+            updateCancelButton();
+        }
         refreshScaledLayout();
         this.dayPlaqueY = Math.max(px(-64), this.height / 2 + px(-428));
         initializeAmbientSprites();
-        com.stardew.craft.StardewCraft.LOGGER.info("[OVERNIGHT_CLIENT] ShippingMenuScreen.init() items={}, introTimer={}", shippedItems.size(), introTimer);
+        com.stardew.craft.StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT] ShippingMenuScreen.init() items={} introTimer={} backgroundTimer={} awaiting={}",
+                shippedItems.size(), introTimer, backgroundRevealTimer, awaitingSettlement);
+    }
+
+    private void requestCancel() {
+        if (cancelRequested || !ClientOvernightHandler.canCancelWaiting()) {
+            return;
+        }
+        cancelRequested = ClientOvernightHandler.requestCancelWaiting();
+        updateCancelButton();
+    }
+
+    private void updateCancelButton() {
+        if (cancelButton == null) {
+            return;
+        }
+        boolean canCancel = waitingForVote
+                && ClientOvernightHandler.canCancelWaiting();
+        cancelButton.visible = canCancel;
+        cancelButton.active = canCancel && !cancelRequested;
     }
 
     private void initializeAmbientSprites() {
@@ -225,14 +377,6 @@ public class ShippingMenuScreen extends Screen {
             com.stardew.craft.api.v1.item.StardewItemDataApi.getTypeKey(first));
     }
 
-    private boolean isLeftMousePressed() {
-        if (this.minecraft == null) {
-            return false;
-        }
-        long window = this.minecraft.getWindow().getWindow();
-        return GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
-    }
-
     private void refreshScaledLayout() {
         this.categoryLabelsWidth = px(512);
         this.plusButtonWidth = px(40);
@@ -260,6 +404,10 @@ public class ShippingMenuScreen extends Screen {
         long currentTime = System.currentTimeMillis();
         int delta = Math.max(0, Math.min(100, (int) (currentTime - lastTime)));
         this.lastTime = currentTime;
+        this.sceneElapsedMs += delta;
+
+        backgroundRevealTimer = ShippingMenuFadeTimeline.advanceBackgroundReveal(
+                backgroundRevealTimer, delta, 1);
 
         if (outro) {
             updateOutro(delta);
@@ -281,6 +429,18 @@ public class ShippingMenuScreen extends Screen {
         // a normal z=0 fill regardless of Java call order.
         drawBackground(graphics, 1.0F);
 
+        if (waitingForVote) {
+            drawVoteWaitingText(graphics);
+            super.render(graphics, mouseX, mouseY, partialTick);
+            return;
+        }
+
+        if (awaitingSettlement) {
+            drawSettlementWaitingText(graphics);
+            super.render(graphics, mouseX, mouseY, partialTick);
+            return;
+        }
+
         if (isGreenRainWeather()) {
             graphics.fill(0, 0, this.width, this.height, 0x1900FF00);
         }
@@ -293,19 +453,24 @@ public class ShippingMenuScreen extends Screen {
 
         if (outro) {
             drawOutro(graphics);
-        } else {
+        } else if (!waitingForVote && !awaitingSettlement) {
             drawBlackOverlay(
                 graphics,
                 ShippingMenuFadeTimeline.FINAL_BLACKOUT_Z,
-                ShippingMenuFadeTimeline.introBlackAlpha(introTimer, INTRO_DURATION)
+                ShippingMenuFadeTimeline.introBlackAlpha(
+                        backgroundRevealTimer, INTRO_DURATION)
             );
         }
+        super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     private void updateIntro(int delta) {
+        if (waitingForVote || awaitingSettlement) {
+            return;
+        }
         int prevIntro = introTimer;
-        int introSpeed = isLeftMousePressed() ? 3 : 1;
-        introTimer -= delta * introSpeed;
+        introTimer = ShippingMenuFadeTimeline.advanceResultReveal(
+                introTimer, delta, SETTLEMENT_REVEAL_SPEED, awaitingSettlement);
         if (prevIntro >= 0 && introTimer >= 0 && prevIntro % 500 < introTimer % 500 && introTimer <= 3000) {
             int categoryThatPoppedUp = 4 - introTimer / 500;
             if (categoryThatPoppedUp > -1 && categoryThatPoppedUp < 6) {
@@ -328,7 +493,7 @@ public class ShippingMenuScreen extends Screen {
 
     private void updateSmoke(int delta) {
         smokeParticles.removeIf(particle -> particle.update(delta));
-        if (outro || introTimer >= 0 || getCurrentDay() == 28) {
+        if (outro || backgroundRevealTimer > 0 || getCurrentDay() == 28) {
             return;
         }
 
@@ -351,7 +516,8 @@ public class ShippingMenuScreen extends Screen {
 
     private void updateAmbientSprites(int delta) {
         ambientSprites.removeIf(sprite -> sprite.update(delta));
-        if (outro || introTimer >= 0 || getCurrentDay() == 28 || isRainLikeWeather()) {
+        if (outro || backgroundRevealTimer > 0 || getCurrentDay() == 28
+                || isRainLikeWeather()) {
             return;
         }
 
@@ -430,6 +596,40 @@ public class ShippingMenuScreen extends Screen {
         drawSmoke(graphics);
     }
 
+    private void drawSettlementWaitingText(GuiGraphics graphics) {
+        Component message = Component.translatable("stardewcraft.shipping.settling");
+        int maxWidth = Math.max(1, width - px(96));
+        double pulse = 0.5D + 0.5D * Math.sin(sceneElapsedMs / 350.0D);
+        int alpha = 190 + (int) Math.round(pulse * 65.0D);
+        int color = alpha << 24 | 0xFFFFFF;
+        graphics.pose().pushPose();
+        graphics.pose().translate(
+                0.0F, 0.0F, ShippingMenuFadeTimeline.FINAL_BLACKOUT_Z + 1.0F);
+        GuiText.drawCenteredClamped(
+                graphics, font, message, width / 2, height / 2, maxWidth, color, true);
+        graphics.pose().popPose();
+    }
+
+    private void drawVoteWaitingText(GuiGraphics graphics) {
+        int maxWidth = Math.max(1, width - px(96));
+        double pulse = 0.5D + 0.5D * Math.sin(sceneElapsedMs / 350.0D);
+        int alpha = 190 + (int) Math.round(pulse * 65.0D);
+        int color = alpha << 24 | 0xFFFFFF;
+        graphics.pose().pushPose();
+        graphics.pose().translate(
+                0.0F, 0.0F, ShippingMenuFadeTimeline.FINAL_BLACKOUT_Z + 1.0F);
+        GuiText.drawCenteredClamped(
+                graphics, font,
+                Component.translatable("stardewcraft.sleep.waiting"),
+                width / 2, height / 2 - px(32), maxWidth, color, true);
+        GuiText.drawCenteredClamped(
+                graphics, font,
+                Component.translatable("stardewcraft.sleep.waiting.progress",
+                        votedCount, requiredCount),
+                width / 2, height / 2 + px(8), maxWidth, 0xFFCCCCCC, false);
+        graphics.pose().popPose();
+    }
+
     private void updateOutro(int delta) {
         if (outroFadeTimer > 0) {
             outroFadeTimer = Math.max(0, outroFadeTimer - delta);
@@ -441,7 +641,8 @@ public class ShippingMenuScreen extends Screen {
             ambientSprites.clear();
             smokeParticles.clear();
             dayPlaqueY = Math.min(targetY,
-                dayPlaqueY + Math.max(1, (int) Math.ceil(delta * 0.35f / guiScale())));
+                dayPlaqueY + Math.max(1, (int) Math.ceil(
+                        delta * ShippingMenuFadeTimeline.DAY_PLAQUE_SPEED / guiScale())));
             if (dayPlaqueY >= targetY) {
                 outroPauseBeforeDateChange = OUTRO_DATE_PAUSE;
             }
@@ -454,7 +655,7 @@ public class ShippingMenuScreen extends Screen {
                 newDayPlaque = true;
                 finalOutroTimer = FINAL_OUTRO_DURATION;
                 saveTimer = SAVE_MARGIN + SAVE_COMPLETE_PAUSE;
-                morningSoundTimer = 1500;
+                morningSoundTimer = ShippingMenuFadeTimeline.MORNING_SOUND_DELAY_MS;
                 playUiSound(ModSounds.NEW_RECIPE.get(), 1.0f, 1.0f);
             }
             return;
@@ -569,14 +770,20 @@ public class ShippingMenuScreen extends Screen {
             return;
         }
         outro = true;
+        outroStartedAtMs = System.currentTimeMillis();
         outroFadeTimer = OUTRO_FADE_DURATION;
+        com.stardew.craft.StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT] Shipping outro started fixedDuration={}ms",
+                ShippingMenuFadeTimeline.fixedOutroDurationMs());
         playUiSound(ModSounds.BIG_DESELECT.get(), 1.0f, 1.0f);
         StardewMusicManager.stopForCutsceneSilence();
     }
 
     private void closeToNextScreen() {
-        com.stardew.craft.StardewCraft.LOGGER.info("[OVERNIGHT_CLIENT] ShippingMenuScreen.closeToNextScreen() siblingCount={}",
-            this.siblingScreens != null ? this.siblingScreens.size() : -1);
+        com.stardew.craft.StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT] ShippingMenuScreen.closeToNextScreen() siblingCount={} elapsed={}ms",
+                this.siblingScreens != null ? this.siblingScreens.size() : -1,
+                outroStartedAtMs == 0L ? -1L : System.currentTimeMillis() - outroStartedAtMs);
         StardewMusicManager.releaseCutsceneOverride();
         if (ClientOvernightHandler.isSequenceActive()) {
             ClientOvernightHandler.openNextScreen("shipping");
@@ -588,7 +795,8 @@ public class ShippingMenuScreen extends Screen {
     }
 
     private boolean canReceiveInput() {
-        return introTimer <= 0 && !outro;
+        return !awaitingSettlement && introTimer <= 0 && !outro
+                && ClientOvernightHandler.isWorldReady();
     }
 
     private boolean showForwardButton() {
@@ -638,11 +846,12 @@ public class ShippingMenuScreen extends Screen {
             for (int i = 0; i < stardewViewWidth; i += 639) {
                 if (isWinter) {
                     float winterBackAlpha = Math.max(0.0f,
-                        0.25f * (0.5f - (float) Math.max(0, introTimer) / INTRO_DURATION));
+                        0.25f * (0.5f - (float) backgroundRevealTimer / INTRO_DURATION));
                     ShippingMenuTextures.drawLandBackTint(graphics, px(i * 4), h - px(192), true, s4(), 1.0F, 1.0F, 1.0F, winterBackAlpha);
                     ShippingMenuTextures.drawLandFrontTint(graphics, px(i * 4), h - px(128), true, s4(), 1.0F, 1.0F, 1.0F, alpha * 0.5f);
                 } else {
-                    float lowerBackAlpha = 0.5f - (float) Math.max(0, introTimer) / 3500.0f;
+                    float lowerBackAlpha = 0.5f
+                            - (float) backgroundRevealTimer / INTRO_DURATION;
                     ShippingMenuTextures.drawLandBackTint(graphics, px(i * 4), h - px(192), false, s4(), 30.0F / 255.0F, 62.0F / 255.0F, 50.0F / 255.0F, lowerBackAlpha);
                     ShippingMenuTextures.drawLandFrontTint(graphics, px(i * 4), h - px(128), false, s4(), 30.0F / 255.0F, 62.0F / 255.0F, 50.0F / 255.0F, alpha);
                 }
@@ -668,7 +877,10 @@ public class ShippingMenuScreen extends Screen {
         ShippingMenuTextures.drawSkyStrip(graphics, w, h, false, 1.0F, 1.0F, 1.0F, alpha);
 
         if (!rainLike) {
-            for (int x = 0; x < w; x += px(2556)) {
+            int starTileWidth = Math.max(1, px(2556));
+            int starOffset = ShippingMenuFadeTimeline.starScrollOffset(
+                    sceneElapsedMs, starTileWidth);
+            for (int x = -starOffset; x < w; x += starTileWidth) {
                 ShippingMenuTextures.drawStarBackdrop(graphics, x, 0, s4(), alpha);
             }
 
@@ -688,7 +900,8 @@ public class ShippingMenuScreen extends Screen {
             }
         }
 
-        float distantAlpha = Math.max(0.0f, Math.min(1.0f, 0.65f - Math.max(0, introTimer) / 3500.0f));
+        float distantAlpha = Math.max(0.0f, Math.min(1.0f,
+                0.65f - (float) backgroundRevealTimer / INTRO_DURATION));
         if (isWinter) {
             ShippingMenuTextures.drawLandBackTint(graphics, px(0), h - px(192), true, s4(), 1.0F, 1.0F, 1.0F, distantAlpha * 0.25f);
             ShippingMenuTextures.drawLandBackTint(graphics, px(2556), h - px(192), true, s4(), 1.0F, 1.0F, 1.0F, distantAlpha * 0.25f);
@@ -893,6 +1106,9 @@ public class ShippingMenuScreen extends Screen {
 
     @Override
     public void onClose() {
+        if (awaitingSettlement) {
+            return;
+        }
         beginOutroClose();
     }
 

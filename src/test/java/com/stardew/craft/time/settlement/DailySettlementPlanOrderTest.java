@@ -38,6 +38,8 @@ class DailySettlementPlanOrderTest {
                 item(DailySettlementPhase.PREPARE, "non_participant_cleanup"),
                 item(DailySettlementPhase.PREPARE, "daily_process_scope"),
 
+                item(DailySettlementPhase.PLAYER_BATCHES, "player_daily_settlement"),
+
                 item(DailySettlementPhase.WORLD_BATCHES, "festival_season_prep"),
                 item(DailySettlementPhase.WORLD_BATCHES, "npc_friendship_daily"),
                 item(DailySettlementPhase.WORLD_BATCHES, "npc_dialogue_events"),
@@ -62,9 +64,8 @@ class DailySettlementPlanOrderTest {
                 item(DailySettlementPhase.WORLD_BATCHES, "farm_caves"),
                 item(DailySettlementPhase.WORLD_BATCHES, "addon_farm_tasks"),
 
-                item(DailySettlementPhase.PLAYER_BATCHES, "player_daily_settlement"),
-
-                item(DailySettlementPhase.COMMIT, "weather_forecast"),
+                 item(DailySettlementPhase.COMMIT, "player_daily_cleanup"),
+                 item(DailySettlementPhase.COMMIT, "weather_forecast"),
                 item(DailySettlementPhase.COMMIT, "farm_cursor"),
                 item(DailySettlementPhase.COMMIT, "special_orders"),
                 item(DailySettlementPhase.COMMIT, "lost_and_found"),
@@ -96,8 +97,9 @@ class DailySettlementPlanOrderTest {
         assertEquals(1, names.stream().filter("shipping_bin_flush"::equals).count());
         assertEquals(1, names.stream().filter("player_daily_settlement"::equals).count());
         assertEquals(0, names.subList(names.indexOf("date_publication") + 1, names.size()).size());
-        assertEquals(26, names.indexOf("player_daily_settlement"));
-        assertEquals(28, names.indexOf("farm_cursor"));
+        assertEquals(3, names.indexOf("player_daily_settlement"));
+        assertEquals(27, names.indexOf("player_daily_cleanup"));
+        assertEquals(29, names.indexOf("farm_cursor"));
         assertEquals(0, names.indexOf("shipping_bin_flush"));
     }
 

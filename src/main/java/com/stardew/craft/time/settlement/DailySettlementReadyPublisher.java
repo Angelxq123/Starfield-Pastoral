@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.Config;
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import com.stardew.craft.server.performance.DailySettlementMetrics;
 import net.minecraft.server.MinecraftServer;
@@ -22,6 +23,7 @@ final class DailySettlementReadyPublisher
     private final Map<UUID, DailySettlementBarrier.ReadyResult> retainedResults =
             new LinkedHashMap<>();
     private final Set<UUID> sent = new java.util.HashSet<>();
+    private final Set<UUID> worldReadySent = new java.util.HashSet<>();
     private final Set<UUID> woken = new java.util.HashSet<>();
     private int retainedDay = -1;
     private boolean hooksPrepared;
@@ -59,7 +61,7 @@ final class DailySettlementReadyPublisher
             @Override
             public DailySettlementBarrier.ReadyResult prepareResult(
                     DailySettlementContext context, UUID playerId) {
-                return players.readyResultOrCreate(context, playerId);
+                return players.prepareResult(context, playerId);
             }
 
             @Override
@@ -72,6 +74,13 @@ final class DailySettlementReadyPublisher
                 ServerPlayer player = requirePlayer(playerId);
                 com.stardew.craft.time.StardewTimePauseService
                         .beginOvernightSettlement(player);
+                if (Config.isSettlementDebugLoggingEnabled()) {
+                    com.stardew.craft.StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_SERVER] Sending settlement player={} day={} personal={} shipped={} levels={} passOut={}",
+                            player.getGameProfile().getName(), payload.absoluteDay(),
+                            payload.personalSettlement(), payload.shippedItems().size(),
+                            payload.levelUps().size(), payload.hasPassOut());
+                }
                 PacketDistributor.sendToPlayer(player, payload);
             }
 
@@ -79,6 +88,14 @@ final class DailySettlementReadyPublisher
             public void wake(UUID playerId) {
                 com.stardew.craft.cutscene.server.WakeUpEventScheduler
                         .enqueueAtNightSettlement(requirePlayer(playerId));
+            }
+
+            @Override
+            public void worldReady(UUID playerId, int absoluteDay) {
+                PacketDistributor.sendToPlayer(
+                        requirePlayer(playerId),
+                        new com.stardew.craft.network.overnight.OvernightWorldReadyPayload(
+                                absoluteDay));
             }
 
             @Override
@@ -96,7 +113,10 @@ final class DailySettlementReadyPublisher
                     }
                 }
                 com.stardew.craft.player.PlayerDataManager.get().setDirty();
-                current.saveEverything(true, false, false);
+                // The tracker and player data are already marked dirty above and by
+                // PlayerDailySettlementService. Do not force a full world save here:
+                // it synchronously flushes every loaded chunk on the server thread
+                // before READY can reach the sleeping client.
             }
 
             private ServerPlayer player(UUID playerId) {
@@ -130,6 +150,15 @@ final class DailySettlementReadyPublisher
     }
 
     @Override
+    public void playerResultsReady(DailySettlementContext context) {
+        beginDay(context.absoluteDay());
+        Set<UUID> participants = Set.copyOf(context.playerIds());
+        Set<UUID> lockedPlayers = orderedLockedPlayers(context);
+        prepareResults(context, participants, lockedPlayers);
+        deliverPlayerResults(context, lockedPlayers);
+    }
+
+    @Override
     public void itemFailure(
             DailySettlementContext context,
             String unitName,
@@ -147,13 +176,7 @@ final class DailySettlementReadyPublisher
         }
         Set<UUID> participants = Set.copyOf(context.playerIds());
         Set<UUID> lockedPlayers = orderedLockedPlayers(context);
-        for (UUID playerId : lockedPlayers) {
-            retainedResults.computeIfAbsent(playerId, ignored ->
-                    participants.contains(playerId)
-                            ? operations.prepareResult(context, playerId)
-                            : DailySettlementBarrier.ReadyResult.barrierOnly(
-                                    context.absoluteDay()));
-        }
+        prepareResults(context, participants, lockedPlayers);
         if (!deliveryPrepared) {
             operations.prepareDelivery(context, Map.copyOf(retainedResults));
             deliveryPrepared = true;
@@ -166,18 +189,23 @@ final class DailySettlementReadyPublisher
             }
             barrierPublished = true;
         }
+        deliverPlayerResults(context, lockedPlayers);
         for (UUID playerId : lockedPlayers) {
             if (!barrier.isLocked(playerId)) {
+                if (sent.contains(playerId) && !woken.contains(playerId)
+                        && operations.isOnline(playerId)) {
+                    operations.wake(playerId);
+                    woken.add(playerId);
+                }
                 sent.add(playerId);
-                woken.add(playerId);
                 continue;
             }
             if (!operations.isOnline(playerId)) {
                 continue;
             }
-            if (!sent.contains(playerId)) {
-                operations.send(playerId, retainedResults.get(playerId).payload());
-                sent.add(playerId);
+            if (!worldReadySent.contains(playerId)) {
+                operations.worldReady(playerId, context.absoluteDay());
+                worldReadySent.add(playerId);
             }
             if (!woken.contains(playerId)) {
                 operations.wake(playerId);
@@ -187,6 +215,35 @@ final class DailySettlementReadyPublisher
         if (metrics != null) {
             DailySettlementMetrics.ReadySummary summary = metrics.completeReady();
             metrics.publishReady(summary);
+        }
+    }
+
+    private void prepareResults(
+            DailySettlementContext context,
+            Set<UUID> participants,
+            Set<UUID> lockedPlayers) {
+        for (UUID playerId : lockedPlayers) {
+            retainedResults.computeIfAbsent(playerId, ignored ->
+                    participants.contains(playerId)
+                            ? operations.prepareResult(context, playerId)
+                            : DailySettlementBarrier.ReadyResult.barrierOnly(
+                                    context.absoluteDay()));
+        }
+        if (!deliveryPrepared) {
+            operations.prepareDelivery(context, Map.copyOf(retainedResults));
+            deliveryPrepared = true;
+        }
+    }
+
+    private void deliverPlayerResults(
+            DailySettlementContext context, Set<UUID> lockedPlayers) {
+        for (UUID playerId : lockedPlayers) {
+            if (!barrier.isLocked(playerId) || !operations.isOnline(playerId)
+                    || sent.contains(playerId)) {
+                continue;
+            }
+            operations.send(playerId, retainedResults.get(playerId).payload());
+            sent.add(playerId);
         }
     }
 
@@ -211,6 +268,7 @@ final class DailySettlementReadyPublisher
         retainedDay = absoluteDay;
         retainedResults.clear();
         sent.clear();
+        worldReadySent.clear();
         woken.clear();
         hooksPrepared = false;
         deliveryPrepared = false;
@@ -231,6 +289,9 @@ final class DailySettlementReadyPublisher
         boolean isOnline(UUID playerId);
 
         void send(UUID playerId, OvernightSettlementPayload payload);
+
+        default void worldReady(UUID playerId, int absoluteDay) {
+        }
 
         void wake(UUID playerId);
     }

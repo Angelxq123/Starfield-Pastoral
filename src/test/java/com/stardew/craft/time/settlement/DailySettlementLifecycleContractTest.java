@@ -153,7 +153,7 @@ class DailySettlementLifecycleContractTest {
         assertBackingDate(time, 2, 3, 28, 1550);
         coordinator.tick();
 
-        assertEquals(List.of("prepare", "world", "player", "publication"), scoped);
+        assertEquals(List.of("prepare", "player", "world", "publication"), scoped);
         assertEquals(1, readyCalls.get());
         assertEquals(DailySettlementPhase.IDLE, coordinator.phase());
         assertBackingDate(time, 3, 0, 2, StardewTimeManager.MORNING_START);

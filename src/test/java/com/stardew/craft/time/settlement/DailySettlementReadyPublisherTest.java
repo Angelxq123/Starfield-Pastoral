@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -155,6 +156,48 @@ class DailySettlementReadyPublisherTest {
         assertTrue(sent.get(lateLogin).shippedItems().isEmpty());
         assertTrue(sent.get(lateLogin).levelUps().isEmpty());
         assertFalse(sent.get(lateLogin).hasPassOut());
+    }
+
+    @Test
+    void readySendsOnlyTheAuthoritativeSettlementPayload() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext context = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(context.absoluteDay(), context.playerIds());
+        List<String> deliveries = new ArrayList<>();
+
+        DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(
+                barrier, new DailySettlementReadyPublisher.Operations() {
+                    @Override
+                    public void prepareHooks(DailySettlementContext target) {
+                    }
+
+                    @Override
+                    public DailySettlementBarrier.ReadyResult prepareResult(
+                            DailySettlementContext target, UUID targetPlayerId) {
+                        return ready(target.absoluteDay());
+                    }
+
+                    @Override
+                    public boolean isOnline(UUID targetPlayerId) {
+                        return true;
+                    }
+
+                    @Override
+                    public void send(
+                            UUID targetPlayerId, OvernightSettlementPayload payload) {
+                        deliveries.add("settlement:" + payload.absoluteDay());
+                    }
+
+                    @Override
+                    public void wake(UUID targetPlayerId) {
+                    }
+                });
+
+        publisher.ready(context);
+
+        assertEquals(List.of("settlement:226"), deliveries);
     }
 
     private static DailySettlementBarrier.ReadyResult ready(int absoluteDay) {

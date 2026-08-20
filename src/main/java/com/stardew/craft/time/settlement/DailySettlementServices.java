@@ -107,7 +107,7 @@ public final class DailySettlementServices {
         DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
                 new BudgetedWorkRunner(System::nanoTime),
                 () -> TimeUnit.MILLISECONDS.toNanos(
-                        Config.DAILY_SETTLEMENT_BUDGET_MILLIS.get().longValue()),
+                        Config.DAILY_SETTLEMENT_ACTIVE_BUDGET_MILLIS.get().longValue()),
                 () -> Config.DAILY_SETTLEMENT_ITEM_LIMIT.get(),
                 plan,
                 DailySettlementReadyPublisher.production(

@@ -158,11 +158,11 @@ public final class ForageSpawnService {
         List<DailySettlementWorkUnit> scans = new ArrayList<>(zone.rects.size());
         for (int index = 0; index < zone.rects.size(); index++) {
             ZoneRect rect = zone.rects.get(index);
-            scans.add(PublicAreaDailyWorkUnits.rectangle(
+            scans.add(PublicAreaDailyWorkUnits.chunkRectangle(
                     "forage_count_" + zone.name + "_" + index,
                     rect.minX, rect.minZ, rect.maxX, rect.maxZ,
-                    (x, z) -> existing.addAndGet(
-                            countForageColumn(level, zone, rect, x, z)),
+                    (chunkX, chunkZ) -> existing.addAndGet(
+                            countForageChunk(level, zone, rect, chunkX, chunkZ)),
                     () -> existing.get() >= zone.maxSpawnedAtOnce,
                     () -> {}));
         }
@@ -385,6 +385,24 @@ public final class ForageSpawnService {
         return countForageAtColumn(level, x, z);
     }
 
+    private static int countForageChunk(
+            ServerLevel level, ForageZone zone, ZoneRect rect, int chunkX, int chunkZ) {
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, chunkX << 4, chunkZ << 4)) {
+            return 0;
+        }
+        int minX = Math.max(rect.minX, chunkX << 4);
+        int maxX = Math.min(rect.maxX, (chunkX << 4) + 15);
+        int minZ = Math.max(rect.minZ, chunkZ << 4);
+        int maxZ = Math.min(rect.maxZ, (chunkZ << 4) + 15);
+        int count = 0;
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                count += countForageColumn(level, zone, rect, x, z);
+            }
+        }
+        return count;
+    }
+
     private static boolean insidePreciseRegion(
             ServerLevel level, ForageZone zone, BlockPos position) {
         return zone.preciseRegion == null
@@ -552,14 +570,11 @@ public final class ForageSpawnService {
             int absoluteDay,
             AtomicInteger totalSpawned) {
         AtomicInteger existing = new AtomicInteger();
-        DailySettlementWorkUnit scan = PublicAreaDailyWorkUnits.rectangle(
+        DailySettlementWorkUnit scan = PublicAreaDailyWorkUnits.chunkRectangle(
                 "forest_farm_forage_count_" + farm.ownerId(),
                 farm.minX(), farm.minZ(), farm.maxX(), farm.maxZ(),
-                (x, z) -> {
-                    if (PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) {
-                        existing.addAndGet(countForageAtColumn(level, x, z));
-                    }
-                },
+                (chunkX, chunkZ) -> existing.addAndGet(
+                        countForageChunk(level, farm, chunkX, chunkZ)),
                 () -> existing.get() >= FOREST_FARM_MAX_AT_ONCE,
                 () -> {});
         DailySettlementWorkUnit spawn = DailySettlementWorkUnits.deferred(
@@ -608,6 +623,24 @@ public final class ForageSpawnService {
                             "[ForageSpawn] Forest farm ({}): spawned {} forage in zone",
                             farm.ownerName(), spawned.get());
                 });
+    }
+
+    private static int countForageChunk(
+            ServerLevel level, ForestFarmDailyEntry farm, int chunkX, int chunkZ) {
+        if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, chunkX << 4, chunkZ << 4)) {
+            return 0;
+        }
+        int minX = Math.max(farm.minX(), chunkX << 4);
+        int maxX = Math.min(farm.maxX(), (chunkX << 4) + 15);
+        int minZ = Math.max(farm.minZ(), chunkZ << 4);
+        int maxZ = Math.min(farm.maxZ(), (chunkZ << 4) + 15);
+        int count = 0;
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                count += countForageAtColumn(level, x, z);
+            }
+        }
+        return count;
     }
 
     private static boolean trySpawnForestFarmForage(

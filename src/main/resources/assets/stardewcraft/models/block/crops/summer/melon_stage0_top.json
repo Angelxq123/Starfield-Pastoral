@@ -1,7 +1,8 @@
 ﻿{
-    "parent":  "minecraft:block/cross",
+    "parent":  "stardewcraft:block/template/cutout_cross",
     "textures":  {
                      "cross":  "stardewcraft:block/crops/summer/melon_stage0_top",
                      "particle":  "stardewcraft:block/crops/summer/melon_stage0_top"
-                 }
+                 },
+  "render_type": "minecraft:cutout"
 }

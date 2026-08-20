@@ -1,7 +1,8 @@
 ﻿{
-    "parent":  "minecraft:block/cross",
+    "parent":  "stardewcraft:block/template/cutout_cross",
     "textures":  {
                      "cross":  "stardewcraft:block/crops/spring/parsnip_stage2",
                      "particle":  "stardewcraft:block/crops/spring/parsnip_stage2"
-                 }
+                 },
+  "render_type": "minecraft:cutout"
 }

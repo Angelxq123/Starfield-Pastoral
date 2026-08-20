@@ -162,6 +162,18 @@ class DailySettlementPerformanceTelemetryTest {
     }
 
     @Test
+    void routineSettlementDiagnosticsAreControlledByTheServerDebugSwitch()
+            throws IOException {
+        String metrics = source(
+                "src/main/java/com/stardew/craft/server/performance/DailySettlementMetrics.java");
+        String publisher = source(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementReadyPublisher.java");
+
+        assertTrue(metrics.contains("Config.isSettlementDebugLoggingEnabled()"));
+        assertTrue(publisher.contains("Config.isSettlementDebugLoggingEnabled()"));
+    }
+
+    @Test
     void coordinatorChunkScopeAndReadyPublisherUseMetricsOnProductionPaths() throws IOException {
         String coordinator = source(
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementCoordinator.java");

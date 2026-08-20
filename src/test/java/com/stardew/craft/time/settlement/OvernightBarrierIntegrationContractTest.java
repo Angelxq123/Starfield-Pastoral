@@ -31,6 +31,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -47,7 +48,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class OvernightBarrierIntegrationContractTest {
     private static final Path PROJECT = Path.of(System.getProperty("stardewcraft.projectDir", "."));
     private static final Path SCREEN = source("client/gui/overnight/SleepWaitingOverlayScreen.java");
+    private static final Path SHIPPING_SCREEN =
+            source("client/gui/overnight/ShippingMenuScreen.java");
     private static final Path CLIENT_HANDLER = source("network/overnight/ClientOvernightHandler.java");
+    private static final Path CLIENT_FLOW =
+            source("network/overnight/ClientOvernightFlow.java");
     private static final Path COLLAPSE_CLIENT_STATE =
             source("network/overnight/OvernightCollapseClientState.java");
     private static final Path SETTLEMENT = source("network/overnight/OvernightSettlementPayload.java");
@@ -71,6 +76,162 @@ class OvernightBarrierIntegrationContractTest {
         MethodTree gate = method(SCREEN, "SleepWaitingOverlayScreen", "handleDismissInput", 0);
         assertTrue(hasInvocationWithSelect(
                 gate.getBody(), "ClientOvernightHandler.handleWaitingInput"));
+    }
+
+    @Test
+    void openingWaitingOverlayDoesNotStartAConfirmationFade() throws IOException {
+        String source = Files.readString(CLIENT_HANDLER).replaceAll("\\s+", "");
+        int showWaiting = source.indexOf("publicvoidshowWaiting(intvotedCount,intrequiredCount)");
+        int showReady = source.indexOf("publicvoidshowReady(intvotedCount,intrequiredCount)", showWaiting);
+
+        assertTrue(showWaiting >= 0 && showReady > showWaiting);
+        String waitingMethod = source.substring(showWaiting, showReady);
+        assertFalse(waitingMethod.contains("EventScreenFade.startFade"));
+        assertTrue(waitingMethod.contains("ShippingMenuScreen.createVotePrelude("));
+    }
+
+    @Test
+    void voteWaitingUsesTheAnimatedShippingPreludeInsteadOfASeparateBlackOverlay()
+            throws IOException {
+        String source = Files.readString(CLIENT_HANDLER).replaceAll("\\s+", "");
+        int showWaiting = source.indexOf("publicvoidshowWaiting(intvotedCount,intrequiredCount)");
+        int showPrelude = source.indexOf("publicvoidshowPrelude(", showWaiting);
+
+        assertTrue(showWaiting >= 0 && showPrelude > showWaiting);
+        String waitingMethod = source.substring(showWaiting, showPrelude);
+        assertTrue(waitingMethod.contains("ShippingMenuScreen.createVotePrelude("));
+        assertFalse(waitingMethod.contains("newSleepWaitingOverlayScreen("));
+        assertFalse(waitingMethod.contains("EventScreenFade.startFade"));
+    }
+
+    @Test
+    void settlementWaitTextIsRenderedByTheAnimatedPreludeWithoutARevealBlackout()
+            throws IOException {
+        String shipping = Files.readString(SHIPPING_SCREEN).replaceAll("\\s+", "");
+
+        assertTrue(shipping.contains("drawSettlementWaitingText(graphics)"));
+        assertTrue(shipping.contains("starScrollOffset(sceneElapsedMs,starTileWidth)"));
+        assertTrue(shipping.contains("backgroundRevealTimer=0"),
+                "waiting modes must start with the starfield visible");
+        assertTrue(shipping.contains("drawBlackOverlay"));
+        assertTrue(shipping.contains("!waitingForVote&&!awaitingSettlement"),
+                "black reveal overlays must be skipped for vote and settlement waiting modes");
+    }
+
+    @Test
+    void lockedBarrierStartsTheNightPreludeBeforeSettlementIsReady() throws IOException {
+        MethodTree receive = method(
+                CLIENT_FLOW, "ClientOvernightFlow", "receiveBarrierState", 1);
+        String body = receive.getBody().toString().replaceAll("\\s+", "");
+
+        assertTrue(body.contains("ui.showPrelude(absoluteDay,votedCount,requiredCount)"),
+                "the locked barrier must replace the vote blackout with the night prelude");
+    }
+
+    @Test
+    void shippingPreludeWaitsForAuthoritativeSettlementBeforeShowingControls()
+            throws IOException {
+        String shipping = Files.readString(SHIPPING_SCREEN).replaceAll("\\s+", "");
+
+        assertTrue(shipping.contains("booleanawaitingSettlement"));
+        assertTrue(shipping.contains("createPrelude("));
+        assertTrue(shipping.contains("acceptSettlement("));
+        assertTrue(shipping.contains("if(awaitingSettlement)"),
+                "the prelude must suppress result controls until READY arrives");
+        assertTrue(shipping.contains("intbackgroundRevealTimer"));
+        assertTrue(shipping.contains("introTimer=INTRO_DURATION"),
+                "READY must restart the category reveal instead of showing all rows at once");
+        assertTrue(shipping.contains("drawSettlementWaitingText(graphics)"));
+        assertTrue(shipping.contains("starScrollOffset(sceneElapsedMs,starTileWidth)"));
+    }
+
+    @Test
+    void settlementControlsWaitForWorldReadyAndRevealCannotBeSpedUp()
+            throws IOException {
+        String shipping = Files.readString(SHIPPING_SCREEN).replaceAll("\\s+", "");
+
+        assertTrue(shipping.contains("ClientOvernightHandler.isWorldReady()"));
+        assertFalse(shipping.contains("isLeftMousePressed()"),
+                "the result animation must not be accelerated by holding the mouse");
+    }
+
+    @Test
+    void readyAckIsDeferredUntilWorldReady() throws IOException {
+        String flow = Files.readString(CLIENT_FLOW).replaceAll("\\s+", "");
+        String handler = Files.readString(CLIENT_HANDLER).replaceAll("\\s+", "");
+
+        assertTrue(flow.contains("voidreceiveWorldReady(OvernightWorldReadyPayloadpayload)"));
+        assertTrue(flow.contains("booleanisWorldReady()"));
+        assertTrue(handler.contains("FLOW.finishSettlementSequence()"));
+        assertTrue(handler.contains("newOvernightReadyAckPayload(absoluteDay)"));
+    }
+
+    @Test
+    void shippingPreludeKeepsResultTimeWhileItsBackgroundContinuesAnimating()
+            throws ReflectiveOperationException {
+        Class<?> timeline = Class.forName(
+                "com.stardew.craft.client.gui.overnight.ShippingMenuFadeTimeline");
+        Method resultReveal = accessible(timeline, "advanceResultReveal",
+                int.class, int.class, float.class, boolean.class);
+        Method backgroundReveal = accessible(timeline, "advanceBackgroundReveal",
+                int.class, int.class, int.class);
+        Method starOffset = accessible(timeline, "starScrollOffset",
+                long.class, int.class);
+
+        assertEquals(3_500, resultReveal.invoke(null, 3_500, 100, 0.75F, true));
+        assertEquals(3_425, resultReveal.invoke(null, 3_500, 100, 0.75F, false));
+        assertEquals(0, backgroundReveal.invoke(null, 50, 100, 1));
+        assertEquals(4, starOffset.invoke(null, 1_000L, 100));
+        assertEquals(4, starOffset.invoke(null, 26_000L, 100));
+    }
+
+    @Test
+    void shippingOutroDecorationsStayBelowTwoSeconds()
+            throws ReflectiveOperationException {
+        Class<?> timeline = Class.forName(
+                "com.stardew.craft.client.gui.overnight.ShippingMenuFadeTimeline");
+        Method fixedOutro = accessible(timeline, "fixedOutroDurationMs");
+
+        assertTrue((int) fixedOutro.invoke(null) <= 2_000,
+                "the decorative outro must not feel like another settlement wait");
+    }
+
+    @Test
+    void readyOverlayDoesNotStartAnotherConfirmationFade() throws IOException {
+        String source = Files.readString(CLIENT_HANDLER).replaceAll("\\s+", "");
+        int showReady = source.indexOf("publicvoidshowReady(intvotedCount,intrequiredCount)");
+        int acknowledge = source.indexOf("publicvoidstartSettlement(", showReady);
+
+        assertTrue(showReady >= 0 && acknowledge > showReady);
+        String readyMethod = source.substring(showReady, acknowledge);
+        assertFalse(readyMethod.contains("EventScreenFade.startFade"));
+    }
+
+    @Test
+    void datedSettlementAlwaysEntersTheBarrierStateMachine() throws IOException {
+        MethodTree receive = method(
+                CLIENT_HANDLER, "ClientOvernightHandler", "receiveSettlement", 1);
+        String body = receive.getBody().toString().replaceAll("\\s+", "");
+
+        assertTrue(body.contains("if(payload.absoluteDay()<0)"));
+        assertTrue(body.contains("FLOW.receiveSettlement(payload)"));
+        assertFalse(body.contains("||!FLOW.isLocked()"),
+                "a dated READY payload must recover a missing client barrier state");
+    }
+
+    @Test
+    void clientTraceCoversTheOnlineWaitingLifecycleWithoutPerTickSpam() throws IOException {
+        String handler = Files.readString(CLIENT_HANDLER);
+        String screen = Files.readString(SCREEN).replaceAll("\\s+", "");
+
+        assertTrue(handler.contains("[OVERNIGHT_CLIENT_TRACE] Vote progress"));
+        assertTrue(handler.contains("[OVERNIGHT_CLIENT_TRACE] Waiting UI"));
+        assertTrue(handler.contains("[OVERNIGHT_CLIENT_TRACE] Ready UI"));
+        assertTrue(handler.contains("[OVERNIGHT_CLIENT_TRACE] Waiting heartbeat"));
+        assertTrue(handler.contains("[OVERNIGHT_CLIENT_TRACE] Waiting input"));
+        assertTrue(handler.contains("[OVERNIGHT_CLIENT_TRACE] Sending READY ACK"));
+        assertTrue(screen.contains("ticksOpen%200==0"),
+                "waiting heartbeat must be rate-limited to ten seconds");
     }
 
     @Test
@@ -230,6 +391,14 @@ class OvernightBarrierIntegrationContractTest {
 
     private static Path source(String relative) {
         return PROJECT.resolve("src/main/java/com/stardew/craft").resolve(relative);
+    }
+
+    private static Method accessible(
+            Class<?> owner, String name, Class<?>... parameterTypes)
+            throws NoSuchMethodException {
+        Method method = owner.getDeclaredMethod(name, parameterTypes);
+        method.setAccessible(true);
+        return method;
     }
 
     private static CompilationUnitTree unit(Path path) throws IOException {

@@ -79,13 +79,23 @@ public final class PlayerDailySettlementService {
                 () -> {});
     }
 
+    public DailySettlementWorkUnit createFinalizationWorkUnit(
+            DailySettlementContext context) {
+        Objects.requireNonNull(context, "context");
+        return DailySettlementWorkUnits.cursor(
+                "player_daily_cleanup",
+                context.playerIds(),
+                UUID::toString,
+                playerId -> finishPreparedSettlement(context, playerId),
+                () -> {});
+    }
+
     void settlePlayer(DailySettlementContext context, UUID playerId) {
         Optional<PendingSettlement> progress = pending.find(playerId);
         DailySettlementBarrier.ReadyResult completed = readyResult(
                 playerId, context.absoluteDay());
         if (completed != null && (progress.isEmpty()
                 || progress.orElseThrow().stage() >= MASTERY_STAGE)) {
-            finishPreparedSettlement(context, playerId);
             return;
         }
         pending.save(context, playerId);
@@ -97,10 +107,19 @@ public final class PlayerDailySettlementService {
                 context.absoluteDay(), payload.orElseThrow());
         pending.complete(playerId, prepared.payload());
         readyResults.put(playerId, prepared);
-        finishPreparedSettlement(context, playerId);
+        finishPreparedSettlement(context, playerId, false);
     }
 
-    private void finishPreparedSettlement(DailySettlementContext context, UUID playerId) {
+    private void finishPreparedSettlement(
+            DailySettlementContext context, UUID playerId) {
+        finishPreparedSettlement(context, playerId, true);
+    }
+
+    private void finishPreparedSettlement(
+            DailySettlementContext context, UUID playerId, boolean cleanup) {
+        if (!cleanup) {
+            return;
+        }
         Optional<PendingSettlement> progress = pending.find(playerId);
         if (progress.isEmpty()) {
             return;
@@ -269,7 +288,7 @@ public final class PlayerDailySettlementService {
         return persisted;
     }
 
-    DailySettlementBarrier.ReadyResult readyResultOrCreate(
+    DailySettlementBarrier.ReadyResult prepareResult(
             DailySettlementContext context, UUID playerId) {
         DailySettlementBarrier.ReadyResult result = readyResult(
                 playerId, context.absoluteDay());
@@ -279,7 +298,6 @@ public final class PlayerDailySettlementService {
                 return result;
             }
             if (progress.orElseThrow().completedPayload().isPresent()) {
-                finishPreparedSettlement(context, playerId);
                 return result;
             }
         }
@@ -291,12 +309,21 @@ public final class PlayerDailySettlementService {
                             context.absoluteDay(), payload.orElseThrow());
             pending.complete(playerId, completed.payload());
             readyResults.put(playerId, completed);
-            finishPreparedSettlement(context, playerId);
             return completed;
         }
         DailySettlementBarrier.ReadyResult fallback = pendingReadyResult(context);
         readyResults.put(playerId, fallback);
         return fallback;
+    }
+
+    DailySettlementBarrier.ReadyResult readyResultOrCreate(
+            DailySettlementContext context, UUID playerId) {
+        DailySettlementBarrier.ReadyResult result = prepareResult(context, playerId);
+        Optional<PendingSettlement> progress = pending.find(playerId);
+        if (progress.isPresent() && progress.orElseThrow().completedPayload().isPresent()) {
+            finishPreparedSettlement(context, playerId);
+        }
+        return result;
     }
 
     public boolean hasCompletedReady(UUID playerId, int absoluteDay) {

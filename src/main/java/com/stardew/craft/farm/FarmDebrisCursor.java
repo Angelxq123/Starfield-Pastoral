@@ -83,14 +83,7 @@ final class FarmDebrisCursor {
             throw new IllegalStateException("Farm debris cursor is complete");
         }
         if (phase == Phase.SCAN) {
-            int chunkMaxX = Math.min(maxX, (chunkX << 4) + 15);
-            int chunkMaxZ = Math.min(maxZ, (chunkZ << 4) + 15);
-            if (z < chunkMaxZ) {
-                z++;
-            } else if (x < chunkMaxX) {
-                x++;
-                z = Math.max(minZ, chunkZ << 4);
-            } else if (chunkZ < maxChunkZ) {
+            if (chunkZ < maxChunkZ) {
                 chunkZ++;
                 resetScanCoordinates();
             } else if (chunkX < maxChunkX) {

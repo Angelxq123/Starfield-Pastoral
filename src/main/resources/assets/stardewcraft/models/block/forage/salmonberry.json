@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:block/cross",
+  "parent": "stardewcraft:block/template/cutout_cross",
   "textures": {
     "cross": "stardewcraft:item/forage/salmonberry",
     "particle": "stardewcraft:item/forage/salmonberry"

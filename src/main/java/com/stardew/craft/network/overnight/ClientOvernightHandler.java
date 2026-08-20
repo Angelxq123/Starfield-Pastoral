@@ -37,31 +37,95 @@ public class ClientOvernightHandler {
                 public boolean isInBedOrWaitingScreen() {
                     Screen screen = Minecraft.getInstance().screen;
                     return screen instanceof net.minecraft.client.gui.screens.InBedChatScreen
-                            || screen instanceof SleepWaitingOverlayScreen;
+                            || screen instanceof SleepWaitingOverlayScreen
+                            || (screen instanceof ShippingMenuScreen shipping
+                                    && shipping.isWaitingScreen());
                 }
 
                 @Override
                 public void showWaiting(int votedCount, int requiredCount) {
                     Minecraft minecraft = Minecraft.getInstance();
-                    if (minecraft.screen instanceof SleepWaitingOverlayScreen waiting) {
-                        waiting.updateProgress(votedCount, requiredCount);
+                    boolean reused = minecraft.screen instanceof ShippingMenuScreen shipping
+                            && shipping.isVotePrelude();
+                    if (minecraft.screen instanceof ShippingMenuScreen shipping
+                            && shipping.isVotePrelude()) {
+                        shipping.updateVoteProgress(votedCount, requiredCount);
                     } else {
-                        minecraft.setScreen(
-                                new SleepWaitingOverlayScreen(votedCount, requiredCount));
+                        minecraft.setScreen(ShippingMenuScreen.createVotePrelude(
+                                votedCount, requiredCount));
                     }
+                    StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_CLIENT_TRACE] Waiting UI voted={}/{} reused={} day={} locked={} ready={}",
+                            votedCount, requiredCount, reused, FLOW.currentAbsoluteDay(),
+                            FLOW.isLocked(), FLOW.isReady());
                 }
 
                 @Override
-                public void acknowledgeAndStart(
+                public void showPrelude(
+                        int absoluteDay, int votedCount, int requiredCount) {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    boolean reused = minecraft.screen instanceof ShippingMenuScreen shipping
+                            && shipping.isWaitingForDay(absoluteDay);
+                    if (minecraft.screen instanceof ShippingMenuScreen shipping
+                            && shipping.isWaitingForDay(absoluteDay)) {
+                        shipping.beginSettlementWait(absoluteDay);
+                    } else {
+                        minecraft.setScreen(ShippingMenuScreen.createPrelude(absoluteDay));
+                    }
+                    StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_CLIENT_TRACE] Night prelude day={} voted={}/{} reused={}",
+                            absoluteDay, votedCount, requiredCount, reused);
+                }
+
+                @Override
+                public void showReady(int votedCount, int requiredCount) {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    if (minecraft.screen instanceof ShippingMenuScreen shipping
+                            && shipping.isWaitingScreen()) {
+                        StardewCraft.LOGGER.info(
+                                "[OVERNIGHT_CLIENT_TRACE] Ready UI voted={}/{} day={} screen={}",
+                                votedCount, requiredCount, FLOW.currentAbsoluteDay(),
+                                minecraft.screen.getClass().getSimpleName());
+                        return;
+                    }
+                    SleepWaitingOverlayScreen waiting;
+                    if (minecraft.screen instanceof SleepWaitingOverlayScreen current) {
+                        waiting = current;
+                    } else {
+                        waiting = new SleepWaitingOverlayScreen(votedCount, requiredCount);
+                        minecraft.setScreen(waiting);
+                    }
+                    waiting.updateProgress(votedCount, requiredCount);
+                    waiting.markSettlementReady();
+                    StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_CLIENT_TRACE] Ready UI voted={}/{} day={} screen={}",
+                            votedCount, requiredCount, FLOW.currentAbsoluteDay(),
+                            minecraft.screen == null
+                                    ? "none" : minecraft.screen.getClass().getSimpleName());
+                }
+
+                @Override
+                public void startSettlement(
                         int absoluteDay,
                         OvernightSettlementPayload payload
                 ) {
-                    PacketDistributor.sendToServer(new OvernightReadyAckPayload(absoluteDay));
+                    StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_CLIENT_TRACE] Starting settlement animation day={} personal={} shipped={} levels={}",
+                            absoluteDay, payload.personalSettlement(),
+                            payload.shippedItems().size(), payload.levelUps().size());
                     if (Minecraft.getInstance().screen
                             instanceof SleepWaitingOverlayScreen waiting) {
                         waiting.onDayAdvanced();
                     }
                     OvernightCollapseClientState.acceptSettlement(payload);
+                }
+
+                @Override
+                public void acknowledgeSettlement(int absoluteDay) {
+                    StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_CLIENT_TRACE] Sending READY ACK after world completion day={}",
+                            absoluteDay);
+                    PacketDistributor.sendToServer(new OvernightReadyAckPayload(absoluteDay));
                 }
 
                 @Override
@@ -71,6 +135,8 @@ public class ClientOvernightHandler {
 
                 @Override
                 public void requestCancelWaiting() {
+                    StardewCraft.LOGGER.info(
+                            "[OVERNIGHT_CLIENT_TRACE] Sending sleep vote cancellation");
                     PacketDistributor.sendToServer(
                             new com.stardew.craft.network.payload.SleepCancelPayload());
                 }
@@ -85,6 +151,9 @@ public class ClientOvernightHandler {
 
     /** Clears menu/fade state on disconnect or an aborted settlement. */
     public static void resetSession() {
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT_TRACE] Reset session day={} locked={} ready={} sequenceActive={}",
+                FLOW.currentAbsoluteDay(), FLOW.isLocked(), FLOW.isReady(), sequenceActive);
         FLOW.resetConnectionState();
         LOCAL_OVERNIGHT_PROFESSIONS.clear();
         PENDING_SCREENS.clear();
@@ -112,28 +181,87 @@ public class ClientOvernightHandler {
         return FLOW.isReady();
     }
 
+    public static boolean isWorldReady() {
+        return FLOW.isWorldReady();
+    }
+
     public static int currentAbsoluteDay() {
         return FLOW.currentAbsoluteDay();
     }
 
     public static void receiveBarrierState(OvernightBarrierPayload payload) {
         FLOW.receiveBarrierState(payload);
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT] Barrier received day={} locked={} stateDay={} stateLocked={} ready={}",
+                payload.absoluteDay(), payload.locked(), FLOW.currentAbsoluteDay(),
+                FLOW.isLocked(), FLOW.isReady());
     }
 
     public static void receiveSettlement(OvernightSettlementPayload payload) {
-        if (payload.absoluteDay() < 0 || !FLOW.isLocked()) {
+        if (payload.absoluteDay() < 0) {
             OvernightCollapseClientState.acceptSettlement(payload);
+            StardewCraft.LOGGER.info(
+                    "[OVERNIGHT_CLIENT] Legacy settlement received personal={} shipped={} levels={}",
+                    payload.personalSettlement(), payload.shippedItems().size(),
+                    payload.levelUps().size());
             return;
         }
+        int previousDay = FLOW.currentAbsoluteDay();
+        boolean previouslyLocked = FLOW.isLocked();
         FLOW.receiveSettlement(payload);
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT] Settlement received day={} previousDay={} previousLocked={} stateDay={} stateLocked={} ready={} personal={} shipped={} levels={}",
+                payload.absoluteDay(), previousDay, previouslyLocked,
+                FLOW.currentAbsoluteDay(), FLOW.isLocked(), FLOW.isReady(),
+                payload.personalSettlement(), payload.shippedItems().size(),
+                payload.levelUps().size());
+    }
+
+    public static void receiveWorldReady(OvernightWorldReadyPayload payload) {
+        boolean sequenceWasActive = sequenceActive;
+        FLOW.receiveWorldReady(payload);
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT] World ready received day={} stateDay={} locked={} ready={} worldReady={}",
+                payload.absoluteDay(), FLOW.currentAbsoluteDay(), FLOW.isLocked(),
+                FLOW.isReady(), FLOW.isWorldReady());
+        if (!FLOW.isLocked()
+                && (sequenceWasActive
+                    || Minecraft.getInstance().screen instanceof ShippingMenuScreen shipping
+                        && shipping.isAwaitingSettlement())) {
+            PENDING_SCREENS.clear();
+            sequenceActive = false;
+            PacketDistributor.sendToServer(new PlayerWokeUpPayload());
+            Minecraft.getInstance().setScreen(null);
+        }
     }
 
     public static void receiveVoteProgress(int votedCount, int requiredCount) {
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT_TRACE] Vote progress voted={}/{} day={} locked={} ready={}",
+                votedCount, requiredCount, FLOW.currentAbsoluteDay(),
+                FLOW.isLocked(), FLOW.isReady());
         FLOW.receiveVoteProgress(votedCount, requiredCount);
     }
 
     public static boolean handleWaitingInput() {
-        return FLOW.handleDismissInput();
+        int absoluteDay = FLOW.currentAbsoluteDay();
+        boolean ready = FLOW.isReady();
+        boolean handled = FLOW.handleDismissInput();
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT_TRACE] Waiting input day={} readyBefore={} handled={} lockedAfter={} readyAfter={}",
+                absoluteDay, ready, handled, FLOW.isLocked(), FLOW.isReady());
+        return handled;
+    }
+
+    public static void logWaitingHeartbeat(
+            int ticksOpen,
+            int votedCount,
+            int requiredCount,
+            boolean screenReady) {
+        StardewCraft.LOGGER.info(
+                "[OVERNIGHT_CLIENT_TRACE] Waiting heartbeat ticks={} voted={}/{} screenReady={} day={} locked={} flowReady={}",
+                ticksOpen, votedCount, requiredCount, screenReady,
+                FLOW.currentAbsoluteDay(), FLOW.isLocked(), FLOW.isReady());
     }
 
     public static boolean canCancelWaiting() {
@@ -147,13 +275,19 @@ public class ClientOvernightHandler {
     public static void receiveCancellationAccepted() {
         FLOW.receiveCancellationAccepted();
         Minecraft minecraft = Minecraft.getInstance();
-        if (!FLOW.isLocked() && minecraft.screen instanceof SleepWaitingOverlayScreen) {
+        if (!FLOW.isLocked() && (minecraft.screen instanceof SleepWaitingOverlayScreen
+                || (minecraft.screen instanceof ShippingMenuScreen shipping
+                        && shipping.isVotePrelude()))) {
             minecraft.setScreen(null);
         }
     }
 
     public static boolean startReadySequence(int absoluteDay) {
         return FLOW.startReadySequence(absoluteDay);
+    }
+
+    public static boolean finishSettlementSequence() {
+        return FLOW.finishSettlementSequence();
     }
 
     public static boolean openNextScreen(String source) {
@@ -177,6 +311,16 @@ public class ClientOvernightHandler {
             return;
         }
         StardewCraft.LOGGER.info("[OVERNIGHT_CLIENT] Settlement sequence completed by {}", source);
+        FLOW.markSettlementSequenceFinished();
+        if (FLOW.isLocked() && !FLOW.finishSettlementSequence()) {
+            StardewCraft.LOGGER.info(
+                    "[OVERNIGHT_CLIENT] World settlement is still pending; keeping player locked");
+            PENDING_SCREENS.clear();
+            sequenceActive = false;
+            Minecraft.getInstance().setScreen(
+                    ShippingMenuScreen.createPrelude(FLOW.currentAbsoluteDay()));
+            return;
+        }
         PENDING_SCREENS.clear();
         sequenceActive = false;
         PacketDistributor.sendToServer(new PlayerWokeUpPayload());
@@ -184,14 +328,22 @@ public class ClientOvernightHandler {
     }
 
     public static void startSequence(OvernightSettlementPayload payload) {
+        Minecraft minecraft = Minecraft.getInstance();
+        ShippingMenuScreen prelude = minecraft.screen instanceof ShippingMenuScreen shipping
+                && shipping.isAwaitingSettlement()
+                && shipping.isPreludeForDay(payload.absoluteDay())
+                && !payload.hasPassOut()
+                ? shipping
+                : null;
         beginSequence();
         if (!payload.personalSettlement()) {
-            Minecraft.getInstance().setScreen(null);
+            minecraft.setScreen(null);
             return;
         }
-        // Game1.NewDay keeps the screen black while the new-day task runs, then
-        // fades back in over the end-of-night menus.
-        com.stardew.craft.cutscene.runtime.EventScreenFade.startFadeFromBlack(12);
+        // The shipping starfield is the overnight transition surface. Do not
+        // add a second global fade on top of it; that was the source of the
+        // black interval between the vote and the settlement animation.
+        com.stardew.craft.cutscene.runtime.EventScreenFade.clear();
 
         // 如果玩家正在睡觉（原版 InBedChatScreen），关闭该界面
         if (Minecraft.getInstance().screen instanceof net.minecraft.client.gui.screens.InBedChatScreen) {
@@ -211,8 +363,16 @@ public class ClientOvernightHandler {
             switch (stage) {
                 case LEVEL_UP -> screenStack.add(
                     new LevelUpMenuScreen(payload.levelUps().get(levelIndex++), screenStack));
-                case SHIPPING -> screenStack.add(
-                    new ShippingMenuScreen(payload.shippedItems(), payload.context(), screenStack));
+                case SHIPPING -> {
+                    if (prelude != null) {
+                        prelude.acceptSettlement(payload);
+                        screenStack.add(prelude);
+                        prelude = null;
+                    } else {
+                        screenStack.add(new ShippingMenuScreen(
+                                payload.shippedItems(), payload.context(), screenStack));
+                    }
+                }
                 case SAVE -> screenStack.add(new SaveGameMenuScreen(screenStack));
             }
         }

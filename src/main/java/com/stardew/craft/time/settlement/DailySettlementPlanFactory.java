@@ -50,6 +50,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "public_forage", "forest_farm_forage", "artifact_spots",
             "quarry", "coal_forest", "farm_caves", "addon_farm_tasks");
     private static final List<String> COMMIT = List.of(
+            "player_daily_cleanup",
             "weather_forecast",
             "farm_cursor",
             "special_orders",
@@ -269,6 +270,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "secret_woods_entrance" -> atomic(name, () ->
                         com.stardew.craft.manager.SecretWoodsAccessManager.ensureEntranceReady(level()));
                 case "player_daily_settlement" -> players.createDailyWorkUnit(context);
+                case "player_daily_cleanup" -> players.createFinalizationWorkUnit(context);
                 case "weather_forecast" -> atomic(name, () -> forecast(context));
                 case "farm_cursor" -> atomic(name, () -> updateFarmCursor(context));
                 case "special_orders", "bookseller", "mail" ->

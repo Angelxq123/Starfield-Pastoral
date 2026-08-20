@@ -26,7 +26,8 @@ class ClientOvernightFlowTest {
 
         access.playerSleeping = false;
         flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
-        assertEquals(2, access.waitingOpens);
+        assertEquals(1, access.waitingOpens);
+        assertEquals(1, access.preludeOpens);
     }
 
     @Test
@@ -46,24 +47,24 @@ class ClientOvernightFlowTest {
     }
 
     @Test
-    void barrierAlwaysRestoresWaitingScreenIncludingAfterReconnect() {
+    void barrierAlwaysRestoresNightPreludeIncludingAfterReconnect() {
         RecordingGateway gateway = new RecordingGateway();
         ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
 
         flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
         assertTrue(flow.isLocked());
-        assertEquals(1, gateway.waitingOpens);
+        assertEquals(1, gateway.preludeOpens);
 
         flow.resetConnectionState();
         gateway.localSleeperOrWaiting = false;
         flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
 
         assertTrue(flow.isLocked());
-        assertEquals(2, gateway.waitingOpens);
+        assertEquals(2, gateway.preludeOpens);
     }
 
     @Test
-    void readyClickAcknowledgesOnceAndStartsTheCompleteSettlementChain() {
+    void readyPayloadAutomaticallyAcknowledgesAndStartsTheCompleteSettlementChain() {
         RecordingGateway gateway = new RecordingGateway();
         ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
         OvernightSettlementPayload ready = new OvernightSettlementPayload(
@@ -82,17 +83,34 @@ class ClientOvernightFlowTest {
 
         flow.receiveSettlement(ready);
         assertTrue(flow.isReady());
-        assertTrue(flow.handleDismissInput());
-        assertFalse(flow.isLocked());
-        assertEquals(List.of(226), gateway.acknowledgedDays);
+        assertTrue(flow.isLocked());
+        assertEquals(1, gateway.readyShows);
+        assertEquals(List.of(), gateway.acknowledgedDays);
         assertEquals(List.of(
                         ClientOvernightHandler.SettlementStage.LEVEL_UP,
                         ClientOvernightHandler.SettlementStage.LEVEL_UP,
-                        ClientOvernightHandler.SettlementStage.SAVE),
+                        ClientOvernightHandler.SettlementStage.SHIPPING),
                 gateway.startedStages);
 
         assertTrue(flow.handleDismissInput());
+        flow.receiveWorldReady(new OvernightWorldReadyPayload(226));
+        flow.markSettlementSequenceFinished();
+        assertTrue(flow.finishSettlementSequence());
         assertEquals(List.of(226), gateway.acknowledgedDays);
+    }
+
+    @Test
+    void datedSettlementRecoversReadyStateWhenTheBarrierPacketWasLost() {
+        RecordingGateway gateway = new RecordingGateway();
+        ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
+
+        flow.receiveSettlement(readyPayload(226));
+
+        assertTrue(flow.isLocked());
+        assertTrue(flow.isReady());
+        assertEquals(226, flow.currentAbsoluteDay());
+        assertEquals(1, gateway.readyShows);
+        assertEquals(List.of(), gateway.acknowledgedDays);
     }
 
     @Test
@@ -107,6 +125,9 @@ class ClientOvernightFlowTest {
         flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
         flow.receiveSettlement(day226);
 
+        flow.receiveWorldReady(new OvernightWorldReadyPayload(226));
+        flow.markSettlementSequenceFinished();
+        assertTrue(flow.finishSettlementSequence());
         assertFalse(flow.isLocked());
         assertEquals(List.of(226), gateway.acknowledgedDays);
 
@@ -139,6 +160,13 @@ class ClientOvernightFlowTest {
     }
 
     @Test
+    void emptyShipmentStillUsesTheNightSettlementAnimation() {
+        assertEquals(
+                List.of(ClientOvernightHandler.SettlementStage.SHIPPING),
+                ClientOvernightHandler.settlementStages(readyPayload(226)));
+    }
+
+    @Test
     void voteCanBeCancelledUntilTheSettlementBarrierLocks() {
         RecordingGateway gateway = new RecordingGateway();
         ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
@@ -154,6 +182,32 @@ class ClientOvernightFlowTest {
         assertEquals(1, gateway.cancelRequests);
     }
 
+    @Test
+    void playerPayloadWaitsForWorldReadyBeforeStartingOrAcknowledging() {
+        RecordingGateway gateway = new RecordingGateway();
+        ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
+        OvernightSettlementPayload payload = readyPayload(226);
+
+        flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
+        flow.receiveSettlement(payload);
+
+        assertTrue(flow.isLocked());
+        assertFalse(flow.isWorldReady());
+        assertEquals(1, gateway.startedSettlements);
+        assertTrue(flow.handleDismissInput());
+        assertEquals(0, gateway.acknowledgedDays.size());
+
+        flow.receiveWorldReady(new OvernightWorldReadyPayload(226));
+
+        assertTrue(flow.isWorldReady());
+        assertEquals(1, gateway.startedSettlements);
+        assertEquals(0, gateway.acknowledgedDays.size());
+        flow.markSettlementSequenceFinished();
+        assertTrue(flow.finishSettlementSequence());
+        assertEquals(List.of(226), gateway.acknowledgedDays);
+        assertFalse(flow.isLocked());
+    }
+
     private static OvernightSettlementPayload readyPayload(int absoluteDay) {
         return new OvernightSettlementPayload(
                 absoluteDay, List.of(), List.of(), -1, 0, List.of());
@@ -162,9 +216,12 @@ class ClientOvernightFlowTest {
     private static final class RecordingGateway implements ClientOvernightFlow.UiGateway {
         private boolean localSleeperOrWaiting;
         private int waitingOpens;
+        private int preludeOpens;
         private int votedCount;
         private int requiredCount;
+        private int readyShows;
         private int cancelRequests;
+        private int startedSettlements;
         private final List<Integer> acknowledgedDays = new ArrayList<>();
         private List<ClientOvernightHandler.SettlementStage> startedStages = List.of();
 
@@ -181,10 +238,28 @@ class ClientOvernightFlowTest {
         }
 
         @Override
-        public void acknowledgeAndStart(
+        public void showPrelude(int absoluteDay, int votedCount, int requiredCount) {
+            preludeOpens++;
+            this.votedCount = votedCount;
+            this.requiredCount = requiredCount;
+        }
+
+        public void showReady(int votedCount, int requiredCount) {
+            readyShows++;
+            this.votedCount = votedCount;
+            this.requiredCount = requiredCount;
+        }
+
+        @Override
+        public void startSettlement(
                 int absoluteDay, OvernightSettlementPayload payload) {
-            acknowledgedDays.add(absoluteDay);
+            startedSettlements++;
             startedStages = ClientOvernightHandler.settlementStages(payload);
+        }
+
+        @Override
+        public void acknowledgeSettlement(int absoluteDay) {
+            acknowledgedDays.add(absoluteDay);
         }
 
         @Override
@@ -202,6 +277,7 @@ class ClientOvernightFlowTest {
             implements ClientOvernightUiGateway.ClientAccess {
         private boolean playerSleeping;
         private int waitingOpens;
+        private int preludeOpens;
 
         @Override
         public boolean isPlayerSleeping() {
@@ -219,8 +295,20 @@ class ClientOvernightFlowTest {
         }
 
         @Override
-        public void acknowledgeAndStart(
+        public void showPrelude(int absoluteDay, int votedCount, int requiredCount) {
+            preludeOpens++;
+        }
+
+        public void showReady(int votedCount, int requiredCount) {
+        }
+
+        @Override
+        public void startSettlement(
                 int absoluteDay, OvernightSettlementPayload payload) {
+        }
+
+        @Override
+        public void acknowledgeSettlement(int absoluteDay) {
         }
 
         @Override

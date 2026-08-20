@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:block/cross",
+  "parent": "stardewcraft:block/template/cutout_cross",
   "textures": {
     "cross": "stardewcraft:block/crops/special/fiber_stage3_bottom",
     "particle": "stardewcraft:block/crops/special/fiber_stage3_bottom"

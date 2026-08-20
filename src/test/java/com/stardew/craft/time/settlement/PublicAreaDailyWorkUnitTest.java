@@ -1,5 +1,6 @@
 package com.stardew.craft.time.settlement;
 
+import com.stardew.craft.manager.PublicAreaDailyWorkUnits;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.EnhancedForLoopTree;
@@ -90,6 +91,22 @@ class PublicAreaDailyWorkUnitTest {
         assertTrue(unit.isComplete());
         assertEquals(9, visited.size());
         assertEquals(9, new HashSet<>(visited).size());
+    }
+
+    @Test
+    void chunkRectangleVisitsEachIntersectingChunkOnceInStableOrder() throws Exception {
+        List<String> visited = new ArrayList<>();
+        DailySettlementWorkUnit unit = PublicAreaDailyWorkUnits.chunkRectangle(
+                "chunks", 1, 7, 32, 32,
+                (chunkX, chunkZ) -> visited.add(chunkX + "," + chunkZ),
+                () -> false,
+                () -> {});
+
+        drainWithBudget(unit, 64);
+
+        assertEquals(List.of(
+                "0,0", "1,0", "2,0", "0,1", "1,1", "2,1", "0,2", "1,2", "2,2"),
+                visited);
     }
 
     @Test
@@ -317,7 +334,10 @@ class PublicAreaDailyWorkUnitTest {
     void forageAndArtifactCallTheTestedProductionStateFactories() throws IOException {
         assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "forageAttempts");
         assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "forageAttempts");
-        assertReachableCall("ArtifactSpotSpawnService", "createDailyWorkUnit", "cappedRectangle");
+        ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
+        MethodTree sand = artifact.method("createSandArtifactWorkUnit", 6);
+        assertTrue(sand.toString().contains("placed.get() < remaining"));
+        assertTrue(sand.toString().contains("placed.get() >= remaining"));
     }
 
     @Test
@@ -377,10 +397,39 @@ class PublicAreaDailyWorkUnitTest {
 
     @Test
     void publicAreaFactoriesReachTheSharedRectangleCursor() throws IOException {
-        assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "rectangle");
-        assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "rectangle");
-        assertReachableCall("ArtifactSpotSpawnService", "createDailyWorkUnit", "rectangle");
+        assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "chunkRectangle");
+        assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "chunkRectangle");
+        assertReachableCall("ArtifactSpotSpawnService", "createDailyWorkUnit", "chunkRectangle");
         assertReachableCall("CoalForestClumpSpawnService", "createDailyWorkUnit", "rectangle");
+    }
+
+    @Test
+    void farmArtifactDailyScanUsesChunkCursor() throws IOException {
+        ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
+        MethodTree farmWork = artifact.method("createFarmArtifactWorkUnit", 5);
+
+        assertTrue(farmWork.toString().contains("chunkRectangle"));
+        assertFalse(farmWork.toString().contains("rectangle("));
+    }
+
+    @Test
+    void publicArtifactDailyScansUseChunkCursors() throws IOException {
+        ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
+
+        assertTrue(artifact.method("createArtifactZoneWorkUnit", 5)
+                .toString().contains("chunkRectangle"));
+        assertTrue(artifact.method("createSandArtifactWorkUnit", 6)
+                .toString().contains("chunkRectangle"));
+    }
+
+    @Test
+    void forageCountScansUseChunkCursorsForPublicAndForestFarms() throws IOException {
+        ParsedClass forage = parse("ForageSpawnService.java", "ForageSpawnService");
+
+        assertTrue(forage.method("createZoneDailyWorkUnit", 6)
+                .toString().contains("chunkRectangle"));
+        assertTrue(forage.method("createForestFarmWorkUnit", 6)
+                .toString().contains("chunkRectangle"));
     }
 
     @Test

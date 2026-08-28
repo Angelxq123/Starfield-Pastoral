@@ -56,7 +56,7 @@ import java.util.Set;
 @SuppressWarnings({"null", "unused"})
 public class MineFloorGenerator {
 
-    private static final int GENERATION_VERSION = 23;
+    private static final int GENERATION_VERSION = 24;
 
     // Perlin 噪声频率 — 控制地质带宽度（越小越宽）
     private static final double PERLIN_FREQ = 0.08;
@@ -457,12 +457,12 @@ public class MineFloorGenerator {
                 totalCount++;
             }
         }
-        if (hasMonsterMuskPlayer(level, floorNumber)) {
-            totalCount *= 2;
-        }
         if (floorNumber > 120) {
             totalCount = com.stardew.craft.festival.desert.DesertFestivalMineService.adjustMonsterCountForCalicoStatues(level, totalCount);
         }
+        totalCount = MineGenerationBalance.normalizeMonsterCount(
+                floorNumber, totalCount,
+                hasMonsterMuskPlayer(level, floorNumber));
         if (totalCount <= 0) {
             return 0;
         }
@@ -522,8 +522,9 @@ public class MineFloorGenerator {
                     mob.moveTo(x + 0.5, y, z + 0.5, random.nextFloat() * 360, 0);
                     mob.setPersistenceRequired();
                     markSelectedProfile(mob, selection);
-                    level.addFreshEntity(mob);
-                    spawned++;
+                    if (level.addFreshEntity(mob)) {
+                        spawned++;
+                    }
                 }
             } else {
                 BlockPos below = spawnPos.below();
@@ -533,8 +534,9 @@ public class MineFloorGenerator {
                         mob.moveTo(x + 0.5, spawnPos.getY(), z + 0.5, random.nextFloat() * 360, 0);
                         mob.setPersistenceRequired();
                         markSelectedProfile(mob, selection);
-                        level.addFreshEntity(mob);
-                        spawned++;
+                        if (level.addFreshEntity(mob)) {
+                            spawned++;
+                        }
                     }
                 }
             }

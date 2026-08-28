@@ -1306,6 +1306,26 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
+    void reconnectAfterCompletedSettlementResendsWorldReadyAfterTheRetainedPayload()
+            throws Exception {
+        ParsedClass events = parse(
+                "src/main/java/com/stardew/craft/time/settlement/DailySettlementEvents.java");
+        String body = events.method("onPlayerLogin", 1).getBody().toString();
+
+        String worldReady = "new OvernightWorldReadyPayload";
+        assertEquals(2, body.split(worldReady, -1).length - 1,
+                "both cold-service recovery and live-service recovery must restore WORLD_READY");
+        assertTrue(body.indexOf("recovered.payload()")
+                        < body.indexOf(worldReady),
+                "cold-service recovery must send the retained result before WORLD_READY");
+        assertTrue(body.lastIndexOf("ready.payload()")
+                        < body.lastIndexOf(worldReady),
+                "live-service recovery must send the retained result before WORLD_READY");
+        assertTrue(body.contains("!services.coordinator().isActive()"),
+                "an active coordinator must retain ownership until global settlement completes");
+    }
+
+    @Test
     void cleanupAndPublicationCanUseRequiredAtomicWorkThatCannotBePermanentlySkipped() {
         DailySettlementWorkUnit required = DailySettlementWorkUnits.atomic(
                 "required", () -> {}, () -> {}, Integer.MAX_VALUE);

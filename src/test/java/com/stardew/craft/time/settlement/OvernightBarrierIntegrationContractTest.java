@@ -151,6 +151,8 @@ class OvernightBarrierIntegrationContractTest {
         String shipping = Files.readString(SHIPPING_SCREEN).replaceAll("\\s+", "");
 
         assertTrue(shipping.contains("ClientOvernightHandler.isWorldReady()"));
+        assertTrue(shipping.contains("publicvoidrenderBackground(GuiGraphicsgraphics"),
+                "the shipping screen must suppress Minecraft's default dirt/blur background");
         assertFalse(shipping.contains("isLeftMousePressed()"),
                 "the result animation must not be accelerated by holding the mouse");
     }

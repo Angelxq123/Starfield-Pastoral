@@ -25,6 +25,10 @@ public final class MineGenerationBalance {
      * density. The result still scales with the actual navigable surface.
      */
     private static final double MINECRAFT_MONSTER_DENSITY_SCALE = 0.25;
+    private static final int REGULAR_MONSTER_MIN = 2;
+    private static final int REGULAR_MONSTER_MAX = 8;
+    private static final int SKULL_MONSTER_MIN = 3;
+    private static final int SKULL_MONSTER_MAX = 10;
 
     private MineGenerationBalance() {
     }
@@ -219,6 +223,22 @@ public final class MineGenerationBalance {
                 * originalChance
                 * MINECRAFT_MONSTER_DENSITY_SCALE
                 * dimensionScale;
+    }
+
+    static int normalizeMonsterCount(
+            int floor,
+            int rolledCount,
+            boolean monsterMusk
+    ) {
+        if (floor <= 1 || (floor < 121 && floor % 10 == 0)) {
+            return 0;
+        }
+        int minimum = floor > 120 ? SKULL_MONSTER_MIN : REGULAR_MONSTER_MIN;
+        int maximum = floor > 120 ? SKULL_MONSTER_MAX : REGULAR_MONSTER_MAX;
+        int population = Math.clamp(rolledCount, minimum, maximum);
+        return monsterMusk
+                ? Math.min(maximum * 2, population * 2)
+                : population;
     }
 
     static double skullCavernOreChance(int floor) {

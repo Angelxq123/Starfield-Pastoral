@@ -2,6 +2,7 @@ package com.stardew.craft.time.settlement;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.network.overnight.OvernightBarrierPayload;
+import com.stardew.craft.network.overnight.OvernightWorldReadyPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.ItemInteractionResult;
@@ -128,6 +129,10 @@ public final class DailySettlementEvents {
                 PacketDistributor.sendToPlayer(
                         player, new OvernightBarrierPayload(absoluteDay, true));
                 PacketDistributor.sendToPlayer(player, recovered.payload());
+                if (!services.coordinator().isActive()) {
+                    PacketDistributor.sendToPlayer(
+                            player, new OvernightWorldReadyPayload(absoluteDay));
+                }
                 StardewCraft.LOGGER.info(
                         "[OVERNIGHT_SERVER] Recovered settlement on login player={} day={} personal={} shipped={} levels={}",
                         player.getGameProfile().getName(), absoluteDay,
@@ -167,6 +172,10 @@ public final class DailySettlementEvents {
                     ready.payload().shippedItems().size(),
                     ready.payload().levelUps().size());
             PacketDistributor.sendToPlayer(player, ready.payload());
+            if (!services.coordinator().isActive()) {
+                PacketDistributor.sendToPlayer(
+                        player, new OvernightWorldReadyPayload(absoluteDay));
+            }
         } else {
             StardewCraft.LOGGER.info(
                     "[OVERNIGHT_SERVER] Re-sent settlement barrier on login player={} day={} waitingForReady=true",

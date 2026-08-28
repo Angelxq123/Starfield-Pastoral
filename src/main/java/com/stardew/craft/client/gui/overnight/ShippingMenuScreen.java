@@ -397,6 +397,13 @@ public class ShippingMenuScreen extends Screen {
 
     @SuppressWarnings("null")
     @Override
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // The shipping scene owns the full-screen background. Calling the vanilla
+        // implementation here would add Minecraft's dirt/blur pass over it.
+    }
+
+    @SuppressWarnings("null")
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         refreshScaledLayout();
         graphics.fill(0, 0, this.width, this.height, 0xFF000000);

@@ -70,3 +70,7 @@ The full clean-checkout suite reported nine failures against contracts revised d
 ### 0.6.1 candidate — external SVE is outside the release scope (2026-09-14)
 
 The pinned SVE checkout failed its own macOS dependency verification, then failed compilation against retired wild-tree and dirt-backed artifact-spot internals. The owner explicitly directed this release not to maintain SVE compatibility. Remove the external SVE checkout/build/audit from the mandatory Build workflow and revert the provisional SVE-only production bridges and dependency-metadata supplement. Keep the core build/check, maintained API checks, GameTests, runtime shutdown verification, example addon and data-pack validation. This is a release-scope decision, not evidence that the old SVE version is compatible with 0.6.1. Earlier release procedure entries above describe the historical gate.
+
+### 0.6.1 — undeclared Pillow build dependency (2026-09-14)
+
+GitHub run `34826617201` on `615b98a85` failed at `compileNativeFurnitureModels`: `compile_sebastian_computer.py` imports `PIL.Image`, but the Ubuntu runner had no Pillow installation. The tracked-only macOS checkout passed because its Python environment already contained Pillow 11.3.0; clean source isolation did not isolate interpreter packages. Add a pinned `requirements-build.txt`, explicitly set up Python and install those requirements before Gradle in CI, document local setup, and repeat the clean-checkout workflow inside a fresh virtual environment. Keep the furniture compiler and generated particle texture checks enabled.

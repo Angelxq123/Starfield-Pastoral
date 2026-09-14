@@ -1,0 +1,2 @@
+# Native furniture particle texture compilation.
+Pillow==11.3.0

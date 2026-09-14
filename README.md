@@ -89,6 +89,7 @@ Data packs and NeoForge add-ons can use the 0.5 API to extend supported farm lay
 Common local validation commands:
 
 ```shell
+python3 -m pip install -r requirements-build.txt
 ./gradlew classes
 ./gradlew build
 ```

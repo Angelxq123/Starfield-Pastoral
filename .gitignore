@@ -415,3 +415,6 @@ tools/npc/*
 /docs/npc-reset-plan.md
 /docs/npc-system-audit-2026-09-10.md
 /docs/building-animal-addon-support-audit.md
+
+# Reproducible model compiler dependencies.
+!/requirements-build.txt

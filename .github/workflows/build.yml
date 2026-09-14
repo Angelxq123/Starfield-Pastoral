@@ -18,6 +18,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install model compiler dependencies
+        run: python3 -m pip install -r requirements-build.txt
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 

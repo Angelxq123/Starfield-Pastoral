@@ -110,21 +110,24 @@ public final class NativeClothChecks {
             }
             p.reset();
         }
+        // Resolve rapid contact changes before comparing full and half time steps.
+        // Coarse 1/120 samples can mistake continuous acceleration for a positional pop.
+        final int samples=480;
         float[][][] first=null,previous=null;float jump=0,midpointError=0,halfStep=0;String worst="";
-        for(int i=0;i<=120;i++) {
-            p.reset();p.apply("animation."+id+".idle",0);p.blend("animation."+id+".walk",i/120.,1);p.groundFeet(m.profile().groundOffset());
+        for(int i=0;i<=samples;i++) {
+            p.reset();p.apply("animation."+id+".idle",0);p.blend("animation."+id+".walk",i/(double)samples,1);p.groundFeet(m.profile().groundOffset());
             var surface=p.clothVertices();float[][][] copy=new float[surface.length][][];
             for(int q=0;q<surface.length;q++)if(surface[q]!=null) {
                 copy[q]=new float[4][3];
                 for(int v=0;v<4;v++) {
                     copy[q][v]=surface[q][v].clone();
                     if(previous!=null)jump=Math.max(jump,new Vector3f(copy[q][v]).distance(new Vector3f(previous[q][v])));
-                    if(i==120&&new Vector3f(copy[q][v]).distance(new Vector3f(first[q][v]))>.0001)
+                    if(i==samples&&new Vector3f(copy[q][v]).distance(new Vector3f(first[q][v]))>.0001)
                         throw new AssertionError("Garment loop seam");
                 }
             }
             if(previous!=null) {
-                p.reset();p.apply("animation."+id+".idle",0);p.blend("animation."+id+".walk",(i-.5)/120.,1);p.groundFeet(m.profile().groundOffset());
+                p.reset();p.apply("animation."+id+".idle",0);p.blend("animation."+id+".walk",(i-.5)/samples,1);p.groundFeet(m.profile().groundOffset());
                 var middle=p.clothVertices();
                 for(int q=0;q<copy.length;q++)if(copy[q]!=null)for(int v=0;v<4;v++) {
                     var mid=new Vector3f(middle[q][v]);
@@ -163,6 +166,6 @@ public final class NativeClothChecks {
             NativeSamAttentionPose.apply(p,NpcAttentionMotion.sample(motion,yaw,8,48,rig),1,rig);
             p.groundFeet(m.profile().groundOffset());inspect(m,p,"dialogue "+yaw+"/"+age);
         }
-        System.out.println("PASS "+id+" cloth: continuous surface/attachments, 1/120 and 1/240 vertex changes="+jump+" / "+halfStep+", midpoint error="+midpointError+", "+checked+" posed leg probes during walk, blends, turns, attention fades and dialogue return");
+        System.out.println("PASS "+id+" cloth: continuous surface/attachments, 1/480 and 1/960 vertex changes="+jump+" / "+halfStep+", midpoint error="+midpointError+", "+checked+" posed leg probes during walk, blends, turns, attention fades and dialogue return");
     }
 }

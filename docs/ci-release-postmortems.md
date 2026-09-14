@@ -58,3 +58,7 @@ The tracked-only candidate then passed Gradle `build`, 18 compatibility
 verifier tests, all 31 required GameTests, runtime shutdown verification, the
 example addon build, validation of 66 example data-pack JSON documents, the
 pinned addon compilation, and the pinned addon's 45-mixin compatibility audit.
+
+### 0.6.1 candidate — cloth continuity sampling (2026-09-14)
+
+The clean `check` gate rejected Evelyn at the coarse 1/120 versus 1/240 sampling ratio (maximum displacements 0.14621837 / 0.092136994). Denser 1/480 and 1/960 sampling of the unchanged production surface gives 0.04757029 / 0.024577953, with midpoint error falling from 0.019293508 to 0.002320573: the discrepancy is resolved continuous contact acceleration, not a fixed positional jump. Increase continuity sampling density for all garments; retain the existing midpoint, half-step ratio, seam, attachment and penetration limits. No runtime animation or model is changed for this gate correction.

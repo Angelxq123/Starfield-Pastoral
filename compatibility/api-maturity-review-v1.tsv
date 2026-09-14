@@ -26,7 +26,7 @@ com.stardew.craft.api.v1.agriculture.StardewCropRuntimeAdapter	keep_experimental
 com.stardew.craft.api.v1.agriculture.StardewCropState	keep_experimental	yes	yes	yes	yes	real_network_and_second_consumer_evidence_pending
 com.stardew.craft.api.v1.agriculture.StardewCropType	keep_experimental	no	yes	yes	yes	core_runtime_reference_missing
 com.stardew.craft.api.v1.agriculture.StardewCropTypes	keep_experimental	yes	yes	yes	yes	real_network_and_second_consumer_evidence_pending
-com.stardew.craft.api.v1.agriculture.StardewGiantCrops	keep_experimental	no	yes	yes	yes	core_runtime_reference_missing
+com.stardew.craft.api.v1.agriculture.StardewGiantCrops	keep_experimental	no	yes	yes	no	core_runtime_reference_missing
 com.stardew.craft.api.v1.agriculture.StardewTruffleFoundContext	keep_experimental	yes	no	no	no	independent_sample_reference_missing
 com.stardew.craft.api.v1.agriculture.StardewTruffleFoundHandlers	keep_experimental	yes	yes	yes	yes	real_network_and_second_consumer_evidence_pending
 com.stardew.craft.api.v1.building.StardewBuildingBlueprint	keep_experimental	yes	no	no	no	independent_sample_reference_missing

@@ -4,6 +4,10 @@ This file is the durable record for release-related CI failures. A release is no
 
 ## Recurring structural cause
 
+### 0.6.1 candidate — local clean-checkout gate (2026-09-14)
+
+Before pushing, `build check` rejected the API maturity manifest: its documentation evidence had been generated with local, ignored audit notes present. The clean checkout correctly reported `StardewGiantCrops.doc_ref=no` where the manifest claimed `yes`. Restrict evidence collection to Git-indexed files and regenerate the conservative experimental classification from the published tree. Local modelling/audit directories remain excluded; they are not added to satisfy a gate. This failure occurred locally before GitHub publication.
+
 Several release failures shared the same structural cause: validation was performed in a developer working tree that contained local source assets or locally updated tests, while GitHub Actions built only the committed repository. `./gradlew classes` also hid test and downstream compatibility failures because the workflow actually runs `./gradlew build` and additional verification stages.
 
 The permanent prevention rule is therefore not “fix the next missing file.” It is to validate the exact candidate commit in a clean worktree before pushing it.

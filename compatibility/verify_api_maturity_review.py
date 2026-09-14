@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -45,6 +46,19 @@ def _read_symbols(paths: list[Path]) -> set[str]:
 
 
 def collect_evidence(project_root: Path, types: list[str]) -> dict[str, Evidence]:
+    # Local, ignored audit notes cannot establish evidence for a published API.
+    # Standalone test fixtures have no Git metadata and use their explicit files.
+    tracked = None
+    if (project_root / ".git").exists():
+        result = subprocess.run(
+            ["git", "ls-files", "-z"], cwd=project_root,
+            check=True, capture_output=True,
+        )
+        tracked = {project_root / name for name in result.stdout.decode().split("\0") if name}
+
+    def published(paths):
+        return [path for path in paths if tracked is None or path in tracked]
+
     main_root = project_root / "src/main/java/com/stardew/craft"
     core_paths = [
         path
@@ -56,16 +70,17 @@ def collect_evidence(project_root: Path, types: list[str]) -> dict[str, Evidence
         for source in (project_root / "examples").glob("*/src/main/java")
         for path in source.rglob("*.java")
     ]
-    doc_paths = list((project_root / "docs").rglob("*.md"))
+    doc_paths = [path for path in (project_root / "docs").rglob("*.md")
+                 if path.name != "ci-release-postmortems.md"]
     doc_paths.extend((project_root / "examples").rglob("README.md"))
 
     areas = {
-        "core": _read_symbols(core_paths),
-        "sample": _read_symbols(sample_paths),
+        "core": _read_symbols(published(core_paths)),
+        "sample": _read_symbols(published(sample_paths)),
         # GameTests ship in the tracked production tree. Ignored src/test remains
         # excluded: a developer's local tests cannot establish release evidence.
-        "test": _read_symbols(main_root.rglob("*GameTests.java")),
-        "doc": _read_symbols(doc_paths),
+        "test": _read_symbols(published(main_root.rglob("*GameTests.java"))),
+        "doc": _read_symbols(published(doc_paths)),
     }
     evidence: dict[str, Evidence] = {}
     for type_name in types:

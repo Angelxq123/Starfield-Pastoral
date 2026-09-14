@@ -8,9 +8,6 @@ import net.minecraft.nbt.ListTag;
 
 /** Public animal-shop API adapts to the same folio, preserving arbitrary registered IDs. */
 public final class AnimalPurchaseScreen extends LivestockShopScreen {
-    // Retained for legacy addons which register shop artwork at class initialization.
-    private static final java.util.Map<String, com.stardew.craft.client.gui.common.SdvTexture> ANIMAL_TEXTURES =
-            java.util.Map.of();
     private final OpenAnimalPurchaseScreenPayload source;
 
     public AnimalPurchaseScreen(OpenAnimalPurchaseScreenPayload source) {
@@ -28,12 +25,6 @@ public final class AnimalPurchaseScreen extends LivestockShopScreen {
         row.putString("Texture", a.shopTextureId());
         row.putInt("TextureWidth", a.shopTextureWidth());
         row.putInt("TextureHeight", a.shopTextureHeight());
-        var legacyTexture = ANIMAL_TEXTURES.get(a.animalTypeId());
-        if (legacyTexture != null) {
-            row.putString("Texture", legacyTexture.texture().toString());
-            row.putInt("TextureWidth", legacyTexture.width());
-            row.putInt("TextureHeight", legacyTexture.height());
-        }
         return row;
     }
 

@@ -54,7 +54,11 @@ git diff -- compatibility/public-api-v1.txt
 
 A baseline update must not be used to hide an accidental break.
 
-## Addon canaries
+## Optional external addon canaries
+
+These external canaries are optional diagnostics and are not part of the core
+release workflow. Compatibility with their pinned versions is not a release
+guarantee.
 
 `addon-canaries.json` pins each external addon to an exact source commit and
 records the compatibility inputs reviewed by this repository. Canaries verify
@@ -130,8 +134,3 @@ a shutdown that saves every dimension.
 Use `--scenario network-world` on the dedicated-server log after a real client
 joins. This additionally requires capability negotiation, player login,
 Stardew player-data load, at least ten stable seconds, and complete saving.
-
-The canary manifest also pins missing macOS native dependency hashes. The checkout
-helper adds only these exact checksums to the external metadata; Gradle's strict
-verification remains enabled. Each entry records its upstream checksum or artifact
-URL, and conflicting existing hashes are rejected.

@@ -141,14 +141,6 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
     }
 
     @SuppressWarnings("null")
-    /** Snapshot current data-pack rates while retaining legacy addon Map.get injection sites. */
-    private static java.util.Map<net.minecraft.world.item.Item, Float> configuredAgingRates() {
-        var rates = new java.util.HashMap<net.minecraft.world.item.Item, Float>();
-        MachineProductionData.profile("cask").agingRates().forEach((id, rate) ->
-                rates.put(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(id), rate));
-        return rates;
-    }
-
     public boolean tryInsert(ItemStack stack, Player player) {
         if (stack.isEmpty()) {
             return false;
@@ -158,7 +150,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
         }
 
         Float rate = resolveAgingRate(
-                stack, configuredAgingRates().get(stack.getItem()));
+                stack, MachineProductionData.agingRate(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())));
         if (rate == null) {
             return false;
         }
@@ -217,7 +209,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
             return stack;
         }
         Float rate = resolveAgingRate(
-                stack, configuredAgingRates().get(stack.getItem()));
+                stack, MachineProductionData.agingRate(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())));
         if (rate == null) {
             return stack;
         }

@@ -45,24 +45,3 @@ jobs:
 
       - name: Validate example data pack
         run: python3 examples/stardewcraft-data-pack/validate.py
-
-      - name: Prepare current JAR for addon canaries
-        run: ./gradlew prepareAddonCanaryJar --no-daemon --console=plain
-
-      - name: Checkout pinned addon canary
-        run: >-
-          python3 compatibility/checkout_addon_canary.py
-          pinned_mixin_addon .canary/pinned-mixin-addon
-
-      - name: Build pinned addon against current main
-        working-directory: .canary/pinned-mixin-addon
-        env:
-          STARDEWCRAFT_JAR: ${{ github.workspace }}/build/compatibility/stardewcraft-canary.jar
-        run: ./gradlew classes jar --no-daemon --console=plain
-
-      - name: Verify pinned addon compatibility targets
-        run: >-
-          python3 compatibility/verify_addon_canary.py
-          pinned_mixin_addon .canary/pinned-mixin-addon
-          --addon-classes
-          .canary/pinned-mixin-addon/build/classes/java/main

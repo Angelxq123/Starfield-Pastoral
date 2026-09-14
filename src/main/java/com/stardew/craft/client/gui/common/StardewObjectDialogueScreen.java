@@ -18,7 +18,7 @@ import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
-public class StardewObjectDialogueScreen extends Screen implements StardewCollectivePauseScreen {
+public class StardewObjectDialogueScreen extends Screen implements StardewCollectivePauseScreen, StardewGuiContentSize {
     private final List<Component> rawMessages;
     private final List<String> messages = new ArrayList<>();
     private StardewRenderMapping mapping;
@@ -32,6 +32,7 @@ public class StardewObjectDialogueScreen extends Screen implements StardewCollec
     private int boxY;
     private int boxWidth;
     private int boxHeight;
+    private int minimumWidth, minimumHeight;
     private boolean transitioning = true;
     private boolean transitioningBigger = true;
     private boolean transitionInitialized;
@@ -75,7 +76,18 @@ public class StardewObjectDialogueScreen extends Screen implements StardewCollec
         this.lastUpdateMs = Util.getMillis();
         this.lastRenderMs = Util.getMillis();
         recomputeLayout();
+        // Fit all messages once so advancing a page cannot change the canvas mid-animation.
+        minimumWidth = 480;
+        minimumHeight = 270;
+        for (String message : messages) {
+            Layout measured = measureLayout(message);
+            minimumWidth = Math.max(minimumWidth, measured.width() + mapping.ui(128));
+            minimumHeight = Math.max(minimumHeight, measured.height() + mapping.ui(128));
+        }
     }
+
+    @Override public int minimumCanvasWidth() { return minimumWidth; }
+    @Override public int minimumCanvasHeight() { return minimumHeight; }
 
     @Override
     public void tick() {
@@ -257,7 +269,7 @@ public class StardewObjectDialogueScreen extends Screen implements StardewCollec
     }
 
     private void recomputeLayout() {
-        float guiScale = this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         this.mapping = new StardewRenderMapping(this.width, this.height, guiScale);
         Layout layout = measureLayout(currentMessage());
         this.boxWidth = layout.width();
@@ -387,7 +399,7 @@ public class StardewObjectDialogueScreen extends Screen implements StardewCollec
     }
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0F : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private void playUiSound(SoundEvent sound, float volume, float pitch) {

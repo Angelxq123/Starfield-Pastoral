@@ -38,6 +38,12 @@ public class FishPondRecord {
     private int nettingStyle;
     private boolean goldenAnimalCracker;
     private boolean empty;
+    private int lastUpdateDay = Integer.MIN_VALUE;
+    private String outputFishType = "";
+    public int lastUpdateDay() { return lastUpdateDay; }
+    public void setLastUpdateDay(int day) { lastUpdateDay=day; }
+    public String outputFishType() { return outputFishType; }
+    public void setOutputFishType(String id) { outputFishType=id; }
 
     public FishPondRecord(String pondId,
                           String ownerPlayerUuid,
@@ -267,8 +273,7 @@ public class FishPondRecord {
     }
 
     public void clearPondContents() {
-        outputItemId = "";
-        outputCount = 0;
+        goldenAnimalCracker = false;
         neededItemId = "";
         neededItemCount = 0;
         hasCompletedRequest = false;
@@ -337,6 +342,8 @@ public class FishPondRecord {
         tag.putInt("nettingStyle", nettingStyle);
         tag.putBoolean("goldenAnimalCracker", goldenAnimalCracker);
         tag.putBoolean("empty", empty);
+        tag.putInt("lastUpdateDay", lastUpdateDay);
+        tag.putString("outputFishType", outputFishType);
 
         ListTag netsTag = new ListTag();
         for (BlockPos netPos : netPositions) {
@@ -369,7 +376,7 @@ public class FishPondRecord {
             waterCells.add(waterTag.getCompound(i).getLong("cell"));
         }
 
-        return new FishPondRecord(
+        FishPondRecord result = new FishPondRecord(
             tag.getString("pondId"),
             tag.getString("ownerPlayerUuid"),
             tag.getString("dimensionId"),
@@ -398,5 +405,8 @@ public class FishPondRecord {
             tag.getBoolean("goldenAnimalCracker"),
             tag.getBoolean("empty")
         );
+        result.lastUpdateDay = tag.contains("lastUpdateDay") ? tag.getInt("lastUpdateDay") : Integer.MIN_VALUE;
+        result.outputFishType = tag.getString("outputFishType");
+        return result;
     }
 }

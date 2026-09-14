@@ -1,6 +1,47 @@
 {
-    "parent":  "stardewcraft:block/mine_exit",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/mine_exit"
-                 }
+  "parent": "stardewcraft:item/mine_exit_earth",
+  "overrides": [
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 0.14285714285714285
+      },
+      "model": "stardewcraft:item/mine_exit_frost"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 0.2857142857142857
+      },
+      "model": "stardewcraft:item/mine_exit_lava"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 0.42857142857142855
+      },
+      "model": "stardewcraft:item/mine_exit_desert"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 0.5714285714285714
+      },
+      "model": "stardewcraft:item/mine_exit_earth_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 0.7142857142857143
+      },
+      "model": "stardewcraft:item/mine_exit_frost_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 0.8571428571428571
+      },
+      "model": "stardewcraft:item/mine_exit_lava_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_exit_theme": 1.0
+      },
+      "model": "stardewcraft:item/mine_exit_desert_dark"
+    }
+  ]
 }

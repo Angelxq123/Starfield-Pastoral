@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -514,7 +517,7 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         String text = Component.translatable("stardewcraft.forge.make_result").getString();
         int centerX = x + ui(32);
         float textScale = Math.min(0.75f, Math.max(0.55f, (ui(112) / (float) Math.max(1, font.width(text)))));
-        drawScaledText(guiGraphics, text, centerX - Math.round(font.width(text) * textScale / 2.0f), y - Math.round((font.lineHeight + 4) * textScale), textScale, TEXT_COLOR);
+        drawScaledText(guiGraphics, text, centerX - Math.round(font.width(text) * textScale / 2.0f), y - Math.round((StardewFonts.lineHeight(font) + 4) * textScale), textScale, TEXT_COLOR);
         CommonGuiTextures.drawItemWithDecorationsCenteredInBox(guiGraphics, font, stack, x, y, ui(SDV_SLOT), ui(SDV_SLOT), s4());
     }
 
@@ -548,10 +551,10 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         float textScale = fitTextScale(description, maxWidth, maxHeight, DESC_FONT_SCALE, MIN_DESC_FONT_SCALE);
         List<FormattedCharSequence> lines = font.split(description, Math.max(1, Math.round(maxWidth / textScale)));
         int lineY = textY;
-        int lineStep = Math.max(1, Math.round((font.lineHeight + 2) * textScale));
+        int lineStep = Math.max(1, Math.round((StardewFonts.lineHeight(font) + 2) * textScale));
         int bottom = textY + maxHeight;
         for (FormattedCharSequence line : lines) {
-            if (lineY + Math.round(font.lineHeight * textScale) > bottom) {
+            if (lineY + Math.round(StardewFonts.lineHeight(font) * textScale) > bottom) {
                 break;
             }
             drawScaledText(guiGraphics, line, textX, lineY, textScale, TEXT_COLOR);
@@ -561,7 +564,7 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         if (shouldShowForgeCost()) {
             Component shards = Component.translatable("stardewcraft.forge.shards_count", currentCinderShardCount(), currentForgeCost());
             int shardY = lineY + ui(8);
-            if (shardY + Math.round(font.lineHeight * textScale) <= bottom) {
+            if (shardY + Math.round(StardewFonts.lineHeight(font) * textScale) <= bottom) {
                 drawScaledText(guiGraphics, shards.getString(), textX, shardY, textScale, DIM_TEXT_COLOR);
             }
         }
@@ -622,7 +625,7 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         float scale = preferredScale;
         while (scale > minScale) {
             int wrapWidth = Math.max(1, Math.round(maxWidth / scale));
-            int height = font.split(text, wrapWidth).size() * Math.max(1, Math.round((font.lineHeight + 2) * scale));
+            int height = font.split(text, wrapWidth).size() * Math.max(1, Math.round((StardewFonts.lineHeight(font) + 2) * scale));
             if (height <= maxHeight) {
                 return scale;
             }
@@ -649,6 +652,13 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
 
     private void drawOkButton(GuiGraphics guiGraphics) {
         drawTexture(guiGraphics, OK_BUTTON, 64, 64, leftPos + ui(OK_X), topPos + ui(OK_Y), s1(), 1.0f);
+    }
+
+    public List<Rect2i> jeiGuiExtraAreas() {
+        return List.of(
+                new Rect2i(leftPos + ui(EQUIP_RING_X), topPos + ui(EQUIP_RING_Y), ui(SDV_SLOT), ui(SDV_SLOT)),
+                new Rect2i(leftPos + ui(EQUIP_RING_X), topPos + ui(EQUIP_RING_Y + EQUIP_RING_GAP), ui(SDV_SLOT), ui(SDV_SLOT)),
+                new Rect2i(leftPos + ui(OK_X), topPos + ui(OK_Y), ui(64), ui(64)));
     }
 
     private void renderCustomTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {

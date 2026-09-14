@@ -50,7 +50,7 @@ public final class ShadowShopService {
         PlayerDataEventHandler.syncPlayerData(player, data);
         com.stardew.craft.sewer.KrobusUnsealEffectService.armAfterDialogueEffect(player);
 
-        krobus.facePlayerTemporarily(player, 60, () -> PacketDistributor.sendToPlayer(player,
+        krobus.facePlayerTemporarily(player, 60, () -> com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
             new OpenNpcDialogueScreenPayload("krobus", DARK_TALISMAN_DIALOGUE, 0)));
         return true;
     }

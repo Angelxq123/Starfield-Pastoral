@@ -1,7 +1,0 @@
-﻿{
-  "type": "minecraft:crafting_shaped",
-  "category": "building",
-  "key": { "#": { "item": "stardewcraft:banded_marble" } },
-  "pattern": [ "###", "###" ],
-  "result": { "count": 6, "id": "stardewcraft:banded_marble_wall" }
-}

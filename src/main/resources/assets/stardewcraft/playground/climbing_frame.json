@@ -1,0 +1,589 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/climbing_frame/part_0",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "name": "攀岩墙(3, 3)底板"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_1",
+      "offset": [
+        0,
+        16,
+        0
+      ],
+      "name": "攀岩墙(3, 3)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_2",
+      "offset": [
+        0,
+        32,
+        0
+      ],
+      "name": "攀岩墙(3, 3)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_3",
+      "offset": [
+        0,
+        0,
+        32
+      ],
+      "name": "攀岩墙(3, 30)底板"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_4",
+      "offset": [
+        0,
+        16,
+        32
+      ],
+      "name": "攀岩墙(3, 30)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_5",
+      "offset": [
+        0,
+        32,
+        32
+      ],
+      "name": "攀岩墙(3, 30)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_6",
+      "offset": [
+        32,
+        0,
+        0
+      ],
+      "name": "攀岩墙(29, 3)底板"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_7",
+      "offset": [
+        32,
+        16,
+        0
+      ],
+      "name": "攀岩墙(29, 3)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_8",
+      "offset": [
+        32,
+        32,
+        0
+      ],
+      "name": "攀岩墙(29, 3)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_9",
+      "offset": [
+        32,
+        0,
+        32
+      ],
+      "name": "攀岩墙(29, 30)底板"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_10",
+      "offset": [
+        32,
+        16,
+        32
+      ],
+      "name": "攀岩墙(29, 30)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_11",
+      "offset": [
+        32,
+        32,
+        32
+      ],
+      "name": "攀岩墙(29, 30)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_12",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "name": "攀岩蓝色墙面上"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_13",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "攀岩蓝色墙面下"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_14",
+      "offset": [
+        16,
+        0,
+        32
+      ],
+      "name": "墙面下折边"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_15",
+      "offset": [
+        16,
+        48,
+        32
+      ],
+      "name": "墙面上折边"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_16",
+      "offset": [
+        16,
+        48,
+        32
+      ],
+      "name": "平台下承梁前"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_17",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "平台下承梁后"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_18",
+      "offset": [
+        16,
+        48,
+        16
+      ],
+      "name": "顶部平台"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_19",
+      "offset": [
+        0,
+        64,
+        0
+      ],
+      "name": "护栏柱(3, 3)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_20",
+      "offset": [
+        0,
+        48,
+        0
+      ],
+      "name": "护栏法兰(3, 3)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_21",
+      "offset": [
+        0,
+        64,
+        32
+      ],
+      "name": "护栏柱(3, 30)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_22",
+      "offset": [
+        0,
+        48,
+        32
+      ],
+      "name": "护栏法兰(3, 30)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_23",
+      "offset": [
+        0,
+        64,
+        16
+      ],
+      "name": "侧扶栏3"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_24",
+      "offset": [
+        0,
+        48,
+        16
+      ],
+      "name": "细栏杆(3, 12)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_25",
+      "offset": [
+        0,
+        48,
+        16
+      ],
+      "name": "细栏杆(3, 22)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_26",
+      "offset": [
+        32,
+        64,
+        0
+      ],
+      "name": "护栏柱(29, 3)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_27",
+      "offset": [
+        32,
+        48,
+        0
+      ],
+      "name": "护栏法兰(29, 3)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_28",
+      "offset": [
+        32,
+        64,
+        32
+      ],
+      "name": "护栏柱(29, 30)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_29",
+      "offset": [
+        32,
+        48,
+        32
+      ],
+      "name": "护栏法兰(29, 30)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_30",
+      "offset": [
+        32,
+        64,
+        16
+      ],
+      "name": "侧扶栏29"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_31",
+      "offset": [
+        32,
+        48,
+        16
+      ],
+      "name": "细栏杆(29, 12)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_32",
+      "offset": [
+        32,
+        48,
+        16
+      ],
+      "name": "细栏杆(29, 22)"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_33",
+      "offset": [
+        16,
+        64,
+        0
+      ],
+      "name": "后部扶栏"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_34",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "后部细栏杆10"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_35",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "后部细栏杆16"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_36",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "后部细栏杆22"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_37",
+      "offset": [
+        16,
+        16,
+        0
+      ],
+      "name": "后部交叉撑45"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_38",
+      "offset": [
+        16,
+        16,
+        0
+      ],
+      "name": "后部交叉撑-45"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_39",
+      "offset": [
+        0,
+        0,
+        32
+      ],
+      "name": "抓点承握面0"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_40",
+      "offset": [
+        0,
+        16,
+        32
+      ],
+      "name": "抓点收肩0"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_41",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "name": "抓点承握面1"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_42",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "name": "抓点收肩1"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_43",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "name": "抓点承握面2"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_44",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "name": "抓点收肩2"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_45",
+      "offset": [
+        0,
+        16,
+        32
+      ],
+      "name": "抓点承握面3"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_46",
+      "offset": [
+        0,
+        16,
+        32
+      ],
+      "name": "抓点收肩3"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_47",
+      "offset": [
+        32,
+        16,
+        32
+      ],
+      "name": "抓点承握面4"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_48",
+      "offset": [
+        32,
+        32,
+        32
+      ],
+      "name": "抓点收肩4"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_49",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点承握面5"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_50",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点收肩5"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_51",
+      "offset": [
+        0,
+        32,
+        32
+      ],
+      "name": "抓点承握面6"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_52",
+      "offset": [
+        0,
+        32,
+        32
+      ],
+      "name": "抓点收肩6"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_53",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点承握面7"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_54",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点收肩7"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_55",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点承握面8"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_56",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点收肩8"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_57",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "抓点承握面9"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_58",
+      "offset": [
+        16,
+        48,
+        32
+      ],
+      "name": "抓点收肩9"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_59",
+      "offset": [
+        0,
+        32,
+        32
+      ],
+      "name": "抓点承握面10"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_60",
+      "offset": [
+        16,
+        48,
+        32
+      ],
+      "name": "抓点收肩10"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_61",
+      "offset": [
+        16,
+        64,
+        0
+      ],
+      "name": "太阳安装杆"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_62",
+      "offset": [
+        16,
+        64,
+        0
+      ],
+      "name": "太阳斜角背板"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_63",
+      "offset": [
+        16,
+        64,
+        0
+      ],
+      "name": "太阳正角背板"
+    },
+    {
+      "model": "stardewcraft:block/climbing_frame/part_64",
+      "offset": [
+        16,
+        64,
+        0
+      ],
+      "name": "太阳浮雕中心"
+    }
+  ]
+}

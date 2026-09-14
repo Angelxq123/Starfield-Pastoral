@@ -94,6 +94,23 @@ public class WeaponIcons {
     public static final String SKILL_INFINITY_DAGGER_2 = "\uE13E"; // 奇点背刺
     public static final String SKILL_FEMUR_1 = "\uE13F"; // 震骨横砸
     
+    public static final String SKILL_GALAXY_HAMMER_1 = "\uE140";
+    public static final String SKILL_GALAXY_HAMMER_2 = "\uE141";
+    public static final String SKILL_INFINITY_GAVEL_1 = "\uE142";
+    public static final String SKILL_INFINITY_GAVEL_2 = "\uE143";
+
+    public static final String SKILL_DRAGONTOOTH_CLUB_1 = "\uE14C";
+    public static final String SKILL_DRAGONTOOTH_CLUB_2 = "\uE14D";
+    public static final String SKILL_RAPIER_1 = "\uE14E";
+    public static final String SKILL_THE_SLAMMER_1 = "\uE148";
+    public static final String SKILL_THE_SLAMMER_2 = "\uE149";
+    public static final String SKILL_DWARF_HAMMER_1 = "\uE14A";
+    public static final String SKILL_DWARF_HAMMER_2 = "\uE14B";
+    public static final String SKILL_LEAD_ROD_1 = "\uE146";
+    public static final String SKILL_KUDGEL_1 = "\uE147";
+    public static final String SKILL_WOOD_CLUB_1 = "\uE144";
+    public static final String SKILL_WOOD_MALLET_1 = "\uE145";
+
     // 分隔线
     public static final String SEPARATOR = "════════════════════";
     

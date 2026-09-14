@@ -1,0 +1,93 @@
+{
+  "intent": "儿童女孩，原版 Shy/Positive；小步、收拢摆臂，重心柔和而明确。裙摆随承重连续响应。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.6291679375,
+  "attentionRig": {
+    "hipHeight": 10,
+    "soleY": 0,
+    "toeDepth": 1.5,
+    "halfStance": 1.58,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.65,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "cloth": {
+    "bone": "skirt",
+    "kind": "skirt",
+    "anchorY": 11,
+    "hemY": 4.9,
+    "margin": 0.45,
+    "standingDepthMargin": 0.2,
+    "contactBlend": 1.2,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "id": "jas",
+    "revision": "character-articulated-3",
+    "rootMean": 0.35200000000000004,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -1.5,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -1.5
+      },
+      "left": {
+        "hip": [
+          1.5,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -1.5
+      }
+    },
+    "bodyPitch": -1.0,
+    "headPitch": 0.3,
+    "halfStance": 1.58,
+    "intent": "儿童女孩，原版 Shy/Positive；小步、收拢摆臂，重心柔和而明确。裙摆随承重连续响应。",
+    "stance": 0.6,
+    "strideRatio": 1.52,
+    "bob": 0.20800000000000002,
+    "sway": 0.36,
+    "rootYaw": 1.3,
+    "bodyYaw": 3.7,
+    "bodyRoll": 0.65,
+    "bodyNod": 0.55,
+    "headYaw": 1.8,
+    "headRoll": 0.4,
+    "armSwing": 12,
+    "armOpening": 4.3,
+    "elbowBase": 10,
+    "elbowSwing": 5,
+    "footLift": 0.22400000000000003,
+    "heelPitch": 4.199999999999999,
+    "toePitch": 7.699999999999999,
+    "breathSeconds": 7.8,
+    "idleScale": 0.85,
+    "stride": 10.066687,
+    "reachMargin": 0.035558,
+    "legLengthStride": 15.2,
+    "previewSpeed": 0.777088,
+    "levelWalk": true
+  }
+}

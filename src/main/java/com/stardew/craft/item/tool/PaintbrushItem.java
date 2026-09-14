@@ -1,7 +1,9 @@
 package com.stardew.craft.item.tool;
 
 import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.block.decor.BedDecorBlock;
 import com.stardew.craft.block.utility.OakTableBlock;
+import com.stardew.craft.block.utility.WallpaperBlock;
 import com.stardew.craft.blockentity.TableDisplayBlockEntity;
 import com.stardew.craft.deco.DecorationService;
 import com.stardew.craft.deco.DecorationType;
@@ -40,7 +42,7 @@ public class PaintbrushItem extends Item implements IStardewItem {
         BlockState clicked = level.getBlockState(pos);
 
         DecorationType type = null;
-        if (clicked.getBlock() == ModBlocks.WALLPAPER_BLOCK.get()) {
+        if (clicked.getBlock() instanceof WallpaperBlock || clicked.is(ModBlocks.WALLPAPER_BLOCK.get())) {
             type = DecorationType.WALLPAPER;
         } else if (clicked.getBlock() == ModBlocks.FLOORING_BLOCK.get()) {
             type = DecorationType.FLOORING;
@@ -119,6 +121,22 @@ public class PaintbrushItem extends Item implements IStardewItem {
                         ? targetState.getValue(com.stardew.craft.block.utility.DyeableChairBlock.COLOR)
                         : clicked.getValue(com.stardew.craft.block.utility.DyeableChairBlock.COLOR);
                     PacketDistributor.sendToPlayer(serverPlayer, new OpenSofaColorScreenPayload(targetPos, current));
+                    return InteractionResult.CONSUME;
+                }
+            }
+            if (context.getPlayer() != null
+                && context.getPlayer().isShiftKeyDown()
+                && clicked.getBlock() instanceof BedDecorBlock bedBlock) {
+                if (level.isClientSide) {
+                    return InteractionResult.SUCCESS;
+                }
+                if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                    BlockPos targetPos = bedBlock.resolveMainPos(level, pos, clicked);
+                    int current = bedBlock.currentColor(level, targetPos, level.getBlockState(targetPos));
+                    PacketDistributor.sendToPlayer(
+                        serverPlayer,
+                        new OpenSofaColorScreenPayload(targetPos, current)
+                    );
                     return InteractionResult.CONSUME;
                 }
             }

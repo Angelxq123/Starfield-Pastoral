@@ -678,8 +678,7 @@ public final class SpiritEveFestivalService {
 
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player openingPlayer) {
-                return new WoodenChestMenu(containerId, playerInventory, container, ignored -> {
-                }, CHEST_BROWN_COLOR);
+                return new WoodenChestMenu(containerId, playerInventory, container, null, CHEST_BROWN_COLOR, true);
             }
         });
     }

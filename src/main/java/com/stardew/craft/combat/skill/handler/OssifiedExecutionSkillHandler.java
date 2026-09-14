@@ -28,7 +28,6 @@ public final class OssifiedExecutionSkillHandler implements RuntimeWeaponSkillHa
     public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
     public static final float PULSE_DAMAGE_MULTIPLIER = 1.0F;
     public static final float CRIT_DAMAGE_BONUS = 0.20F;
-    public static final int RING_PARTICLE_INTERVAL_TICKS = 5;
     public static final double MINIMUM_PULL_DISTANCE = 0.01D;
     public static final double BASE_PULL_STRENGTH = 0.02D;
     public static final double INNER_PULL_BONUS = 0.03D;
@@ -104,8 +103,10 @@ public final class OssifiedExecutionSkillHandler implements RuntimeWeaponSkillHa
                         DURATION_TICKS
         );
         instance.initializeExecutionState(executionState);
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(), context.weaponId().getPath(), context.skillData().getId(), 10);
         instance.registerCommittedEffect(() ->
-                executionState.activate(context, target)
+                executionState.activate(context)
         );
     }
 

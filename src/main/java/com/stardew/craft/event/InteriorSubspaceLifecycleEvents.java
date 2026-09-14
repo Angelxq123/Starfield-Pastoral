@@ -78,6 +78,7 @@ public class InteriorSubspaceLifecycleEvents {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
+        InteriorSubspaceManager.tickPendingPortals(level);
         if (!ModDimensions.STARDEW_VALLEY.equals(level.dimension())) {
             return;
         }

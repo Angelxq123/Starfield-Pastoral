@@ -40,6 +40,7 @@ public final class WorkbenchRecipeManager {
         return switch (type) {
             case WOOD  -> buildWood();
             case STONE -> buildStone();
+            case TEMPLATE -> TemplateWorkbenchRecipes.build();
         };
     }
 

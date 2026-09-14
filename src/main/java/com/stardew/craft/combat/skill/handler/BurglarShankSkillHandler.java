@@ -65,6 +65,13 @@ public final class BurglarShankSkillHandler implements RuntimeWeaponSkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> WeaponSkillDamage.apply(
                 context.player(), target,
                 createHitContext(context.skillData()),
@@ -74,12 +81,6 @@ public final class BurglarShankSkillHandler implements RuntimeWeaponSkillHandler
                 WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
         ));
 
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

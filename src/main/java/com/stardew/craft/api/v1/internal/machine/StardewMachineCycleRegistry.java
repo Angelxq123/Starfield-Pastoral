@@ -54,6 +54,8 @@ public final class StardewMachineCycleRegistry {
         Objects.requireNonNull(context, "context");
         StardewProductionPlan current =
                 Objects.requireNonNull(proposed, "proposed");
+        current = new StardewProductionPlan(current.output(),
+                com.stardew.craft.production.MachineProductionData.minutes(context.machineId().toString(), current.minutes()));
         for (var entry : PLANS.entries()) {
             try {
                 StardewProductionPlan proposedPlan = current;

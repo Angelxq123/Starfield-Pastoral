@@ -96,6 +96,7 @@ public final class PrefabTreeRegistry extends SavedData {
 			t.putString("Species", instance.species());
 			t.putInt("Variant", instance.variant());
 			t.putBoolean("Felled", instance.felled());
+			t.putInt("BombDamage", instance.bombDamage());
 			long[] members = new long[instance.members().size()];
 			int i = 0;
 			for (BlockPos pos : instance.members()) {
@@ -122,7 +123,9 @@ public final class PrefabTreeRegistry extends SavedData {
 				members.add(BlockPos.of(packed));
 			}
 			members.add(root);
-			data.index(new PrefabTreeInstance(root, species, variant, members, felled));
+			var instance = new PrefabTreeInstance(root, species, variant, members, felled);
+			instance.setBombDamage(t.getInt("BombDamage"));
+			data.index(instance);
 		}
 		return data;
 	}

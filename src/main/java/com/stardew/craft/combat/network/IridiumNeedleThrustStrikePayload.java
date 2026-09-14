@@ -31,7 +31,7 @@ public record IridiumNeedleThrustStrikePayload() implements CustomPacketPayload 
     private static void handleClient(IridiumNeedleThrustStrikePayload payload) {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null) {
-            com.stardew.craft.client.weapon.SkillEffectsClient.playSkillEffects("iridium_needle_thrust", mc.player);
+            com.stardew.craft.client.weapon.NeedleBurglarVisuals.strikeConfirmed();
         }
     }
 }

@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 骷髅矿洞会话管理器
  * <p>
  * SDV 原版：每次离开骷髅矿后，所有楼层(121+)重置，下次进入从 121 重新开始。
- * 本管理器追踪在矿内的玩家，当所有人离开时触发异步清理。
+ * 保留断线玩家的当日楼层；全员真正离开后使现有楼层失效，下次进入重建。
  */
 @EventBusSubscriber(modid = StardewCraft.MODID)
 public class SkullCavernSessionManager {
@@ -31,7 +31,7 @@ public class SkullCavernSessionManager {
     /** 玩家进入骷髅矿（从入口或 /tp 命令触发） */
     public static void onPlayerEnter(ServerPlayer player) {
         if (playersInSkullCavern.add(player.getUUID())) {
-            craftedStaircasesUsed.put(player.getUUID(), 0);
+            craftedStaircasesUsed.put(player.getUUID(),player.getPersistentData().getInt("stardewcraft_skull_stairs_used"));
         }
         StardewCraft.LOGGER.info("[SKULL] Player {} entered skull cavern, active={}",
                 player.getName().getString(), playersInSkullCavern.size());
@@ -47,10 +47,13 @@ public class SkullCavernSessionManager {
     /** 玩家离开骷髅矿 */
     public static void onPlayerLeave(ServerPlayer player, ServerLevel miningLevel) {
         playersInSkullCavern.remove(player.getUUID());
+        player.getPersistentData().remove("stardewcraft_skull_stairs_used");
+        craftedStaircasesUsed.remove(player.getUUID());
         StardewCraft.LOGGER.info("[SKULL] Player {} left skull cavern, remaining={}",
                 player.getName().getString(), playersInSkullCavern.size());
 
-        if (playersInSkullCavern.isEmpty()) {
+        if (miningLevel.players().stream().noneMatch(p->p!=player && MiningDataManager.getPlayerData(p).getCurrentFloor()>120)
+                && OrdinaryMineProgress.get(miningLevel).deepestDisconnected(com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay())<=120) {
             resetSession(miningLevel);
             com.stardew.craft.festival.desert.DesertFestivalMineService.resetCurrentRun(miningLevel);
         }
@@ -65,17 +68,17 @@ public class SkullCavernSessionManager {
         return craftedStaircasesUsed.getOrDefault(playerId, 0);
     }
 
-    /**
-     * 全部玩家离开 → 异步清理所有骷髅矿楼层数据
-     * 方块清理不需要做（下次生成时会覆写），只清 MineFloorDataManager 记录即可。
-     */
+    /** Keep prior layout bounds until the next generation removes its old geometry. */
     private static void resetSession(ServerLevel miningLevel) {
         StardewCraft.LOGGER.info("[SKULL] All players left, resetting session (floors 121-{})",
                 sessionDeepestFloor);
 
         MineFloorDataManager manager = MineFloorDataManager.get(miningLevel);
-        for (int floor = 121; floor <= sessionDeepestFloor; floor++) {
-            manager.clearFloorData(floor);
+        // Preserve the old layout bounds so regeneration removes its entire footprint.
+        for(int floor:manager.floorNumbers()) if(floor>120) {
+            var data=manager.getFloorData(floor);
+            data.setGenerationVersion(0);
+            manager.setFloorData(floor,data);
         }
 
         sessionDeepestFloor = 121;
@@ -92,11 +95,16 @@ public class SkullCavernSessionManager {
                 || !event.getPlacedBlock().is(ModBlocks.MINE_LADDER.get())) {
             return;
         }
+        recordCraftedStaircasePlaced(player);
+    }
+
+    public static void recordCraftedStaircasePlaced(ServerPlayer player) {
         MiningPlayerData mining = MiningDataManager.getPlayerData(player);
         if (mining.getCurrentFloor() > 120) {
             // SDV Object.cs increments numberOfCraftedStairsUsedThisRun as soon as
             // placement successfully creates the ladder, not when it is clicked.
-            craftedStaircasesUsed.merge(player.getUUID(), 1, Integer::sum);
+            int count=craftedStaircasesUsed.merge(player.getUUID(),1,Integer::sum);
+            player.getPersistentData().putInt("stardewcraft_skull_stairs_used",count);
         }
     }
 
@@ -120,10 +128,7 @@ public class SkullCavernSessionManager {
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
         if (!playersInSkullCavern.contains(sp.getUUID())) return;
 
-        ServerLevel miningLevel = sp.server.getLevel(ModMiningDimensions.STARDEW_MINING);
-        if (miningLevel != null) {
-            onPlayerLeave(sp, miningLevel);
-        }
+        playersInSkullCavern.remove(sp.getUUID());
         craftedStaircasesUsed.remove(sp.getUUID());
     }
 

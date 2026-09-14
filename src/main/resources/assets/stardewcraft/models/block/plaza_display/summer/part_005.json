@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/summer/plaza_display_summer",
+    "particle": "stardewcraft:block/plaza_display/summer/plaza_summer_rim_rose_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -1,
+        7,
+        7
+      ],
+      "to": [
+        17,
+        9,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.5,
+            1.0,
+            4.625,
+            1.125
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            6.0,
+            1.0,
+            6.125,
+            1.125
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4.75,
+            1.0,
+            5.875,
+            1.125
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.25,
+            1.0,
+            6.375,
+            1.125
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6.5,
+            1.0,
+            7.625,
+            1.125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            7.75,
+            1.0,
+            8.875,
+            1.125
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

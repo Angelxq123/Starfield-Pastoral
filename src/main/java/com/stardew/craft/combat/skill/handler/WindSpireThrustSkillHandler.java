@@ -87,9 +87,17 @@ public final class WindSpireThrustSkillHandler implements RuntimeWeaponSkillHand
         if (target != null) {
             instance.setTargetEntityIds(List.of(target.getId()));
         }
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
+            Vec3 visualOrigin = context.player().position();
             if (target == null) {
-                DashMovementTracker.start(
+                var visualDash = DashMovementTracker.startExact(
                         context.player(),
                         context.nowTick(),
                         computeDashEnd(
@@ -98,9 +106,15 @@ public final class WindSpireThrustSkillHandler implements RuntimeWeaponSkillHand
                         ),
                         DASH_DURATION_TICKS
                 );
+                if (visualDash != null) PacketDistributor.sendToPlayersTrackingEntityAndSelf(context.player(),
+                        new com.stardew.craft.combat.network.IronWindMovePayload(context.player().getId(), context.nowTick(),
+                                com.stardew.craft.combat.network.IronWindMovePayload.Mode.WIND_DASH, visualOrigin, visualOrigin));
             } else {
                 teleportToTargetFront(context.player(), target);
                 faceTarget(context.player(), target);
+                PacketDistributor.sendToPlayersTrackingEntityAndSelf(context.player(),
+                        new com.stardew.craft.combat.network.IronWindMovePayload(context.player().getId(), context.nowTick(),
+                                com.stardew.craft.combat.network.IronWindMovePayload.Mode.WIND_BLINK, visualOrigin, context.player().position()));
                 WeaponSkillDamage.apply(
                         context.player(),
                         target,
@@ -117,12 +131,6 @@ public final class WindSpireThrustSkillHandler implements RuntimeWeaponSkillHand
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 ANIMATION_TICKS
         );
     }

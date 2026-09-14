@@ -1,0 +1,53 @@
+{
+  "credit": "Made with Blockbench",
+  "textures": {
+    "0": "stardewcraft:block/utility/incubator_rework",
+    "particle": "stardewcraft:block/utility/incubator_rework_particle"
+  },
+  "elements": [
+    {
+      "name": "草窝后沿",
+      "from": [
+        3,
+        26,
+        12
+      ],
+      "to": [
+        13,
+        28,
+        12
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8,
+          26,
+          12
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            13.125,
+            10.75,
+            14.375,
+            11
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14.5,
+            10.75,
+            15.75,
+            11
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout"
+}

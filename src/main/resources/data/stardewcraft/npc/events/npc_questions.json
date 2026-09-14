@@ -1,0 +1,455 @@
+{
+  "event_id": "npc_questions",
+  "questions": {
+    "stardewcraft.npc.abigail.fall_sun": [
+      {
+        "id": "27",
+        "points": 10,
+        "next": "Sun_27"
+      },
+      {
+        "id": "27",
+        "points": 10,
+        "next": "Sun_27"
+      },
+      {
+        "id": "27",
+        "points": 20,
+        "next": "Sun_WildColor"
+      },
+      {
+        "id": "28",
+        "points": 0,
+        "next": "Sun_28"
+      }
+    ],
+    "stardewcraft.npc.abigail.summer_sun": [
+      {
+        "id": "25",
+        "points": 0,
+        "next": "Sun_25"
+      },
+      {
+        "id": "26",
+        "points": 30,
+        "next": "Sun_26"
+      },
+      {
+        "id": "26",
+        "points": 30,
+        "next": "Sun_26"
+      },
+      {
+        "id": "25",
+        "points": 0,
+        "next": "Sun_25"
+      }
+    ],
+    "stardewcraft.npc.abigail.sun2": [
+      {
+        "id": "17",
+        "points": 0,
+        "next": "Sun_17"
+      },
+      {
+        "id": "18",
+        "points": 40,
+        "next": "Sun_18"
+      },
+      {
+        "id": "17",
+        "points": 0,
+        "next": "Sun_17"
+      },
+      {
+        "id": "18",
+        "points": 0,
+        "next": "Sun_17"
+      },
+      {
+        "id": "17",
+        "points": 30,
+        "next": "Sun_nothing"
+      }
+    ],
+    "stardewcraft.npc.abigail.winter_sun": [
+      {
+        "id": "29",
+        "points": 20,
+        "next": "Sun_29"
+      },
+      {
+        "id": "30",
+        "points": 5,
+        "next": "Sun_30"
+      },
+      {
+        "id": "29",
+        "points": -50,
+        "next": "Sun_Bad"
+      }
+    ],
+    "stardewcraft.npc.alex.fall_wed": [
+      {
+        "id": "54",
+        "points": 30,
+        "next": "fall_Wed_01_01"
+      },
+      {
+        "id": "55",
+        "points": -30,
+        "next": "fall_Wed_01_02"
+      }
+    ],
+    "stardewcraft.npc.alex.summer_wed": [
+      {
+        "id": "52",
+        "points": 30,
+        "next": "summer_Wed_01_01"
+      },
+      {
+        "id": "52",
+        "points": 0,
+        "next": "summer_Wed_01_02"
+      },
+      {
+        "id": "53",
+        "points": -50,
+        "next": "summer_Wed_01_03"
+      }
+    ],
+    "stardewcraft.npc.alex.wed": [
+      {
+        "id": "6",
+        "points": 0,
+        "next": "Wed_01_02"
+      },
+      {
+        "id": "5",
+        "points": 15,
+        "next": "Wed_01_01"
+      },
+      {
+        "id": "5",
+        "points": 0,
+        "next": "Wed_01_03"
+      }
+    ],
+    "stardewcraft.npc.clint.mon": [
+      {
+        "id": "9",
+        "points": 30,
+        "next": "Mon_9"
+      },
+      {
+        "id": "9",
+        "points": 50,
+        "next": "Mon_clown"
+      },
+      {
+        "id": "9",
+        "points": -50,
+        "next": "Mon_rude"
+      }
+    ],
+    "stardewcraft.npc.haley.fall_sat": [
+      {
+        "id": "44",
+        "points": 10,
+        "next": "fall_Sat_12"
+      },
+      {
+        "id": "44",
+        "points": 20,
+        "next": "fall_Sat_12"
+      },
+      {
+        "id": "44",
+        "points": -30,
+        "next": "fall_Sat_13"
+      }
+    ],
+    "stardewcraft.npc.haley.summer_sat": [
+      {
+        "id": "42",
+        "points": 10,
+        "next": "summer_Sat_12"
+      },
+      {
+        "id": "42",
+        "points": 10,
+        "next": "summer_Sat_12"
+      },
+      {
+        "id": "43",
+        "points": -10,
+        "next": "summer_Sat_13"
+      },
+      {
+        "id": "42",
+        "points": 10,
+        "next": "summer_Sat_12"
+      }
+    ],
+    "stardewcraft.npc.leah.mon": [
+      {
+        "id": "21",
+        "points": -5,
+        "next": "Mon_21"
+      },
+      {
+        "id": "22",
+        "points": 5,
+        "next": "Mon_22"
+      },
+      {
+        "id": "211132",
+        "points": 5,
+        "next": "Mon_211132"
+      },
+      {
+        "id": "22",
+        "points": 5,
+        "next": "Mon_22"
+      }
+    ],
+    "stardewcraft.npc.morris.first_membership": [
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_join_yes"
+      },
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_dismiss"
+      }
+    ],
+    "stardewcraft.npc.morris.weekend_membership": [
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_join_yes"
+      },
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_dismiss"
+      }
+    ],
+    "stardewcraft.npc.morris.signup_confirm": [
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_signup_yes"
+      },
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_dismiss"
+      }
+    ],
+    "stardewcraft.npc.morris.cd_form_offer": [
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_cd_yes"
+      },
+      {
+        "id": "-1",
+        "points": -1,
+        "next": "morris_dismiss"
+      }
+    ],
+    "stardewcraft.npc.maru.summer_thu": [
+      {
+        "id": "35",
+        "points": 30,
+        "next": "Thu_0"
+      },
+      {
+        "id": "36",
+        "points": -50,
+        "next": "Thu_01_01"
+      },
+      {
+        "id": "35",
+        "points": 40,
+        "next": "Thu_01_02"
+      }
+    ],
+    "stardewcraft.npc.maru.sun": [
+      {
+        "id": "3",
+        "points": 0,
+        "next": "Sun_01_01"
+      },
+      {
+        "id": "4",
+        "points": 0,
+        "next": "Sun_01_02"
+      }
+    ],
+    "stardewcraft.npc.penny.mon4": [
+      {
+        "id": "7",
+        "points": 50,
+        "next": "Mon_7"
+      },
+      {
+        "id": "8",
+        "points": 10,
+        "next": "Mon_8"
+      }
+    ],
+    "stardewcraft.npc.sam.wed": [
+      {
+        "id": "20",
+        "points": 30,
+        "next": "Wed_20"
+      },
+      {
+        "id": "8820",
+        "points": 30,
+        "next": "Wed_20"
+      },
+      {
+        "id": "8821",
+        "points": 30,
+        "next": "Wed_20"
+      },
+      {
+        "id": "19",
+        "points": -50,
+        "next": "Wed_19"
+      }
+    ],
+    "stardewcraft.npc.sebastian.fall_fri": [
+      {
+        "id": "62",
+        "points": -30,
+        "next": "Fri_bad"
+      },
+      {
+        "id": "63",
+        "points": 30,
+        "next": "Fri_good"
+      },
+      {
+        "id": "62",
+        "points": 0,
+        "next": "Fri_bad"
+      },
+      {
+        "id": "63",
+        "points": -30,
+        "next": "Fri_bad"
+      }
+    ],
+    "stardewcraft.npc.sebastian.fri2": [
+      {
+        "id": "15",
+        "points": 0,
+        "next": "Fri_bad"
+      },
+      {
+        "id": "16",
+        "points": 30,
+        "next": "Fri_good"
+      },
+      {
+        "id": "15",
+        "points": -30,
+        "next": "Fri_bad"
+      },
+      {
+        "id": "15",
+        "points": -30,
+        "next": "Fri_bad"
+      }
+    ],
+    "stardewcraft.npc.wizard.daily_hub": [
+      {
+        "id": "wizard_go_stardew",
+        "points": 0,
+        "next": "wizard_go_stardew"
+      },
+      {
+        "id": "wizard_go_overworld",
+        "points": 0,
+        "next": "wizard_go_overworld"
+      },
+      {
+        "id": "wizard_stay",
+        "points": 0,
+        "next": "wizard_stay"
+      }
+    ],
+    "stardewcraft.npc.wizard.e112_cage": [
+      {
+        "id": "wizard_e112_dismiss",
+        "points": 0,
+        "next": "wizard_e112_dismiss"
+      }
+    ],
+    "stardewcraft.npc.wizard.e112_cauldron": [
+      {
+        "id": "wizard_e112_drink",
+        "points": 0,
+        "next": "wizard_e112_drink"
+      }
+    ],
+    "stardewcraft.npc.wizard.e112_intro": [
+      {
+        "id": "wizard_e112_reveal",
+        "points": 0,
+        "next": "wizard_e112_reveal"
+      }
+    ],
+    "stardewcraft.npc.wizard.e112_note": [
+      {
+        "id": "wizard_e112_wizard_leave",
+        "points": 0,
+        "next": "wizard_e112_wizard_leave"
+      }
+    ],
+    "stardewcraft.npc.wizard.e112_return": [
+      {
+        "id": "wizard_e112_cauldron",
+        "points": 0,
+        "next": "wizard_e112_cauldron"
+      }
+    ],
+    "stardewcraft.npc.wizard.galaxy_offer": [
+      {
+        "id": "wizard_galaxy_confirm",
+        "points": 0,
+        "next": "wizard_galaxy_confirm"
+      },
+      {
+        "id": "wizard_galaxy_decline",
+        "points": 0,
+        "next": "wizard_galaxy_decline"
+      }
+    ],
+    "stardewcraft.npc.wizard.has_eye": [
+      {
+        "id": "wizard_first_teleport",
+        "points": 0,
+        "next": "wizard_first_teleport"
+      }
+    ],
+    "stardewcraft.npc.wizard.intro_1": [
+      {
+        "id": "wizard_accepted",
+        "points": 0,
+        "next": "wizard_accepted"
+      },
+      {
+        "id": "wizard_decline",
+        "points": 0,
+        "next": "null"
+      }
+    ]
+  }
+}

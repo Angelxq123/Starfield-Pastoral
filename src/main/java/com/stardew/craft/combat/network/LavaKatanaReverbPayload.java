@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-public record LavaKatanaReverbPayload(boolean active, int durationTicks) implements CustomPacketPayload {
+public record LavaKatanaReverbPayload(int casterId, long castTick, boolean active, int durationTicks) implements CustomPacketPayload {
 
     @SuppressWarnings("null")
     public static final Type<LavaKatanaReverbPayload> TYPE = new Type<>(
@@ -18,6 +18,10 @@ public record LavaKatanaReverbPayload(boolean active, int durationTicks) impleme
 
     @SuppressWarnings("null")
     public static final StreamCodec<ByteBuf, LavaKatanaReverbPayload> STREAM_CODEC = StreamCodec.composite(
+        ByteBufCodecs.VAR_INT,
+        LavaKatanaReverbPayload::casterId,
+        ByteBufCodecs.VAR_LONG,
+        LavaKatanaReverbPayload::castTick,
         ByteBufCodecs.BOOL,
         LavaKatanaReverbPayload::active,
         ByteBufCodecs.VAR_INT,
@@ -36,18 +40,8 @@ public record LavaKatanaReverbPayload(boolean active, int durationTicks) impleme
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(LavaKatanaReverbPayload payload) {
-        if (payload.active()) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;
-            com.stardew.craft.client.weapon.LavaKatanaReverbClientState.start(nowTick, payload.durationTicks());
-            if (mc.player != null) {
-                com.stardew.craft.client.weapon.SkillEffectsClient.playSkillEffects(
-                    "lava_katana_reverb",
-                    mc.player
-                );
-            }
-        } else {
-            com.stardew.craft.client.weapon.LavaKatanaReverbClientState.clear();
+        if (com.stardew.craft.client.weapon.LavaKatanaReverbClientState.apply(payload) && payload.active()) {
+            com.stardew.craft.client.weapon.LavaKatanaReverbVisuals.ignite(payload.casterId());
         }
     }
 }

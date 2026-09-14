@@ -1,0 +1,245 @@
+{
+  "source": "Stardew Valley 1.6 Data/Characters: CanSocialize and SocialTab; Sandy condition is evaluated separately.",
+  "characters": [
+    {
+      "npcId": "abigail",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "caroline",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "clint",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "demetrius",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "willy",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "elliott",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "emily",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "evelyn",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "george",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "gus",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "haley",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "harvey",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "jas",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "jodi",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "alex",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "kent",
+      "canSocialize": true,
+      "socialTab": "AlwaysShown"
+    },
+    {
+      "npcId": "leah",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "lewis",
+      "canSocialize": true,
+      "socialTab": "AlwaysShown"
+    },
+    {
+      "npcId": "linus",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "marlon",
+      "canSocialize": false,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "marnie",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "maru",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "pam",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "penny",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "pierre",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "robin",
+      "canSocialize": true,
+      "socialTab": "AlwaysShown"
+    },
+    {
+      "npcId": "sam",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "sebastian",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "shane",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "vincent",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "wizard",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "dwarf",
+      "canSocialize": true,
+      "socialTab": "HiddenUntilMet"
+    },
+    {
+      "npcId": "sandy",
+      "canSocialize": true,
+      "socialTab": "UnknownUntilMet"
+    },
+    {
+      "npcId": "krobus",
+      "canSocialize": true,
+      "socialTab": "HiddenUntilMet"
+    },
+    {
+      "npcId": "leo",
+      "canSocialize": true,
+      "socialTab": "AlwaysShown"
+    },
+    {
+      "npcId": "???",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "bear",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "birdie",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "bouncer",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "gil",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "governor",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "grandpa",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "gunther",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "henchman",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "mister_qi",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "morris",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "old_mariner",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    },
+    {
+      "npcId": "welwick",
+      "canSocialize": false,
+      "socialTab": "HiddenAlways"
+    }
+  ]
+}

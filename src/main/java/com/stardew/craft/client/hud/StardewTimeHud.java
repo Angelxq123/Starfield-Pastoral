@@ -98,6 +98,16 @@ public class StardewTimeHud {
     public static void updateClientTime(StardewTimeManager timeData) {
         clientTimeCache = timeData;
         timeSyncedFromServer = true;
+        refreshTerrainSeason(timeData.getCurrentSeason());
+    }
+
+    private static void refreshTerrainSeason(int season) {
+        com.stardew.craft.block.decor.IceCreamStandBlock.updateClientSeason(season);
+        com.stardew.craft.block.decor.PlazaDisplayBlock.updateClientSeason(season);
+        if (com.stardew.craft.client.model.terrain.TerrainSeasonTextures.updateSeason(season)) {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.level != null) minecraft.levelRenderer.allChanged();
+        }
     }
 
     public static boolean isTimeSynced() {
@@ -106,6 +116,7 @@ public class StardewTimeHud {
 
     public static void resetTimeSync() {
         timeSyncedFromServer = false;
+        refreshTerrainSeason(-1);
         fairFishingHudActive = false;
         iceFishingHudActive = false;
         FestivalCurrencyHudState.reset();
@@ -176,6 +187,16 @@ public class StardewTimeHud {
         };
     }
     
+    /** Shared by rendering and the addon API so visibility rules cannot diverge. */
+    public static boolean isMainHudVisible() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || mc.options.hideGui || mc.player.isSpectator()
+                || mc.screen instanceof StardewHudLayoutEditorScreen) return false;
+        boolean dimension = mc.level.dimension() == ModDimensions.STARDEW_VALLEY
+                || mc.level.dimension() == com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING;
+        return dimension && (!FestivalHudState.hidden() || FestivalCurrencyHudState.active() || isCasinoCurrencyActive());
+    }
+
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
@@ -199,9 +220,7 @@ public class StardewTimeHud {
             return;
         }
 
-        if (com.stardew.craft.client.hud.FestivalHudState.hidden()
-                && !FestivalCurrencyHudState.active()
-                && !isCasinoCurrencyActive()) {
+        if (!isMainHudVisible()) {
             renderFairFishingHud(event.getGuiGraphics());
             renderIceFishingHud(event.getGuiGraphics());
             return;
@@ -221,6 +240,7 @@ public class StardewTimeHud {
         renderMainHudAt(graphics, placement.x(), placement.y(), placement.scale());
         renderAttachedCurrency(graphics, placement);
         renderDesertFestivalMineRating(graphics);
+        StardewAddonHudBridge.renderPost(graphics, screenWidth, screenHeight, placement);
     }
 
     static void renderPreview(GuiGraphics graphics, int x, int y, float scale) {
@@ -320,9 +340,11 @@ public class StardewTimeHud {
         String weekdayName = getWeekdayName(currentDay);
         String dateStr = I18n.get("stardewcraft.hud.date_format", currentDay, weekdayName);
         float clockLineHeight = StardewFonts.lineHeight(clockRole);
-        float dateX = 333.0F * 0.5625F / 4.0F - clockFont.width(dateStr) * HUD_FONT_SCALE / 2.0F;
-        float dateY = 431.0F * 0.1F / 4.0F - clockLineHeight * HUD_FONT_SCALE / 2.0F;
-        drawHudTextWithShadow(graphics, clockFont, dateStr, dateX, dateY, SDV_TEXT_COLOR, korean || isLongWordLanguage(language));
+        float dateScale = com.stardew.craft.client.gui.common.GuiLayoutMath.fitTextScale(
+                HUD_FONT_SCALE, clockFont.width(dateStr), clockLineHeight, 38.0F, 9.0F);
+        float dateX = 333.0F * 0.5625F / 4.0F - clockFont.width(dateStr) * dateScale / 2.0F;
+        float dateY = 431.0F * 0.1F / 4.0F - clockLineHeight * dateScale / 2.0F;
+        drawHudTextWithShadow(graphics, clockFont, dateStr, dateX, dateY, SDV_TEXT_COLOR, korean || isLongWordLanguage(language), dateScale);
 
         String timeStr = formatClockTime(currentTime, language);
         boolean isLateNight = currentTime >= 1440;
@@ -343,9 +365,11 @@ public class StardewTimeHud {
         }
         float timeShakeX = timeShakeTimer > 0 ? (float)(Math.random() * 5.0D - 2.0D) / 4.0F : 0.0F;
         float timeShakeY = timeShakeTimer > 0 ? (float)(Math.random() * 5.0D - 2.0D) / 4.0F : 0.0F;
-        float timeX = 333.0F * 0.55F / 4.0F - clockFont.width(timeStr) * HUD_FONT_SCALE / 2.0F + timeShakeX;
-        float timeY = 431.0F * 0.31F / 4.0F - clockLineHeight * HUD_FONT_SCALE / 2.0F + timeShakeY;
-        drawHudTextWithShadow(graphics, clockFont, timeStr, timeX, timeY, timeColor, korean || isLongWordLanguage(language));
+        float timeScale = com.stardew.craft.client.gui.common.GuiLayoutMath.fitTextScale(
+                HUD_FONT_SCALE, clockFont.width(timeStr), clockLineHeight, 38.0F, 9.0F);
+        float timeX = 333.0F * 0.55F / 4.0F - clockFont.width(timeStr) * timeScale / 2.0F + timeShakeX;
+        float timeY = 431.0F * 0.31F / 4.0F - clockLineHeight * timeScale / 2.0F + timeShakeY;
+        drawHudTextWithShadow(graphics, clockFont, timeStr, timeX, timeY, timeColor, korean || isLongWordLanguage(language), timeScale);
 
         if (moneyShakeTimer > 0) {
             moneyShakeTimer -= (int)(Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() * 50);
@@ -391,12 +415,12 @@ public class StardewTimeHud {
     }
 
     private static void drawHudTextWithShadow(GuiGraphics graphics, Font font, String text,
-                                              float x, float y, int color, boolean compactShadow) {
+                                              float x, float y, int color, boolean compactShadow, float textScale) {
         float shadowX = compactShadow ? -2.0F / 3.0F : -1.0F;
         float shadowY = compactShadow ? 2.0F / 3.0F : 1.0F;
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0.0F);
-        graphics.pose().scale(HUD_FONT_SCALE, HUD_FONT_SCALE, 1.0F);
+        graphics.pose().scale(textScale, textScale, 1.0F);
         drawHudTextAt(graphics, font, text, shadowX, shadowY, SDV_TEXT_SHADOW);
         drawHudTextAt(graphics, font, text, shadowX, 0.0F, SDV_TEXT_SHADOW);
         drawHudTextAt(graphics, font, text, 0.0F, shadowY, SDV_TEXT_SHADOW);

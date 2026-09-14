@@ -91,6 +91,8 @@ public final class DwarfFortressSkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(), context.weaponId().getPath(), context.skillData().getId(), 10);
         instance.registerCommittedEffect(() -> {
             executionState.start(
                     context.player(),

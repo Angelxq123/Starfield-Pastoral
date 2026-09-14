@@ -1,0 +1,119 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/mine/shrine/altar_active_stone",
+    "1": "stardewcraft:block/mine/shrine/altar_active_glow",
+    "2": "stardewcraft:block/mine/shrine/shrine_stone_particle",
+    "particle": "stardewcraft:block/mine/shrine/shrine_stone_particle"
+  },
+  "elements": [
+    {
+      "name": "右石火盆前缘",
+      "from": [
+        5,
+        6,
+        11
+      ],
+      "to": [
+        15,
+        8,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.125,
+            5.625,
+            2.75,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.6875,
+            5.625,
+            3.8125,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2.8125,
+            5.625,
+            3.4375,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3.5,
+            5.625,
+            3.625,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            3.875,
+            5.625,
+            4.5,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.5625,
+            5.625,
+            5.1875,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "右原版火焰正面",
+      "from": [
+        6,
+        8,
+        14.2
+      ],
+      "to": [
+        14,
+        18,
+        14.2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14.6875,
+            5.625,
+            15.1875,
+            6.25
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            15.25,
+            5.625,
+            15.75,
+            6.25
+          ],
+          "texture": "#1"
+        }
+      },
+      "shade": false,
+      "neoforge_data": {
+        "block_light": 15,
+        "sky_light": 15,
+        "ambient_occlusion": false
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

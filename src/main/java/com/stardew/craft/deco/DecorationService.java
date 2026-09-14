@@ -2,6 +2,7 @@ package com.stardew.craft.deco;
 
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.utility.FlooringBlock;
+import com.stardew.craft.block.utility.LegacyWallpaperBlock;
 import com.stardew.craft.block.utility.WallpaperBlock;
 import com.stardew.craft.blockentity.DecorBlockEntity;
 import com.stardew.craft.network.payload.OpenDecorationScreenPayload;
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 
 public final class DecorationService {
+    private static final int MAX_CONNECTED_BLOCKS = 8192;
+
     private DecorationService() {
     }
 
@@ -60,18 +63,24 @@ public final class DecorationService {
 
         String currentStyle = DecorationStyleRegistry.getDefaultStyleId(type);
         int currentSegment = -1;
-        if (level.getBlockEntity(pos) instanceof DecorBlockEntity decorBe) {
+        if (type == DecorationType.WALLPAPER && state.getBlock() instanceof WallpaperBlock wallpaper) {
+            currentStyle = wallpaper.getStyleId();
+        } else if (level.getBlockEntity(pos) instanceof DecorBlockEntity decorBe) {
             currentStyle = decorBe.getStyleId();
-            currentSegment = decorBe.getSegmentOverride();
+            if (type == DecorationType.WALLPAPER) {
+                currentSegment = decorBe.getSegmentOverride();
+            }
+        } else if (type == DecorationType.WALLPAPER && state.hasProperty(LegacyWallpaperBlock.STYLE)) {
+            currentStyle = WallpaperStyles.fromLegacyVisualIndex(state.getValue(LegacyWallpaperBlock.STYLE));
         }
 
-        PacketDistributor.sendToPlayer(player, new OpenDecorationScreenPayload(type.name(), pos, currentStyle, options, currentSegment));
+        PacketDistributor.sendToPlayer(player,
+            new OpenDecorationScreenPayload(type.name(), pos, currentStyle, options, currentSegment));
     }
 
     @SuppressWarnings("null")
-    public static int applyToConnected(Level level, BlockPos start, DecorationType type, String styleId) {
-        Block targetBlock = type == DecorationType.WALLPAPER ? ModBlocks.WALLPAPER_BLOCK.get() : ModBlocks.FLOORING_BLOCK.get();
-        if (!level.getBlockState(start).is(targetBlock)) {
+    public static int applyToConnected(Level level, BlockPos start, DecorationType type, String styleId, int segment) {
+        if (!isTargetBlock(level.getBlockState(start).getBlock(), type)) {
             return 0;
         }
 
@@ -80,28 +89,17 @@ public final class DecorationService {
         queue.add(start);
 
         int changed = 0;
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && changed < MAX_CONNECTED_BLOCKS) {
             BlockPos pos = queue.poll();
             if (!visited.add(pos)) {
                 continue;
             }
-            if (!level.getBlockState(pos).is(targetBlock)) {
+            if (!isTargetBlock(level.getBlockState(pos).getBlock(), type)) {
                 continue;
             }
 
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof DecorBlockEntity decorBe) {
-                decorBe.setStyleId(styleId);
-                applyVisualState(level, pos, type, styleId);
+            if (applyAt(level, pos, type, styleId, segment)) {
                 changed++;
-            } else if (level.getBlockState(pos).getBlock() instanceof EntityBlock entityBlock) {
-                BlockEntity created = entityBlock.newBlockEntity(pos, level.getBlockState(pos));
-                if (created instanceof DecorBlockEntity decorCreated) {
-                    level.setBlockEntity(decorCreated);
-                    decorCreated.setStyleId(styleId);
-                    applyVisualState(level, pos, type, styleId);
-                    changed++;
-                }
             }
 
             queue.add(pos.north());
@@ -115,13 +113,10 @@ public final class DecorationService {
         return changed;
     }
 
-    /**
-     * Apply a style to all matching blocks within an AABB region (cornerA to cornerB inclusive).
-     */
+    /** Apply a style to all matching blocks within an AABB region (inclusive). */
     @SuppressWarnings("null")
-    public static int applyToRegion(Level level, BlockPos cornerA, BlockPos cornerB, DecorationType type, String styleId) {
-        Block targetBlock = type == DecorationType.WALLPAPER ? ModBlocks.WALLPAPER_BLOCK.get() : ModBlocks.FLOORING_BLOCK.get();
-
+    public static int applyToRegion(Level level, BlockPos cornerA, BlockPos cornerB, DecorationType type,
+                                    String styleId, int segment) {
         int minX = Math.min(cornerA.getX(), cornerB.getX());
         int minY = Math.min(cornerA.getY(), cornerB.getY());
         int minZ = Math.min(cornerA.getZ(), cornerB.getZ());
@@ -135,23 +130,11 @@ public final class DecorationService {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     cursor.set(x, y, z);
-                    if (!level.getBlockState(cursor).is(targetBlock)) {
+                    if (!isTargetBlock(level.getBlockState(cursor).getBlock(), type)) {
                         continue;
                     }
-                    BlockPos immutable = cursor.immutable();
-                    BlockEntity be = level.getBlockEntity(immutable);
-                    if (be instanceof DecorBlockEntity decorBe) {
-                        decorBe.setStyleId(styleId);
-                        applyVisualState(level, immutable, type, styleId);
+                    if (applyAt(level, cursor.immutable(), type, styleId, segment)) {
                         changed++;
-                    } else if (level.getBlockState(immutable).getBlock() instanceof EntityBlock entityBlock) {
-                        BlockEntity created = entityBlock.newBlockEntity(immutable, level.getBlockState(immutable));
-                        if (created instanceof DecorBlockEntity decorCreated) {
-                            level.setBlockEntity(decorCreated);
-                            decorCreated.setStyleId(styleId);
-                            applyVisualState(level, immutable, type, styleId);
-                            changed++;
-                        }
                     }
                 }
             }
@@ -160,57 +143,61 @@ public final class DecorationService {
     }
 
     private static boolean isTargetBlock(Block block, DecorationType type) {
-        return (type == DecorationType.WALLPAPER && block == ModBlocks.WALLPAPER_BLOCK.get())
-            || (type == DecorationType.FLOORING && block == ModBlocks.FLOORING_BLOCK.get());
+        return type == DecorationType.WALLPAPER
+            ? block instanceof WallpaperBlock || block == ModBlocks.WALLPAPER_BLOCK.get()
+            : block == ModBlocks.FLOORING_BLOCK.get();
     }
 
-    @SuppressWarnings("null")
-    private static void applyVisualState(Level level, BlockPos pos, DecorationType type, String styleId) {
+    private static boolean applyAt(Level level, BlockPos pos, DecorationType type, String styleId, int segment) {
+        if (type == DecorationType.WALLPAPER) {
+            return applyWallpaper(level, pos, styleId, segment);
+        }
+        return applyFlooring(level, pos, styleId);
+    }
+
+    private static boolean applyWallpaper(Level level, BlockPos pos, String styleId, int requestedSegment) {
         BlockState current = level.getBlockState(pos);
-        int visual = DecorationStyleRegistry.getVisualIndex(type, styleId);
-        BlockState updated;
-        if (type == DecorationType.WALLPAPER && current.hasProperty(WallpaperBlock.STYLE)) {
-            // Respect segmentOverride from block entity if present
-            int segment;
-            if (level.getBlockEntity(pos) instanceof DecorBlockEntity decorBe && decorBe.getSegmentOverride() >= 0) {
-                segment = decorBe.getSegmentOverride();
-            } else {
-                segment = resolveWallpaperSegment(level, pos);
-            }
-            updated = current.setValue(WallpaperBlock.STYLE, visual);
-            if (updated.hasProperty(WallpaperBlock.SEGMENT)) {
-                updated = updated.setValue(WallpaperBlock.SEGMENT, segment);
-            }
-        } else if (type == DecorationType.FLOORING && current.hasProperty(FlooringBlock.STYLE)) {
-            int px = Math.floorMod(pos.getX(), 2);
-            int pz = Math.floorMod(pos.getZ(), 2);
-            int part = pz * 2 + px;
-            updated = current.setValue(FlooringBlock.STYLE, visual);
-            if (updated.hasProperty(FlooringBlock.PART)) {
-                updated = updated.setValue(FlooringBlock.PART, part);
-            }
-        } else {
-            return;
+        if (!isTargetBlock(current.getBlock(), DecorationType.WALLPAPER)) {
+            return false;
         }
+
+        int preservedSegment = current.hasProperty(WallpaperBlock.SEGMENT)
+            ? current.getValue(WallpaperBlock.SEGMENT)
+            : 0;
+        int segment = requestedSegment >= 0 ? requestedSegment : preservedSegment;
+        WallpaperBlock target = ModBlocks.getWallpaperStyleBlock(styleId).get();
+        BlockState updated = target.defaultBlockState().setValue(WallpaperBlock.SEGMENT, segment);
         if (updated != current) {
-            level.setBlock(pos, updated, 3);
+            level.setBlock(pos, updated, Block.UPDATE_ALL);
         }
+        return true;
     }
 
-    @SuppressWarnings("null")
-    private static int resolveWallpaperSegment(Level level, BlockPos pos) {
-        Block wallpaper = ModBlocks.WALLPAPER_BLOCK.get();
-        int bottomY = pos.getY();
-        BlockPos.MutableBlockPos cursor = pos.mutable();
-        while (true) {
-            cursor.set(pos.getX(), bottomY - 1, pos.getZ());
-            if (!level.getBlockState(cursor).is(wallpaper)) {
-                break;
-            }
-            bottomY--;
+    private static boolean applyFlooring(Level level, BlockPos pos, String styleId) {
+        BlockState current = level.getBlockState(pos);
+        if (!current.is(ModBlocks.FLOORING_BLOCK.get())) {
+            return false;
         }
 
-        int offset = pos.getY() - bottomY;
-        return Math.floorMod(offset, 3);
+        BlockEntity be = level.getBlockEntity(pos);
+        DecorBlockEntity decor;
+        if (be instanceof DecorBlockEntity existing) {
+            decor = existing;
+        } else if (current.getBlock() instanceof EntityBlock entityBlock
+            && entityBlock.newBlockEntity(pos, current) instanceof DecorBlockEntity created) {
+            level.setBlockEntity(created);
+            decor = created;
+        } else {
+            return false;
+        }
+
+        decor.setStyleId(styleId);
+        int visual = DecorationStyleRegistry.getVisualIndex(DecorationType.FLOORING, styleId);
+        int part = Math.floorMod(pos.getZ(), 2) * 2 + Math.floorMod(pos.getX(), 2);
+        BlockState updated = current.setValue(FlooringBlock.STYLE, visual).setValue(FlooringBlock.PART, part);
+        if (updated != current) {
+            level.setBlock(pos, updated, Block.UPDATE_ALL);
+        }
+        return true;
     }
 }

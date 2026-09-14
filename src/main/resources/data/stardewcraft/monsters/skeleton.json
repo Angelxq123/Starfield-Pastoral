@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "source_name": "Skeleton",
+  "family": "skeleton",
+  "health": 140,
+  "damage": 10,
+  "resilience": 1,
+  "miss_chance": 0.0,
+  "experience": 8,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:bone_fragment",
+      "chance": 0.5
+    },
+    {
+      "item": "stardewcraft:bone_fragment",
+      "chance": 0.4
+    },
+    {
+      "item": "stardewcraft:bone_fragment",
+      "chance": 0.2
+    },
+    {
+      "item": "stardewcraft:prehistoric_scapula",
+      "chance": 0.005
+    }
+  ]
+}

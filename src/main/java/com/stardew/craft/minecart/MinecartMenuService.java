@@ -39,7 +39,7 @@ public final class MinecartMenuService {
     public static final Destination MINES = new Destination(
             "mines", "stardewcraft.minecart.dest.mines",
             ModMiningDimensions.STARDEW_MINING,
-            -6.0 + 0.5, 66.0, -12.0 + 0.5, -90.0F, null);
+            -4.5, 66.125, -0.5, -90.0F, null);
 
     public static final Destination BUS = new Destination(
             "bus", "stardewcraft.minecart.dest.bus",
@@ -98,6 +98,10 @@ public final class MinecartMenuService {
         player.closeContainer();
         player.stopUsingItem();
 
-        ModTeleport.to(player, target, dest.x, dest.y, dest.z, dest.yaw, 0.0F);
+        if(dest==MINES) {
+            com.stardew.craft.mining.MiningCoordinates.teleportPlayerToFloor(player,target,0);
+            var p=com.stardew.craft.mining.OrdinaryMineLayout.load(target,0).position(0,13,11);
+            ModTeleport.to(player,target,p.getX()+.5,p.getY()+.125,p.getZ()+.5,-90,0);
+        } else ModTeleport.to(player, target, dest.x, dest.y, dest.z, dest.yaw, 0.0F);
     }
 }

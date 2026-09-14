@@ -35,6 +35,15 @@
       "price": 10000,
       "stock": 1,
       "day_of_week": 4
+    },
+    {
+      "item": "recipe:stardewcraft:crystal_floor",
+      "price": 500,
+      "stock": 1
+    },
+    {
+      "item": "stardewcraft:butterfly_powder",
+      "price": 20000
     }
   ],
   "accepted_sell_types": []

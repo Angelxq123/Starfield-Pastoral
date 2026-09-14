@@ -1,6 +1,8 @@
 package com.stardew.craft.block.nature;
 
 import com.stardew.craft.block.utility.GardenPotBlock;
+import com.stardew.craft.block.crop.CropModelShapes;
+import com.stardew.craft.block.decor.GardenPlanterBlock;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.event.FarmAreaProtectionEvents;
 import com.stardew.craft.item.ModItems;
@@ -23,6 +25,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -34,21 +37,23 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-/** SDV green-tea bush: a permanent, unwatered two-block plant with four visual states. */
+/** Permanent tea bush with three ages, harvest shoots and source-faithful cosmetic seasons. */
 public final class TeaBushBlock extends Block {
     public static final IntegerProperty STAGE = IntegerProperty.create("stage", 0, 3);
+    public static final IntegerProperty SEASON = IntegerProperty.create("season", 0, 3);
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
 
     public TeaBushBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any()
                 .setValue(STAGE, 0)
+                .setValue(SEASON, 0)
                 .setValue(HALF, DoubleBlockHalf.LOWER));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(STAGE, HALF);
+        builder.add(STAGE, SEASON, HALF);
     }
 
     @Override
@@ -123,10 +128,7 @@ public final class TeaBushBlock extends Block {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        if (GardenPotBlock.isPottedPlant(level, pos, state)) {
-            return Shapes.empty();
-        }
-        return halfShape(state);
+        return halfShape(state, level, pos);
     }
 
     @Override
@@ -134,19 +136,28 @@ public final class TeaBushBlock extends Block {
         if (GardenPotBlock.isPottedPlant(level, pos, state)) {
             return Shapes.empty();
         }
-        return halfShape(state);
+        return halfShape(state, level, pos);
     }
 
-    /** Uses the same texture-derived per-stage geometry as the project's other two-block crops. */
-    private VoxelShape halfShape(BlockState state) {
+    /** Split the complete modeled envelope after applying the actual supporting surface. */
+    private VoxelShape halfShape(BlockState state, BlockGetter level, BlockPos pos) {
         String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         int stage = state.getValue(STAGE);
-        String half = state.getValue(HALF) == DoubleBlockHalf.UPPER ? "upper" : "lower";
+        boolean upper = state.getValue(HALF) == DoubleBlockHalf.UPPER;
         String modelId = ModelVoxelShapeCache.variantModel(
-                blockId, "half=" + half + ",stage=" + stage);
+                blockId, "half=lower,stage=" + stage + ",season=" + state.getValue(SEASON));
         if (modelId != null && !modelId.isBlank()) {
-            // An empty shape is intentional when that half of the 16x32 source sprite is transparent.
-            return ModelVoxelShapeCache.shape(modelId);
+            BlockPos root = upper ? pos.below() : pos;
+            BlockPos soil = root.below();
+            BlockState support = level.getBlockState(soil);
+            boolean pot = support.getBlock() instanceof GardenPotBlock;
+            double offset = support.getBlock() instanceof GardenPlanterBlock ? -.25 : 0;
+            if (support.getBlock() instanceof FarmBlock) {
+                VoxelShape floor = support.getCollisionShape(level, soil);
+                if (!floor.isEmpty()) offset = floor.max(Direction.Axis.Y) - 1;
+            }
+            return CropModelShapes.place(ModelVoxelShapeCache.requiredShape(modelId).bounds(),
+                    offset, pot, true, upper);
         }
         return Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
     }

@@ -1,7 +1,260 @@
 {
   "variants": {
-    "": {
-      "model": "stardewcraft:block/mine_barrel"
+    "facing=north,part=main,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=earth": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=frost": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=lava": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=desert": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/loot/earth_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/loot/frost_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/loot/lava_barrel_empty",
+      "y": 270
+    },
+    "facing=north,part=main,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 0
+    },
+    "facing=north,part=extension,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 0
+    },
+    "facing=east,part=main,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 90
+    },
+    "facing=east,part=extension,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 90
+    },
+    "facing=south,part=main,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 180
+    },
+    "facing=south,part=extension,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 180
+    },
+    "facing=west,part=main,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel",
+      "y": 270
+    },
+    "facing=west,part=extension,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/loot/desert_barrel_empty",
+      "y": 270
     }
   }
 }

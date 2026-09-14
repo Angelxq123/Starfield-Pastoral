@@ -90,7 +90,7 @@ public final class GalaxyDaggerStarstabSkillHandler
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,
-                skillId,
+                "galaxy_dagger_ready",
                 INITIAL_ANIMATION_TICKS
         );
     }

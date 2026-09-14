@@ -14,6 +14,17 @@ final class CommonWeaponAppliedHitRules {
     private CommonWeaponAppliedHitRules() {
     }
 
+    static void applyNativeHitTiming(ResolvedWeaponHit hit) {
+        if (!(hit.target() instanceof com.stardew.craft.monster.StardewMonsterEntity monster)) return;
+        boolean dagger = WeaponStats.fromItemStack(hit.weapon()).getWeaponType() == WeaponType.DAGGER;
+        if (hit.skillId() == null || hit.skillId().isBlank() || "normal".equals(hit.skillId())) monster.sourceWeaponRecovery(dagger);
+        else if (dagger && monster.isAlive()
+                && !com.stardew.craft.combat.skill.YetiFreezeTracker.isMovementLocked(monster, hit.gameTick())) {
+            // Authored multi-hit skills keep their release cadence and receive the source 50 ms stagger.
+            com.stardew.craft.combat.skill.YetiFreezeTracker.apply(monster, hit.gameTick(), 1);
+        }
+    }
+
     static void applyKnockback(ResolvedWeaponHit hit) {
         float strength = hit.frame().knockbackStrength();
         if (!hit.dealtPositiveDamage() || strength <= 0.0F) {
@@ -61,6 +72,8 @@ final class CommonWeaponAppliedHitRules {
             return;
         }
         LivingEntity target = hit.target();
+        if (target instanceof com.stardew.craft.monster.StardewMonsterEntity monster
+                && !monster.claimSettlement(com.stardew.craft.monster.MonsterState.Settlement.WEAPON_REWARDS)) return;
         if (WeaponForgeCombatRules.hasDragonToothBonus(
                 hit.weapon(),
                 "slime_gatherer"

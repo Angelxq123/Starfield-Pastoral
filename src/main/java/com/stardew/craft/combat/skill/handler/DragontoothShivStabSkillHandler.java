@@ -61,6 +61,13 @@ public final class DragontoothShivStabSkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             WeaponSkillDamage.apply(
                     context.player(),
@@ -76,12 +83,6 @@ public final class DragontoothShivStabSkillHandler
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 ANIMATION_TICKS
         );
     }

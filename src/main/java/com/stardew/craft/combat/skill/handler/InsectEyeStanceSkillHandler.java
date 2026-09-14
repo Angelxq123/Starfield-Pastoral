@@ -17,7 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class InsectEyeStanceSkillHandler implements RuntimeWeaponSkillHandler {
     public static final int ACTIVE_DURATION_TICKS = 30;
-    public static final int ANIMATION_TICKS = 1;
+    public static final int ANIMATION_TICKS = 6;
     public static final float DAMAGE_MULTIPLIER = 1.05F;
 
     public record AttackReservation(
@@ -70,7 +70,7 @@ public final class InsectEyeStanceSkillHandler implements RuntimeWeaponSkillHand
                 )
         );
 
-        // The authored stance has a one-tick notification and no animation lock.
+        // A short opening gesture yields to real attacks; no animation lock is added.
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,

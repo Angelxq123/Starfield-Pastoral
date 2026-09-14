@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:block/terrain/summer/dark_grass_block",
+  "textures": {
+    "side": "minecraft:block/grass_block_snow"
+  }
+}

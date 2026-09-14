@@ -1,0 +1,516 @@
+{
+  "variants": {
+    "facing=north,part=main,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/mine_blocked_entry_upper",
+      "y": 270
+    },
+    "facing=north,part=main,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=main,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_empty",
+      "y": 0
+    },
+    "facing=north,part=extension,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_upper",
+      "y": 0
+    },
+    "facing=east,part=main,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=main,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_empty",
+      "y": 90
+    },
+    "facing=east,part=extension,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_upper",
+      "y": 90
+    },
+    "facing=south,part=main,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=main,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_empty",
+      "y": 180
+    },
+    "facing=south,part=extension,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_upper",
+      "y": 180
+    },
+    "facing=west,part=main,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=main,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_empty",
+      "y": 270
+    },
+    "facing=west,part=extension,upper=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/mine_blocked_entry_upper",
+      "y": 270
+    }
+  }
+}

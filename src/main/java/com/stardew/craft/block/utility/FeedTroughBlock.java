@@ -53,7 +53,7 @@ public class FeedTroughBlock extends Block implements EntityBlock {
     public static final BooleanProperty RIGHT_CONNECTED = BooleanProperty.create("right_connected");
     public static final BooleanProperty HAS_HAY = BooleanProperty.create("has_hay");
 
-    private static final VoxelShape FALLBACK_SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 14.0, 16.0);
+    private static final VoxelShape FALLBACK_SHAPE = Block.box(0.0, 0.0, 2.0, 16.0, 8.0, 14.0);
     private static final Map<String, VoxelShape> SHAPE_CACHE = new ConcurrentHashMap<>();
 
     @SuppressWarnings("null")
@@ -135,7 +135,6 @@ public class FeedTroughBlock extends Block implements EntityBlock {
             level.setBlock(pos, updatedSelf, 3);
         }
         refreshNeighbors(level, pos, updatedSelf);
-        reorientIsolatedNeighbors(level, pos, updatedSelf.getValue(FACING));
     }
 
     @SuppressWarnings("null")
@@ -162,50 +161,14 @@ public class FeedTroughBlock extends Block implements EntityBlock {
     }
 
     @SuppressWarnings("null")
-    private static BlockState updateConnections(LevelAccessor level, BlockPos pos, BlockState state) {
+    public static BlockState updateConnections(LevelAccessor level, BlockPos pos, BlockState state) {
         Direction facing = state.getValue(FACING);
         Direction left = facing.getCounterClockWise();
         Direction right = facing.getClockWise();
 
-        boolean straightLeft = isTroughWithFacing(level.getBlockState(pos.relative(left)), facing);
-        boolean straightRight = isTroughWithFacing(level.getBlockState(pos.relative(right)), facing);
-
-        boolean sideCornerLeft = isTroughWithFacing(level.getBlockState(pos.relative(left)), left.getOpposite());
-        boolean sideCornerRight = isTroughWithFacing(level.getBlockState(pos.relative(right)), right.getOpposite());
-
-        boolean cornerLeft = hasLeftCornerConnection(level, pos, facing);
-        boolean cornerRight = hasRightCornerConnection(level, pos, facing);
-
-        boolean leftConnected = straightLeft || sideCornerLeft || (!straightRight && !sideCornerRight && cornerLeft);
-        boolean rightConnected = straightRight || sideCornerRight || (!straightLeft && !sideCornerLeft && cornerRight);
-
+        boolean leftConnected = isTroughWithFacing(level.getBlockState(pos.relative(left)), facing);
+        boolean rightConnected = isTroughWithFacing(level.getBlockState(pos.relative(right)), facing);
         return state.setValue(LEFT_CONNECTED, leftConnected).setValue(RIGHT_CONNECTED, rightConnected);
-    }
-
-    private static boolean hasLeftCornerConnection(LevelAccessor level, BlockPos pos, Direction facing) {
-        Direction left = facing.getCounterClockWise();
-        Direction right = facing.getClockWise();
-
-        BlockState front = level.getBlockState(pos.relative(facing));
-        if (isTroughWithFacing(front, left)) {
-            return true;
-        }
-
-        BlockState back = level.getBlockState(pos.relative(facing.getOpposite()));
-        return isTroughWithFacing(back, right);
-    }
-
-    private static boolean hasRightCornerConnection(LevelAccessor level, BlockPos pos, Direction facing) {
-        Direction left = facing.getCounterClockWise();
-        Direction right = facing.getClockWise();
-
-        BlockState front = level.getBlockState(pos.relative(facing));
-        if (isTroughWithFacing(front, right)) {
-            return true;
-        }
-
-        BlockState back = level.getBlockState(pos.relative(facing.getOpposite()));
-        return isTroughWithFacing(back, left);
     }
 
     private static boolean isTroughWithFacing(BlockState state, Direction facing) {
@@ -227,39 +190,6 @@ public class FeedTroughBlock extends Block implements EntityBlock {
         if (updated != neighborState) {
             level.setBlock(neighborPos, updated, 3);
         }
-    }
-
-    private static void reorientIsolatedNeighbors(Level level, BlockPos placedPos, Direction placedFacing) {
-        for (Direction direction : Direction.Plane.HORIZONTAL) {
-            BlockPos neighborPos = placedPos.relative(direction);
-            BlockState neighborState = level.getBlockState(neighborPos);
-            if (!(neighborState.getBlock() instanceof FeedTroughBlock)) {
-                continue;
-            }
-            if (countAdjacentTroughs(level, neighborPos) != 1) {
-                continue;
-            }
-
-            Direction currentFacing = neighborState.getValue(FACING);
-            if (currentFacing == placedFacing) {
-                continue;
-            }
-
-            BlockState rotated = neighborState.setValue(FACING, placedFacing);
-            rotated = updateConnections(level, neighborPos, rotated);
-            level.setBlock(neighborPos, rotated, 3);
-            refreshNeighbors(level, neighborPos, rotated);
-        }
-    }
-
-    private static int countAdjacentTroughs(LevelAccessor level, BlockPos pos) {
-        int count = 0;
-        for (Direction direction : Direction.Plane.HORIZONTAL) {
-            if (level.getBlockState(pos.relative(direction)).getBlock() instanceof FeedTroughBlock) {
-                count++;
-            }
-        }
-        return count;
     }
 
     public static List<BlockPos> collectConnectedTroughs(LevelAccessor level, BlockPos origin) {
@@ -312,7 +242,7 @@ public class FeedTroughBlock extends Block implements EntityBlock {
         if (!(a.getBlock() instanceof FeedTroughBlock) || !(b.getBlock() instanceof FeedTroughBlock)) {
             return false;
         }
-        return connectsTo(aPos, a, bPos, b) || connectsTo(bPos, b, aPos, a);
+        return connectsTo(aPos, a, bPos, b);
     }
 
     private static boolean connectsTo(BlockPos fromPos, BlockState fromState, BlockPos toPos, BlockState toState) {
@@ -328,10 +258,6 @@ public class FeedTroughBlock extends Block implements EntityBlock {
 
         if (toDir == facing.getCounterClockWise() || toDir == facing.getClockWise()) {
             return toState.getValue(FACING) == facing;
-        }
-        if (toDir == facing || toDir == facing.getOpposite()) {
-            Direction toFacing = toState.getValue(FACING);
-            return toFacing == facing.getCounterClockWise() || toFacing == facing.getClockWise();
         }
         return false;
     }

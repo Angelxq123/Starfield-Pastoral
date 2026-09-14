@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.overnight;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.stardew.craft.StardewCraft;
 import net.minecraft.client.Minecraft;
@@ -317,7 +319,7 @@ public class StardewGuiUtil {
         if (mc == null || mc.getWindow() == null) {
             return 1.0f;
         }
-        return (float) mc.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.renderScale();
     }
 
     private static ResourceLocation common(String name) {

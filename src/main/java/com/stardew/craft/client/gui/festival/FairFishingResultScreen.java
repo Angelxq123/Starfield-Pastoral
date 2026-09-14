@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.festival;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.network.payload.FairFishingResultAdvancePayload;
 import com.stardew.craft.network.payload.OpenFairFishingResultPayload;
@@ -39,7 +41,7 @@ public class FairFishingResultScreen extends Screen {
     @Override
     protected void init() {
         lastUpdateMs = System.currentTimeMillis();
-        guiScale = (float) Minecraft.getInstance().getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     @Override

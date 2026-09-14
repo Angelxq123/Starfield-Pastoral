@@ -1,7 +1,7 @@
 package com.stardew.craft.combat.skill.handler;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.combat.network.FireRingEffectPayload;
+import com.stardew.craft.combat.network.DwarfShockPayload;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
 import com.stardew.craft.combat.skill.WeaponSkillDamage;
@@ -11,16 +11,11 @@ import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import com.stardew.craft.effect.ModMobEffects;
 import java.util.List;
 import java.util.Objects;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,7 +23,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -251,16 +245,8 @@ final class DwarfFortressExecutionState
         Vec3 center = player.position();
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 player,
-                new FireRingEffectPayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
-                        radius,
-                        DwarfFortressSkillHandler.RING_DURATION_TICKS
-                )
+                new DwarfShockPayload(player.getId(), nowTick, center.x, center.y, center.z, radius, echo)
         );
-
-        spawnShockwaveEffects(serverLevel, center, radius, echo);
 
         List<LivingEntity> targets = getTargetsInRadius(
                 serverLevel,
@@ -282,84 +268,6 @@ final class DwarfFortressExecutionState
                             .BYPASS_FOR_AUTHORED_SEQUENCE
             );
         }
-    }
-
-    @SuppressWarnings("null")
-    private static void spawnShockwaveEffects(
-            ServerLevel level,
-            Vec3 center,
-            float radius,
-            boolean echo
-    ) {
-        int smokeCount = echo ? 28 : 18;
-        int critCount = echo ? 26 : 16;
-        int dustCount = echo ? 36 : 24;
-
-        level.sendParticles(
-                ParticleTypes.EXPLOSION,
-                center.x,
-                center.y + 0.1,
-                center.z,
-                echo ? 2 : 1,
-                0.2,
-                0.05,
-                0.2,
-                0.0
-        );
-        level.sendParticles(
-                ParticleTypes.SMOKE,
-                center.x,
-                center.y + 0.1,
-                center.z,
-                smokeCount,
-                radius * 0.35,
-                0.12,
-                radius * 0.35,
-                0.02
-        );
-        level.sendParticles(
-                ParticleTypes.CRIT,
-                center.x,
-                center.y + 0.25,
-                center.z,
-                critCount,
-                radius * 0.4,
-                0.2,
-                radius * 0.4,
-                0.12
-        );
-        level.sendParticles(
-                new BlockParticleOption(
-                        ParticleTypes.BLOCK,
-                        Blocks.STONE.defaultBlockState()
-                ),
-                center.x,
-                center.y + 0.05,
-                center.z,
-                dustCount,
-                radius * 0.45,
-                0.18,
-                radius * 0.45,
-                0.12
-        );
-
-        BlockPos pos = BlockPos.containing(center);
-        level.playSound(
-                null,
-                pos,
-                SoundEvents.ANVIL_LAND,
-                SoundSource.PLAYERS,
-                0.8F,
-                echo ? 0.7F : 0.9F
-        );
-        level.playSound(
-                null,
-                pos,
-                SoundEvents.GENERIC_EXPLODE.value(),
-                SoundSource.PLAYERS,
-                echo ? 0.9F : 0.6F,
-                echo ? 0.8F : 1.1F
-        );
     }
 
     private static List<LivingEntity> getTargetsInRadius(

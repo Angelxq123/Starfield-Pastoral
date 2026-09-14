@@ -38,7 +38,7 @@ import java.util.Set;
  * 预制树的砍伐与破坏保护。由 {@code WildTreeChopEvents.onBlockBreak} 在顶部转发进来：
  * 凡是落在某棵预制树占地（{@link PrefabTreeInstance#members()}）内的方块都归这里处理。
  *
- * <p>行为对齐旧版野生树砍伐与 Stardew Valley 1.6 源码（Tree.cs / Axe.cs）：长按树根 → 除树根外
+ * <p>行为对齐 Stardew Valley 1.6 源码（Tree.cs / Axe.cs）：长按树根 → 除树根外
  * 整树倒下（动画 + treecrack/treethud + 粒子）→ 掉落原木（每个 log/branch/原木楼梯/原木台阶 1 个，
  * 再叠 Forester +25%、伐木书 5% 翻倍、Shaving 加成）+ 树种（采集≥1 时按 seedOnChopChance≈75%，1-2 颗）
  * + 5 树液（仅橡/枫/松）→ 树根留作可再砍的树桩。其余组件平时不可破坏。
@@ -65,12 +65,7 @@ public final class PrefabTreeChopHandler {
 		PrefabTreeRegistry reg = PrefabTreeRegistry.get(level);
 		PrefabTreeInstance inst = reg.getByMember(pos);
 		if (inst == null) {
-			// 收养老存档里的「算法生成现代树」（oak_root/log/branch/leaves，不在登记表里）：
-			// 登记成预制实例后，与预制树共用同一套砍伐/掉落/树桩/保护逻辑。
-			inst = tryAdoptModernTree(level, reg, pos);
-			if (inst == null) {
-				return false;
-			}
+			return false;
 		}
 
 		// 创造模式：整树清除，无掉落。
@@ -102,48 +97,27 @@ public final class PrefabTreeChopHandler {
 		return true;
 	}
 
-	/**
-	 * 把老存档里的算法生成现代树「收养」为预制实例：成员 = 连通木质 + 相连树叶。
-	 * 之后砍伐/掉落/树桩/保护全部走预制逻辑，与预制树完全一致。variant=0 标记为收养树。
-	 */
-	private static PrefabTreeInstance tryAdoptModernTree(ServerLevel level, PrefabTreeRegistry reg, BlockPos pos) {
-		BlockState state = level.getBlockState(pos);
-		WildTrees.Def def = WildTrees.findByModernPart(state);
-		if (def == null) {
-			return null;
-		}
-		BlockPos root = WildTrees.findGeneratedModernRoot(level, pos, def);
-		if (root == null) {
-			return null;
-		}
-		PrefabTreeInstance existing = reg.getByRoot(root);
-		if (existing != null) {
-			return existing;
-		}
-		Set<BlockPos> members = WildTrees.collectGeneratedModernTreeMembers(level, root, def);
-		Block logBlock = def.modernLog().get();
-		boolean hasLog = false;
-		for (BlockPos m : members) {
-			if (level.getBlockState(m).getBlock() == logBlock) {
-				hasLog = true;
-				break;
-			}
-		}
-		if (!hasLog) {
-			return null;
-		}
-		reg.register(root, def.id(), 0, members);
-		WildTrees.markGeneratedModernTree(level, root, def);
-		return reg.getByRoot(root);
+	/** The root is one SDV terrain tile; branches cannot receive duplicate blast hits. */
+	public static void explode(ServerLevel level, PrefabTreeInstance inst, ServerPlayer player, int damage) {
+		PrefabTreeRegistry reg = PrefabTreeRegistry.get(level);
+		boolean destroyed = inst.damageByBomb(damage);
+		reg.setDirty();
+		if (!destroyed) return;
+		if (inst.felled()) removeStump(level, reg, inst, player, inst.root(), ItemStack.EMPTY, true);
+		else fell(level, reg, inst, player, inst.root(), ItemStack.EMPTY, true);
 	}
 
 	private static void fell(ServerLevel level, PrefabTreeRegistry reg, PrefabTreeInstance inst, ServerPlayer player, BlockPos root, ItemStack tool) {
+		fell(level, reg, inst, player, root, tool, false);
+	}
+
+	private static void fell(ServerLevel level, PrefabTreeRegistry reg, PrefabTreeInstance inst, ServerPlayer player, BlockPos root, ItemStack tool, boolean explosion) {
 		WildTrees.Def def = PrefabTrees.defById(inst.species());
 		if (def == null) {
 			clearAll(level, reg, inst);
 			return;
 		}
-		if (!consumeChopEnergy(player, level, tool, hitsToFell(tool))) {
+		if (!explosion && !consumeChopEnergy(player, level, tool, hitsToFell(tool))) {
 			return;
 		}
 		Block logBlock = def.modernLog().get();
@@ -188,7 +162,7 @@ public final class PrefabTreeChopHandler {
 				drops.add(new ItemStack(ModItems.WOOD_HARD.get(), hardwood));
 			}
 		}
-		ItemStack secretNote = SecretNoteService.tryCreateFromSource(player, level.random, 0.005F);
+		ItemStack secretNote = explosion ? ItemStack.EMPTY : SecretNoteService.tryCreateFromSource(player, level.random, 0.005F);
 		if (!secretNote.isEmpty()) {
 			drops.add(secretNote);
 		}
@@ -208,14 +182,18 @@ public final class PrefabTreeChopHandler {
 
 		WildTreeSeedManager.get(level).untrackTree(level, root);
 		// 每个木质方块给 1 采集经验。
-		if (logCount > 0) {
+		if (!explosion && logCount > 0) {
 			PlayerStardewDataAPI.addExperience(player, SkillType.FORAGING, logCount);
 		}
 	}
 
 	private static void removeStump(ServerLevel level, PrefabTreeRegistry reg, PrefabTreeInstance inst, ServerPlayer player, BlockPos root, ItemStack tool) {
+		removeStump(level, reg, inst, player, root, tool, false);
+	}
+
+	private static void removeStump(ServerLevel level, PrefabTreeRegistry reg, PrefabTreeInstance inst, ServerPlayer player, BlockPos root, ItemStack tool, boolean explosion) {
 		WildTrees.Def def = PrefabTrees.defById(inst.species());
-		if (!consumeChopEnergy(player, level, tool, Math.max(1, hitsToFell(tool) / 2))) {
+		if (!explosion && !consumeChopEnergy(player, level, tool, Math.max(1, hitsToFell(tool) / 2))) {
 			return;
 		}
 		BlockState rootState = level.getBlockState(root);
@@ -234,7 +212,7 @@ public final class PrefabTreeChopHandler {
 		}
 		reg.unregister(inst);
 		WildTreeSeedManager.get(level).untrackTree(level, root);
-		PlayerStardewDataAPI.addExperience(player, SkillType.FORAGING, XP_REMOVE_STUMP);
+		if (!explosion) PlayerStardewDataAPI.addExperience(player, SkillType.FORAGING, XP_REMOVE_STUMP);
 	}
 
 	private static void clearAll(ServerLevel level, PrefabTreeRegistry reg, PrefabTreeInstance inst) {

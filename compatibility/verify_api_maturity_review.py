@@ -49,21 +49,22 @@ def collect_evidence(project_root: Path, types: list[str]) -> dict[str, Evidence
     core_paths = [
         path
         for path in main_root.rglob("*.java")
-        if "/api/v1/" not in path.as_posix()
+        if "/api/v1/" not in path.as_posix() and not path.name.endswith("GameTests.java")
     ]
-    sample_paths = list(
-        (project_root / "examples/stardewcraft-addon").rglob("*.java")
-    )
+    sample_paths = [
+        path
+        for source in (project_root / "examples").glob("*/src/main/java")
+        for path in source.rglob("*.java")
+    ]
     doc_paths = list((project_root / "docs").rglob("*.md"))
     doc_paths.extend((project_root / "examples").rglob("README.md"))
 
     areas = {
         "core": _read_symbols(core_paths),
         "sample": _read_symbols(sample_paths),
-        # Java tests are intentionally local-only and are not part of the
-        # reproducible release tree, so they cannot count as published API
-        # maturity evidence.
-        "test": set(),
+        # GameTests ship in the tracked production tree. Ignored src/test remains
+        # excluded: a developer's local tests cannot establish release evidence.
+        "test": _read_symbols(main_root.rglob("*GameTests.java")),
         "doc": _read_symbols(doc_paths),
     }
     evidence: dict[str, Evidence] = {}

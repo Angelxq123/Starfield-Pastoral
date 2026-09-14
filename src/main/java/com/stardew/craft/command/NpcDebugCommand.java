@@ -27,11 +27,6 @@ import java.util.Map;
 
 @SuppressWarnings("null")
 public final class NpcDebugCommand {
-    private static final net.minecraft.world.phys.AABB GLOBAL_NPC_SCAN = new net.minecraft.world.phys.AABB(
-        -30_000_000D, -2_048D, -30_000_000D,
-        30_000_000D, 4_096D, 30_000_000D
-    );
-
     private NpcDebugCommand() {
     }
 
@@ -105,9 +100,8 @@ public final class NpcDebugCommand {
     }
 
     private static void sendNpcSummary(CommandSourceStack source, ServerLevel level, String npcId, NpcRuntimeState state) {
-        List<StardewNpcEntity> entities = level.getEntitiesOfClass(
-            StardewNpcEntity.class,
-            GLOBAL_NPC_SCAN,
+        List<? extends StardewNpcEntity> entities = level.getEntities(
+            net.minecraft.world.level.entity.EntityTypeTest.forClass(StardewNpcEntity.class),
             entity -> npcId.equals(entity.getNpcId())
         );
 
@@ -127,9 +121,8 @@ public final class NpcDebugCommand {
     }
 
     private static void sendNpcDetails(CommandSourceStack source, ServerLevel level, String npcId, NpcRuntimeState state) {
-        List<StardewNpcEntity> entities = level.getEntitiesOfClass(
-            StardewNpcEntity.class,
-            GLOBAL_NPC_SCAN,
+        List<? extends StardewNpcEntity> entities = level.getEntities(
+            net.minecraft.world.level.entity.EntityTypeTest.forClass(StardewNpcEntity.class),
             entity -> npcId.equals(entity.getNpcId())
         );
 

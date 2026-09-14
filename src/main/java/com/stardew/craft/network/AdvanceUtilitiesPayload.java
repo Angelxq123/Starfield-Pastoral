@@ -2,7 +2,7 @@ package com.stardew.craft.network;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.blockentity.AdvanceableUtility;
-import com.stardew.craft.fishpond.service.FishPondDailyUpdateService;
+import com.stardew.craft.fishpond.service.FishPondHusbandry;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.StreamCodec;
@@ -55,7 +55,7 @@ public record AdvanceUtilitiesPayload() implements CustomPacketPayload {
 				}
 			}
 
-			FishPondDailyUpdateService.advanceNearby(serverLevel, playerPos, 1);
+			FishPondHusbandry.advanceNearby(serverLevel, playerPos, 1);
 		});
 	}
 }

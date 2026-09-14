@@ -163,6 +163,14 @@ public final class StardewFonts {
         return data == null ? 9.0F : data.lineHeight();
     }
 
+    /** Font.lineHeight is a vanilla constant; localized Stardew glyphs have their own metrics. */
+    public static int lineHeight(Font font) {
+        Role role = font == dialogue ? Role.DIALOGUE : font == small ? Role.SMALL
+                : font == tiny ? Role.TINY : font == tooltip ? Role.TOOLTIP_BODY
+                : font == spriteText ? Role.SPRITE_TEXT : font == spriteTextColored ? Role.SPRITE_TEXT_COLORED : null;
+        return role == null ? font.lineHeight : Math.max(1, (int) Math.ceil(lineHeight(role)));
+    }
+
     private static Font create(ResourceLocation defaultFont) {
         StardewFonts.Role defaultRole = StardewFontManager.role(defaultFont);
         return new StardewFont(defaultRole, requested -> fontSet(

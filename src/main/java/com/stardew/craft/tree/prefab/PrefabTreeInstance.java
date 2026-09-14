@@ -21,6 +21,7 @@ public final class PrefabTreeInstance {
 	private final int variant;
 	private final Set<BlockPos> members;
 	private boolean felled;
+	private int bombDamage;
 
 	public PrefabTreeInstance(BlockPos root, String species, int variant, Set<BlockPos> members, boolean felled) {
 		this.root = root.immutable();
@@ -50,8 +51,16 @@ public final class PrefabTreeInstance {
 		return felled;
 	}
 
+	public int bombDamage() { return bombDamage; }
+	void setBombDamage(int damage) { bombDamage = Math.max(0, damage); }
+	boolean damageByBomb(int damage) {
+		bombDamage += damage;
+		return bombDamage >= (felled ? 5 : 10);
+	}
+
 	void markFelled() {
 		this.felled = true;
+		this.bombDamage = 0;
 		this.members.clear();
 		this.members.add(root);
 	}

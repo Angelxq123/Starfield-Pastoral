@@ -2,7 +2,7 @@ package com.stardew.craft.blockentity;
 
 import com.stardew.craft.fishpond.data.FishPondWorldData;
 import com.stardew.craft.fishpond.model.FishPondRecord;
-import com.stardew.craft.fishpond.service.FishPondDailyUpdateService;
+import com.stardew.craft.fishpond.service.FishPondHusbandry;
 import com.stardew.craft.fishpond.service.FishPondQualifiedItemService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,6 +34,8 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
     private int pondMaxOffsetX;
     private int pondMinOffsetZ;
     private int pondMaxOffsetZ;
+    private long[] pondWaterCells = new long[0];
+    public long[] getPondWaterCells() { return pondWaterCells.clone(); }
     private double waterSurfaceY = 1.05D;
     private int fishSignOffsetX;
     private int fishSignOffsetY;
@@ -157,7 +159,7 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
             return ItemStack.EMPTY;
         }
 
-        ItemStack available = FishPondDailyUpdateService.createOutputStack(pond);
+        ItemStack available = FishPondHusbandry.createOutputStack(pond);
         if (available.isEmpty()) {
             refreshSnapshot(serverLevel);
             return ItemStack.EMPTY;
@@ -226,6 +228,7 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
         tag.putInt("pondMinOffsetZ", pondMinOffsetZ);
         tag.putInt("pondMaxOffsetZ", pondMaxOffsetZ);
         tag.putDouble("waterSurfaceY", waterSurfaceY);
+        tag.putLongArray("pondWaterCells",pondWaterCells);
         tag.putInt("fishSignOffsetX", fishSignOffsetX);
         tag.putInt("fishSignOffsetY", fishSignOffsetY);
         tag.putInt("fishSignOffsetZ", fishSignOffsetZ);
@@ -253,6 +256,7 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
         pondMaxOffsetX = tag.getInt("pondMaxOffsetX");
         pondMinOffsetZ = tag.getInt("pondMinOffsetZ");
         pondMaxOffsetZ = tag.getInt("pondMaxOffsetZ");
+        pondWaterCells = tag.getLongArray("pondWaterCells");
         waterSurfaceY = tag.contains("waterSurfaceY") ? tag.getDouble("waterSurfaceY") : 1.05D;
         fishSignOffsetX = tag.getInt("fishSignOffsetX");
         fishSignOffsetY = tag.getInt("fishSignOffsetY");
@@ -285,7 +289,7 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
         FishPondRecord pond = FishPondWorldData.get(level)
             .findPondByBucket(level.dimension().location().toString(), this.worldPosition)
             .orElse(null);
-        ItemStack nextOutput = pond == null ? ItemStack.EMPTY : FishPondDailyUpdateService.createOutputStack(pond);
+        ItemStack nextOutput = pond == null ? ItemStack.EMPTY : FishPondHusbandry.createOutputStack(pond);
         ItemStack nextRequest = resolveRequestPreview(pond);
         ItemStack nextFishSign = resolveFishSignPreview(pond);
         BlockPos nextFishSignPos = resolveFishSignAnchor(level, pond);
@@ -295,7 +299,8 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
         int nextPondMaxOffsetX = pond == null ? 0 : pond.maxX() - this.worldPosition.getX();
         int nextPondMinOffsetZ = pond == null ? 0 : pond.minZ() - this.worldPosition.getZ();
         int nextPondMaxOffsetZ = pond == null ? 0 : pond.maxZ() - this.worldPosition.getZ();
-        double nextWaterSurfaceY = pond == null ? 1.05D : (pond.maxY() - this.worldPosition.getY()) + 0.05D;
+        double nextWaterSurfaceY = pond == null ? 1.05D : (pond.maxY() - this.worldPosition.getY()) + 8.0D/9;
+        long[] nextWaterCells = pond == null ? new long[0] : pond.waterCells().stream().mapToLong(Long::longValue).sorted().toArray();
         int nextFishSignOffsetX = nextFishSignPos == null ? 0 : nextFishSignPos.getX() - this.worldPosition.getX();
         int nextFishSignOffsetY = nextFishSignPos == null ? 0 : nextFishSignPos.getY() - this.worldPosition.getY();
         int nextFishSignOffsetZ = nextFishSignPos == null ? 0 : nextFishSignPos.getZ() - this.worldPosition.getZ();
@@ -303,6 +308,14 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
         double nextRequestRenderY = pond == null ? 1.5D : computeCenterY(pond);
         double nextRequestRenderZ = pond == null ? 0.5D : computeCenterZ(pond);
         boolean nextReady = !nextOutput.isEmpty();
+        // Both appearances belong to the pond state, not to a placeable item variant.
+        BlockState state = getBlockState();
+        BlockState nextState = state
+                .setValue(com.stardew.craft.block.utility.FishPondBucketBlock.GOLDEN, pond != null && pond.goldenAnimalCracker())
+                .setValue(com.stardew.craft.block.utility.FishPondBucketBlock.READY, nextReady);
+        if (state != nextState) {
+            level.setBlock(worldPosition, nextState, 3);
+        }
 
         if (ready == nextReady
             && ItemStack.matches(cachedOutput, nextOutput)
@@ -317,6 +330,7 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
             && pondMaxOffsetX == nextPondMaxOffsetX
             && pondMinOffsetZ == nextPondMinOffsetZ
             && pondMaxOffsetZ == nextPondMaxOffsetZ
+            && java.util.Arrays.equals(pondWaterCells,nextWaterCells)
             && Double.compare(waterSurfaceY, nextWaterSurfaceY) == 0
             && fishSignOffsetX == nextFishSignOffsetX
             && fishSignOffsetY == nextFishSignOffsetY
@@ -338,6 +352,7 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
         pondMinOffsetZ = nextPondMinOffsetZ;
         pondMaxOffsetZ = nextPondMaxOffsetZ;
         waterSurfaceY = nextWaterSurfaceY;
+        pondWaterCells = nextWaterCells;
         fishSignOffsetX = nextFishSignOffsetX;
         fishSignOffsetY = nextFishSignOffsetY;
         fishSignOffsetZ = nextFishSignOffsetZ;
@@ -374,6 +389,11 @@ public class FishPondBucketBlockEntity extends BlockEntity implements UtilityAut
             return null;
         }
 
+        var building = com.stardew.craft.building.runtime.FishPondPrefabs.at(level,pond.managerPos());
+        if (building != null) {
+            BlockPos sign = com.stardew.craft.building.runtime.FishPondPrefabs.signPosition(building);
+            return level.getBlockState(sign).is(com.stardew.craft.block.ModBlocks.WOOD_SIGN.get()) ? sign : null;
+        }
         Set<BlockPos> candidates = new HashSet<>();
         for (Long packedPos : pond.waterCells()) {
             BlockPos waterPos = BlockPos.of(packedPos);

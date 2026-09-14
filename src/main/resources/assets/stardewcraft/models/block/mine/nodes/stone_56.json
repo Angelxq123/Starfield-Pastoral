@@ -1,0 +1,169 @@
+{
+  "parent": "minecraft:block/block",
+  "credit": "StardewCraft: source stone 56 reference; original per-face pixel art matched to mine environment",
+  "textures": {
+    "0": "stardewcraft:block/mine/nodes/stone_56",
+    "particle": "stardewcraft:block/mine/nodes/stone_56_particle"
+  },
+  "stardewcraft:collision": {
+    "mode": "aabb"
+  },
+  "elements": [
+    {
+      "name": "赭红主岩",
+      "from": [
+        5,
+        -4,
+        4
+      ],
+      "to": [
+        13,
+        8,
+        12
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          1,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            0.0,
+            2.0,
+            2.0
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.25,
+            0.0,
+            4.25,
+            2.0
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            4.5,
+            0.0,
+            6.5,
+            3.0
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            6.75,
+            0.0,
+            8.75,
+            3.0
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            9.0,
+            0.0,
+            11.0,
+            3.0
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.25,
+            0.0,
+            13.25,
+            3.0
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "矮侧断岩",
+      "from": [
+        2,
+        -3,
+        5
+      ],
+      "to": [
+        7,
+        5,
+        11
+      ],
+      "rotation": {
+        "origin": [
+          5,
+          1,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            13.5,
+            0.0,
+            14.75,
+            1.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.0,
+            3.25,
+            1.25,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            1.5,
+            3.25,
+            2.75,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.0,
+            3.25,
+            4.25,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4.5,
+            3.25,
+            6.0,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.25,
+            3.25,
+            7.75,
+            5.25
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

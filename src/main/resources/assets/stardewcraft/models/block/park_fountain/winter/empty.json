@@ -1,0 +1,8 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/winter/surface",
+    "particle": "stardewcraft:block/park_fountain/winter/particle"
+  },
+  "elements": [],
+  "render_type": "minecraft:cutout"
+}

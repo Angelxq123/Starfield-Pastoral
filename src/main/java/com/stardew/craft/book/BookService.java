@@ -1,6 +1,6 @@
 package com.stardew.craft.book;
 
-import com.stardew.craft.animal.service.AnimalShopService;
+import com.stardew.craft.animal.runtime.LivestockShop;
 import com.stardew.craft.item.StardewBookItem;
 import com.stardew.craft.player.PlayerDataEventHandler;
 import com.stardew.craft.player.PlayerStardewData;
@@ -101,7 +101,7 @@ public final class BookService {
         if (definition.kind() == BookDefinition.BookKind.ANIMAL_CATALOGUE) {
             player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
             finishReadingVisual(player);
-            AnimalShopService.openForPlayer(player);
+            LivestockShop.openForPlayer(player);
             return;
         }
 

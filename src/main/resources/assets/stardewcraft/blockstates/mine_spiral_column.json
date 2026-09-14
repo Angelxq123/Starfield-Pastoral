@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,tier=0": {
+      "model": "stardewcraft:block/mine/spiral_column/column_0"
+    },
+    "facing=east,tier=0": {
+      "model": "stardewcraft:block/mine/spiral_column/column_0",
+      "y": 90
+    },
+    "facing=south,tier=0": {
+      "model": "stardewcraft:block/mine/spiral_column/column_0",
+      "y": 180
+    },
+    "facing=west,tier=0": {
+      "model": "stardewcraft:block/mine/spiral_column/column_0",
+      "y": 270
+    },
+    "facing=north,tier=1": {
+      "model": "stardewcraft:block/mine/spiral_column/column_1"
+    },
+    "facing=east,tier=1": {
+      "model": "stardewcraft:block/mine/spiral_column/column_1",
+      "y": 90
+    },
+    "facing=south,tier=1": {
+      "model": "stardewcraft:block/mine/spiral_column/column_1",
+      "y": 180
+    },
+    "facing=west,tier=1": {
+      "model": "stardewcraft:block/mine/spiral_column/column_1",
+      "y": 270
+    },
+    "facing=north,tier=2": {
+      "model": "stardewcraft:block/mine/spiral_column/column_2"
+    },
+    "facing=east,tier=2": {
+      "model": "stardewcraft:block/mine/spiral_column/column_2",
+      "y": 90
+    },
+    "facing=south,tier=2": {
+      "model": "stardewcraft:block/mine/spiral_column/column_2",
+      "y": 180
+    },
+    "facing=west,tier=2": {
+      "model": "stardewcraft:block/mine/spiral_column/column_2",
+      "y": 270
+    },
+    "facing=north,tier=3": {
+      "model": "stardewcraft:block/mine/spiral_column/column_3"
+    },
+    "facing=east,tier=3": {
+      "model": "stardewcraft:block/mine/spiral_column/column_3",
+      "y": 90
+    },
+    "facing=south,tier=3": {
+      "model": "stardewcraft:block/mine/spiral_column/column_3",
+      "y": 180
+    },
+    "facing=west,tier=3": {
+      "model": "stardewcraft:block/mine/spiral_column/column_3",
+      "y": 270
+    }
+  }
+}

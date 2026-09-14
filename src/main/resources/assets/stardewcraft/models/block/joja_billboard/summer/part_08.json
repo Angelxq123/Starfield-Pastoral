@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/decor/joja_billboard/summer/joja_billboard_summer",
+    "particle": "stardewcraft:block/decor/joja_billboard/summer/joja_billboard_metal_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -16,
+        0,
+        2
+      ],
+      "to": [
+        16,
+        2,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.8125,
+            3.25,
+            9.8125,
+            3.375
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.9375,
+            3.25,
+            12.3125,
+            3.375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            9.875,
+            3.25,
+            11.875,
+            3.375
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12.375,
+            3.25,
+            12.75,
+            3.375
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.8125,
+            3.25,
+            14.8125,
+            3.625
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.0625,
+            4.6875,
+            2.0625,
+            5.0625
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

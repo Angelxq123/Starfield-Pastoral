@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
-      "model": "stardewcraft:block/utility/bone_mill"
+    "facing=north": {
+      "model": "stardewcraft:block/utility/farm_computer"
+    },
+    "facing=east": {
+      "model": "stardewcraft:block/utility/farm_computer",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "stardewcraft:block/utility/farm_computer",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "stardewcraft:block/utility/farm_computer",
+      "y": 270
     }
   }
 }

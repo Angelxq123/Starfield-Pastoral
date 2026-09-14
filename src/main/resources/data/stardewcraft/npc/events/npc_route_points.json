@@ -39,95 +39,164 @@
     },
     "_comment_night_market_visitors": "=== Night Market confirmed NPC positions ===",
     "night_market_day1_linus": {
-      "x": 43, "y": 60, "z": 94, "indoor": false,
+      "x": 43,
+      "y": 60,
+      "z": 94,
+      "indoor": false,
       "note": "Night Market day 1 Linus, south"
     },
     "night_market_day1_jas": {
-      "x": 43, "y": 60, "z": 134, "indoor": false,
+      "x": 43,
+      "y": 60,
+      "z": 134,
+      "indoor": false,
       "note": "Night Market day 1 Jas, south"
     },
     "night_market_day1_shane": {
-      "x": 45, "y": 60, "z": 134, "indoor": false,
+      "x": 45,
+      "y": 60,
+      "z": 134,
+      "indoor": false,
       "note": "Night Market day 1 Shane, south"
     },
     "night_market_day1_emily": {
-      "x": 56, "y": 60, "z": 156, "indoor": false,
+      "x": 56,
+      "y": 60,
+      "z": 156,
+      "indoor": false,
       "note": "Night Market day 1 Emily, south"
     },
     "night_market_day1_abigail": {
-      "x": 65, "y": 60, "z": 151, "indoor": false,
+      "x": 65,
+      "y": 60,
+      "z": 151,
+      "indoor": false,
       "note": "Night Market day 1 Abigail, south"
     },
     "night_market_day1_penny": {
-      "x": 74, "y": 60, "z": 156, "indoor": false,
+      "x": 74,
+      "y": 60,
+      "z": 156,
+      "indoor": false,
       "note": "Night Market day 1 Penny, south"
     },
     "night_market_day1_clint": {
-      "x": 74, "y": 60, "z": 145, "indoor": false,
+      "x": 74,
+      "y": 60,
+      "z": 145,
+      "indoor": false,
       "note": "Night Market day 1 Clint, east"
     },
     "night_market_day1_harvey": {
-      "x": 74, "y": 60, "z": 142, "indoor": false,
+      "x": 74,
+      "y": 60,
+      "z": 142,
+      "indoor": false,
       "note": "Night Market day 1 Harvey, east"
     },
     "night_market_day1_leah": {
-      "x": 82, "y": 60, "z": 155, "indoor": false,
+      "x": 82,
+      "y": 60,
+      "z": 155,
+      "indoor": false,
       "note": "Night Market day 1 Leah, north"
     },
     "night_market_day2_vincent": {
-      "x": 46, "y": 60, "z": 133, "indoor": false,
+      "x": 46,
+      "y": 60,
+      "z": 133,
+      "indoor": false,
       "note": "Night Market day 2 Vincent, south"
     },
     "night_market_day2_robin": {
-      "x": 38, "y": 60, "z": 146, "indoor": false,
+      "x": 38,
+      "y": 60,
+      "z": 146,
+      "indoor": false,
       "note": "Night Market day 2 Robin, east"
     },
     "night_market_day2_demetrius": {
-      "x": 35, "y": 60, "z": 153, "indoor": false,
+      "x": 35,
+      "y": 60,
+      "z": 153,
+      "indoor": false,
       "note": "Night Market day 2 Demetrius, west"
     },
     "night_market_day2_maru": {
-      "x": 35, "y": 60, "z": 155, "indoor": false,
+      "x": 35,
+      "y": 60,
+      "z": 155,
+      "indoor": false,
       "note": "Night Market day 2 Maru, west"
     },
     "night_market_day2_sebastian": {
-      "x": 36, "y": 60, "z": 156, "indoor": false,
+      "x": 36,
+      "y": 60,
+      "z": 156,
+      "indoor": false,
       "note": "Night Market day 2 Sebastian, south"
     },
     "night_market_day2_caroline": {
-      "x": 54, "y": 60, "z": 147, "indoor": false,
+      "x": 54,
+      "y": 60,
+      "z": 147,
+      "indoor": false,
       "note": "Night Market day 2 Caroline, west"
     },
     "night_market_day2_haley": {
-      "x": 59, "y": 60, "z": 150, "indoor": false,
+      "x": 59,
+      "y": 60,
+      "z": 150,
+      "indoor": false,
       "note": "Night Market day 2 Haley, south"
     },
     "night_market_day2_lewis": {
-      "x": 79, "y": 60, "z": 152, "indoor": false,
+      "x": 79,
+      "y": 60,
+      "z": 152,
+      "indoor": false,
       "note": "Night Market day 2 Lewis, south"
     },
     "night_market_day2_marnie": {
-      "x": 76, "y": 60, "z": 139, "indoor": false,
+      "x": 76,
+      "y": 60,
+      "z": 139,
+      "indoor": false,
       "note": "Night Market day 2 Marnie, north"
     },
     "night_market_day3_jodi": {
-      "x": 46, "y": 60, "z": 133, "indoor": false,
+      "x": 46,
+      "y": 60,
+      "z": 133,
+      "indoor": false,
       "note": "Night Market day 3 Jodi, south"
     },
     "night_market_day3_alex": {
-      "x": 58, "y": 60, "z": 132, "indoor": false,
+      "x": 58,
+      "y": 60,
+      "z": 132,
+      "indoor": false,
       "note": "Night Market day 3 Alex, east"
     },
     "night_market_day3_sam": {
-      "x": 34, "y": 60, "z": 155, "indoor": false,
+      "x": 34,
+      "y": 60,
+      "z": 155,
+      "indoor": false,
       "note": "Night Market day 3 Sam, west"
     },
     "night_market_day3_evelyn": {
-      "x": 37, "y": 60, "z": 156, "indoor": false,
+      "x": 37,
+      "y": 60,
+      "z": 156,
+      "indoor": false,
       "note": "Night Market day 3 Evelyn, south"
     },
     "night_market_day3_elliott": {
-      "x": 74, "y": 60, "z": 156, "indoor": false,
+      "x": 74,
+      "y": 60,
+      "z": 156,
+      "indoor": false,
       "note": "Night Market day 3 Elliott, south"
     },
     "desert_festival_stall_a": {
@@ -411,13 +480,6 @@
       "z": -33,
       "indoor": true,
       "note": "Abigail 睡觉位置（玩家实测）"
-    },
-    "abigail_saloon_indoor_stay": {
-      "x": 32,
-      "y": 37,
-      "z": -39,
-      "indoor": true,
-      "note": "Abigail Saloon 室内停留点（玩家实测）"
     },
     "abigail_museum_indoor_stay": {
       "x": 123,
@@ -990,6 +1052,14 @@
       "indoor": true,
       "note": "Evelyn 原版日程 02：客厅沙发"
     },
+    "evelyn_home_seat": {
+      "x": 61,
+      "y": 22,
+      "z": 0,
+      "indoor": true,
+      "furniture": "chair",
+      "note": "Evelyn: user-confirmed home stool; winter sitting only"
+    },
     "evelyn_schedule_03": {
       "x": 40,
       "y": 22,
@@ -1012,11 +1082,18 @@
       "note": "Evelyn 原版日程 05：餐桌"
     },
     "evelyn_schedule_06": {
-      "x": 39,
+      "x": 41,
       "y": 22,
-      "z": -17,
+      "z": -19,
       "indoor": true,
-      "note": "Evelyn 原版日程 06：睡觉"
+      "furniture": "bed",
+      "preserve_bed_side": true,
+      "approach_offset": [
+        -0.875,
+        0,
+        -0.375
+      ],
+      "note": "Evelyn: user-confirmed side of double bed; approach beside foot, clear of bedside lamp"
     },
     "evelyn_schedule_07": {
       "x": 41,
@@ -1026,11 +1103,12 @@
       "note": "Evelyn 原版日程 07：绿雨"
     },
     "evelyn_schedule_09": {
-      "x": 14,
+      "x": 15,
       "y": 43,
       "z": -14,
       "indoor": true,
-      "note": "Evelyn 原版日程 09：春 2 日诊所候诊"
+      "furniture": "chair",
+      "note": "Evelyn: user-confirmed birch waiting chair"
     },
     "evelyn_schedule_10": {
       "x": 2,
@@ -1072,7 +1150,13 @@
       "y": 64,
       "z": 0,
       "indoor": false,
-      "note": "Evelyn 原版日程 16：夏季花园"
+      "note": "Evelyn 原版日程 16：夏季花园",
+      "activity_target": {
+        "x": -9,
+        "y": 64,
+        "z": 0,
+        "surface_y": 1.0
+      }
     },
     "_comment_emily": "=== Emily (HaleyHouse / Saloon / SeedShop / Town / Beach) ===",
     "emily_haleyhouse_room": {
@@ -1225,11 +1309,14 @@
     },
     "_comment_gus": "=== Gus schedule (Saloon / SeedShop / Hospital) ===",
     "gus_schedule_01": {
-      "x": 32,
+      "x": 31,
       "y": 36,
-      "z": -2,
+      "z": -3,
       "indoor": true,
-      "note": "Gus schedule 1: Saloon morning chair, south"
+      "furniture": "chair",
+      "seat_span": [1, 0, 0],
+      "approach_offset": [0, 0, -1],
+      "note": "Gus schedule 1: user-confirmed midpoint of black sofas (31,36,-3) and (32,36,-3); facing from furniture"
     },
     "gus_schedule_02": {
       "x": 24,
@@ -1253,11 +1340,12 @@
       "note": "Gus schedule 4: Saloon cleaning position, south"
     },
     "gus_schedule_05": {
-      "x": 38,
+      "x": 37,
       "y": 36,
       "z": -3,
       "indoor": true,
-      "note": "Gus schedule 5: Saloon bed, east"
+      "furniture": "bed",
+      "note": "Gus schedule 5: user-confirmed bed (37,36,-3); resolve main block and facing from furniture"
     },
     "gus_schedule_06": {
       "x": 30,
@@ -2889,6 +2977,158 @@
       "x": 108,
       "y": 45,
       "z": -17,
+      "indoor": true
+    },
+    "sam_schedule_01": {
+      "x": -15,
+      "y": 39,
+      "z": 27,
+      "indoor": true
+    },
+    "sam_schedule_02": {
+      "x": -13,
+      "y": 39,
+      "z": 29,
+      "indoor": true
+    },
+    "sam_schedule_03": {
+      "x": -26,
+      "y": 39,
+      "z": 23,
+      "indoor": true
+    },
+    "sam_schedule_04": {
+      "x": -13,
+      "y": 39,
+      "z": 27,
+      "indoor": true
+    },
+    "sam_schedule_05": {
+      "x": -8,
+      "y": 39,
+      "z": 30,
+      "indoor": true,
+      "furniture": "wooden_dining_chair"
+    },
+    "sam_schedule_06": {
+      "x": -9,
+      "y": 39,
+      "z": 26,
+      "indoor": true,
+      "furniture": "bed"
+    },
+    "sam_schedule_07": {
+      "x": -28,
+      "y": 38,
+      "z": 34,
+      "indoor": true
+    },
+    "sam_schedule_10": {
+      "x": -11,
+      "y": 39,
+      "z": 28,
+      "indoor": true
+    },
+    "sam_schedule_11": {
+      "x": -26,
+      "y": 64,
+      "z": 42,
+      "indoor": false
+    },
+    "sam_schedule_12": {
+      "x": -31,
+      "y": 64,
+      "z": 46,
+      "indoor": false
+    },
+    "sam_schedule_13": {
+      "x": -30,
+      "y": 64,
+      "z": 46,
+      "indoor": false
+    },
+    "sam_schedule_14": {
+      "x": -13,
+      "y": 64,
+      "z": 48,
+      "indoor": false
+    },
+    "sam_schedule_15": {
+      "x": -5,
+      "y": 64,
+      "z": 48,
+      "indoor": false
+    },
+    "sam_schedule_16": {
+      "x": -2,
+      "y": 64,
+      "z": 51,
+      "indoor": false
+    },
+    "sam_schedule_18": {
+      "x": 69,
+      "y": 64,
+      "z": 52,
+      "indoor": false
+    },
+    "sam_schedule_19": {
+      "x": 82,
+      "y": 64,
+      "z": 49,
+      "indoor": false
+    },
+    "sam_schedule_20": {
+      "x": 54,
+      "y": 36,
+      "z": 12,
+      "indoor": true
+    },
+    "sam_schedule_21": {
+      "x": 55,
+      "y": 36,
+      "z": 10,
+      "indoor": true
+    },
+    "sam_schedule_22": {
+      "x": 33,
+      "y": 36,
+      "z": 12,
+      "indoor": true
+    },
+    "sam_schedule_23": {
+      "x": 74,
+      "y": 60,
+      "z": 126,
+      "indoor": false
+    },
+    "sam_schedule_25": {
+      "x": -136,
+      "y": 64,
+      "z": 86,
+      "indoor": false
+    },
+    "sam_schedule_26": {
+      "x": 14,
+      "y": 43,
+      "z": -15,
+      "indoor": true
+    },
+    "sam_schedule_27": {
+      "x": 2,
+      "y": 43,
+      "z": -23,
+      "indoor": true
+    },
+    "sam_schedule_28": {
+      "x": 112,
+      "y": 45,
+      "z": -40,
+      "indoor": true
+    },
+    "sam_schedule_29": {
+      "x": 163,
+      "y": 38,
+      "z": 30,
       "indoor": true
     }
   }

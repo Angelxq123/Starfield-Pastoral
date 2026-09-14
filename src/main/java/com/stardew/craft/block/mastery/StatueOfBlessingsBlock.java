@@ -1,6 +1,5 @@
 package com.stardew.craft.block.mastery;
 
-import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.blockentity.MasteryStatueBlockEntity;
 import com.stardew.craft.blockentity.ModBlockEntities;
 import com.stardew.craft.effect.ModMobEffects;
@@ -25,7 +24,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -35,8 +33,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -54,11 +50,8 @@ import java.util.Random;
 public class StatueOfBlessingsBlock extends TallMasteryBlock implements EntityBlock {
     public static final BooleanProperty ACTIVATED = BooleanProperty.create("activated");
 
-    private static final VoxelShape[] ACTIVE_MAIN_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/mastery/statue_of_blessings_activated", Direction.SOUTH);
-    private static final VoxelShape[] ACTIVE_EXT_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/mastery/statue_of_blessings_activated_extension", Direction.SOUTH);
-
     public StatueOfBlessingsBlock(Properties properties) {
-        super(properties, "stardewcraft:block/mastery/statue_of_blessings", Direction.SOUTH);
+        super(properties, "stardewcraft:block/mastery/statue_of_blessings", Direction.EAST);
         registerDefaultState(defaultBlockState().setValue(ACTIVATED, false));
     }
 
@@ -89,19 +82,6 @@ public class StatueOfBlessingsBlock extends TallMasteryBlock implements EntityBl
         if (placer instanceof ServerPlayer sp && level.getBlockEntity(pos) instanceof MasteryStatueBlockEntity statue) {
             statue.setOwner(sp);
         }
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        if (state.getValue(ACTIVATED)) {
-            return getPartShape(state, ACTIVE_MAIN_SHAPES, ACTIVE_EXT_SHAPES);
-        }
-        return super.getShape(state, level, pos, context);
-    }
-
-    @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getShape(state, level, pos, context);
     }
 
     private static final List<Holder<MobEffect>> BUFFS = List.of(

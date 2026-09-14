@@ -24,6 +24,12 @@ public interface StardewCropRuntimeAdapter {
     @Nullable
     StardewCropState inspect(LevelReader level, BlockPos position);
 
+    /** Horizontal blocks needed around a root during daily growth (0..64).
+     * Eight preserves the previous scheduler guarantee. Return zero for a self-contained crop;
+     * giant formation loads/checks its grid independently of this ordinary-growth radius.
+     */
+    default int dailyNeighborhoodRadius() { return 8; }
+
     /**
      * Processes one in-game day for a revalidated crop.
      *

@@ -1,0 +1,33 @@
+{
+  "textures": {
+    "edge": "stardewcraft:block/mine_ground/lava/2/31",
+    "particle": "stardewcraft:block/mine/mine_lava_loose_soil"
+  },
+  "render_type": "minecraft:cutout",
+  "elements": [
+    {
+      "from": [
+        0,
+        16.02,
+        0
+      ],
+      "to": [
+        16,
+        16.02,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/decor/joja_billboard/spring/joja_billboard_spring",
+    "particle": "stardewcraft:block/decor/joja_billboard/spring/joja_billboard_metal_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        2,
+        4
+      ],
+      "to": [
+        11,
+        3,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14.1875,
+            8.1875,
+            14.5625,
+            8.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            15.0625,
+            8.1875,
+            15.375,
+            8.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14.625,
+            8.1875,
+            15.0,
+            8.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            15.4375,
+            8.1875,
+            15.75,
+            8.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0.0625,
+            10.125,
+            0.4375,
+            10.4375
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            10.125,
+            0.875,
+            10.4375
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

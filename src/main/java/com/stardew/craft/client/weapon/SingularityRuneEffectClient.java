@@ -3,12 +3,10 @@ package com.stardew.craft.client.weapon;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -20,10 +18,6 @@ import java.util.List;
 
 public final class SingularityRuneEffectClient {
 
-    private static final ResourceLocation RUNE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_f.png"
-    );
 
     private static final List<Rune> RUNES = new ArrayList<>();
 
@@ -71,7 +65,7 @@ public final class SingularityRuneEffectClient {
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        RenderType runeType = RenderType.entityTranslucent(RUNE_TEXTURE);
+        RenderType runeType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer consumer = buffer.getBuffer(runeType);
 
         for (Rune rune : RUNES) {
@@ -107,10 +101,7 @@ public final class SingularityRuneEffectClient {
 
             int a = Math.min(255, Math.max(0, (int) (alpha * 255)));
             float size = 0.5f;
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, -size, -size, 0, 1);
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, size, -size, 1, 1);
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, size, size, 1, 0);
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, -size, size, 0, 0);
+            WeaponEffectShapes.ring(consumer, pose, size, rOuter, gOuter, bOuter, a);
 
             poseStack.popPose();
 
@@ -122,10 +113,7 @@ public final class SingularityRuneEffectClient {
             PoseStack.Pose billboard = poseStack.last();
             Matrix4f billboardPose = billboard.pose();
             int upperAlpha = Math.max(0, (int) (a * 0.6f));
-            vertex(consumer, billboardPose, 0xF000F0, r, g, b, upperAlpha, -size, -size, 0, 1);
-            vertex(consumer, billboardPose, 0xF000F0, r, g, b, upperAlpha, size, -size, 1, 1);
-            vertex(consumer, billboardPose, 0xF000F0, r, g, b, upperAlpha, size, size, 1, 0);
-            vertex(consumer, billboardPose, 0xF000F0, r, g, b, upperAlpha, -size, size, 0, 0);
+            WeaponEffectShapes.ring(consumer, billboardPose, size, r, g, b, upperAlpha);
 
             poseStack.popPose();
         }
@@ -133,16 +121,7 @@ public final class SingularityRuneEffectClient {
         buffer.endBatch(runeType);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light, int r, int g, int b, int alpha,
-                               float x, float y, float u, float v) {
-        consumer.addVertex(pose, x, 0.0f, y)
-            .setColor(r, g, b, alpha)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
+
 
     private static final class Rune {
         private final Vec3 pos;

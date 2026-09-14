@@ -21,11 +21,9 @@ public class ModMenuTypes {
         MENU_TYPES.register("stardew_game_menu",
             () -> new MenuType<>(StardewGameMenu::new, FeatureFlags.DEFAULT_FLAGS));
     
-    // 矿井出口菜单（简单的无额外数据Menu）
-    @SuppressWarnings("null")
-    public static final DeferredHolder<MenuType<?>, MenuType<MineExitMenu>> MINE_EXIT = 
-        MENU_TYPES.register("mine_exit", 
-            () -> new MenuType<>(MineExitMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<AquariumMenu>> AQUARIUM =
+        MENU_TYPES.register("aquarium", () -> new MenuType<>(AquariumMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     // 矿井电梯菜单
     @SuppressWarnings("null")

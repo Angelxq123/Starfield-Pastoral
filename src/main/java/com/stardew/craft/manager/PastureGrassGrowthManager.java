@@ -9,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -199,8 +198,8 @@ public class PastureGrassGrowthManager extends SavedData {
     }
 
     private static boolean isDiggableFarmGround(Block block) {
-        return block == ModBlocks.YELLOW_DIRT.get()
-                || block == Blocks.GRASS_BLOCK;
+        return (block == ModBlocks.YELLOW_DIRT.get() || block == ModBlocks.DIRT.get())
+                || block instanceof net.minecraft.world.level.block.GrassBlock;
     }
 
     private static void cleanupWinterGrass(ServerLevel level) {

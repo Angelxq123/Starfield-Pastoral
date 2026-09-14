@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=north,part=main": {
+      "model": "stardewcraft:block/decor/old_tire/spring/old_tire_spring",
+      "y": 0
+    },
+    "facing=north,part=extension": {
+      "model": "stardewcraft:block/decor/old_tire/empty",
+      "y": 0
+    },
+    "facing=east,part=main": {
+      "model": "stardewcraft:block/decor/old_tire/spring/old_tire_spring",
+      "y": 90
+    },
+    "facing=east,part=extension": {
+      "model": "stardewcraft:block/decor/old_tire/empty",
+      "y": 90
+    },
+    "facing=south,part=main": {
+      "model": "stardewcraft:block/decor/old_tire/spring/old_tire_spring",
+      "y": 180
+    },
+    "facing=south,part=extension": {
+      "model": "stardewcraft:block/decor/old_tire/empty",
+      "y": 180
+    },
+    "facing=west,part=main": {
+      "model": "stardewcraft:block/decor/old_tire/spring/old_tire_spring",
+      "y": 270
+    },
+    "facing=west,part=extension": {
+      "model": "stardewcraft:block/decor/old_tire/empty",
+      "y": 270
+    }
+  }
+}

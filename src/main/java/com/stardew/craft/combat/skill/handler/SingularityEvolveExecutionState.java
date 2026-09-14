@@ -2,9 +2,6 @@ package com.stardew.craft.combat.skill.handler;
 
 import com.stardew.craft.combat.VfxColors;
 import com.stardew.craft.combat.network.RiftPathPayload;
-import com.stardew.craft.combat.network.ShockwaveRingPayload;
-import com.stardew.craft.combat.network.SingularityCorePayload;
-import com.stardew.craft.combat.network.SingularityRunePayload;
 import com.stardew.craft.combat.skill.DashMovementTracker;
 import com.stardew.craft.combat.skill.RiftPathDamageTracker;
 import com.stardew.craft.combat.skill.SkillContext;
@@ -20,8 +17,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -33,6 +28,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /** One runtime-owned Singularity Evolution pull and settlement window. */
 final class SingularityEvolveExecutionState
         implements SkillInstance.ExecutionState {
+    private final long startTick;
     private final long endTick;
     private final String skillId;
     private final boolean evolved;
@@ -60,6 +56,7 @@ final class SingularityEvolveExecutionState
             );
         }
         this.dimension = Objects.requireNonNull(dimension, "dimension");
+        this.startTick = nowTick;
         this.endTick = nowTick + durationTicks;
         this.skillId = Objects.requireNonNull(skillId, "skillId");
         this.evolved = evolved;
@@ -109,6 +106,8 @@ final class SingularityEvolveExecutionState
     }
 
     void cancel(ServerPlayer player) {
+        com.stardew.craft.combat.network.InfinityPhasePayload.send(player, startTick,
+                com.stardew.craft.combat.network.InfinityPhasePayload.Phase.END_EVOLVE, player.position(), player.position(), 0, evolved);
         if (settled) {
             return;
         }
@@ -126,44 +125,8 @@ final class SingularityEvolveExecutionState
             ServerPlayer player,
             int durationTicks
     ) {
-        Vec3 pos = player.position();
-        ServerLevel level = player.serverLevel();
-        int color = evolved
-                ? VfxColors.INFINITY_GOLD
-                : VfxColors.GALAXY_PURPLE;
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new ShockwaveRingPayload(
-                        (float) pos.x,
-                        (float) pos.y,
-                        (float) pos.z,
-                        3.6F,
-                        12,
-                        color
-                )
-        );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new SingularityRunePayload(
-                        (float) pos.x,
-                        (float) pos.y,
-                        (float) pos.z,
-                        (float) SingularityEvolveSkillHandler.EFFECT_RADIUS,
-                        durationTicks,
-                        color
-                )
-        );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new SingularityCorePayload(
-                        (float) pos.x,
-                        (float) pos.y + 0.05F,
-                        (float) pos.z,
-                        1.15F,
-                        durationTicks,
-                        color
-                )
-        );
+        com.stardew.craft.combat.network.InfinityPhasePayload.send(player, startTick,
+                com.stardew.craft.combat.network.InfinityPhasePayload.Phase.EVOLVE, player.position(), player.position(), durationTicks, evolved);
     }
 
     @SuppressWarnings("null")
@@ -259,6 +222,10 @@ final class SingularityEvolveExecutionState
                 )
         );
 
+        com.stardew.craft.combat.network.InfinityPhasePayload.send(player, startTick,
+                com.stardew.craft.combat.network.InfinityPhasePayload.Phase.RELEASE, center, center, 8, evolved);
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(player, "infinity_blade", "singularity_release", 8);
+
         for (LivingEntity target : targets) {
             applyDamage(
                     player,
@@ -269,34 +236,6 @@ final class SingularityEvolveExecutionState
                     WeaponSkillDamage.AttackGatePolicy.SKILL_DAMAGE
             );
         }
-
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.END_PORTAL_SPAWN,
-                SoundSource.PLAYERS,
-                0.8F,
-                1.1F
-        );
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.GENERIC_EXPLODE.value(),
-                SoundSource.PLAYERS,
-                0.6F,
-                1.2F
-        );
-        level.sendParticles(
-                ParticleTypes.PORTAL,
-                center.x,
-                center.y + 0.8D,
-                center.z,
-                30,
-                radius * 0.4D,
-                0.6D,
-                radius * 0.4D,
-                0.05D
-        );
 
         movementHandle = dashForward(player, nowTick);
         try {

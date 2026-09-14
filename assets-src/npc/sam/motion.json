@@ -1,0 +1,57 @@
+{
+  "intent": "年轻成年、友善外向的 Sam；平静站立，呼吸克制，目光清醒。性别不单独决定眨眼频率。",
+  "intervalMin": 3.4,
+  "intervalMax": 6.8,
+  "durationMin": 0.9,
+  "durationMax": 1.12,
+  "doubleChance": 0.1,
+  "groundOffset": 0.12,
+  "walkStride": 0.86055275,
+  "gait": {
+    "id": "sam",
+    "revision": "character-articulated-3",
+    "rootMean": 0.4,
+    "bob": 0.272,
+    "sway": 0.5,
+    "rootYaw": 2.0,
+    "bodyPitch": -3.0,
+    "headPitch": 2.1,
+    "halfStance": 2.12,
+    "groundOffset": 0.12,
+    "stride": 13.768844,
+    "stance": 0.55,
+    "footLift": 0.30800000000000005,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "sides": {
+      "right": {
+        "hip": [
+          -2,
+          12,
+          0
+        ],
+        "knee": 6,
+        "ankle": 1.5,
+        "sole": -0.12,
+        "heel": 2.12,
+        "toe": -3.12
+      },
+      "left": {
+        "hip": [
+          2,
+          12,
+          0
+        ],
+        "knee": 6,
+        "ankle": 1.5,
+        "sole": -0.12,
+        "heel": 2.12,
+        "toe": -3.12
+      }
+    },
+    "reachMargin": 0.046454,
+    "previewSpeed": 0.754008,
+    "levelWalk": true,
+    "armSwing": 17
+  }
+}

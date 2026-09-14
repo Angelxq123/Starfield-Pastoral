@@ -296,7 +296,6 @@ public final class WickedKrisPoisonTracker {
                 WeaponSkillDamage.HitCooldownPolicy
                         .BYPASS_FOR_AUTHORED_SEQUENCE
         );
-        emitDotTick(target);
     }
 
     private static void detonate(
@@ -348,7 +347,6 @@ public final class WickedKrisPoisonTracker {
                 );
             }
         }
-        emitDetonation(level, center);
     }
 
     private static ServerPlayer resolveOwner(
@@ -652,142 +650,11 @@ public final class WickedKrisPoisonTracker {
         if (!(target.level() instanceof ServerLevel level)) {
             return;
         }
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.6D;
-        double z = target.getZ();
-        level.sendParticles(
-                ParticleTypes.WITCH,
-                x,
-                y,
-                z,
-                12,
-                0.35D,
-                0.25D,
-                0.35D,
-                0.02D
-        );
-        level.sendParticles(
-                ParticleTypes.SPORE_BLOSSOM_AIR,
-                x,
-                y,
-                z,
-                8,
-                0.35D,
-                0.25D,
-                0.35D,
-                0.01D
-        );
-        level.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.ENCHANTMENT_TABLE_USE,
-                SoundSource.PLAYERS,
-                0.6F,
-                1.25F
-        );
+        level.sendParticles(ParticleTypes.WITCH,target.getX(),target.getY()+target.getBbHeight()*.6,target.getZ(),
+                2,.1,.1,.1,.005);
+        level.playSound(null,target.blockPosition(),SoundEvents.ENCHANTMENT_TABLE_USE,SoundSource.PLAYERS,.18f,1.4f);
     }
 
-    private static void emitDotTick(LivingEntity target) {
-        if (!(target.level() instanceof ServerLevel level)) {
-            return;
-        }
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.55D;
-        double z = target.getZ();
-        level.sendParticles(
-                ParticleTypes.WITCH,
-                x,
-                y,
-                z,
-                6,
-                0.25D,
-                0.2D,
-                0.25D,
-                0.01D
-        );
-        level.sendParticles(
-                ParticleTypes.SPORE_BLOSSOM_AIR,
-                x,
-                y,
-                z,
-                4,
-                0.2D,
-                0.15D,
-                0.2D,
-                0.01D
-        );
-        level.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.SPIDER_AMBIENT,
-                SoundSource.PLAYERS,
-                0.45F,
-                1.35F
-        );
-    }
-
-    private static void emitDetonation(ServerLevel level, Vec3 center) {
-        level.sendParticles(
-                ParticleTypes.EXPLOSION_EMITTER,
-                center.x,
-                center.y + 0.2D,
-                center.z,
-                1,
-                0.0D,
-                0.0D,
-                0.0D,
-                0.0D
-        );
-        level.sendParticles(
-                ParticleTypes.WITCH,
-                center.x,
-                center.y + 0.35D,
-                center.z,
-                28,
-                0.6D,
-                0.3D,
-                0.6D,
-                0.02D
-        );
-        level.sendParticles(
-                ParticleTypes.SPORE_BLOSSOM_AIR,
-                center.x,
-                center.y + 0.35D,
-                center.z,
-                20,
-                0.55D,
-                0.3D,
-                0.55D,
-                0.01D
-        );
-        level.sendParticles(
-                ParticleTypes.CRIT,
-                center.x,
-                center.y + 0.3D,
-                center.z,
-                16,
-                0.45D,
-                0.2D,
-                0.45D,
-                0.08D
-        );
-        level.playSound(
-                null,
-                net.minecraft.core.BlockPos.containing(center),
-                SoundEvents.GENERIC_EXPLODE.value(),
-                SoundSource.PLAYERS,
-                0.9F,
-                1.05F
-        );
-        level.playSound(
-                null,
-                net.minecraft.core.BlockPos.containing(center),
-                SoundEvents.EVOKER_CAST_SPELL,
-                SoundSource.PLAYERS,
-                0.7F,
-                0.9F
-        );
-    }
 
     static int clampStacks(int stacks) {
         return Mth.clamp(stacks, 1, MAX_STACKS);

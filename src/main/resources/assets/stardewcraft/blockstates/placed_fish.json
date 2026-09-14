@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=north,wall=false": {
+      "model": "stardewcraft:block/placed_fish_floor"
+    },
+    "facing=north,wall=true": {
+      "model": "stardewcraft:block/placed_fish_wall"
+    },
+    "facing=east,wall=false": {
+      "model": "stardewcraft:block/placed_fish_floor"
+    },
+    "facing=east,wall=true": {
+      "model": "stardewcraft:block/placed_fish_wall"
+    },
+    "facing=south,wall=false": {
+      "model": "stardewcraft:block/placed_fish_floor"
+    },
+    "facing=south,wall=true": {
+      "model": "stardewcraft:block/placed_fish_wall"
+    },
+    "facing=west,wall=false": {
+      "model": "stardewcraft:block/placed_fish_floor"
+    },
+    "facing=west,wall=true": {
+      "model": "stardewcraft:block/placed_fish_wall"
+    }
+  }
+}

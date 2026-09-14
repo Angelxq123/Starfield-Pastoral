@@ -49,6 +49,14 @@ final class ClaymoreFoldbackExecutionState
             return SkillTickResult.COMPLETE;
         }
 
+        // Bind confirmed contact feedback to this action, without delaying damage.
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                context.weaponId().getPath(),
+                "claymore_foldback_return",
+                ClaymoreFoldbackSkillHandler.RETURN_ANIMATION_TICKS
+        );
+
         WeaponDamageSnapshot weaponSnapshot = context.weaponSnapshot();
         WeaponSkillDamage.apply(
                 context.player(),
@@ -63,12 +71,6 @@ final class ClaymoreFoldbackExecutionState
                         .BYPASS_FOR_AUTHORED_SEQUENCE
         );
 
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                context.weaponId().getPath(),
-                "claymore_foldback_return",
-                ClaymoreFoldbackSkillHandler.RETURN_ANIMATION_TICKS
-        );
         return SkillTickResult.COMPLETE;
     }
 

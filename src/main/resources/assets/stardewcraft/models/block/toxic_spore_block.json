@@ -1,7 +1,0 @@
-{
-    "parent":  "minecraft:block/cube_all",
-    "textures":  {
-                     "all":  "stardewcraft:block/mine/toxic_spore_block",
-                     "particle":  "stardewcraft:block/mine/toxic_spore_block"
-                 }
-}

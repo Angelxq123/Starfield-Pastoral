@@ -1,0 +1,72 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_spring_repaint",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_wood_particle",
+    "2": "stardewcraft:block/decor/bookseller/bookseller_spring_accents",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_wood_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        -3,
+        3,
+        0
+      ],
+      "to": [
+        29,
+        14,
+        2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.09375,
+            1.09375,
+            2.09375,
+            1.4375
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2.15625,
+            1.09375,
+            2.21875,
+            1.4375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2.28125,
+            1.09375,
+            3.28125,
+            1.4375
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            3.34375,
+            1.09375,
+            4.34375,
+            1.15625
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.40625,
+            1.09375,
+            5.40625,
+            1.15625
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

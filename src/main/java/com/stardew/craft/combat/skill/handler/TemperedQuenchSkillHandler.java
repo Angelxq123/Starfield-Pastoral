@@ -86,6 +86,13 @@ public final class TemperedQuenchSkillHandler implements RuntimeWeaponSkillHandl
                         context.player().level().dimension()
                 )
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> WeaponSkillDamage.apply(
                 context.player(),
                 target,
@@ -99,12 +106,6 @@ public final class TemperedQuenchSkillHandler implements RuntimeWeaponSkillHandl
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 ANIMATION_TICKS
         );
     }
@@ -131,13 +132,11 @@ public final class TemperedQuenchSkillHandler implements RuntimeWeaponSkillHandl
                 player.getUUID(),
                 BuiltinWeaponSkillHandlers.TEMPERED_QUENCH,
                 TemperedQuenchExecutionState.class
-        ).map(state -> state.arm(
-                target.getUUID(),
-                player.level().dimension(),
-                nowTick,
-                delayTicks,
-                weaponSnapshot
-        )).orElse(false);
+        ).map(state -> {
+            boolean armed=state.arm(target.getUUID(),player.level().dimension(),nowTick,delayTicks,weaponSnapshot);
+            if(armed) state.showHeat(player,target,nowTick,delayTicks);
+            return armed;
+        }).orElse(false);
     }
 
     @Override

@@ -30,8 +30,8 @@ import java.util.Set;
  */
 @SuppressWarnings("null")
 public final class VanillaGiftTasteResolver {
-    private static final String VANILLA_TASTES_RESOURCE = "data/stardewcraft/npc/vanilla/data/NPCGiftTastes.json";
-    private static final String VANILLA_OBJECTS_RESOURCE = "data/stardewcraft/npc/vanilla/data/Objects.json";
+    private static final String VANILLA_TASTES_RESOURCE = "data/stardewcraft/npc/vanilla/data/npc_gift_tastes.json";
+    private static final String VANILLA_OBJECTS_RESOURCE = "data/stardewcraft/npc/vanilla/data/objects.json";
     private static volatile VanillaData cachedData;
 
     private VanillaGiftTasteResolver() {

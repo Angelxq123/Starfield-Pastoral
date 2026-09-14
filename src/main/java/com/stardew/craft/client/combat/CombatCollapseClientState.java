@@ -91,29 +91,8 @@ public final class CombatCollapseClientState {
             && collapsingPlayerId.equals(player.getUUID());
     }
 
-    public static float bodyRotationDegrees(AbstractClientPlayer player, float partialTick) {
-        if (!isCollapsing(player)) {
-            return 0.0F;
-        }
-        return 90.0F * CombatCollapseTimeline.bodyFallProgress(elapsedTicks, partialTick);
-    }
-
-    public static float bodyJitterX(AbstractClientPlayer player, float partialTick) {
-        if (!isCollapsing(player)) {
-            return 0.0F;
-        }
-        float strength = CombatCollapseTimeline.jitterStrength(elapsedTicks, partialTick);
-        float time = elapsedTicks + partialTick;
-        return (float) Math.sin(time * 2.71F) * 0.028F * strength;
-    }
-
-    public static float bodyJitterZ(AbstractClientPlayer player, float partialTick) {
-        if (!isCollapsing(player)) {
-            return 0.0F;
-        }
-        float strength = CombatCollapseTimeline.jitterStrength(elapsedTicks, partialTick);
-        float time = elapsedTicks + partialTick;
-        return (float) Math.cos(time * 3.17F) * 0.022F * strength;
+    public static float collapseTime(float partialTick) {
+        return elapsedTicks + partialTick;
     }
 
     public static float cameraYawJitter(float partialTick) {

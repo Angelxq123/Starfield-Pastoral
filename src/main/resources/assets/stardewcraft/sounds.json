@@ -1,22 +1,50 @@
 {
+  "monster_crab_death": {
+    "sounds": [
+      {
+        "name": "stardewcraft:monsterdead",
+        "stream": false
+      }
+    ]
+  },
+  "monster_bat_hit": {
+    "sounds": [
+      {
+        "name": "stardewcraft:hit_enemy",
+        "stream": false
+      }
+    ]
+  },
   "crow_caw": {
     "sounds": [
-      { "name": "stardewcraft:entity/crow/caw", "stream": false }
+      {
+        "name": "stardewcraft:entity/crow/caw",
+        "stream": false
+      }
     ]
   },
   "music_lava_ambient": {
     "sounds": [
-      { "name": "stardewcraft:music/lava_ambient", "stream": false }
+      {
+        "name": "stardewcraft:music/lava_ambient",
+        "stream": false
+      }
     ]
   },
   "music_upper_ambient": {
     "sounds": [
-      { "name": "stardewcraft:music/upper_ambient", "stream": false }
+      {
+        "name": "stardewcraft:music/upper_ambient",
+        "stream": false
+      }
     ]
   },
   "crow_flap": {
     "sounds": [
-      { "name": "stardewcraft:entity/crow/flap", "stream": false }
+      {
+        "name": "stardewcraft:entity/crow/flap",
+        "stream": false
+      }
     ]
   },
   "hoe_hit": {
@@ -426,25 +454,46 @@
   },
   "clank": {
     "sounds": [
-      { "name": "stardewcraft:clank_000000ad", "stream": false },
-      { "name": "stardewcraft:clank_000000cb", "stream": false },
-      { "name": "stardewcraft:clank_000000cc", "stream": false },
-      { "name": "stardewcraft:clank_000000cd", "stream": false }
+      {
+        "name": "stardewcraft:clank_000000ad",
+        "stream": false
+      },
+      {
+        "name": "stardewcraft:clank_000000cb",
+        "stream": false
+      },
+      {
+        "name": "stardewcraft:clank_000000cc",
+        "stream": false
+      },
+      {
+        "name": "stardewcraft:clank_000000cd",
+        "stream": false
+      }
     ]
   },
   "crafting": {
     "sounds": [
-      { "name": "stardewcraft:crafting", "stream": false }
+      {
+        "name": "stardewcraft:crafting",
+        "stream": false
+      }
     ]
   },
   "debuff_hit": {
     "sounds": [
-      { "name": "stardewcraft:debuffhit", "stream": false }
+      {
+        "name": "stardewcraft:debuffhit",
+        "stream": false
+      }
     ]
   },
   "debuff_spell": {
     "sounds": [
-      { "name": "stardewcraft:debuffspell", "stream": false }
+      {
+        "name": "stardewcraft:debuffspell",
+        "stream": false
+      }
     ]
   },
   "slime_hit": {
@@ -1558,6 +1607,16 @@
       }
     ]
   },
+  "park_fountain_water": {
+    "subtitle": "subtitles.stardewcraft.park_fountain_water",
+    "sounds": [
+      {
+        "name": "stardewcraft:ambient/park_fountain_water",
+        "stream": false,
+        "attenuation_distance": 16
+      }
+    ]
+  },
   "babbling_brook": {
     "sounds": [
       {
@@ -1751,6 +1810,147 @@
     "sounds": [
       {
         "name": "stardewcraft:utility/dwarvish_sentry",
+        "stream": false
+      }
+    ]
+  },
+  "slime": {
+    "sounds": [
+      {
+        "name": "stardewcraft:slime",
+        "stream": false
+      }
+    ]
+  },
+  "fly_buzzing": {
+    "sounds": [
+      {
+        "name": "stardewcraft:flybuzzing",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.entity.bee.loop"
+  },
+  "duggy": {
+    "sounds": [
+      {
+        "name": "stardewcraft:duggy",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.stardewcraft.duggy"
+  },
+  "dust_meep": {
+    "subtitle": "subtitles.stardewcraft.dust_meep",
+    "sounds": [
+      "stardewcraft:dust_meep"
+    ]
+  },
+  "rock_golem_spawn": {
+    "subtitle": "subtitles.stardewcraft.rock_golem_spawn",
+    "sounds": [
+      "stardewcraft:rock_golem_spawn"
+    ]
+  },
+  "rock_golem_hit": {
+    "subtitle": "subtitles.stardewcraft.rock_golem_hit",
+    "sounds": [
+      "stardewcraft:rock_golem_hit"
+    ]
+  },
+  "rock_golem_die": {
+    "subtitle": "subtitles.stardewcraft.rock_golem_die",
+    "sounds": [
+      "stardewcraft:rock_golem_die"
+    ]
+  },
+  "shadow_hit": {
+    "subtitle": "subtitles.stardewcraft.shadow_hit",
+    "sounds": [
+      {
+        "name": "stardewcraft:shadow_hit",
+        "stream": false
+      }
+    ]
+  },
+  "shadow_peep": {
+    "sounds": [
+      "stardewcraft:monster/shadow_peep"
+    ]
+  },
+  "monster_heal": {
+    "sounds": [
+      "stardewcraft:monster/monster_heal"
+    ]
+  },
+  "serpent_hit": {
+    "sounds": [
+      "stardewcraft:serpent_hit"
+    ]
+  },
+  "serpent_die": {
+    "sounds": [
+      "stardewcraft:serpent_die"
+    ]
+  },
+  "monster_rex_grunt": {
+    "sounds": [
+      "stardewcraft:monster_rex_grunt"
+    ]
+  },
+  "hit_enemy": {
+    "sounds": [
+      "stardewcraft:hit_enemy"
+    ]
+  },
+  "pet_cat": {
+    "sounds": [
+      {
+        "name": "stardewcraft:cat1",
+        "stream": false
+      },
+      {
+        "name": "stardewcraft:cat2",
+        "stream": false
+      }
+    ]
+  },
+  "dog_pant": {
+    "sounds": [
+      {
+        "name": "stardewcraft:pet/dog_pant",
+        "stream": false
+      }
+    ]
+  },
+  "turtle_pet": {
+    "sounds": [
+      {
+        "name": "stardewcraft:pet/turtle_pet",
+        "stream": false
+      }
+    ]
+  },
+  "cowboy_footstep": {
+    "sounds": [
+      {
+        "name": "stardewcraft:pet/cowboy_footstep",
+        "stream": false
+      }
+    ]
+  },
+  "watering_can": {
+    "sounds": [
+      {
+        "name": "stardewcraft:pet/watering_can1",
+        "stream": false
+      },
+      {
+        "name": "stardewcraft:pet/watering_can2",
+        "stream": false
+      },
+      {
+        "name": "stardewcraft:pet/watering_can3",
         "stream": false
       }
     ]

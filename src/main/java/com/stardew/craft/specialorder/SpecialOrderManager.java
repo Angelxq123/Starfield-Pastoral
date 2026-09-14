@@ -177,7 +177,7 @@ public final class SpecialOrderManager {
         var before = StardewProgressRegistry.specialOrderSnapshot(
                 player, order, null);
         grantRewards(player, definition, order);
-        cleanupTemporaryOrderState(List.of(player), definition);
+        cleanupTemporaryOrderState(player.serverLevel(),List.of(player), definition);
         order.markRewardClaimed(player.getUUID());
         if (!definition.repeatable() && order.allParticipantRewardsClaimed()) {
             data.completedOrderIds().add(order.orderId());
@@ -208,7 +208,7 @@ public final class SpecialOrderManager {
                 var before = StardewProgressRegistry.specialOrderSnapshot(
                         (UUID) null, order, StardewProgressPhase.ACTIVE);
                 queueReturnedDonations(level, players, order);
-                cleanupTemporaryOrderState(players, definition);
+                cleanupTemporaryOrderState(level,players, definition);
                 order.setFailed(true);
                 data.active().remove(order);
                 StardewProgressRegistry.dispatch(new StardewProgressEvent(
@@ -531,11 +531,20 @@ public final class SpecialOrderManager {
     }
 
     public static boolean hasSpecialDropFlag(ServerPlayer player, String flag) {
+        if(flag.equals("ectoplasmDrop") && SpecialOrderWorldData.get(player.serverLevel()).sharedSpecialDropFlags().contains(flag))return true;
         PlayerStardewData data = PlayerDataManager.getPlayerData(player);
         return data.hasMailFlag(flag) || data.hasMailFlagForTomorrow(flag);
     }
 
     public static void markSpecialDropFlag(ServerPlayer player, String flag) {
+        // Farmer.cs sends ectoplasmDrop to everyone; the source host flag closes the team drop branch.
+        if(flag.equals("ectoplasmDrop")){
+            var world=SpecialOrderWorldData.get(player.serverLevel());
+            if(world.sharedSpecialDropFlags().add(flag)){
+                world.setDirty();for(var member:player.server.getPlayerList().getPlayers())MailService.addMailFlagForTomorrow(member,flag);
+            }
+            return;
+        }
         if (!hasSpecialDropFlag(player, flag)) {
             MailService.addMailFlagForTomorrow(player, flag);
         }
@@ -948,11 +957,15 @@ public final class SpecialOrderManager {
         return stacks;
     }
 
-    private static void cleanupTemporaryOrderState(List<ServerPlayer> players, SpecialOrderDefinition definition) {
+    private static void cleanupTemporaryOrderState(ServerLevel level,List<ServerPlayer> players, SpecialOrderDefinition definition) {
         if (definition == null) return;
         ResourceLocation itemId = definition.itemToRemoveOnEnd() == null || definition.itemToRemoveOnEnd().isBlank()
             ? null : ResourceLocation.parse(definition.itemToRemoveOnEnd());
         String mailFlag = definition.mailToRemoveOnEnd();
+        if("ectoplasmDrop".equals(mailFlag)){
+            var world=SpecialOrderWorldData.get(level);if(world.sharedSpecialDropFlags().remove(mailFlag))world.setDirty();
+            for(var member:PlayerDataManager.get().getAllPlayerData().values()){member.removeMailFlag(mailFlag);member.removeMailFlagForTomorrow(mailFlag);}
+        }
         for (ServerPlayer player : players) {
             if (itemId != null) {
                 Item item = BuiltInRegistries.ITEM.get(itemId);

@@ -69,53 +69,9 @@ public final class MiningVanillaExperienceEvents {
             return 0;
         }
 
-        if (isAny(state,
-                ModBlocks.QUARTZ,
-                ModBlocks.EARTH_CRYSTAL,
-                ModBlocks.EARTH_COPPER_ORE,
-                ModBlocks.FROST_COPPER_ORE,
-                ModBlocks.LAVA_COPPER_ORE,
-                ModBlocks.DESERT_COPPER_ORE,
-                ModBlocks.EARTH_COAL_ORE,
-                ModBlocks.FROST_COAL_ORE,
-                ModBlocks.LAVA_COAL_ORE,
-                ModBlocks.DESERT_COAL_ORE,
-                ModBlocks.AMETHYST_ORE,
-                ModBlocks.TOPAZ_ORE)) {
-            return 1;
-        }
-
-        if (isAny(state,
-                ModBlocks.FROZEN_TEAR,
-                ModBlocks.EARTH_IRON_ORE,
-                ModBlocks.FROST_IRON_ORE,
-                ModBlocks.LAVA_IRON_ORE,
-                ModBlocks.DESERT_IRON_ORE,
-                ModBlocks.AQUAMARINE_ORE,
-                ModBlocks.JADE_ORE)) {
-            return 2;
-        }
-
-        if (isAny(state,
-                ModBlocks.FIRE_QUARTZ,
-                ModBlocks.EARTH_GOLD_ORE,
-                ModBlocks.FROST_GOLD_ORE,
-                ModBlocks.LAVA_GOLD_ORE,
-                ModBlocks.DESERT_GOLD_ORE,
-                ModBlocks.DIAMOND_ORE,
-                ModBlocks.EMERALD_ORE,
-                ModBlocks.RUBY_ORE)) {
-            return 3;
-        }
-
-        if (isAny(state,
-                ModBlocks.EARTH_IRIDIUM_ORE,
-                ModBlocks.FROST_IRIDIUM_ORE,
-                ModBlocks.LAVA_IRIDIUM_ORE,
-                ModBlocks.DESERT_IRIDIUM_ORE)) {
-            return 5;
-        }
-
+        if (isAny(state, ModBlocks.QUARTZ, ModBlocks.EARTH_CRYSTAL)) return 1;
+        if (state.is(ModBlocks.FROZEN_TEAR.get())) return 2;
+        if (state.is(ModBlocks.FIRE_QUARTZ.get())) return 3;
         return 0;
     }
 

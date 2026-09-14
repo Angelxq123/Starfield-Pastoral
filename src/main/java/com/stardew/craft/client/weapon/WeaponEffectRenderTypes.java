@@ -1,43 +1,54 @@
 package com.stardew.craft.client.weapon;
 
-import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import net.minecraft.resources.ResourceLocation;
 
-import java.util.Map;
 
 public final class WeaponEffectRenderTypes {
-    private static final RenderStateShard.ShaderStateShard WEAPON_EFFECT_SHADER =
-        new RenderStateShard.ShaderStateShard(WeaponShaderRegistry::getWeaponEffect);
+    /** Unlit, depth-tested ribbon/impact geometry. Only color is written; no scene copy is needed. */
+    public static final RenderType MOLTEN_GLOW = RenderType.create(
+            "stardewcraft_molten_glow", DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS, 4096, false, false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(
+                            net.minecraft.client.renderer.GameRenderer::getPositionColorShader))
+                    .setTransparencyState(new RenderStateShard.TransparencyStateShard("molten_additive", () -> {
+                        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+                        com.mojang.blaze3d.systems.RenderSystem.blendFunc(
+                                com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA,
+                                com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE);
+                    }, () -> {
+                        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+                        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+                    }))
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
 
-    private static final Map<ResourceLocation, RenderType> CACHE = Maps.newHashMap();
+    /** Dark/translucent edge preserves hit silhouettes against bright sky and pale targets. */
+    public static final RenderType IMPACT_EDGE = RenderType.create(
+            "stardewcraft_impact_edge", DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS, 4096, false, false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(
+                            net.minecraft.client.renderer.GameRenderer::getPositionColorShader))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+
+    /** Opaque projectile bodies keep their silhouette; their separate wakes supply the glow. */
+    public static final RenderType PROJECTILE_BODY = RenderType.create(
+            "stardewcraft_weapon_projectile_body", DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS, 4096, false, false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(
+                            net.minecraft.client.renderer.GameRenderer::getPositionColorShader))
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setWriteMaskState(RenderStateShard.COLOR_DEPTH_WRITE)
+                    .createCompositeState(false));
 
     private WeaponEffectRenderTypes() {}
-
-    @SuppressWarnings("null")
-    public static RenderType weaponEffect(ResourceLocation texture) {
-        if (WeaponShaderRegistry.getWeaponEffect() == null) {
-            return RenderType.entityTranslucent(texture);
-        }
-        return CACHE.computeIfAbsent(texture, tex -> RenderType.create(
-            "stardewcraft_weapon_effect_" + tex.getPath().replace('/', '_'),
-            DefaultVertexFormat.POSITION_TEX_COLOR,
-            VertexFormat.Mode.QUADS,
-            256,
-            false,
-            true,
-            RenderType.CompositeState.builder()
-                .setShaderState(WEAPON_EFFECT_SHADER)
-                .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
-                .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-                .setCullState(RenderStateShard.NO_CULL)
-                .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                .setLightmapState(RenderStateShard.LIGHTMAP)
-                .setOverlayState(RenderStateShard.OVERLAY)
-                .createCompositeState(false)
-        ));
-    }
 }

@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/dark_lava_basalt_slab",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/dark_lava_basalt"
-                 }
-}

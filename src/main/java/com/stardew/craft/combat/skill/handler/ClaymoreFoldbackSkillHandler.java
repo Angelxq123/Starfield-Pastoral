@@ -62,6 +62,14 @@ public final class ClaymoreFoldbackSkillHandler
                 context.skillData().getCooldown() * 20
         );
 
+        // Bind confirmed contact feedback to this action, without delaying damage.
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                INITIAL_ANIMATION_TICKS
+        );
+
         LivingEntity target = SkillTargeting.findTargetEntity(
                 context.player(),
                 INITIAL_TARGET_RANGE
@@ -81,14 +89,6 @@ public final class ClaymoreFoldbackSkillHandler
                 )
         );
 
-        // Preserve the original notification order after the first strike and
-        // delayed return registration. This skill never imposed an attack lock.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                INITIAL_ANIMATION_TICKS
-        );
     }
 
     @Override

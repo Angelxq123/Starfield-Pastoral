@@ -73,7 +73,7 @@ public final class TravelingCartEvents {
         ensureSingleEntity(level, manager);
     }
 
-    private static boolean shouldTravelingMerchantVisitToday(int dayOfMonth) {
+    public static boolean shouldTravelingMerchantVisitToday(int dayOfMonth) {
         int dayOfWeek = Math.floorMod(dayOfMonth - 1, 7);
         return dayOfWeek == 4 || dayOfWeek == 6;
     }

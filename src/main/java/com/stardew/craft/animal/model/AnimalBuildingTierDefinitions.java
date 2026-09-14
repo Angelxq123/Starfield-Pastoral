@@ -47,6 +47,8 @@ public final class AnimalBuildingTierDefinitions {
         return definition;
     }
 
+    public static AnimalBuildingTierDefinition find(String family,int tier) { return effectiveSnapshot().byKey().get(key(family,tier)); }
+
     public static long generation() {
         return effectiveSnapshot().generation();
     }

@@ -21,8 +21,7 @@ import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.stardew.craft.building.runtime.BuildingPurchasePlan;
 
 /**
  * Client request for a stable blueprint ID from an authorized catalog snapshot.
@@ -32,7 +31,8 @@ public record CarpenterPurchasePayload(
         String builder,
         int blueprintIndex,
         String blueprintId,
-        long catalogRevision
+        long catalogRevision,
+        java.util.UUID requestId
 ) implements CustomPacketPayload {
     public static final Type<CarpenterPurchasePayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(
@@ -50,7 +50,7 @@ public record CarpenterPurchasePayload(
                             ByteBufCodecs.STRING_UTF8.decode(buffer),
                             buffer.readInt(),
                             ByteBufCodecs.STRING_UTF8.decode(buffer),
-                            buffer.readVarLong());
+                            buffer.readVarLong(), buffer.readUUID());
                 }
 
                 @Override
@@ -64,8 +64,13 @@ public record CarpenterPurchasePayload(
                     ByteBufCodecs.STRING_UTF8.encode(
                             buffer, payload.blueprintId());
                     buffer.writeVarLong(payload.catalogRevision());
+                    buffer.writeUUID(payload.requestId());
                 }
             };
+
+    public CarpenterPurchasePayload(String builder, int blueprintIndex, String blueprintId, long catalogRevision) {
+        this(builder, blueprintIndex, blueprintId, catalogRevision, java.util.UUID.randomUUID());
+    }
 
     /**
      * Source-compatible constructor. Requests without the server-issued
@@ -99,7 +104,7 @@ public record CarpenterPurchasePayload(
                     || !BuildingCatalogService.authorizes(
                             player, builder, blueprintId,
                             payload.catalogRevision())) {
-                fail(player, payload.blueprintIndex());
+                fail(player, payload.blueprintIndex(), payload.requestId());
                 return;
             }
             StardewBuildingBlueprint blueprint =
@@ -111,106 +116,80 @@ public record CarpenterPurchasePayload(
                             player, builder).stream()
                             .noneMatch(candidate ->
                                     candidate.id().equals(blueprintId))) {
-                fail(player, payload.blueprintIndex());
+                fail(player, payload.blueprintIndex(), payload.requestId());
                 return;
             }
             if (StardewBuildingBuilders.WIZARD.equals(builder)
                     && !WizardBuildingService.canUse(player)) {
-                fail(player, payload.blueprintIndex());
+                fail(player, payload.blueprintIndex(), payload.requestId());
                 return;
             }
-            purchase(player, blueprint, payload.blueprintIndex());
+            if (com.stardew.craft.building.runtime.UtilityBuildings.managed(blueprintId)) {
+                com.stardew.craft.building.runtime.BuildingPurchaseService.openChoices(player, payload.catalogRevision(), blueprintId, payload.requestId());
+                return;
+            }
+            if (BuiltInRegistries.ITEM.get(blueprint.definition().resultItem()) instanceof com.stardew.craft.building.runtime.BuildingUpgradePermitItem permit) {
+                com.stardew.craft.building.runtime.BuildingPurchaseService.purchaseUpgrade(player, blueprint, permit, payload.requestId());
+                return;
+            }
+            purchase(player, blueprint, payload.blueprintIndex(), payload.requestId());
         });
     }
 
     private static void purchase(
             ServerPlayer player,
             StardewBuildingBlueprint blueprint,
-            int clientIndex
+            int clientIndex, java.util.UUID requestId
     ) {
         var definition = blueprint.definition();
         int currentMoney = PlayerStardewDataAPI.getMoney(player);
         if (currentMoney < definition.money()) {
-            fail(player, clientIndex);
+            fail(player, clientIndex, requestId, "livestock.stardewcraft.money");
             return;
         }
 
         Item resultItem = BuiltInRegistries.ITEM.get(
                 definition.resultItem());
         if (resultItem == null || resultItem == Items.AIR) {
-            fail(player, clientIndex);
+            fail(player, clientIndex, requestId);
             return;
         }
 
-        ArrayList<Consumption> plan = new ArrayList<>();
-        for (var material : definition.materials()) {
-            Item item = BuiltInRegistries.ITEM.get(material.item());
-            if (item == null || item == Items.AIR
-                    || !planConsumption(
-                            player, item, material.count(), plan)) {
-                fail(player, clientIndex);
-                return;
-            }
-        }
-
-        if (definition.money() > 0
-                && !PlayerStardewDataAPI.removeMoney(
-                        player, definition.money())) {
-            fail(player, clientIndex);
+        ItemStack resultStack = new ItemStack(resultItem, definition.resultCount());
+        if (resultItem instanceof WizardBuildingItem) WizardBuildingItem.bindTo(resultStack, player);
+        var materials = definition.materials().stream().map(material ->
+                new BuildingPurchasePlan.Material(BuiltInRegistries.ITEM.get(material.item()), material.count())).toList();
+        var plan = BuildingPurchasePlan.prepare(player.getInventory(), resultStack, materials);
+        if (plan == null) {
+            fail(player, clientIndex, requestId, BuildingPurchasePlan.hasMaterials(player.getInventory(), materials)
+                    ? "livestock.stardewcraft.inventory_full" : "stardewcraft.workbench.need_materials");
             return;
         }
-
-        // The complete slot plan was validated on this server task before
-        // payment; no partially consumed material loop can now fail.
-        for (Consumption consumption : plan) {
-            player.getInventory().getItem(consumption.slot())
-                    .shrink(consumption.count());
+        if (definition.money() > 0 && !PlayerStardewDataAPI.removeMoney(player, definition.money())) {
+            fail(player, clientIndex, requestId, "livestock.stardewcraft.money");
+            return;
         }
-
-        ItemStack resultStack = new ItemStack(
-                resultItem, definition.resultCount());
-        if (resultItem instanceof WizardBuildingItem) {
-            WizardBuildingItem.bindTo(resultStack, player);
-        }
-        if (!player.getInventory().add(resultStack)) {
-            player.drop(resultStack, false);
-        }
+        plan.apply(player.getInventory());
         sendResult(
                 player, true,
                 PlayerStardewDataAPI.getMoney(player),
                 definition.resultItem().toString(),
-                clientIndex);
-    }
-
-    private static boolean planConsumption(
-            ServerPlayer player,
-            Item item,
-            int count,
-            List<Consumption> plan
-    ) {
-        int remaining = count;
-        for (int slotIndex = 0;
-             slotIndex < player.getInventory().getContainerSize()
-                     && remaining > 0;
-             slotIndex++) {
-            ItemStack stack = player.getInventory().getItem(slotIndex);
-            if (!stack.isEmpty() && stack.is(item)) {
-                int take = Math.min(remaining, stack.getCount());
-                plan.add(new Consumption(slotIndex, take));
-                remaining -= take;
-            }
-        }
-        return remaining == 0;
+                clientIndex, requestId);
     }
 
     private static void fail(
             ServerPlayer player,
-            int blueprintIndex
+            int blueprintIndex, java.util.UUID requestId
     ) {
+        fail(player, blueprintIndex, requestId, "building.stardewcraft.work_stale");
+    }
+
+    private static void fail(ServerPlayer player, int blueprintIndex, java.util.UUID requestId, String key) {
+        com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player, net.minecraft.network.chat.Component.translatable(key));
         sendResult(
                 player, false,
                 PlayerStardewDataAPI.getMoney(player),
-                "", blueprintIndex);
+                "", blueprintIndex, requestId);
     }
 
     private static void sendResult(
@@ -218,14 +197,12 @@ public record CarpenterPurchasePayload(
             boolean success,
             int newMoney,
             String resultItemId,
-            int blueprintIndex
+            int blueprintIndex, java.util.UUID requestId
     ) {
         PacketDistributor.sendToPlayer(player,
                 new CarpenterPurchaseResultPayload(
                         success, newMoney, resultItemId,
-                        blueprintIndex));
+                        blueprintIndex, requestId));
     }
 
-    private record Consumption(int slot, int count) {
-    }
 }

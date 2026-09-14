@@ -2,12 +2,10 @@ package com.stardew.craft.client.weapon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -19,10 +17,6 @@ import java.util.List;
 
 public final class SingularityCoreEffectClient {
 
-    private static final ResourceLocation CORE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_b.png"
-    );
 
     private static final List<Core> CORES = new ArrayList<>();
 
@@ -66,25 +60,12 @@ public final class SingularityCoreEffectClient {
             return;
         }
 
-        var shader = WeaponShaderRegistry.getWeaponEffect();
 
         Vec3 camPos = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        float shaderTime = mc.level.getGameTime() + partial;
-        if (shader != null) {
-            shader.safeGetUniform("Time").set(shaderTime);
-            shader.safeGetUniform("FlowStrength").set(0.55f);
-            shader.safeGetUniform("NoiseStrength").set(0.2f);
-            shader.safeGetUniform("TextureColorStrength").set(0.0f);
-            shader.safeGetUniform("AlphaFloor").set(0.0f);
-            shader.safeGetUniform("GlowStrength").set(0.25f);
-            shader.safeGetUniform("ErosionStrength").set(0.0f);
-            shader.safeGetUniform("UseTextureAlpha").set(1.0f);
-            shader.safeGetUniform("AlphaBoost").set(1.7f);
-        }
-        RenderType coreType = WeaponEffectRenderTypes.weaponEffect(CORE_TEXTURE);
+        RenderType coreType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer consumer = buffer.getBuffer(coreType);
 
         for (Core core : CORES) {

@@ -2,7 +2,6 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.manager.CropGrowthManager;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
@@ -11,6 +10,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
@@ -19,13 +21,14 @@ import java.util.function.Supplier;
 /**
  * 野生种子作物方块 — 种下后经历2个生长阶段，成熟后自动变成对应季节的采集物方块(ForageBlock)。
  * SDV: Crops.json phases [3,4], SpriteIndex 23, 成熟后 newDay() 替换为地面采集物。
- * 复用 broccoli 的 stage0/stage1 cross 贴图作为生长阶段外观。
+ * 出苗时固定选择原版六种苗态之一，成熟后替换为采集物。
  */
 @SuppressWarnings("null")
 public class WildSeedCropBlock extends StardewCropBlock {
 
     /** SDV wild seed crop: 2 growth phases, 3 days + 4 days = 7 days total */
     private static final int[] PHASE_DAYS = new int[]{3, 4};
+    public static final IntegerProperty WILD_VARIANT = IntegerProperty.create("wild_variant", 0, 5);
 
     private final int season; // 0=spring, 1=summer, 2=fall, 3=winter
     private final Supplier<Item> seedsItem;
@@ -37,6 +40,17 @@ public class WildSeedCropBlock extends StardewCropBlock {
                 .sound(SoundType.CROP));
         this.season = season;
         this.seedsItem = seedsItem;
+        registerDefaultState(defaultBlockState().setValue(WILD_VARIANT, 0));
+    }
+
+    @Override
+    protected void addExtraProperties(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(WILD_VARIANT);
+    }
+
+    static BlockState selectFirstSproutVariant(BlockState before, BlockState after, RandomSource random) {
+        return before.getValue(AGE) == 0 && after.getValue(AGE) > 0
+                ? after.setValue(WILD_VARIANT, random.nextInt(6)) : after;
     }
 
     @Override
@@ -57,7 +71,7 @@ public class WildSeedCropBlock extends StardewCropBlock {
     @Override
     protected boolean isInSeason(Level level) {
         if (level.isClientSide()) return true;
-        return StardewTimeManager.get().getCurrentSeason() == season;
+        return seasonForGrowth() == season;
     }
 
     @Override
@@ -98,6 +112,13 @@ public class WildSeedCropBlock extends StardewCropBlock {
 
         // Check if we just reached maturity
         BlockState currentState = level.getBlockState(pos);
+        if (currentState.getBlock() == this) {
+            BlockState selected = selectFirstSproutVariant(state, currentState, level.getRandom());
+            if (selected != currentState) {
+                level.setBlock(pos, selected, Block.UPDATE_CLIENTS);
+                currentState = selected;
+            }
+        }
         if (currentState.getBlock() == this && currentState.getValue(AGE) == MAX_AGE) {
             transformToForage(level, pos);
         }
@@ -122,7 +143,7 @@ public class WildSeedCropBlock extends StardewCropBlock {
     /**
      * SDV Crop.getRandomWildCropForSeason — picks a random forage block.
      */
-    private Block pickRandomForage(net.minecraft.util.RandomSource random) {
+    Block pickRandomForage(net.minecraft.util.RandomSource random) {
         return switch (season) {
             case 0 -> switch (random.nextInt(4)) {
                 case 0 -> ModBlocks.FORAGE_WILD_HORSERADISH.get();
@@ -133,7 +154,7 @@ public class WildSeedCropBlock extends StardewCropBlock {
             case 1 -> switch (random.nextInt(3)) {
                 case 0 -> ModBlocks.FORAGE_SPICE_BERRY.get();
                 case 1 -> ModBlocks.FORAGE_SWEET_PEA.get();
-                default -> ModBlocks.FORAGE_FIDDLEHEAD_FERN.get(); // SDV: grape — 暂用蕨菜替代
+                default -> ModBlocks.FORAGE_GRAPE.get();
             };
             case 2 -> switch (random.nextInt(4)) {
                 case 0 -> ModBlocks.FORAGE_COMMON_MUSHROOM.get();
@@ -144,7 +165,7 @@ public class WildSeedCropBlock extends StardewCropBlock {
             case 3 -> switch (random.nextInt(4)) {
                 case 0 -> ModBlocks.FORAGE_WINTER_ROOT.get();
                 case 1 -> ModBlocks.FORAGE_CRYSTAL_FRUIT.get();
-                case 2 -> ModBlocks.FORAGE_HOLLY.get(); // SDV: snow_yam — 暂用冬青替代
+                case 2 -> ModBlocks.FORAGE_SNOW_YAM.get();
                 default -> ModBlocks.FORAGE_CROCUS.get();
             };
             default -> null;

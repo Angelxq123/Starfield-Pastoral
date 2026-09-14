@@ -4,7 +4,7 @@ import com.stardew.craft.cutscene.runtime.EventPlayer;
 
 /**
  * A single step in an event script.
- * Commands are ticked every client frame until complete.
+ * Commands are ticked every client tick until complete.
  */
 public interface EventCommand {
 

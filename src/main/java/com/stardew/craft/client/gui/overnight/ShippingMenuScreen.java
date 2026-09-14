@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.overnight;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.sound.StardewMusicManager;
@@ -187,7 +189,7 @@ public class ShippingMenuScreen extends Screen {
     }
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private int px(int stardewPixels) {

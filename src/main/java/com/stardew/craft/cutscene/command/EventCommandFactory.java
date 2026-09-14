@@ -78,7 +78,7 @@ public final class EventCommandFactory {
                     getDouble(obj, "x", 0),
                     getDouble(obj, "y", 0),
                     getDouble(obj, "z", 0),
-                    obj.get("ticks").getAsInt(),
+                    getInt(obj, "ticks", 0),
                     getBool(obj, "relative", true),
                     getString(obj, "anchor", null)
             );
@@ -88,7 +88,7 @@ public final class EventCommandFactory {
                     getDouble(obj, "y", 0),
                     getDouble(obj, "z", 0),
                     getBool(obj, "relative", false),
-                    getDouble(obj, "speed", 0.11D),
+                    getDouble(obj, "speed", 0.0D),
                     getString(obj, "anchor", null)
             );
             case "face_actor"    -> new FaceActorCommand(

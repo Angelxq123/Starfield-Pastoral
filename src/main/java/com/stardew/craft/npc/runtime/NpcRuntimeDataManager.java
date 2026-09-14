@@ -14,6 +14,10 @@ import java.util.Map;
 public final class NpcRuntimeDataManager extends SavedData {
     private static final String DATA_NAME = "stardew_npc_runtime";
 
+    private java.util.UUID scheduleContextPlayer;
+    public java.util.UUID scheduleContextPlayer() { return scheduleContextPlayer; }
+    public void setScheduleContextPlayer(java.util.UUID player) { scheduleContextPlayer=player; setDirty(); }
+
     private final Map<String, NpcRuntimeState> states = new LinkedHashMap<>();
 
     public static NpcRuntimeDataManager get(net.minecraft.server.level.ServerLevel level) {
@@ -33,6 +37,7 @@ public final class NpcRuntimeDataManager extends SavedData {
 
     public static NpcRuntimeDataManager load(CompoundTag tag, HolderLookup.Provider provider) {
         NpcRuntimeDataManager manager = new NpcRuntimeDataManager();
+        if (tag.hasUUID("ScheduleContextPlayer")) manager.scheduleContextPlayer=tag.getUUID("ScheduleContextPlayer");
         int count = tag.getInt("Count");
         for (int i = 0; i < count; i++) {
             String key = "Npc_" + i;
@@ -53,6 +58,7 @@ public final class NpcRuntimeDataManager extends SavedData {
     @Override
     @SuppressWarnings("null")
     public @NotNull CompoundTag save(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider provider) {
+        if (scheduleContextPlayer!=null) tag.putUUID("ScheduleContextPlayer",scheduleContextPlayer);
         tag.putInt("Count", states.size());
         int index = 0;
         for (NpcRuntimeState state : states.values()) {

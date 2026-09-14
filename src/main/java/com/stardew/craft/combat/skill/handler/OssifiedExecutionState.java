@@ -8,7 +8,6 @@ import com.stardew.craft.combat.skill.runtime.SkillInstance;
 import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import com.stardew.craft.combat.skill.runtime.WeaponSkillMovementArbiter;
 import java.util.List;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -23,6 +22,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /** One Ossified Execution circle and its server-authoritative pulse schedule. */
 final class OssifiedExecutionState
         implements SkillInstance.ExecutionState {
+    private ServerLevel presentationLevel;
+    private int casterId;
+    private final long castTick;
     private final Vec3 center;
     private final float radius;
     private final ResourceKey<Level> dimension;
@@ -44,6 +46,7 @@ final class OssifiedExecutionState
                     "Ossified Execution radius and duration must be positive"
             );
         }
+        this.castTick = nowTick;
         this.center = center;
         this.radius = radius;
         this.dimension = dimension;
@@ -53,64 +56,19 @@ final class OssifiedExecutionState
     }
 
     @SuppressWarnings("null")
-    void activate(SkillExecutionContext context, LivingEntity anchor) {
+    void activate(SkillExecutionContext context) {
         ServerLevel level = context.player().serverLevel();
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-                anchor,
-                new OssifiedExecutionCirclePayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
-                        radius,
-                        durationTicks
-                )
-        );
-        level.sendParticles(
-                ParticleTypes.SOUL,
-                center.x,
-                center.y + 0.05D,
-                center.z,
-                18,
-                radius * 0.4D,
-                0.1D,
-                radius * 0.4D,
-                0.02D
-        );
-        level.sendParticles(
-                ParticleTypes.ASH,
-                center.x,
-                center.y + 0.05D,
-                center.z,
-                10,
-                radius * 0.35D,
-                0.1D,
-                radius * 0.35D,
-                0.02D
-        );
-        level.playSound(
-                null,
-                anchor.blockPosition(),
-                SoundEvents.BONE_BLOCK_BREAK,
-                SoundSource.PLAYERS,
-                1.1F,
-                0.9F
-        );
-        level.playSound(
-                null,
-                anchor.blockPosition(),
-                SoundEvents.SOUL_ESCAPE.value(),
-                SoundSource.PLAYERS,
-                1.1F,
-                0.8F
-        );
-        level.playSound(
-                null,
-                anchor.blockPosition(),
-                SoundEvents.ANVIL_LAND,
-                SoundSource.PLAYERS,
-                0.8F,
-                0.7F
-        );
+        presentationLevel = level;
+        casterId = context.player().getId();
+        sendPhase(OssifiedExecutionCirclePayload.START);
+        level.playSound(null, center.x, center.y, center.z, SoundEvents.BONE_BLOCK_PLACE, SoundSource.PLAYERS, 0.65f, 0.7f);
+        level.playSound(null, center.x, center.y, center.z, SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.3f, 1.2f);
+    }
+
+    private void sendPhase(int phase) {
+        if (presentationLevel == null) return;
+        PacketDistributor.sendToPlayersInDimension(presentationLevel, new OssifiedExecutionCirclePayload(
+                casterId, castTick, phase, center.x, center.y, center.z, radius, durationTicks));
     }
 
     SkillTickResult advance(SkillExecutionContext context) {
@@ -139,15 +97,11 @@ final class OssifiedExecutionState
                     context.player()
             );
             pullTargets(targets, center, radius);
-            if (context.nowTick()
-                    % OssifiedExecutionSkillHandler
-                    .RING_PARTICLE_INTERVAL_TICKS == 0L) {
-                emitRingParticles(level);
-            }
             if (shouldPulse(context.nowTick(), nextDamageTick)) {
                 nextDamageTick += OssifiedExecutionSkillHandler
                         .DAMAGE_INTERVAL_TICKS;
-                pulse(context, level, targets);
+                sendPhase(OssifiedExecutionCirclePayload.PULSE);
+                pulse(context, targets);
             }
             return SkillTickResult.CONTINUE;
         } finally {
@@ -181,6 +135,8 @@ final class OssifiedExecutionState
     }
 
     void cancel() {
+        sendPhase(OssifiedExecutionCirclePayload.END);
+        presentationLevel = null;
         settled = true;
     }
 
@@ -203,41 +159,8 @@ final class OssifiedExecutionState
     }
 
     @SuppressWarnings("null")
-    private void emitRingParticles(ServerLevel level) {
-        for (int index = 0; index < 16; index++) {
-            double angle = Math.PI * 2.0D * (index / 16.0D);
-            double x = center.x + Math.cos(angle) * radius;
-            double z = center.z + Math.sin(angle) * radius;
-            double y = center.y + 0.05D;
-            level.sendParticles(
-                    ParticleTypes.SOUL,
-                    x,
-                    y,
-                    z,
-                    1,
-                    0.02D,
-                    0.02D,
-                    0.02D,
-                    0.0D
-            );
-            level.sendParticles(
-                    ParticleTypes.ASH,
-                    x,
-                    y,
-                    z,
-                    1,
-                    0.02D,
-                    0.02D,
-                    0.02D,
-                    0.0D
-            );
-        }
-    }
-
-    @SuppressWarnings("null")
     private static void pulse(
             SkillExecutionContext context,
-            ServerLevel level,
             List<LivingEntity> targets
     ) {
         for (LivingEntity target : targets) {
@@ -252,36 +175,6 @@ final class OssifiedExecutionState
                     WeaponSkillDamage.AttackGatePolicy.SKILL_DAMAGE,
                     WeaponSkillDamage.HitCooldownPolicy
                             .BYPASS_FOR_AUTHORED_SEQUENCE
-            );
-            level.sendParticles(
-                    ParticleTypes.ASH,
-                    target.getX(),
-                    target.getY() + target.getBbHeight() * 0.5D,
-                    target.getZ(),
-                    6,
-                    0.25D,
-                    0.2D,
-                    0.25D,
-                    0.01D
-            );
-            level.sendParticles(
-                    ParticleTypes.SOUL_FIRE_FLAME,
-                    target.getX(),
-                    target.getY() + target.getBbHeight() * 0.5D,
-                    target.getZ(),
-                    4,
-                    0.2D,
-                    0.15D,
-                    0.2D,
-                    0.01D
-            );
-            level.playSound(
-                    null,
-                    target.blockPosition(),
-                    SoundEvents.BONE_BLOCK_HIT,
-                    SoundSource.PLAYERS,
-                    0.75F,
-                    1.2F
             );
         }
     }

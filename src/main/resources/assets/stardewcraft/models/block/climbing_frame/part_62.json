@@ -1,0 +1,87 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "surface": "stardewcraft:block/climbing_frame/climber_spring",
+    "particle": "stardewcraft:block/climbing_frame/sun_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -5,
+        0,
+        4
+      ],
+      "to": [
+        5,
+        10,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            5.1875,
+            3.1875,
+            5.5,
+            3.5
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            5.875,
+            3.1875,
+            5.90625,
+            3.5
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            5.53125,
+            3.1875,
+            5.84375,
+            3.5
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            5.9375,
+            3.1875,
+            5.96875,
+            3.5
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            6.0,
+            3.1875,
+            6.3125,
+            3.21875
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            6.34375,
+            3.1875,
+            6.65625,
+            3.21875
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "z",
+        "angle": 45,
+        "origin": [
+          0,
+          5,
+          4.5
+        ],
+        "rescale": false
+      }
+    }
+  ]
+}

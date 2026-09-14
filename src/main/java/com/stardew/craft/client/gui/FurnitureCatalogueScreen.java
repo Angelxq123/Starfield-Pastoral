@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
@@ -186,8 +190,7 @@ public class FurnitureCatalogueScreen extends Screen {
     protected void init() {
         super.init();
         openedAtMs = System.currentTimeMillis();
-        Minecraft mc = Minecraft.getInstance();
-        guiScale = (float) mc.getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         float s4 = s4();
 
         panelWGui = ui(WIN_W);
@@ -267,7 +270,7 @@ public class FurnitureCatalogueScreen extends Screen {
                 ? I18n.get("stardewcraft.catalogue.no_favourites")
                 : I18n.get("stardewcraft.catalogue.no_results");
             GuiText.drawCenteredClamped(g, font, Component.literal(msg),
-                panelX + panelWGui / 2, panelY + panelHGui / 2 - font.lineHeight / 2,
+                panelX + panelWGui / 2, panelY + panelHGui / 2 - StardewFonts.lineHeight(font) / 2,
                 Math.max(1, panelWGui - ui(80)), 0x404040, false);
         }
 
@@ -313,7 +316,7 @@ public class FurnitureCatalogueScreen extends Screen {
         // Background using texture box (SDV-style input field)
         CommonGuiTextures.drawEntryBox(g, searchBoxX, searchBoxY, searchBoxW, searchBoxH, s4, false);
 
-        int textY = searchBoxY + (searchBoxH - font.lineHeight) / 2;
+        int textY = searchBoxY + (searchBoxH - StardewFonts.lineHeight(font)) / 2;
         int textX = searchBoxX + ui(16);
 
         // Draw placeholder or search text

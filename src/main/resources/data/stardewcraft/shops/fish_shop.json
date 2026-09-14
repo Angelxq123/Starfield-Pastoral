@@ -4,6 +4,14 @@
   "owner_dialogue": "stardewcraft.shop.fishshop.dialogue",
   "entries": [
     {
+      "item": "stardewcraft:large_fish_tank",
+      "price": 2000
+    },
+    {
+      "item": "stardewcraft:fish_market_crate",
+      "price": 1500
+    },
+    {
       "item": "stardewcraft:bait",
       "price": 5
     },

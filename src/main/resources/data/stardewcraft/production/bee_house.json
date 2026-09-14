@@ -1,0 +1,10 @@
+{
+  "time_multiplier": 1.0,
+  "cycles": {
+    "default": {
+      "duration": {
+        "minutes": 5040
+      }
+    }
+  }
+}

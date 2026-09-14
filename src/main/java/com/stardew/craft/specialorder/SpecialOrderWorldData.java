@@ -23,6 +23,7 @@ public final class SpecialOrderWorldData extends SavedData {
     private final List<SpecialOrderInstance> available = new ArrayList<>();
     private final List<SpecialOrderInstance> active = new ArrayList<>();
     private final Set<String> completedOrderIds = new HashSet<>();
+    private final Set<String> sharedSpecialDropFlags = new HashSet<>();
     private final Map<UUID, List<SpecialOrderInstance.DonatedItem>> returnedDonations = new LinkedHashMap<>();
     private int lastRefreshDay = Integer.MIN_VALUE;
     private boolean normalOrderAcceptedThisRefresh;
@@ -35,6 +36,7 @@ public final class SpecialOrderWorldData extends SavedData {
 
     public List<SpecialOrderInstance> available() { return available; }
     public List<SpecialOrderInstance> active() { return active; }
+    public Set<String> sharedSpecialDropFlags() { return sharedSpecialDropFlags; }
     public Set<String> completedOrderIds() { return completedOrderIds; }
     public Map<UUID, List<SpecialOrderInstance.DonatedItem>> returnedDonations() { return returnedDonations; }
     public int lastRefreshDay() { return lastRefreshDay; }
@@ -60,6 +62,8 @@ public final class SpecialOrderWorldData extends SavedData {
             completedList.add(StringTag.valueOf(id));
         }
         tag.put("Completed", completedList);
+        ListTag dropFlags=new ListTag();for(String flag:sharedSpecialDropFlags)dropFlags.add(StringTag.valueOf(flag));
+        tag.put("SharedSpecialDropFlags",dropFlags);
         CompoundTag returnedTag = new CompoundTag();
         for (Map.Entry<UUID, List<SpecialOrderInstance.DonatedItem>> entry : returnedDonations.entrySet()) {
             ListTag items = new ListTag();
@@ -76,6 +80,7 @@ public final class SpecialOrderWorldData extends SavedData {
 
     private static SpecialOrderWorldData load(CompoundTag tag, HolderLookup.Provider provider) {
         SpecialOrderWorldData data = new SpecialOrderWorldData();
+        for(var flag:tag.getList("SharedSpecialDropFlags",8))data.sharedSpecialDropFlags.add(flag.getAsString());
         ListTag availableList = tag.getList("Available", 10);
         for (int i = 0; i < availableList.size(); i++) {
             data.available.add(SpecialOrderInstance.load(availableList.getCompound(i)));

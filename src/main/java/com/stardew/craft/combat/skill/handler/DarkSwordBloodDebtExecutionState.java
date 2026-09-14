@@ -6,6 +6,9 @@ import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 /** One authoritative Blood Debt activation window. */
 final class DarkSwordBloodDebtExecutionState
         implements SkillInstance.ExecutionState {
+    private net.minecraft.server.level.ServerLevel visualLevel;
+    private int visualCaster;
+    private long visualTick;
     private final long endTick;
     private boolean cancelled;
 
@@ -30,7 +33,18 @@ final class DarkSwordBloodDebtExecutionState
         return SkillTickResult.COMPLETE;
     }
 
+    void startPresentation(net.minecraft.server.level.ServerPlayer player,long tick) {
+        visualLevel=player.serverLevel(); visualCaster=player.getId(); visualTick=tick;
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(visualLevel,
+                new com.stardew.craft.combat.network.DarkSwordBloodDebtPayload(visualCaster,visualTick,true,DarkSwordBloodDebtSkillHandler.ACTIVE_DURATION_TICKS));
+    }
+
     void cancel() {
+        if(visualLevel != null) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(visualLevel,
+                    new com.stardew.craft.combat.network.DarkSwordBloodDebtPayload(visualCaster,visualTick,false,0));
+            visualLevel=null;
+        }
         cancelled = true;
     }
 }

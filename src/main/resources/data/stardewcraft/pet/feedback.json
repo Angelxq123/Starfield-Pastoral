@@ -1,0 +1,269 @@
+{
+  "cat": {
+    "repeatContentTicks": -1,
+    "states": {
+      "SitDownBlinkShortContent": {
+        "start": {
+          "sound": "BARK",
+          "voice": true,
+          "rangeFromBorder": 2,
+          "range": -1
+        },
+        "length": 0.2,
+        "loop": false,
+        "frames": []
+      },
+      "SitDownBlinkContent": {
+        "start": {
+          "sound": "BARK",
+          "voice": true,
+          "rangeFromBorder": 2,
+          "range": -1
+        },
+        "length": 2.8,
+        "loop": false,
+        "frames": []
+      },
+      "SitDownLick": {
+        "start": null,
+        "length": 0.9,
+        "loop": false,
+        "frames": [
+          {
+            "time": 0.5,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 2,
+              "range": -1
+            },
+            "terrain": false
+          }
+        ]
+      },
+      "SitDownLickRepeat": {
+        "start": null,
+        "length": 0.45,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.15,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 2,
+              "range": -1
+            },
+            "terrain": false
+          }
+        ]
+      },
+      "Flop": {
+        "start": null,
+        "length": 0.8,
+        "loop": false,
+        "frames": [
+          {
+            "time": 0.6,
+            "cue": {
+              "sound": "stardewcraft:thud_step",
+              "voice": false,
+              "rangeFromBorder": 2,
+              "range": -1
+            },
+            "terrain": false
+          }
+        ]
+      },
+      "Walk": {
+        "start": null,
+        "length": 0.7,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.175,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 1,
+              "range": -1
+            },
+            "terrain": false
+          },
+          {
+            "time": 0.525,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 1,
+              "range": -1
+            },
+            "terrain": false
+          }
+        ]
+      },
+      "LeapJump": {
+        "start": null,
+        "length": 0.8,
+        "loop": false,
+        "frames": [
+          {
+            "time": 0.75,
+            "cue": null,
+            "terrain": true
+          }
+        ]
+      }
+    }
+  },
+  "dog": {
+    "repeatContentTicks": 8,
+    "states": {
+      "Sprint": {
+        "start": {
+          "sound": "BARK",
+          "voice": true,
+          "rangeFromBorder": 1,
+          "range": -1
+        },
+        "length": 0.4,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.2,
+            "cue": null,
+            "terrain": true
+          }
+        ]
+      },
+      "SitDownPant": {
+        "start": null,
+        "length": 0.4,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.0,
+            "cue": {
+              "sound": "stardewcraft:dog_pant",
+              "voice": true,
+              "rangeFromBorder": -1,
+              "range": 5
+            },
+            "terrain": false
+          }
+        ]
+      },
+      "SitSideBark": {
+        "start": {
+          "sound": "BARK",
+          "voice": true,
+          "rangeFromBorder": 10,
+          "range": -1
+        },
+        "length": 0.501,
+        "loop": false,
+        "frames": []
+      },
+      "SitSideWag": {
+        "start": null,
+        "length": 0.4,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.2,
+            "cue": null,
+            "terrain": true
+          }
+        ]
+      },
+      "SitSideWagFast": {
+        "start": null,
+        "length": 0.24,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.12,
+            "cue": null,
+            "terrain": true
+          }
+        ]
+      },
+      "SitSidePant": {
+        "start": null,
+        "length": 0.4,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.0,
+            "cue": {
+              "sound": "stardewcraft:dog_pant",
+              "voice": true,
+              "rangeFromBorder": -1,
+              "range": 5
+            },
+            "terrain": false
+          }
+        ]
+      },
+      "Walk": {
+        "start": null,
+        "length": 0.7,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.175,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 1,
+              "range": -1
+            },
+            "terrain": false
+          },
+          {
+            "time": 0.525,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 1,
+              "range": -1
+            },
+            "terrain": false
+          }
+        ]
+      }
+    }
+  },
+  "turtle": {
+    "repeatContentTicks": -1,
+    "states": {
+      "Walk": {
+        "start": null,
+        "length": 0.7,
+        "loop": true,
+        "frames": [
+          {
+            "time": 0.175,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 1,
+              "range": -1
+            },
+            "terrain": false
+          },
+          {
+            "time": 0.525,
+            "cue": {
+              "sound": "stardewcraft:cowboy_footstep",
+              "voice": false,
+              "rangeFromBorder": 1,
+              "range": -1
+            },
+            "terrain": false
+          }
+        ]
+      }
+    }
+  }
+}

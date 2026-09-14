@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "stardewcraft:block/terrain/dirt"
+    },
+    "variant=1": {
+      "model": "stardewcraft:block/terrain/dirt_tuft"
+    },
+    "variant=2": {
+      "model": "stardewcraft:block/terrain/dirt_impression"
+    },
+    "variant=3": {
+      "model": "stardewcraft:block/terrain/dirt_marks"
+    },
+    "variant=4": {
+      "model": "stardewcraft:block/terrain/dirt_stones"
+    }
+  }
+}

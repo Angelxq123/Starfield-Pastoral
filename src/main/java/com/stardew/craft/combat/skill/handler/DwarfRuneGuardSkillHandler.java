@@ -82,6 +82,13 @@ public final class DwarfRuneGuardSkillHandler
                 )
         );
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             DwarfRuneGuardExecutionState state =
                     instance.requireExecutionState(
@@ -110,13 +117,6 @@ public final class DwarfRuneGuardSkillHandler
             state.settleMiss(context.player());
         });
 
-        // Preserve the authored notification and action-lock order.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

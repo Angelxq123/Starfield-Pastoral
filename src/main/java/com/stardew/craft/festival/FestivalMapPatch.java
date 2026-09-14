@@ -2,7 +2,6 @@ package com.stardew.craft.festival;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.portal.PortalTriggerBlock;
-import com.stardew.craft.tree.WildTrees;
 import com.stardew.craft.tree.prefab.PrefabTreeInstance;
 import com.stardew.craft.tree.prefab.PrefabTreeRegistry;
 import net.minecraft.core.BlockPos;
@@ -14,7 +13,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,7 +30,6 @@ public record FestivalMapPatch(
     int length,
     List<FestivalMapPatchEntry> entries
 ) {
-    private static final int MAX_CONNECTED_TREE_PARTS = 4096;
     private static final int CONNECTED_TREE_HORIZONTAL_RADIUS = 16;
     private static final int CONNECTED_TREE_VERTICAL_RADIUS = 64;
 
@@ -228,57 +225,9 @@ public record FestivalMapPatch(
                 addNonAirMembers(level, prefab.members(), positions);
                 continue;
             }
-            BlockState state = level.getBlockState(pos);
-            WildTrees.Def def = WildTrees.findByAnyPart(state);
-            if (def == null) {
-                continue;
-            }
-            addNonAirMembers(level, collectWildTreeMembers(level, pos, def), positions);
+
         }
         return positions;
-    }
-
-    private static Set<BlockPos> collectWildTreeMembers(ServerLevel level, BlockPos pos, WildTrees.Def def) {
-        if (def.isModernPart(level.getBlockState(pos))) {
-            BlockPos root = WildTrees.findGeneratedModernRoot(level, pos, def);
-            if (root != null) {
-                return WildTrees.collectGeneratedModernTreeMembers(level, root, def);
-            }
-        }
-        return collectConnectedWildTreeParts(level, pos, def);
-    }
-
-    private static Set<BlockPos> collectConnectedWildTreeParts(ServerLevel level, BlockPos start, WildTrees.Def def) {
-        Set<BlockPos> visited = new HashSet<>();
-        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        if (!def.isAnyPart(level.getBlockState(start))) {
-            return visited;
-        }
-        visited.add(start.immutable());
-        queue.add(start.immutable());
-        while (!queue.isEmpty() && visited.size() < MAX_CONNECTED_TREE_PARTS) {
-            BlockPos pos = queue.removeFirst();
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) {
-                            continue;
-                        }
-                        BlockPos next = pos.offset(dx, dy, dz);
-                        if (visited.contains(next) || !withinTreeFloodBounds(start, next)) {
-                            continue;
-                        }
-                        if (!def.isAnyPart(level.getBlockState(next))) {
-                            continue;
-                        }
-                        BlockPos immutable = next.immutable();
-                        visited.add(immutable);
-                        queue.add(immutable);
-                    }
-                }
-            }
-        }
-        return visited;
     }
 
     private static boolean withinTreeFloodBounds(BlockPos start, BlockPos pos) {

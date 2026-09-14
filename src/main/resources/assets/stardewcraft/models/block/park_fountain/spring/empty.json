@@ -1,0 +1,8 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/spring/surface",
+    "particle": "stardewcraft:block/park_fountain/spring/particle"
+  },
+  "elements": [],
+  "render_type": "minecraft:cutout"
+}

@@ -54,7 +54,7 @@ public final class CrossDimensionCombatHandler {
             return true;
         }
 
-        if (equipment.hasYobaProtection()) {
+        if (equipment.hasYobaProtection() && !(event.getSource() instanceof com.stardew.craft.monster.MonsterDamageSource)) {
             int scaledHealth = CombatRingRules.healthOnStardewScale(
                     player.getHealth(),
                     player.getMaxHealth()
@@ -86,6 +86,12 @@ public final class CrossDimensionCombatHandler {
         }
 
         long nowTick = player.level().getGameTime();
+        if (event.getNewDamage() > 0 && event.getSource() instanceof com.stardew.craft.monster.MonsterDamageSource
+                && com.stardew.craft.monster.MonsterCombatBridge.beforePlayerDamage(event.getSource(), player,
+                CombatRingRules.healthOnStardewScale(player.getHealth(), player.getMaxHealth()))) {
+            event.setNewDamage(0);
+            return;
+        }
         NativeIncomingDamageStore.bind(
                 player,
                 event.getSource(),

@@ -1,0 +1,121 @@
+{
+  "wood_floor": {
+    "cells": 752,
+    "phase": [
+      4,
+      4
+    ],
+    "mask_count": 47,
+    "source": "木地板"
+  },
+  "stone_floor": {
+    "cells": 752,
+    "phase": [
+      4,
+      4
+    ],
+    "mask_count": 47,
+    "source": "石地板"
+  },
+  "weathered_floor": {
+    "cells": 752,
+    "phase": [
+      4,
+      4
+    ],
+    "mask_count": 47,
+    "source": "风化地板"
+  },
+  "crystal_floor": {
+    "cells": 564,
+    "phase": [
+      4,
+      3
+    ],
+    "mask_count": 47,
+    "source": "水晶地板"
+  },
+  "gravel_path": {
+    "cells": 64,
+    "phase": [
+      2,
+      2
+    ],
+    "mask_count": 16,
+    "source": "砾石小径/02-细砾土路重绘"
+  },
+  "wood_path": {
+    "cells": 64,
+    "phase": [
+      2,
+      2
+    ],
+    "mask_count": 16,
+    "source": "木头小径/02-独立细化重绘"
+  },
+  "crystal_path": {
+    "cells": 64,
+    "phase": [
+      2,
+      2
+    ],
+    "mask_count": 16,
+    "source": "水晶小径/02-独立细化重绘"
+  },
+  "cobblestone_path": {
+    "cells": 64,
+    "phase": [
+      2,
+      2
+    ],
+    "mask_count": 16,
+    "source": "鹅卵石小径/02-独立细化重绘"
+  },
+  "stepping_stone_path": {
+    "cells": 16,
+    "phase": [
+      1,
+      1
+    ],
+    "mask_count": 1,
+    "source": "垫脚石小径/02-独立细化重绘"
+  },
+  "brick_floor": {
+    "cells": 423,
+    "phase": [
+      3,
+      3
+    ],
+    "mask_count": 47,
+    "source": "红砖地板/03-微调与暗部细化"
+  },
+  "rustic_plank_floor": {
+    "cells": 256,
+    "phase": [
+      4,
+      4
+    ],
+    "mask_count": 16,
+    "source": "乡村木地板/02-宽板独立重绘"
+  },
+  "straw_floor": {
+    "cells": 64,
+    "hay_cells": 73,
+    "phase": [
+      2,
+      2
+    ],
+    "mask_count": 16,
+    "source": "稻草地板/04-秆束与跨格衔接"
+  },
+  "stone_walkway_floor": {
+    "seasons": 4,
+    "phase": [
+      2,
+      2
+    ],
+    "mask_count": 47,
+    "variants": 6,
+    "source": "石制走道地板/04-复用鹈鹕镇石砖"
+  }
+}

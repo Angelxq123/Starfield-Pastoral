@@ -36,6 +36,10 @@ import java.util.function.Consumer;
 public final class StardewCropRuntimeRegistry {
     private static final Map<ResourceLocation, Registration> ADDONS = new HashMap<>();
     private static volatile Catalog catalog = Catalog.empty();
+    private static final ThreadLocal<StardewCropDailyContext> ACTIVE_DAY = new ThreadLocal<>();
+
+    @Nullable
+    public static StardewCropDailyContext activeDay() { return ACTIVE_DAY.get(); }
 
     private StardewCropRuntimeRegistry() {
     }
@@ -137,12 +141,32 @@ public final class StardewCropRuntimeRegistry {
                         BuiltInRegistries.BLOCK.getKey(state.getBlock()));
     }
 
+    public static int dailyNeighborhoodRadius(BlockState state) {
+        if (state.getBlock() instanceof com.stardew.craft.block.crop.RiceCropBlock) return 3;
+        if (state.getBlock() instanceof StardewCropBlock) return 0;
+        int radius = 0;
+        for (var registration : catalog.byBlock().getOrDefault(BuiltInRegistries.BLOCK.getKey(state.getBlock()), List.of())) {
+            try { radius = Math.max(radius, Math.clamp(registration.adapter().dailyNeighborhoodRadius(), 0, 64)); }
+            catch (RuntimeException exception) { radius = Math.max(radius, 8); }
+        }
+        return radius;
+    }
+
     public static StardewCropRuntimeAdapter.DailyResult growOneDay(
             ServerLevel level,
             BlockPos position,
             boolean watered,
             boolean offlineCatchUp
     ) {
+        var time = StardewTimeManager.get();
+        int day = Math.max(0, (time.getCurrentYear() - 1) * 112 + time.getCurrentSeason() * 28 + time.getCurrentDay());
+        return growOneDay(level, position, watered, offlineCatchUp, day, time.getCurrentSeason());
+    }
+
+    public static StardewCropRuntimeAdapter.DailyResult growOneDay(
+            ServerLevel level, BlockPos position, boolean watered, boolean offlineCatchUp, int day, int season) {
+        var context = new StardewCropDailyContext(watered, season,
+                SeasonLocationRules.seedsIgnoreSeasonsHere(level, position), day, offlineCatchUp);
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(position, "position");
 
@@ -150,7 +174,10 @@ public final class StardewCropRuntimeRegistry {
         if (state.getBlock() instanceof StardewCropBlock cropBlock) {
             CropGrowthManager.CropGrowthState growthState =
                     CropGrowthManager.get(level).getOrCreateState(level, position);
-            cropBlock.growCropOneDay(level, position, state, watered, growthState);
+            var previous = ACTIVE_DAY.get();
+            ACTIVE_DAY.set(context);
+            try { cropBlock.growCropOneDay(level, position, state, watered, growthState); }
+            finally { if (previous == null) ACTIVE_DAY.remove(); else ACTIVE_DAY.set(previous); }
             return level.getBlockState(position).getBlock() instanceof StardewCropBlock
                     ? StardewCropRuntimeAdapter.DailyResult.CHANGED
                     : StardewCropRuntimeAdapter.DailyResult.REMOVED;
@@ -163,15 +190,6 @@ public final class StardewCropRuntimeRegistry {
             return StardewCropRuntimeAdapter.DailyResult.REMOVED;
         }
 
-        StardewTimeManager time = StardewTimeManager.get();
-        StardewCropDailyContext context = new StardewCropDailyContext(
-                watered,
-                Math.max(0, Math.min(3, time.getCurrentSeason())),
-                SeasonLocationRules.seedsIgnoreSeasonsHere(level, addon.root()),
-                Math.max(0, (time.getCurrentYear() - 1) * 112
-                        + time.getCurrentSeason() * 28 + time.getCurrentDay()),
-                offlineCatchUp
-        );
         try {
             StardewCropRuntimeAdapter.DailyResult result =
                     registration.adapter().growOneDay(level, addon, context);

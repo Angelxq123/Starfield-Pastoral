@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.sound.StardewMusicManager;
@@ -173,7 +175,7 @@ public final class NightMarketMermaidScreen extends Screen implements StardewRea
     }
 
     private void updateLayout() {
-        double guiScale = Math.max(1.0, Minecraft.getInstance().getWindow().getGuiScale());
+        double guiScale = Math.max(1.0, StardewGuiViewport.REFERENCE_SCALE);
         roomScale = (float) (4.0 / guiScale);
         logicalScreenW = width / roomScale;
         logicalScreenH = height / roomScale;

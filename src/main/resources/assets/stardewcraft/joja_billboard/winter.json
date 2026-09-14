@@ -1,0 +1,229 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_00",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_01",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_02",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_03",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_04",
+      "scene_offset": [
+        32,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_05",
+      "scene_offset": [
+        32,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_06",
+      "scene_offset": [
+        32,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_07",
+      "scene_offset": [
+        32,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_08",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_09",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_10",
+      "scene_offset": [
+        0,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_11",
+      "scene_offset": [
+        48,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_12",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_13",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_14",
+      "scene_offset": [
+        48,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_15",
+      "scene_offset": [
+        48,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_16",
+      "scene_offset": [
+        0,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_17",
+      "scene_offset": [
+        48,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_18",
+      "scene_offset": [
+        32,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_19",
+      "scene_offset": [
+        32,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_20",
+      "scene_offset": [
+        0,
+        16,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_21",
+      "scene_offset": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_22",
+      "scene_offset": [
+        48,
+        16,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_23",
+      "scene_offset": [
+        48,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_24",
+      "scene_offset": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_25",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_26",
+      "scene_offset": [
+        32,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/winter/part_27",
+      "scene_offset": [
+        48,
+        0,
+        0
+      ]
+    }
+  ],
+  "model_units_per_block": 16
+}

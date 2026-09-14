@@ -108,8 +108,52 @@
       "price": 500
     },
     {
+      "item": "stardewcraft:template_workbench",
+      "price": 500
+    },
+    {
       "item": "stardewcraft:stone_workbench",
       "price": 500
+    },
+    {
+      "item": "recipe:stardewcraft:wood_floor",
+      "price": 100,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:rustic_plank_floor",
+      "price": 200,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:stone_floor",
+      "price": 100,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:brick_floor",
+      "price": 500,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:stone_walkway_floor",
+      "price": 200,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:stepping_stone_path",
+      "price": 100,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:straw_floor",
+      "price": 200,
+      "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:crystal_path",
+      "price": 200,
+      "stock": 1
     }
   ],
   "accepted_sell_types": [

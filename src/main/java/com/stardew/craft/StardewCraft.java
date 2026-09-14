@@ -85,6 +85,8 @@ public class StardewCraft {
         com.stardew.craft.api.v1.internal.network
                 .StardewNetworkCapabilityRegistry.bootstrap();
 
+        com.stardew.craft.api.v1.pet.StardewPets.breeds();
+
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(PacketHandler::register);
@@ -99,6 +101,8 @@ public class StardewCraft {
         // 注册作物系统的物品和方块
         ModItems.ITEMS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
+        com.stardew.craft.farm.LegacyFarmSoilMigration.ATTACHMENTS.register(modEventBus);
+        com.stardew.craft.templates.TemplateContent.register(modEventBus);
         ModFluids.FLUID_TYPES.register(modEventBus);
         ModFluids.FLUIDS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
@@ -124,7 +128,6 @@ public class StardewCraft {
         NeoForge.EVENT_BUS.register(this);
         
         // 手动注册事件（确保事件被正确注册）
-        NeoForge.EVENT_BUS.register(com.stardew.craft.event.MinePickaxeEvents.class);
         NeoForge.EVENT_BUS.register(WildTreeChopEvents.class);
         NeoForge.EVENT_BUS.register(com.stardew.craft.event.ResourceClumpEvents.class);
         // WeaponCombatEvents 已有 @EventBusSubscriber 自动注册，不需要手动注册
@@ -144,6 +147,7 @@ public class StardewCraft {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(com.stardew.craft.event.MineMonsterSpawnHandler::ensureProfilesRegistered);
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("Initializing StardewCraft systems...");

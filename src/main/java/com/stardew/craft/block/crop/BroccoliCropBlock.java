@@ -2,7 +2,6 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -17,7 +16,7 @@ import java.util.function.Supplier;
  */
 public class BroccoliCropBlock extends StardewCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{2, 2, 2, 2};
+    private static final int[] PHASE_DAYS = new int[]{1, 2, 2, 3};
 
     @SuppressWarnings("null")
     public BroccoliCropBlock() {
@@ -42,8 +41,7 @@ public class BroccoliCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 2;
     }
 
     @Override

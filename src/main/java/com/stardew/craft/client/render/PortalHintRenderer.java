@@ -337,13 +337,20 @@ public final class PortalHintRenderer {
         int range = (int) ENTITY_SCAN_RANGE;
 
         Map<String, Set<BlockPos>> portalBlocks = new LinkedHashMap<>();
-        for (int dx = -range; dx <= range; dx++) {
-            for (int dy = -4; dy <= 4; dy++) {
-                for (int dz = -range; dz <= range; dz++) {
-                    BlockPos pos = center.offset(dx, dy, dz);
-                    if (!level.getBlockState(pos).is(ModBlocks.PORTAL_TRIGGER.get())) continue;
-                    BlockEntity be = level.getBlockEntity(pos);
+        // Portal triggers already have a loaded block-entity index. Do not probe
+        // all 15,129 surrounding block positions on every rendered frame.
+        for (int cx = (center.getX()-range)>>4; cx <= (center.getX()+range)>>4; cx++) {
+            for (int cz = (center.getZ()-range)>>4; cz <= (center.getZ()+range)>>4; cz++) {
+                var chunk = level.getChunkSource().getChunk(cx, cz,
+                        net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false);
+                if (!(chunk instanceof net.minecraft.world.level.chunk.LevelChunk loadedChunk)) continue;
+                for (BlockEntity be : loadedChunk.getBlockEntities().values()) {
                     if (!(be instanceof PortalTriggerBlockEntity ptbe)) continue;
+                    BlockPos pos = be.getBlockPos();
+                    if (be.isRemoved() || Math.abs(pos.getX()-center.getX())>range
+                            || Math.abs(pos.getY()-center.getY())>4
+                            || Math.abs(pos.getZ()-center.getZ())>range
+                            || !be.getBlockState().is(ModBlocks.PORTAL_TRIGGER.get())) continue;
                     String targetId = ptbe.getTargetId();
                     if (targetId == null || targetId.isBlank()) continue;
                     if (MrQiQuestInteractionService.SAND_DRAGON_TARGET_ID.equals(targetId)
@@ -776,6 +783,18 @@ public final class PortalHintRenderer {
         renderFaces(ps, vc, box, r, g, b, faceA);
         renderEdgeQuads(ps, vc, box, cam, r, g, b, edgeA, EDGE_HALF);
         buf.endBatch(QUAD_TYPE);
+    }
+
+    /** Existing interaction-hint ribbons, without the translucent box faces. */
+    public static void renderEdgesOnly(MultiBufferSource.BufferSource buffers,PoseStack pose,Vec3 camera,
+            java.util.List<com.stardew.craft.building.runtime.BuildingOutline.Edge> edges,int color) {
+        int r=(color>>16)&255,g=(color>>8)&255,b=color&255;
+        for (boolean xray : new boolean[]{true,false}) {
+            var type=xray?QUAD_XRAY:QUAD_TYPE;var consumer=buffers.getBuffer(type);
+            for(var edge:edges)edgeQuad(pose,consumer,(float)edge.from().x,(float)edge.from().y,(float)edge.from().z,
+                    (float)edge.to().x,(float)edge.to().y,(float)edge.to().z,xray?EDGE_HALF*.6f:EDGE_HALF,camera,r,g,b,xray?60:180);
+            buffers.endBatch(type);
+        }
     }
 
     // ======================== 3D box rendering ========================

@@ -3,6 +3,8 @@ package com.stardew.craft.client.gui;
 import com.stardew.craft.block.utility.WoodenChestColorPalette;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
+import com.stardew.craft.client.gui.common.ChestColorWheel;
+import com.stardew.craft.client.gui.common.ChestModelPreview;
 import com.stardew.craft.menu.WoodenChestMenu;
 import com.stardew.craft.network.payload.InventoryOrganizePayload;
 import com.stardew.craft.network.payload.WoodenChestColorSelectPayload;
@@ -10,6 +12,9 @@ import com.stardew.craft.sound.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.renderer.Rect2i;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -22,9 +27,6 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
 
     private static final ResourceLocation COLOR_WHEEL = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/color_wheel.png");
 
-    private static final int SWATCH_WIDTH = 8;
-    private static final int SWATCH_HEIGHT = 14;
-    private static final int GRID_COLS = 21; // All in one row
 
     private int colorButtonX;
     private int colorButtonY;
@@ -32,7 +34,10 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
     private int organizeButtonY;
     private static final int BUTTON_SIZE = 18;
     
-    private boolean paletteOpen;
+    private final ChestModelPreview modelPreview = new ChestModelPreview();
+    private final ChestColorWheel wheel = new ChestColorWheel(ChestColorWheel.chestOptions(),
+            color -> PacketDistributor.sendToServer(new WoodenChestColorSelectPayload(color)),
+            (graphics, x, y, color) -> modelPreview.draw(graphics, x, y, color, menu.hasWoodenPreview(), false));
 
     public WoodenChestScreen(WoodenChestMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -48,6 +53,7 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         this.colorButtonY = this.topPos + 16;
         this.organizeButtonX = this.colorButtonX;
         this.organizeButtonY = this.colorButtonY + 30;
+        wheel.layout(this.width, this.height, this.leftPos, this.leftPos + this.imageWidth, colorButtonY);
     }
 
     @Override
@@ -58,33 +64,37 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         graphics.blit(CHEST_TEXTURE, x, y, 0, 0, this.imageWidth, ROWS * 18 + 17);
         graphics.blit(CHEST_TEXTURE, x, y + ROWS * 18 + 17, 0, 126, this.imageWidth, 96);
 
-        // Draw the sleek color wheel button without a vanilla button background
-        boolean hovered = isHoveringColorButton(mouseX, mouseY);
-        if (hovered) {
-            // subtle highlight glow
-            graphics.fill(colorButtonX - 1, colorButtonY - 1, colorButtonX + BUTTON_SIZE + 1, colorButtonY + BUTTON_SIZE + 1, 0x40FFFFFF);
-        }
-        graphics.blit(COLOR_WHEEL, colorButtonX, colorButtonY, 0, 0, BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE);
+        if (menu.canChangeColor()) {
+            // Draw the sleek color wheel button without a vanilla button background
+            boolean hovered = isHoveringColorButton(mouseX, mouseY);
+            if (hovered) {
+                // subtle highlight glow
+                graphics.fill(colorButtonX - 1, colorButtonY - 1, colorButtonX + BUTTON_SIZE + 1, colorButtonY + BUTTON_SIZE + 1, 0x40FFFFFF);
+            }
+            graphics.blit(COLOR_WHEEL, colorButtonX, colorButtonY, 0, 0, BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE, BUTTON_SIZE);
 
-        // Render current selected color as a small sleek indicator below the wheel
-        int selected = this.menu.getColorSelection();
-        if (selected >= 0) {
-            int rgb = WoodenChestColorPalette.rgbAt(selected) | 0xFF000000;
-            int indW = 10;
-            int indH = 3;
-            // Draw a tiny rounded-like indicator
-            graphics.fill(colorButtonX + BUTTON_SIZE / 2 - indW / 2, colorButtonY + BUTTON_SIZE + 2, 
-                          colorButtonX + BUTTON_SIZE / 2 + indW / 2, colorButtonY + BUTTON_SIZE + 2 + indH, rgb);
-            // subtle stroke around indicator
-            graphics.fill(colorButtonX + BUTTON_SIZE / 2 - indW / 2 - 1, colorButtonY + BUTTON_SIZE + 1, 
-                          colorButtonX + BUTTON_SIZE / 2 + indW / 2 + 1, colorButtonY + BUTTON_SIZE + 2, 0x40000000);
+            // Render current selected color as a small sleek indicator below the wheel
+            int selected = this.menu.getColorSelection();
+            if (selected >= 0) {
+                int rgb = WoodenChestColorPalette.rgbAt(selected) | 0xFF000000;
+                int indW = 10;
+                int indH = 3;
+                // Draw a tiny rounded-like indicator
+                graphics.fill(colorButtonX + BUTTON_SIZE / 2 - indW / 2, colorButtonY + BUTTON_SIZE + 2,
+                              colorButtonX + BUTTON_SIZE / 2 + indW / 2, colorButtonY + BUTTON_SIZE + 2 + indH, rgb);
+                // subtle stroke around indicator
+                graphics.fill(colorButtonX + BUTTON_SIZE / 2 - indW / 2 - 1, colorButtonY + BUTTON_SIZE + 1,
+                              colorButtonX + BUTTON_SIZE / 2 + indW / 2 + 1, colorButtonY + BUTTON_SIZE + 2, 0x40000000);
+            }
         }
 
-        boolean organizeHovered = isHoveringOrganizeButton(mouseX, mouseY);
-        if (organizeHovered) {
-            graphics.fill(organizeButtonX - 1, organizeButtonY - 1, organizeButtonX + BUTTON_SIZE + 1, organizeButtonY + BUTTON_SIZE + 1, 0x40FFFFFF);
+        if (menu.canOrganize()) {
+            boolean organizeHovered = isHoveringOrganizeButton(mouseX, mouseY);
+            if (organizeHovered) {
+                graphics.fill(organizeButtonX - 1, organizeButtonY - 1, organizeButtonX + BUTTON_SIZE + 1, organizeButtonY + BUTTON_SIZE + 1, 0x40FFFFFF);
+            }
+            CommonGuiTextures.drawGameMenuOrganize(graphics, organizeButtonX + 1, organizeButtonY + 1, 1.0F);
         }
-        CommonGuiTextures.drawGameMenuOrganize(graphics, organizeButtonX + 1, organizeButtonY + 1, 1.0F);
     }
 
     @Override
@@ -97,67 +107,82 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
+        boolean selecting = wheel.active();
+        super.render(graphics, selecting ? -10000 : mouseX, selecting ? -10000 : mouseY, partialTick);
 
-        if (this.paletteOpen) {
-            renderPalette(graphics, mouseX, mouseY);
+        if (wheel.active()) {
+            if (!menu.canChangeColor()) wheel.cancel();
+            wheel.render(graphics, mouseX, mouseY);
+            return;
         }
 
         this.renderTooltip(graphics, mouseX, mouseY);
 
-        if (isHoveringColorButton(mouseX, mouseY) && !this.paletteOpen) {
+        if (isHoveringColorButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.wooden_chest.color_picker"), mouseX, mouseY);
             // Optionally could add a second line for "Right-click to reset" but translatable key should handle that
         }
-        if (isHoveringOrganizeButton(mouseX, mouseY) && !this.paletteOpen) {
+        if (isHoveringOrganizeButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.game_menu.inventory.organize"), mouseX, mouseY);
         }
     }
 
     private boolean isHoveringColorButton(double mouseX, double mouseY) {
-        return mouseX >= colorButtonX && mouseX < colorButtonX + BUTTON_SIZE &&
+        return menu.canChangeColor() && mouseX >= colorButtonX && mouseX < colorButtonX + BUTTON_SIZE &&
                mouseY >= colorButtonY && mouseY < colorButtonY + BUTTON_SIZE;
     }
 
     private boolean isHoveringOrganizeButton(double mouseX, double mouseY) {
-        return mouseX >= organizeButtonX && mouseX < organizeButtonX + BUTTON_SIZE &&
+        return menu.canOrganize() && mouseX >= organizeButtonX && mouseX < organizeButtonX + BUTTON_SIZE &&
                mouseY >= organizeButtonY && mouseY < organizeButtonY + BUTTON_SIZE;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (wheel.click(mouseX, mouseY, button, isHoveringColorButton(mouseX, mouseY))) return true;
         if (isHoveringColorButton(mouseX, mouseY)) {
-            if (button == 1) { // Right click to reset
-                this.menu.setClientPreviewColorSelection(-1);
-                PacketDistributor.sendToServer(new WoodenChestColorSelectPayload(-1));
-                return true;
-            } else if (button == 0) {
-                this.paletteOpen = !this.paletteOpen;
-                return true;
-            }
+            wheel.claimButton(button);
+            if (!menu.getCarried().isEmpty()) return true;
+            if (button == 0) wheel.open(menu.getColorSelection());
+            else if (button == 1) PacketDistributor.sendToServer(new WoodenChestColorSelectPayload(-1));
+            return true;
         }
-
         if (button == 0 && isHoveringOrganizeButton(mouseX, mouseY)) {
             PacketDistributor.sendToServer(new InventoryOrganizePayload(InventoryOrganizePayload.TARGET_OPEN_CONTAINER));
             playOrganizeSound();
             return true;
         }
-
-        if (this.paletteOpen) {
-            int hit = getPaletteIndexAt(mouseX, mouseY);
-            if (hit >= -1 && isInsidePalette(mouseX, mouseY)) {
-                if (hit != -1) {
-                    this.menu.setClientPreviewColorSelection(hit);
-                    PacketDistributor.sendToServer(new WoodenChestColorSelectPayload(hit));
-                }
-                return true;
-            }
-
-            if (!isInsidePalette(mouseX, mouseY) && !isHoveringColorButton(mouseX, mouseY)) {
-                this.paletteOpen = false;
-            }
-        }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double x, double y, int button) {
+        return wheel.release(button) || super.mouseReleased(x, y, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        return wheel.dragging(button) || super.mouseDragged(x, y, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        return wheel.scroll(vertical) || super.mouseScrolled(x, y, horizontal, vertical);
+    }
+
+    @Override
+    public boolean keyPressed(int key, int scan, int modifiers) {
+        return wheel.key(key) || super.keyPressed(key, scan, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int key, int scan, int modifiers) {
+        return wheel.keyReleased(key) || super.keyReleased(key, scan, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char character, int modifiers) {
+        return wheel.active() || super.charTyped(character, modifiers);
     }
 
     private void playOrganizeSound() {
@@ -166,70 +191,18 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         }
     }
 
-    private void renderPalette(GuiGraphics graphics, int mouseX, int mouseY) {
-        int panelX = getPaletteX();
-        int panelY = getPaletteY();
-        int panelW = GRID_COLS * SWATCH_WIDTH;
-        int panelH = SWATCH_HEIGHT;
-
-        // Elegant minimal dark backing
-        graphics.fill(panelX - 2, panelY - 2, panelX + panelW + 2, panelY + panelH + 2, 0xD0101010);
-        graphics.fill(panelX - 1, panelY - 1, panelX + panelW + 1, panelY + panelH + 1, 0x40FFFFFF);
-
-        int selected = this.menu.getColorSelection();
-        for (int i = 0; i < WoodenChestColorPalette.size(); i++) {
-            int x = panelX + i * SWATCH_WIDTH;
-            int y = panelY;
-            
-            boolean hovered = mouseX >= x && mouseX < x + SWATCH_WIDTH && mouseY >= y && mouseY < y + SWATCH_HEIGHT;
-
-            int rgb = WoodenChestColorPalette.rgbAt(i) | 0xFF000000;
-            // Draw continuous color block
-            graphics.fill(x, y, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, rgb);
-
-            // Sleek selection indicator
-            if (i == selected) {
-                graphics.fill(x, y, x + SWATCH_WIDTH, y + 2, 0xFFFFFFFF); // Top indicator
-                graphics.fill(x, y + SWATCH_HEIGHT - 2, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, 0xFFFFFFFF); // Bottom indicator
-                // subtle highlight
-                graphics.fill(x, y, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, 0x40FFFFFF);
-            } else if (hovered) {
-                graphics.fill(x, y, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, 0x50FFFFFF); // Lighten overlay
-            }
+    /** Canvas coordinates: JEI render/input events share StardewGuiViewport's transform. */
+    public List<Rect2i> jeiGuiExtraAreas() {
+        List<Rect2i> areas = new ArrayList<>(3);
+        if (menu.canChangeColor()) {
+            // Include the hover highlight and the current-color indicator below the wheel.
+            areas.add(new Rect2i(colorButtonX - 1, colorButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 6));
+            if (wheel.active()) areas.add(wheel.bounds());
         }
-
-        int hovered = getPaletteIndexAt(mouseX, mouseY);
-        if (hovered >= 0) {
-            graphics.renderTooltip(this.font, Component.translatable("stardewcraft.wooden_chest.color_tooltip", hovered + 1), mouseX, mouseY);
+        if (menu.canOrganize()) {
+            areas.add(new Rect2i(organizeButtonX - 1, organizeButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 2));
         }
+        return List.copyOf(areas);
     }
 
-    private int getPaletteIndexAt(double mouseX, double mouseY) {
-        int panelX = getPaletteX();
-        int panelY = getPaletteY();
-        for (int i = 0; i < WoodenChestColorPalette.size(); i++) {
-            int x = panelX + i * SWATCH_WIDTH;
-            int y = panelY;
-            if (mouseX >= x && mouseX < x + SWATCH_WIDTH && mouseY >= y && mouseY < y + SWATCH_HEIGHT) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private boolean isInsidePalette(double mouseX, double mouseY) {
-        int panelX = getPaletteX();
-        int panelY = getPaletteY();
-        int panelW = GRID_COLS * SWATCH_WIDTH;
-        int panelH = SWATCH_HEIGHT;
-        return mouseX >= panelX - 2 && mouseX < panelX + panelW + 2 && mouseY >= panelY - 2 && mouseY < panelY + panelH + 2;
-    }
-
-    private int getPaletteX() {
-        return this.leftPos + (this.imageWidth - (GRID_COLS * SWATCH_WIDTH)) / 2;
-    }
-
-    private int getPaletteY() {
-        return this.topPos - SWATCH_HEIGHT - 6;
-    }
 }

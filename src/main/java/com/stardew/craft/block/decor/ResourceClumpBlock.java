@@ -188,6 +188,27 @@ public class ResourceClumpBlock extends MapDecorStaticBlock {
         };
     }
 
+    public String failureHint(ItemStack tool) {
+        if (getRequiredPower(tool) > 0) return null;
+        if (!isCorrectTool(tool)) return "message.stardewcraft.resource_clump.requires_"
+                + (requiredTool == RequiredTool.AXE ? "axe" : "pickaxe");
+        if (this == com.stardew.craft.block.ModBlocks.LARGE_STUMP.get())
+            return "message.stardewcraft.resource_clump.weak_stump";
+        if (this == com.stardew.craft.block.ModBlocks.HOLLOW_LOG.get())
+            return "message.stardewcraft.resource_clump.weak_log";
+        if (this == com.stardew.craft.block.ModBlocks.LARGE_BOULDER.get())
+            return "message.stardewcraft.resource_clump.weak_boulder";
+        return getRequirementTranslationKey();
+    }
+
+    public String inspectionHint() {
+        if (this == com.stardew.craft.block.ModBlocks.HOLLOW_LOG.get())
+            return "message.stardewcraft.resource_clump.inspect_log";
+        if (this == com.stardew.craft.block.ModBlocks.LARGE_BOULDER.get())
+            return "message.stardewcraft.resource_clump.inspect_boulder";
+        return null;
+    }
+
     public void breakClump(ServerLevel level, BlockPos pos, BlockState state, @Nullable ServerPlayer player) {
         BlockPos mainPos = findMainPos(level, pos, state);
         if (mainPos == null) {

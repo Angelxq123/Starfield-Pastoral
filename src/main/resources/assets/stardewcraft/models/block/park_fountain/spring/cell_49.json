@@ -1,0 +1,88 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/spring/surface",
+    "particle": "stardewcraft:block/park_fountain/spring/particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -7.31371,
+        -1.96875,
+        0.6862899999999996
+      ],
+      "to": [
+        16.68629,
+        2.03125,
+        8.68629
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.0,
+            6.9375,
+            0.75,
+            7.0625
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            1.5625,
+            6.9375,
+            1.8125,
+            7.0625
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            0.78125,
+            6.9375,
+            1.53125,
+            7.0625
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            1.84375,
+            6.9375,
+            2.09375,
+            7.0625
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            2.125,
+            6.9375,
+            2.875,
+            7.1875
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            2.90625,
+            6.9375,
+            3.65625,
+            7.1875
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          4.68629,
+          -1.96875,
+          4.68629
+        ],
+        "rescale": false
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

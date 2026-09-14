@@ -1,0 +1,328 @@
+{
+  "variants": {
+    "facing=north,left=false,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_0"
+    },
+    "facing=north,left=false,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=false,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_1"
+    },
+    "facing=north,left=false,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=false,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_2"
+    },
+    "facing=north,left=false,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=false,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_0"
+    },
+    "facing=north,left=false,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=false,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_1"
+    },
+    "facing=north,left=false,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=false,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_2"
+    },
+    "facing=north,left=false,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=true,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_0"
+    },
+    "facing=north,left=true,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=true,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_1"
+    },
+    "facing=north,left=true,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=true,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_2"
+    },
+    "facing=north,left=true,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=true,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_0"
+    },
+    "facing=north,left=true,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=true,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_1"
+    },
+    "facing=north,left=true,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=north,left=true,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_2"
+    },
+    "facing=north,left=true,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=false,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_0",
+      "y": 90
+    },
+    "facing=east,left=false,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=false,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_1",
+      "y": 90
+    },
+    "facing=east,left=false,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=false,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_2",
+      "y": 90
+    },
+    "facing=east,left=false,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=false,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_0",
+      "y": 90
+    },
+    "facing=east,left=false,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=false,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_1",
+      "y": 90
+    },
+    "facing=east,left=false,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=false,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_2",
+      "y": 90
+    },
+    "facing=east,left=false,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=true,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_0",
+      "y": 90
+    },
+    "facing=east,left=true,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=true,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_1",
+      "y": 90
+    },
+    "facing=east,left=true,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=true,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_2",
+      "y": 90
+    },
+    "facing=east,left=true,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=true,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_0",
+      "y": 90
+    },
+    "facing=east,left=true,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=true,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_1",
+      "y": 90
+    },
+    "facing=east,left=true,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=east,left=true,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_2",
+      "y": 90
+    },
+    "facing=east,left=true,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=false,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_0",
+      "y": 180
+    },
+    "facing=south,left=false,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=false,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_1",
+      "y": 180
+    },
+    "facing=south,left=false,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=false,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_2",
+      "y": 180
+    },
+    "facing=south,left=false,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=false,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_0",
+      "y": 180
+    },
+    "facing=south,left=false,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=false,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_1",
+      "y": 180
+    },
+    "facing=south,left=false,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=false,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_2",
+      "y": 180
+    },
+    "facing=south,left=false,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=true,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_0",
+      "y": 180
+    },
+    "facing=south,left=true,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=true,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_1",
+      "y": 180
+    },
+    "facing=south,left=true,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=true,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_2",
+      "y": 180
+    },
+    "facing=south,left=true,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=true,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_0",
+      "y": 180
+    },
+    "facing=south,left=true,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=true,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_1",
+      "y": 180
+    },
+    "facing=south,left=true,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=south,left=true,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_2",
+      "y": 180
+    },
+    "facing=south,left=true,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=false,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_0",
+      "y": 270
+    },
+    "facing=west,left=false,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=false,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_1",
+      "y": 270
+    },
+    "facing=west,left=false,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=false,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/single_2",
+      "y": 270
+    },
+    "facing=west,left=false,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=false,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_0",
+      "y": 270
+    },
+    "facing=west,left=false,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=false,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_1",
+      "y": 270
+    },
+    "facing=west,left=false,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=false,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/left_2",
+      "y": 270
+    },
+    "facing=west,left=false,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=true,part=main,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_0",
+      "y": 270
+    },
+    "facing=west,left=true,part=extension,right=false,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=true,part=main,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_1",
+      "y": 270
+    },
+    "facing=west,left=true,part=extension,right=false,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=true,part=main,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/right_2",
+      "y": 270
+    },
+    "facing=west,left=true,part=extension,right=false,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=true,part=main,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_0",
+      "y": 270
+    },
+    "facing=west,left=true,part=extension,right=true,variant=0": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=true,part=main,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_1",
+      "y": 270
+    },
+    "facing=west,left=true,part=extension,right=true,variant=1": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    },
+    "facing=west,left=true,part=main,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/spring/middle_2",
+      "y": 270
+    },
+    "facing=west,left=true,part=extension,right=true,variant=2": {
+      "model": "stardewcraft:block/decor/park_bench/empty"
+    }
+  }
+}

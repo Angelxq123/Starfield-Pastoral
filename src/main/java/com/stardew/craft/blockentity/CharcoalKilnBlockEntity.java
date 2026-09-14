@@ -132,7 +132,7 @@ public class CharcoalKilnBlockEntity extends TimedProductionBlockEntity {
             return InsertResult.missing(new MissingItemRequirement(stack.getItem(), recipe.consumeCount()));
         }
 
-        ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+        ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.rollOutputCount(level.random));
         var plan = prepareProduction(
                 stack, output, recipe.minutes(),
                 player, false);
@@ -187,7 +187,7 @@ public class CharcoalKilnBlockEntity extends TimedProductionBlockEntity {
         if (simulate) {
             return AutomationStackHelper.remainderAfterInsert(stack, recipe.consumeCount());
         }
-        ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+        ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.rollOutputCount(level.random));
         var plan = prepareProduction(
                 stack, output, recipe.minutes(),
                 null, true);

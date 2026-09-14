@@ -126,10 +126,12 @@ public final class LavaKatanaReverbSkillHandler
                     );
                 }
             }
-            PacketDistributor.sendToPlayer(
+            com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(), context.weaponId().getPath(), "lava_katana_reverb", 6);
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                     context.player(),
                     new LavaKatanaReverbPayload(
-                            true,
+                            context.player().getId(), context.nowTick(), true,
                             ACTIVE_DURATION_TICKS
                     )
             );
@@ -177,9 +179,11 @@ public final class LavaKatanaReverbSkillHandler
         instance.executionState(LavaKatanaReverbExecutionState.class)
             .ifPresent(LavaKatanaReverbExecutionState::cancel);
         if (shouldNotifyOnFinish(reason)) {
-            PacketDistributor.sendToPlayer(
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 context.player(),
-                new LavaKatanaReverbPayload(false, 0)
+                new LavaKatanaReverbPayload(context.player().getId(),
+                    instance.executionState(LavaKatanaReverbExecutionState.class)
+                        .map(LavaKatanaReverbExecutionState::startTick).orElse(context.nowTick()), false, 0)
             );
         }
     }

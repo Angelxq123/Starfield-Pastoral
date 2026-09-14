@@ -129,6 +129,10 @@ public final class NpcLocationGraph {
      * outdoor means walk to that interior's exit and WARP to its outdoor exit.
      */
     static List<NpcRoutePlanner.NpcRouteStep> toRouteSteps(GraphRoute route, Vec3 finalTarget) {
+        return toRouteSteps(null,route,finalTarget);
+    }
+
+    static List<NpcRoutePlanner.NpcRouteStep> toRouteSteps(net.minecraft.server.level.ServerLevel level,GraphRoute route,Vec3 finalTarget) {
         if (route == null || route.edges.isEmpty()) return Collections.emptyList();
 
         List<NpcRoutePlanner.NpcRouteStep> steps = new ArrayList<>();
@@ -143,11 +147,12 @@ public final class NpcLocationGraph {
 
             if (!fromIndoor && toIndoor) {
                 Vec3 outdoor = !edge.viaOutdoor.isEmpty()
-                    ? NpcRoutePlanner.pointFromConfig(edge.viaOutdoor, null)
-                    : NpcRoutePlanner.outdoorDoorForLocation(edge.to);
+                    ? NpcRoutePlanner.pointFromConfig(level,edge.viaOutdoor, null)
+                    : NpcRoutePlanner.outdoorDoorForLocation(level,edge.to);
                 Vec3 indoor = !edge.viaIndoor.isEmpty()
-                    ? NpcRoutePlanner.pointFromConfig(edge.viaIndoor, null)
-                    : NpcRoutePlanner.indoorEntryForLocation(edge.to);
+                    ? NpcRoutePlanner.pointFromConfig(level,edge.viaIndoor, null)
+                    : NpcRoutePlanner.indoorEntryForLocation(level,edge.to);
+                if (outdoor == null || indoor == null) return Collections.emptyList();
                 if (outdoor != null) {
                     steps.add(NpcRoutePlanner.NpcRouteStep.walk("graph_outdoor_" + edge.to, outdoor));
                 }
@@ -155,8 +160,9 @@ public final class NpcLocationGraph {
                     steps.add(NpcRoutePlanner.NpcRouteStep.warp("graph_indoor_" + edge.to, indoor));
                 }
             } else if (fromIndoor && !toIndoor) {
-                Vec3 indoorExit = NpcRoutePlanner.indoorExitForLocation(edge.from);
-                Vec3 outdoorExit = NpcRoutePlanner.outdoorExitForLocation(edge.from);
+                Vec3 indoorExit = NpcRoutePlanner.indoorExitForLocation(level,edge.from);
+                Vec3 outdoorExit = NpcRoutePlanner.outdoorExitForLocation(level,edge.from);
+                if (indoorExit == null || outdoorExit == null) return Collections.emptyList();
                 if (indoorExit != null) {
                     steps.add(NpcRoutePlanner.NpcRouteStep.walk("graph_indoor_exit_" + edge.from, indoorExit));
                 }
@@ -166,8 +172,9 @@ public final class NpcLocationGraph {
             } else if (!fromIndoor && !toIndoor && isWarpMode(edge.mode)) {
                 String walkPointId = edge.reversed ? edge.viaIndoor : edge.viaOutdoor;
                 String warpPointId = edge.reversed ? edge.viaOutdoor : edge.viaIndoor;
-                Vec3 walkPoint = NpcRoutePlanner.pointFromConfig(walkPointId, null);
-                Vec3 warpPoint = NpcRoutePlanner.pointFromConfig(warpPointId, null);
+                Vec3 walkPoint = NpcRoutePlanner.pointFromConfig(level,walkPointId, null);
+                Vec3 warpPoint = NpcRoutePlanner.pointFromConfig(level,warpPointId, null);
+                if (walkPoint == null || warpPoint == null) return Collections.emptyList();
                 if (walkPoint != null) {
                     steps.add(NpcRoutePlanner.NpcRouteStep.walk("graph_outdoor_warp_depart_" + edge.to, walkPoint));
                 }
@@ -175,7 +182,8 @@ public final class NpcLocationGraph {
                     steps.add(NpcRoutePlanner.NpcRouteStep.warp("graph_outdoor_warp_arrive_" + edge.to, warpPoint));
                 }
             } else if (!isLast && !edge.viaOutdoor.isEmpty()) {
-                Vec3 outdoor = NpcRoutePlanner.pointFromConfig(edge.viaOutdoor, null);
+                Vec3 outdoor = NpcRoutePlanner.pointFromConfig(level,edge.viaOutdoor, null);
+                if (outdoor == null) return Collections.emptyList();
                 if (outdoor != null) {
                     steps.add(NpcRoutePlanner.NpcRouteStep.walk("graph_hop_" + edge.to, outdoor));
                 }

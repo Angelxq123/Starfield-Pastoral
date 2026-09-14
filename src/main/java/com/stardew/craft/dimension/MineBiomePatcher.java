@@ -51,6 +51,11 @@ public final class MineBiomePatcher {
         // 用区块中心 Z 坐标推算所属楼层
         int chunkCenterZ = (chunk.getPos().getMinBlockZ() + chunk.getPos().getMaxBlockZ()) / 2;
         int floor = estimateFloorFromZ(chunkCenterZ);
+        patchChunk(serverLevel, chunk, floor);
+    }
+
+    /** Also runs after template placement, correcting previously saved void/legacy biome palettes. */
+    public static void patchChunk(ServerLevel serverLevel, LevelChunk chunk, int floor) {
         Holder<Biome> targetBiome = getBiomeForFloor(serverLevel, floor);
 
         boolean modified = false;
@@ -65,7 +70,7 @@ public final class MineBiomePatcher {
                 for (int by = 0; by < 4; by++) {
                     for (int bz = 0; bz < 4; bz++) {
                         Holder<Biome> current = biomes.get(bx, by, bz);
-                        if (current.is(Biomes.THE_VOID)) {
+                        if (!current.is(targetBiome.unwrapKey().orElseThrow())) {
                             biomes.getAndSetUnchecked(bx, by, bz, targetBiome);
                             modified = true;
                         }
@@ -85,15 +90,14 @@ public final class MineBiomePatcher {
      * 0 层中心 Z = 0。
      */
     private static int estimateFloorFromZ(int z) {
-        if (z < MiningCoordinates.FLOOR_SPACING / 2) {
-            return 0;
-        }
-        return Math.max(1, Math.round((float)(z - 14) / MiningCoordinates.FLOOR_SPACING));
+        return com.stardew.craft.mining.OrdinaryMineRuntime.floorAt(new net.minecraft.core.BlockPos(0,66,z));
     }
 
     private static Holder<Biome> getBiomeForFloor(ServerLevel level, int floor) {
         ResourceKey<Biome> key;
-        if (floor >= 80) {
+        if (floor > 120 || floor == com.stardew.craft.mining.SkullCavernRuntime.LOBBY) {
+            key=ResourceKey.create(Registries.BIOME,ResourceLocation.fromNamespaceAndPath("stardewcraft","skull_cavern"));
+        } else if (floor >= 80) {
             key = MINES_100_KEY;
         } else if (floor >= 40) {
             key = MINES_60_KEY;

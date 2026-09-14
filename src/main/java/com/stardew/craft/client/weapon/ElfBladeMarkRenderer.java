@@ -1,129 +1,45 @@
 package com.stardew.craft.client.weapon;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
+import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import org.joml.Matrix4f;
 
-import java.util.List;
-
-@SuppressWarnings("unused")
+/** A small growing sprig carries the existing stack count without a spinning icon wheel. */
 public final class ElfBladeMarkRenderer {
-
-    private static final ResourceLocation MARK_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        "minecraft",
-        "textures/misc/white.png"
-    );
-
-    @SuppressWarnings("null")
-    private static final RenderType MARK_RENDER_TYPE = RenderType.create(
-        "stardew_elf_blade_mark",
-        DefaultVertexFormat.POSITION_TEX_COLOR,
-        VertexFormat.Mode.QUADS,
-        256,
-        false,
-        true,
-        RenderType.CompositeState.builder()
-            .setShaderState(new RenderType.ShaderStateShard(GameRenderer::getPositionTexColorShader))
-            .setTextureState(new RenderType.TextureStateShard(MARK_TEXTURE, false, false))
-            .setTransparencyState(new RenderType.TransparencyStateShard("translucent_transparency", () -> {
-                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
-            }, () -> {
-                com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-            }))
-            .setWriteMaskState(new RenderType.WriteMaskStateShard(true, false))
-            .setCullState(new RenderType.CullStateShard(false))
-            .setDepthTestState(new RenderType.DepthTestStateShard("always", 519))
-            .createCompositeState(false)
-    );
-
+    private static final RenderType MATERIAL = WeaponEffectRenderTypes.MOLTEN_GLOW;
     private ElfBladeMarkRenderer() {}
 
-    @SuppressWarnings("null")
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
-            return;
-        }
-
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return;
+        if (mc.level == null || !Config.ENABLE_WEAPON_SPECIAL_EFFECTS.getAsBoolean()) return;
+        var ids = ElfBladeMarkClientState.markedEntityIds();
+        if (ids.isEmpty()) return;
+        float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        long tick = mc.level.getGameTime();
+        Vec3 camera = event.getCamera().getPosition();
+        var stack = event.getPoseStack();
+        var buffers = mc.renderBuffers().bufferSource();
+        var out = buffers.getBuffer(MATERIAL);
+        for (int id : ids) {
+            if (!(mc.level.getEntity(id) instanceof LivingEntity target) || !target.isAlive()
+                    || target.distanceToSqr(camera) > 32 * 32) continue;
+            var info = ElfBladeMarkClientState.getMarkInfo(id, tick);
+            if (info == null || info.stacks <= 0) continue;
+            var bounds = target.getBoundingBox().move(target.getPosition(partial).subtract(target.position()));
+            Vec3 center = bounds.getCenter();
+            Vec3 point = bounds.clip(camera, center).orElse(center)
+                    .add(camera.subtract(center).normalize().scale(0.04)).subtract(camera);
+            float fade = Math.min(1, (info.endTick - tick) / 20f);
+            stack.pushPose(); stack.translate(point.x, point.y, point.z);
+            stack.mulPose(event.getCamera().rotation());
+            GroveEffectGeometry.sprig(out, stack.last().pose(), info.stacks, fade);
+            stack.popPose();
         }
-
-        Vec3 camPos = event.getCamera().getPosition();
-        long nowTick = mc.level.getGameTime();
-        AABB box = new AABB(
-            camPos.x - 48, camPos.y - 48, camPos.z - 48,
-            camPos.x + 48, camPos.y + 48, camPos.z + 48
-        );
-
-        List<LivingEntity> entities = mc.level.getEntitiesOfClass(LivingEntity.class, box);
-        if (entities.isEmpty()) {
-            return;
-        }
-
-        PoseStack poseStack = event.getPoseStack();
-        MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-        VertexConsumer consumer = buffer.getBuffer(MARK_RENDER_TYPE);
-        EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
-
-        for (LivingEntity entity : entities) {
-            ElfBladeMarkClientState.MarkInfo info = ElfBladeMarkClientState.getMarkInfo(entity.getId(), nowTick);
-            if (info == null) {
-                continue;
-            }
-
-            int stacks = Math.max(1, info.stacks);
-            float size = 0.55f + (0.05f * Math.min(4, stacks));
-            float alpha = Math.min(0.9f, 0.35f + (0.12f * (stacks - 1)));
-
-            Vec3 pos = entity.position().add(0, entity.getBbHeight() * 0.6, 0);
-            double x = pos.x - camPos.x;
-            double y = pos.y - camPos.y;
-            double z = pos.z - camPos.z;
-
-            poseStack.pushPose();
-            poseStack.translate(x, y, z);
-            poseStack.mulPose(dispatcher.cameraOrientation());
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.scale(0.7f, 0.7f, 0.7f);
-
-            PoseStack.Pose last = poseStack.last();
-            Matrix4f pose = last.pose();
-
-            vertex(consumer, pose, 0xF000F0, -size, -size, 0, 1, 1.0f, 0.9f, 0.35f, alpha);
-            vertex(consumer, pose, 0xF000F0, size, -size, 1, 1, 1.0f, 0.9f, 0.35f, alpha);
-            vertex(consumer, pose, 0xF000F0, size, size, 1, 0, 1.0f, 0.9f, 0.35f, alpha);
-            vertex(consumer, pose, 0xF000F0, -size, size, 0, 0, 1.0f, 0.9f, 0.35f, alpha);
-
-            poseStack.popPose();
-        }
-
-        buffer.endBatch(MARK_RENDER_TYPE);
+        buffers.endBatch(MATERIAL);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light,
-                               float x, float y, float u, float v,
-                               float r, float g, float b, float a) {
-        consumer.addVertex(pose, x, y, 0.0f)
-            .setColor(r, g, b, a)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
 }

@@ -1,0 +1,59 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "surface": "stardewcraft:block/bird_spring_rider/bird_spring",
+    "particle": "stardewcraft:block/bird_spring_rider/steel_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        6,
+        13
+      ],
+      "to": [
+        6,
+        7,
+        17
+      ],
+      "faces": {
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            7.375,
+            0.6875,
+            7.625,
+            0.75
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            7.6875,
+            0.6875,
+            7.9375,
+            0.75
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            8.0,
+            0.6875,
+            8.0625,
+            0.9375
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            8.125,
+            0.6875,
+            8.1875,
+            0.9375
+          ]
+        }
+      }
+    }
+  ]
+}

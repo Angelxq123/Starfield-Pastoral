@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/desert_iridium_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/desert_iridium_ore"
-                 }
-}

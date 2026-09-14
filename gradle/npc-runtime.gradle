@@ -1,0 +1,26 @@
+// Standalone deterministic tests; no client, local SDV source, dev assets, or ignored src/test dependency.
+def compileNpcRuntimeRegression = tasks.register('compileNpcRuntimeRegression', JavaCompile) {
+    dependsOn tasks.named('classes')
+    source = files('tools/npc/NpcRuntimeRegression.java')
+    classpath = sourceSets.main.output + sourceSets.main.compileClasspath
+    destinationDirectory = layout.buildDirectory.dir('classes/npcRuntimeRegression')
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(21) }
+}
+def npcRuntimeRegression = tasks.register('npcRuntimeRegression', JavaExec) {
+    group = 'verification'
+    dependsOn compileNpcRuntimeRegression
+    classpath = files(compileNpcRuntimeRegression) + sourceSets.main.runtimeClasspath
+    mainClass = 'com.stardew.craft.npc.runtime.NpcRuntimeRegression'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    args file('src/main/resources/data/stardewcraft/npc').absolutePath
+}
+tasks.named('check') { dependsOn npcRuntimeRegression }
+
+// Compile the independent addon example against current classes without assembling a mod JAR.
+tasks.register('compileNpcAddonCompatibility', JavaCompile) {
+    dependsOn tasks.named('classes')
+    source = fileTree('examples/stardewcraft-addon/src/main/java') { include '**/*.java' }
+    classpath = sourceSets.main.output + sourceSets.main.compileClasspath
+    destinationDirectory = layout.buildDirectory.dir('classes/npcAddonCompatibility')
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(21) }
+}

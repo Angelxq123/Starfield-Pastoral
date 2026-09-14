@@ -32,6 +32,11 @@ public final class FishingRodCastAnimationState {
 	private FishingRodCastAnimationState() {
 	}
 
+	public static void reset() {
+		MAIN.reset();
+		OFF.reset();
+	}
+
 	public static void tick() {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null || mc.level == null) {

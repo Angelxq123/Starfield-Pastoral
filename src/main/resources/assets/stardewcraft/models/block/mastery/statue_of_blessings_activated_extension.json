@@ -1,7 +1,7 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "particle": "stardewcraft:block/mastery/statue_of_blessings_activated"
+    "particle": "stardewcraft:block/mastery/statue_of_blessings_activated_particle"
   },
   "elements": []
 }

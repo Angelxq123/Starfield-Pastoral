@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "stardewcraft:mine_timber_support",
+          "properties": {
+            "tier": "0"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stardewcraft:mine_timber_support",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "stardewcraft:mine_timber_support",
+              "properties": [
+                "theme",
+                "variant"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

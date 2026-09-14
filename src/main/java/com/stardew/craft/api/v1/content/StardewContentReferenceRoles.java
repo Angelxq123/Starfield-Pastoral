@@ -97,7 +97,6 @@ public final class StardewContentReferenceRoles {
     public static final ResourceLocation DROP_ITEM = id("drop_item");
     public static final ResourceLocation MONSTER_PROFILE =
             id("monster_profile");
-    public static final ResourceLocation MINE_THEME = id("mine_theme");
     public static final ResourceLocation EXCLUSIVE_QUEST =
             id("exclusive_quest");
     public static final ResourceLocation CURRENCY = id("currency");

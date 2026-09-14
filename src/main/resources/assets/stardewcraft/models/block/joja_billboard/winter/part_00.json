@@ -1,0 +1,31 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/decor/joja_billboard/winter/joja_billboard_winter",
+    "particle": "stardewcraft:block/decor/joja_billboard/winter/joja_billboard_metal_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -14,
+        2,
+        3
+      ],
+      "to": [
+        16,
+        24,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.0,
+            1.5,
+            3.875,
+            2.875
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

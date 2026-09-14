@@ -10,6 +10,7 @@ import com.stardew.craft.cutscene.data.EventRegistry;
 import com.stardew.craft.cutscene.network.CutsceneAnchorPayload;
 import com.stardew.craft.cutscene.network.SyncEventSeenPayload;
 import com.stardew.craft.cutscene.server.WakeUpEventScheduler;
+import com.stardew.craft.cutscene.server.CombatRescueCutsceneCoordinator;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.secretnote.SecretNote21Service;
 import com.stardew.craft.secretnote.SecretNote31BushInteraction;
@@ -111,8 +112,14 @@ public final class CutsceneDebugCommand {
                                     spawn.getZ() + 0.5));
                 }
             }
-            // Send a trigger packet (and mark server-side cutscene active)
-            com.stardew.craft.cutscene.server.ServerCutsceneTracker.startEvent(player, eventId);
+            // The hospital scene needs its actual bed and a loaded destination, even in debug.
+            // NOOP deliberately omits the combat-death money/item settlement.
+            if (CombatRescueCutsceneCoordinator.HOSPITAL_EVENT_ID.equals(eventId)) {
+                if (!CombatRescueCutsceneCoordinator.beginHospitalRescue(player,
+                        CombatRescueCutsceneCoordinator.Completion.NOOP)) return 0;
+            } else {
+                com.stardew.craft.cutscene.server.ServerCutsceneTracker.startEvent(player, eventId);
+            }
             context.getSource().sendSuccess(() -> Component.translatable("stardewcraft.command.event.triggered", eventId), false);
             return 1;
         }

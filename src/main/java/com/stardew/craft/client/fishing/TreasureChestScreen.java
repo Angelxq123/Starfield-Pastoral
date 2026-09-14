@@ -27,6 +27,15 @@ public class TreasureChestScreen extends AbstractContainerScreen<TreasureChestMe
 		this.inventoryLabelY = this.imageHeight - 94; // 调整"背包"文字位置
 	}
 
+	@Override
+	protected void init() {
+		super.init();
+		// A vanilla menu-open packet may already be in flight when fishing is interrupted.
+		if (!FishingCatchVisuals.expectsTreasureMenu() && minecraft != null && minecraft.player != null) {
+			minecraft.player.closeContainer();
+		}
+	}
+
 	@SuppressWarnings("null")
 	@Override
 	protected void renderBg(@SuppressWarnings("null") GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {

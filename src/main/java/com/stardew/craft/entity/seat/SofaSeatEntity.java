@@ -153,6 +153,7 @@ public class SofaSeatEntity extends Entity {
 
     private static boolean isSupportedSeatBlock(net.minecraft.world.level.block.Block block) {
         return block instanceof SofaBlock
+            || block instanceof com.stardew.craft.block.decor.ParkBenchBlock
             || block instanceof ChairBlock
             || block instanceof CushionBlock
             || block instanceof OfficeStoolBlock

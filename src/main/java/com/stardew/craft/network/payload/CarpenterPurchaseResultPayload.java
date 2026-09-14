@@ -16,8 +16,13 @@ public record CarpenterPurchaseResultPayload(
     boolean success,
     int     newMoney,
     String  resultItemId,
-    int     blueprintIndex
+    int     blueprintIndex,
+    java.util.UUID requestId
 ) implements CustomPacketPayload {
+
+    public CarpenterPurchaseResultPayload(boolean success, int newMoney, String resultItemId, int blueprintIndex) {
+        this(success, newMoney, resultItemId, blueprintIndex, new java.util.UUID(0, 0));
+    }
 
     public static final Type<CarpenterPurchaseResultPayload> TYPE =
         new Type<>(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "carpenter_purchase_result"));
@@ -28,6 +33,7 @@ public record CarpenterPurchaseResultPayload(
             ByteBufCodecs.INT,         CarpenterPurchaseResultPayload::newMoney,
             ByteBufCodecs.STRING_UTF8, CarpenterPurchaseResultPayload::resultItemId,
             ByteBufCodecs.INT,         CarpenterPurchaseResultPayload::blueprintIndex,
+            net.minecraft.core.UUIDUtil.STREAM_CODEC, CarpenterPurchaseResultPayload::requestId,
             CarpenterPurchaseResultPayload::new
         );
 
@@ -43,7 +49,8 @@ public record CarpenterPurchaseResultPayload(
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(CarpenterPurchaseResultPayload payload) {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc.screen instanceof com.stardew.craft.client.gui.CarpenterMenuScreen screen) {
+        if (mc.screen instanceof com.stardew.craft.client.building.BuildingRoutesScreen routes) routes.result(payload);
+        else if (mc.screen instanceof com.stardew.craft.client.gui.CarpenterMenuScreen screen) {
             screen.onPurchaseResult(payload);
         }
     }

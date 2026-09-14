@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:block/slab_top",
-  "textures": {
-    "bottom": "stardewcraft:block/mine/sulfur_rock",
-    "top": "stardewcraft:block/mine/sulfur_rock",
-    "side": "stardewcraft:block/mine/sulfur_rock",
-    "particle": "stardewcraft:block/mine/sulfur_rock"
-  }
-}

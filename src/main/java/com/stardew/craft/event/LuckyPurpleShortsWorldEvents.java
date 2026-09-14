@@ -45,7 +45,6 @@ public final class LuckyPurpleShortsWorldEvents {
     private static final BlockPos BASEMENT_SHORTS_POS = new BlockPos(81, 44, 32);
     private static final BlockPos BASEMENT_EXIT_PORTAL_POS = new BlockPos(68, 44, 20);
     private static final AABB LEWIS_BASEMENT_BOUNDS = new AABB(64, 43, 19, 84, 49, 36);
-    private static final AABB FULL_STARDEW_LEVEL_BOUNDS = new AABB(-30_000_000, -64, -30_000_000, 30_000_000, 320, 30_000_000);
     private static final Set<UUID> BASEMENT_COLLECTED_THIS_VISIT = ConcurrentHashMap.newKeySet();
     private static long lastBasementCleanupTick = -1L;
 
@@ -251,7 +250,9 @@ public final class LuckyPurpleShortsWorldEvents {
             return;
         }
 
-        var monsters = level.getEntitiesOfClass(LuckyPurpleShortsMonsterEntity.class, FULL_STARDEW_LEVEL_BOUNDS);
+        var monsters = level.getEntities(
+                net.minecraft.world.level.entity.EntityTypeTest.forClass(LuckyPurpleShortsMonsterEntity.class),
+                monster -> !monster.isSpectator());
         for (LuckyPurpleShortsMonsterEntity monster : monsters) {
             monster.discard();
         }

@@ -1,6 +1,3 @@
 {
-    "parent":  "stardewcraft:block/barn_manager",
-    "textures":  {
-                     "particle":  "stardewcraft:block/building/barn_manager"
-                 }
+  "parent": "stardewcraft:block/barn_manager"
 }

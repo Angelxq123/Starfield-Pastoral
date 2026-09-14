@@ -1,0 +1,8 @@
+{
+  "elements": [],
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/summer/surface",
+    "particle": "stardewcraft:block/park_fountain/summer/particle"
+  },
+  "render_type": "minecraft:cutout"
+}

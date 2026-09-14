@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_313"
+    },
+    "variant=1": {
+      "model": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_314"
+    },
+    "variant=2": {
+      "model": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_315"
+    }
+  }
+}

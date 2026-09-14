@@ -1,0 +1,88 @@
+{
+  "intent": "影人连续头身、细短肢体；安静柔和的小步与整体移重，不切人类脖颈、不浮空、不改变已认可五官。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.30734025,
+  "attentionRig": {
+    "hipHeight": 5,
+    "soleY": 0,
+    "toeDepth": 2.2,
+    "halfStance": 2.4,
+    "rightZ": 0.04,
+    "leftZ": -0.04,
+    "rightYaw": -2,
+    "leftYaw": 2,
+    "lift": 0.3,
+    "lean": 0.65,
+    "armSwing": 2
+  },
+  "lookLimits": {
+    "yaw": 1,
+    "pitch": 1
+  },
+  "gait": {
+    "id": "krobus",
+    "revision": "character-articulated-3",
+    "rootMean": 0.18400000000000002,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.3,
+          5.0,
+          0.0
+        ],
+        "knee": 2.5,
+        "ankle": 0.5,
+        "sole": 0.0,
+        "heel": 1.7999999999999998,
+        "toe": -2.2
+      },
+      "left": {
+        "hip": [
+          2.3,
+          5.0,
+          0.0
+        ],
+        "knee": 2.5,
+        "ankle": 0.5,
+        "sole": 0.0,
+        "heel": 1.7999999999999998,
+        "toe": -2.2
+      }
+    },
+    "bodyPitch": -0.4,
+    "headPitch": 0,
+    "halfStance": 2.4,
+    "intent": "影人连续头身、细短肢体；安静柔和的小步与整体移重，不切人类脖颈、不浮空、不改变已认可五官。",
+    "stance": 0.62,
+    "strideRatio": 1.5,
+    "bob": 0.1024,
+    "sway": 0.27,
+    "rootYaw": 1.2,
+    "bodyYaw": 2.4,
+    "bodyRoll": 0.7,
+    "bodyNod": 0.3,
+    "headYaw": 0,
+    "headRoll": 0,
+    "headNod": 0,
+    "armSwing": 8,
+    "armOpening": 3,
+    "elbowBase": 4,
+    "elbowSwing": 3,
+    "footLift": 0.098,
+    "heelPitch": 2.0999999999999996,
+    "toePitch": 4.199999999999999,
+    "breathSeconds": 10.2,
+    "idleScale": 0.85,
+    "stride": 4.917444,
+    "reachMargin": 0.038047,
+    "legLengthStride": 7.5,
+    "previewSpeed": 0.480525,
+    "levelWalk": true
+  }
+}

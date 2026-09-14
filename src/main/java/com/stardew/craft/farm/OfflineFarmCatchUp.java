@@ -113,7 +113,17 @@ public final class OfflineFarmCatchUp {
             try (TemporaryChunkLeaseTracker.Lease ignored =
                          FarmChunkManager.get().acquireTemporaryChunks(level, plan.requiredChunks())) {
                 // 1. 批量推进作物生长
-                catchUpCrops(level, cropMgr, plan.crops(), daysMissed);
+                var neighborhoods = new java.util.HashSet<net.minecraft.world.level.ChunkPos>();
+                for (var crop : plan.crops()) {
+                    int radius = StardewCropRuntimeRegistry.dailyNeighborhoodRadius(level.getBlockState(crop.pos()));
+                    for (int x = (crop.pos().getX() - radius) >> 4; x <= (crop.pos().getX() + radius) >> 4; x++)
+                        for (int z = (crop.pos().getZ() - radius) >> 4; z <= (crop.pos().getZ() + radius) >> 4; z++)
+                            neighborhoods.add(new net.minecraft.world.level.ChunkPos(x, z));
+                }
+                neighborhoods.removeAll(plan.requiredChunks());
+                try (TemporaryChunkLeaseTracker.Lease cropLease = FarmChunkManager.get().acquireTemporaryChunks(level, neighborhoods)) {
+                    catchUpCrops(level, cropMgr, plan.crops(), daysMissed);
+                }
 
                 // 2. 批量推进树苗生长
                 catchUpTrees(level, treeMgr, plan.trees(), daysMissed);
@@ -147,21 +157,9 @@ public final class OfflineFarmCatchUp {
         StardewCraft.LOGGER.info("[FARM-CATCHUP] Processing {} crops for {} days",
                 farmCrops.size(), daysMissed);
 
-        for (GlobalPos gp : farmCrops) {
-            BlockPos pos = gp.pos();
-            if (!level.isLoaded(pos)) continue;
-
-            for (int d = 0; d < daysMissed; d++) {
-                // 离线期间假设洒水器正常工作 → watered=true
-                StardewCropRuntimeAdapter.DailyResult result =
-                        StardewCropRuntimeRegistry.growOneDay(
-                                level, pos, true, true);
-                cropMgr.setDirty();
-                if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) {
-                    cropMgr.removeCrop(level, pos);
-                    break;
-                }
-            }
+        int today = computeAbsoluteDay();
+        for (int day = today - daysMissed + 1; day <= today; day++) {
+            cropMgr.settleCrops(level, farmCrops, day, seasonOfAbsDay(day), true);
         }
     }
 

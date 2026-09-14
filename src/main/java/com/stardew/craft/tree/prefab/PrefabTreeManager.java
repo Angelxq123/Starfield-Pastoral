@@ -113,10 +113,52 @@ public final class PrefabTreeManager {
 		PrefabTreeRegistry.get(level).register(worldRootPos, def.id(), variant, members);
 		// 让预制树参与「每日带种 / 摇树掉种 / 种子扩散」（与现成的 WildTreeShakeEvents 复用）。
 		WildTreeSeedManager.get(level).trackTree(level, worldRootPos, def);
-		// 打 generated-tree 标记：借「预制感知的连通性」覆盖全部木质成员，让树液采集器、生长阻挡、
-		// 施肥提示等所有「现代树」子系统把预制树当作一等公民原生识别。
+		// 按登记的木质成员写入同一棵树的标记，供采集器识别。
 		WildTrees.markGeneratedModernTree(level, worldRootPos, def);
 		return true;
+	}
+
+	/** Repair old map trees only after matching an entire shipped prefab, never loose placed wood. */
+	public static PrefabTreeInstance findOrRestoreForTapper(ServerLevel level, BlockPos clicked) {
+		PrefabTreeRegistry registry = PrefabTreeRegistry.get(level);
+		PrefabTreeInstance known = registry.getByMember(clicked);
+		if (known != null) return known;
+		BlockState clickedState = level.getBlockState(clicked);
+		WildTrees.Def def = WildTrees.findByAnyPart(clickedState);
+		if (def == null) {
+			for (WildTrees.Def candidate : WildTrees.ALL) {
+				if (PrefabTrees.countsAsLog(candidate, clickedState.getBlock())) { def = candidate; break; }
+			}
+		}
+		if (def == null) return null;
+		// Largest shipped canopy is nine blocks wide; tallest tree is twenty high.
+		for (BlockPos root : BlockPos.betweenClosed(clicked.offset(-5, -24, -5), clicked.offset(5, 0, 5))) {
+			if (!level.hasChunkAt(root) || !def.isModernRoot(level.getBlockState(root))) continue;
+			// Never adopt a felled tree or attach player-added wood to an existing tree.
+			if (registry.getByRoot(root) != null) continue;
+			for (int variant = 1; variant <= PrefabTrees.VARIANTS_PER_SPECIES; variant++) {
+				var layout = structure(PrefabTrees.speciesIndex(def), variant);
+				if (layout == null) continue;
+				BlockPos relativeRoot = findRootRel(layout, def.modernRoot().get(), "tapper legacy lookup");
+				if (relativeRoot == null) continue;
+				BlockPos origin = root.subtract(relativeRoot);
+				Set<BlockPos> members = new HashSet<>();
+				boolean matches = true;
+				for (StructureLoader.PositionedState part : layout.states()) {
+					if (part.state().isAir()) continue;
+					BlockPos pos = origin.offset(part.dx(), part.dy(), part.dz());
+					if (!level.hasChunkAt(pos) || !level.getBlockState(pos).is(part.state().getBlock())
+							|| registry.getByMember(pos) != null) { matches = false; break; }
+					members.add(pos.immutable());
+				}
+				if (!matches || !members.contains(clicked)) continue;
+				registry.register(root, def.id(), variant, members);
+				WildTrees.markGeneratedModernTree(level, root, def);
+				WildTreeSeedManager.get(level).trackTree(level, root, def);
+				return registry.getByRoot(root);
+			}
+		}
+		return null;
 	}
 
 	/** 随机挑一个变体放置（校验占地）。用于树苗成熟时生成。 */

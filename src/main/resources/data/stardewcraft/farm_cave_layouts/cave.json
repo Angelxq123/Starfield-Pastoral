@@ -1,0 +1,3311 @@
+{
+  "id": "cave",
+  "revision": 2,
+  "status": "runtime_architecture",
+  "source": "Content/Maps/FarmCave.tmx",
+  "source_sha256": "11f2638d45b1850633c7fcc7ae2341e0dc5bd2c76c88862bc370b2f5eb7c0728",
+  "structure": "stardewcraft:farm_layouts/cave",
+  "structure_sha256": "9c83e56190b778d4ebbee76b21020c52c38dc05e8644b8c5cc460640517bc4c4",
+  "size": [
+    16,
+    13,
+    18
+  ],
+  "tile_scale": 1,
+  "tile_origin": [
+    2,
+    3,
+    2
+  ],
+  "spawn": [
+    10.5,
+    3,
+    13.5
+  ],
+  "spawn_yaw": 180,
+  "exit_tile": [
+    8,
+    12
+  ],
+  "exit_block": [
+    10,
+    3,
+    14
+  ],
+  "mushroom_box_anchors": [
+    [
+      6,
+      3,
+      7
+    ],
+    [
+      8,
+      3,
+      7
+    ],
+    [
+      10,
+      3,
+      7
+    ],
+    [
+      6,
+      3,
+      9
+    ],
+    [
+      8,
+      3,
+      9
+    ],
+    [
+      10,
+      3,
+      9
+    ]
+  ],
+  "dehydrator_anchor": [
+    12,
+    3,
+    7
+  ],
+  "lamps": [
+    {
+      "block": [
+        6,
+        4,
+        6
+      ],
+      "facing": "south"
+    },
+    {
+      "block": [
+        4,
+        4,
+        9
+      ],
+      "facing": "east"
+    },
+    {
+      "block": [
+        12,
+        4,
+        10
+      ],
+      "facing": "west"
+    },
+    {
+      "block": [
+        10,
+        4,
+        13
+      ],
+      "facing": "east"
+    }
+  ],
+  "cells": [
+    {
+      "tile": [
+        0,
+        0
+      ],
+      "block": [
+        2,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        0
+      ],
+      "block": [
+        3,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        2,
+        0
+      ],
+      "block": [
+        4,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 70,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        0
+      ],
+      "block": [
+        5,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 71,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        0
+      ],
+      "block": [
+        6,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 76,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        0
+      ],
+      "block": [
+        7,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 77,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        0
+      ],
+      "block": [
+        8,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 74,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        0
+      ],
+      "block": [
+        9,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 75,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        0
+      ],
+      "block": [
+        10,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 76,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        0
+      ],
+      "block": [
+        11,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 94,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        0
+      ],
+      "block": [
+        12,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 95,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        0
+      ],
+      "block": [
+        13,
+        3,
+        2
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 96,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        0,
+        1
+      ],
+      "block": [
+        2,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        1
+      ],
+      "block": [
+        3,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 69,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        1
+      ],
+      "block": [
+        4,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 86,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        1
+      ],
+      "block": [
+        5,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 87,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        1
+      ],
+      "block": [
+        6,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 92,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        1
+      ],
+      "block": [
+        7,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 93,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        1
+      ],
+      "block": [
+        8,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 90,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        1
+      ],
+      "block": [
+        9,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 91,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        1
+      ],
+      "block": [
+        10,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 92,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        1
+      ],
+      "block": [
+        11,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 110,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        1
+      ],
+      "block": [
+        12,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 111,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        1
+      ],
+      "block": [
+        13,
+        3,
+        3
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 112,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        2
+      ],
+      "block": [
+        2,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        2
+      ],
+      "block": [
+        3,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 85,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        2
+      ],
+      "block": [
+        4,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 99,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        2
+      ],
+      "block": [
+        5,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 103,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        2
+      ],
+      "block": [
+        6,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 108,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        2
+      ],
+      "block": [
+        7,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 109,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        2
+      ],
+      "block": [
+        8,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 106,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        2
+      ],
+      "block": [
+        9,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 107,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        2
+      ],
+      "block": [
+        10,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 108,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        2
+      ],
+      "block": [
+        11,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 126,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        2
+      ],
+      "block": [
+        12,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 127,
+        "Paths": 0,
+        "Front": 52
+      }
+    },
+    {
+      "tile": [
+        11,
+        2
+      ],
+      "block": [
+        13,
+        3,
+        4
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 128,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        3
+      ],
+      "block": [
+        2,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        3
+      ],
+      "block": [
+        3,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 101,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        3
+      ],
+      "block": [
+        4,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 115,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        3
+      ],
+      "block": [
+        5,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 119,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        3
+      ],
+      "block": [
+        6,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 124,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        3
+      ],
+      "block": [
+        7,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 125,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        3
+      ],
+      "block": [
+        8,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 122,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        3
+      ],
+      "block": [
+        9,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 123,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        3
+      ],
+      "block": [
+        10,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 124,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        3
+      ],
+      "block": [
+        11,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 142,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        3
+      ],
+      "block": [
+        12,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 143,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        3
+      ],
+      "block": [
+        13,
+        3,
+        5
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 144,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        4
+      ],
+      "block": [
+        2,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        4
+      ],
+      "block": [
+        3,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 117,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        4
+      ],
+      "block": [
+        4,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 134,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        4
+      ],
+      "block": [
+        5,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 187,
+        "Buildings": 135,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        4
+      ],
+      "block": [
+        6,
+        3,
+        6
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        4
+      ],
+      "block": [
+        7,
+        3,
+        6
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        4
+      ],
+      "block": [
+        8,
+        3,
+        6
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        4
+      ],
+      "block": [
+        9,
+        3,
+        6
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        4
+      ],
+      "block": [
+        10,
+        3,
+        6
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        4
+      ],
+      "block": [
+        11,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 186,
+        "Buildings": 158,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        4
+      ],
+      "block": [
+        12,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 159,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        4
+      ],
+      "block": [
+        13,
+        3,
+        6
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 160,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        5
+      ],
+      "block": [
+        2,
+        3,
+        7
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        5
+      ],
+      "block": [
+        3,
+        3,
+        7
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 133,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        5
+      ],
+      "block": [
+        4,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 6,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        5
+      ],
+      "block": [
+        5,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 236,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        5
+      ],
+      "block": [
+        6,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        5
+      ],
+      "block": [
+        7,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 170,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        5
+      ],
+      "block": [
+        8,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        5
+      ],
+      "block": [
+        9,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        5
+      ],
+      "block": [
+        10,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        5
+      ],
+      "block": [
+        11,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 234,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        5
+      ],
+      "block": [
+        12,
+        3,
+        7
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 186,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        5
+      ],
+      "block": [
+        13,
+        3,
+        7
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 176,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        6
+      ],
+      "block": [
+        2,
+        3,
+        8
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        6
+      ],
+      "block": [
+        3,
+        3,
+        8
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 149,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        6
+      ],
+      "block": [
+        4,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 140,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        6
+      ],
+      "block": [
+        5,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        6
+      ],
+      "block": [
+        6,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        6
+      ],
+      "block": [
+        7,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        6
+      ],
+      "block": [
+        8,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 141,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        6
+      ],
+      "block": [
+        9,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        6
+      ],
+      "block": [
+        10,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 155,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        6
+      ],
+      "block": [
+        11,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        6
+      ],
+      "block": [
+        12,
+        3,
+        8
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 234,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        6
+      ],
+      "block": [
+        13,
+        3,
+        8
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 235,
+        "Buildings": 192,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        7
+      ],
+      "block": [
+        2,
+        3,
+        9
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        7
+      ],
+      "block": [
+        3,
+        3,
+        9
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 165,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        7
+      ],
+      "block": [
+        4,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        7
+      ],
+      "block": [
+        5,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        7
+      ],
+      "block": [
+        6,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        7
+      ],
+      "block": [
+        7,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        7
+      ],
+      "block": [
+        8,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 9,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        7
+      ],
+      "block": [
+        9,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        7
+      ],
+      "block": [
+        10,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 171,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        7
+      ],
+      "block": [
+        11,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 172,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        7
+      ],
+      "block": [
+        12,
+        3,
+        9
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        7
+      ],
+      "block": [
+        13,
+        3,
+        9
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 208,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        8
+      ],
+      "block": [
+        2,
+        3,
+        10
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        8
+      ],
+      "block": [
+        3,
+        3,
+        10
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 181,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        8
+      ],
+      "block": [
+        4,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        8
+      ],
+      "block": [
+        5,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        8
+      ],
+      "block": [
+        6,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 155,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        8
+      ],
+      "block": [
+        7,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        8
+      ],
+      "block": [
+        8,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        8
+      ],
+      "block": [
+        9,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        8
+      ],
+      "block": [
+        10,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        8
+      ],
+      "block": [
+        11,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        8
+      ],
+      "block": [
+        12,
+        3,
+        10
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        11,
+        8
+      ],
+      "block": [
+        13,
+        3,
+        10
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 224,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        9
+      ],
+      "block": [
+        2,
+        3,
+        11
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        9
+      ],
+      "block": [
+        3,
+        3,
+        11
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 197,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        2,
+        9
+      ],
+      "block": [
+        4,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 6,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 198
+      }
+    },
+    {
+      "tile": [
+        3,
+        9
+      ],
+      "block": [
+        5,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 170,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        4,
+        9
+      ],
+      "block": [
+        6,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        5,
+        9
+      ],
+      "block": [
+        7,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        6,
+        9
+      ],
+      "block": [
+        8,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        7,
+        9
+      ],
+      "block": [
+        9,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 8,
+      "source_gids": {
+        "Back": 140,
+        "Buildings": 0,
+        "Paths": 249,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        8,
+        9
+      ],
+      "block": [
+        10,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        9
+      ],
+      "block": [
+        11,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 249,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        10,
+        9
+      ],
+      "block": [
+        12,
+        3,
+        11
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 206
+      }
+    },
+    {
+      "tile": [
+        11,
+        9
+      ],
+      "block": [
+        13,
+        3,
+        11
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 207,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        0,
+        10
+      ],
+      "block": [
+        2,
+        3,
+        12
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        10
+      ],
+      "block": [
+        3,
+        3,
+        12
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        2,
+        10
+      ],
+      "block": [
+        4,
+        3,
+        12
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        3,
+        10
+      ],
+      "block": [
+        5,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 6,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 215
+      }
+    },
+    {
+      "tile": [
+        4,
+        10
+      ],
+      "block": [
+        6,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 216
+      }
+    },
+    {
+      "tile": [
+        5,
+        10
+      ],
+      "block": [
+        7,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 215
+      }
+    },
+    {
+      "tile": [
+        6,
+        10
+      ],
+      "block": [
+        8,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 216
+      }
+    },
+    {
+      "tile": [
+        7,
+        10
+      ],
+      "block": [
+        9,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 217
+      }
+    },
+    {
+      "tile": [
+        8,
+        10
+      ],
+      "block": [
+        10,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 7,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 249,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        10
+      ],
+      "block": [
+        11,
+        3,
+        12
+      ],
+      "ground_open": true,
+      "ceiling_y": 6,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 221
+      }
+    },
+    {
+      "tile": [
+        10,
+        10
+      ],
+      "block": [
+        12,
+        3,
+        12
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 222
+      }
+    },
+    {
+      "tile": [
+        11,
+        10
+      ],
+      "block": [
+        13,
+        3,
+        12
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 219,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        0,
+        11
+      ],
+      "block": [
+        2,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        11
+      ],
+      "block": [
+        3,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        2,
+        11
+      ],
+      "block": [
+        4,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        3,
+        11
+      ],
+      "block": [
+        5,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        4,
+        11
+      ],
+      "block": [
+        6,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        5,
+        11
+      ],
+      "block": [
+        7,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        6,
+        11
+      ],
+      "block": [
+        8,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        7,
+        11
+      ],
+      "block": [
+        9,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 233,
+        "Paths": 0,
+        "Front": 233
+      }
+    },
+    {
+      "tile": [
+        8,
+        11
+      ],
+      "block": [
+        10,
+        3,
+        13
+      ],
+      "ground_open": true,
+      "ceiling_y": 6,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 249,
+        "Front": 0
+      }
+    },
+    {
+      "tile": [
+        9,
+        11
+      ],
+      "block": [
+        11,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 237,
+        "Paths": 0,
+        "Front": 237
+      }
+    },
+    {
+      "tile": [
+        10,
+        11
+      ],
+      "block": [
+        12,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        11,
+        11
+      ],
+      "block": [
+        13,
+        3,
+        13
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        0,
+        12
+      ],
+      "block": [
+        2,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        12
+      ],
+      "block": [
+        3,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        2,
+        12
+      ],
+      "block": [
+        4,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        3,
+        12
+      ],
+      "block": [
+        5,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        4,
+        12
+      ],
+      "block": [
+        6,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        5,
+        12
+      ],
+      "block": [
+        7,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        6,
+        12
+      ],
+      "block": [
+        8,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        7,
+        12
+      ],
+      "block": [
+        9,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 214
+      }
+    },
+    {
+      "tile": [
+        8,
+        12
+      ],
+      "block": [
+        10,
+        3,
+        14
+      ],
+      "ground_open": true,
+      "ceiling_y": 6,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 216
+      }
+    },
+    {
+      "tile": [
+        9,
+        12
+      ],
+      "block": [
+        11,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 222
+      }
+    },
+    {
+      "tile": [
+        10,
+        12
+      ],
+      "block": [
+        12,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        11,
+        12
+      ],
+      "block": [
+        13,
+        3,
+        14
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        0,
+        13
+      ],
+      "block": [
+        2,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        1,
+        13
+      ],
+      "block": [
+        3,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        2,
+        13
+      ],
+      "block": [
+        4,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        3,
+        13
+      ],
+      "block": [
+        5,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        4,
+        13
+      ],
+      "block": [
+        6,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        5,
+        13
+      ],
+      "block": [
+        7,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        6,
+        13
+      ],
+      "block": [
+        8,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        7,
+        13
+      ],
+      "block": [
+        9,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        8,
+        13
+      ],
+      "block": [
+        10,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 214,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        9,
+        13
+      ],
+      "block": [
+        11,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        10,
+        13
+      ],
+      "block": [
+        12,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    },
+    {
+      "tile": [
+        11,
+        13
+      ],
+      "block": [
+        13,
+        3,
+        15
+      ],
+      "ground_open": false,
+      "ceiling_y": null,
+      "source_gids": {
+        "Back": 139,
+        "Buildings": 0,
+        "Paths": 0,
+        "Front": 78
+      }
+    }
+  ],
+  "checks": {
+    "reachable_floor_cells": 59,
+    "furnished_aisle_cells": 52,
+    "minimum_clearance": 3,
+    "maximum_clearance": 6,
+    "full_volume_blocks": 3744,
+    "palette_states": 9,
+    "supported_lamps": 4,
+    "structure_roundtrip": true
+  },
+  "runtime_layout_version": 1
+}

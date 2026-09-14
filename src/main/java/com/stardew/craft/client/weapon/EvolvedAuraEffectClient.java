@@ -4,12 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.stardew.craft.Config;
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.combat.VfxColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -17,15 +15,7 @@ import org.joml.Matrix4f;
 
 public final class EvolvedAuraEffectClient {
 
-    private static final ResourceLocation RUNE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_f.png"
-    );
 
-    private static final ResourceLocation CORE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_b.png"
-    );
 
     private EvolvedAuraEffectClient() {}
 
@@ -52,8 +42,8 @@ public final class EvolvedAuraEffectClient {
         Vec3 camPos = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-        RenderType runeType = RenderType.entityTranslucent(RUNE_TEXTURE);
-        RenderType coreType = RenderType.entityTranslucent(CORE_TEXTURE);
+        RenderType runeType = WeaponEffectRenderTypes.MOLTEN_GLOW;
+        RenderType coreType = WeaponEffectRenderTypes.MOLTEN_GLOW;
 
         float age = player.tickCount + event.getPartialTick().getGameTimeDeltaPartialTick(false);
         float pulse = 0.85f + 0.15f * (float) Math.sin(age * 0.2f);
@@ -79,10 +69,7 @@ public final class EvolvedAuraEffectClient {
         PoseStack.Pose last = poseStack.last();
         Matrix4f pose = last.pose();
         float size = 0.5f;
-        vertex(runeConsumer, pose, 0xF000F0, r, g, b, alpha, -size, -size, 0, 1);
-        vertex(runeConsumer, pose, 0xF000F0, r, g, b, alpha, size, -size, 1, 1);
-        vertex(runeConsumer, pose, 0xF000F0, r, g, b, alpha, size, size, 1, 0);
-        vertex(runeConsumer, pose, 0xF000F0, r, g, b, alpha, -size, size, 0, 0);
+        WeaponEffectShapes.ring(runeConsumer, pose, size, r, g, b, alpha);
         poseStack.popPose();
 
         VertexConsumer coreConsumer = buffer.getBuffer(coreType);
@@ -94,26 +81,13 @@ public final class EvolvedAuraEffectClient {
         PoseStack.Pose column = poseStack.last();
         Matrix4f columnPose = column.pose();
         int colAlpha = 140;
-        vertex(coreConsumer, columnPose, 0xF000F0, r, g, b, colAlpha, -size, -size, 0, 1);
-        vertex(coreConsumer, columnPose, 0xF000F0, r, g, b, colAlpha, size, -size, 1, 1);
-        vertex(coreConsumer, columnPose, 0xF000F0, r, g, b, colAlpha, size, size, 1, 0);
-        vertex(coreConsumer, columnPose, 0xF000F0, r, g, b, colAlpha, -size, size, 0, 0);
+        WeaponEffectShapes.ring(coreConsumer, columnPose, size, r, g, b, colAlpha);
         poseStack.popPose();
 
         buffer.endBatch(runeType);
         buffer.endBatch(coreType);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light,
-                               int r, int g, int b, int alpha,
-                               float x, float y, float u, float v) {
-        consumer.addVertex(pose, x, 0.0f, y)
-            .setColor(r, g, b, alpha)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
+
 
 }

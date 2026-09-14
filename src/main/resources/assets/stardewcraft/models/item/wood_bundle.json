@@ -1,7 +1,3 @@
 {
-  "parent": "stardewcraft:decor/common/wood_bundle_4",
-  "textures": {
-    "particle": "stardewcraft:block/deco/misc/common/wood_bundle_4"
-  }
+  "parent": "stardewcraft:decor/common/wood_bundle_4"
 }
-

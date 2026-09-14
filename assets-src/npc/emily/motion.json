@@ -1,0 +1,93 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.9049019375,
+  "attentionRig": {
+    "hipHeight": 12.0,
+    "soleY": 0.0,
+    "toeDepth": 2.5,
+    "halfStance": 2.16,
+    "rightZ": 0.14,
+    "leftZ": -0.18,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "cloth": {
+    "bone": "dress_skirt",
+    "kind": "skirt",
+    "anchorY": 15.0,
+    "hemY": 2.88,
+    "margin": 0.7,
+    "clearancePart": "dress_core",
+    "standingDepthMargin": 0.4,
+    "contactBlend": 1.0,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "id": "emily",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42800000000000005,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      }
+    },
+    "bodyPitch": -1.6,
+    "headPitch": 1.15,
+    "halfStance": 2.16,
+    "stride": 14.478431,
+    "reachMargin": 0.038072,
+    "legLengthStride": 21.0,
+    "approvedBaseStride": 21.0,
+    "stance": 0.54,
+    "bob": 0.2816,
+    "sway": 0.58,
+    "rootYaw": 2.6,
+    "bodyYaw": 6.0,
+    "armSwing": 18.0,
+    "armPhase": 0.02,
+    "footLift": 0.32480000000000003,
+    "swingPeak": 0.43,
+    "elbowBase": 11,
+    "bodyRoll": 1.12,
+    "strideScale": 1.0,
+    "intent": "成年女性、外向；节奏明快，侧向重心和肩臂较活跃，仍然是走路而非跳舞。",
+    "bodyLag": 0.05,
+    "headLag": 0.085,
+    "headYawLag": 0.035,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.792866,
+    "levelWalk": true
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "variants": {
+    "facing=north,profile=0": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_0",
+      "y": 0
+    },
+    "facing=north,profile=1": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_1",
+      "y": 0
+    },
+    "facing=north,profile=2": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_2",
+      "y": 0
+    },
+    "facing=north,profile=3": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_3",
+      "y": 0
+    },
+    "facing=north,profile=4": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_4",
+      "y": 0
+    },
+    "facing=north,profile=5": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_5",
+      "y": 0
+    },
+    "facing=north,profile=6": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_6",
+      "y": 0
+    },
+    "facing=north,profile=7": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_7",
+      "y": 0
+    },
+    "facing=east,profile=0": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_0",
+      "y": 90
+    },
+    "facing=east,profile=1": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_1",
+      "y": 90
+    },
+    "facing=east,profile=2": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_2",
+      "y": 90
+    },
+    "facing=east,profile=3": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_3",
+      "y": 90
+    },
+    "facing=east,profile=4": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_4",
+      "y": 90
+    },
+    "facing=east,profile=5": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_5",
+      "y": 90
+    },
+    "facing=east,profile=6": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_6",
+      "y": 90
+    },
+    "facing=east,profile=7": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_7",
+      "y": 90
+    },
+    "facing=south,profile=0": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_0",
+      "y": 180
+    },
+    "facing=south,profile=1": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_1",
+      "y": 180
+    },
+    "facing=south,profile=2": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_2",
+      "y": 180
+    },
+    "facing=south,profile=3": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_3",
+      "y": 180
+    },
+    "facing=south,profile=4": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_4",
+      "y": 180
+    },
+    "facing=south,profile=5": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_5",
+      "y": 180
+    },
+    "facing=south,profile=6": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_6",
+      "y": 180
+    },
+    "facing=south,profile=7": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_7",
+      "y": 180
+    },
+    "facing=west,profile=0": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_0",
+      "y": 270
+    },
+    "facing=west,profile=1": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_1",
+      "y": 270
+    },
+    "facing=west,profile=2": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_2",
+      "y": 270
+    },
+    "facing=west,profile=3": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_3",
+      "y": 270
+    },
+    "facing=west,profile=4": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_4",
+      "y": 270
+    },
+    "facing=west,profile=5": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_5",
+      "y": 270
+    },
+    "facing=west,profile=6": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_6",
+      "y": 270
+    },
+    "facing=west,profile=7": {
+      "model": "stardewcraft:block/material_templates/balcony_railing_7",
+      "y": 270
+    }
+  }
+}

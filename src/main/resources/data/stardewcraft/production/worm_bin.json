@@ -1,0 +1,13 @@
+{
+  "time_multiplier": 1.0,
+  "cycles": {
+    "default": {
+      "duration": {
+        "minutes": 1260
+      },
+      "output": "stardewcraft:bait",
+      "min_count": 4,
+      "max_count": 5
+    }
+  }
+}

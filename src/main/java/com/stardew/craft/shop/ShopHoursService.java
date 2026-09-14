@@ -3,6 +3,7 @@ package com.stardew.craft.shop;
 import com.stardew.craft.cutscene.server.EventSeenData;
 import com.stardew.craft.festival.FestivalService;
 import com.stardew.craft.network.ObjectDialogueService;
+import com.stardew.craft.npc.runtime.NpcFriendshipDataManager;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewData;
 import com.stardew.craft.time.StardewTimeManager;
@@ -11,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Source: SDV map {@code LockedDoorWarp} actions and
@@ -22,6 +24,7 @@ public final class ShopHoursService {
     private static final String WILLY_EXTENDED_HOURS_FLAG = "willyHours";
 
     private static final Map<String, DoorHours> DOOR_HOURS = Map.ofEntries(
+        Map.entry("elliott_cabin_enter", new DoorHours(1000, 1800, false, false)),
         Map.entry("pierre_house_enter", new DoorHours(900, 2100, true, true)),
         Map.entry("museum_enter", new DoorHours(800, 1800, false, true)),
         Map.entry("blacksmith_enter", new DoorHours(900, 1600, false, true)),
@@ -40,6 +43,9 @@ public final class ShopHoursService {
 
     /** @return whether the interaction was consumed because the door is closed. */
     public static boolean blockClosedPortal(ServerPlayer player, String targetId) {
+        if ("stardewcraft:elliott_cabin_enter".equals(targetId)) {
+            targetId = "elliott_cabin_enter";
+        }
         DoorHours hours = DOOR_HOURS.get(targetId);
         if (player == null || hours == null) {
             return false;
@@ -67,13 +73,13 @@ public final class ShopHoursService {
             : hours.openClock();
 
         if (hasTownKey || greenRainKeepsDoorOpen(player, time, hours)) {
-            return false;
+            return blockInsufficientFriendship(player, targetId);
         }
 
         int currentMinutes = time.getCurrentTime();
         if (currentMinutes >= clockToMinutes(openClock)
             && currentMinutes < clockToMinutes(hours.closeClock())) {
-            return false;
+            return blockInsufficientFriendship(player, targetId);
         }
 
         ObjectDialogueService.show(player, Component.translatable(
@@ -82,6 +88,22 @@ public final class ShopHoursService {
             timeComponent(hours.closeClock())
         ));
         return true;
+    }
+
+    private static boolean blockInsufficientFriendship(ServerPlayer player, String targetId) {
+        if (!"elliott_cabin_enter".equals(targetId)
+                || hasElliottCabinFriendship(NpcFriendshipDataManager.get(player.serverLevel()), player.getUUID())) {
+            return false;
+        }
+        ObjectDialogueService.show(player, Component.translatable(
+                "stardewcraft.shop.hours.friends_only",
+                Component.translatable("entity.stardewcraft.npc.elliott")));
+        return true;
+    }
+
+    // This cabin requires two hearts year-round; the town key only bypasses opening hours.
+    static boolean hasElliottCabinFriendship(NpcFriendshipDataManager friendships, UUID playerId) {
+        return friendships.getPointsForNpc(playerId, "elliott") >= 500;
     }
 
     private static boolean storesClosedForFestival() {

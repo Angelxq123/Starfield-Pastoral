@@ -18,6 +18,13 @@ import net.minecraft.world.item.ItemStack;
  */
 public class FishItem extends Item implements IStardewItem {
 
+    @Override
+    public net.minecraft.world.InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
+        return context.getPlayer() != null && context.getPlayer().isShiftKeyDown()
+                ? com.stardew.craft.item.cooking.PlacedFoodPlacement.place(context) : super.useOn(context);
+    }
+
+
     /** 各品质售价 [普通, 银星, 金星, 铱星] */
     protected final int[] priceByQuality;
     /** 各品质能量恢复 [普通, 银星, 金星, 铱星] */

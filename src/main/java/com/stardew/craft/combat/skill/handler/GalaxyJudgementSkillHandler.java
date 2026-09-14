@@ -104,6 +104,12 @@ public final class GalaxyJudgementSkillHandler
                 )
         );
         instance.registerCommittedEffect(() -> {
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(),
+                    weaponId,
+                    skillId,
+                    ANIMATION_TICKS
+            );
             for (LivingEntity target : targets) {
                 WeaponSkillDamage.apply(
                         context.player(),
@@ -116,12 +122,7 @@ public final class GalaxyJudgementSkillHandler
                         WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
                 );
             }
-            WeaponSkillAnimationDispatcher.sendSkillAnim(
-                    context.player(),
-                    weaponId,
-                    skillId,
-                    ANIMATION_TICKS
-            );
+
             WeaponSkillAnimationLock.setLock(
                     context.player(),
                     context.nowTick(),

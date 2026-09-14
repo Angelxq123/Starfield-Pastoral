@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-public record HolyBladeRingPayload(float x, float y, float z, float maxRadius, int durationTicks) implements CustomPacketPayload {
+public record HolyBladeRingPayload(double x, double y, double z, float maxRadius, int durationTicks) implements CustomPacketPayload {
 
     @SuppressWarnings("null")
     public static final Type<HolyBladeRingPayload> TYPE = new Type<>(
@@ -18,11 +18,11 @@ public record HolyBladeRingPayload(float x, float y, float z, float maxRadius, i
 
     @SuppressWarnings("null")
     public static final StreamCodec<ByteBuf, HolyBladeRingPayload> STREAM_CODEC = StreamCodec.composite(
-        ByteBufCodecs.FLOAT,
+        ByteBufCodecs.DOUBLE,
         HolyBladeRingPayload::x,
-        ByteBufCodecs.FLOAT,
+        ByteBufCodecs.DOUBLE,
         HolyBladeRingPayload::y,
-        ByteBufCodecs.FLOAT,
+        ByteBufCodecs.DOUBLE,
         HolyBladeRingPayload::z,
         ByteBufCodecs.FLOAT,
         HolyBladeRingPayload::maxRadius,

@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.item.ModItems;
@@ -106,7 +108,7 @@ public class PrizeTicketMachineScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        guiScale = (float) Minecraft.getInstance().getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         int menuW = ui(SDV_W);
         int menuH = ui(SDV_H);
         x0 = width / 2 - menuW / 2;

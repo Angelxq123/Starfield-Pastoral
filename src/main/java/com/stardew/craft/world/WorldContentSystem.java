@@ -4,8 +4,6 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.world.data.WorldLootPoolData;
 import com.stardew.craft.world.data.ForageZoneData;
 import com.stardew.craft.manager.ArtifactDropService;
-import com.stardew.craft.mining.MineThemeData;
-import com.stardew.craft.mining.MineMonsterSpawnTableData;
 import com.stardew.craft.interior.InteriorRegionRegistry;
 import com.stardew.craft.interior.InteriorPortalRegistry;
 import com.stardew.craft.mastery.MasteryRewardRegistry;
@@ -25,8 +23,6 @@ public final class WorldContentSystem {
         event.addListener(new WorldLootPoolData.ReloadListener());
         event.addListener(new ForageZoneData.ReloadListener());
         event.addListener(new ArtifactDropService.ReloadListener());
-        event.addListener(new MineThemeData.ReloadListener());
-        event.addListener(new MineMonsterSpawnTableData.ReloadListener());
         event.addListener(new InteriorRegionRegistry.ReloadListener());
         event.addListener(new WorldRegionRegistry.ReloadListener());
         event.addListener(new WorldAnchorRegistry.ReloadListener());

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "source_name": "Sludge",
+  "family": "slime",
+  "health": 205,
+  "damage": 16,
+  "resilience": 0,
+  "miss_chance": 0,
+  "experience": 10,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:slime_item",
+      "chance": 0.8
+    },
+    {
+      "item": "stardewcraft:white_algae",
+      "chance": 0.1
+    },
+    {
+      "item": "-4",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:diamond",
+      "chance": 0.01
+    },
+    {
+      "item": "stardewcraft:sap",
+      "chance": 0.5
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

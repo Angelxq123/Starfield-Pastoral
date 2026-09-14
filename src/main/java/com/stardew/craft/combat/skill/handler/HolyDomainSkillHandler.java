@@ -1,6 +1,5 @@
 package com.stardew.craft.combat.skill.handler;
 
-import com.stardew.craft.combat.skill.HolyBladeEffects;
 import com.stardew.craft.combat.skill.WeaponSkillCooldowns;
 import com.stardew.craft.combat.skill.runtime.RuntimeWeaponSkillHandler;
 import com.stardew.craft.combat.skill.runtime.SkillExecutionContext;
@@ -81,7 +80,8 @@ public final class HolyDomainSkillHandler implements RuntimeWeaponSkillHandler {
                 );
         instance.initializeExecutionState(executionState);
         instance.registerCommittedEffect(() ->
-                HolyBladeEffects.playDomainActivate(context.player())
+                com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                        context.player(), "holy_blade", "holy_domain", 10)
         );
     }
 

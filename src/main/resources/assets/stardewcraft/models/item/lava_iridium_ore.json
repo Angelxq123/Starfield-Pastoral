@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/lava_iridium_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/lava_iridium_ore"
-                 }
-}

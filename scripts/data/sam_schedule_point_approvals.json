@@ -1,0 +1,228 @@
+{
+  "npc_id": "sam",
+  "island_in_scope": false,
+  "excluded_point_ids": [
+    24,
+    30
+  ],
+  "excluded_reason": "用户明确：节日点位不需要完成",
+  "missing_point_ids": [],
+  "coordinate_convention": "用户提供的MC方块坐标；direction以本次用户提供值为准；家具朝向从方块状态读取",
+  "runtime_status": "integrated_source_and_native_assets; headless_and_Blockbench_verified; in_game_route_acceptance_pending",
+  "points": {
+    "1": {
+      "x": -15,
+      "y": 39,
+      "z": 27,
+      "direction": "north",
+      "target_kind": "route"
+    },
+    "2": {
+      "x": -13,
+      "y": 39,
+      "z": 29,
+      "direction": "north",
+      "target_kind": "route"
+    },
+    "3": {
+      "x": -26,
+      "y": 39,
+      "z": 23,
+      "direction": "east",
+      "target_kind": "route"
+    },
+    "4": {
+      "x": -13,
+      "y": 39,
+      "z": 27,
+      "direction": "north",
+      "target_kind": "route"
+    },
+    "5": {
+      "x": -8,
+      "y": 39,
+      "z": 30,
+      "target_kind": "furniture",
+      "furniture": "wooden_dining_chair",
+      "direction_source": "block_state"
+    },
+    "6": {
+      "x": -9,
+      "y": 39,
+      "z": 26,
+      "target_kind": "furniture",
+      "furniture": "bed",
+      "direction_source": "block_state"
+    },
+    "7": {
+      "x": -28,
+      "y": 38,
+      "z": 34,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "8": {
+      "x": -26,
+      "y": 39,
+      "z": 22,
+      "direction": "east",
+      "target_kind": "route"
+    },
+    "9": {
+      "x": -30,
+      "y": 38,
+      "z": 34,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "10": {
+      "x": -11,
+      "y": 39,
+      "z": 28,
+      "direction": "north",
+      "target_kind": "route"
+    },
+    "11": {
+      "x": -26,
+      "y": 64,
+      "z": 42,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "12": {
+      "x": -31,
+      "y": 64,
+      "z": 46,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "13": {
+      "x": -30,
+      "y": 64,
+      "z": 46,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "14": {
+      "x": -13,
+      "y": 64,
+      "z": 48,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "15": {
+      "x": -5,
+      "y": 64,
+      "z": 48,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "16": {
+      "x": -2,
+      "y": 64,
+      "z": 51,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "18": {
+      "x": 69,
+      "y": 64,
+      "z": 52,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "19": {
+      "x": 82,
+      "y": 64,
+      "z": 49,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "20": {
+      "x": 54,
+      "y": 36,
+      "z": 12,
+      "direction": "east",
+      "target_kind": "route"
+    },
+    "21": {
+      "x": 55,
+      "y": 36,
+      "z": 10,
+      "direction": "north",
+      "target_kind": "route"
+    },
+    "22": {
+      "x": 33,
+      "y": 36,
+      "z": 12,
+      "direction": "west",
+      "target_kind": "route"
+    },
+    "23": {
+      "x": 74,
+      "y": 60,
+      "z": 126,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "25": {
+      "x": -136,
+      "y": 64,
+      "z": 86,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "26": {
+      "x": 14,
+      "y": 43,
+      "z": -15,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "27": {
+      "x": 2,
+      "y": 43,
+      "z": -23,
+      "direction": "north",
+      "target_kind": "route"
+    },
+    "28": {
+      "x": 112,
+      "y": 45,
+      "z": -40,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "29": {
+      "x": 163,
+      "y": 38,
+      "z": 30,
+      "direction": "south",
+      "target_kind": "route"
+    },
+    "31": {
+      "x": -59,
+      "y": 64,
+      "z": -43,
+      "direction": "west",
+      "target_kind": "route"
+    },
+    "32": {
+      "x": -60,
+      "y": 64,
+      "z": -43,
+      "direction": "west",
+      "target_kind": "route"
+    }
+  },
+  "marriage_in_scope": false,
+  "deferred_point_ids": [
+    8,
+    9,
+    17,
+    31,
+    32
+  ],
+  "deferred_reason": "用户明确：先不做婚后日程"
+}

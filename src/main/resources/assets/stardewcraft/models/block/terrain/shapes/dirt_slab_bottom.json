@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "side": "stardewcraft:block/terrain/yellow_earth_side",
+    "top": "stardewcraft:block/terrain/yellow_earth_side",
+    "bottom": "stardewcraft:block/terrain/yellow_earth_side",
+    "particle": "stardewcraft:block/terrain/yellow_earth_side"
+  }
+}

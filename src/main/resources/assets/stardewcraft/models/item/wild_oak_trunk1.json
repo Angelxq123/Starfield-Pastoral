@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/wild_tree/oak/trunk1",
-    "textures":  {
-                     "particle":  "stardewcraft:block/wild_tree/oak/trunk1"
-                 }
-}

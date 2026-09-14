@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "stardewcraft:block/plaza_red_bricks/variant_0"
+    },
+    "variant=1": {
+      "model": "stardewcraft:block/plaza_red_bricks/variant_1"
+    },
+    "variant=2": {
+      "model": "stardewcraft:block/plaza_red_bricks/variant_2"
+    },
+    "variant=3": {
+      "model": "stardewcraft:block/plaza_red_bricks/variant_3"
+    },
+    "variant=4": {
+      "model": "stardewcraft:block/plaza_red_bricks/variant_4"
+    },
+    "variant=5": {
+      "model": "stardewcraft:block/plaza_red_bricks/variant_5"
+    }
+  }
+}

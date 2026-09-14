@@ -93,6 +93,11 @@ public final class CrescentSlashSkillHandler implements RuntimeWeaponSkillHandle
     }
 
     private static void strike(SkillExecutionContext context, SkillInstance instance) {
+        com.stardew.craft.event.MineBarrelBreakHandler.breakInArc(
+                context.player(),
+                TARGET_RANGE,
+                MINIMUM_DIRECTION_DOT
+        );
         List<LivingEntity> targets = SkillTargeting.findTargetsInArc(
                 context.player(),
                 TARGET_RANGE,
@@ -118,12 +123,12 @@ public final class CrescentSlashSkillHandler implements RuntimeWeaponSkillHandle
                     WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
             );
         }
-        WeaponSkillAnimationDispatcher.sendImpact(
-                context.player(),
-                context.skillData().getId(),
-                targetIds,
-                instance.seed()
-        );
+
+    }
+
+    @Override public void finish(SkillExecutionContext context,SkillInstance instance,SkillInstance.EndReason reason){
+        if(reason!=SkillInstance.EndReason.COMPLETED)net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(context.player(),
+                new com.stardew.craft.combat.network.CrescentFalchionEndPayload(-1,context.player().getId(),"crescent_slash"));
     }
 
     private static final class State implements SkillInstance.ExecutionState {

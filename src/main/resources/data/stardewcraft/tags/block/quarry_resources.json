@@ -1,9 +1,20 @@
 {
   "replace": false,
   "values": [
-    "stardewcraft:artifact_spot_dirt",
-    "#stardewcraft:stardew_stones",
-    "#stardewcraft:stardew_ores",
+    "stardewcraft:mine_stone_10",
+    "stardewcraft:mine_stone_12",
+    "stardewcraft:mine_stone_14",
+    "stardewcraft:mine_stone_2",
+    "stardewcraft:mine_stone_290",
+    "stardewcraft:mine_stone_343",
+    "stardewcraft:mine_stone_4",
+    "stardewcraft:mine_stone_450",
+    "stardewcraft:mine_stone_6",
+    "stardewcraft:mine_stone_751",
+    "stardewcraft:mine_stone_764",
+    "stardewcraft:mine_stone_765",
+    "stardewcraft:mine_stone_8",
+    "stardewcraft:mine_stone_basic_coal_node0",
     "#stardewcraft:stardew_minerals"
   ]
 }

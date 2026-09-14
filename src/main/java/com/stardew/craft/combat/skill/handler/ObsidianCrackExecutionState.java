@@ -11,7 +11,6 @@ import com.stardew.craft.combat.skill.runtime.SkillInstance;
 import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import com.stardew.craft.combat.skill.runtime.WeaponSkillMovementArbiter;
 import java.util.List;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,6 +26,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 final class ObsidianCrackExecutionState
         implements SkillInstance.ExecutionState {
     private final long explodeTick;
+    private final long castTick;
+    private ServerLevel presentationLevel;
+    private int casterId;
+    private float yaw, length;
+    private boolean settled;
     private final Vec3 start;
     private final Vec3 end;
 
@@ -35,6 +39,7 @@ final class ObsidianCrackExecutionState
             Vec3 start,
             Vec3 end
     ) {
+        this.castTick = nowTick;
         this.explodeTick = nowTick
                 + ObsidianCrackSkillHandler.EXPLODE_DELAY_TICKS;
         this.start = start;
@@ -48,17 +53,9 @@ final class ObsidianCrackExecutionState
     ) {
         Vec3 center = start.add(end).scale(0.5D);
         ServerLevel level = context.player().serverLevel();
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new ObsidianCrackPayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
-                        yaw,
-                        length,
-                        ObsidianCrackSkillHandler.EFFECT_DURATION_TICKS
-                )
-        );
+        presentationLevel = level;
+        casterId = context.player().getId(); this.yaw = yaw; this.length = length;
+        sendPhase(ObsidianCrackPayload.START);
         level.playSound(
                 null,
                 center.x,
@@ -72,11 +69,28 @@ final class ObsidianCrackExecutionState
     }
 
     SkillTickResult advance(SkillExecutionContext context) {
+        if (settled) return SkillTickResult.COMPLETE;
         if (isWaitingForExplosion(context.nowTick(), explodeTick)) {
             return SkillTickResult.CONTINUE;
         }
+        settled = true;
+        sendPhase(ObsidianCrackPayload.PULSE);
         explode(context);
         return SkillTickResult.COMPLETE;
+    }
+
+    void cancel() {
+        if (settled) return;
+        settled = true;
+        sendPhase(ObsidianCrackPayload.END);
+    }
+
+    private void sendPhase(int phase) {
+        if (presentationLevel == null) return;
+        Vec3 center = start.add(end).scale(0.5);
+        PacketDistributor.sendToPlayersInDimension(presentationLevel, new ObsidianCrackPayload(
+                casterId, castTick, phase, center.x, center.y, center.z, yaw, length,
+                ObsidianCrackSkillHandler.EFFECT_DURATION_TICKS));
     }
 
     static boolean isWaitingForExplosion(long nowTick, long explodeTick) {
@@ -207,94 +221,9 @@ final class ObsidianCrackExecutionState
             );
         }
 
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.GLASS_BREAK,
-                SoundSource.PLAYERS,
-                0.9F,
-                0.9F
-        );
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.ANVIL_LAND,
-                SoundSource.PLAYERS,
-                0.6F,
-                0.8F
-        );
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.GENERIC_EXPLODE.value(),
-                SoundSource.PLAYERS,
-                0.9F,
-                0.9F
-        );
-
         Vec3 center = start.add(end).scale(0.5D);
-        level.sendParticles(
-                ParticleTypes.CRIT,
-                center.x,
-                center.y + 0.2D,
-                center.z,
-                24,
-                0.7D,
-                0.08D,
-                0.7D,
-                0.1D
-        );
-        level.sendParticles(
-                ParticleTypes.SMOKE,
-                center.x,
-                center.y + 0.1D,
-                center.z,
-                16,
-                0.7D,
-                0.02D,
-                0.7D,
-                0.03D
-        );
-        level.sendParticles(
-                ParticleTypes.EXPLOSION,
-                center.x,
-                center.y + 0.15D,
-                center.z,
-                2,
-                0.2D,
-                0.0D,
-                0.2D,
-                0.01D
-        );
-
-        int steps = 12;
-        for (int index = 0; index <= steps; index++) {
-            double ratio = index / (double) steps;
-            double particleX = start.x + (end.x - start.x) * ratio;
-            double particleZ = start.z + (end.z - start.z) * ratio;
-            level.sendParticles(
-                    ParticleTypes.CRIT,
-                    particleX,
-                    center.y + 0.08D,
-                    particleZ,
-                    2,
-                    0.08D,
-                    0.02D,
-                    0.08D,
-                    0.02D
-            );
-            level.sendParticles(
-                    ParticleTypes.SMOKE,
-                    particleX,
-                    center.y + 0.04D,
-                    particleZ,
-                    1,
-                    0.06D,
-                    0.01D,
-                    0.06D,
-                    0.01D
-            );
-        }
+        level.playSound(null, center.x, center.y, center.z, SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.8f, 0.65f);
+        level.playSound(null, center.x, center.y, center.z, SoundEvents.DEEPSLATE_BREAK, SoundSource.PLAYERS, 0.65f, 0.8f);
     }
 
     private static void applySlow(LivingEntity target) {

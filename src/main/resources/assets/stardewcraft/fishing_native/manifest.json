@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "sources": {
+    "01-蓄力/fishing_charge_with_tackle.bbmodel": "627387a36579b78a894c76381a4d52a3d8d7ef1bf56cb4a4bf8ff9af4638c77a",
+    "02-甩竿/fishing_cast_v1.bbmodel": "166b1e59fb1e2fee73a26b1b5f95f548de3eaea18957c22aef834f8f401274a9",
+    "03-咬钩提竿/fishing_bite_v1.bbmodel": "22f1abd9fbf26749af8b153ac719b1b86be33cb57dfb0447efc9e5046a1f4d80",
+    "04-左手接摇柄/fishing_reel_grab_continuous.bbmodel": "d513da98993f50bac66dbf2edf2030a1844d5ae1660b1fd4edeabfddf2225253",
+    "05-稳定收线/fishing_reel_loop.bbmodel": "fdeb88bd81710b347200a796cb1d79abb15514fd7bf9302afd7480b9e21c0981",
+    "07-鱼冲远顶住让线/fishing_fish_run.bbmodel": "000a8546e8da905af8d3e6098b0b02e110d0a66dc0efcd2a86d19e21b8d7ca24",
+    "08-鱼靠近收余线/fishing_slack_takeup.bbmodel": "202c3771b3c9c196adc311cdfd54c394b767042c0aaa88d5d8b564e83b893991",
+    "09-最后提竿鱼出水/fishing_catch_lift.bbmodel": "7f0cf0aa775727ade32bc8bfc491e04a5bcb5aeeac046f60e1ac9d3f35d911c0",
+    "10-失败取消与收尾/fishing_endings.bbmodel": "a924287813a1871b0f3adf4fefebe8adffc76264760cd88491c94c97508445b7",
+    "11-普通物品收获/fishing_item_catch.bbmodel": "431e0b250a02b708795a263b2b3ab95c807c31213a507ad8c46f48c7c583ce8c",
+    "12-拿出鱼竿/fishing_equip.bbmodel": "1af720606251a122f1f57f7b2375e9bb2d21ac3ac0855e1b1a81b8ddc535f36a"
+  },
+  "clips": {
+    "charge_enter": {
+      "length": 0.45,
+      "loop": false
+    },
+    "charge_hold": {
+      "length": 2,
+      "loop": true
+    },
+    "cast_release": {
+      "length": 1.8,
+      "loop": false
+    },
+    "wait_enter": {
+      "length": 0.45,
+      "loop": false
+    },
+    "wait_idle": {
+      "length": 2.4,
+      "loop": true
+    },
+    "bite_notice": {
+      "length": 0.5,
+      "loop": false
+    },
+    "hook_set": {
+      "length": 0.45,
+      "loop": false
+    },
+    "tension_hold": {
+      "length": 1.6,
+      "loop": true
+    },
+    "reel_grab": {
+      "length": 0.75,
+      "loop": false
+    },
+    "reel_enter": {
+      "length": 0.8,
+      "loop": false
+    },
+    "reel_loop": {
+      "length": 1.2,
+      "loop": true
+    },
+    "fish_run": {
+      "length": 1.8,
+      "loop": false
+    },
+    "slack_takeup": {
+      "length": 2,
+      "loop": false
+    },
+    "reel_loop_near": {
+      "length": 1.2,
+      "loop": true
+    },
+    "catch_lift_near": {
+      "length": 4.45,
+      "loop": false
+    },
+    "catch_lift": {
+      "length": 4.833333333333333,
+      "loop": false
+    },
+    "catch_lift_far": {
+      "length": 5.058333333333334,
+      "loop": false
+    },
+    "failed_retrieve_near": {
+      "length": 2.6166666666666667,
+      "loop": false
+    },
+    "failed_retrieve": {
+      "length": 3.25,
+      "loop": false
+    },
+    "failed_retrieve_far": {
+      "length": 3.558333333333333,
+      "loop": false
+    },
+    "cancel_retrieve_near": {
+      "length": 1.975,
+      "loop": false
+    },
+    "cancel_retrieve": {
+      "length": 2.525,
+      "loop": false
+    },
+    "cancel_retrieve_far": {
+      "length": 2.7916666666666665,
+      "loop": false
+    },
+    "ready_idle": {
+      "length": 1.8,
+      "loop": true
+    },
+    "success_to_ready": {
+      "length": 0.8,
+      "loop": false
+    },
+    "catch_item_near": {
+      "length": 3.4899999999999998,
+      "loop": false
+    },
+    "catch_block_near": {
+      "length": 3.4899999999999998,
+      "loop": false
+    },
+    "catch_item": {
+      "length": 3.873333333333333,
+      "loop": false
+    },
+    "catch_block": {
+      "length": 3.873333333333333,
+      "loop": false
+    },
+    "catch_item_far": {
+      "length": 4.098333333333333,
+      "loop": false
+    },
+    "catch_block_far": {
+      "length": 4.098333333333333,
+      "loop": false
+    },
+    "equip_raise": {
+      "length": 1.12,
+      "loop": false
+    },
+    "ready_one_hand": {
+      "length": 1.8,
+      "loop": true
+    }
+  },
+  "dynamic": [
+    "rod_stowed_tackle",
+    "cast_line_*",
+    "reel_line_*",
+    "hook_leader",
+    "caught_fish",
+    "caught_item",
+    "caught_block"
+  ],
+  "nativeArmature": true
+}

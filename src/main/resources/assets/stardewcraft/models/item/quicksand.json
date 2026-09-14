@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/quicksand",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/quicksand"
-                 }
-}

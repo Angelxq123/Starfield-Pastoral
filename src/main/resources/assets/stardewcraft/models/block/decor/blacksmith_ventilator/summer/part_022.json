@@ -1,0 +1,34 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "stardewcraft:block/decor/blacksmith_ventilator/summer/ventilator_summer",
+    "particle": "stardewcraft:block/decor/blacksmith_ventilator/summer/hardware_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        7,
+        8.010000000000002
+      ],
+      "to": [
+        10,
+        9,
+        8.010000000000002
+      ],
+      "faces": {
+        "south": {
+          "texture": "#0",
+          "uv": [
+            2.1875,
+            3.1875,
+            2.375,
+            3.3125
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

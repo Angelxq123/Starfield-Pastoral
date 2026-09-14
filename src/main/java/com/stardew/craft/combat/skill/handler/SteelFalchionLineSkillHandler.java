@@ -125,6 +125,7 @@ public final class SteelFalchionLineSkillHandler
             SkillInstance instance,
             SkillInstance.EndReason reason
     ) {
+        if(reason!=SkillInstance.EndReason.COMPLETED)instance.executionState(SteelFalchionLineExecutionState.class).ifPresent(state->state.cancelVisual(context.player()));
         instance.executionState(SteelFalchionLineExecutionState.class)
                 .ifPresent(SteelFalchionLineExecutionState::cancel);
     }

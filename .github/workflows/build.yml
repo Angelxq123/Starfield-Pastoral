@@ -27,7 +27,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon --console=plain
+        run: ./gradlew build check --no-daemon --console=plain
 
       - name: Test compatibility verifiers
         run: python3 -m unittest discover -s compatibility -p 'test_*.py'

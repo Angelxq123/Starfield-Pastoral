@@ -2,7 +2,6 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -44,8 +43,7 @@ public class ParsnipCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 0;
+        return seasonForGrowth() == 0;
     }
 
     @Override

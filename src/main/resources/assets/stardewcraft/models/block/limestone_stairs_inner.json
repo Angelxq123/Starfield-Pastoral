@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/inner_stairs",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/limestone",
-                     "top":  "stardewcraft:block/mine/limestone",
-                     "side":  "stardewcraft:block/mine/limestone",
-                     "particle":  "stardewcraft:block/mine/limestone"
-                 }
-}

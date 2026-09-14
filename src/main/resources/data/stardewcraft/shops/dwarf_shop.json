@@ -31,6 +31,11 @@
       "item": "stardewcraft:book_bombs",
       "price": 4000,
       "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:weathered_floor",
+      "price": 500,
+      "stock": 1
     }
   ],
   "accepted_sell_types": []

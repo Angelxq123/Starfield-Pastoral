@@ -1,0 +1,105 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_spring_repaint",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_wood_particle",
+    "2": "stardewcraft:block/decor/bookseller/bookseller_spring_accents",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_wood_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        11,
+        5,
+        15
+      ],
+      "to": [
+        13,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.59375,
+            1.75,
+            13.65625,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.71875,
+            1.75,
+            13.75,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            13.8125,
+            1.75,
+            13.875,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.9375,
+            1.75,
+            13.96875,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            14.03125,
+            1.75,
+            14.09375,
+            1.78125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            14.15625,
+            1.75,
+            14.21875,
+            1.78125
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        0,
+        14,
+        14
+      ],
+      "to": [
+        0,
+        17,
+        16
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            8.03125,
+            9.8125,
+            8.09375,
+            9.90625
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

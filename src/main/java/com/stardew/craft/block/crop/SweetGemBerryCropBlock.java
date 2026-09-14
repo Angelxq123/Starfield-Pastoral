@@ -3,7 +3,6 @@ package com.stardew.craft.block.crop;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -28,7 +27,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.function.Supplier;
 
 public class SweetGemBerryCropBlock extends StardewCropBlock {
-    private static final int[] PHASE_DAYS = new int[]{2, 4, 12, 6};
+    private static final int[] PHASE_DAYS = new int[]{2, 4, 6, 6, 6};
     private static final int[] OUTLINE_HEIGHTS = new int[]{5, 13, 18, 20};
     private static final int[] OUTLINE_WIDTHS = new int[]{3, 7, 10, 12};
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
@@ -61,7 +60,7 @@ public class SweetGemBerryCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        return StardewTimeManager.get().getCurrentSeason() == 2;
+        return seasonForGrowth() == 2;
     }
 
     @Override
@@ -113,6 +112,8 @@ public class SweetGemBerryCropBlock extends StardewCropBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape model = CropModelShapes.shape(state, level, pos);
+        if (model != null) return model;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }
@@ -231,7 +232,7 @@ public class SweetGemBerryCropBlock extends StardewCropBlock {
         BlockPos above = pos.above();
         BlockState upperState = lower.setValue(HALF, DoubleBlockHalf.UPPER);
         BlockState upper = level.getBlockState(above);
-        if (upper.getBlock() != this || upper.getValue(HALF) != DoubleBlockHalf.UPPER || upper.getValue(AGE) != lower.getValue(AGE) || upper.getValue(MATURE) != lower.getValue(MATURE)) {
+        if (upper.getBlock() != this || upper.getValue(HALF) != DoubleBlockHalf.UPPER || upper.getValue(AGE) != lower.getValue(AGE) || upper.getValue(GROWTH_STAGE) != lower.getValue(GROWTH_STAGE) || upper.getValue(MATURE) != lower.getValue(MATURE)) {
             level.setBlock(above, upperState, 3);
         }
     }

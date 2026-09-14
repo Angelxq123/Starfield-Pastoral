@@ -146,7 +146,10 @@ public final class EternalCollapseSkillHandler
             SkillInstance.EndReason reason
     ) {
         instance.executionState(EternalCollapseExecutionState.class)
-                .ifPresent(EternalCollapseExecutionState::cancel);
+                .ifPresent(state -> {
+                    state.cancel();
+                    state.endPresentation(context.player());
+                });
     }
 
     static int extraStrikesForStacks(int stacks) {

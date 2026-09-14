@@ -1,0 +1,247 @@
+{
+  "parent": "minecraft:block/block",
+  "credit": "StardewCraft: source stone BasicCoalNode0 reference; original per-face pixel art matched to mine environment",
+  "textures": {
+    "0": "stardewcraft:block/mine/nodes/stone_basic_coal_node0",
+    "particle": "stardewcraft:block/mine/nodes/stone_basic_coal_node0_particle"
+  },
+  "stardewcraft:collision": {
+    "mode": "aabb"
+  },
+  "elements": [
+    {
+      "name": "深褐宽岩",
+      "from": [
+        3,
+        -4,
+        3
+      ],
+      "to": [
+        13,
+        6,
+        13
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            0.0,
+            2.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.75,
+            0.0,
+            5.25,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            5.5,
+            0.0,
+            8.0,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.25,
+            0.0,
+            10.75,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.0,
+            0.0,
+            13.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0.0,
+            2.75,
+            2.5,
+            5.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "后侧圆岩冠",
+      "from": [
+        4,
+        4,
+        5
+      ],
+      "to": [
+        11,
+        10,
+        12
+      ],
+      "rotation": {
+        "origin": [
+          7,
+          5,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            2.75,
+            2.75,
+            4.5,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.75,
+            2.75,
+            6.5,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            6.75,
+            2.75,
+            8.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.75,
+            2.75,
+            10.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10.75,
+            2.75,
+            12.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12.75,
+            2.75,
+            14.5,
+            4.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "右低褐岩肩",
+      "from": [
+        9,
+        0,
+        7
+      ],
+      "to": [
+        14,
+        7,
+        13
+      ],
+      "rotation": {
+        "origin": [
+          11,
+          2,
+          10
+        ],
+        "axis": "z",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            14.75,
+            2.75,
+            16.0,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.0,
+            5.5,
+            1.25,
+            7.0
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            1.5,
+            5.5,
+            2.75,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.0,
+            5.5,
+            4.25,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4.5,
+            5.5,
+            6.0,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.25,
+            5.5,
+            7.75,
+            7.25
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

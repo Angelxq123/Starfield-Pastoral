@@ -1,0 +1,70 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "stardewcraft:block/decor/blacksmith_ventilator/spring/ventilator_spring",
+    "particle": "stardewcraft:block/decor/blacksmith_ventilator/spring/iron_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        7,
+        4
+      ],
+      "to": [
+        16,
+        9,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            10.25,
+            8.0625,
+            11.25,
+            8.1875
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            11.3125,
+            8.0625,
+            12.3125,
+            8.1875
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            12.9375,
+            8.0625,
+            13.4375,
+            8.1875
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            13.5,
+            8.0625,
+            14.5,
+            8.5625
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            14.5625,
+            8.0625,
+            15.5625,
+            8.5625
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

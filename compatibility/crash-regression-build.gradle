@@ -1,0 +1,16 @@
+// Also pass --project-cache-dir .gradle/crash-regression-cache so Gradle's stale-output
+// cleanup cannot remove another active build's classes when switching output directories.
+allprojects {
+    layout.buildDirectory.set(layout.projectDirectory.dir('.gradle/crash-regression-verification'))
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.each { sourceSet ->
+                def destination = layout.buildDirectory.dir("classes/java/${sourceSet.name}")
+                sourceSet.java.destinationDirectory.set(destination)
+                tasks.named(sourceSet.compileJavaTaskName) { destinationDirectory.set(destination) }
+            }
+            tasks.named('test') { workingDir = layout.buildDirectory.dir('minecraft-junit').get().asFile }
+            tasks.named('prepareNeoForgeTestFiles') { gameDirectory.set(layout.buildDirectory.dir('minecraft-junit')) }
+        }
+    }
+}

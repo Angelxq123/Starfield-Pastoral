@@ -17,6 +17,8 @@ public enum StardewCatalogTab {
     MINING("mining", "itemGroup.stardewcraft.mining", () -> ModItems.PRISMATIC_SHARD.get()),
     COMBAT("combat", "itemGroup.stardewcraft.combat", () -> ModItems.GALAXY_SWORD.get()),
     DECOR("decor", "itemGroup.stardewcraft.decor", () -> ModItems.FURNITURE_CATALOGUE.get()),
+    NATURE("nature", "itemGroup.stardewcraft.nature", () -> ModItems.GRASS_BLOCK.get()),
+    BUILDING("building", "itemGroup.stardewcraft.building", () -> ModItems.TOWN_PAVING.get()),
     SPECIAL("special", "itemGroup.stardewcraft.special", () -> ModItems.STARDROP.get());
 
     private final String registryName;

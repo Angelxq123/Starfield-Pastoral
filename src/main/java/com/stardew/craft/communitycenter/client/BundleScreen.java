@@ -1,5 +1,7 @@
 package com.stardew.craft.communitycenter.client;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.LocalizedGuiAssets;
@@ -145,7 +147,7 @@ public class BundleScreen extends AbstractContainerScreen<BundleMenu> {
         super.init();
 
         boolean isRelayout = this.mapping != null;
-        float guiScale = (float) this.minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         this.mapping = StardewRenderMapping.fitCanvas(
                 this.width, this.height, guiScale, 1280, 720);
         this.s4 = mapping.s4();

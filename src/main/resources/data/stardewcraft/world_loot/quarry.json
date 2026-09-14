@@ -25,7 +25,9 @@
               "weight": 1,
               "query": {
                 "type": "stardewcraft:item",
-                "data": { "item": "stardewcraft:fire_quartz" }
+                "data": {
+                  "item": "stardewcraft:mine_stone_46"
+                }
               }
             },
             {
@@ -34,14 +36,42 @@
                 "type": "stardewcraft:one_of",
                 "data": {
                   "items": [
-                    "stardewcraft:amethyst_ore",
-                    "stardewcraft:aquamarine_ore",
-                    "stardewcraft:diamond_ore",
-                    "stardewcraft:emerald_ore",
-                    "stardewcraft:jade_ore",
-                    "stardewcraft:ruby_ore",
-                    "stardewcraft:topaz_ore"
+                    "stardewcraft:mine_stone_8",
+                    "stardewcraft:mine_stone_12",
+                    "stardewcraft:mine_stone_2",
+                    "stardewcraft:mine_stone_4",
+                    "stardewcraft:mine_stone_6",
+                    "stardewcraft:mine_stone_10",
+                    "stardewcraft:mine_stone_14"
                   ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chance": 0.04,
+      "query": {
+        "type": "stardewcraft:weighted",
+        "data": {
+          "entries": [
+            {
+              "weight": 85,
+              "query": {
+                "type": "stardewcraft:item",
+                "data": {
+                  "item": "stardewcraft:artifact_spot"
+                }
+              }
+            },
+            {
+              "weight": 15,
+              "query": {
+                "type": "stardewcraft:item",
+                "data": {
+                  "item": "stardewcraft:seed_spot"
                 }
               }
             }
@@ -55,10 +85,42 @@
         "type": "stardewcraft:weighted",
         "data": {
           "entries": [
-            { "weight": 1000, "query": { "type": "stardewcraft:item", "data": { "item": "stardewcraft:earth_iridium_ore" } } },
-            { "weight": 99900, "query": { "type": "stardewcraft:item", "data": { "item": "stardewcraft:earth_gold_ore" } } },
-            { "weight": 296703, "query": { "type": "stardewcraft:item", "data": { "item": "stardewcraft:earth_iron_ore" } } },
-            { "weight": 602397, "query": { "type": "stardewcraft:item", "data": { "item": "stardewcraft:earth_copper_ore" } } }
+            {
+              "weight": 1000,
+              "query": {
+                "type": "stardewcraft:item",
+                "data": {
+                  "item": "stardewcraft:mine_stone_765"
+                }
+              }
+            },
+            {
+              "weight": 99900,
+              "query": {
+                "type": "stardewcraft:item",
+                "data": {
+                  "item": "stardewcraft:mine_stone_764"
+                }
+              }
+            },
+            {
+              "weight": 296703,
+              "query": {
+                "type": "stardewcraft:item",
+                "data": {
+                  "item": "stardewcraft:mine_stone_290"
+                }
+              }
+            },
+            {
+              "weight": 602397,
+              "query": {
+                "type": "stardewcraft:item",
+                "data": {
+                  "item": "stardewcraft:mine_stone_751"
+                }
+              }
+            }
           ]
         }
       }
@@ -67,7 +129,9 @@
       "chance": 0.1,
       "query": {
         "type": "stardewcraft:item",
-        "data": { "item": "stardewcraft:earth_coal_ore" }
+        "data": {
+          "item": "stardewcraft:mine_stone_basic_coal_node0"
+        }
       }
     },
     {
@@ -75,12 +139,8 @@
         "type": "stardewcraft:one_of",
         "data": {
           "items": [
-            "stardewcraft:earth_shale",
-            "stardewcraft:frost_gneiss",
-            "stardewcraft:lava_basalt",
-            "stardewcraft:banded_marble",
-            "stardewcraft:limestone",
-            "stardewcraft:mossy_sandstone"
+            "stardewcraft:mine_stone_343",
+            "stardewcraft:mine_stone_450"
           ]
         }
       }

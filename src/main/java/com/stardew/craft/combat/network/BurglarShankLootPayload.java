@@ -30,7 +30,7 @@ public record BurglarShankLootPayload() implements CustomPacketPayload {
     private static void handleClient(BurglarShankLootPayload payload) {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null) {
-            com.stardew.craft.client.weapon.SkillEffectsClient.playBurglarShankLoot(mc.player);
+            com.stardew.craft.client.weapon.NeedleBurglarVisuals.lootConfirmed();
             com.stardew.craft.client.hud.StardewTimeHud.triggerMoneyShake();
         }
     }

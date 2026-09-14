@@ -2,7 +2,8 @@ package com.stardew.craft.workbench;
 
 public enum WorkbenchType {
     WOOD(0, "wood",  "stardewcraft:wood_normal", "stardewcraft:wood_hard", 5),
-    STONE(1, "stone", "stardewcraft:stone",       null,                     0);
+    STONE(1, "stone", "stardewcraft:stone",       null,                     0),
+    TEMPLATE(2, "template", "stardewcraft:wood_normal", null, 0);
 
     private final int id;
     private final String key;

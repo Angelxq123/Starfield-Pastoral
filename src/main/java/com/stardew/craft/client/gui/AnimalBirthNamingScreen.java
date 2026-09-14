@@ -1,124 +1,93 @@
 package com.stardew.craft.client.gui;
 
-import com.stardew.craft.network.payload.AnimalBirthNamingSubmitPayload;
-import com.stardew.craft.network.payload.OpenAnimalBirthNamingPayload;
-import net.minecraft.client.Minecraft;
+import com.stardew.craft.client.animal.LivestockPortrait;
+import com.stardew.craft.network.payload.*;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import javax.annotation.Nonnull;
-import java.util.Random;
+public final class AnimalBirthNamingScreen extends FarmFolioScreen {
+    private final OpenAnimalBirthNamingPayload source;
+    private final CompoundTag portrait = new CompoundTag();
+    private String value = "";
+    private EditBox input;
+    private Button confirm;
 
-/** Blocking naming step matching the result of Stardew Valley's {@code QuestionEvent(2)}. */
-@SuppressWarnings("null")
-public final class AnimalBirthNamingScreen extends Screen {
-    private final OpenAnimalBirthNamingPayload payload;
-    private final Random random = new Random();
-    private EditBox nameField;
-
-    public AnimalBirthNamingScreen(OpenAnimalBirthNamingPayload payload) {
-        super(Component.translatable(
-                "stardewcraft.animal.pregnancy.naming_title",
-                payload.animalTypeId()
-        ));
-        this.payload = payload;
+    public AnimalBirthNamingScreen(OpenAnimalBirthNamingPayload source) {
+        super(ui("newborn"), null);
+        this.source = source;
+        com.stardew.craft.animal.runtime.LivestockUiData.describe(portrait, source.animalTypeId());
     }
 
     @Override
-    protected void init() {
-        int panelWidth = 260;
-        int left = (width - panelWidth) / 2;
-        int top = height / 2 - 45;
-        nameField = new EditBox(
-                com.stardew.craft.client.font.StardewFonts.dialogue(),
-                left,
-                top + 34,
-                panelWidth,
-                20,
-                Component.translatable(
-                        "stardewcraft.animal.pregnancy.naming_hint")
-        );
-        nameField.setMaxLength(48);
-        reroll();
-        addRenderableWidget(nameField);
-        addRenderableWidget(Button.builder(
-                Component.translatable(
-                        "stardewcraft.animal.pregnancy.random_name"),
-                button -> reroll()
-        ).bounds(left, top + 62, 125, 20).build());
-        addRenderableWidget(Button.builder(
-                Component.translatable("gui.done"),
-                button -> submit()
-        ).bounds(left + 135, top + 62, 125, 20).build());
-        setInitialFocus(nameField);
-    }
-
-    private void reroll() {
-        String language = Minecraft.getInstance()
-                .getLanguageManager()
-                .getSelected();
-        nameField.setValue(
-                SdvAnimalNameGenerator.randomName(language, random));
-    }
-
-    private void submit() {
-        String name = nameField.getValue().trim();
-        if (name.isEmpty()) {
-            return;
-        }
-        PacketDistributor.sendToServer(
-                new AnimalBirthNamingSubmitPayload(payload.eventId(), name));
-        super.onClose();
+    protected int preferredWidth() {
+        return 280;
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 257 || keyCode == 335) {
-            submit();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    protected int preferredHeight() {
+        return 305;
     }
 
     @Override
-    public void onClose() {
-        // The source overnight event cannot be skipped; the persisted prompt survives reconnects.
+    protected void layout() {
+        input =
+                field(
+                        Component.translatable("livestock.stardewcraft.name_required"),
+                        value,
+                        x + 24,
+                        y + h - 116,
+                        w - 90,
+                        32);
+        input.setResponder(
+                s -> {
+                    value = s;
+                    if (confirm != null) confirm.active = FarmRenameScreen.valid(s);
+                });
+        tile(
+                ui("random_name"),
+                x + w - 56,
+                y + h - 116,
+                32,
+                32,
+                () -> input.setValue(FarmAnimalNames.next()),
+                (g, b) -> {
+                    box(g, "button", b.getX(), b.getY(), 32, 32);
+                    glyph(g, "dice", b.getX() + 8, b.getY() + 8);
+                });
+        button(ui("later"), x + 16, y + h - 38, (w - 42) / 2, 26, this::onClose);
+        confirm =
+                button(
+                        Component.translatable("gui.done"),
+                        x + w / 2 + 5,
+                        y + h - 38,
+                        (w - 42) / 2,
+                        26,
+                        () -> {
+                            PacketDistributor.sendToServer(
+                                    new AnimalBirthNamingSubmitPayload(
+                                            source.eventId(), value.strip()));
+                            onClose();
+                        });
+        confirm.active = FarmRenameScreen.valid(value);
+        setInitialFocus(input);
     }
 
     @Override
-    public boolean shouldCloseOnEsc() {
-        return false;
-    }
-
-    @Override
-    public void render(
-            @Nonnull GuiGraphics graphics,
-            int mouseX,
-            int mouseY,
-            float partialTick
-    ) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(
-                font,
-                Component.translatable(
-                        "stardewcraft.animal.pregnancy.birth_notification",
-                        payload.parentName()
-                ),
-                width / 2,
-                height / 2 - 48,
-                0xFFFFFF
-        );
-        graphics.drawCenteredString(
-                font,
-                title,
-                width / 2,
-                height / 2 - 30,
-                0xFFE7A5
-        );
-        super.render(graphics, mouseX, mouseY, partialTick);
+    protected void paint(GuiGraphics g) {
+        paper(g, x + 16, y + 36, w - 32, h - 90);
+        LivestockPortrait.draw(g, portrait, x + 40, y + 50, w - 80, h - 194, false);
+        label(g, Component.literal(source.parentName()), x + 24, y + h - 160, w - 48, MUTED);
+        label(
+                g,
+                Component.translatable("livestock.stardewcraft.name_required"),
+                x + 24,
+                y + h - 138,
+                w - 48,
+                INK);
     }
 }

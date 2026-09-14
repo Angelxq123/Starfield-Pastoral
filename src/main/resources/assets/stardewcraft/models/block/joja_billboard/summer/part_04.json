@@ -1,0 +1,31 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/decor/joja_billboard/summer/joja_billboard_summer",
+    "particle": "stardewcraft:block/decor/joja_billboard/summer/joja_billboard_metal_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        2,
+        3
+      ],
+      "to": [
+        30,
+        24,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.125,
+            1.5,
+            2.0,
+            2.875
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

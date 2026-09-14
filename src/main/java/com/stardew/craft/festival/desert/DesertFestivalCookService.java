@@ -161,7 +161,7 @@ public final class DesertFestivalCookService {
             player.drop(stack, false);
         }
         player.inventoryMenu.broadcastChanges();
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
             "desert_festival",
             doneKey(ingredient, sauce),
             0,
@@ -218,7 +218,7 @@ public final class DesertFestivalCookService {
     }
 
     private static void sendDialogue(ServerPlayer player, String key) {
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload("desert_festival", key, 0));
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload("desert_festival", key, 0));
     }
 
     private static String ingredientKey(int ingredient) {

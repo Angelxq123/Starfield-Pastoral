@@ -118,6 +118,13 @@ public final class TemperedBilletSkillHandler implements RuntimeWeaponSkillHandl
                 PROJECTILE_STATE_TICKS,
                 releaseWeaponSnapshot
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             for (TemperedBilletProjectileEntity projectile : projectiles) {
                 if (!level.addFreshEntity(projectile)) {
@@ -129,12 +136,6 @@ public final class TemperedBilletSkillHandler implements RuntimeWeaponSkillHandl
         });
 
         // The authored cast has no attack lock; only notify presentation.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
     }
 
     static boolean canPayEnergy(

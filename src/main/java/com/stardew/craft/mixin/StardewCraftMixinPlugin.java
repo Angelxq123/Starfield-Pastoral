@@ -23,10 +23,46 @@ public final class StardewCraftMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.equals("com.stardew.craft.mixin.CtmModelInitializationMixin")) {
+            LoadingModList list = LoadingModList.get();
+            return list != null && list.getModFileById("ctm") != null;
+        }
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.XaeroWorldMap")) {
+            LoadingModList list = LoadingModList.get();
+            return list != null && list.getModFileById("xaeroworldmap") != null;
+        }
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.XaeroMinimap")) {
+            LoadingModList list = LoadingModList.get();
+            return list != null && list.getModFileById("xaerominimap") != null;
+        }
+        if (mixinClassName.equals("com.stardew.craft.mixin.Ae2FacadeItemMixin")) {
+            LoadingModList modList = LoadingModList.get();
+            return modList != null && modList.getModFileById("ae2") != null;
+        }
         if (PURPLE_SHORTS_BOBBER_MIXIN.equals(mixinClassName) && isHybridAquaticLoaded()) {
             return false;
         }
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.SodiumRingLight")) {
+            LoadingModList modList = LoadingModList.get();
+            return modList != null && modList.getModFileById("sodium") != null;
+        }
+        // These hooks target renderer internals, not a stable public RGB-light API.
+        // Unknown versions retain normal block light instead of risking a startup failure.
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.SodiumColoredLight")) {
+            return hasRendererVersion("sodium", "0.6.13");
+        }
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.IrisMineLamp")) {
+            return hasRendererVersion("iris", "1.8.12");
+        }
         return true;
+    }
+
+    private static boolean hasRendererVersion(String id, String version) {
+        LoadingModList list = LoadingModList.get();
+        var file = list == null ? null : list.getModFileById(id);
+        return file != null && file.getMods().stream().anyMatch(mod -> mod.getModId().equals(id)
+                && (mod.getVersion().toString().equals(version) || mod.getVersion().toString().startsWith(version + "+")
+                || mod.getVersion().toString().startsWith(version + "-snapshot+")));
     }
 
     private static boolean isHybridAquaticLoaded() {

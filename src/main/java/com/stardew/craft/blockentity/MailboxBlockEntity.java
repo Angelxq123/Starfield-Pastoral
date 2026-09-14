@@ -1,5 +1,6 @@
 package com.stardew.craft.blockentity;
 
+import com.stardew.craft.block.utility.MailboxBlock;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewData;
 import net.minecraft.core.BlockPos;
@@ -9,6 +10,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -101,8 +103,19 @@ public class MailboxBlockEntity extends BlockEntity {
             newHasMail = data.hasMailInMailbox();
         }
 
-        if (newHasMail != hasMail) {
+        boolean mailChanged = newHasMail != hasMail;
+        if (mailChanged) {
             hasMail = newHasMail;
+        }
+
+        BlockState state = getBlockState();
+        boolean modelChanged = state.hasProperty(MailboxBlock.HAS_MAIL)
+            && state.getValue(MailboxBlock.HAS_MAIL) != newHasMail;
+        if (modelChanged) {
+            level.setBlock(worldPosition, state.setValue(MailboxBlock.HAS_MAIL, newHasMail), Block.UPDATE_CLIENTS);
+        }
+
+        if (mailChanged || modelChanged) {
             setChanged();
             syncToClient();
         }

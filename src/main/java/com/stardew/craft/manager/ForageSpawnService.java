@@ -273,10 +273,7 @@ public final class ForageSpawnService {
 
     private static boolean isNaturalForageSurface(BlockState state) {
         Block block = state.getBlock();
-        if (block == ModBlocks.ARTIFACT_SPOT_DIRT.get()) {
-            return false;
-        }
-        if (block == Blocks.GRASS_BLOCK || block == ModBlocks.YELLOW_DIRT.get()) {
+        if (block instanceof net.minecraft.world.level.block.GrassBlock || (block == ModBlocks.YELLOW_DIRT.get() || block == ModBlocks.DIRT.get())) {
             return true;
         }
         return state.is(BlockTags.DIRT);

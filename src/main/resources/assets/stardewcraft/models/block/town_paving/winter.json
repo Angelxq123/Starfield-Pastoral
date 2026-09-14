@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "stardewcraft:block/town_paving/winter/top",
+    "side": "stardewcraft:block/town_paving/winter/side",
+    "bottom": "stardewcraft:block/town_paving/winter/side",
+    "particle": "stardewcraft:block/town_paving/winter/side"
+  }
+}

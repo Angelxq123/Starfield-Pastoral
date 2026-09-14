@@ -6,7 +6,6 @@ import com.stardew.craft.item.IStardewItem;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -32,6 +31,14 @@ public class RiceShootItem extends Item implements IStardewItem {
         return 20;
     }
 
+    protected Block getCropBlock() {
+        return ModBlocks.RICE_CROP.get();
+    }
+
+    protected int getPlantingSeason() {
+        return 0;
+    }
+
     @SuppressWarnings("null")
     @Override
     public InteractionResult useOn(UseOnContext context) {
@@ -45,36 +52,31 @@ public class RiceShootItem extends Item implements IStardewItem {
 
         BlockPos cropPos = farmPos.above();
         BlockState cropSpace = level.getBlockState(cropPos);
-        if (!level.getFluidState(cropPos).is(FluidTags.WATER)
-                || !level.getFluidState(cropPos).isSource()
-                || !cropSpace.getCollisionShape(level, cropPos).isEmpty()) {
+        if (!cropSpace.isAir()) {
             return InteractionResult.PASS;
         }
 
         BlockPos upperPos = cropPos.above();
         BlockState upperSpace = level.getBlockState(upperPos);
-        if (!upperSpace.isAir() && !level.getFluidState(upperPos).is(FluidTags.WATER)) {
-            return InteractionResult.PASS;
-        }
-        if (!upperSpace.getCollisionShape(level, upperPos).isEmpty()) {
+        if (!upperSpace.isAir()) {
             return InteractionResult.PASS;
         }
 
         if (!level.isClientSide) {
             int season = StardewTimeManager.get().getCurrentSeason();
-            if (!com.stardew.craft.farming.SeasonLocationRules.isPlantingSeasonAllowed(level, cropPos, season, 0)) {
+            if (!com.stardew.craft.farming.SeasonLocationRules.isPlantingSeasonAllowed(level, cropPos, season, getPlantingSeason())) {
                 if (context.getPlayer() != null) {
                     context.getPlayer().displayClientMessage(Component.translatable("stardewcraft.message.seed.wrong_season"), true);
                 }
                 return InteractionResult.FAIL;
             }
 
-            BlockState planted = ModBlocks.RICE_CROP.get().defaultBlockState()
+            BlockState planted = getCropBlock().defaultBlockState()
                     .setValue(RiceCropBlock.HALF, DoubleBlockHalf.LOWER)
-                    .setValue(RiceCropBlock.WATERLOGGED, true);
+                    .setValue(RiceCropBlock.WATERLOGGED, false);
             level.setBlock(cropPos, planted, 3);
-            if (farmState.getBlock() instanceof FarmBlock && farmState.hasProperty(FarmBlock.MOISTURE)) {
-                level.setBlock(farmPos, farmState.setValue(FarmBlock.MOISTURE, 7), 3);
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                RiceCropBlock.keepPaddySoilWatered(serverLevel, cropPos);
             }
             level.playSound(null, cropPos,
                     net.minecraft.sounds.SoundEvents.HOE_TILL,

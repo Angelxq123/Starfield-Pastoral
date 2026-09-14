@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/template_wall_side_tall",
-  "textures": {
-    "wall": "stardewcraft:block/mine/desert_bedrock",
-    "particle": "stardewcraft:block/mine/desert_bedrock"
-  }
-}

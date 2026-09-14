@@ -9,7 +9,12 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * 野草方块物品，携带季节和变体信息
  */
-public class WildWeedsBlockItem extends BlockItem {
+public class WildWeedsBlockItem extends BlockItem implements com.stardew.craft.item.IStardewItem {
+    @Override
+    public String getItemTypeKey() {
+        return "stardewcraft.type.natural_grass";
+    }
+
     private final int season;
     private final int variant;
 

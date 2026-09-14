@@ -1,6 +1,6 @@
 package com.stardew.craft.combat.skill.handler;
 
-import com.stardew.craft.combat.network.BrokenTridentThrustStrikePayload;
+import com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher;
 import com.stardew.craft.combat.skill.BrokenTridentCatchTracker;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
@@ -19,7 +19,6 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /** One Fish Catch Thrust execution; Fish Catch itself remains cross-execution. */
 final class FishcatchThrustExecutionState
@@ -86,6 +85,7 @@ final class FishcatchThrustExecutionState
                 .build();
         WeaponDamageSnapshot weaponSnapshot =
                 executionContext.weaponSnapshot();
+        WeaponSkillAnimationDispatcher.sendSkillAnim(player, "broken_trident", "fishcatch_thrust", 6);
         beginStrike(target.getUUID(), fishCatchActive);
         try {
             WeaponSkillDamage.apply(
@@ -114,10 +114,6 @@ final class FishcatchThrustExecutionState
                 || !pendingTargetId.equals(target.getUUID())) {
             return false;
         }
-        PacketDistributor.sendToPlayer(
-                player,
-                new BrokenTridentThrustStrikePayload()
-        );
         if (!pendingFishCatchActive
                 && BrokenTridentCatchTracker.hasFishInInventory(player)) {
             BrokenTridentCatchTracker.start(

@@ -138,20 +138,24 @@ public class MoneyDial {
     private void drawDigits(GuiGraphics graphics, float x, float y) {
         // 右对齐：从右边开始填充
         String moneyStr = String.valueOf(currentValue);
-        int numDigitsToDraw = Math.min(moneyStr.length(), numDigits);
-        int startSlot = numDigits - numDigitsToDraw; // 右对齐起始槽位
+        int numDigitsToDraw = moneyStr.length();
+        float availableWidth = numDigits * DIGIT_SPACING - 1;
+        float contentWidth = (numDigitsToDraw - 1) * DIGIT_SPACING + DIGIT_WIDTH;
+        float fit = Math.min(1.0F, availableWidth / contentWidth);
+        float startX = x + availableWidth - contentWidth * fit;
+        y += DIGIT_HEIGHT * (1.0F - fit) * 0.5F;
         
         for (int i = 0; i < numDigitsToDraw; i++) {
             int currentDigit = Character.getNumericValue(moneyStr.charAt(i));
-            int slotIndex = startSlot + i;
-            float digitX = x + slotIndex * DIGIT_SPACING; // 每个槽位6px间距
+            int slotIndex = numDigits - numDigitsToDraw + i;
+            float digitX = startX + i * DIGIT_SPACING * fit; // 每个槽位6px间距
             // 计算缩放 - 闪光动画（从右到左依次闪光）
-            float scale = 1.0f;
+            float scale = fit;
             if (moneyShineTimer > 0) {
                 // 每60帧闪一个数字（1秒=20ticks=60帧在60fps下）
                 int shineDigitIndex = moneyShineTimer / 60;
                 if (shineDigitIndex == (numDigits - slotIndex - 1)) {
-                    scale = 1.075f; // 放大7.5%
+                    scale = fit * 1.075f; // 放大7.5%
                 }
             }
             
@@ -159,7 +163,7 @@ public class MoneyDial {
             if (scale != 1.0f) {
                 graphics.pose().pushPose();
                 // 以数字中心为缩放原点
-                graphics.pose().translate(digitX + DIGIT_WIDTH * 0.5f, y + DIGIT_HEIGHT * 0.5f, 0);
+                graphics.pose().translate(digitX + DIGIT_WIDTH * fit * 0.5f, y + DIGIT_HEIGHT * fit * 0.5f, 0);
                 graphics.pose().scale(scale, scale, 1.0f);
                 graphics.pose().translate(-DIGIT_WIDTH * 0.5f, -DIGIT_HEIGHT * 0.5f, 0);
                 

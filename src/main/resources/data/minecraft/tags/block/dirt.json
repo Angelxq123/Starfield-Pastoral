@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "stardewcraft:yellow_dirt",
-    "stardewcraft:artifact_spot_dirt"
+    "stardewcraft:grass_block",
+    "stardewcraft:dirt",
+    "stardewcraft:dark_grass_block"
   ]
 }

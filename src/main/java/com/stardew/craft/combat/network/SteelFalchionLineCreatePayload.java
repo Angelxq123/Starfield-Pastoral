@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-public record SteelFalchionLineCreatePayload(int lineId, float x, float y, float z, int durationTicks, float width)
+public record SteelFalchionLineCreatePayload(int lineId, double x, double y, double z, int durationTicks, float width)
         implements CustomPacketPayload {
 
     @SuppressWarnings("null")
@@ -21,11 +21,11 @@ public record SteelFalchionLineCreatePayload(int lineId, float x, float y, float
     public static final StreamCodec<ByteBuf, SteelFalchionLineCreatePayload> STREAM_CODEC = StreamCodec.composite(
         ByteBufCodecs.VAR_INT,
         SteelFalchionLineCreatePayload::lineId,
-        ByteBufCodecs.FLOAT,
+        ByteBufCodecs.DOUBLE,
         SteelFalchionLineCreatePayload::x,
-        ByteBufCodecs.FLOAT,
+        ByteBufCodecs.DOUBLE,
         SteelFalchionLineCreatePayload::y,
-        ByteBufCodecs.FLOAT,
+        ByteBufCodecs.DOUBLE,
         SteelFalchionLineCreatePayload::z,
         ByteBufCodecs.VAR_INT,
         SteelFalchionLineCreatePayload::durationTicks,

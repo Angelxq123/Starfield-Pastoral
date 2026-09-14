@@ -1,5 +1,7 @@
 package com.stardew.craft.joja.client;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.LocalizedGuiAssets;
 import com.stardew.craft.client.gui.common.StardewRenderMapping;
 import com.stardew.craft.client.hud.StardewTimeHud;
@@ -84,7 +86,7 @@ public class JojaCDScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        this.mapping = new StardewRenderMapping(this.width, this.height, (float) this.minecraft.getWindow().getGuiScale());
+        this.mapping = new StardewRenderMapping(this.width, this.height, (float) StardewGuiViewport.REFERENCE_SCALE);
         this.s4 = mapping.s4();
         this.menuX = (this.width - mapping.ui(SDV_W)) / 2;
         this.menuY = (this.height - mapping.ui(SDV_H)) / 2;

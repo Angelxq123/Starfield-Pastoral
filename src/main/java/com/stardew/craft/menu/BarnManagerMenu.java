@@ -51,6 +51,8 @@ public class BarnManagerMenu extends AbstractContainerMenu implements IBuildingM
     private int curDoorCount;
     private int hasInteriorSpace;
     private int boundAnimalCount;
+    private int currentCapacity;
+    private int targetCapacity;
 
     public BarnManagerMenu(int containerId, Inventory playerInventory) {
         this(containerId, playerInventory, BlockPos.ZERO);
@@ -88,6 +90,9 @@ public class BarnManagerMenu extends AbstractContainerMenu implements IBuildingM
         this.addDataSlot(sync(() -> hasInteriorSpace, value -> hasInteriorSpace = value));
         this.addDataSlot(sync(() -> boundAnimalCount, value -> boundAnimalCount = value));
 
+        this.addDataSlot(sync(() -> currentCapacity, value -> currentCapacity = value));
+        this.addDataSlot(sync(() -> targetCapacity, value -> targetCapacity = value));
+
         refreshState();
     }
 
@@ -115,6 +120,9 @@ public class BarnManagerMenu extends AbstractContainerMenu implements IBuildingM
         java.util.UUID farmOwner = com.stardew.craft.farm.FarmResourceOwnership
                 .resolveManageableOwner(level, managerPos, serverPlayer);
         if (farmOwner == null) {
+            boundAnimalCount = 0;
+            currentCapacity = 0;
+            targetCapacity = 0;
             currentTier = 0;
             targetTier = 0;
             canBuildOrUpgrade = 0;
@@ -137,6 +145,10 @@ public class BarnManagerMenu extends AbstractContainerMenu implements IBuildingM
                 existing.map(AnimalBuildingRecord::validationState)
                         .orElse(AnimalBuildingRecord.ValidationState.VALID));
         targetTier = flow.targetTier();
+        currentCapacity = existing.map(AnimalBuildingRecord::capacity).orElse(0);
+        targetCapacity = targetTier > 0
+                ? com.stardew.craft.animal.model.AnimalBuildingTierDefinitions.require(buildingFamily(), targetTier).capacity()
+                : currentCapacity;
 
         if (!flow.shouldScan()) {
             canBuildOrUpgrade = 0;
@@ -193,7 +205,6 @@ public class BarnManagerMenu extends AbstractContainerMenu implements IBuildingM
         reqDoorCount = 0;
         curDoorCount = 0;
         hasInteriorSpace = 0;
-        boundAnimalCount = 0;
     }
 
     @Override
@@ -334,6 +345,9 @@ public class BarnManagerMenu extends AbstractContainerMenu implements IBuildingM
     public boolean hasExistingBuilding() {
         return currentTier > 0;
     }
+
+    @Override public int getCurrentCapacity() { return currentCapacity; }
+    @Override public int getTargetCapacity() { return targetCapacity; }
 
     public int getBoundAnimalCount() {
         return boundAnimalCount;

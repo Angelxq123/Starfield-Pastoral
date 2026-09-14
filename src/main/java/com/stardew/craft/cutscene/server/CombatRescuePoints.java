@@ -12,8 +12,8 @@ import java.util.Map;
 /**
  * Single authoring table for every 3D point used by combat rescue scenes.
  *
- * <p>{@link Status#AUTHOR_CONFIRMED} means the coordinate was captured in
- * Minecraft with the point/camera tools. {@link Status#PENDING_AUTHORING}
+ * <p>{@link Status#AUTHOR_CONFIRMED} means the scene was authored against its actual
+ * Minecraft destination (captured in game or checked against the shipped structure). {@link Status#PENDING_AUTHORING}
  * means the value is only a visible development fallback and must not be used
  * by the normal gameplay entry point.</p>
  */
@@ -58,40 +58,40 @@ public final class CombatRescuePoints {
         }
     }
 
-    // Mine — M01-M03 came from the user's point-wand export and M04 from the
-    // user's camera-command export in this thread. The user also explicitly
-    // confirmed that all four belong to STARDEW_MINING.
+    // Current earth_lobby: SDV farmer tile (19,10), rescuer (18,10), exit (18,13).
+    // origin=(-20,63,-14), tile_origin=(2,3,2). All three stand on plain soil.
+    // These are newly authored template points, NOT the obsolete point-wand captures.
     public static final Point M01 = confirmed(
             "M01", Role.PLAYER, ModMiningDimensions.STARDEW_MINING,
-            1.0D, 66.0D, -10.0D, 90.0F, 0.0F,
-            "user point-wand export: player, west");
+            1.5D, 66.0D, -1.5D, 0.0F, 0.0F,
+            "earth_lobby: SDV farmer tile 19,10; south");
     public static final Point M02 = confirmed(
             "M02", Role.RESCUER, ModMiningDimensions.STARDEW_MINING,
-            -1.0D, 66.0D, -10.0D, -90.0F, 0.0F,
-            "user point-wand export: rescuer, east");
+            0.5D, 66.0D, -1.5D, -90.0F, 0.0F,
+            "earth_lobby: SDV rescuer tile 18,10; east");
     public static final Point M03 = confirmed(
             "M03", Role.RESCUER_EXIT, ModMiningDimensions.STARDEW_MINING,
-            0.0D, 66.0D, -8.0D, 0.0F, 0.0F,
-            "user point-wand export: rescuer exit, south");
+            0.5D, 66.0D, 1.5D, 0.0F, 0.0F,
+            "earth_lobby: SDV rescuer exit tile 18,13; south");
     public static final Point M04 = confirmed(
             "M04", Role.CAMERA, ModMiningDimensions.STARDEW_MINING,
-            -2.270D, 68.256D, -7.442D, -136.5F, 43.8F,
-            "user camera-command export");
+            3.5D, 69.0D, 0.5D, 129.0F, 36.0F,
+            "earth_lobby: open chamber, looking northwest at the rescue pair");
 
-    // Hospital — H01-H02 came from the user's point-wand export and H03 from
-    // the user's camera-command export in this thread.
+    // Clinic checked against the current saved room: bed_1 main (22,43,-15), south.
+    // H01 is the clear floor beside the bed; the skin actor animates onto/off its mattress.
     public static final Point H01 = confirmed(
             "H01", Role.PLAYER, ModDimensions.STARDEW_VALLEY,
-            23.0D, 43.0D, -16.0D, -90.0F, 0.0F,
-            "user point-wand export: player, east");
+            23.65D, 43.0D, -14.625D, -90.0F, 0.0F,
+            "clinic bedside: safe standing handoff, east");
     public static final Point H02 = confirmed(
             "H02", Role.RESCUER, ModDimensions.STARDEW_VALLEY,
-            25.0D, 43.0D, -16.0D, 90.0F, 0.0F,
-            "user point-wand export: Harvey, west");
+            24.8D, 43.0D, -15.65D, 90.0F, 0.0F,
+            "Harvey beside the pillow, clear of bed and tables");
     public static final Point H03 = confirmed(
             "H03", Role.CAMERA, ModDimensions.STARDEW_VALLEY,
-            24.384D, 44.082D, -12.294D, -178.3F, 31.1F,
-            "user camera-command export");
+            25.8D, 45.2D, -13.5D, 120.0F, 25.0F,
+            "clinic: wide view of pillow, Harvey and bedside exit");
 
     /*
      * IslandSouth — Minecraft captures have not been supplied.

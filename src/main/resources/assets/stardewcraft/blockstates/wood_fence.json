@@ -1,0 +1,75 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "part": "main",
+        "variant": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_post"
+      }
+    },
+    {
+      "when": {
+        "part": "main",
+        "variant": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_post_b"
+      }
+    },
+    {
+      "when": {
+        "part": "main",
+        "variant": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_post_c"
+      }
+    },
+    {
+      "when": {
+        "part": "main",
+        "east": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_east"
+      }
+    },
+    {
+      "when": {
+        "part": "main",
+        "south": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_south"
+      }
+    },
+    {
+      "when": {
+        "part": "main",
+        "west": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_west"
+      }
+    },
+    {
+      "when": {
+        "part": "main",
+        "north": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_north"
+      }
+    },
+    {
+      "when": {
+        "part": "extension"
+      },
+      "apply": {
+        "model": "stardewcraft:block/decor/wood_fence_extension"
+      }
+    }
+  ]
+}

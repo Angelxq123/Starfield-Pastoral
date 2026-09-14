@@ -35,6 +35,12 @@ public final class NpcDataRegistry {
     }
 
     private static volatile Snapshot CURRENT = Snapshot.EMPTY;
+    private static volatile Map<String,JsonObject> CLIENT_EVENTS = Map.of();
+    public static Map<String,JsonObject> clientEvents() { return CLIENT_EVENTS; }
+    public static void clearClientEvents() { CLIENT_EVENTS=Map.of(); }
+    private static volatile long revision;
+
+    public static long revision() { return revision; }
 
     private static final Gson GSON = new Gson();
     /** 缓存 events JSON（SoftReference），内存紧张时可被 GC 回收 */
@@ -70,8 +76,9 @@ public final class NpcDataRegistry {
                     events.put(entry.getKey(), entry.getValue().getAsJsonObject());
                 }
             }
-            replaceEvents(events);
+            CLIENT_EVENTS=freezeJson(events);
         } catch (Exception e) {
+            com.mojang.logging.LogUtils.getLogger().warn("Rejected client NPC event snapshot",e);
         }
     }
 
@@ -90,14 +97,15 @@ public final class NpcDataRegistry {
     ) {
         CURRENT = new Snapshot(
                 Collections.unmodifiableMap(new LinkedHashMap<>(capabilities)),
-                Collections.unmodifiableMap(new LinkedHashMap<>(dialogues)),
-                Collections.unmodifiableMap(new LinkedHashMap<>(schedules)),
-                Collections.unmodifiableMap(new LinkedHashMap<>(tastes)),
-                Collections.unmodifiableMap(new LinkedHashMap<>(events)),
+                freezeJson(dialogues),
+                freezeJson(schedules),
+                freezeJson(tastes),
+                freezeJson(events),
                 Collections.unmodifiableSet(new LinkedHashSet<>(locationMappings)),
                 Collections.unmodifiableMap(new LinkedHashMap<>(locationAliases)),
                 Collections.unmodifiableMap(new LinkedHashMap<>(locationAnchors))
         );
+        revision++;
         CACHED_EVENTS_JSON_REF = new java.lang.ref.SoftReference<>(null);
     }
 
@@ -105,31 +113,36 @@ public final class NpcDataRegistry {
         Snapshot s = CURRENT;
         CURRENT = new Snapshot(Collections.unmodifiableMap(new LinkedHashMap<>(capabilities)),
             s.dialogues, s.schedules, s.tastes, s.events, s.locationMappings, s.locationAliases, s.locationAnchors);
+        revision++;
     }
 
     public static void replaceDialogues(Map<String, JsonObject> dialogues) {
         Snapshot s = CURRENT;
-        CURRENT = new Snapshot(s.capabilities, Collections.unmodifiableMap(new LinkedHashMap<>(dialogues)),
+        CURRENT = new Snapshot(s.capabilities, freezeJson(dialogues),
             s.schedules, s.tastes, s.events, s.locationMappings, s.locationAliases, s.locationAnchors);
+        revision++;
     }
 
     public static void replaceSchedules(Map<String, JsonObject> schedules) {
         Snapshot s = CURRENT;
-        CURRENT = new Snapshot(s.capabilities, s.dialogues, Collections.unmodifiableMap(new LinkedHashMap<>(schedules)),
+        CURRENT = new Snapshot(s.capabilities, s.dialogues, freezeJson(schedules),
             s.tastes, s.events, s.locationMappings, s.locationAliases, s.locationAnchors);
+        revision++;
     }
 
     public static void replaceTastes(Map<String, JsonObject> tastes) {
         Snapshot s = CURRENT;
         CURRENT = new Snapshot(s.capabilities, s.dialogues, s.schedules,
-            Collections.unmodifiableMap(new LinkedHashMap<>(tastes)), s.events, s.locationMappings, s.locationAliases, s.locationAnchors);
+            freezeJson(tastes), s.events, s.locationMappings, s.locationAliases, s.locationAnchors);
+        revision++;
     }
 
     public static void replaceEvents(Map<String, JsonObject> events) {
         Snapshot s = CURRENT;
-        Map<String, JsonObject> frozen = Collections.unmodifiableMap(new LinkedHashMap<>(events));
+        Map<String, JsonObject> frozen = freezeJson(events);
         CURRENT = new Snapshot(s.capabilities, s.dialogues, s.schedules, s.tastes,
             frozen, s.locationMappings, s.locationAliases, s.locationAnchors);
+        revision++;
         // 清除旧的缓存引用，下次 getCachedEventsJson() 时按需重建
         CACHED_EVENTS_JSON_REF = new java.lang.ref.SoftReference<>(null);
     }
@@ -138,18 +151,53 @@ public final class NpcDataRegistry {
         Snapshot s = CURRENT;
         CURRENT = new Snapshot(s.capabilities, s.dialogues, s.schedules, s.tastes, s.events,
             Collections.unmodifiableSet(new LinkedHashSet<>(locations)), s.locationAliases, s.locationAnchors);
+        revision++;
     }
 
     public static void replaceLocationAliases(Map<String, String> aliases) {
         Snapshot s = CURRENT;
         CURRENT = new Snapshot(s.capabilities, s.dialogues, s.schedules, s.tastes, s.events,
             s.locationMappings, Collections.unmodifiableMap(new LinkedHashMap<>(aliases)), s.locationAnchors);
+        revision++;
     }
 
     public static void replaceLocationAnchors(Map<String, NpcLocationAnchor> anchors) {
         Snapshot s = CURRENT;
         CURRENT = new Snapshot(s.capabilities, s.dialogues, s.schedules, s.tastes, s.events,
             s.locationMappings, s.locationAliases, Collections.unmodifiableMap(new LinkedHashMap<>(anchors)));
+        revision++;
+    }
+
+    private static Map<String, JsonObject> freezeJson(Map<String, JsonObject> input) {
+        Map<String, JsonObject> copy = new LinkedHashMap<>();
+        input.forEach((key, value) -> copy.put(key, value.deepCopy()));
+        return new JsonDocuments(copy);
+    }
+
+    /** Stable map identity for revision caches, with copy-on-read values instead of mutable snapshot access. */
+    private static final class JsonDocuments extends java.util.AbstractMap<String,JsonObject> {
+        private final Map<String,JsonObject> documents;
+        JsonDocuments(Map<String,JsonObject> source) { documents=Map.copyOf(source); }
+        @Override public JsonObject get(Object key) {
+            var value=documents.get(key); return value==null?null:value.deepCopy();
+        }
+        @Override public boolean containsKey(Object key) { return documents.containsKey(key); }
+        @Override public int size() { return documents.size(); }
+        @Override public Set<Entry<String,JsonObject>> entrySet() {
+            return new java.util.AbstractSet<>() {
+                @Override public int size() { return documents.size(); }
+                @Override public java.util.Iterator<Entry<String,JsonObject>> iterator() {
+                    var entries=documents.entrySet().iterator();
+                    return new java.util.Iterator<>() {
+                        public boolean hasNext() { return entries.hasNext(); }
+                        public Entry<String,JsonObject> next() {
+                            var entry=entries.next();
+                            return new SimpleImmutableEntry<>(entry.getKey(),entry.getValue().deepCopy());
+                        }
+                    };
+                }
+            };
+        }
     }
 
     public static Map<String, NpcCapabilityProfile> capabilities() {

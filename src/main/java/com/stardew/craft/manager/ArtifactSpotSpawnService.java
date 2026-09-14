@@ -1,608 +1,230 @@
 package com.stardew.craft.manager;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.api.v1.world.*;
 import com.stardew.craft.block.ModBlocks;
-import com.stardew.craft.block.nature.ArtifactSpotBlock;
+import com.stardew.craft.block.nature.SurfaceArtifactSpotBlock;
+import com.stardew.craft.core.FarmAreaResolver;
 import com.stardew.craft.core.ModDimensions;
+import com.stardew.craft.farm.FarmInstanceRegistry;
+import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
-
-import javax.annotation.Nonnull;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import java.util.*;
 
-/**
- * SDV-parity artifact spot spawning service.
- *
- * <p>Replicates GameLocation.spawnObjects() artifact-spot section:
- * <ul>
- *   <li>Daily: remove existing spots with 15% chance each, then spawn new ones</li>
- *   <li>Spawn loop: chanceForNewArtifactAttempt starts at 1.0, *= 0.75 per iteration;
- *       +0.10 in winter</li>
- *   <li>Cap: stop if &gt;1 spot exists (winter: &gt;4)</li>
- *   <li>Must be on yellow_dirt, exposed to sky, block above is air</li>
- * </ul>
- *
- * <p>Also handles chunk-load spawning: when a chunk loads the first time during a
- * world session, artifact spots are attempted on any eligible yellow_dirt in that chunk.
- */
+/** Location-level SDV lifecycle. Chunk loading only discovers markers; it never rolls spawns. */
 @EventBusSubscriber(modid = StardewCraft.MODID)
-@SuppressWarnings("null")
 public final class ArtifactSpotSpawnService {
-
     private ArtifactSpotSpawnService() {}
+    private static final ResourceLocation OUTDOOR = ResourceLocation.fromNamespaceAndPath("stardewcraft", "outdoor");
+    private static final Map<String, String> LOCATION_NAMES = Map.ofEntries(
+            Map.entry("town", "Town"), Map.entry("forest", "Forest"), Map.entry("mountain", "Mountain"),
+            Map.entry("bus_stop", "BusStop"), Map.entry("backwoods", "Backwoods"),
+            Map.entry("railroad", "Railroad"), Map.entry("beach", "Beach"),
+            Map.entry("desert", "Desert"), Map.entry("secret_woods", "Woods"));
 
-    private static final String INIT_DATA_ID = "stardewcraft_artifact_spot_init";
+    public static String locationName(net.minecraft.world.level.Level level, BlockPos ground) {
+        if (FarmAreaResolver.isInAnyFarm(level, ground)) return "Farm";
+        if (StardewLocations.find(level, ground).map(StardewLocation::indoor).orElse(false)) return "Default";
+        return StardewRegions.find(level, ground).or(() -> StardewRegions.find(level, ground.above()))
+                .map(r -> LOCATION_NAMES.getOrDefault(r.locationId() == null ? r.id().getPath() : r.locationId().getPath(), "Default"))
+                .orElse("Default");
+    }
 
-    // SDV: Farm cap at >0; non-farm cap at >1; winter allows up to 4
-    private static final int MAX_SPOTS_FARM = 0;
-    private static final int MAX_SPOTS_NON_FARM = 1;
-    private static final int MAX_SPOTS_WINTER = 4;
-    // 沙漠区因 bbox 巨大，单独给一个略宽的硬上限，超过后停止 bbox 扫描
-    private static final int DESERT_DAILY_CAP = 12;
-    private static final double BEACH_SAND_DAILY_CHANCE = 0.0004D;
-    private static final double DESERT_SAND_DAILY_CHANCE = 0.00015D;
-    private static final double SAND_CHUNK_LOAD_CHANCE = 0.0008D;
+    public static boolean isDiggableSurface(BlockState state) {
+        // Deliberate project exception: grass is excluded even in winter.
+        return state.is(ModBlocks.DIRT.get()) || state.is(ModBlocks.YELLOW_DIRT.get())
+                || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.SAND);
+    }
 
-    // ======================== Zone Definition ========================
+    public static boolean canPlace(ServerLevel level, BlockPos marker) {
+        return isDiggableSurface(level.getBlockState(marker.below()))
+                && level.getBlockState(marker).isAir() && surfaceMarker(level, marker.getX(), marker.getZ()).equals(marker)
+                && !StardewLocations.find(level, marker.below()).map(StardewLocation::indoor).orElse(false);
+    }
 
-    private record ZoneRect(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
-        boolean contains(int x, int z) {
-            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+    /** Invisible map boundary ceilings are not scenery; real roofs, foliage and fluids still block spawning. */
+    public static BlockPos surfaceMarker(ServerLevel level, int x, int z) {
+        var cursor = new BlockPos.MutableBlockPos(x, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1, z);
+        while (cursor.getY() >= level.getMinBuildHeight()) {
+            var state = level.getBlockState(cursor);
+            if (!state.isAir() && !state.is(Blocks.BARRIER)) return cursor.above();
+            cursor.move(0, -1, 0);
         }
+        return cursor.above();
+    }
 
-        boolean containsSurfaceY(int y) {
-            return y >= minY && y <= maxY;
+    public static boolean place(ServerLevel level, BlockPos marker, boolean seed) {
+        return canPlace(level, marker) && level.setBlock(marker,
+                (seed ? ModBlocks.SEED_SPOT : ModBlocks.ARTIFACT_SPOT).get().defaultBlockState(), Block.UPDATE_ALL);
+    }
+
+    public static void track(ServerLevel level, BlockPos pos) {
+        if (data(level).spots.add(pos.asLong())) data(level).setDirty();
+    }
+
+    public static void untrack(ServerLevel level, BlockPos pos) {
+        if (data(level).spots.remove(pos.asLong())) data(level).setDirty();
+    }
+
+    public static int totalDays() {
+        var time = StardewTimeManager.get();
+        return (time.getCurrentYear() - 1) * 112 + time.getCurrentSeason() * 28 + time.getCurrentDay();
+    }
+
+    public static int dailyPasses(int day, int totalDays, boolean farm) {
+        return 1 + (!farm && day % 7 == 0 ? 2 : 0) + (day == 1 ? 1 : 0) + (totalDays < 4 ? 1 : 0);
+    }
+
+    public static boolean maySpawn(int existing, boolean farm, int season) {
+        return existing <= (farm ? 0 : 1) || season == 3 && existing <= 4;
+    }
+
+    private record Zone(String key, String location, BlockPos min, BlockPos max, StardewRegion region) {
+        boolean contains(ServerLevel level, BlockPos ground) {
+            return ground.getX() >= min.getX() && ground.getX() <= max.getX()
+                    && ground.getY() >= min.getY() - 1 && ground.getY() <= max.getY()
+                    && ground.getZ() >= min.getZ() && ground.getZ() <= max.getZ()
+                    && (region == null || region.contains(level.dimension().location(), ground)
+                        || region.contains(level.dimension().location(), ground.above()))
+                    && location.equals(locationName(level, ground));
         }
     }
 
-    private static ZoneRect rect(int x1, int y1, int z1, int x2, int y2, int z2) {
-        return new ZoneRect(
-                Math.min(x1, x2),
-                Math.min(y1, y2),
-                Math.min(z1, z2),
-                Math.max(x1, x2),
-                Math.max(y1, y2),
-                Math.max(z1, z2));
-    }
-
-    /**
-     * All zones where artifact spots can spawn.
-     * Uses same coordinate regions as ForageSpawnService + ArtifactDropService.
-     */
-    private record SpawnZone(String name, ZoneRect[] rects, int tileWidth, int tileHeight, SurfaceKind surface) {
-        SpawnZone(String name, ZoneRect[] rects, int tileWidth, int tileHeight) {
-            this(name, rects, tileWidth, tileHeight, SurfaceKind.YELLOW_DIRT);
+    private static List<Zone> zones(ServerLevel level) {
+        List<Zone> result = new ArrayList<>();
+        for (var region : StardewRegions.withTag(OUTDOOR)) {
+            if (!region.dimension().equals(level.dimension().location())) continue;
+            String location = LOCATION_NAMES.get(region.locationId() == null ? region.id().getPath() : region.locationId().getPath());
+            if (location == null) continue;
+            BlockPos min = new BlockPos(region.includes().stream().mapToInt(b -> b.min().getX()).min().orElseThrow(),
+                    region.includes().stream().mapToInt(b -> b.min().getY()).min().orElseThrow(),
+                    region.includes().stream().mapToInt(b -> b.min().getZ()).min().orElseThrow());
+            BlockPos max = new BlockPos(region.includes().stream().mapToInt(b -> b.max().getX()).max().orElseThrow(),
+                    region.includes().stream().mapToInt(b -> b.max().getY()).max().orElseThrow(),
+                    region.includes().stream().mapToInt(b -> b.max().getZ()).max().orElseThrow());
+            result.add(new Zone(region.id().toString(), location, min, max, region));
         }
+        for (var farm : FarmInstanceRegistry.get().getAllFarms()) {
+            var min = farm.getFarmBoundsMin();
+            result.add(new Zone("farm:" + min.asLong(), "Farm", min, farm.getFarmBoundsMax(), null));
+        }
+        return result;
     }
 
-    /** 表面类型：YELLOW_DIRT → 黄土；BEACH_SAND → 海滩沙子；DESERT_SAND → 沙漠沙子。 */
-    private enum SurfaceKind { YELLOW_DIRT, BEACH_SAND, DESERT_SAND }
-
-    // SDV locations mapped to MC coordinates
-    private static final SpawnZone[] ZONES = {
-            new SpawnZone("MainMap",
-                new ZoneRect[]{ rect(200, 63, 79, -151, 91, -237) },
-                352, 317),
-            new SpawnZone("Beach",
-                new ZoneRect[]{ rect(-4, 65, 77, 239, 57, 186) },
-                244, 110, SurfaceKind.BEACH_SAND),
-            new SpawnZone("Desert",
-                new ZoneRect[]{ rect(-310, 53, -241, -158, 107, -113) },
-                153, 129, SurfaceKind.DESERT_SAND),
-    };
-
-    // ======================== Daily Spawn (called from StardewTimeManager) ========================
-
-    /**
-     * Called once per day. Replicates SDV GameLocation.spawnObjects() artifact spot logic.
-     */
     public static void onNewDay(ServerLevel level, int season) {
         if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
-
-        RandomSource random = level.getRandom();
-
-        for (SpawnZone zone : ZONES) {
-            // 0. Revert public yellow-dirt farmland back to yellow_dirt in non-farm zones.
-            //    Sand-backed artifact spots till directly back to sand and need no farmland reset.
-            if (!"Farm".equals(zone.name) && zone.surface == SurfaceKind.YELLOW_DIRT) {
-                for (ZoneRect rect : zone.rects) {
-                    revertFarmlandInRect(level, rect);
+        var data = data(level);
+        int day = StardewTimeManager.get().getCurrentDay();
+        for (Zone zone : zones(level)) {
+            if (data.updated.getOrDefault(zone.key, -1) == totalDays()) continue;
+            RandomSource random = RandomSource.create(level.getSeed() + totalDays() * 777L + zone.key.hashCode());
+            List<StardewRegion.Box> boxes = zone.region == null
+                    ? List.of(new StardewRegion.Box(zone.min, zone.max)) : zone.region.includes();
+            int attempts = 0, placed = 0;
+            int blockedPasses = 0;
+            boolean noGround = false;
+            int inspected = 0;
+            BlockPos firstPlaced = null;
+            var positionRandom = RandomSource.create(level.getSeed() ^ totalDays() * 777L ^ zone.key.hashCode() ^ 0x6A09E667F3BCC909L);
+            for (int pass = 0; pass < dailyPasses(day, totalDays(), zone.location.equals("Farm")); pass++) {
+                int count = 0;
+                for (long packed : List.copyOf(data.spots)) {
+                    BlockPos marker = BlockPos.of(packed);
+                    if (!zone.contains(level, marker.below())) continue;
+                    // Only known markers and random candidates are loaded, never a whole region scan.
+                    level.getChunk(marker.getX() >> 4, marker.getZ() >> 4);
+                    if (!(level.getBlockState(marker).getBlock() instanceof SurfaceArtifactSpotBlock)) {
+                        untrack(level, marker);
+                    } else if (random.nextDouble() < .15) {
+                        level.removeBlock(marker, false);
+                    } else count++;
                 }
+                if (!maySpawn(count, zone.location.equals("Farm"), season)) { blockedPasses++; continue; }
+                var candidates = new ArtifactSpotCandidatePool(boxes, positionRandom);
+                double chance = 1;
+                while (random.nextDouble() < chance) {
+                    attempts++;
+                    BlockPos marker = candidates.next(level, ground -> zone.contains(level, ground));
+                    if (marker == null) { noGround = true; break; }
+                    if (place(level, marker, random.nextDouble() < .166)) {
+                        placed++;
+                        if (firstPlaced == null) firstPlaced = marker;
+                    }
+                    chance = chance * .75 + (season == 3 ? .10000000149011612 : 0);
+                }
+                inspected += candidates.inspected();
             }
-
-            // 1. Count & remove existing spots (SDV: 15% removal per spot per day)
-            int existingCount = 0;
-            for (ZoneRect rect : zone.rects) {
-                removeAndCountSpots(level, rect, random, zone.surface);
-                existingCount += countSpotsInRect(level, rect, zone.surface);
-            }
-
-            // 2. Check cap: SDV — Farm stops if >0, non-Farm stops if >1,
-            //    but in Winter spawning continues as long as count <= 4
-            //    沙漠走低概率 bbox 扫描；其他区域走 SDV 衰减循环。
-            int threshold = "Farm".equals(zone.name) ? MAX_SPOTS_FARM : MAX_SPOTS_NON_FARM;
-            boolean overCap = existingCount > threshold && (season != 3 || existingCount > MAX_SPOTS_WINTER);
-
-            // 3a. 沙滩/沙漠：在明确包围区域内扫描露天沙子，替换为对应远古斑点。
-            //     这些区域的 pregen 地表现在都是 sand，不再以 sandstone 作为底块。
-            if (isSandSurface(zone.surface)) {
-                int cap = sandZoneDailyCap(zone, season);
-                if (existingCount >= cap) continue;
-                double perBlockChance = zone.surface == SurfaceKind.DESERT_SAND
-                        ? DESERT_SAND_DAILY_CHANCE
-                        : BEACH_SAND_DAILY_CHANCE;
-                int remaining = cap - existingCount;
-                int placed = spawnInLoadedSandZone(level, zone, random, perBlockChance, remaining);
-                if (placed == 0 && existingCount == 0) {
-                    placeOneLoadedSandSpot(level, zone, random);
-                }
-                continue;
-            }
-
-            if (overCap) continue;
-
-            // 3b. SDV spawn loop: chanceForNewArtifactAttempt（黄土区域）
-            double chanceForNewAttempt = 1.0;
-            while (random.nextDouble() < chanceForNewAttempt) {
-                // SDV: *= 0.75, winter +0.10
-                // Decay FIRST so that `continue` (e.g. unloaded chunk) cannot skip it
-                chanceForNewAttempt *= 0.75;
-                if (season == 3) {
-                    chanceForNewAttempt += 0.10;
-                }
-
-                // Pick a random rect
-                ZoneRect rect = zone.rects[random.nextInt(zone.rects.length)];
-
-                // Random position within rect
-                int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
-                int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-
-                // Skip if chunk not loaded (no sync generation)
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-
-                // Check spawn conditions
-                if (canSpawnArtifactSpot(level, x, z, zone.surface)) {
-                    int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                    BlockPos pos = new BlockPos(x, surfaceY, z);
-                    level.setBlock(pos, spotStateFor(level.getBlockState(pos), zone.surface), Block.UPDATE_ALL);
-                }
-            }
-        }
-
-        spawnOnPlayerFarms(level, season, random);
-    }
-
-    private static void spawnOnPlayerFarms(ServerLevel level, int season, RandomSource random) {
-        for (com.stardew.craft.farm.FarmInstance farm : com.stardew.craft.farm.FarmInstanceRegistry.get().getAllFarms()) {
-            BlockPos min = farm.getFarmBoundsMin();
-            BlockPos max = farm.getFarmBoundsMax();
-            ZoneRect rect = rect(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ());
-
-            int existingCount = 0;
-            removeAndCountSpots(level, rect, random, SurfaceKind.YELLOW_DIRT);
-            existingCount += countSpotsInRect(level, rect, SurfaceKind.YELLOW_DIRT);
-
-            boolean overCap = existingCount > MAX_SPOTS_FARM && (season != 3 || existingCount > MAX_SPOTS_WINTER);
-            if (overCap) {
-                continue;
-            }
-
-            double chanceForNewAttempt = 1.0D;
-            while (random.nextDouble() < chanceForNewAttempt) {
-                chanceForNewAttempt *= 0.75D;
-                if (season == 3) {
-                    chanceForNewAttempt += 0.10D;
-                }
-
-                int x = rect.minX + random.nextInt(rect.maxX - rect.minX + 1);
-                int z = rect.minZ + random.nextInt(rect.maxZ - rect.minZ + 1);
-                if (!level.hasChunk(x >> 4, z >> 4)) {
-                    continue;
-                }
-                if (canSpawnArtifactSpotInRect(level, x, z, SurfaceKind.YELLOW_DIRT, rect)) {
-                    int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                    BlockPos pos = new BlockPos(x, surfaceY, z);
-                    level.setBlock(pos, spotStateFor(level.getBlockState(pos), SurfaceKind.YELLOW_DIRT), Block.UPDATE_ALL);
-                }
-            }
+            data.updated.put(zone.key, totalDays());
+            data.setDirty();
+            StardewCraft.LOGGER.info("[Artifact spawn] day={} region={} attempts={} placed={} inspected={} no_ground={} blocked_passes={} first={}",
+                    totalDays(), zone.key, attempts, placed, inspected, noGround, blockedPasses,
+                    firstPlaced == null ? "none" : firstPlaced.toShortString());
         }
     }
 
-    // ======================== Chunk Load Spawn ========================
+    public static void ensureInitialSpawn(ServerLevel level, int season) { onNewDay(level, season); }
 
-    /**
-     * 区块加载时按低概率撒远古斑点，是最稳定 / 多人友好的兜底机制。
-     * 关键约束：每个区块最多只能有 1 个斑点（chunkAlreadyHasSpot 检查），
-     * 这样多人服务器即便频繁加载也不会无限堆积。
-     */
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
-        if (!serverLevel.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
-        if (!(event.getChunk() instanceof LevelChunk chunk)) return;
+        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)
+                || !level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
+        // The callback must not set blocks or ask for heights while the chunk is being loaded.
+        int cx = chunk.getPos().x, cz = chunk.getPos().z;
+        level.getServer().tell(new net.minecraft.server.TickTask(level.getServer().getTickCount() + 1, () -> {
+            var loaded = level.getChunkSource().getChunkNow(cx, cz);
+            if (loaded == null) return;
+            for (int sectionIndex = 0; sectionIndex < loaded.getSectionsCount(); sectionIndex++) {
+                var section = loaded.getSection(sectionIndex);
+                if (!section.maybeHas(s -> s.getBlock() instanceof SurfaceArtifactSpotBlock)) continue;
+                int bottom = loaded.getSectionYFromSectionIndex(sectionIndex) << 4;
+                for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) {
+                    var state = section.getBlockState(x, y, z);
+                    var pos = new BlockPos((cx << 4) + x, bottom + y, (cz << 4) + z);
+                    if (state.getBlock() instanceof SurfaceArtifactSpotBlock) track(level, pos);
 
-        // Defer artifact-spot spawning to the next server tick to avoid
-        // recursive chunk loading (getHeight / setBlock inside a ChunkEvent.Load
-        // callback can deadlock the server thread).
-        final int chunkX = chunk.getPos().x;
-        final int chunkZ = chunk.getPos().z;
-        final int savedChunkX = chunk.getPos().getMinBlockX();
-        final int savedChunkZ = chunk.getPos().getMinBlockZ();
-        serverLevel.getServer().tell(new net.minecraft.server.TickTask(
-            serverLevel.getServer().getTickCount() + 1, () -> {
-                RandomSource random = serverLevel.getRandom();
-                // 多人友好硬上限：每区块最多 1 个斑点。先扫一次，已经有就直接 return。
-                if (chunkHasAnySpot(serverLevel, chunkX, chunkZ)) {
-                    return;
-                }
-                // 削率：原 0.00067 → 0.0002（约每 78 个区块期望生成一个）
-                for (int dx = 0; dx < 16; dx++) {
-                    for (int dz = 0; dz < 16; dz++) {
-                        int x = savedChunkX + dx;
-                        int z = savedChunkZ + dz;
-                        SurfaceKind surface = surfaceKindAt(serverLevel, x, z);
-                        if (surface == null) continue;
-                        double chunkLoadChance = isSandSurface(surface) ? SAND_CHUNK_LOAD_CHANCE : 0.0002D;
-                        if (random.nextDouble() >= chunkLoadChance) continue;
-                        int surfaceY = serverLevel.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                        BlockPos pos = new BlockPos(x, surfaceY, z);
-                        if (canSpawnArtifactSpot(serverLevel, x, z, surface)) {
-                            serverLevel.setBlock(pos, spotStateFor(serverLevel.getBlockState(pos), surface),
-                                    Block.UPDATE_ALL);
-                            return;
-                        }
-                    }
-                }
-            }));
-    }
-
-    // ======================== Helpers ========================
-
-    /**
-     * 该区块表面是否已经有一个该表面类型的远古斑点（多人友好的硬上限）。
-     * 只扫 16×16 高度图顶部一格，开销可控。
-     */
-    private static boolean chunkAlreadyHasSpot(ServerLevel level, int chunkX, int chunkZ, SurfaceKind surface) {
-        Block spotBlock = spotBlockFor(surface);
-        int baseX = chunkX << 4;
-        int baseZ = chunkZ << 4;
-        for (int dx = 0; dx < 16; dx++) {
-            for (int dz = 0; dz < 16; dz++) {
-                int x = baseX + dx;
-                int z = baseZ + dz;
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                if (level.getBlockState(new BlockPos(x, surfaceY, z)).is(spotBlock)) return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean chunkHasAnySpot(ServerLevel level, int chunkX, int chunkZ) {
-        int baseX = chunkX << 4;
-        int baseZ = chunkZ << 4;
-        for (int dx = 0; dx < 16; dx++) {
-            for (int dz = 0; dz < 16; dz++) {
-                int x = baseX + dx;
-                int z = baseZ + dz;
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockState state = level.getBlockState(new BlockPos(x, surfaceY, z));
-                if (state.is(ModBlocks.ARTIFACT_SPOT_DIRT.get())
-                        || state.is(ModBlocks.DESERT_ARTIFACT_SPOT.get())
-                        || state.is(ModBlocks.BEACH_ARTIFACT_SPOT.get())) {
-                    return true;
                 }
             }
+        }));
+    }
+
+    public static long treasureTotemsUsed(ServerLevel level) { return data(level).totems; }
+    public static void recordTreasureTotem(ServerLevel level) { data(level).totems++; data(level).setDirty(); }
+
+    private static SpotData data(ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(SpotData::new,
+                (tag, lookup) -> new SpotData(tag)), "stardewcraft_surface_artifact_spots");
+    }
+
+    public static final class SpotData extends SavedData {
+        final Set<Long> spots = new LinkedHashSet<>();
+        final Map<String, Integer> updated = new HashMap<>();
+        long totems;
+        public SpotData() {}
+        SpotData(CompoundTag tag) {
+            for (long pos : tag.getLongArray("Spots")) spots.add(pos);
+            var days = tag.getCompound("Days");
+            for (String key : days.getAllKeys()) updated.put(key, days.getInt(key));
+            totems = tag.getLong("TreasureTotemsUsed");
         }
-        return false;
-    }
-
-    private static SurfaceKind surfaceKindAt(ServerLevel level, int x, int z) {
-        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-        for (SpawnZone zone : ZONES) {
-            for (ZoneRect rect : zone.rects) {
-                if (rect.contains(x, z) && rect.containsSurfaceY(surfaceY)) {
-                    return zone.surface;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Check if an artifact spot can spawn at (x, z).
-     * Conditions: surface block matches the zone's surface kind, block above is air, can see sky.
-     */
-    private static boolean canSpawnArtifactSpot(ServerLevel level, int x, int z, SurfaceKind surface) {
-        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-        BlockPos pos = new BlockPos(x, surfaceY, z);
-        BlockState state = level.getBlockState(pos);
-
-        if (!isSurfaceYInZone(x, surfaceY, z, surface)) return false;
-        if (!matchesSurface(state, surface)) return false;
-
-        BlockPos above = pos.above();
-        return level.getBlockState(above).isAir() && level.canSeeSky(above);
-    }
-
-    private static boolean canSpawnArtifactSpotInRect(ServerLevel level, int x, int z, SurfaceKind surface, ZoneRect rect) {
-        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-        if (!rect.contains(x, z) || !rect.containsSurfaceY(surfaceY)) {
-            return false;
-        }
-        BlockPos pos = new BlockPos(x, surfaceY, z);
-        if (!matchesSurface(level.getBlockState(pos), surface)) {
-            return false;
-        }
-        BlockPos above = pos.above();
-        return level.getBlockState(above).isAir() && level.canSeeSky(above);
-    }
-
-    private static boolean isSurfaceYInZone(int x, int y, int z, SurfaceKind surface) {
-        for (SpawnZone zone : ZONES) {
-            if (zone.surface != surface) continue;
-            for (ZoneRect rect : zone.rects) {
-                if (rect.contains(x, z) && rect.containsSurfaceY(y)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /** 判断表面是否为该区域可生成远古斑点的原始方块。 */
-    private static boolean matchesSurface(BlockState state, SurfaceKind surface) {
-        return switch (surface) {
-            case YELLOW_DIRT -> state.is(ModBlocks.YELLOW_DIRT.get());
-            case BEACH_SAND, DESERT_SAND -> state.is(net.minecraft.world.level.block.Blocks.SAND);
-        };
-    }
-
-    private static boolean isSandSurface(SurfaceKind surface) {
-        return surface == SurfaceKind.BEACH_SAND || surface == SurfaceKind.DESERT_SAND;
-    }
-
-    private static int sandZoneDailyCap(SpawnZone zone, int season) {
-        if (zone.surface == SurfaceKind.DESERT_SAND) {
-            return DESERT_DAILY_CAP;
-        }
-        return season == 3 ? MAX_SPOTS_WINTER + 1 : MAX_SPOTS_NON_FARM + 1;
-    }
-
-    private static int spawnInLoadedSandZone(ServerLevel level, SpawnZone zone, RandomSource random,
-                                            double perBlockChance, int maxPlacements) {
-        int placed = 0;
-        for (ZoneRect rect : zone.rects) {
-            for (int x = rect.minX; x <= rect.maxX; x++) {
-                for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                    if (placed >= maxPlacements) return placed;
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                    if (random.nextDouble() >= perBlockChance) continue;
-                    if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) continue;
-                    if (tryPlaceArtifactSpot(level, x, z, zone.surface)) {
-                        placed++;
-                    }
-                }
-            }
-        }
-        return placed;
-    }
-
-    private static boolean placeOneLoadedSandSpot(ServerLevel level, SpawnZone zone, RandomSource random) {
-        BlockPos chosen = null;
-        int seen = 0;
-        for (ZoneRect rect : zone.rects) {
-            for (int x = rect.minX; x <= rect.maxX; x++) {
-                for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                    if (!canSpawnArtifactSpot(level, x, z, zone.surface)) continue;
-                    seen++;
-                    if (random.nextInt(seen) == 0) {
-                        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                        chosen = new BlockPos(x, surfaceY, z);
-                    }
-                }
-            }
-        }
-        if (chosen == null) return false;
-        return tryPlaceArtifactSpot(level, chosen.getX(), chosen.getZ(), zone.surface);
-    }
-
-    private static boolean tryPlaceArtifactSpot(ServerLevel level, int x, int z, SurfaceKind surface) {
-        if (!canSpawnArtifactSpot(level, x, z, surface)) return false;
-        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-        BlockPos pos = new BlockPos(x, surfaceY, z);
-        level.setBlock(pos, spotStateFor(level.getBlockState(pos), surface), Block.UPDATE_ALL);
-        return true;
-    }
-
-    /** 返回该表面类型对应的远古斑点方块。 */
-    private static Block spotBlockFor(SurfaceKind surface) {
-        return switch (surface) {
-            case YELLOW_DIRT -> ModBlocks.ARTIFACT_SPOT_DIRT.get();
-            case BEACH_SAND -> ModBlocks.BEACH_ARTIFACT_SPOT.get();
-            case DESERT_SAND -> ModBlocks.DESERT_ARTIFACT_SPOT.get();
-        };
-    }
-
-    private static BlockState spotStateFor(BlockState underlyingState, SurfaceKind surface) {
-        Block block = spotBlockFor(surface);
-        if (block instanceof ArtifactSpotBlock artifactSpot) {
-            return artifactSpot.stateForUnderlying(underlyingState);
-        }
-        return block.defaultBlockState();
-    }
-
-    /** 返回该表面类型被锄头锄后应还原为哪种原始方块。 */
-    private static Block underlyingBlockFor(SurfaceKind surface) {
-        return switch (surface) {
-            case YELLOW_DIRT -> ModBlocks.YELLOW_DIRT.get();
-            case BEACH_SAND, DESERT_SAND -> net.minecraft.world.level.block.Blocks.SAND;
-        };
-    }
-
-    private static BlockState underlyingStateFor(BlockState state, SurfaceKind surface) {
-        if (state.getBlock() instanceof ArtifactSpotBlock artifactSpot) {
-            return artifactSpot.resolveUnderlyingState(state);
-        }
-        return underlyingBlockFor(surface).defaultBlockState();
-    }
-
-    /**
-     * Remove existing artifact spots with 15% chance each (SDV parity).
-     * Returns number removed.
-     */
-    private static int removeAndCountSpots(ServerLevel level, ZoneRect rect, RandomSource random, SurfaceKind surface) {
-        int removed = 0;
-        Block spotBlock = spotBlockFor(surface);
-        for (int x = rect.minX; x <= rect.maxX; x++) {
-            for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockPos pos = new BlockPos(x, surfaceY, z);
-                BlockState state = level.getBlockState(pos);
-                if (state.is(spotBlock)) {
-                    if (random.nextDouble() < 0.15) {
-                        level.setBlock(pos, underlyingStateFor(state, surface), Block.UPDATE_ALL);
-                        removed++;
-                    }
-                }
-            }
-        }
-        return removed;
-    }
-
-    /**
-     * Count existing artifact spots in a rect.
-     */
-    private static int countSpotsInRect(ServerLevel level, ZoneRect rect, SurfaceKind surface) {
-        int count = 0;
-        Block spotBlock = spotBlockFor(surface);
-        for (int x = rect.minX; x <= rect.maxX; x++) {
-            for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockPos pos = new BlockPos(x, surfaceY, z);
-                if (level.getBlockState(pos).is(spotBlock)) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    /**
-     * Revert any farmland in a non-farm zone rect back to yellow_dirt.
-     * This handles artifact spots that were dug by players — they become farmland,
-     * and should reset to yellow_dirt the next day so new artifact spots can spawn.
-     *
-     * <p>但若耕地上方有作物 / forage / 任何非空气方块，则跳过——保留耕地，
-     * 否则 BushBlock 类（forage、作物等）会失去支撑而被 vanilla 自动破坏并丢物品。
-     */
-    private static void revertFarmlandInRect(ServerLevel level, ZoneRect rect) {
-        for (int x = rect.minX; x <= rect.maxX; x++) {
-            for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                BlockPos pos = new BlockPos(x, surfaceY, z);
-                if (!level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.FARMLAND)) continue;
-                // 上方有方块（作物/forage/装饰等）则保留耕地，避免支撑被毁
-                if (!level.getBlockState(pos.above()).isAir()) continue;
-                level.setBlock(pos, ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
-            }
-        }
-    }
-
-    // ======================== First-Day Initial Spawn ========================
-
-    /**
-     * Called on first entry into the Stardew dimension. Ensures artifact spots exist on Day 1.
-     * Uses SavedData to guarantee it only runs once per world.
-     */
-    public static void ensureInitialSpawn(ServerLevel level, int season) {
-        if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return;
-
-        ArtifactInitData data = level.getDataStorage().computeIfAbsent(
-                ArtifactInitData.factory(), INIT_DATA_ID);
-        if (!data.isInitialized()) {
-            onNewDay(level, season);
-            data.markInitialized();
-            data.markDesertInitialized();
-            return;
-        }
-        // 老存档补扫：沙漠远古斑点是后加的，需要一次性 bbox 扫描
-        if (!data.isDesertInitialized()) {
-            RandomSource random = level.getRandom();
-            for (SpawnZone zone : ZONES) {
-                if (zone.surface != SurfaceKind.DESERT_SAND) continue;
-                // 削后的首次补扫概率：原 0.0008 → 0.0003，配合 DESERT_DAILY_CAP 与每区块上限
-                final double perBlockChance = 0.0003;
-                int placed = 0;
-                outer:
-                for (ZoneRect rect : zone.rects) {
-                    for (int x = rect.minX; x <= rect.maxX; x++) {
-                        for (int z = rect.minZ; z <= rect.maxZ; z++) {
-                            if (placed >= DESERT_DAILY_CAP) break outer;
-                            if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                            if (random.nextDouble() >= perBlockChance) continue;
-                            if (chunkAlreadyHasSpot(level, x >> 4, z >> 4, zone.surface)) continue;
-                            if (canSpawnArtifactSpot(level, x, z, zone.surface)) {
-                                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                                BlockPos pos = new BlockPos(x, surfaceY, z);
-                                level.setBlock(pos, spotStateFor(level.getBlockState(pos), zone.surface), Block.UPDATE_ALL);
-                                placed++;
-                            }
-                        }
-                    }
-                }
-            }
-            data.markDesertInitialized();
-        }
-    }
-
-    public static class ArtifactInitData extends SavedData {
-        private boolean initialized;
-        private boolean desertInitialized;
-
-        public ArtifactInitData() {}
-
-        private ArtifactInitData(CompoundTag tag) {
-            this.initialized = tag.getBoolean("Initialized");
-            this.desertInitialized = tag.getBoolean("DesertInitialized");
-        }
-
-        public boolean isInitialized() { return initialized; }
-        public boolean isDesertInitialized() { return desertInitialized; }
-
-        public void markInitialized() {
-            this.initialized = true;
-            setDirty();
-        }
-
-        public void markDesertInitialized() {
-            this.desertInitialized = true;
-            setDirty();
-        }
-
         @Override
-        @Nonnull
-        public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider registries) {
-            tag.putBoolean("Initialized", initialized);
-            tag.putBoolean("DesertInitialized", desertInitialized);
-            return tag;
-        }
-
-        public static SavedData.Factory<ArtifactInitData> factory() {
-            return new SavedData.Factory<>(ArtifactInitData::new, (tag, provider) -> new ArtifactInitData(tag));
+        public CompoundTag save(CompoundTag tag, HolderLookup.Provider lookup) {
+            tag.putLongArray("Spots", spots.stream().mapToLong(Long::longValue).toArray());
+            var days = new CompoundTag(); updated.forEach(days::putInt); tag.put("Days", days);
+            tag.putLong("TreasureTotemsUsed", totems); return tag;
         }
     }
 }

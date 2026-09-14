@@ -105,6 +105,12 @@ public final class MeowmereSymphonySkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
         instance.registerCommittedEffect(() -> {
             for (MeowmereProjectileEntity projectile : projectiles) {
                 if (!level.addFreshEntity(projectile)) {
@@ -115,13 +121,7 @@ public final class MeowmereSymphonySkillHandler
             }
         });
 
-        // Preserve the authored presentation-only notification.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
+
     }
 
     @Override

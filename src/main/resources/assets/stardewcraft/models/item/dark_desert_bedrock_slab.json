@@ -1,6 +1,0 @@
-{
-  "parent": "stardewcraft:block/dark_desert_bedrock_slab",
-  "textures": {
-    "particle": "stardewcraft:block/mine/dark_desert_bedrock"
-  }
-}

@@ -1,0 +1,92 @@
+{
+  "format_version": "1.21.11",
+  "credit": "Made with Blockbench",
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:item/weapon/master_slingshot",
+    "particle": "stardewcraft:block/wood/pine_checkerboard_planks"
+  },
+  "elements": [
+    {
+      "name": "pouch",
+      "from": [
+        6.5,
+        10.25,
+        8
+      ],
+      "to": [
+        9.5,
+        12.25,
+        9
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            3.75,
+            1,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            1.25,
+            3.75,
+            1.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1.75,
+            3.75,
+            2.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.75,
+            3.75,
+            3,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            3.25,
+            3.75,
+            4,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.25,
+            3.75,
+            5,
+            4
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

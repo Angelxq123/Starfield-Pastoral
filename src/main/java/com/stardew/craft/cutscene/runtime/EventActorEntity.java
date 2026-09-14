@@ -1,5 +1,7 @@
 package com.stardew.craft.cutscene.runtime;
 
+import com.stardew.craft.npc.animation.SamActivity;
+
 import com.stardew.craft.StardewCraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -24,7 +26,7 @@ import java.util.Locale;
 
 /**
  * Lightweight, temporary actor entity for cutscenes and photography commands.
- * Reuses NPC GeckoLib models based on npcId.
+ * Reuses the real NPC's current model based on npcId, including native animation.
  * Has no AI, collision, gameplay interaction, or persistence.
  */
 public class EventActorEntity extends Mob implements GeoEntity {
@@ -35,6 +37,8 @@ public class EventActorEntity extends Mob implements GeoEntity {
             SynchedEntityData.defineId(EventActorEntity.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Boolean> DATA_IS_WALKING =
             SynchedEntityData.defineId(EventActorEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<CompoundTag> DATA_GUITAR =
+            SynchedEntityData.defineId(EventActorEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("walk");
@@ -44,10 +48,6 @@ public class EventActorEntity extends Mob implements GeoEntity {
     private Vec3 scriptedWalkTarget;
     private double scriptedWalkSpeed;
 
-    /** Custom animation override (set by animate command). */
-    private RawAnimation customAnimation = null;
-    @SuppressWarnings("unused")
-    private boolean customAnimationLoop = false;
 
     public EventActorEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
@@ -61,6 +61,7 @@ public class EventActorEntity extends Mob implements GeoEntity {
         super.defineSynchedData(builder);
         builder.define(DATA_NPC_ID, "");
         builder.define(DATA_IS_WALKING, false);
+        builder.define(DATA_GUITAR, new CompoundTag());
     }
 
     public String getNpcId() {
@@ -99,6 +100,7 @@ public class EventActorEntity extends Mob implements GeoEntity {
     }
 
     public void setWalking(boolean walking) {
+        if (walking && getNativeActivity() != null) clearCustomAnimation();
         this.entityData.set(DATA_IS_WALKING, walking);
     }
 
@@ -157,25 +159,54 @@ public class EventActorEntity extends Mob implements GeoEntity {
     }
 
     public void setCustomAnimation(String animName, boolean loop) {
-        if (loop) {
-            this.customAnimation = RawAnimation.begin().thenLoop(animName);
-        } else {
-            this.customAnimation = RawAnimation.begin().thenPlay(animName);
+        String shortName = animName.startsWith("animation." + getNpcId() + ".")
+                ? animName.substring(("animation." + getNpcId() + ".").length()) : animName;
+        if ("idle".equals(shortName) || "walk".equals(shortName)) {
+            clearCustomAnimation();
+            setWalking("walk".equals(shortName));
+            return;
         }
-        this.customAnimationLoop = loop;
+        var guitar = new CompoundTag();
+        guitar.putString("animation", animName);
+        guitar.putLong("start", level().getGameTime());
+        guitar.putBoolean("loop", loop);
+        var action = SamActivity.fromAnimation(animName);
+        if ("sam".equals(getNpcId()) && action != null) {
+            stopWalking();
+            guitar.putString("activity", action.asset());
+            guitar.putString("clip", action.holdClip().equals(animName) ? action.holdClip() : action.playClip());
+        }
+        entityData.set(DATA_GUITAR, guitar);
     }
 
     public void clearCustomAnimation() {
-        this.customAnimation = null;
+        entityData.set(DATA_GUITAR, new CompoundTag());
     }
+
+    public boolean hasCustomAnimation() {
+        return !getCustomAnimationName().isEmpty();
+    }
+
+    public String getCustomAnimationName() { return entityData.get(DATA_GUITAR).getString("animation"); }
+    public long getCustomAnimationStartTick() { return entityData.get(DATA_GUITAR).getLong("start"); }
+    public boolean isCustomAnimationLooping() { return entityData.get(DATA_GUITAR).getBoolean("loop"); }
+    public SamActivity getNativeActivity() { return SamActivity.fromAnimation(entityData.get(DATA_GUITAR).getString("activity")); }
+    public String getNativeActivityClip() { return entityData.get(DATA_GUITAR).getString("clip"); }
+    public long getNativeActivityStartTick() { return entityData.get(DATA_GUITAR).getLong("start"); }
+    public boolean isNativeActivityLooping() { return entityData.get(DATA_GUITAR).getBoolean("loop"); }
+    public boolean isPlayingGuitar() { return getNativeActivity() == SamActivity.GUITAR; }
+    public long getGuitarStartTick() { return entityData.get(DATA_GUITAR).getLong("start"); }
+    public boolean isGuitarLooping() { return entityData.get(DATA_GUITAR).getBoolean("loop"); }
 
     // ─── GeckoLib ───
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "main", 5, state -> {
-            if (customAnimation != null) {
-                state.setAndContinue(customAnimation);
+            if (hasCustomAnimation()) {
+                state.setAndContinue(isCustomAnimationLooping()
+                        ? RawAnimation.begin().thenLoop(getCustomAnimationName())
+                        : RawAnimation.begin().thenPlay(getCustomAnimationName()));
                 return PlayState.CONTINUE;
             }
             if (isWalking()) {

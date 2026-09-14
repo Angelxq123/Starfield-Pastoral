@@ -1,7 +1,0 @@
-{
-  "variants": {
-    "type=bottom": { "model": "stardewcraft:block/banded_marble_slab" },
-    "type=double": { "model": "stardewcraft:block/banded_marble" },
-    "type=top": { "model": "stardewcraft:block/banded_marble_slab_top" }
-  }
-}

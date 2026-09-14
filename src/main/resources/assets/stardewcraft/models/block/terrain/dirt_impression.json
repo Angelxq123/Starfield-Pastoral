@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:block/terrain/dirt",
+  "textures": {
+    "top": "stardewcraft:block/terrain/spring/dirt_impression"
+  }
+}

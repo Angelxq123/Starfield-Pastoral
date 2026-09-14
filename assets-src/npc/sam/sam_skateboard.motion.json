@@ -1,0 +1,10 @@
+{
+  "intent": "年轻成年、友善外向的 Sam；平静站立，呼吸克制，目光清醒。性别不单独决定眨眼频率。",
+  "intervalMin": 3.4,
+  "intervalMax": 6.8,
+  "durationMin": 0.9,
+  "durationMax": 1.12,
+  "doubleChance": 0.1,
+  "groundOffset": 0,
+  "walkStride": 1.625
+}

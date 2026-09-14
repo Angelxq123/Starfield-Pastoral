@@ -91,6 +91,9 @@ public final class BuiltinApiTypes {
             return playerData.hasMailFlag(data.id()) == data.present();
         });
 
+        StardewConditions.register(id("known_recipe"), Codec.STRING, (context, recipe) ->
+                context.player() != null && PlayerDataManager.getPlayerData(context.player()).isRecipeUnlocked(recipe));
+
         StardewConditions.register(id("skill"), SkillCondition.CODEC, (context, data) -> {
             if (context.player() == null) return false;
             com.stardew.craft.player.SkillType skill =
@@ -177,6 +180,7 @@ public final class BuiltinApiTypes {
     }
 
     private static void registerItemQueries() {
+        com.stardew.craft.mining.SkullCavernTreasurePool.registerQuery();
         StardewItemQueries.register(id("item"), DirectItemQuery.CODEC, (context, data) -> {
             if (!BuiltInRegistries.ITEM.containsKey(data.item())) {
                 return List.of();

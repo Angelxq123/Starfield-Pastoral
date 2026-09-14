@@ -127,7 +127,10 @@ public final class TemplarJudgementSkillHandler
             SkillInstance.EndReason reason
     ) {
         instance.executionState(TemplarJudgementExecutionState.class)
-                .ifPresent(TemplarJudgementExecutionState::cancel);
+                .ifPresent(state -> {
+                    state.endPresentation(context.player());
+                    state.cancel();
+                });
     }
 
     public static boolean isActive(

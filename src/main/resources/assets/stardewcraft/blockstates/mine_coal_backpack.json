@@ -1,0 +1,244 @@
+{
+  "variants": {
+    "desert=false,dark=false,facing=north,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_full"
+    },
+    "desert=true,dark=false,facing=north,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full"
+    },
+    "desert=false,dark=false,facing=east,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_full",
+      "y": 90
+    },
+    "desert=true,dark=false,facing=east,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full",
+      "y": 90
+    },
+    "desert=false,dark=false,facing=south,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_full",
+      "y": 180
+    },
+    "desert=true,dark=false,facing=south,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full",
+      "y": 180
+    },
+    "desert=false,dark=false,facing=west,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_full",
+      "y": 270
+    },
+    "desert=true,dark=false,facing=west,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full",
+      "y": 270
+    },
+    "desert=false,dark=false,facing=north,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension"
+    },
+    "desert=true,dark=false,facing=north,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension"
+    },
+    "desert=false,dark=false,facing=east,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension",
+      "y": 90
+    },
+    "desert=true,dark=false,facing=east,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 90
+    },
+    "desert=false,dark=false,facing=south,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension",
+      "y": 180
+    },
+    "desert=true,dark=false,facing=south,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 180
+    },
+    "desert=false,dark=false,facing=west,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension",
+      "y": 270
+    },
+    "desert=true,dark=false,facing=west,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 270
+    },
+    "desert=false,dark=false,facing=north,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_empty"
+    },
+    "desert=true,dark=false,facing=north,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty"
+    },
+    "desert=false,dark=false,facing=east,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_empty",
+      "y": 90
+    },
+    "desert=true,dark=false,facing=east,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty",
+      "y": 90
+    },
+    "desert=false,dark=false,facing=south,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_empty",
+      "y": 180
+    },
+    "desert=true,dark=false,facing=south,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty",
+      "y": 180
+    },
+    "desert=false,dark=false,facing=west,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_empty",
+      "y": 270
+    },
+    "desert=true,dark=false,facing=west,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty",
+      "y": 270
+    },
+    "desert=false,dark=false,facing=north,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension"
+    },
+    "desert=true,dark=false,facing=north,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension"
+    },
+    "desert=false,dark=false,facing=east,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension",
+      "y": 90
+    },
+    "desert=true,dark=false,facing=east,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 90
+    },
+    "desert=false,dark=false,facing=south,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension",
+      "y": 180
+    },
+    "desert=true,dark=false,facing=south,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 180
+    },
+    "desert=false,dark=false,facing=west,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_extension",
+      "y": 270
+    },
+    "desert=true,dark=false,facing=west,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 270
+    },
+    "desert=false,dark=true,facing=north,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_full"
+    },
+    "desert=true,dark=true,facing=north,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full"
+    },
+    "desert=false,dark=true,facing=east,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_full",
+      "y": 90
+    },
+    "desert=true,dark=true,facing=east,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full",
+      "y": 90
+    },
+    "desert=false,dark=true,facing=south,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_full",
+      "y": 180
+    },
+    "desert=true,dark=true,facing=south,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full",
+      "y": 180
+    },
+    "desert=false,dark=true,facing=west,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_full",
+      "y": 270
+    },
+    "desert=true,dark=true,facing=west,open=false,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_full",
+      "y": 270
+    },
+    "desert=false,dark=true,facing=north,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension"
+    },
+    "desert=true,dark=true,facing=north,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension"
+    },
+    "desert=false,dark=true,facing=east,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension",
+      "y": 90
+    },
+    "desert=true,dark=true,facing=east,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 90
+    },
+    "desert=false,dark=true,facing=south,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension",
+      "y": 180
+    },
+    "desert=true,dark=true,facing=south,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 180
+    },
+    "desert=false,dark=true,facing=west,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension",
+      "y": 270
+    },
+    "desert=true,dark=true,facing=west,open=false,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 270
+    },
+    "desert=false,dark=true,facing=north,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_empty"
+    },
+    "desert=true,dark=true,facing=north,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty"
+    },
+    "desert=false,dark=true,facing=east,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_empty",
+      "y": 90
+    },
+    "desert=true,dark=true,facing=east,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty",
+      "y": 90
+    },
+    "desert=false,dark=true,facing=south,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_empty",
+      "y": 180
+    },
+    "desert=true,dark=true,facing=south,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty",
+      "y": 180
+    },
+    "desert=false,dark=true,facing=west,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_empty",
+      "y": 270
+    },
+    "desert=true,dark=true,facing=west,open=true,part=main": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_empty",
+      "y": 270
+    },
+    "desert=false,dark=true,facing=north,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension"
+    },
+    "desert=true,dark=true,facing=north,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension"
+    },
+    "desert=false,dark=true,facing=east,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension",
+      "y": 90
+    },
+    "desert=true,dark=true,facing=east,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 90
+    },
+    "desert=false,dark=true,facing=south,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension",
+      "y": 180
+    },
+    "desert=true,dark=true,facing=south,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 180
+    },
+    "desert=false,dark=true,facing=west,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/frost_dark_extension",
+      "y": 270
+    },
+    "desert=true,dark=true,facing=west,open=true,part=extension": {
+      "model": "stardewcraft:block/mine/backpack/desert_dark_extension",
+      "y": 270
+    }
+  }
+}

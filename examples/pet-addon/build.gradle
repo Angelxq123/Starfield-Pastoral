@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.137'
+}
+group = 'com.example.petaddon'
+version = '0.1.0'
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+neoForge { version = '21.1.217' }
+
+// Development compilation consumes the current core classes without building a distribution JAR.
+// Installed use requires the matching StardewCraft build declared in neoforge.mods.toml.
+dependencies {
+    compileOnly files(providers.gradleProperty('stardewcraftJar').getOrElse('../../build/classes/java/main'))
+}

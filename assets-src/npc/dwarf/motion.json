@@ -1,0 +1,97 @@
+{
+  "intent": "非人类矮小比例、重盔；短腿有承重的踏步，盔甲稳，不能成人缩小或锁膝滑行。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.2114644375,
+  "attentionRig": {
+    "hipHeight": 4,
+    "soleY": 0,
+    "toeDepth": 1.5,
+    "halfStance": 1.78,
+    "rightZ": 0.04,
+    "leftZ": -0.04,
+    "rightYaw": -2,
+    "leftYaw": 2,
+    "lift": 0.22,
+    "lean": 0.65,
+    "armSwing": 2
+  },
+  "lookLimits": {
+    "yaw": 12,
+    "pitch": 5
+  },
+  "cloth": {
+    "bone": "garment",
+    "kind": "cape",
+    "anchorY": 10,
+    "hemY": 2,
+    "margin": 0.35,
+    "standingDepthMargin": 0.12,
+    "contactBlend": 1.2,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "id": "dwarf",
+    "revision": "character-articulated-3",
+    "rootMean": 0.13760000000000003,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -1.7,
+          4.0,
+          0.0
+        ],
+        "knee": 2.0,
+        "ankle": 1.3,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -1.5
+      },
+      "left": {
+        "hip": [
+          1.7,
+          4.0,
+          0.0
+        ],
+        "knee": 2.0,
+        "ankle": 1.3,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -1.5
+      }
+    },
+    "bodyPitch": -0.6,
+    "headPitch": 0,
+    "halfStance": 1.78,
+    "intent": "非人类矮小比例、重盔；短腿有承重的踏步，盔甲稳，不能成人缩小或锁膝滑行。",
+    "stance": 0.61,
+    "strideRatio": 1.5,
+    "bob": 0.07344,
+    "sway": 0.23,
+    "rootYaw": 1.5,
+    "bodyYaw": 3.3,
+    "bodyRoll": 0.65,
+    "bodyNod": 0.4,
+    "headYaw": 0.5,
+    "headRoll": 0.2,
+    "armSwing": 12,
+    "armOpening": 8,
+    "elbowBase": 8,
+    "elbowSwing": 4,
+    "footLift": 0.098,
+    "heelPitch": 2.0999999999999996,
+    "toePitch": 4.199999999999999,
+    "breathSeconds": 8.8,
+    "idleScale": 0.85,
+    "stride": 3.383431,
+    "reachMargin": 0.038926,
+    "legLengthStride": 6.0,
+    "previewSpeed": 0.369502,
+    "levelWalk": true
+  }
+}

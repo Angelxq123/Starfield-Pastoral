@@ -1,0 +1,94 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.7305375625,
+  "attentionRig": {
+    "hipHeight": 10.0,
+    "soleY": 0.0,
+    "toeDepth": 3.0,
+    "halfStance": 2.16,
+    "rightZ": 0.12,
+    "leftZ": -0.18,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "blinkMode": "closed",
+  "cloth": {
+    "bone": "chest_breath",
+    "kind": "skirt",
+    "anchorY": 13.5,
+    "hemY": 6.82,
+    "margin": 0.55,
+    "clearancePart": "cardigan_body",
+    "standingDepthMargin": 0.35,
+    "contactBlend": 1.0,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "id": "evelyn",
+    "revision": "character-articulated-3",
+    "rootMean": 0.472,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2,
+        "toe": -3.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2,
+        "toe": -3.0
+      }
+    },
+    "bodyPitch": -1.0,
+    "headPitch": 1.15,
+    "halfStance": 2.21,
+    "stride": 11.688601,
+    "reachMargin": 0.046691,
+    "legLengthStride": 17.5,
+    "approvedBaseStride": 17.5,
+    "stance": 0.62,
+    "bob": 0.256,
+    "sway": 0.54,
+    "rootYaw": 1.3,
+    "bodyYaw": 3.6,
+    "armSwing": 12.5,
+    "armPhase": 0.065,
+    "footLift": 0.21840000000000004,
+    "swingPeak": 0.57,
+    "elbowBase": 12,
+    "bodyRoll": 0.8,
+    "strideScale": 0.94,
+    "intent": "老年女性、始终闭眼；更谨慎的落脚和较长共同承重，低一些的摆动脚，保留可见全身配合。",
+    "bodyLag": 0.095,
+    "headLag": 0.13,
+    "headYawLag": 0.08,
+    "headNod": 0.34,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.817136,
+    "levelWalk": true
+  }
+}

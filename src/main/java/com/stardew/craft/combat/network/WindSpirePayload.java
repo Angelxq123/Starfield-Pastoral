@@ -36,6 +36,7 @@ public record WindSpirePayload(boolean active, int durationTicks) implements Cus
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(WindSpirePayload payload) {
+        com.stardew.craft.client.weapon.IronWindVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;

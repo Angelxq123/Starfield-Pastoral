@@ -36,6 +36,7 @@ public record SteelSpineFuryPayload(boolean active, int durationTicks) implement
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(SteelSpineFuryPayload payload) {
+        com.stardew.craft.client.weapon.GuardSpineVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;

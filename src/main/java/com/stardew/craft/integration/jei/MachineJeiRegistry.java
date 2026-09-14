@@ -48,6 +48,7 @@ public final class MachineJeiRegistry {
             machine("dehydrator", Layout.STANDARD, true),
             machine("fish_smoker", Layout.AUXILIARY_INPUT, true),
             machine("furnace", Layout.STANDARD, true),
+            machine("heavy_furnace", Layout.AUXILIARY_INPUT, true),
             machine("incubator", Layout.STANDARD, false),
             machine("keg", Layout.STANDARD, true),
             machine("loom", Layout.STANDARD, true),

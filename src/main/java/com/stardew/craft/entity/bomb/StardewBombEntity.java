@@ -6,7 +6,7 @@ import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.bomb.BombType;
 import com.stardew.craft.sound.ModSounds;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
+import com.stardew.craft.weather.ModParticles;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -36,12 +36,12 @@ import java.util.UUID;
 /**
  * SDV 炸弹实体 — 放置在地面上，引信倒数后爆炸。
  *
- * <p>完全复刻 SDV 原版逻辑：</p>
+ * <p>原版格子爆炸映射到 MC 的当前地面层：</p>
  * <ul>
  *   <li>引信时间：48 ticks (2400ms)，引信期间模型加速颤抖</li>
  *   <li>音效：放置 thudStep → 引信 fuse (循环) → 爆炸 explosion</li>
- *   <li>颤抖：shakeIntensity=0.5 + 0.002/tick 加速，完全匹配 SDV</li>
- *   <li>爆炸：MC 3D 球形破坏，方块破坏半径按炸弹类型单独平衡</li>
+ *   <li>颤抖：随引信时间逐渐增强的轻微颤抖</li>
+ *   <li>爆炸：当前层的原版格子圆，脚下地面仅尝试锄地</li>
  *   <li>伤害：怪物 r*6~r*8，玩家自伤 r*3（r 为 SDV 原版半径）</li>
  *   <li>粒子：45% 概率每格生成碎片或粉尘</li>
  * </ul>
@@ -165,63 +165,64 @@ public class StardewBombEntity extends Entity {
 
     /* ── 引信火花粒子（SDV: 3 层 spark，黄/橙/白交错） ──── */
 
-    private void spawnFuseParticles(int fuse) {
-        if (fuse <= 0) return;
-
-        BombType type = getBombType();
-        double sparkX = this.getX();
-        double sparkY = this.getY() + getModelHeight(type);
-        double sparkZ = this.getZ();
-
-        // SDV: 53ms/frame × 5 frames × 9 loops = ~2385ms
-        // MC: 基础火花每 tick 生成
-        level().addParticle(ParticleTypes.FLAME,
-            sparkX + (random.nextDouble() - 0.5) * 0.15,
-            sparkY + random.nextDouble() * 0.1,
-            sparkZ + (random.nextDouble() - 0.5) * 0.15,
-            0, 0.02, 0);
-
-        // 黄色/橙色层 — 每 2 tick 交替
-        if (fuse % 2 == 0) {
-            level().addParticle(ParticleTypes.LAVA,
-                sparkX + (random.nextDouble() - 0.5) * 0.1,
-                sparkY,
-                sparkZ + (random.nextDouble() - 0.5) * 0.1,
-                0, 0.01, 0);
-        }
-
-        // SDV 白色烟雾层 — 概率生成
-        if (random.nextInt(3) == 0) {
-            level().addParticle(ParticleTypes.SMOKE,
-                sparkX, sparkY + 0.1, sparkZ,
-                0, 0.01, 0);
-        }
+    /** Source intensity grows by 0.002 per millisecond; sampling never consumes gameplay RNG. */
+    public Vec3 getVisualShake(float partialTick) {
+        float elapsed = Mth.clamp(getBombType().getFuseTicks() - getFuse() + partialTick,
+                0, getBombType().getFuseTicks());
+        float amplitude = (0.5f + elapsed * 50 * 0.002f) / 64;
+        float phase = (tickCount + partialTick) * 2.4f + getId() * 0.73f;
+        return new Vec3(Mth.sin(phase) * amplitude, 0, Mth.sin(phase * 1.37f) * amplitude);
     }
 
-    private float getModelHeight(BombType type) {
-        return switch (type) {
-            case CHERRY_BOMB -> 0.375f;  // 6/16
-            case BOMB -> 0.8125f;        // 13/16
-            case MEGA_BOMB -> 0.875f;    // 14/16
+    private void spawnFuseParticles(int fuse) {
+        if (fuse <= 0) return;
+        int phase = tickCount % 5;
+        if (phase != 0 && phase != 2 && phase != 4) return;
+
+        // Model-space cord tips, including the normal bomb's 45-degree bend.
+        Vec3 tip = switch (getBombType()) {
+            case CHERRY_BOMB -> new Vec3(0, 9.0 / 16, 0);
+            case BOMB -> new Vec3((5.5 - 4 / Math.sqrt(2) - 8) / 16,
+                    (13.5 + 4 / Math.sqrt(2)) / 16, -0.5 / 16);
+            case MEGA_BOMB -> new Vec3(0, 16.5 / 16, 0);
         };
+        Vec3 shake = getVisualShake(0);
+        level().addParticle(ModParticles.BOMB_FUSE.get(),
+                getX() + tip.x + shake.x, getY() + tip.y + 0.04, getZ() + tip.z + shake.z,
+                phase, 0, 0);
     }
 
     /* ── 爆炸 ──────────────────────────────────────────── */
 
-    private void explode() {
+    /** BasicProjectile.explodeOnImpact: the same blast rules, radius two, no fuse. */
+    public static void explodeSlingshotAmmo(ServerLevel level, Vec3 impact, @Nullable LivingEntity owner) {
+        var blast = new StardewBombEntity(com.stardew.craft.entity.ModEntities.STARDEW_BOMB.get(), level);
+        BlockPos floor = BlockPos.containing(impact);
+        // Project a 3D impact onto its local floor, as the source explosion is a tile circle.
+        for (int i = 0; i < 4 && level.getBlockState(floor.below()).getCollisionShape(level, floor.below()).isEmpty(); i++)
+            floor = floor.below();
+        int planeY = level.dimension() == com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING
+                ? com.stardew.craft.mining.MiningCoordinates.FIXED_Y : floor.getY();
+        blast.setPos(impact.x, planeY, impact.z);
+        blast.setOwner(owner);
+        blast.explode(2);
+    }
+
+    private void explode() { explode(getBombType().getRadius()); }
+
+    private void explode(int radius) {
         if (level().isClientSide()) return;
 
         ServerLevel serverLevel = (ServerLevel) level();
-        BombType type = getBombType();
-        BlockPos center = this.blockPosition();
-        float scaledRadius = type.getScaledRadius();
+        BlockPos center = new BlockPos(this.getBlockX(), Mth.ceil(this.getY() - 1.0E-4D), this.getBlockZ());
+        float scaledRadius = radius;
         LivingEntity resolvedOwner = getOwner();
 
         // 1. SDV: 停止 fuse 音效 → 播放 explosion
         serverLevel.playSound(null, center, ModSounds.EXPLOSION.get(),
             SoundSource.BLOCKS, 1.5f, 0.9f + random.nextFloat() * 0.2f);
 
-        // 2. MC 3D 球形破坏方块，半径由炸弹类型单独平衡
+        // 2. 只处理当前层的物件；地面由独立的锄地阶段处理。
         destroyBlocksInCircle(
                 serverLevel,
                 center,
@@ -229,65 +230,93 @@ public class StardewBombEntity extends Entity {
                 resolvedOwner
         );
 
-        // 3. 伤害范围内实体（SDV 伤害数值 + MC 3D 空间判定）
-        damageEntitiesInRadius(serverLevel, type, resolvedOwner);
+        tillSoilInCircle(serverLevel, center, radius / 2, resolvedOwner);
 
-        // 4. SDV 爆炸粒子（按炸弹类型区分规模）
-        spawnExplosionParticles(serverLevel, center, type, scaledRadius);
+        // 3. 原版矩形伤害范围，限定在同一地面层。
+        damageEntitiesInRadius(serverLevel, radius, resolvedOwner);
+
+        // 4. 地面爆闪和尘圈，范围跟随这次爆炸（含弹弓爆炸弹药）。
+        spawnExplosionParticles(serverLevel, center, scaledRadius);
 
         // 5. 移除实体
         this.discard();
     }
 
-    /**
-     * SDV 使用 getCircleOutlineGrid(radius) 生成填充圆形图案。
-     * 本实现在 XZ 平面上做 2D 圆形检测，Y 方向扩展 ±scaledRadius（球形）。
-     */
     private void destroyBlocksInCircle(
-            ServerLevel level,
-            BlockPos center,
-            float radius,
-            @Nullable LivingEntity resolvedOwner
+            ServerLevel level, BlockPos center, float radius, @Nullable LivingEntity resolvedOwner
     ) {
-        int r = (int) Math.ceil(radius);
-        float radiusSq = radius * radius;
-
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dz = -r; dz <= r; dz++) {
-                // SDV 2D 圆形检测
-                if (dx * dx + dz * dz > radiusSq) continue;
-
-                for (int dy = -r; dy <= r; dy++) {
-                    // 3D 球形检测（自然的 MC 3D 扩展）
-                    if (dx * dx + dy * dy + dz * dz > radiusSq) continue;
-
-                    BlockPos pos = center.offset(dx, dy, dz);
-                    BlockState state = level.getBlockState(pos);
-
-                    if (state.isAir()) continue;
-                    if (!canBombDestroy(
-                            level,
-                            pos,
-                            state,
-                            resolvedOwner
-                    )) continue;
-
-                    // SDV 炸弹掉落逻辑：矿石掉产物，其余掉自身
-                    dropBlockForBomb(
-                            level,
-                            pos,
-                            state,
-                            resolvedOwner
-                    );
-                    level.removeBlock(pos, false);
-
-                    // 炸弹炸石头会递减 stonesLeft，但梯子概率低于手挖。
-                    if (resolvedOwner instanceof net.minecraft.server.level.ServerPlayer sp
-                            && level.dimension() == com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING) {
-                        com.stardew.craft.event.MiningBlockBreakHandler.handleStoneBreakFromBomb(level, sp, pos, state);
-                    }
+        var trees = com.stardew.craft.tree.prefab.PrefabTreeRegistry.get(level);
+        for (BombBlastPattern.Tile tile : BombBlastPattern.circle((int) radius)) {
+            BlockPos pos = center.offset(tile.x(), 0, tile.z());
+            BlockState state = level.getBlockState(pos);
+            var tree = trees.getByMember(pos);
+            if (tree != null) {
+                if (pos.equals(tree.root()) && resolvedOwner instanceof ServerPlayer player
+                        && tree.members().stream().allMatch(member -> canModify(level, member, player))) {
+                    com.stardew.craft.tree.prefab.PrefabTreeChopHandler.explode(level, tree, player, (int) radius / 2);
                 }
+                continue;
             }
+            if (state.isAir() || !canBombDestroy(level, pos, state, resolvedOwner)) continue;
+            if (state.getBlock() instanceof com.stardew.craft.block.mine.MineBarrelBlock) {
+                com.stardew.craft.block.mine.MineBarrelBlock.breakByExplosion(level, pos,
+                        resolvedOwner instanceof ServerPlayer sp ? sp : null);
+                continue;
+            }
+            if (state.getBlock() instanceof com.stardew.craft.block.mine.MineGroundWeedsBlock) {
+                com.stardew.craft.block.mine.MineGroundWeedsBlock.breakBy(level, pos,
+                        resolvedOwner instanceof ServerPlayer sp ? sp : null, false);
+                continue;
+            }
+            dropBlockForBomb(level, pos, state, resolvedOwner);
+            level.removeBlock(pos, false);
+        }
+    }
+
+    private static boolean canModify(ServerLevel level, BlockPos pos, @Nullable LivingEntity owner) {
+        return level.dimension() != com.stardew.craft.core.ModDimensions.STARDEW_VALLEY
+                || owner instanceof ServerPlayer player && (player.isCreative()
+                || com.stardew.craft.event.FarmAreaProtectionEvents.canModifyAt(player, pos));
+    }
+
+    private void tillSoilInCircle(ServerLevel level, BlockPos center, int radius,
+                                  @Nullable LivingEntity resolvedOwner) {
+        for (BombBlastPattern.Tile tile : BombBlastPattern.circle(radius)) {
+            BlockPos pos = center.offset(tile.x(), -1, tile.z());
+            if (!level.isEmptyBlock(pos.above()) || random.nextDouble() >= 0.9D
+                    || !canModify(level, pos, resolvedOwner) || !canModify(level, pos.above(), resolvedOwner)) continue;
+            BlockState state = level.getBlockState(pos);
+            BlockState mineSoil = BombMineSoil.tilled(state);
+            if (mineSoil != null) {
+                if (level.setBlock(pos, mineSoil, 11)) {
+                    level.levelEvent(2001, pos, Block.getId(state));
+                    BombMineSoil.drop(level, pos, resolvedOwner instanceof ServerPlayer player ? player : null);
+                }
+                continue;
+            }
+            if (state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock
+                    || state.getBlock() instanceof com.stardew.craft.block.terrain.TerrainGrassBlock
+                    || com.stardew.craft.mining.OrdinaryMineRuntime.isArchitecture(level, pos)) continue;
+            var context = new net.minecraft.world.item.context.UseOnContext(level,
+                    resolvedOwner instanceof Player player ? player : null,
+                    net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WOODEN_HOE),
+                    new net.minecraft.world.phys.BlockHitResult(Vec3.atBottomCenterOf(pos.above()),
+                            net.minecraft.core.Direction.UP, pos, false));
+            BlockState tilled = state.getToolModifiedState(context,
+                    net.neoforged.neoforge.common.ItemAbilities.HOE_TILL, false);
+            if (tilled == null || !(tilled.getBlock() instanceof net.minecraft.world.level.block.FarmBlock)) continue;
+            if (level.isRainingAt(pos.above())) {
+                tilled = tilled.setValue(net.minecraft.world.level.block.FarmBlock.MOISTURE, 7);
+            }
+            if (!level.setBlock(pos, tilled, 11)) continue;
+            if (com.stardew.craft.core.FarmAreaResolver.isInStardewButNotFarm(level, pos)
+                    && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, pos)) {
+                com.stardew.craft.manager.CropGrowthManager.get(level).trackPublicTilledChunk(level, pos);
+            }
+            level.levelEvent(2001, pos, Block.getId(state));
+            // GameLocation.checkForBuriedItem(explosion=true) excludes the outdoor
+            // clay/winter-forage rolls. Do not call the ordinary hoe drop path here.
         }
     }
 
@@ -297,14 +326,17 @@ public class StardewBombEntity extends Entity {
             BlockState state,
             @Nullable LivingEntity resolvedOwner
     ) {
+        if (!canModify(level, pos, resolvedOwner)) return false;
         // 不破坏不可破坏方块（基岩 / 屏障 / 命令方块 / 末地传送门框 / 强化深板岩 等）
         if (isIndestructible(level, pos, state)) return false;
         // 不破坏矿井梯子和 portal trigger 这类功能方块。
-        if (isBombProtectedBlock(state)) return false;
+        if (isBombProtectedBlock(state) || com.stardew.craft.mining.OrdinaryMineRuntime.isArchitecture(level,pos)) return false;
+        if (state.getBlock() instanceof com.stardew.craft.block.mine.MineIceDebrisBlock
+                || state.getBlock() instanceof com.stardew.craft.block.mine.MineGroundWeedsBlock) return true;
         // 多格家具/机器的 extension 格子只是占位。炸它们会触发每格各掉一份的安全网。
-        if (isExtensionPart(state)) return false;
-        // SDV parity：炸弹不破坏树（树干 / 树枝 / 树苗 / 树叶 等任何树的部分），
-        // 砍树必须用斧头。
+        if (isExtensionPart(state) && !(state.getBlock() instanceof com.stardew.craft.block.mine.MineBarrelBlock)) return false;
+        if (com.stardew.craft.tree.WildTrees.findBySapling(state) != null) return true;
+        // 登记的整树按树根受伤处理；其余树体不可逐块炸散。
         if (com.stardew.craft.tree.WildTrees.isAnyWildTreePart(state)) return false;
         // 采石场：只允许炸掉每日/初始生成的石头、矿物等资源块，原始结构不允许被炸毁。
         if (level.dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY
@@ -312,13 +344,11 @@ public class StardewBombEntity extends Entity {
                 && !com.stardew.craft.manager.QuarrySpawnService.canBombDestroyInQuarry(state)) {
             return false;
         }
-        // 不破坏小镇区域和非权限农场的方块。
-        if (level.dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY
-                && resolvedOwner instanceof net.minecraft.server.level.ServerPlayer sp
-                && !sp.isCreative()
-                && !com.stardew.craft.event.FarmAreaProtectionEvents.canModifyAt(sp, pos)) {
-            return false;
-        }
+        // 爆炸毁坏作物和草丛，不触发收获产物。
+        if (state.getBlock() instanceof com.stardew.craft.block.crop.StardewCropBlock
+                || state.getBlock() instanceof net.minecraft.world.level.block.CropBlock
+                || state.is(net.minecraft.tags.BlockTags.CROPS)
+                || state.getBlock() instanceof net.minecraft.world.level.block.TallGrassBlock) return true;
         // 无掉落表或没有任何炸弹合法结果的方块不应被破坏。
         if (state.getBlock().getLootTable() == net.minecraft.world.level.storage.loot.BuiltInLootTables.EMPTY) {
             return false;
@@ -349,10 +379,7 @@ public class StardewBombEntity extends Entity {
         if (block instanceof com.stardew.craft.block.mine.MineBarrelBlock) {
             return true;
         }
-        if (getOreDropItem(state) != null) {
-            return true;
-        }
-        if (state.is(ModBlocks.ARTIFACT_SPOT_DIRT.get())) {
+        if (block instanceof com.stardew.craft.block.mine.MineStoneBlock) {
             return true;
         }
         if (isPlantLikeBlock(state)) {
@@ -412,44 +439,18 @@ public class StardewBombEntity extends Entity {
             return;
         }
 
+        if (block instanceof com.stardew.craft.block.mine.MineStoneBlock) {
+            com.stardew.craft.mining.MineStoneMining.finishDrops(level,
+                    resolvedOwner instanceof net.minecraft.server.level.ServerPlayer sp ? sp : null, pos, state, true);
+            return;
+        }
+
         // 0. 木桶：onRemove 已经会调用 dropBarrelLoot，这里不要再 popResource(barrelItem)
         //    否则玩家会同时拿到一个可放置的木桶方块物品。
         if (block instanceof com.stardew.craft.block.mine.MineBarrelBlock) {
             return;
         }
 
-        // 1. SDV parity：让炸弹完全等价于"玩家挖矿"——吃 Miner / Geologist / Excavator /
-        //    Prospector 职业、采矿等级、每日幸运、铱矿 3.5% 五彩碎片、120 层后普通石头 0.005% 五彩碎片、
-        //    并给予挖矿经验。当 owner 是 ServerPlayer 时走这条路径。
-        if (resolvedOwner instanceof net.minecraft.server.level.ServerPlayer sp
-                && !sp.isCreative()) {
-            net.minecraft.world.item.Item oreProduct =
-                com.stardew.craft.event.MinePickaxeEvents.applyPlayerStyleBombDrops(level, sp, pos, state);
-            if (oreProduct != null) {
-                // 矿石已由 helper 投放，跳过自身/产物重复掉落
-                return;
-            }
-            // 非矿石：继续走下面的"掉落自身"逻辑（额外晶洞/煤等已由 helper 处理）
-        } else {
-            // 非玩家所有者（极少见，例如指令召唤）：保留旧的简化矿石产物路径
-            net.minecraft.world.item.Item oreProduct = getOreDropItem(state);
-            if (oreProduct != null) {
-                Block.popResource(level, pos, new net.minecraft.world.item.ItemStack(oreProduct));
-                if (state.is(com.stardew.craft.core.ModTags.Blocks.IRIDIUM_ORES)
-                        && level.getRandom().nextDouble() < 0.035) {
-                    Block.popResource(level, pos,
-                        new net.minecraft.world.item.ItemStack(ModItems.PRISMATIC_SHARD.get(), 1));
-                }
-                return;
-            }
-        }
-
-        // 1.5 远古斑点：被炸时不出古物，仅掉落普通黄土方块
-        if (state.is(ModBlocks.ARTIFACT_SPOT_DIRT.get())) {
-            Block.popResource(level, pos,
-                new net.minecraft.world.item.ItemStack(ModBlocks.YELLOW_DIRT.get()));
-            return;
-        }
         if (isPlantLikeBlock(state)) {
             return;
         }
@@ -465,10 +466,10 @@ public class StardewBombEntity extends Entity {
      */
     private static boolean isPlantLikeBlock(BlockState state) {
         Block b = state.getBlock();
+        if (com.stardew.craft.tree.WildTrees.findBySapling(state) != null) return true;
         // 模组植物
         if (b instanceof com.stardew.craft.block.crop.StardewCropBlock) return true;
         if (b instanceof com.stardew.craft.block.nature.WildWeedsBlock) return true;
-        if (b instanceof com.stardew.craft.block.tree.WildOakBranchBlock) return true;
         // 香草/模组通用植物：BushBlock 覆盖 PastureGrassBlock、DeadCropBlock 以及香草花/树苗
         if (b instanceof net.minecraft.world.level.block.BushBlock) return true;
         if (b instanceof net.minecraft.world.level.block.CropBlock) return true;
@@ -490,54 +491,24 @@ public class StardewBombEntity extends Entity {
         return false;
     }
 
-    /**
-     * SDV 矿石 → 产物映射（与 MinePickaxeEvents.getOreDropItem 一致）。
-     * 返回 null 表示不是矿石。
-     */
-    @Nullable
-    private static net.minecraft.world.item.Item getOreDropItem(BlockState state) {
-        @SuppressWarnings("null")
-        var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (key == null || !com.stardew.craft.StardewCraft.MODID.equals(key.getNamespace())) {
-            return null;
-        }
-        String path = key.getPath();
-        if (path.contains("coal_ore"))     return ModItems.COAL.get();
-        if (path.contains("copper_ore"))   return ModItems.COPPER_ORE.get();
-        if (path.contains("iron_ore"))     return ModItems.IRON_ORE.get();
-        if (path.contains("gold_ore"))     return ModItems.GOLD_ORE.get();
-        if (path.contains("iridium_ore"))  return ModItems.IRIDIUM_ORE.get();
-        return switch (path) {
-            case "amethyst_ore"   -> ModItems.AMETHYST.get();
-            case "aquamarine_ore" -> ModItems.AQUAMARINE.get();
-            case "diamond_ore"    -> ModItems.DIAMOND.get();
-            case "emerald_ore"    -> ModItems.EMERALD.get();
-            case "jade_ore"       -> ModItems.JADE.get();
-            case "ruby_ore"       -> ModItems.RUBY.get();
-            case "topaz_ore"      -> ModItems.TOPAZ.get();
-            default -> null;
-        };
-    }
+
 
     /**
      * SDV 伤害公式：怪物 r*6 ~ r*8，玩家自伤 r*3。
-     * 范围判定改为 MC 3D 友好的水平圆柱：水平半径跟随可见爆炸半径，垂直半径随炸弹等级增长但保持克制。
+     * 原版伤害使用 (2r+1) 格的矩形；MC 只选择同层的实体。
      */
     private void damageEntitiesInRadius(
             ServerLevel level,
-            BombType type,
+            int radius,
             @Nullable LivingEntity resolvedOwner
     ) {
-        double horizontalRadius = type.getScaledRadius();
-        double verticalRadius = Math.max(1.25D, type.getRadius() * 0.75D);
-        Vec3 center = new Vec3(this.getX(), this.getY() + 0.5D, this.getZ());
-        AABB damageBox = new AABB(center, center).inflate(horizontalRadius, verticalRadius, horizontalRadius);
+        int planeY = Mth.ceil(this.getY() - 1.0E-4D);
+        AABB damageBox = new AABB(getBlockX() - radius, planeY - 1, getBlockZ() - radius,
+                getBlockX() + radius + 1, planeY + 2, getBlockZ() + radius + 1);
         List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, damageBox);
 
         for (LivingEntity entity : entities) {
-            if (!isInsideBombDamageVolume(entity, center, horizontalRadius, verticalRadius)) {
-                continue;
-            }
+            if (Mth.ceil(entity.getY() - 1.0E-4D) != planeY) continue;
 
             DamageSource source = level.damageSources().explosion(
                     this,
@@ -548,101 +519,28 @@ public class StardewBombEntity extends Entity {
                 if (entity.hasEffect(ModMobEffects.DWARF_STATUE_3)) {
                     continue;
                 }
-                entity.hurt(source, type.getPlayerDamage());
+                entity.hurt(source, radius * 3);
             } else if (entity instanceof Mob) {
-                int damage = type.getMinDamage()
-                    + random.nextInt(type.getMaxDamage() - type.getMinDamage() + 1);
+                int damage = radius * 6 + random.nextInt(radius * 2 + 1);
                 entity.hurt(source, damage);
             }
         }
     }
 
-    private boolean isInsideBombDamageVolume(Entity entity, Vec3 center, double horizontalRadius, double verticalRadius) {
-        AABB box = entity.getBoundingBox().inflate(0.3D);
-        double closestX = Mth.clamp(center.x, box.minX, box.maxX);
-        double closestY = Mth.clamp(center.y, box.minY, box.maxY);
-        double closestZ = Mth.clamp(center.z, box.minZ, box.maxZ);
-        double dx = closestX - center.x;
-        double dy = Math.abs(closestY - center.y);
-        double dz = closestZ - center.z;
-        return dx * dx + dz * dz <= horizontalRadius * horizontalRadius && dy <= verticalRadius;
-    }
-
-    /**
-     * SDV: 爆炸粒子按炸弹类型区分。
-     * Cherry Bomb: 小型爆炸，少量烟雾
-     * Bomb: 中型爆炸 + 火焰+烟雾
-     * Mega Bomb: 大型爆炸 + 大量火焰+烟雾+余烬
-     */
-    private void spawnExplosionParticles(ServerLevel level, BlockPos center,
-                                         BombType type, float radius) {
-        int r = (int) Math.ceil(radius);
-        float radiusSq = radius * radius;
-
-        // 核心爆炸大小取决于炸弹类型
-        int emitterCount = switch (type) {
-            case CHERRY_BOMB -> 1;
-            case BOMB -> 2;
-            case MEGA_BOMB -> 3;
-        };
-        for (int i = 0; i < emitterCount; i++) {
-            double ox = (random.nextDouble() - 0.5) * radius * 0.5;
-            double oz = (random.nextDouble() - 0.5) * radius * 0.5;
-            level.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
-                center.getX() + 0.5 + ox, center.getY() + 0.5, center.getZ() + 0.5 + oz,
-                1, 0, 0, 0, 0);
-        }
-
-        // SDV: 45% 概率/格，随机碎片或粉尘
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dz = -r; dz <= r; dz++) {
-                if (dx * dx + dz * dz > radiusSq) continue;
-                if (random.nextFloat() > 0.45f) continue;
-
-                double px = center.getX() + dx + 0.5 + (random.nextDouble() - 0.5) * 0.5;
-                double py = center.getY() + 0.5 + random.nextDouble() * 1.5;
-                double pz = center.getZ() + dz + 0.5 + (random.nextDouble() - 0.5) * 0.5;
-
-                if (random.nextBoolean()) {
-                    level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                        px, py, pz, 1,
-                        0.2, 0.3, 0.2, 0.01);
-                } else {
-                    level.sendParticles(ParticleTypes.POOF,
-                        px, py - 0.3, pz, 1,
-                        0.1, 0.2, 0.1, 0.02);
-                }
-            }
-        }
-
-        // Bomb / Mega Bomb: 额外火焰粒子（模拟 SDV 大规模爆炸火焰）
-        if (type == BombType.BOMB || type == BombType.MEGA_BOMB) {
-            int fireCount = type == BombType.MEGA_BOMB ? 20 : 8;
-            for (int i = 0; i < fireCount; i++) {
-                double fx = center.getX() + 0.5 + (random.nextDouble() - 0.5) * radius * 2;
-                double fy = center.getY() + 0.5 + random.nextDouble() * 2.0;
-                double fz = center.getZ() + 0.5 + (random.nextDouble() - 0.5) * radius * 2;
-                level.sendParticles(ParticleTypes.FLAME,
-                    fx, fy, fz, 1,
-                    0.05, 0.15, 0.05, 0.03);
-            }
-        }
-
-        // Mega Bomb: 额外大型烟柱 + 余烬
-        if (type == BombType.MEGA_BOMB) {
-            for (int i = 0; i < 12; i++) {
-                double sx = center.getX() + 0.5 + (random.nextDouble() - 0.5) * radius * 1.5;
-                double sz = center.getZ() + 0.5 + (random.nextDouble() - 0.5) * radius * 1.5;
-                level.sendParticles(ParticleTypes.LARGE_SMOKE,
-                    sx, center.getY() + 1.0, sz, 1,
-                    0.1, 0.5, 0.1, 0.02);
-            }
-            for (int i = 0; i < 8; i++) {
-                double lx = center.getX() + 0.5 + (random.nextDouble() - 0.5) * radius * 2;
-                double lz = center.getZ() + 0.5 + (random.nextDouble() - 0.5) * radius * 2;
-                level.sendParticles(ParticleTypes.LAVA,
-                    lx, center.getY() + 0.5, lz, 1,
-                    0, 0.05, 0, 0);
+    /** Source-style ground bursts and short dust rings across the affected tile circle. */
+    private void spawnExplosionParticles(ServerLevel level, BlockPos center, float radius) {
+        for (BombBlastPattern.Tile tile : BombBlastPattern.circle((int) Math.ceil(radius))) {
+            double x = center.getX() + tile.x() + 0.5;
+            double z = center.getZ() + tile.z() + 0.5;
+            // SDV animations row 6: eight frames, distance * 20 ms per frame (not a start delay).
+            double frameMillis = Math.max(20, Math.hypot(tile.x(), tile.z()) * 20);
+            level.sendParticles(ModParticles.BOMB_BURST.get(), x, center.getY() + 0.5, z,
+                    0, frameMillis, 0, 1, 1);
+            if (random.nextFloat() < 0.45f) {
+                // The source's row-5 puff runs at 50 ms/frame and starts up to 200 ms later.
+                float size = 0.5f + random.nextInt(10) / 10.0f;
+                level.sendParticles(ModParticles.BOMB_DUST.get(), x, center.getY() + size / 2, z,
+                        0, 50, random.nextInt(200), size, 1);
             }
         }
     }

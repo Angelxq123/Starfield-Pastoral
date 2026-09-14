@@ -48,7 +48,7 @@ public record OpenMineExitDialogPayload(int currentFloor) implements CustomPacke
         // SDV GameLocation.performAction("ExitMine"):
         //   Response("Leave", "Mines_LeaveMine"), Response("Go", "Mines_GoUp"), Response("Do", "Mines_DoNothing")
         // 楼层0无需"上一层"选项
-        boolean canGoUp = payload.currentFloor() > 0;
+        boolean canGoUp = payload.currentFloor() > 0 && payload.currentFloor() <= 120;
 
         List<Component> responses = new java.util.ArrayList<>();
         responses.add(Component.translatable("stardewcraft.mine_exit.leave"));

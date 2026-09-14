@@ -1,7 +1,0 @@
-{
-  "variants": {
-    "type=bottom": { "model": "stardewcraft:block/cracked_slate_slab" },
-    "type=double": { "model": "stardewcraft:block/cracked_slate" },
-    "type=top": { "model": "stardewcraft:block/cracked_slate_slab_top" }
-  }
-}

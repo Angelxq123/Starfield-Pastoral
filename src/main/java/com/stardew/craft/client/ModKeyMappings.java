@@ -64,6 +64,17 @@ public final class ModKeyMappings {
             CATEGORY
     );
 
+    public static final KeyMapping BUILDING_ROTATE = new KeyMapping(
+            "key.stardewcraft.building_rotate", new net.neoforged.neoforge.client.settings.IKeyConflictContext() {
+                @Override public boolean isActive() {
+                    var mc = net.minecraft.client.Minecraft.getInstance();
+                    return mc.screen == null && mc.player != null && (mc.player.getMainHandItem().getItem() instanceof com.stardew.craft.building.runtime.BuildingBlueprintItem
+                            || mc.player.getOffhandItem().getItem() instanceof com.stardew.craft.building.runtime.BuildingBlueprintItem);
+                }
+                @Override public boolean conflicts(net.neoforged.neoforge.client.settings.IKeyConflictContext other) { return other == this; }
+            },
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY);
+
     private ModKeyMappings() {}
 
     /**
@@ -83,5 +94,6 @@ public final class ModKeyMappings {
         event.register(GAME_MENU);
         event.register(QUEST_LOG);
         event.register(CUTSCENE_SKIP);
+        event.register(BUILDING_ROTATE);
     }
 }

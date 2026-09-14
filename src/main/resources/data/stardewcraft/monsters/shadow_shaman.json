@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "source_name": "Shadow Shaman",
+  "family": "shadow_shaman",
+  "health": 80,
+  "damage": 17,
+  "resilience": 2,
+  "miss_chance": 0,
+  "experience": 15,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:void_essence",
+      "chance": 0.75
+    },
+    {
+      "item": "stardewcraft:void_essence",
+      "chance": 0.2
+    },
+    {
+      "item": "stardewcraft:iridium_bar",
+      "chance": 0.002
+    },
+    {
+      "item": "stardewcraft:gold_bar",
+      "chance": 0.01
+    },
+    {
+      "item": "stardewcraft:iron_bar",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:copper_bar",
+      "chance": 0.04
+    },
+    {
+      "item": "stardewcraft:rare_disc",
+      "chance": 0.003
+    },
+    {
+      "item": "-4",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    },
+    {
+      "item": "stardewcraft:prismatic_shard",
+      "chance": 0.0005
+    }
+  ]
+}

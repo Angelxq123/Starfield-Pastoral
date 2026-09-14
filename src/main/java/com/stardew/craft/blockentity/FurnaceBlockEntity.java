@@ -156,7 +156,7 @@ public class FurnaceBlockEntity extends TimedProductionBlockEntity {
         Item outputItem = BuiltInRegistries.ITEM.get(
                 recipe.outputId());
         ItemStack output = new ItemStack(
-                outputItem, recipe.outputCount());
+                outputItem, recipe.rollOutputCount(level.random));
         var plan = prepareProduction(
                 stack, output, recipe.minutes(),
                 player, false);
@@ -225,7 +225,7 @@ public class FurnaceBlockEntity extends TimedProductionBlockEntity {
         Item outputItem = BuiltInRegistries.ITEM.get(
                 recipe.outputId());
         ItemStack output = new ItemStack(
-                outputItem, recipe.outputCount());
+                outputItem, (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
         var plan = prepareProduction(
                 stack, output, recipe.minutes(),
                 null, true);

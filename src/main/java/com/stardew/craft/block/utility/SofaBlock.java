@@ -129,6 +129,8 @@ public class SofaBlock extends Block {
             return InteractionResult.SUCCESS;
         }
 
+        if (com.stardew.craft.npc.runtime.NpcSupportTarget.occupied((net.minecraft.server.level.ServerLevel)level,pos))
+            return InteractionResult.CONSUME;
         SofaSeatEntity seat = SofaSeatEntity.getOrCreate((net.minecraft.server.level.ServerLevel) level, pos);
         if (seat == null) {
             return InteractionResult.PASS;

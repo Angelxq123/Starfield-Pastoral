@@ -1,0 +1,436 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_000",
+      "scene_offset": [
+        48,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_001",
+      "scene_offset": [
+        48,
+        0,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_002",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_003",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_004",
+      "scene_offset": [
+        32,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_005",
+      "scene_offset": [
+        48,
+        0,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_006",
+      "scene_offset": [
+        16,
+        0,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_007",
+      "scene_offset": [
+        32,
+        0,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_008",
+      "scene_offset": [
+        0,
+        0,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_009",
+      "scene_offset": [
+        48,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_010",
+      "scene_offset": [
+        48,
+        32,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_011",
+      "scene_offset": [
+        48,
+        16,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_012",
+      "scene_offset": [
+        48,
+        32,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_013",
+      "scene_offset": [
+        0,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_014",
+      "scene_offset": [
+        0,
+        32,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_015",
+      "scene_offset": [
+        0,
+        16,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_016",
+      "scene_offset": [
+        0,
+        32,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_017",
+      "scene_offset": [
+        48,
+        32,
+        16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_018",
+      "scene_offset": [
+        0,
+        32,
+        16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_019",
+      "scene_offset": [
+        32,
+        16,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_020",
+      "scene_offset": [
+        16,
+        16,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_021",
+      "scene_offset": [
+        32,
+        48,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_022",
+      "scene_offset": [
+        32,
+        48,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_023",
+      "scene_offset": [
+        48,
+        48,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_024",
+      "scene_offset": [
+        48,
+        48,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_025",
+      "scene_offset": [
+        16,
+        48,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_026",
+      "scene_offset": [
+        16,
+        48,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_027",
+      "scene_offset": [
+        16,
+        32,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_028",
+      "scene_offset": [
+        48,
+        16,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_029",
+      "scene_offset": [
+        0,
+        16,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_030",
+      "scene_offset": [
+        32,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_031",
+      "scene_offset": [
+        16,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_032",
+      "scene_offset": [
+        64,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_033",
+      "scene_offset": [
+        80,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_034",
+      "scene_offset": [
+        80,
+        32,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_035",
+      "scene_offset": [
+        80,
+        16,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_036",
+      "scene_offset": [
+        64,
+        16,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_037",
+      "scene_offset": [
+        -16,
+        32,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_038",
+      "scene_offset": [
+        -16,
+        16,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_039",
+      "scene_offset": [
+        -16,
+        16,
+        0
+      ],
+      "emissive": true
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_040",
+      "scene_offset": [
+        80,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_041",
+      "scene_offset": [
+        64,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_042",
+      "scene_offset": [
+        -16,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_043",
+      "scene_offset": [
+        64,
+        16,
+        32
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_044",
+      "scene_offset": [
+        0,
+        0,
+        0
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_045",
+      "scene_offset": [
+        64,
+        0,
+        -16
+      ],
+      "emissive": false
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_046",
+      "scene_offset": [
+        80,
+        16,
+        -16
+      ],
+      "emissive": true
+    },
+    {
+      "model": "stardewcraft:block/bookseller/bookseller_stall/part_047",
+      "scene_offset": [
+        64,
+        16,
+        -16
+      ],
+      "emissive": true
+    }
+  ]
+}

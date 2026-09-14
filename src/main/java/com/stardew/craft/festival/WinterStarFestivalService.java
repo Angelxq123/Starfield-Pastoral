@@ -249,10 +249,15 @@ public final class WinterStarFestivalService {
     }
 
     public static boolean tryPromptSecretGift(ServerPlayer player, StardewNpcEntity npc, String npcId) {
+        return tryPromptSecretGift(player, npc, npcId, () -> {});
+    }
+
+    public static boolean tryPromptSecretGift(ServerPlayer player, StardewNpcEntity npc, String npcId, Runnable onOpened) {
         if (player == null || npc == null || npcId == null || !isInteractionEnabled(player)) {
             return false;
         }
         if (tryDeliverPendingReturnGift(player)) {
+            onOpened.run();
             return true;
         }
         if (hasSecretGiftCompleted(player)
@@ -262,8 +267,11 @@ public final class WinterStarFestivalService {
         com.stardew.craft.npc.data.NpcCapabilityProfile profile =
             com.stardew.craft.npc.data.NpcDataRegistry.capabilities().get(npcId.toLowerCase(java.util.Locale.ROOT));
         boolean female = profile != null && profile.gender() == com.stardew.craft.npc.data.NpcCapabilityProfile.GENDER_FEMALE;
-        npc.facePlayerTemporarily(player, 60, () -> PacketDistributor.sendToPlayer(player,
-            new OpenWinterStarGiftPromptPayload(npcId, npc.getDisplayName().getString(), female)));
+        npc.facePlayerTemporarily(player, 60, () -> {
+            PacketDistributor.sendToPlayer(player,
+                new OpenWinterStarGiftPromptPayload(npcId, npc.getDisplayName().getString(), female));
+            onOpened.run();
+        });
         return true;
     }
 

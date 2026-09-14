@@ -30,6 +30,18 @@ public class TomatoSeedItem extends Item implements IStardewItem {
         return 12;
     }
 
+    protected Block getCropBlock() {
+        return ModBlocks.TOMATO_CROP.get();
+    }
+
+    protected boolean isPlantingAllowed(Level level, BlockPos pos, int season) {
+        return com.stardew.craft.farming.SeasonLocationRules.isPlantingSeasonAllowed(level, pos, season, 1);
+    }
+
+    protected String getPlantingDeniedMessageKey() {
+        return "stardewcraft.message.seed.wrong_season";
+    }
+
     @SuppressWarnings("null")
     @Override
     public InteractionResult useOn(@SuppressWarnings("null") UseOnContext context) {
@@ -51,10 +63,10 @@ public class TomatoSeedItem extends Item implements IStardewItem {
 
         if (!level.isClientSide) {
             int season = StardewTimeManager.get().getCurrentSeason();
-            if (!com.stardew.craft.farming.SeasonLocationRules.isPlantingSeasonAllowed(level, abovePos, season, 1)) {
+            if (!isPlantingAllowed(level, abovePos, season)) {
                 if (context.getPlayer() != null) {
                     context.getPlayer().displayClientMessage(
-                            net.minecraft.network.chat.Component.translatable("stardewcraft.message.seed.wrong_season"),
+                            net.minecraft.network.chat.Component.translatable(getPlantingDeniedMessageKey()),
                             true);
                 }
                 return InteractionResult.FAIL;
@@ -62,7 +74,7 @@ public class TomatoSeedItem extends Item implements IStardewItem {
         }
 
         if (!level.isClientSide) {
-            level.setBlock(abovePos, ModBlocks.TOMATO_CROP.get().defaultBlockState(), 3);
+            level.setBlock(abovePos, getCropBlock().defaultBlockState(), 3);
             level.playSound(null, abovePos,
                     net.minecraft.sounds.SoundEvents.HOE_TILL,
                     net.minecraft.sounds.SoundSource.BLOCKS,
@@ -83,4 +95,3 @@ public class TomatoSeedItem extends Item implements IStardewItem {
         return blockId.contains("farmland");
     }
 }
-

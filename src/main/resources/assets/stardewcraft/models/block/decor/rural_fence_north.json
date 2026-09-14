@@ -1,0 +1,156 @@
+{
+  "format_version": "1.21.11",
+  "credit": "Made with Blockbench",
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/decor/rural_fence",
+    "particle": "stardewcraft:block/decor/rural_fence_particle"
+  },
+  "elements": [
+    {
+      "name": "东下横杆",
+      "from": [
+        6,
+        9,
+        0
+      ],
+      "to": [
+        10,
+        13,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13,
+            9,
+            14,
+            10
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            7.75,
+            7.75,
+            9,
+            8.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.75,
+            9,
+            12.75,
+            10
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            9.25,
+            7.75,
+            10.5,
+            8.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6.25,
+            7.75,
+            7.5,
+            8.75
+          ],
+          "texture": "#0",
+          "rotation": 270
+        },
+        "down": {
+          "uv": [
+            10.75,
+            7.75,
+            12,
+            8.75
+          ],
+          "texture": "#0",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "东上横杆",
+      "from": [
+        6,
+        21,
+        0
+      ],
+      "to": [
+        10,
+        25,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.5,
+            9,
+            11.5,
+            10
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            1.75,
+            7.75,
+            3,
+            8.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            9.25,
+            9,
+            10.25,
+            10
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            7.75,
+            4.5,
+            8.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0.25,
+            7.75,
+            1.5,
+            8.75
+          ],
+          "texture": "#0",
+          "rotation": 270
+        },
+        "down": {
+          "uv": [
+            4.75,
+            7.75,
+            6,
+            8.75
+          ],
+          "texture": "#0",
+          "rotation": 90
+        }
+      }
+    }
+  ]
+}

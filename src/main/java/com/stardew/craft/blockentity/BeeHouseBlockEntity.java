@@ -1,5 +1,6 @@
 package com.stardew.craft.blockentity;
 
+import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.crop.StardewCropBlock;
 import com.stardew.craft.block.utility.BeeHouseBlock;
@@ -30,7 +31,6 @@ import java.util.List;
  */
 public class BeeHouseBlockEntity extends TimedProductionBlockEntity {
 	private static final int EFFECTIVE_MINUTES_PER_DAY = 1260;
-	private static final int DAYS_UNTIL_READY = 4;
 	private static final int WILD_HONEY_VALUE = 100;
 
 	private static final String TAG_READY_AT = "readyAtAbsMinute";
@@ -84,7 +84,7 @@ public class BeeHouseBlockEntity extends TimedProductionBlockEntity {
 	}
 
 	private void startCycle(Level level, BlockPos pos, BlockState state) {
-		readyAtAbsMinute = getCurrentAbsMinute() + (long) DAYS_UNTIL_READY * (long) EFFECTIVE_MINUTES_PER_DAY;
+		readyAtAbsMinute = MachineProductionData.cycle("bee_house", "default").deadline(getCurrentAbsMinute(), "bee_house");
 		ready = false;
 		setChanged();
 		syncToClient();

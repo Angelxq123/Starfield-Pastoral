@@ -1,11 +1,14 @@
 package com.stardew.craft.combat.skill.handler;
 
 import com.stardew.craft.combat.network.TremorBlockPayload;
+import com.stardew.craft.combat.network.MeleeImpactPayload;
 import com.stardew.craft.combat.equipment.EquipmentMobEffectHandler;
 import com.stardew.craft.combat.equipment.EquipmentNegativeStatusProtection;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
 import com.stardew.craft.combat.skill.WeaponSkillDamage;
+import com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher;
+import com.stardew.craft.combat.skill.WeaponGroundContact;
 import com.stardew.craft.combat.skill.runtime.DeferredSkillCooldown;
 import com.stardew.craft.combat.skill.runtime.SkillExecutionContext;
 import com.stardew.craft.combat.skill.runtime.SkillInstance;
@@ -18,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -151,6 +153,7 @@ final class FemurSlamExecutionState
             return;
         }
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(player, context.weaponId().getPath(), "femur_slam", 8);
         List<LivingEntity> targets = findTargetsInArc(
                 player,
                 FemurSlamSkillHandler.RANGE,
@@ -188,6 +191,15 @@ final class FemurSlamExecutionState
         }
         spawnQuakeImpact(level, player);
         spawnTremorBurst(level, player, FemurSlamSkillHandler.RANGE);
+        Vec3 look = player.getLookAngle();
+        Vec3 forward = new Vec3(look.x, 0, look.z).normalize();
+        var contact = WeaponGroundContact.find(level, player, player.position().add(forward.scale(0.85)));
+        if (contact != null) {
+            Vec3 point = contact.getLocation();
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new MeleeImpactPayload(
+                    player.getId(), -1, context.nowTick(), MeleeImpactPayload.Kind.GROUND, context.weaponId().getPath(),
+                    point.x, point.y, point.z, false));
+        }
 
         level.playSound(
                 null,
@@ -335,8 +347,10 @@ final class FemurSlamExecutionState
             ServerLevel level,
             Player player
     ) {
-        Vec3 center = player.position();
-        double baseY = player.getY() + 0.05D;
+        var contact = WeaponGroundContact.find(level, player, player.position());
+        if (contact == null) return;
+        Vec3 center = contact.getLocation();
+        double baseY = center.y + 0.05D;
 
         level.sendParticles(
                 ParticleTypes.POOF,
@@ -376,7 +390,7 @@ final class FemurSlamExecutionState
                 FemurSlamSkillHandler.QUAKE_TREMOR_MAX,
                 Math.max(18, (int) (radius * radius * 0.6D))
         );
-        spawnTremorAt(level, center, random, 0.32F, 14);
+        spawnTremorAt(level, player, center, random, 0.32F, 14);
         for (int index = 0; index < tremorCount; index++) {
             Vec3 offset = randomPointInArc(random, radius);
             if (offset.lengthSqr() < 0.0001D) {
@@ -392,6 +406,7 @@ final class FemurSlamExecutionState
             }
             spawnTremorAt(
                     level,
+                    player,
                     center.add(offset),
                     random,
                     0.22F,
@@ -402,21 +417,16 @@ final class FemurSlamExecutionState
 
     private static void spawnTremorAt(
             ServerLevel level,
+            Player player,
             Vec3 position,
             RandomSource random,
             float ySpeed,
             int count
     ) {
-        BlockState ground = level.getBlockState(
-                BlockPos.containing(
-                        position.x,
-                        position.y,
-                        position.z
-                ).below()
-        );
-        if (ground.isAir()) {
-            return;
-        }
+        var contact = WeaponGroundContact.find(level, player, position);
+        if (contact == null) return;
+        BlockState ground = level.getBlockState(contact.getBlockPos());
+        position = contact.getLocation();
         BlockParticleOption debris = new BlockParticleOption(
                 Objects.requireNonNull(ParticleTypes.BLOCK),
                 ground
@@ -443,8 +453,8 @@ final class FemurSlamExecutionState
                 0.05D,
                 0.02D
         );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
+        PacketDistributor.sendToPlayersNear(
+                level, null, position.x, position.y, position.z, 48,
                 new TremorBlockPayload(
                         (float) position.x,
                         (float) position.y + 0.05F,

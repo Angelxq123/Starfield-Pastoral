@@ -107,6 +107,12 @@ final class CarvingThrustExecutionState
                 .build();
         WeaponDamageSnapshot weaponSnapshot =
                 executionContext.weaponSnapshot();
+        if ("carving_knife".equals(executionContext.weaponId().getPath())) {
+            com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    player, executionContext.weaponId().getPath(),
+                    bonusStrike ? "carving_thrust_bonus" : "carving_thrust_strike",
+                    bonusStrike ? 4 : CarvingThrustSkillHandler.STRIKE_INTERVAL_TICKS);
+        }
         WeaponSkillDamage.apply(
                 player,
                 target,

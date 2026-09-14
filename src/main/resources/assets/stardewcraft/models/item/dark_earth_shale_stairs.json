@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/dark_earth_shale_stairs",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/dark_earth_shale"
-                 }
-}

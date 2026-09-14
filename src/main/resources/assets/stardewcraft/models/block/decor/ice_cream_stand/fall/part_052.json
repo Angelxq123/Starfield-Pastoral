@@ -1,0 +1,70 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "0": "stardewcraft:block/decor/ice_cream_stand/fall/ice_cream_stand_fall",
+    "particle": "stardewcraft:block/decor/ice_cream_stand/fall/stand_pumpkin_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        7,
+        4
+      ],
+      "to": [
+        12,
+        9,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            7.0,
+            8.0,
+            7.5,
+            8.125
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            8.125,
+            8.0,
+            8.625,
+            8.125
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            7.5625,
+            8.0,
+            8.0625,
+            8.125
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            8.6875,
+            8.0,
+            9.1875,
+            8.125
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            9.25,
+            8.0,
+            9.75,
+            8.5
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

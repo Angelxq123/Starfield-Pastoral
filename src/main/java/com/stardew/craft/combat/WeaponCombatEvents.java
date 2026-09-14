@@ -261,6 +261,10 @@ public class WeaponCombatEvents {
                         skillContext,
                         equipStats
                 ).toBuilder();
+        if(source.getDirectEntity() instanceof com.stardew.craft.entity.projectile.SlingshotProjectile projectile) {
+            // Ammunition and equipment multiplier were rolled once at release; common impact bonuses remain below.
+            damageRequest.baseDamage(projectile.releasedDamage(), projectile.releasedDamage() + 1);
+        }
         boolean inStardewDimension =
                 DimensionDamageMapper.isInStardewDimension(target);
         if (customProtection != null) {
@@ -468,7 +472,10 @@ public class WeaponCombatEvents {
                     difficultyMultiplier,
                     "difficultyMultiplier"
             );
-            requireNonNegativeFinite(defense, "defense");
+            // Jinxed subtracts eight defense and may legitimately increase incoming damage.
+            if (!Float.isFinite(defense)) {
+                throw new IllegalArgumentException("defense must be finite");
+            }
         }
     }
 
@@ -554,11 +561,10 @@ public class WeaponCombatEvents {
             return admission(WeaponDamageProvenance.THORNS);
         }
         if (source.is(DamageTypeTags.IS_PROJECTILE)) {
-            // Pending context alone is never provenance. Meowmere is the one
-            // authored weapon projectile that binds its immutable release
-            // snapshot synchronously around this exact hurt call.
-            WeaponDamageProvenance provenance = source.getDirectEntity()
-                            instanceof MeowmereProjectileEntity
+            // Pending context alone is never provenance. These authored projectiles
+            // bind an immutable release snapshot around this exact hurt call.
+            WeaponDamageProvenance provenance = (source.getDirectEntity() instanceof MeowmereProjectileEntity
+                    || source.getDirectEntity() instanceof com.stardew.craft.entity.projectile.SlingshotProjectile)
                     && WeaponSkillContextStore.hasPending(player, nowTick)
                     ? WeaponDamageProvenance.PROJECT_SKILL
                     : WeaponDamageProvenance.PROJECTILE;

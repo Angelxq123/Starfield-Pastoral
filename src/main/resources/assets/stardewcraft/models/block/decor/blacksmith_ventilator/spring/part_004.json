@@ -1,0 +1,34 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "stardewcraft:block/decor/blacksmith_ventilator/spring/ventilator_spring",
+    "particle": "stardewcraft:block/decor/blacksmith_ventilator/spring/ventilator_spring_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -4,
+        8,
+        -3
+      ],
+      "to": [
+        20,
+        8,
+        19
+      ],
+      "faces": {
+        "up": {
+          "texture": "#0",
+          "uv": [
+            7.0625,
+            0.0625,
+            8.5625,
+            1.4375
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

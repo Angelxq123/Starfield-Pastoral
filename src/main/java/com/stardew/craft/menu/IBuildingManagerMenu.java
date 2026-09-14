@@ -39,6 +39,8 @@ public interface IBuildingManagerMenu {
     boolean isAtMaxTier();
     boolean hasExistingBuilding();
     int getBoundAnimalCount();
+    int getCurrentCapacity();
+    int getTargetCapacity();
 
     default boolean isRevalidating() {
         return hasExistingBuilding()

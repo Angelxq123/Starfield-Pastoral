@@ -65,7 +65,8 @@ public class MiningFloorHud {
         }
 
         // Dynamically calculate floor based on player Z position!
-        currentFloor = (int) Math.max(0, Math.round(mc.player.getZ() / MiningCoordinates.FLOOR_SPACING));
+        currentFloor = com.stardew.craft.mining.OrdinaryMineRuntime.floorAt(mc.player.blockPosition());
+        if(currentFloor<0)return;
 
         
         GuiGraphics guiGraphics = event.getGuiGraphics();
@@ -88,8 +89,8 @@ public class MiningFloorHud {
             SLOT_SIZE, SLOT_SIZE,
             SLOT_SIZE, SLOT_SIZE);
         
-        // 层数文本（骷髅矿从 121 开始显示为 0，下一层显示 1...）
-        int displayFloor = currentFloor >= 121 ? (currentFloor - 121) : currentFloor;
+        // 层数文本（骷髅矿内部 121 对应第 1 层...）
+        int displayFloor = currentFloor >= 121 ? (currentFloor - 120) : currentFloor;
         String floorText = String.valueOf(displayFloor);
         
         // 栗色（Maroon） RGB(128, 0, 0) = 0x800000

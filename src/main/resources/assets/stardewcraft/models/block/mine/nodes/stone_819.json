@@ -1,0 +1,169 @@
+{
+  "parent": "minecraft:block/block",
+  "credit": "StardewCraft: source stone 819 reference; original per-face pixel art matched to mine environment",
+  "textures": {
+    "0": "stardewcraft:block/mine/nodes/stone_819",
+    "particle": "stardewcraft:block/mine/nodes/stone_819_particle"
+  },
+  "stardewcraft:collision": {
+    "mode": "aabb"
+  },
+  "elements": [
+    {
+      "name": "灰紫晶洞主体",
+      "from": [
+        3,
+        -3,
+        3
+      ],
+      "to": [
+        13,
+        8,
+        13
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          3,
+          8
+        ],
+        "axis": "y",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            0.0,
+            2.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.75,
+            0.0,
+            5.25,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            5.5,
+            0.0,
+            8.0,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.25,
+            0.0,
+            10.75,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.0,
+            0.0,
+            13.5,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0.0,
+            3.0,
+            2.5,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "偏后晶洞顶",
+      "from": [
+        4,
+        4,
+        5
+      ],
+      "to": [
+        12,
+        11,
+        12
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          6,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            2.75,
+            3.0,
+            4.75,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            5.0,
+            3.0,
+            7.0,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            7.25,
+            3.0,
+            9.25,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            9.5,
+            3.0,
+            11.5,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.75,
+            3.0,
+            13.5,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.75,
+            3.0,
+            15.5,
+            4.75
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

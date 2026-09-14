@@ -1,0 +1,67 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/spring/swing_spring",
+    "particle": "stardewcraft:block/double_swing/spring/swing_cable_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -0.5,
+        -13,
+        -8.5
+      ],
+      "to": [
+        0.5,
+        8,
+        -7.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            10.8125,
+            2.0625,
+            10.84375,
+            2.71875
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            10.9375,
+            2.0625,
+            10.96875,
+            2.71875
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            10.875,
+            2.0625,
+            10.90625,
+            2.71875
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            11.0,
+            2.0625,
+            11.03125,
+            2.71875
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            11.0625,
+            2.0625,
+            11.09375,
+            2.09375
+          ]
+        }
+      }
+    }
+  ]
+}

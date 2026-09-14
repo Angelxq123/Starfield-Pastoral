@@ -131,7 +131,7 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
     }
 
     private boolean pickup(Level level, BlockPos pos, Player player) {
-        ItemStack food = createFoodStack();
+        ItemStack food = createFoodStack(level, pos);
         if (food.isEmpty()) {
             return false;
         }
@@ -147,7 +147,7 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
     }
 
     private boolean eat(Level level, BlockPos pos, Player player) {
-        ItemStack food = createFoodStack();
+        ItemStack food = createFoodStack(level, pos);
         if (food.isEmpty() || !food.has(DataComponents.FOOD)) {
             return false;
         }
@@ -159,7 +159,13 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
         return true;
     }
 
-    private @Nonnull ItemStack createFoodStack() {
+    private @Nonnull ItemStack createFoodStack(Level level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof CookingPlacedFoodBlockEntity foodEntity) {
+            ItemStack stored = foodEntity.getStoredFood();
+            if (!stored.isEmpty()) {
+                return stored;
+            }
+        }
         Item item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, itemId));
         if (item == Items.AIR) {
             return ItemStack.EMPTY;

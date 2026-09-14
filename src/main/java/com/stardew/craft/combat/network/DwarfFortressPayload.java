@@ -36,16 +36,11 @@ public record DwarfFortressPayload(boolean active, int durationTicks) implements
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(DwarfFortressPayload payload) {
+        com.stardew.craft.client.weapon.DwarfWeaponVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;
             com.stardew.craft.client.weapon.DwarfFortressClientState.start(nowTick, payload.durationTicks());
-            if (mc.player != null) {
-                com.stardew.craft.client.weapon.SkillEffectsClient.playSkillEffects(
-                        "dwarf_fortress",
-                        mc.player
-                );
-            }
         } else {
             com.stardew.craft.client.weapon.DwarfFortressClientState.clear();
         }

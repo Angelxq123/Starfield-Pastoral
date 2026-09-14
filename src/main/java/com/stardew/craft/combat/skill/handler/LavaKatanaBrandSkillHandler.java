@@ -61,6 +61,9 @@ public final class LavaKatanaBrandSkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        // Enqueue the cast before its synchronous impact so observers have its pose ready.
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(), weaponId, skillId, ANIMATION_TICKS);
         instance.registerCommittedEffect(() -> {
             LavaKatanaMarkTracker.prepareRelease(
                     target,
@@ -85,12 +88,6 @@ public final class LavaKatanaBrandSkillHandler
             }
         });
 
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

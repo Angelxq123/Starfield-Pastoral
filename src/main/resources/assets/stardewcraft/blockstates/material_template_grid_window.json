@@ -1,0 +1,1284 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_glass",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_0_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_1_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "2"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_2_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "3"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_3_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "4"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_4_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "5"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_5_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "6"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_6_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "7"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_7_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "8"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_8_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "9"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_9_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "10"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_10_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "11"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_11_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "12"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_12_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "13"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_13_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "14"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_14_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "connections": "15"
+      },
+      "apply": {
+        "model": "stardewcraft:block/material_templates/grid_window_15_glass",
+        "y": 270
+      }
+    }
+  ]
+}

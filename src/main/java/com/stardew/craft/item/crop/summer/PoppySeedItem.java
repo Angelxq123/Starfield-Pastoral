@@ -50,7 +50,7 @@ public class PoppySeedItem extends Item implements IStardewItem {
 
         BlockPos abovePos = Objects.requireNonNull(pos.above(), "abovePos");
         BlockState aboveState = level.getBlockState(abovePos);
-        if (!aboveState.isAir()) {
+        if (!aboveState.isAir() || !level.getBlockState(abovePos.above()).isAir()) {
             return InteractionResult.PASS;
         }
 

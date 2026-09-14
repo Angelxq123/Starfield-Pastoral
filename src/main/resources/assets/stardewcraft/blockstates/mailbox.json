@@ -1,12 +1,20 @@
 {
   "variants": {
-    "facing=north,part=main": { "model": "stardewcraft:block/utility/mailbox" },
-    "facing=east,part=main": { "model": "stardewcraft:block/utility/mailbox", "y": 90 },
-    "facing=south,part=main": { "model": "stardewcraft:block/utility/mailbox", "y": 180 },
-    "facing=west,part=main": { "model": "stardewcraft:block/utility/mailbox", "y": 270 },
-    "facing=north,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
-    "facing=east,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
-    "facing=south,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
-    "facing=west,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" }
+    "facing=north,has_mail=false,part=main": { "model": "stardewcraft:block/utility/mailbox" },
+    "facing=east,has_mail=false,part=main": { "model": "stardewcraft:block/utility/mailbox", "y": 90 },
+    "facing=south,has_mail=false,part=main": { "model": "stardewcraft:block/utility/mailbox", "y": 180 },
+    "facing=west,has_mail=false,part=main": { "model": "stardewcraft:block/utility/mailbox", "y": 270 },
+    "facing=north,has_mail=true,part=main": { "model": "stardewcraft:block/utility/mailbox_has_mail" },
+    "facing=east,has_mail=true,part=main": { "model": "stardewcraft:block/utility/mailbox_has_mail", "y": 90 },
+    "facing=south,has_mail=true,part=main": { "model": "stardewcraft:block/utility/mailbox_has_mail", "y": 180 },
+    "facing=west,has_mail=true,part=main": { "model": "stardewcraft:block/utility/mailbox_has_mail", "y": 270 },
+    "facing=north,has_mail=false,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=east,has_mail=false,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=south,has_mail=false,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=west,has_mail=false,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=north,has_mail=true,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=east,has_mail=true,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=south,has_mail=true,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" },
+    "facing=west,has_mail=true,part=extension": { "model": "stardewcraft:block/utility/mailbox_extension" }
   }
 }

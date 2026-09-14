@@ -153,7 +153,8 @@ public final class EquipmentPlayerAttributes {
         float defense = equipment.getDefense()
                 + mainHandStats.getDefense()
                 + data.getTempDefenseBonus()
-                + BookPowerEffects.getDefenseBonus(data);
+                + BookPowerEffects.getDefenseBonus(data)
+                - (player.hasEffect(com.stardew.craft.effect.ModMobEffects.JINXED) ? 8 : 0);
         syncModifier(
                 player.getAttribute(Attributes.ARMOR),
                 DEFENSE_ID,

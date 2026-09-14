@@ -56,7 +56,7 @@ public class IceSpineEffectRenderer extends EntityRenderer<IceSpineEffectEntity>
         mc.getItemRenderer().renderModelLists(
             model,
             ItemStack.EMPTY,
-            packedLight,
+            entity.isGroundWave() ? net.minecraft.client.renderer.LightTexture.FULL_BRIGHT : packedLight,
             OverlayTexture.NO_OVERLAY,
             poseStack,
             consumer

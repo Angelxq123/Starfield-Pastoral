@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "source_name": "Duggy",
+  "family": "duggy",
+  "health": 40,
+  "damage": 6,
+  "resilience": 0,
+  "miss_chance": 0,
+  "experience": 10,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:cherry_bomb",
+      "chance": 0.25
+    },
+    {
+      "item": "stardewcraft:geode",
+      "chance": 0.25
+    },
+    {
+      "item": "stardewcraft:yam",
+      "chance": 0.03
+    },
+    {
+      "item": "stardewcraft:chewing_stick",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:earth_crystal",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:diamond",
+      "chance": 0.01
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_i",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui.casino;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.SdvFontAdapter;
 import com.stardew.craft.network.payload.CasinoGameActionPayload;
@@ -87,7 +91,7 @@ public final class SlotsScreen extends Screen {
     @Override
     protected void init() {
         viewport = new CasinoViewport(
-                width, height, (float) Minecraft.getInstance().getWindow().getGuiScale());
+                width, height, (float) StardewGuiViewport.REFERENCE_SCALE);
         layoutButtons();
     }
 
@@ -362,7 +366,7 @@ public final class SlotsScreen extends Screen {
     }
 
     private int renderedTextHeight(float multiplier) {
-        return Math.max(1, Math.round(font.lineHeight * textScale(multiplier)));
+        return Math.max(1, Math.round(StardewFonts.lineHeight(font) * textScale(multiplier)));
     }
 
     private void drawText(

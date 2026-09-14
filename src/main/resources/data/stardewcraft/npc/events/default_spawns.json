@@ -2,10 +2,18 @@
   "event_id": "default_spawns",
   "spawns": {
     "abigail": {
-      "x": 154.5,
-      "y": -13.0,
-      "z": 122.5,
-      "yaw": 180.0
+      "x": 32.5,
+      "y": 37,
+      "z": -38.5,
+      "yaw": 180.0,
+      "retired_positions": [
+        {
+          "x": 154.5,
+          "y": -13.0,
+          "z": 122.5
+        }
+      ],
+      "point": "abigail_seedshop_indoor_target"
     },
     "alex": {
       "x": 59.5,
@@ -14,16 +22,32 @@
       "yaw": 180.0
     },
     "caroline": {
-      "x": 148.5,
-      "y": -13.0,
-      "z": 122.5,
-      "yaw": 180.0
+      "x": 57.5,
+      "y": 37,
+      "z": -40.5,
+      "yaw": 180.0,
+      "retired_positions": [
+        {
+          "x": 148.5,
+          "y": -13.0,
+          "z": 122.5
+        }
+      ],
+      "point": "caroline_schedule_01"
     },
     "lewis": {
-      "x": 151.5,
-      "y": -13.0,
-      "z": 116.5,
-      "yaw": 0.0
+      "x": 56.5,
+      "y": 50,
+      "z": 21.5,
+      "yaw": 0.0,
+      "retired_positions": [
+        {
+          "x": 151.5,
+          "y": -13.0,
+          "z": 116.5
+        }
+      ],
+      "point": "lewis_manorhouse_living"
     },
     "clint": {
       "x": 104.5,
@@ -38,10 +62,18 @@
       "yaw": 0.0
     },
     "elliott": {
-      "x": 17670.5,
-      "y": 71.0,
-      "z": 18247.5,
-      "yaw": -90.0
+      "x": 73.5,
+      "y": 45,
+      "z": 97.5,
+      "yaw": -90.0,
+      "retired_positions": [
+        {
+          "x": 17670.5,
+          "y": 71.0,
+          "z": 18247.5
+        }
+      ],
+      "point": "elliott_house_write"
     },
     "evelyn": {
       "x": 40.5,
@@ -68,10 +100,18 @@
       "yaw": 90.0
     },
     "haley": {
-      "x": 17096.5,
-      "y": 71.0,
-      "z": 17671.5,
-      "yaw": -90.0
+      "x": -3.5,
+      "y": 24,
+      "z": 23.5,
+      "yaw": -90.0,
+      "retired_positions": [
+        {
+          "x": 17096.5,
+          "y": 71.0,
+          "z": 17671.5
+        }
+      ],
+      "point": "haley_haleyhouse_mirror"
     },
     "krobus": {
       "x": 30.5,
@@ -80,34 +120,74 @@
       "yaw": 0.0
     },
     "harvey": {
-      "x": 15373.5,
-      "y": 71.0,
-      "z": 15364.5,
-      "yaw": -90.0
+      "x": 6.5,
+      "y": 43,
+      "z": -12.5,
+      "yaw": -90.0,
+      "retired_positions": [
+        {
+          "x": 15373.5,
+          "y": 71.0,
+          "z": 15364.5
+        }
+      ],
+      "point": "harvey_clinic_desk"
     },
     "jas": {
-      "x": 17092.5,
-      "y": 71.0,
-      "z": 18246.5,
-      "yaw": 0.0
+      "x": -96.5,
+      "y": 34,
+      "z": 22.5,
+      "yaw": 0.0,
+      "retired_positions": [
+        {
+          "x": 17092.5,
+          "y": 71.0,
+          "z": 18246.5
+        }
+      ],
+      "point": "jas_animalshop_living"
     },
     "jodi": {
-      "x": 17092.5,
-      "y": 71.0,
-      "z": 17093.5,
-      "yaw": 180.0
+      "x": -27.5,
+      "y": 39,
+      "z": 21.5,
+      "yaw": 180.0,
+      "retired_positions": [
+        {
+          "x": 17092.5,
+          "y": 71.0,
+          "z": 17093.5
+        }
+      ],
+      "point": "jodi_samhouse_kitchen"
     },
     "leah": {
-      "x": 17094.5,
-      "y": 71.0,
-      "z": 18823.5,
-      "yaw": 180.0
+      "x": -84.5,
+      "y": 38,
+      "z": 47.5,
+      "yaw": 180.0,
+      "retired_positions": [
+        {
+          "x": 17094.5,
+          "y": 71.0,
+          "z": 18823.5
+        }
+      ],
+      "point": "leah_house_easel"
     },
     "linus": {
-      "x": -184.5,
-      "y": -12.0,
-      "z": 237.5,
-      "yaw": 180.0
+      "x": 45.5,
+      "y": 85,
+      "z": -159.5,
+      "yaw": 180.0,
+      "retired_positions": [
+        {
+          "x": -184.5,
+          "y": -12.0,
+          "z": 237.5
+        }
+      ],
+      "point": "linus_schedule_01"
     },
     "marnie": {
       "x": -87.5,
@@ -128,10 +208,18 @@
       "yaw": 0.0
     },
     "penny": {
-      "x": -232.5,
-      "y": -18.0,
-      "z": 20.5,
-      "yaw": 180.0
+      "x": 65.5,
+      "y": 35,
+      "z": -1.5,
+      "yaw": 180.0,
+      "retired_positions": [
+        {
+          "x": -232.5,
+          "y": -18.0,
+          "z": 20.5
+        }
+      ],
+      "point": "penny_trailer_reading"
     },
     "pierre": {
       "x": 22.5,
@@ -170,10 +258,18 @@
       "yaw": 90.0
     },
     "willy": {
-      "x": 17670.5,
-      "y": 71.0,
-      "z": 17670.5,
-      "yaw": 90.0
+      "x": 65.5,
+      "y": 31,
+      "z": 143.5,
+      "yaw": 90.0,
+      "retired_positions": [
+        {
+          "x": 17670.5,
+          "y": 71.0,
+          "z": 17670.5
+        }
+      ],
+      "point": "willy_fishshop_counter"
     },
     "gunther": {
       "x": 111.5,

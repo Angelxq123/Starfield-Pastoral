@@ -33,6 +33,33 @@ public class ShippingBinMenu extends AbstractContainerMenu {
             public boolean mayPlace(ItemStack stack) {
                 return ShippingBinBlockEntity.canShip(stack);
             }
+
+            @Override
+            public ItemStack safeInsert(ItemStack stack, int increment) {
+                if (container instanceof ShippingBinBlockEntity bin && mayPlace(stack)) {
+                    int inserted = Math.min(increment, stack.getCount());
+                    if (inserted > 0 && bin.depositFromPlayer(playerInventory.player, stack.copyWithCount(inserted))) {
+                        stack.shrink(inserted);
+                    }
+                    return stack;
+                }
+                return super.safeInsert(stack, increment);
+            }
+
+            @Override
+            public void setByPlayer(ItemStack stack, ItemStack oldStack) {
+                if (container instanceof ShippingBinBlockEntity bin && !stack.isEmpty()) {
+                    int oldCount = ItemStack.isSameItemSameComponents(stack, oldStack) ? oldStack.getCount() : 0;
+                    int inserted = stack.getCount() - oldCount;
+                    if (inserted > 0) {
+                        // Drag distribution passes the combined stack. Only this player's
+                        // added quantity belongs to the new batch; settle the old one first.
+                        bin.depositFromPlayer(playerInventory.player, stack.copyWithCount(inserted));
+                        return;
+                    }
+                }
+                super.setByPlayer(stack, oldStack);
+            }
         });
 
         int playerInvY = 49;
@@ -52,27 +79,34 @@ public class ShippingBinMenu extends AbstractContainerMenu {
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
         if (slotId == 0 && clickType == ClickType.PICKUP) {
             ItemStack carried = getCarried();
-            if (!carried.isEmpty() && ShippingBinBlockEntity.canShip(carried)) {
-                ItemStack toShip = carried.copy();
-                if (button == 1) {
-                    toShip.setCount(1);
-                    carried.shrink(1);
+            if (!carried.isEmpty()) {
+                if (!ShippingBinBlockEntity.canShip(carried)) return;
+                ItemStack toShip = carried.copyWithCount(button == 1 ? 1 : carried.getCount());
+                if (deposit(player, toShip)) {
+                    carried.shrink(toShip.getCount());
                     setCarried(carried.isEmpty() ? ItemStack.EMPTY : carried);
-                } else {
-                    setCarried(ItemStack.EMPTY);
                 }
-
-                if (this.container instanceof ShippingBinBlockEntity bin) {
-                    bin.depositFromPlayer(player, toShip);
-                } else {
-                    this.container.setItem(0, toShip);
-                    this.container.setChanged();
+                return;
+            }
+        }
+        if (slotId == 0 && clickType == ClickType.SWAP && (button >= 0 && button < 9 || button == 40)) {
+            ItemStack hotbar = player.getInventory().getItem(button);
+            if (!hotbar.isEmpty()) {
+                if (ShippingBinBlockEntity.canShip(hotbar) && deposit(player, hotbar)) {
+                    player.getInventory().setItem(button, ItemStack.EMPTY);
                 }
                 return;
             }
         }
 
         super.clicked(slotId, button, clickType, player);
+    }
+
+    private boolean deposit(Player player, ItemStack stack) {
+        if (container instanceof ShippingBinBlockEntity bin) return bin.depositFromPlayer(player, stack);
+        container.setItem(0, stack.copy());
+        container.setChanged();
+        return true;
     }
 
     @Override
@@ -95,7 +129,7 @@ public class ShippingBinMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
             if (this.container instanceof ShippingBinBlockEntity bin) {
-                bin.depositFromPlayer(player, stackInSlot);
+                if (!bin.depositFromPlayer(player, stackInSlot)) return ItemStack.EMPTY;
                 stackInSlot.setCount(0);
                 slot.set(ItemStack.EMPTY);
                 slot.setChanged();

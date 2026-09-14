@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "source_name": "Stone Golem",
+  "family": "rock_golem",
+  "health": 45,
+  "damage": 5,
+  "resilience": 5,
+  "miss_chance": 0.0,
+  "experience": 5,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:stone",
+      "chance": 0.9
+    },
+    {
+      "item": "stardewcraft:quartz",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:coal",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:iron_ore",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_ii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

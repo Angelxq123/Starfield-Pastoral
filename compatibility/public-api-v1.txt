@@ -425,34 +425,6 @@ MEMBER com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind :: p
 MEMBER com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind :: public static final com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind PLACEHOLDER; :: descriptor: Lcom/stardew/craft/api/v1/mastery/StardewMasteryRewardDefinition$Kind;
 MEMBER com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind :: public static final com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind RECIPE; :: descriptor: Lcom/stardew/craft/api/v1/mastery/StardewMasteryRewardDefinition$Kind;
 MEMBER com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind :: public static final com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind STAT; :: descriptor: Lcom/stardew/craft/api/v1/mastery/StardewMasteryRewardDefinition$Kind;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public boolean dark(); :: descriptor: ()Z
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public com.stardew.craft.api.v1.mining.StardewMineMonsterContext(int, boolean, double, net.minecraft.util.RandomSource); :: descriptor: (IZDLnet/minecraft/util/RandomSource;)V
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public double distanceFromSpawn(); :: descriptor: ()D
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public final boolean equals(java.lang.Object); :: descriptor: (Ljava/lang/Object;)Z
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public final int hashCode(); :: descriptor: ()I
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public final java.lang.String toString(); :: descriptor: ()Ljava/lang/String;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public int floor(); :: descriptor: ()I
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterContext :: public net.minecraft.util.RandomSource random(); :: descriptor: ()Lnet/minecraft/util/RandomSource;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterProvider :: public abstract net.minecraft.world.entity.EntityType<?> select(com.stardew.craft.api.v1.mining.StardewMineMonsterContext); :: descriptor: (Lcom/stardew/craft/api/v1/mining/StardewMineMonsterContext;)Lnet/minecraft/world/entity/EntityType;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterProviders :: public static net.minecraft.world.entity.EntityType<?> select(com.stardew.craft.api.v1.mining.StardewMineMonsterContext); :: descriptor: (Lcom/stardew/craft/api/v1/mining/StardewMineMonsterContext;)Lnet/minecraft/world/entity/EntityType;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineMonsterProviders :: public static synchronized void register(net.minecraft.resources.ResourceLocation, int, com.stardew.craft.api.v1.mining.StardewMineMonsterProvider); :: descriptor: (Lnet/minecraft/resources/ResourceLocation;ILcom/stardew/craft/api/v1/mining/StardewMineMonsterProvider;)V
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public com.stardew.craft.api.v1.mining.StardewMineThemeDefinition(java.lang.String, int, int, int, net.minecraft.resources.ResourceLocation, net.minecraft.resources.ResourceLocation, java.util.List<net.minecraft.resources.ResourceLocation>, java.util.List<net.minecraft.resources.ResourceLocation>, java.util.List<net.minecraft.resources.ResourceLocation>, java.util.List<net.minecraft.resources.ResourceLocation>, java.util.List<net.minecraft.resources.ResourceLocation>, java.util.Map<java.lang.String, net.minecraft.resources.ResourceLocation>); :: descriptor: (Ljava/lang/String;IIILnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public final boolean equals(java.lang.Object); :: descriptor: (Ljava/lang/Object;)Z
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public final int hashCode(); :: descriptor: ()I
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public final java.lang.String toString(); :: descriptor: ()Ljava/lang/String;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public int maxFloor(); :: descriptor: ()I
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public int minFloor(); :: descriptor: ()I
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public int priority(); :: descriptor: ()I
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.lang.String mechanicId(); :: descriptor: ()Ljava/lang/String;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.util.List<net.minecraft.resources.ResourceLocation> caveDecorations(); :: descriptor: ()Ljava/util/List;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.util.List<net.minecraft.resources.ResourceLocation> decorA(); :: descriptor: ()Ljava/util/List;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.util.List<net.minecraft.resources.ResourceLocation> decorB(); :: descriptor: ()Ljava/util/List;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.util.List<net.minecraft.resources.ResourceLocation> decorativeStones(); :: descriptor: ()Ljava/util/List;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.util.List<net.minecraft.resources.ResourceLocation> vanillaAccents(); :: descriptor: ()Ljava/util/List;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public java.util.Map<java.lang.String, net.minecraft.resources.ResourceLocation> ores(); :: descriptor: ()Ljava/util/Map;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public net.minecraft.resources.ResourceLocation darkStone(); :: descriptor: ()Lnet/minecraft/resources/ResourceLocation;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public net.minecraft.resources.ResourceLocation mainStone(); :: descriptor: ()Lnet/minecraft/resources/ResourceLocation;
-MEMBER com.stardew.craft.api.v1.mining.StardewMineThemeDefinition :: public static final com.mojang.serialization.Codec<com.stardew.craft.api.v1.mining.StardewMineThemeDefinition> CODEC; :: descriptor: Lcom/mojang/serialization/Codec;
 MEMBER com.stardew.craft.api.v1.museum.StardewLostBookDefinition :: public com.stardew.craft.api.v1.museum.StardewLostBookDefinition(int, java.lang.String, java.util.List<com.stardew.craft.api.v1.condition.StardewCondition>, java.util.List<com.stardew.craft.api.v1.museum.StardewLostBookDefinition$Interaction>); :: descriptor: (ILjava/lang/String;Ljava/util/List;Ljava/util/List;)V
 MEMBER com.stardew.craft.api.v1.museum.StardewLostBookDefinition :: public final boolean equals(java.lang.Object); :: descriptor: (Ljava/lang/Object;)Z
 MEMBER com.stardew.craft.api.v1.museum.StardewLostBookDefinition :: public final int hashCode(); :: descriptor: ()I
@@ -940,9 +912,6 @@ TYPE public final class com.stardew.craft.api.v1.mail.StardewMailDefinition$Atta
 TYPE public final class com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition extends java.lang.Record {
 TYPE public final class com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Entry extends java.lang.Record {
 TYPE public final class com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind extends java.lang.Enum<com.stardew.craft.api.v1.mastery.StardewMasteryRewardDefinition$Kind> {
-TYPE public final class com.stardew.craft.api.v1.mining.StardewMineMonsterContext extends java.lang.Record {
-TYPE public final class com.stardew.craft.api.v1.mining.StardewMineMonsterProviders {
-TYPE public final class com.stardew.craft.api.v1.mining.StardewMineThemeDefinition extends java.lang.Record {
 TYPE public final class com.stardew.craft.api.v1.museum.StardewLostBookDefinition extends java.lang.Record {
 TYPE public final class com.stardew.craft.api.v1.museum.StardewLostBookDefinition$Interaction extends java.lang.Record {
 TYPE public final class com.stardew.craft.api.v1.museum.StardewMuseumRewardDefinition extends java.lang.Record {
@@ -1007,7 +976,6 @@ TYPE public interface com.stardew.craft.api.v1.cutscene.StardewCutsceneTriggerEv
 TYPE public interface com.stardew.craft.api.v1.equipment.StardewEquipmentDataProvider {
 TYPE public interface com.stardew.craft.api.v1.equipment.StardewWeaponSkillHandler {
 TYPE public interface com.stardew.craft.api.v1.item.StardewItemDataProvider {
-TYPE public interface com.stardew.craft.api.v1.mining.StardewMineMonsterProvider {
 TYPE public interface com.stardew.craft.api.v1.npc.StardewNpcInteractionProvider {
 TYPE public interface com.stardew.craft.api.v1.profession.StardewProfessionEffectHandler {
 TYPE public interface com.stardew.craft.api.v1.query.StardewItemQueryResolver<T> {

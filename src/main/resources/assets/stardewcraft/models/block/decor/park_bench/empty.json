@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "stardewcraft:block/decor/park_bench/spring_particle"
+  },
+  "elements": []
+}

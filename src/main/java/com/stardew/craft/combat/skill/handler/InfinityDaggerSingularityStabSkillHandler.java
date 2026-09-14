@@ -90,7 +90,7 @@ public final class InfinityDaggerSingularityStabSkillHandler
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,
-                skillId,
+                "infinity_dagger_ready",
                 INITIAL_ANIMATION_TICKS
         );
     }

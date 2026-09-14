@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.overnight;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.sound.ModSounds;
@@ -53,9 +55,11 @@ public class MoneyDial {
         int elapsedMs = lastDrawMs == 0L ? 0 : (int) Math.min(Integer.MAX_VALUE, now - lastDrawMs);
         lastDrawMs = now;
 
-        float guiScale = (float) net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScale();
-        float digitScale = 4.0f / guiScale;
-        int digitStep = Math.max(1, Math.round(24.0f / guiScale));
+        float guiScale = (float) StardewGuiViewport.renderScale();
+        float digitScale = 4.0F / guiScale;
+        int drawDigits = Math.max(numDigits, Integer.toString(Math.max(0, Math.max(currentValue, target))).length());
+        digitScale *= numDigits / (float) drawDigits;
+        float digitStep = 6.0F * digitScale;
 
         if (previousTargetValue != target) {
             speed = (target - currentValue) / 100;
@@ -111,13 +115,13 @@ public class MoneyDial {
             }
         }
         
-        int xPosition = 0;
-        int digitStrip = (int) Math.pow(10.0, numDigits - 1);
+        float xPosition = 0;
+        int digitStrip = (int) Math.pow(10.0, drawDigits - 1);
         boolean significant = false;
         
-        for (int j = 0; j < numDigits; j++) {
+        for (int j = 0; j < drawDigits; j++) {
             int currentDigit = (currentValue / digitStrip) % 10;
-            if (currentDigit > 0 || j == numDigits - 1) {
+            if (currentDigit > 0 || j == drawDigits - 1) {
                 significant = true;
             }
             
@@ -127,7 +131,7 @@ public class MoneyDial {
                     yOffset = Mth.sin((float) (System.currentTimeMillis() / 100.53096771240234D + j)) * (currentValue / 1_000_000.0f);
                 }
                 float scale = digitScale + ((moneyShineTimer / 60 == numDigits - j) ? (0.3f / guiScale) : 0.0f);
-                ShippingMenuTextures.drawDigit(graphics, x + xPosition, (int) (y + yOffset), currentDigit, scale,
+                ShippingMenuTextures.drawDigit(graphics, Math.round(x + xPosition), (int) (y + yOffset), currentDigit, scale,
                         128.0F / 255.0F, 0.0F, 0.0F, 1.0F);
             }
             xPosition += digitStep;

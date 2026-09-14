@@ -74,10 +74,7 @@ public final class OssifiedMarkTracker {
                 double z = target.getZ();
                 serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ASH,
                     x, y, z,
-                    10, 0.35, 0.2, 0.35, 0.02);
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
-                    x, y, z,
-                    6, 0.25, 0.18, 0.25, 0.01);
+                    3, 0.15, 0.15, 0.15, 0.01);
                 serverLevel.playSound(null, target.blockPosition(),
                     SoundEvents.BONE_BLOCK_PLACE,
                     SoundSource.PLAYERS, 0.9f, 1.05f);

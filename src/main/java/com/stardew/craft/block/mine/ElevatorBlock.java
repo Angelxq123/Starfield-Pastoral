@@ -1,90 +1,113 @@
 package com.stardew.craft.block.mine;
 
+import com.stardew.craft.block.decor.MapDecorStaticBlock;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-/**
- * 电梯方块 - 用于在矿井楼层间传送
- * 有水平朝向属性，面向玩家放置
- */
-public class ElevatorBlock extends Block {
-    
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
-    private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/elevator", Direction.NORTH);
+/** Three door cells plus a clickable, noncolliding call panel on the adjacent wall. */
+@SuppressWarnings("null")
+public class ElevatorBlock extends MapDecorStaticBlock {
+    public static final IntegerProperty SECTION = IntegerProperty.create("section", 0, 3);
+    private static final VoxelShape BUTTON = Block.box(18, 23, -3, 23, 31, 0);
+    private static final VoxelShape BODY = Shapes.or(
+            ModelVoxelShapeCache.shapeFromModelId("stardewcraft:block/elevator"),
+            ModelVoxelShapeCache.shapeFromModelId("stardewcraft:block/elevator_middle").move(0, 1, 0),
+            ModelVoxelShapeCache.shapeFromModelId("stardewcraft:block/elevator_upper").move(0, 2, 0)).optimize();
+    private static final VoxelShape[] COLLISIONS = new VoxelShape[4];
 
-    @SuppressWarnings("null")
-    public ElevatorBlock(Properties properties) {
-        super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(@SuppressWarnings("null") StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    public BlockState getStateForPlacement(@SuppressWarnings("null") BlockPlaceContext context) {
-        // 放置时面向玩家（玩家看向的反方向）
-        if (!context.getLevel().getBlockState(context.getClickedPos().above()).isAir()) {
-            return null;
+    static {
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            COLLISIONS[ModelVoxelShapeCache.horizontalIndex(facing)] = rotateShapeForFacing(BODY, facing);
         }
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public boolean canSurvive(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") LevelReader level, @SuppressWarnings("null") BlockPos pos) {
-        return level.getBlockState(pos.above()).isAir();
+    public ElevatorBlock(Properties properties) {
+        super(properties.lightLevel(state -> state.getValue(SECTION) == 2 ? 12 : 0), "block/elevator");
+        registerDefaultState(defaultBlockState().setValue(SECTION, 0).setValue(MineBuildingTheme.PROPERTY, MineBuildingTheme.EARTH));
     }
 
-    @SuppressWarnings("null")
     @Override
-    public VoxelShape getShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(SECTION, MineBuildingTheme.PROPERTY);
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public VoxelShape getCollisionShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+    @Override public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext context) {
+        BlockState state = super.getStateForPlacement(context);
+        return state == null ? null : state.setValue(MineBuildingTheme.PROPERTY, MineBuildingTheme.forPlacement(context));
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public VoxelShape getInteractionShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+    @Override public net.minecraft.world.item.ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+        return MineBuildingTheme.picked(this, state);
     }
 
-    @SuppressWarnings("null")
     @Override
-    public BlockState rotate(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    protected VoxelShape canonicalShape() {
+        return Shapes.or(BODY, BUTTON);
     }
 
-    @SuppressWarnings("null")
     @Override
-    public BlockState mirror(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Mirror mirror) {
-        return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
+    protected BlockState extensionState(BlockState mainState, BlockPos offset) {
+        boolean doorColumn = offset.getX() == 0 && offset.getZ() == 0;
+        return super.extensionState(mainState, offset).setValue(SECTION, doorColumn ? offset.getY() : 3);
+    }
+
+    @Override
+    protected CellOffset findOffsetForExtension(BlockGetter level, BlockPos pos, BlockState state) {
+        int section = state.getValue(SECTION);
+        Direction facing = state.getValue(FACING);
+        for (CellOffset offset : occupiedOffsets(facing)) {
+            boolean matches = section == 3
+                    ? offset.dy() == 1 && (offset.dx() != 0 || offset.dz() != 0)
+                    : section > 0 && offset.dy() == section && offset.dx() == 0 && offset.dz() == 0;
+            if (!matches) continue;
+            BlockState main = level.getBlockState(pos.offset(-offset.dx(), -offset.dy(), -offset.dz()));
+            if (main.is(this) && main.getValue(PART) == Part.MAIN && main.getValue(FACING) == facing) return offset;
+        }
+        return null;
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (state.getValue(SECTION) == 3) return Shapes.empty();
+        BlockPos main = findMainPos(level, pos, state);
+        if (main == null) return Shapes.empty();
+        return COLLISIONS[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))]
+                .move(main.getX() - pos.getX(), main.getY() - pos.getY(), main.getZ() - pos.getZ());
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean moving) {
+        super.onPlace(state, level, pos, oldState, moving);
+        if (!level.isClientSide && !oldState.is(this) && state.getValue(PART) == Part.MAIN) {
+            // Commands and structure placement do not invoke BlockItem.setPlacedBy.
+            level.scheduleTick(pos, this, 1);
+        }
+    }
+
+    @Override
+    protected void tick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos,
+                        net.minecraft.util.RandomSource random) {
+        if (state.getValue(PART) == Part.MAIN) placeExtensions(level, pos, state);
+    }
+
+    @Override
+    public VoxelShape getInteractionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return getShape(state, level, pos, CollisionContext.empty());
     }
 
     /**
@@ -108,6 +131,9 @@ public class ElevatorBlock extends Block {
     @Override
     protected InteractionResult useWithoutItem(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Level level, @SuppressWarnings("null") BlockPos pos,
                                                @SuppressWarnings("null")    Player player, @SuppressWarnings("null")    BlockHitResult hitResult) {
+        if (state.getValue(PART) == Part.EXTENSION) {
+            return super.useWithoutItem(state, level, pos, player, hitResult);
+        }
         if (level.dimension() != com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("stardewcraft.elevator.mine_only"));
             return InteractionResult.FAIL;

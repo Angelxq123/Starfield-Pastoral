@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/frost_gold_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/frost_gold_ore"
-                 }
-}

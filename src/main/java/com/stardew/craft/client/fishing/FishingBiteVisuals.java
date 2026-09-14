@@ -36,6 +36,22 @@ public final class FishingBiteVisuals {
 	private static final float EXCLAMATION_JUMP_PX = 22f;
 	private static final Map<ResourceLocation, int[]> TEX_SIZE_CACHE = new ConcurrentHashMap<>();
 
+    /** The complete scope surrounds the renderer, including cancellation or exceptions inside it. */
+    public static void renderHook(com.mojang.blaze3d.vertex.PoseStack pose,boolean nativeTackle,float dip,Runnable vanilla) {
+        if(nativeTackle)return;
+        if(dip==0){vanilla.run();return;}
+        pose.pushPose();
+        try {pose.translate(0,dip,0);vanilla.run();}
+        finally {pose.popPose();}
+    }
+
+	public static void clear() {
+		dipUntilMsByHookId.clear();
+		dipStartMsByHookId.clear();
+		bitePromptUntilMs = 0;
+		bitePromptStartMs = 0;
+	}
+
 	public static void clearTexSizeCache() {
 		TEX_SIZE_CACHE.clear();
 	}
@@ -129,7 +145,7 @@ public final class FishingBiteVisuals {
 			return;
 		}
 		// Don't render on top of the minigame.
-		if (mc.screen instanceof FishingMinigameScreen) {
+		if (FishingMinigameHud.active()) {
 			return;
 		}
 

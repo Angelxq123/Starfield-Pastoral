@@ -1,0 +1,170 @@
+{
+  "event_id": "npc_runtime",
+  "navigation": {
+    "searches_per_tick": 4,
+    "retry_ticks": 20,
+    "max_retry_ticks": 200,
+    "arrival_radius": 0.5,
+    "vertical_tolerance": 0.55,
+    "corridor_radius": 1,
+    "max_visited_nodes": 4096,
+    "search_range": 96
+  },
+  "actors": {
+    "jas": {
+      "eye_height": 1.125,
+      "speed": 0.135146,
+      "step_height": 1.0
+    },
+    "vincent": {
+      "eye_height": 1.125,
+      "speed": 0.144996,
+      "step_height": 1.0
+    },
+    "george": {
+      "eye_height": 1.53125
+    },
+    "marlon": {
+      "eye_height": 1.75,
+      "speed": 0.121739,
+      "step_height": 1.0
+    },
+    "kent": {
+      "eye_height": 1.6875,
+      "speed": 0.129821,
+      "step_height": 1.0
+    },
+    "willy": {
+      "eye_height": 1.6875,
+      "speed": 0.136511,
+      "step_height": 1.0
+    },
+    "pam": {
+      "eye_height": 1.4375,
+      "speed": 0.133794,
+      "step_height": 1.0
+    },
+    "linus": {
+      "eye_height": 1.5625,
+      "speed": 0.128522,
+      "step_height": 1.0
+    },
+    "clint": {
+      "eye_height": 1.6875,
+      "speed": 0.136511,
+      "step_height": 1.0
+    },
+    "dwarf": {
+      "eye_height": 0.84375,
+      "speed": 0.064261,
+      "step_height": 1.0
+    },
+    "krobus": {
+      "eye_height": 1.0,
+      "speed": 0.08357,
+      "step_height": 1.0
+    },
+    "sandy": {
+      "eye_height": 1.6875,
+      "speed": 0.131132,
+      "step_height": 1.0
+    },
+    "leo": {
+      "eye_height": 1.125,
+      "speed": 0.136511,
+      "step_height": 1.0
+    },
+    "abigail": {
+      "speed": 0.14069,
+      "step_height": 1.0
+    },
+    "alex": {
+      "speed": 0.131132,
+      "step_height": 1.0
+    },
+    "caroline": {
+      "speed": 0.135146,
+      "step_height": 1.0
+    },
+    "demetrius": {
+      "speed": 0.132456,
+      "step_height": 1.0
+    },
+    "elliott": {
+      "speed": 0.131132,
+      "step_height": 1.0
+    },
+    "emily": {
+      "speed": 0.13789,
+      "step_height": 1.0
+    },
+    "evelyn": {
+      "speed": 0.142111,
+      "step_height": 1.0
+    },
+    "gus": {
+      "speed": 0.133794,
+      "step_height": 1.0
+    },
+    "haley": {
+      "speed": 0.139283,
+      "step_height": 1.0
+    },
+    "harvey": {
+      "speed": 0.135146,
+      "step_height": 1.0
+    },
+    "jodi": {
+      "speed": 0.128522,
+      "step_height": 1.0
+    },
+    "leah": {
+      "speed": 0.131132,
+      "step_height": 1.0
+    },
+    "lewis": {
+      "speed": 0.143546,
+      "step_height": 1.0
+    },
+    "marnie": {
+      "speed": 0.139283,
+      "step_height": 1.0
+    },
+    "maru": {
+      "speed": 0.132456,
+      "step_height": 1.0
+    },
+    "mister_qi": {
+      "speed": 0.133794,
+      "step_height": 1.0
+    },
+    "penny": {
+      "speed": 0.133794,
+      "step_height": 1.0
+    },
+    "pierre": {
+      "speed": 0.133794,
+      "step_height": 1.0
+    },
+    "robin": {
+      "speed": 0.13789,
+      "step_height": 1.0
+    },
+    "sam": {
+      "speed": 0.131132,
+      "step_height": 1.0
+    },
+    "sebastian": {
+      "speed": 0.131132,
+      "step_height": 1.0
+    },
+    "shane": {
+      "speed": 0.13789,
+      "step_height": 1.0
+    },
+    "wizard": {
+      "speed": 0.14069,
+      "step_height": 1.0
+    }
+  }
+}

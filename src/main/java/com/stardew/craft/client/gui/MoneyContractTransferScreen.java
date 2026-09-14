@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
@@ -57,7 +61,7 @@ public class MoneyContractTransferScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        guiScale = (float) Math.max(1.0D, minecraft.getWindow().getGuiScale());
+        guiScale = (float) Math.max(1.0D, StardewGuiViewport.REFERENCE_SCALE);
         int maxW = Math.max(1, this.width - 24);
         int maxH = Math.max(1, this.height - 24);
         panelW = clamp(ui(SDV_W), Math.min(312, maxW), maxW);
@@ -82,16 +86,16 @@ public class MoneyContractTransferScreen extends Screen {
         summaryH = Math.max(48, Math.min(60, contentH / 3));
 
         sendW = Math.max(112, Math.min(148, contentW / 2));
-        sendH = Math.max(25, font.lineHeight + 13);
+        sendH = Math.max(25, StardewFonts.lineHeight(font) + 13);
         sendX = contentX + contentW - sendW - Math.max(6, contentW / 30);
         sendY = contentY + contentH - sendH - Math.max(0, contentH / 70);
 
-        fieldH = Math.max(30, font.lineHeight + 17);
+        fieldH = Math.max(30, StardewFonts.lineHeight(font) + 17);
         fieldW = contentW - Math.max(12, contentW / 14) * 2;
         fieldX = contentX + Math.max(6, contentW / 28);
         fieldY = sendY - fieldH - Math.max(22, contentH / 9);
-        amountField = new EditBox(com.stardew.craft.client.font.StardewFonts.small(), fieldX + 28, fieldY + (fieldH - font.lineHeight) / 2,
-            Math.max(1, fieldW - 40), font.lineHeight,
+        amountField = new EditBox(com.stardew.craft.client.font.StardewFonts.small(), fieldX + 28, fieldY + (fieldH - StardewFonts.lineHeight(font)) / 2,
+            Math.max(1, fieldW - 40), StardewFonts.lineHeight(font),
             Component.translatable("stardewcraft.money_contract.transfer.amount"));
         amountField.setMaxLength(9);
         amountField.setBordered(false);
@@ -132,7 +136,7 @@ public class MoneyContractTransferScreen extends Screen {
         drawHeader(graphics);
         drawSummaryCard(graphics);
 
-        int labelY = fieldY - font.lineHeight - Math.max(5, contentH / 46);
+        int labelY = fieldY - StardewFonts.lineHeight(font) - Math.max(5, contentH / 46);
         graphics.drawString(font,
             GuiText.ellipsize(font, Component.translatable("stardewcraft.money_contract.transfer.amount"), contentW),
             fieldX + 2, labelY, TEXT_BODY, false);
@@ -145,7 +149,7 @@ public class MoneyContractTransferScreen extends Screen {
         drawButtonIcon(graphics, canSend);
         GuiText.drawCenteredClamped(graphics, font,
             Component.translatable("stardewcraft.money_contract.transfer.send"),
-            sendX + sendW / 2 + 7, sendY + (sendH - font.lineHeight) / 2, sendW - 38,
+            sendX + sendW / 2 + 7, sendY + (sendH - StardewFonts.lineHeight(font)) / 2, sendW - 38,
             canSend ? TEXT_DARK : 0x806D59, false);
     }
 
@@ -224,7 +228,7 @@ public class MoneyContractTransferScreen extends Screen {
         CommonGuiTextures.drawItem(graphics, contractIcon, iconX, iconY, iconScale());
 
         int titleX = iconX + iconSize + Math.max(12, contentW / 24);
-        int titleY = iconY + Math.max(2, (iconSize - font.lineHeight * 2) / 2);
+        int titleY = iconY + Math.max(2, (iconSize - StardewFonts.lineHeight(font) * 2) / 2);
         graphics.drawString(font,
             GuiText.ellipsize(font, Component.translatable("stardewcraft.money_contract.transfer.title"),
                 contentW - (titleX - contentX) - 4),
@@ -232,7 +236,7 @@ public class MoneyContractTransferScreen extends Screen {
         graphics.drawString(font,
             GuiText.ellipsize(font, Component.translatable("stardewcraft.money_contract.transfer.target", targetName),
                 contentW - (titleX - contentX) - 4),
-            titleX, titleY + font.lineHeight + 4, TEXT_MUTED, false);
+            titleX, titleY + StardewFonts.lineHeight(font) + 4, TEXT_MUTED, false);
 
         int partitionY = iconY + iconSize + Math.max(8, contentH / 34);
         drawLedgerStroke(graphics, contentX + Math.max(4, contentW / 44), partitionY,
@@ -254,16 +258,16 @@ public class MoneyContractTransferScreen extends Screen {
             PAPER_TINT_STRONG);
 
         int coinDrawSize = Math.round(14 * coinScale());
-        int rowY = summaryY + Math.max(9, (summaryH - font.lineHeight * 2 - 7) / 2);
+        int rowY = summaryY + Math.max(9, (summaryH - StardewFonts.lineHeight(font) * 2 - 7) / 2);
         int coinX = summaryX + Math.max(11, summaryW / 24);
-        CommonGuiTextures.drawGoldCoin16(graphics, coinX, rowY - Math.max(2, (coinDrawSize - font.lineHeight) / 2),
+        CommonGuiTextures.drawGoldCoin16(graphics, coinX, rowY - Math.max(2, (coinDrawSize - StardewFonts.lineHeight(font)) / 2),
             coinScale());
         graphics.drawString(font,
             GuiText.ellipsize(font, Component.translatable("stardewcraft.money_contract.transfer.money", formatGold(money)),
                 summaryW - (coinX - summaryX) - coinDrawSize - 18),
             coinX + coinDrawSize + 8, rowY, TEXT_BODY, false);
 
-        int targetY = rowY + font.lineHeight + 7;
+        int targetY = rowY + StardewFonts.lineHeight(font) + 7;
         int pinX = coinX + Math.max(3, coinDrawSize / 4);
         drawRecipientMark(graphics, pinX, targetY + 1);
         graphics.drawString(font,
@@ -304,14 +308,14 @@ public class MoneyContractTransferScreen extends Screen {
             ? Component.translatable("stardewcraft.money_contract.transfer.placeholder")
             : Component.literal(value);
         int textX = fieldX + 37;
-        int textY = fieldY + (fieldH - font.lineHeight) / 2;
+        int textY = fieldY + (fieldH - StardewFonts.lineHeight(font)) / 2;
         graphics.drawString(font,
             GuiText.ellipsize(font, shown, fieldW - 45),
             textX, textY, textColor, false);
         if (amountField.isFocused() && (System.currentTimeMillis() / 500L) % 2L == 0L) {
             int visibleWidth = value.isEmpty() ? 0 : Math.min(font.width(value), Math.max(0, fieldW - 47));
             int cursorX = textX + visibleWidth + (value.isEmpty() ? -4 : 2);
-            graphics.fill(cursorX, textY - 1, cursorX + 1, textY + font.lineHeight + 1, TEXT_DARK);
+            graphics.fill(cursorX, textY - 1, cursorX + 1, textY + StardewFonts.lineHeight(font) + 1, TEXT_DARK);
         }
     }
 

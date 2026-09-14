@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "top": "stardewcraft:block/desert_artifact_spot_top",
-    "side": "minecraft:block/sand",
-    "bottom": "minecraft:block/sand",
-    "particle": "minecraft:block/sand"
-  }
-}

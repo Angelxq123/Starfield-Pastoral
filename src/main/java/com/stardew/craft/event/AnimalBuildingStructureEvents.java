@@ -21,7 +21,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 /** Invalidates validated animal-building snapshots when a structural cell changes. */
-@EventBusSubscriber(modid = StardewCraft.MODID)
+// Legacy event adapter is deliberately not registered; runtime records own housing and entities.
 public final class AnimalBuildingStructureEvents {
     private AnimalBuildingStructureEvents() {
     }

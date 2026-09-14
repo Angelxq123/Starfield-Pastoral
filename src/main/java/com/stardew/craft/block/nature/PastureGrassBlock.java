@@ -1,6 +1,5 @@
 package com.stardew.craft.block.nature;
 
-import com.stardew.craft.animal.data.AnimalWorldData;
 import com.stardew.craft.animal.service.AnimalGrassTargetService;
 import com.stardew.craft.book.BookPowerEffects;
 import com.stardew.craft.block.ModBlocks;
@@ -148,9 +147,7 @@ public class PastureGrassBlock extends BushBlock {
             return true;
         }
 
-        AnimalWorldData data = AnimalWorldData.get(level);
-        java.util.UUID hayOwner = com.stardew.craft.core.FarmAreaResolver.getOwnerAt(pos);
-        int stored = data.storeHay(hayOwner == null ? player.getUUID() : hayOwner, hayCount);
+        int stored = com.stardew.craft.animal.runtime.FarmFeed.store(level, pos, hayCount);
         if (stored > 0) {
             HayHarvestHudMessagePacket.sendTo(player, stored, false);
         }

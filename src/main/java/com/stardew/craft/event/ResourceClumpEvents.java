@@ -1,6 +1,9 @@
 package com.stardew.craft.event;
 
 import com.stardew.craft.block.decor.ResourceClumpBlock;
+import com.stardew.craft.block.mine.MineRockClumpBlock;
+import com.stardew.craft.mining.MineRockClumpMining;
+import com.stardew.craft.network.payload.HudHintPayload;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.SkillType;
@@ -12,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 import java.util.Map;
@@ -27,6 +31,36 @@ public final class ResourceClumpEvents {
     }
 
     private record MiningState(BlockPos pos, long startTick) {
+    }
+
+    @SubscribeEvent
+    public static void onMiningAttempt(PlayerInteractEvent.LeftClickBlock event) {
+        var player = event.getEntity();
+        if (player.isCreative() || player.isSpectator()
+                || event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) return;
+        var block = player.level().getBlockState(event.getPos()).getBlock();
+        String hint = block instanceof MineRockClumpBlock rock
+                ? MineRockClumpMining.failureHint(rock.sourceId(), player.getMainHandItem())
+                : block instanceof ResourceClumpBlock clump ? clump.failureHint(player.getMainHandItem()) : null;
+        if (hint == null) return;
+        // Zero destroy progress never reaches BreakEvent. Reject and explain on the initial hit,
+        // equally for the main cell and every extension; server owns the throttled HUD message.
+        event.setCanceled(true);
+        if (player instanceof ServerPlayer serverPlayer) HudHintPayload.send(serverPlayer, hint);
+    }
+
+    @SubscribeEvent
+    public static void onInspect(PlayerInteractEvent.RightClickBlock event) {
+        var player = event.getEntity();
+        if (player.isSpectator() || player.isShiftKeyDown()
+                || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
+        var block = player.level().getBlockState(event.getPos()).getBlock();
+        String hint = block instanceof MineRockClumpBlock rock ? MineRockClumpMining.inspectionHint(rock.sourceId())
+                : block instanceof ResourceClumpBlock clump ? clump.inspectionHint() : null;
+        if (hint == null) return;
+        if (player instanceof ServerPlayer serverPlayer) HudHintPayload.send(serverPlayer, hint);
+        event.setCanceled(true);
+        event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
     }
 
     @SubscribeEvent

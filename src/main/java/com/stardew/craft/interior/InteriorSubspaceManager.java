@@ -41,6 +41,7 @@ public final class InteriorSubspaceManager {
                                    String markerTag, String targetTag, boolean solidOnly) {}
 
     private static final Map<Long, PortalPlacement> PORTAL_REGISTRY = new ConcurrentHashMap<>();
+    private static final Map<ServerLevel, Map<Long, PortalPlacement>> PENDING_PORTALS = new java.util.IdentityHashMap<>();
     private static final double REPAIR_CHECK_RANGE = 12.0;
 
     private static long portalKey(ResourceKey<Level> dim, BlockPos pos) {
@@ -158,6 +159,19 @@ public final class InteriorSubspaceManager {
      */
     public static void clearPortalRegistry() {
         PORTAL_REGISTRY.clear();
+        PENDING_PORTALS.clear();
+        InteriorPortalTickets.clear();
+    }
+
+    /** Retry only during a real level tick. TickTask timestamps do not delay event-loop execution. */
+    public static void tickPendingPortals(ServerLevel level) {
+        var pending = PENDING_PORTALS.get(level);
+        if (pending == null) return;
+        if (!level.getServer().isRunning()) { PENDING_PORTALS.remove(level); return; }
+        for (var p : List.copyOf(pending.values())) {
+            placePortalTriggerAreaInternal(level,p.basePos,p.heightBlocks,p.xBlocks,p.zBlocks,p.markerTag,p.targetTag,p.solidOnly);
+        }
+        if (pending.isEmpty()) PENDING_PORTALS.remove(level);
     }
 
     // 用户要求：室内亚空间区域必须在第一象限远坐标，且 X>10000、Z>10000。
@@ -385,18 +399,15 @@ public final class InteriorSubspaceManager {
 
     private static final String TAG_PORTAL_MARKER_GREENHOUSE_OUTSIDE = "sdv_portal_marker:greenhouse_outside";
 
-    // ---- 农场洞穴 ----
-    public static final String FARM_CAVE_PATH = "data/stardewcraft/structures/farm/cave.schem";
-    /** 每玩家农场洞穴室内基础 origin（实际 origin = 此值 + index * CAVE_Z_STRIDE） */
-    public static final BlockPos FARM_CAVE_INTERIOR_ORIGIN = new BlockPos(18944, 70, 19392);
-    /** schem 9×6×10，min corner 映射到 origin；玩家入口 spawn 局部 (2,1,6) 朝东 */
-    public static final BlockPos FARM_CAVE_INDOOR_SPAWN_OFFSET = new BlockPos(2, 1, 6);
-    /** 室内出洞传送触发方块基点 (1,1,6)，高 2 格 */
-    static final BlockPos FARM_CAVE_INDOOR_EXIT_PORTAL_OFFSET = new BlockPos(1, 1, 6);
-    /** cave schem 外接尺寸 (width, height, length) */
-    public static final int FARM_CAVE_SCHEM_W = 9;
-    public static final int FARM_CAVE_SCHEM_H = 6;
-    public static final int FARM_CAVE_SCHEM_L = 10;
+    // ---- 农场洞穴：实际运行使用已审核的矿井风格原生结构 ----
+    public static final String FARM_CAVE_PATH = "data/stardewcraft/structure/farm_layouts/cave.nbt";
+    public static final BlockPos LEGACY_FARM_CAVE_INTERIOR_ORIGIN = new BlockPos(18944,70,19392);
+    public static final BlockPos FARM_CAVE_INTERIOR_ORIGIN = FarmCaveLayout.BASE;
+    public static final BlockPos FARM_CAVE_INDOOR_SPAWN_OFFSET = FarmCaveLayout.SPAWN;
+    static final BlockPos FARM_CAVE_INDOOR_EXIT_PORTAL_OFFSET = FarmCaveLayout.EXIT;
+    public static final int FARM_CAVE_SCHEM_W = FarmCaveLayout.WIDTH;
+    public static final int FARM_CAVE_SCHEM_H = FarmCaveLayout.HEIGHT;
+    public static final int FARM_CAVE_SCHEM_L = FarmCaveLayout.LENGTH;
 
     private static final String TAG_PORTAL_MARKER_FARM_CAVE_OUTSIDE = "sdv_portal_marker:farm_cave_outside";
     static final String TAG_PORTAL_MARKER_FARM_CAVE_INSIDE = "sdv_portal_marker:farm_cave_inside";
@@ -1038,6 +1049,7 @@ public final class InteriorSubspaceManager {
             return false;
         }
 
+        if(FarmCaveRuntime.farmAt(level,pos)!=null)return true;
         return pos.getX() >= REGION_MIN_X
             && pos.getX() <= REGION_MAX_X
             && pos.getZ() >= REGION_MIN_Z
@@ -1741,10 +1753,11 @@ public final class InteriorSubspaceManager {
 
         // ── 区块预加载检查 ──
         java.util.Set<Long> neededChunks = new java.util.HashSet<>();
-        for (int dx = 0; dx < xBlocks; dx++) {
-            for (int dz = 0; dz < zBlocks; dz++) {
-                BlockPos pos = basePos.offset(dx, 0, dz);
-                neededChunks.add(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4));
+        // UPDATE_ALL touches adjacent blocks. Include that border before placement so a
+        // portal on a chunk edge cannot turn a deferred job into a synchronous neighbor load.
+        for (int cx = (basePos.getX() - 1) >> 4; cx <= (basePos.getX() + xBlocks) >> 4; cx++) {
+            for (int cz = (basePos.getZ() - 1) >> 4; cz <= (basePos.getZ() + zBlocks) >> 4; cz++) {
+                neededChunks.add(ChunkPos.asLong(cx, cz));
             }
         }
 
@@ -1754,26 +1767,18 @@ public final class InteriorSubspaceManager {
             int cz = ChunkPos.getZ(chunkKey);
             if (level.getChunkSource().getChunkNow(cx, cz) == null) {
                 allLoaded = false;
-                level.setChunkForced(cx, cz, true);
+                InteriorPortalTickets.request(level,basePos,cx,cz);
             }
         }
         if (!allLoaded) {
-            // 区块尚未加载，延迟到下一 tick 重试
-            level.getServer().tell(new net.minecraft.server.TickTask(
-                level.getServer().getTickCount() + 1,
-                () -> placePortalTriggerAreaInternal(level, basePos, heightBlocks, xBlocks, zBlocks, markerTag, targetTag, solidOnly)
-            ));
-            StardewCraft.LOGGER.info("[INTERIOR] Deferred portal trigger '{}' at {} — waiting for chunks",
-                    markerTag, basePos);
+            PENDING_PORTALS.computeIfAbsent(level, ignored -> new java.util.LinkedHashMap<>())
+                    .put(portalKey(level.dimension(),basePos),PORTAL_REGISTRY.get(portalKey(level.dimension(),basePos)));
             return;
         }
+        var pending = PENDING_PORTALS.get(level);
+        if (pending != null) pending.remove(portalKey(level.dimension(),basePos));
 
-        // 释放 force-load（方块是持久化数据，放完即可释放）
-        for (long chunkKey : neededChunks) {
-            int cx = ChunkPos.getX(chunkKey);
-            int cz = ChunkPos.getZ(chunkKey);
-            level.setChunkForced(cx, cz, false);
-        }
+        InteriorPortalTickets.release(level,basePos);
 
         // ── 放置方块 ──
         String targetId = targetTag;

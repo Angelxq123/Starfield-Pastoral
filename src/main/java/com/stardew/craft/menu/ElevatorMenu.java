@@ -3,7 +3,7 @@ package com.stardew.craft.menu;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.mining.MiningCoordinates;
-import com.stardew.craft.mining.MineFloorGenerator;
+import com.stardew.craft.mining.OrdinaryMineRuntime;
 import com.stardew.craft.mining.MiningDataManager;
 import com.stardew.craft.mining.MiningPlayerData;
 import net.minecraft.server.level.ServerLevel;
@@ -88,7 +88,7 @@ public class ElevatorMenu extends AbstractContainerMenu {
             return;
         }
 
-        if (targetFloor < 0 || targetFloor % 5 != 0) {
+        if (targetFloor < 0 || targetFloor > 120 || targetFloor % 5 != 0) {
             return;
         }
 
@@ -106,7 +106,7 @@ public class ElevatorMenu extends AbstractContainerMenu {
         }
 
         if (targetFloor > 0) {
-            MineFloorGenerator.generateFloor(mineLevel, targetFloor);
+            OrdinaryMineRuntime.ensure(mineLevel, targetFloor);
         }
 
         MiningCoordinates.teleportPlayerToFloor(serverPlayer, mineLevel, targetFloor);

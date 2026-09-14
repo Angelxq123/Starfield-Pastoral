@@ -50,7 +50,7 @@ public class NpcGeoRenderer extends GeoEntityRenderer<StardewNpcEntity> {
         renderOverheadIndicator(entity, poseStack, bufferSource, packedLight);
     }
 
-    private static boolean isHiddenForLocalPlayer(String npcId) {
+    public static boolean isHiddenForLocalPlayer(String npcId) {
         return npcId != null && (ClientNpcVisibilityState.isHidden(npcId)
                 || ("henchman".equalsIgnoreCase(npcId)
                 && ClientPlayerDataCache.hasMailFlag("henchmanGone"))
@@ -58,7 +58,7 @@ public class NpcGeoRenderer extends GeoEntityRenderer<StardewNpcEntity> {
                 && ClientPlayerDataCache.hasMailFlag("bouncerGone")));
     }
 
-    private void renderOverheadIndicator(StardewNpcEntity entity,
+    public void renderOverheadIndicator(StardewNpcEntity entity,
                                          PoseStack poseStack,
                                          MultiBufferSource bufferSource,
                                          int packedLight) {

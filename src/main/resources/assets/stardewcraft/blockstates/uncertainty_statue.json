@@ -1,31 +1,32 @@
 {
   "variants": {
     "facing=north,part=main": {
-      "model": "stardewcraft:decor/common/uncertainty_statue_proxy"
-    },
-    "facing=north,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
-    },
-    "facing=east,part=main": {
-      "model": "stardewcraft:decor/common/uncertainty_statue_proxy",
+      "model": "stardewcraft:block/decor/uncertainty_statue",
       "y": 90
     },
-    "facing=east,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+    "facing=north,part=extension": {
+      "model": "stardewcraft:block/decor/uncertainty_statue_extension"
     },
-    "facing=south,part=main": {
-      "model": "stardewcraft:decor/common/uncertainty_statue_proxy",
+    "facing=east,part=main": {
+      "model": "stardewcraft:block/decor/uncertainty_statue",
       "y": 180
     },
-    "facing=south,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+    "facing=east,part=extension": {
+      "model": "stardewcraft:block/decor/uncertainty_statue_extension"
     },
-    "facing=west,part=main": {
-      "model": "stardewcraft:decor/common/uncertainty_statue_proxy",
+    "facing=south,part=main": {
+      "model": "stardewcraft:block/decor/uncertainty_statue",
       "y": 270
     },
+    "facing=south,part=extension": {
+      "model": "stardewcraft:block/decor/uncertainty_statue_extension"
+    },
+    "facing=west,part=main": {
+      "model": "stardewcraft:block/decor/uncertainty_statue",
+      "y": 0
+    },
     "facing=west,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+      "model": "stardewcraft:block/decor/uncertainty_statue_extension"
     }
   }
 }

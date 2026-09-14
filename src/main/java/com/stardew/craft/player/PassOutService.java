@@ -916,6 +916,8 @@ public final class PassOutService {
         double sz = spawnPos.getZ() + 0.5;
 
         ModTeleport.to(player, stardewLevel, sx, sy, sz, player.getYRot(), player.getXRot());
+        LOGGER.info("[OVERNIGHT] Returned {} to {} at {} before settlement",
+                player.getName().getString(), player.level().dimension().location(), player.blockPosition());
     }
 
     private static boolean isSleepBlock(net.minecraft.world.level.block.state.BlockState state) {

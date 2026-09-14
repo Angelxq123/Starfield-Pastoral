@@ -1,0 +1,739 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "metal": "stardewcraft:block/decor/manhole/spring/manhole_spring",
+    "particle": "stardewcraft:block/decor/manhole/spring/manhole_spring_particle"
+  },
+  "elements": [
+    {
+      "name": "底座",
+      "from": [
+        -16,
+        0,
+        -16
+      ],
+      "to": [
+        32,
+        1,
+        32
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            12.25,
+            0,
+            15.25,
+            3
+          ],
+          "texture": "#metal"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            3,
+            15
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "前边框",
+      "from": [
+        -16,
+        1,
+        -16
+      ],
+      "to": [
+        32,
+        2,
+        -12
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.25,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.25,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            9.8125,
+            3.0625,
+            12.8125,
+            3.3125
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "后边框",
+      "from": [
+        -16,
+        1,
+        28
+      ],
+      "to": [
+        32,
+        2,
+        32
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.25,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            7,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.25,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            6.75,
+            6.125,
+            9.75,
+            6.375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "左边框",
+      "from": [
+        -16,
+        1,
+        -12
+      ],
+      "to": [
+        -12,
+        2,
+        28
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            14,
+            6.5,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            6.5,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            5.125,
+            6.4375,
+            5.375,
+            8.9375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "右边框",
+      "from": [
+        28,
+        1,
+        -12
+      ],
+      "to": [
+        32,
+        2,
+        28
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            14,
+            6.5,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            6.5,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            11.5,
+            6.4375,
+            11.75,
+            8.9375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "盖板前缘",
+      "from": [
+        -11,
+        1,
+        -11
+      ],
+      "to": [
+        27,
+        2,
+        -6
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            6.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.3125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            6.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.3125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            7.3125,
+            9,
+            9.6875,
+            9.3125
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "前提手左侧",
+      "from": [
+        -11,
+        1,
+        -6
+      ],
+      "to": [
+        2,
+        2,
+        -4
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            7.3125,
+            9.3125,
+            8.125,
+            9.4375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "前提手右侧",
+      "from": [
+        14,
+        1,
+        -6
+      ],
+      "to": [
+        27,
+        2,
+        -4
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            8.875,
+            9.3125,
+            9.6875,
+            9.4375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "盖板主体",
+      "from": [
+        -11,
+        1,
+        -4
+      ],
+      "to": [
+        27,
+        2,
+        18
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            6.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            5.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            6.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            5.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            7.3125,
+            9.4375,
+            9.6875,
+            10.8125
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "后提手左侧",
+      "from": [
+        -11,
+        1,
+        18
+      ],
+      "to": [
+        2,
+        2,
+        20
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            7.3125,
+            10.8125,
+            8.125,
+            10.9375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "后提手右侧",
+      "from": [
+        14,
+        1,
+        18
+      ],
+      "to": [
+        27,
+        2,
+        20
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.125,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            8.875,
+            10.8125,
+            9.6875,
+            10.9375
+          ],
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "name": "盖板后缘",
+      "from": [
+        -11,
+        1,
+        20
+      ],
+      "to": [
+        27,
+        2,
+        27
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            14,
+            6.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "east": {
+          "uv": [
+            4,
+            14,
+            4.4375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "south": {
+          "uv": [
+            4,
+            14,
+            6.375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "west": {
+          "uv": [
+            4,
+            14,
+            4.4375,
+            14.0625
+          ],
+          "texture": "#metal"
+        },
+        "up": {
+          "uv": [
+            7.3125,
+            10.9375,
+            9.6875,
+            11.375
+          ],
+          "texture": "#metal"
+        }
+      }
+    }
+  ]
+}

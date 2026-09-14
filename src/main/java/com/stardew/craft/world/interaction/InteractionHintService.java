@@ -36,11 +36,16 @@ import com.stardew.craft.festival.SpiritEveFestivalService;
 import com.stardew.craft.festival.desert.DesertFestivalVendorService;
 import com.stardew.craft.festival.desert.DesertFestivalSpecialInteractionService;
 import com.stardew.craft.festival.nightmarket.NightMarketWarperService;
+import com.stardew.craft.item.ModItems;
+import com.stardew.craft.item.cosmetic.StardewHatItem;
 import com.stardew.craft.mastery.MasterySite;
 import com.stardew.craft.mastery.MasterySiteInstaller;
 import com.stardew.craft.museum.LostBookRegistry;
 import com.stardew.craft.museum.LostBookService;
 import com.stardew.craft.npc.runtime.NpcInteractionService;
+import com.stardew.craft.pet.PetEntity;
+import com.stardew.craft.pet.PetService;
+import com.stardew.craft.pet.PetWorldData;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.SkillType;
 import com.stardew.craft.shop.ShopInteractionBindings;
@@ -210,6 +215,22 @@ public final class InteractionHintService {
                             StardewInteractionHintType.GRAB,
                             entityIdentity(entity)))
                     : Optional.empty();
+        }
+        if (entity instanceof PetEntity petEntity) {
+            var pet = PetWorldData.get(player.server).find(petEntity.getUUID());
+            if (pet == null || !pet.variant.available() || !PetService.manages(player, pet.farm)) {
+                return Optional.empty();
+            }
+            ItemStack held = player.getMainHandItem();
+            boolean itemAction = held.is(ModItems.BUTTERFLY_POWDER.get())
+                    || held.getItem() instanceof StardewHatItem
+                            && pet.variant.wearsHat();
+            boolean opensMenu = !itemAction && (player.isShiftKeyDown()
+                    || pet.petted.getOrDefault(player.getUUID(), -1)
+                            == StardewTimeManager.get().getAbsoluteDay());
+            return Optional.of(hint(
+                    opensMenu ? StardewInteractionHintType.LOOK : StardewInteractionHintType.GRAB,
+                    entityIdentity(entity)));
         }
         if (entity instanceof BaseCoopAnimalEntity animal) {
             if (animal.getManagedAnimalId() <= 0L

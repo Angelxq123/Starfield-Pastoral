@@ -1,0 +1,60 @@
+{
+  "format_version": 1,
+  "reservation_bounds_from_anchor": {
+    "min": [
+      0,
+      0,
+      0
+    ],
+    "max_exclusive": [
+      2,
+      1,
+      2
+    ]
+  },
+  "self_build": {
+    "radius": 0,
+    "height": 1,
+    "manager_price": 0
+  },
+  "tiers": [
+    {
+      "tier": 1,
+      "structure": "stardewcraft:farm_buildings/pet_bowl_wood",
+      "size": [
+        2,
+        1,
+        2
+      ],
+      "anchor": [
+        0,
+        0,
+        0
+      ],
+      "bounds_from_anchor": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max_exclusive": [
+          2,
+          1,
+          2
+        ]
+      },
+      "manager": {
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      "animal_spawn": [
+        1,
+        0,
+        1
+      ]
+    }
+  ]
+}

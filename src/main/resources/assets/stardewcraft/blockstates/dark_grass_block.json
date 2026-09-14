@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "snowy=false": {
+      "model": "stardewcraft:block/terrain/dark_grass_block"
+    },
+    "snowy=true": {
+      "model": "stardewcraft:block/terrain/dark_grass_block_snow"
+    }
+  }
+}

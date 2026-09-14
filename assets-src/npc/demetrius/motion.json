@@ -1,0 +1,82 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.9043066875,
+  "attentionRig": {
+    "hipHeight": 13.0,
+    "soleY": 0.0,
+    "toeDepth": 2.5,
+    "halfStance": 2.18,
+    "rightZ": 0.12,
+    "leftZ": -0.2,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "demetrius",
+    "revision": "character-articulated-3",
+    "rootMean": 0.41600000000000004,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          13.0,
+          0.0
+        ],
+        "knee": 6.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      },
+      "left": {
+        "hip": [
+          2.0,
+          13.0,
+          0.0
+        ],
+        "knee": 6.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      }
+    },
+    "bodyPitch": -1.8,
+    "headPitch": 1.15,
+    "halfStance": 2.18,
+    "stride": 14.468907,
+    "reachMargin": 0.042805,
+    "legLengthStride": 22.75,
+    "approvedBaseStride": 22.5225,
+    "stance": 0.57,
+    "bob": 0.2688,
+    "sway": 0.43,
+    "rootYaw": 1.55,
+    "bodyYaw": 4.0,
+    "armSwing": 16.0,
+    "armPhase": 0.04,
+    "footLift": 0.2856,
+    "swingPeak": 0.5,
+    "elbowBase": 9,
+    "bodyRoll": 0.72,
+    "strideScale": 1.02,
+    "intent": "较高成年男性；长步协调、头肩稳、手臂自然跟随，不能仅因腿长而复制 Sam。",
+    "bodyLag": 0.07,
+    "headLag": 0.10500000000000001,
+    "headYawLag": 0.055,
+    "headNod": 0.34,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.761624,
+    "levelWalk": true
+  }
+}

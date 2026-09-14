@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/stairs",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/dark_lava_basalt",
-                     "top":  "stardewcraft:block/mine/dark_lava_basalt",
-                     "side":  "stardewcraft:block/mine/dark_lava_basalt",
-                     "particle":  "stardewcraft:block/mine/dark_lava_basalt"
-                 }
-}

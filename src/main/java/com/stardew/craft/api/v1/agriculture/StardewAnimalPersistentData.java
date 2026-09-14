@@ -51,13 +51,51 @@ public final class StardewAnimalPersistentData {
                 SCOPE, id, currentVersion));
     }
 
+    public static Optional<Value> read(com.stardew.craft.animal.runtime.LivestockRecord animal,Key key) {
+        return fromTag(animal.persistentData()).readEntry(key);
+    }
+    public static com.stardew.craft.animal.runtime.LivestockRecord with(com.stardew.craft.animal.runtime.LivestockRecord animal,Key key,CompoundTag payload) {
+        var state=fromTag(animal.persistentData());state.writeEntry(key,payload);return animal.persistentData(state.toTag());
+    }
+    public static Optional<Value> read(ServerLevel level,java.util.UUID animalId,Key key) {
+        requireRegistered(key);var animal=com.stardew.craft.animal.runtime.LivestockDayState.read(level,animalId);
+        return animal==null?Optional.empty():read(animal,key);
+    }
+    public static boolean write(ServerLevel level,java.util.UUID animalId,Key key,CompoundTag payload) {
+        requireRegistered(key);var data=com.stardew.craft.animal.runtime.LivestockWorldData.get(level.getServer());var animal=com.stardew.craft.animal.runtime.LivestockDayState.read(level,animalId);
+        if(animal==null)return false;com.stardew.craft.animal.runtime.LivestockDayState.write(level,with(animal,key,payload));return true;
+    }
+    public static boolean remove(ServerLevel level,java.util.UUID animalId,Key key) {
+        requireRegistered(key);var data=com.stardew.craft.animal.runtime.LivestockWorldData.get(level.getServer());var animal=com.stardew.craft.animal.runtime.LivestockDayState.read(level,animalId);
+        if(animal==null)return false;var state=fromTag(animal.persistentData());if(!state.removeEntry(key))return false;com.stardew.craft.animal.runtime.LivestockDayState.write(level,animal.persistentData(state.toTag()));return true;
+    }
+    public static Optional<StardewStateContainerSnapshot> diagnostics(ServerLevel level,java.util.UUID animalId) {
+        var animal=com.stardew.craft.animal.runtime.LivestockDayState.read(level,animalId);
+        return animal==null?Optional.empty():Optional.of(fromTag(animal.persistentData()).diagnostics());
+    }
+    public static Optional<StardewStateMigrationPreview> previewMigration(ServerLevel level,java.util.UUID animalId,Key key,StardewStateMigration migration) throws Exception {
+        requireRegistered(key);var animal=com.stardew.craft.animal.runtime.LivestockDayState.read(level,animalId);
+        return animal==null?Optional.empty():fromTag(animal.persistentData()).previewEntry(key,migration);
+    }
+    public static StardewStateMigrationResult applyMigration(ServerLevel level,java.util.UUID animalId,Key key,StardewStateMigrationPreview preview) {
+        requireRegistered(key);var data=com.stardew.craft.animal.runtime.LivestockWorldData.get(level.getServer());var animal=com.stardew.craft.animal.runtime.LivestockDayState.read(level,animalId);
+        if(animal==null)return StardewStateMigrationResult.MISSING;
+        var state=fromTag(animal.persistentData());var result=state.applyEntry(key,preview);
+        if(result==StardewStateMigrationResult.APPLIED)com.stardew.craft.animal.runtime.LivestockDayState.write(level,animal.persistentData(state.toTag()));return result;
+    }
+
     public static Optional<Value> read(FarmAnimalRecord animal, Key key) {
         Objects.requireNonNull(animal, "animal");
         requireRegistered(key);
         return animal.persistentData().readEntry(key);
     }
 
+    private static java.util.UUID runtimeId(ServerLevel level,long handle){
+        if(handle>=0)return null;
+        return com.stardew.craft.animal.runtime.LivestockWorldData.get(level.getServer()).all().stream().filter(a->a.randomId()==-handle).map(com.stardew.craft.animal.runtime.LivestockRecord::id).findFirst().orElse(null);
+    }
     public static Optional<Value> read(ServerLevel level, long animalId, Key key) {
+        if(animalId<0){var id=runtimeId(level,animalId);return id==null?Optional.empty():read(level,id, key);}
         Objects.requireNonNull(level, "level");
         requireRegistered(key);
         return AnimalWorldData.get(level).getAnimal(animalId)
@@ -70,6 +108,7 @@ public final class StardewAnimalPersistentData {
             Key key,
             CompoundTag payload
     ) {
+        if(animalId<0){var id=runtimeId(level,animalId);return id==null?false:write(level,id, key, payload);}
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(payload, "payload");
         requireRegistered(key);
@@ -84,6 +123,7 @@ public final class StardewAnimalPersistentData {
     }
 
     public static boolean remove(ServerLevel level, long animalId, Key key) {
+        if(animalId<0){var id=runtimeId(level,animalId);return id==null?false:remove(level,id, key);}
         Objects.requireNonNull(level, "level");
         requireRegistered(key);
         AnimalWorldData worldData = AnimalWorldData.get(level);
@@ -101,6 +141,7 @@ public final class StardewAnimalPersistentData {
             Key key,
             StardewStateMigration migration
     ) throws Exception {
+        if(animalId<0){var id=runtimeId(level,animalId);return id==null?Optional.empty():previewMigration(level,id, key, migration);}
         Objects.requireNonNull(level, "level");
         requireRegistered(key);
         FarmAnimalRecord animal = AnimalWorldData.get(level)
@@ -117,6 +158,7 @@ public final class StardewAnimalPersistentData {
             Key key,
             StardewStateMigrationPreview preview
     ) {
+        if(animalId<0){var id=runtimeId(level,animalId);return id==null?StardewStateMigrationResult.MISSING:applyMigration(level,id, key, preview);}
         Objects.requireNonNull(level, "level");
         requireRegistered(key);
         AnimalWorldData worldData = AnimalWorldData.get(level);
@@ -137,6 +179,7 @@ public final class StardewAnimalPersistentData {
             ServerLevel level,
             long animalId
     ) {
+        if(animalId<0){var id=runtimeId(level,animalId);return id==null?Optional.empty():diagnostics(level,id);}
         Objects.requireNonNull(level, "level");
         return AnimalWorldData.get(level).getAnimal(animalId)
                 .map(animal -> animal.persistentData().diagnostics());

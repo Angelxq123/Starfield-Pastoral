@@ -652,6 +652,8 @@ public class InteriorPortalInteractionEvents {
     private static final net.minecraft.core.BlockPos PUBLIC_SOUTH_FARM_TARGET = new net.minecraft.core.BlockPos(-114, 64, -2);
     private static final net.minecraft.core.BlockPos PUBLIC_NORTH_FARM_TARGET = new net.minecraft.core.BlockPos(-114, 69, -64);
 
+    public static net.minecraft.core.BlockPos publicFarmExitTarget() { return PUBLIC_EAST_FARM_TARGET; }
+
     private static void handleFarmExit(ServerPlayer player, String exitId) {
         long now = player.serverLevel().getGameTime();
         long last = player.getPersistentData().getLong(PLAYER_LAST_PORTAL_TICK);
@@ -697,64 +699,17 @@ public class InteriorPortalInteractionEvents {
         player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
     }
 
-    /** 骷髅矿入口：传送到 floor 121 大厅 schem 内部 (origin + 3, 1, 3) */
+    /** The public entrance hall precedes the Skull Key door. */
     private static void handleDesertMineEntrance(ServerPlayer player) {
-        ServerLevel mineLevel = player.server.getLevel(ModMiningDimensions.STARDEW_MINING);
-        if (mineLevel == null) {
-            StardewCraft.LOGGER.warn("[SKULL_CAVERN] Mine dimension not available");
-            return;
-        }
-
-        long now = player.serverLevel().getGameTime();
-        long last = player.getPersistentData().getLong(PLAYER_LAST_PORTAL_TICK);
-        if (now - last < PORTAL_COOLDOWN_TICKS) return;
-
-        // SDV 原版门禁：必须拥有 SkullKey 才能进入 (GameLocation.SkullDoor)
-        com.stardew.craft.player.PlayerStardewData sdData =
-                com.stardew.craft.player.PlayerDataManager.getPlayerData(player);
-        if (!sdData.hasMailFlag(com.stardew.craft.communitycenter.state.CCStoryFlags.HAS_SKULL_KEY)) {
-            ObjectDialogueService.show(player, "message.stardewcraft.skull_door_locked");
-            player.playNotifySound(net.minecraft.sounds.SoundEvents.IRON_DOOR_OPEN,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6f, 0.7f);
-            player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
-            return;
-        }
-
-        unlockSkullDoorQuest(player);
-
-        // 生成 floor 121 入口大厅（使用 skullkeyentrance.schem）
-        com.stardew.craft.mining.MineFloorGenerator.generateFloor(mineLevel, 121);
-
-        // 传送到 schem 内部 spawn (origin + 3, 1, 3) — ModTeleport 自动跳过维度拦截
-        net.minecraft.core.BlockPos spawn = com.stardew.craft.mining.MineFloorGenerator.SKULL_CAVERN_LOBBY_SPAWN;
-        player.invulnerableTime = Math.max(player.invulnerableTime, 20);
-        ModTeleport.to(player, mineLevel,
-                spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D,
-                0.0F, 0.0F);
-        player.setDeltaMovement(0, 0, 0);
-        player.fallDistance = 0;
-        player.hurtMarked = true;
-        player.invulnerableTime = Math.max(player.invulnerableTime, 20);
-
-        // 更新玩家矿井数据
-        com.stardew.craft.mining.MiningPlayerData pData = com.stardew.craft.mining.MiningDataManager.getPlayerData(player);
-        if (pData != null) {
-            pData.setCurrentFloor(121);
-            com.stardew.craft.mining.MiningDataManager.savePlayerData(player, pData);
-        }
-
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
-            player,
-            new com.stardew.craft.network.MiningFloorSyncPacket(121)
-        );
-
-        com.stardew.craft.mining.SkullCavernSessionManager.onPlayerEnter(player);
-
-        player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
-        StardewCraft.LOGGER.info("[SKULL_CAVERN] {} entered skull cavern lobby at {}", player.getName().getString(), spawn);
+        ServerLevel mineLevel=player.server.getLevel(ModMiningDimensions.STARDEW_MINING);
+        if(mineLevel==null)return;
+        long now=player.serverLevel().getGameTime();
+        if(now-player.getPersistentData().getLong(PLAYER_LAST_PORTAL_TICK)<PORTAL_COOLDOWN_TICKS)return;
+        com.stardew.craft.mining.MiningCoordinates.teleportPlayerToFloor(player,mineLevel,com.stardew.craft.mining.SkullCavernRuntime.LOBBY);
+        player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK,now);
     }
 
-    private static void unlockSkullDoorQuest(ServerPlayer player) {
+    public static void unlockSkullDoorQuest(ServerPlayer player) {
         boolean firstUnlock = !com.stardew.craft.mail.MailService.hasOrWillReceiveMail(player, "skullCave");
         if (firstUnlock) {
             ObjectDialogueService.show(player, "message.stardewcraft.skull_door_unlock");
@@ -923,66 +878,11 @@ public class InteriorPortalInteractionEvents {
     // ════════════════════════════════════════════════════════════════
 
     private static void handleFarmCaveEntry(ServerPlayer player) {
-        long now = player.serverLevel().getGameTime();
-        long last = player.getPersistentData().getLong(PLAYER_LAST_PORTAL_TICK);
-        if (now - last < PORTAL_COOLDOWN_TICKS) return;
-
-        ServerLevel level = player.serverLevel();
-
-        // 农场 owner 决定用谁的洞穴（成员共享 owner 的洞穴）
-        com.stardew.craft.farm.FarmInstance farm = com.stardew.craft.farm.FarmInstanceRegistry.get()
-                .getFarmForPlayer(player.getUUID());
-        java.util.UUID caveOwner = (farm != null) ? farm.getOwnerUUID() : player.getUUID();
-
-        PlayerInteriorAllocator alloc = PlayerInteriorAllocator.get(level);
-        net.minecraft.core.BlockPos caveOrigin = alloc.ensureCaveLoaded(level, caveOwner);
-        net.minecraft.core.BlockPos spawnPos = caveOrigin.offset(InteriorSubspaceManager.FARM_CAVE_INDOOR_SPAWN_OFFSET);
-
-        player.closeContainer();
-        player.stopUsingItem();
-
-        player.teleportTo(level,
-            spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
-            -90.0F, 0.0F);
-        player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
-        applyInteriorFlag(player, InteriorPortalRegistry.PortalMode.ENTRANCE);
-
+        com.stardew.craft.interior.FarmCaveRuntime.enter(player);
     }
 
     private static void handleFarmCaveExit(ServerPlayer player) {
-        long now = player.serverLevel().getGameTime();
-        long last = player.getPersistentData().getLong(PLAYER_LAST_PORTAL_TICK);
-        if (now - last < PORTAL_COOLDOWN_TICKS) return;
-
-        ServerLevel level = player.serverLevel();
-        // 反查当前所在的洞穴属于哪个玩家
-        java.util.UUID caveOwner = PlayerInteriorAllocator.get(level).findCaveOwner(player.blockPosition());
-        com.stardew.craft.farm.FarmInstance farm = null;
-        if (caveOwner != null) {
-            farm = com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(caveOwner);
-        }
-        if (farm == null) {
-            // 兜底：按玩家自身农场反查
-            farm = com.stardew.craft.farm.FarmInstanceRegistry.get().getFarmForPlayer(player.getUUID());
-        }
-        if (farm == null || farm.getFarmLayout().caveExitSpawn() == null) {
-            StardewCraft.LOGGER.warn("[FARM-CAVE] Cannot resolve exit target for {}, aborting", player.getName().getString());
-            return;
-        }
-
-        net.minecraft.core.BlockPos exitOffset =
-                farm.getFarmLayout().caveExitSpawn();
-        float yaw = farm.getFarmLayout().caveExitYaw();
-        net.minecraft.core.BlockPos exitAbs = farm.getOrigin().offset(exitOffset);
-
-        player.closeContainer();
-        player.stopUsingItem();
-        player.teleportTo(level,
-            exitAbs.getX() + 0.5D, exitAbs.getY(), exitAbs.getZ() + 0.5D,
-            yaw, 0.0F);
-        player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
-        applyInteriorFlag(player, InteriorPortalRegistry.PortalMode.EXIT);
-
+        com.stardew.craft.interior.FarmCaveRuntime.exit(player);
     }
 
     // ════════════════════════════════════════════════════════════════

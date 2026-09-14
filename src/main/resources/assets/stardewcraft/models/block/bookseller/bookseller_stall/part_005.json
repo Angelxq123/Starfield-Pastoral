@@ -1,0 +1,210 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_spring_repaint",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_wood_particle",
+    "2": "stardewcraft:block/decor/bookseller/bookseller_spring_accents",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_wood_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        -16,
+        3,
+        15
+      ],
+      "to": [
+        16,
+        5,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.15625,
+            1.75,
+            3.15625,
+            1.8125
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.21875,
+            1.75,
+            3.25,
+            1.8125
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.3125,
+            1.75,
+            4.3125,
+            1.8125
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4.375,
+            1.75,
+            5.375,
+            1.78125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            5.4375,
+            1.75,
+            6.4375,
+            1.78125
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        11,
+        5,
+        15
+      ],
+      "to": [
+        13,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.84375,
+            1.75,
+            10.90625,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10.96875,
+            1.75,
+            11.0,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.0625,
+            1.75,
+            11.125,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.1875,
+            1.75,
+            11.21875,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            11.28125,
+            1.75,
+            11.34375,
+            1.78125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            11.40625,
+            1.75,
+            11.46875,
+            1.78125
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        -1,
+        5,
+        15
+      ],
+      "to": [
+        1,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.53125,
+            1.75,
+            11.59375,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.65625,
+            1.75,
+            11.6875,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.75,
+            1.75,
+            11.8125,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.875,
+            1.75,
+            11.90625,
+            2.03125
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            11.96875,
+            1.75,
+            12.03125,
+            1.78125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            12.09375,
+            1.75,
+            12.15625,
+            1.78125
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "source_name": "Rock Crab",
+  "family": "rock_crab",
+  "health": 30,
+  "damage": 5,
+  "resilience": 1,
+  "miss_chance": 0,
+  "experience": 4,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:crab",
+      "chance": 0.15
+    },
+    {
+      "item": "stardewcraft:cherry_bomb",
+      "chance": 0.4
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_i",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

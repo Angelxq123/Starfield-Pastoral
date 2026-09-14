@@ -1,0 +1,70 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/summer/plaza_display_summer",
+    "particle": "stardewcraft:block/plaza_display/summer/plaza_summer_ceramic_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        5,
+        7
+      ],
+      "to": [
+        14,
+        12,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.125,
+            5.25,
+            0.875,
+            5.6875
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            1.875,
+            5.25,
+            2.0,
+            5.6875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1.0,
+            5.25,
+            1.75,
+            5.6875
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.125,
+            5.25,
+            2.25,
+            5.6875
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.375,
+            5.25,
+            3.125,
+            5.375
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

@@ -82,7 +82,7 @@ public final class ShopRegistry {
 
     private static final String TRAVELING_CART_RARECROW_ID = "stardewcraft:scarecrow_4";
     private static final String TRAVELING_CART_VANILLA_OBJECTS_RESOURCE =
-            "data/stardewcraft/npc/vanilla/data/Objects.json";
+            "data/stardewcraft/npc/vanilla/data/objects.json";
     private static final Map<String, String> TRAVELING_CART_OBJECT_PATH_OVERRIDES = Map.ofEntries(
             Map.entry("bomb", "bomb_item"),
             Map.entry("grape_starter", "grape_seeds"),

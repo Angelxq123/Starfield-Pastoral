@@ -27,7 +27,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
  * 解决方案：在实体加入世界时，检测是否已有相同 managedAnimalId 的实体存在，
  * 如果是，则取消加入（discard 旧的那个）。
  */
-@EventBusSubscriber(modid = StardewCraft.MODID)
+// Legacy event adapter is deliberately not registered; runtime records own housing and entities.
 public class AnimalDuplicateGuardEvents {
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {

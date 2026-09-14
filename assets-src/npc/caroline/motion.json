@@ -1,0 +1,98 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.85186025,
+  "attentionRig": {
+    "hipHeight": 12.0,
+    "soleY": 0.0,
+    "toeDepth": 2.5,
+    "halfStance": 2.16,
+    "rightZ": 0.14,
+    "leftZ": -0.18,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 48,
+    "pitch": 6
+  },
+  "cloth": {
+    "bone": "skirt",
+    "kind": "skirt",
+    "anchorY": 15.0,
+    "hemY": 2.88,
+    "margin": 0.7,
+    "clearancePart": "skirt_core",
+    "standingDepthMargin": 0.4,
+    "contactBlend": 1.0,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "id": "caroline",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42800000000000005,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      }
+    },
+    "bodyPitch": -1.7,
+    "headPitch": 1.15,
+    "halfStance": 2.16,
+    "stride": 13.629764,
+    "reachMargin": 0.043077,
+    "legLengthStride": 21.0,
+    "shoulderDrop": -0.65,
+    "approvedBaseStride": 21.0,
+    "stance": 0.59,
+    "bob": 0.2688,
+    "sway": 0.55,
+    "rootYaw": 1.95,
+    "bodyYaw": 4.6,
+    "armSwing": 15.0,
+    "armPhase": 0.05,
+    "footLift": 0.27440000000000003,
+    "swingPeak": 0.52,
+    "elbowBase": 11,
+    "bodyRoll": 0.95,
+    "strideScale": 0.98,
+    "intent": "成年女性、礼貌；平稳放松、移重圆润，长裙和头发保持既有净空与锚定。",
+    "bodyLag": 0.08,
+    "headLag": 0.115,
+    "headYawLag": 0.065,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.777088,
+    "levelWalk": true
+  }
+}

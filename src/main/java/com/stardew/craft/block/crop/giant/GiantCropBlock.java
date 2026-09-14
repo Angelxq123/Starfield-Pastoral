@@ -1,10 +1,12 @@
 package com.stardew.craft.block.crop.giant;
 
-import com.stardew.craft.blockentity.GiantCropBlockEntity;
+import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.SkillType;
 import com.stardew.craft.secretnote.SecretNoteService;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
@@ -16,13 +18,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.neoforged.neoforge.registries.DeferredItem;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,11 +35,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Stardew 巨型作物方块基类（3×3×2，仅 MAIN 块拥有 BE 渲染）。
+ * Stardew 巨型作物方块基类（3×3 占地，高度由模型包络确定）。
  * 当作普通方块处理：空手/任何工具都能挖；硬度由 ModBlocks.Properties 控制；
- * 砍掉 18 格中任意一格 = 拆掉整株 + 掉 15-21 个对应作物 + 5 农场经验。
+ * 砍掉任意承载格 = 拆掉整株 + 掉 15-21 个对应作物 + 5 农场经验。
  */
-public abstract class GiantCropBlock extends Block implements EntityBlock {
+public abstract class GiantCropBlock extends Block {
 
     public enum Part implements StringRepresentable {
         MAIN("main"),
@@ -47,13 +52,13 @@ public abstract class GiantCropBlock extends Block implements EntityBlock {
 
     public static final EnumProperty<Part> PART = EnumProperty.create("part", Part.class);
 
-    /** 3×3×2 = 18 个单元；MAIN 在 (0,0,0)，向四周延伸 ±1 + 上方 1 格。 */
+    /** 至多 3×3×3；MAIN 在 (0,0,0)，只放置实际高度内的承载格。 */
     public static final List<int[]> CELL_OFFSETS;
     static {
-        List<int[]> cells = new ArrayList<>(18);
+        List<int[]> cells = new ArrayList<>(27);
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                for (int dy = 0; dy <= 1; dy++) {
+                for (int dy = 0; dy <= 2; dy++) {
                     cells.add(new int[]{dx, dy, dz});
                 }
             }
@@ -64,7 +69,8 @@ public abstract class GiantCropBlock extends Block implements EntityBlock {
     public static final int CHOP_FARMING_XP = 5;
 
     public GiantCropBlock(Properties properties) {
-        super(properties);
+        // Each cell's box depends on its root and the actual support surface.
+        super(properties.dynamicShape());
         registerDefaultState(stateDefinition.any().setValue(PART, Part.MAIN));
     }
 
@@ -80,14 +86,58 @@ public abstract class GiantCropBlock extends Block implements EntityBlock {
     public int getDropMin() { return 15; }
     public int getDropMax() { return 21; }
 
+    @Nullable
+    private String staticModelId() {
+        String model = ModelVoxelShapeCache.variantModel(BuiltInRegistries.BLOCK.getKey(this).toString(), "part=main");
+        return model != null && model.startsWith("stardewcraft:block/crop3d/") ? model : null;
+    }
+
+    public int footprintHeight() {
+        String model = staticModelId();
+        return model == null ? 2 : Math.max(1, Math.min(3,
+                (int) Math.ceil(ModelVoxelShapeCache.requiredShape(model).bounds().maxY)));
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        String model = staticModelId();
+        if (model == null) return super.getShape(state, level, pos, context);
+        BlockPos main = findMainPos(level, pos, state);
+        if (main == null) return Shapes.empty();
+        double offset = 0;
+        BlockState support = level.getBlockState(main.below());
+        if (support.getBlock() instanceof FarmBlock) {
+            VoxelShape floor = support.getCollisionShape(level, main.below());
+            if (!floor.isEmpty()) offset = floor.max(Direction.Axis.Y) - 1;
+        } else if (support.getBlock() instanceof com.stardew.craft.block.decor.GardenPlanterBlock) offset = -.25;
+        AABB whole = ModelVoxelShapeCache.requiredShape(model).bounds().move(
+                main.getX() - pos.getX(), main.getY() - pos.getY() + offset, main.getZ() - pos.getZ());
+        return cellShape(whole, pos.getY() == main.getY());
+    }
+
+    /** Every occupied cell contributes its slice of the same enclosing model box. */
+    public static VoxelShape cellShape(AABB whole, boolean lower) {
+        double minX = Math.max(0, whole.minX), minY = lower ? whole.minY : Math.max(0, whole.minY);
+        double minZ = Math.max(0, whole.minZ), maxX = Math.min(1, whole.maxX);
+        double maxY = Math.min(1, whole.maxY), maxZ = Math.min(1, whole.maxZ);
+        if (minX >= maxX || minY >= maxY || minZ >= maxZ) return Shapes.empty();
+        return Shapes.create(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getShape(state, level, pos, context);
+    }
+
     // ── 多格管理 ──────────────────────────────
 
-    /** 在 main pos 处放置整株巨型作物（含 17 个上下扩展格）。 */
+    /** 在 main pos 处放置整株巨型作物及实际高度所需的扩展格。 */
     public void placeFootprint(Level level, BlockPos mainPos) {
         BlockState mainState = defaultBlockState().setValue(PART, Part.MAIN);
         level.setBlock(mainPos, mainState, 3);
         BlockState extState = defaultBlockState().setValue(PART, Part.EXTENSION);
         for (int[] off : CELL_OFFSETS) {
+            if (off[1] >= footprintHeight()) continue;
             if (off[0] == 0 && off[1] == 0 && off[2] == 0) continue;
             BlockPos p = mainPos.offset(off[0], off[1], off[2]);
             level.setBlock(p, extState, 3);
@@ -103,28 +153,37 @@ public abstract class GiantCropBlock extends Block implements EntityBlock {
         for (int[] off : CELL_OFFSETS) {
             if (off[0] == 0 && off[1] == 0 && off[2] == 0) continue;
             BlockPos candidate = pos.offset(-off[0], -off[1], -off[2]);
+            if (level instanceof LevelReader reader && !reader.hasChunkAt(candidate)) continue;
             BlockState s = level.getBlockState(candidate);
-            if (s.is(this) && s.getValue(PART) == Part.MAIN) {
+            if (off[1] < footprintHeight() && s.is(this) && s.getValue(PART) == Part.MAIN) {
                 return candidate;
             }
         }
         return null;
     }
 
-    // ── BlockEntity / 渲染 ─────────────────────
-
-    @Override
-    public RenderShape getRenderShape(@Nonnull BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+    /** Upgrade old two-layer footprints without replacing player-built obstructions. */
+    public void restoreUpperFootprint(ServerLevel level, BlockPos main) {
+        if (footprintHeight() <= 2 || !level.hasChunksAt(main.offset(-1, 0, -1), main.offset(1, 2, 1))) return;
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            BlockState state = level.getBlockState(main.offset(dx, 2, dz));
+            if (state.is(this) && state.getValue(PART) == Part.EXTENSION) continue;
+            if (!state.isAir() && !state.canBeReplaced()) return;
+        }
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            BlockPos pos = main.offset(dx, 2, dz);
+            if (!level.getBlockState(pos).is(this)) level.setBlock(pos, defaultBlockState().setValue(PART, Part.EXTENSION), 3);
+        }
     }
 
     @Override
-    @Nullable
-    public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        if (state.getValue(PART) != Part.MAIN) {
-            return null;
-        }
-        return new GiantCropBlockEntity(pos, state);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, net.minecraft.util.RandomSource random) {
+        if (state.getValue(PART) == Part.MAIN) restoreUpperFootprint(level, pos);
+    }
+
+    @Override
+    public RenderShape getRenderShape(@Nonnull BlockState state) {
+        return RenderShape.MODEL;
     }
 
     // ── 多块联动：EXT 失去 MAIN 自销 ────────────────────────
@@ -149,7 +208,7 @@ public abstract class GiantCropBlock extends Block implements EntityBlock {
         return state.canSurvive(level, pos) ? state : Blocks.AIR.defaultBlockState();
     }
 
-    // ── 玩家破坏：整株掉落 + 经验 + 移除 18 格 ────────────────────────
+    // ── 玩家破坏：整株掉落 + 经验 + 移除承载格 ────────────────────────
 
     @SuppressWarnings("null")
     @Override
@@ -174,68 +233,20 @@ public abstract class GiantCropBlock extends Block implements EntityBlock {
                         PlayerStardewDataAPI.addExperience(sp, SkillType.FARMING, CHOP_FARMING_XP);
                     }
                 }
-                // 静默移除其余 17 格（避免 onRemove 递归 / 重复 popResource）
+                // 移除本株的其余承载格，避免重复掉落或移除相邻植株。
+                List<BlockPos> owned = new ArrayList<>();
                 for (int[] off : CELL_OFFSETS) {
                     BlockPos p = mainPos.offset(off[0], off[1], off[2]);
                     if (p.equals(pos)) continue;
                     BlockState s = level.getBlockState(p);
-                    if (s.is(this)) {
-                        level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+                    if (s.is(this) && mainPos.equals(findMainPos(level, p, s))) {
+                        owned.add(p);
                     }
                 }
+                for (BlockPos p : owned) level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
             }
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
 
-    // ── 客户端：左键命中/破坏粒子绑定到作物物品贴图 ────────────────────────
-
-    @Override
-    public void initializeClient(@SuppressWarnings("null") java.util.function.Consumer<net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions> consumer) {
-        consumer.accept(new net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions() {
-            @Override
-            @SuppressWarnings("null")
-            public boolean addHitEffects(BlockState state, Level level, net.minecraft.world.phys.HitResult target,
-                                         net.minecraft.client.particle.ParticleEngine manager) {
-                if (target instanceof net.minecraft.world.phys.BlockHitResult bhr) {
-                    spawnItemCrack(level, bhr.getBlockPos(), bhr.getDirection(), 4);
-                }
-                return true;
-            }
-
-            @Override
-            @SuppressWarnings("null")
-            public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos,
-                                             net.minecraft.client.particle.ParticleEngine manager) {
-                BlockPos main = findMainPos(level, pos, state);
-                BlockPos center = main != null ? main : pos;
-                for (int[] off : CELL_OFFSETS) {
-                    BlockPos p = center.offset(off[0], off[1], off[2]);
-                    spawnItemCrack(level, p, null, 6);
-                }
-                return true;
-            }
-
-            private void spawnItemCrack(Level level, BlockPos pos, @Nullable net.minecraft.core.Direction face, int count) {
-                ItemStack icon = new ItemStack(getDropItem().get());
-                net.minecraft.core.particles.ItemParticleOption opt =
-                        new net.minecraft.core.particles.ItemParticleOption(net.minecraft.core.particles.ParticleTypes.ITEM, icon);
-                java.util.Random rng = new java.util.Random();
-                for (int i = 0; i < count; i++) {
-                    double dx = pos.getX() + 0.1 + rng.nextDouble() * 0.8;
-                    double dy = pos.getY() + 0.1 + rng.nextDouble() * 0.8;
-                    double dz = pos.getZ() + 0.1 + rng.nextDouble() * 0.8;
-                    double vx = (rng.nextDouble() - 0.5) * 0.3;
-                    double vy = (rng.nextDouble() - 0.5) * 0.3 + 0.1;
-                    double vz = (rng.nextDouble() - 0.5) * 0.3;
-                    if (face != null) {
-                        dx += face.getStepX() * 0.05;
-                        dy += face.getStepY() * 0.05;
-                        dz += face.getStepZ() * 0.05;
-                    }
-                    level.addParticle(opt, dx, dy, dz, vx, vy, vz);
-                }
-            }
-        });
-    }
 }

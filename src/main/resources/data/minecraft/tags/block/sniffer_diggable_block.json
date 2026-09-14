@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "stardewcraft:grass_block",
+    "stardewcraft:dirt",
+    "stardewcraft:dark_grass_block"
+  ]
+}

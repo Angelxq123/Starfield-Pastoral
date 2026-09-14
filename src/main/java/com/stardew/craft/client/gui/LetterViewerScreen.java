@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.PlayerGenderText;
@@ -113,7 +115,7 @@ public class LetterViewerScreen extends Screen {
 
     @Override
     protected void init() {
-        float guiScale = (float) minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         mapping = new StardewRenderMapping(width, height, guiScale);
 
         letterW = mapping.ui(SDV_LETTER_W);

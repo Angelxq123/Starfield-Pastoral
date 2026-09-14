@@ -167,11 +167,21 @@ public final class FishingDataManager {
 	 */
 	@SuppressWarnings("null")
 	public Optional<FishSelection> selectFish(ServerPlayer player, ServerLevel level, BlockPos bobberPos, int waterDepth, boolean inSplash, RandomSource random) {
+        return selectFish(player, level, bobberPos, waterDepth, inSplash, random, null);
+    }
+
+    /** Pet LOCATION_FISH query: inherited pool, no rod, tutorial catch, special bobber rewards or junk fallback. */
+    public ItemStack selectPetGift(ServerPlayer player, ServerLevel level, String location, RandomSource random) {
+        if (!location.equals("Mountain") && !location.equals("Forest")) throw new IllegalArgumentException("Pet fishing location");
+        return selectFish(player, level, player.blockPosition(), 1, false, random, location).map(FishSelection::stack).orElse(ItemStack.EMPTY);
+    }
+
+    private Optional<FishSelection> selectFish(ServerPlayer player, ServerLevel level, BlockPos bobberPos, int waterDepth, boolean inSplash, RandomSource random, String queryLocation) {
 		int effectiveDepth = waterDepth + (inSplash ? 1 : 0);
 		if (!isStardewFishingDimension(level)) {
-			return Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
+			return queryLocation != null ? Optional.empty() : Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
 		}
-		Optional<ItemStack> secretNote25Catch = com.stardew.craft.secretnote.SecretNote25Service
+		Optional<ItemStack> secretNote25Catch = queryLocation != null ? Optional.empty() : com.stardew.craft.secretnote.SecretNote25Service
 				.tryCreateNecklaceCatch(player, level, bobberPos);
 		if (secretNote25Catch.isPresent()) {
 			return Optional.of(new FishSelection(secretNote25Catch.get(), 0, 0, 0, 0, true));
@@ -179,8 +189,8 @@ public final class FishingDataManager {
 
 		int luckBuffLevel = Math.max(0, PlayerStardewDataAPI.getLuckBuffLevel(player));
 		PlayerStardewData playerData = PlayerStardewDataAPI.getData(player);
-		boolean hasCuriosityLure = hasCuriosityLure(player);
-		ItemStack rodStack = getRodFromPlayer(player);
+		boolean hasCuriosityLure = queryLocation == null && hasCuriosityLure(player);
+		ItemStack rodStack = queryLocation == null ? getRodFromPlayer(player) : ItemStack.EMPTY;
 		int fishingLevel = StardewEnchantments.effectiveFishingLevel(player, rodStack);
 		boolean usingMagicBait = !rodStack.isEmpty()
 				&& (rodStack.getItem() instanceof com.stardew.craft.item.tool.FishingRodItem)
@@ -190,17 +200,20 @@ public final class FishingDataManager {
 				&& fri.getTier() == com.stardew.craft.item.tool.FishingRodItem.RodTier.TRAINING_ROD;
 		boolean usingGoodBait = isUsingGoodBait(rodStack);
 		String baitTargetFishId = getTargetedBaitFishId(rodStack);
-		Holder<Biome> biomeHolder = level.getBiome(bobberPos);
-		Optional<FishSelection> mineCatch = trySelectVanillaMineCatch(
+		Holder<Biome> biomeHolder = queryLocation == null ? level.getBiome(bobberPos)
+                : level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getHolderOrThrow(
+                        net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME,
+                                ResourceLocation.parse("stardewcraft:" + (queryLocation.equals("Mountain") ? "mountain_lake" : "forest_river"))));
+		Optional<FishSelection> mineCatch = queryLocation != null ? Optional.empty() : trySelectVanillaMineCatch(
 				biomeHolder, isTrainingRod, fishingLevel, effectiveDepth,
 				luckBuffLevel, hasCuriosityLure, baitTargetFishId, random);
 		if (mineCatch.isPresent()) {
 			return mineCatch;
 		}
-		boolean fairFishingGame = com.stardew.craft.festival.fair.FairFishingGameService.isFishingGameActive(player);
-		boolean iceFishingContest = com.stardew.craft.festival.FestivalOfIceService.isFishingContestActive(player);
+		boolean fairFishingGame = queryLocation == null && com.stardew.craft.festival.fair.FairFishingGameService.isFishingGameActive(player);
+		boolean iceFishingContest = queryLocation == null && com.stardew.craft.festival.FestivalOfIceService.isFishingContestActive(player);
 		boolean festivalFishingGame = fairFishingGame || iceFishingContest;
-		List<String> lookupKeys = resolveFishingLookupKeys(
+		List<String> lookupKeys = queryLocation != null ? List.of(queryLocation) : resolveFishingLookupKeys(
 				fairFishingGame,
 				iceFishingContest,
 				festivalFishingGame
@@ -209,7 +222,7 @@ public final class FishingDataManager {
 		boolean nightMarketFishing = com.stardew.craft.festival.nightmarket.NightMarketSubmarineService
 				.isInsideSubmarineBounds(bobberPos)
 				|| hasBiomeTag(biomeHolder, "stardewcraft:is_night_market");
-		boolean poolOnly = festivalFishingGame || nightMarketFishing || useDesertFestivalPoolOnly(biomeHolder);
+		boolean poolOnly = queryLocation == null && (festivalFishingGame || nightMarketFishing || useDesertFestivalPoolOnly(biomeHolder));
 
 		// 获取当前环境条件
 		boolean isRaining = com.stardew.craft.weather.WeatherManager.isRaining(level);
@@ -228,7 +241,7 @@ public final class FishingDataManager {
 
 		if (candidates.isEmpty()) {
 			// 如果没有任何候选鱼（数据未加载或配置错误），直接返回垃圾
-			return Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
+			return queryLocation != null ? Optional.empty() : Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
 		}
 
 		// SDV: who.fishCaught.Length == 0 → only tutorial fish allowed; Sunfish fallback otherwise.
@@ -242,7 +255,7 @@ public final class FishingDataManager {
 				break;
 			}
 		}
-		boolean isTutorialCatch = shouldApplyTutorialCatchGate(
+		boolean isTutorialCatch = queryLocation == null && shouldApplyTutorialCatchGate(
 				festivalFishingGame,
 				hasTutorialFishHere,
 				playerData.getDistinctFishCaughtCount());
@@ -260,7 +273,7 @@ public final class FishingDataManager {
 		for (int pass = 0; pass < 2 && chosen == null; pass++) {
 			for (CandidateRule candidate : ordered) {
 				SpawnFishRule rule = candidate.rule();
-				if (candidate.inherited() && !rule.canBeInherited()) {
+				if ((queryLocation != null || candidate.inherited()) && !rule.canBeInherited()) {
 					continue;
 				}
 				if (!RULE_ELIGIBILITY_HOOK.allow(player, level, bobberPos, biomeHolder, rule)) {
@@ -422,7 +435,7 @@ public final class FishingDataManager {
 					return Optional.of(new FishSelection(new ItemStack(sunfish), 30, 0, 5, 15, false));
 				}
 			}
-			return Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
+			return queryLocation != null ? Optional.empty() : Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
 		}
 		String resolvedItemId = chosen.itemId();
 		SpawnFishRule resultRule = chosen;
@@ -458,6 +471,8 @@ public final class FishingDataManager {
 			boolean curiosityLure,
 			String targetedFishId,
 			RandomSource random) {
+        if(hasBiomeId(biome,"stardewcraft:skull_cavern"))
+            return trainingRod?Optional.of(new FishSelection(getRandomJunk(random),0,0,0,0,true)):Optional.empty();
 		String fishId = null;
 		float chance = 0f;
 		boolean lavaArea = hasBiomeTag(biome, "stardewcraft:is_mines_100");
@@ -671,7 +686,7 @@ public final class FishingDataManager {
 		if (hasBiomeTag(biomeHolder, "stardewcraft:is_desert")) {
 			return List.of("Desert");
 		}
-		if (hasBiomeTag(biomeHolder, "stardewcraft:is_mines_20")
+		if (hasBiomeId(biomeHolder,"stardewcraft:skull_cavern") || hasBiomeTag(biomeHolder, "stardewcraft:is_mines_20")
 				|| hasBiomeTag(biomeHolder, "stardewcraft:is_mines_60")
 				|| hasBiomeTag(biomeHolder, "stardewcraft:is_mines_100")) {
 			return List.of("UndergroundMine");

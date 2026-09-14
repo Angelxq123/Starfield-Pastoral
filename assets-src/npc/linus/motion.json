@@ -1,0 +1,97 @@
+{
+  "intent": "年长、宽身、叶衣；踏实平缓、稍前倾，抬脚低，胡须与衣摆维持连接。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.4583379375,
+  "attentionRig": {
+    "hipHeight": 8,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 2.5,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 22,
+    "pitch": 6
+  },
+  "cloth": {
+    "bone": "garment",
+    "kind": "skirt",
+    "anchorY": 8,
+    "hemY": 3,
+    "margin": 0.35,
+    "standingDepthMargin": 0.12,
+    "contactBlend": 1.2,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "id": "linus",
+    "revision": "character-articulated-3",
+    "rootMean": 0.34400000000000003,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          8.0,
+          0.0
+        ],
+        "knee": 4.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          8.0,
+          0.0
+        ],
+        "knee": 4.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -2.0,
+    "headPitch": 0.9,
+    "halfStance": 2.5,
+    "intent": "年长、宽身、叶衣；踏实平缓、稍前倾，抬脚低，胡须与衣摆维持连接。",
+    "stance": 0.63,
+    "strideRatio": 1.5,
+    "bob": 0.19856,
+    "sway": 0.57,
+    "rootYaw": 1.6,
+    "bodyYaw": 4.0,
+    "bodyRoll": 0.9,
+    "bodyNod": 0.6,
+    "headYaw": 1.7,
+    "headRoll": 0.4,
+    "armSwing": 13,
+    "armOpening": 7.5,
+    "elbowBase": 11,
+    "elbowSwing": 5,
+    "footLift": 0.196,
+    "heelPitch": 3.5,
+    "toePitch": 6.3,
+    "breathSeconds": 10.0,
+    "idleScale": 1.0,
+    "stride": 7.333407,
+    "reachMargin": 0.036499,
+    "legLengthStride": 12.0,
+    "previewSpeed": 0.739003,
+    "levelWalk": true
+  }
+}

@@ -8,7 +8,8 @@ public final class WoodenChestColorPalette {
         CUSHION(228),
         OFFICE_SEATING(228),
         STOOL(228),
-        DINING_CHAIR(228);
+        DINING_CHAIR(228),
+        BEDDING(208);
 
         private final int whiteBase;
 

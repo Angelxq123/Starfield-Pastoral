@@ -21,7 +21,12 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RouteEditorWandItem extends Item {
+public class RouteEditorWandItem extends Item implements com.stardew.craft.item.IStardewItem {
+    @Override
+    public String getItemTypeKey() {
+        return "stardewcraft.type.tool";
+    }
+
     private static final String TAG_ROUTE_ID = "RouteId";
     private static final String TAG_POINTS = "RoutePoints";
     private static final String DEFAULT_ROUTE_ID = "spirit_eve_maze_exit";

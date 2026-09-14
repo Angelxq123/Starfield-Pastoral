@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/outer_stairs",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/cracked_slate",
-                     "top":  "stardewcraft:block/mine/cracked_slate",
-                     "side":  "stardewcraft:block/mine/cracked_slate",
-                     "particle":  "stardewcraft:block/mine/cracked_slate"
-                 }
-}

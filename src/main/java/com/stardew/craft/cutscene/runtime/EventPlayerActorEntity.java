@@ -26,6 +26,9 @@ public class EventPlayerActorEntity extends Mob {
     private boolean holdingItemAboveHead = false;
     /** Client-authored unconscious pose used by combat rescue scenes. */
     private boolean collapsed = false;
+    private int recoveryStartTick = -1;
+    private boolean hospitalBed;
+    private int hospitalRecoveryStartTick = -1;
     /** Client-authored vanilla-style item-use pose used by farmerEat scenes. */
     private boolean eatingItem = false;
     private UUID skinSourcePlayerId;
@@ -88,11 +91,34 @@ public class EventPlayerActorEntity extends Mob {
         return collapsed;
     }
 
+    public boolean isInHospitalBedScene() { return hospitalBed; }
+
+    public void lieInHospitalBed() {
+        hospitalBed=true;hospitalRecoveryStartTick=-1;
+        collapsed=false;recoveryStartTick=-1;setWalking(false);
+    }
+
+    public void getUpFromHospitalBed() {
+        if(hospitalBed && hospitalRecoveryStartTick<0) hospitalRecoveryStartTick=tickCount;
+    }
+
+    public float hospitalBedTime(float partialTick) {
+        return hospitalRecoveryStartTick<0 ? -1 : tickCount-hospitalRecoveryStartTick+partialTick;
+    }
+
     public void setCollapsed(boolean collapsed) {
+        hospitalBed=false;hospitalRecoveryStartTick=-1;
+        if (this.collapsed && !collapsed) recoveryStartTick = tickCount;
+        if (collapsed) recoveryStartTick = -1;
         this.collapsed = collapsed;
         if (collapsed) {
             setWalking(false);
         }
+    }
+
+    /** -1 means no recovery. Uses the actor tick clock, never render-call count. */
+    public float recoveryTime(float partialTick) {
+        return recoveryStartTick < 0 ? -1 : tickCount - recoveryStartTick + partialTick;
     }
 
     public boolean isEatingItem() {

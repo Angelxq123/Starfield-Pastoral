@@ -58,6 +58,8 @@ public final class OssifiedMarkSkillHandler implements RuntimeWeaponSkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(), context.weaponId().getPath(), context.skillData().getId(), 8);
         instance.registerCommittedEffect(() -> OssifiedMarkTracker.apply(
                 target, context.player(), context.nowTick(),
                 MARK_DURATION_TICKS

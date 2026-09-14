@@ -1,7 +1,5 @@
 package com.stardew.craft.blockentity;
 
-import com.stardew.craft.animal.data.AnimalWorldData;
-import com.stardew.craft.animal.model.AnimalBuildingRecord;
 import com.stardew.craft.block.utility.AutoPetterBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -46,7 +44,7 @@ public class AutoPetterBlockEntity extends net.minecraft.world.level.block.entit
 
     @SuppressWarnings("null")
     private void refreshWorkingState(ServerLevel level, BlockPos pos, BlockState state) {
-        AnimalBuildingRecord building = resolveSupportedBuilding(level, pos);
+        var building = resolveSupportedBuilding(level, pos);
         boolean workingNow = building != null;
         if (working != workingNow) {
             working = workingNow;
@@ -58,42 +56,9 @@ public class AutoPetterBlockEntity extends net.minecraft.world.level.block.entit
         }
     }
 
-    private AnimalBuildingRecord resolveSupportedBuilding(ServerLevel level, BlockPos pos) {
-        AnimalWorldData data = AnimalWorldData.get(level);
-        if (!buildingId.isBlank()) {
-            AnimalBuildingRecord existing = data.getBuilding(buildingId).orElse(null);
-            if (existing != null
-                && Objects.equals(existing.dimensionId(), level.dimension().location().toString())
-                && existing.isWithinBoundingBox(pos)
-                && isSupportedFamily(existing)) {
-                return existing;
-            }
-        }
-
-        for (AnimalBuildingRecord candidate : data.getBuildings()) {
-            if (!Objects.equals(candidate.dimensionId(), level.dimension().location().toString())) {
-                continue;
-            }
-            if (!candidate.isWithinBoundingBox(pos) || !isSupportedFamily(candidate)) {
-                continue;
-            }
-            if (!Objects.equals(buildingId, candidate.buildingId())) {
-                buildingId = candidate.buildingId();
-                setChanged();
-            }
-            return candidate;
-        }
-
-        if (!buildingId.isBlank()) {
-            buildingId = "";
-            setChanged();
-        }
-        return null;
-    }
-
-    private boolean isSupportedFamily(AnimalBuildingRecord building) {
-        String family = building.buildingType().family();
-        return "coop".equalsIgnoreCase(family) || "barn".equalsIgnoreCase(family);
+    private com.stardew.craft.building.runtime.BuildingRecord resolveSupportedBuilding(ServerLevel level, BlockPos pos) {
+        var home = com.stardew.craft.animal.runtime.FarmFeed.home(level, pos);
+        return com.stardew.craft.animal.runtime.LivestockHomes.accepts(home) ? home : null;
     }
 
     @SuppressWarnings("null")

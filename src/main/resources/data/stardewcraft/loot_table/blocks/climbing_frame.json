@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "stardewcraft:climbing_frame",
+          "properties": {
+            "part": "main"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stardewcraft:climbing_frame"
+        }
+      ]
+    }
+  ]
+}

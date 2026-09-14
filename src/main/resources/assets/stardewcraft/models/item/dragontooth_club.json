@@ -1,0 +1,63 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "stardewcraft:item/weapon/club/dragontooth_club",
+    "particle": "stardewcraft:item/weapon/club/dragontooth_club"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 700201
+      },
+      "model": "stardewcraft:item/forge_appearance/femur"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700202
+      },
+      "model": "stardewcraft:item/forge_appearance/galaxy_hammer"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700203
+      },
+      "model": "stardewcraft:item/forge_appearance/infinity_gavel"
+    }
+  ],
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        25
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.68,
+        0.68,
+        0.68
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -25
+      ],
+      "translation": [
+        -1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.68,
+        0.68,
+        0.68
+      ]
+    }
+  }
+}

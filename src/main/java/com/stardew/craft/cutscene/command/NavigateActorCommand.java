@@ -9,6 +9,9 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import com.stardew.craft.client.npcnative.NativeNpcAssets;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -48,9 +51,12 @@ public class NavigateActorCommand implements EventCommand {
     private Mob actor;
     private List<Vec3> path = List.of();
     private int segmentIndex;
-    private Vec3 segmentStart;
-    private Vec3 segmentEnd;
-    private double segmentProgress;
+    private Vec3 destination;
+    private double walkSpeed;
+    private double currentSpeed;
+    private double verticalVelocity;
+    private int blockedTicks;
+    private int replans;
     private boolean done;
     private ClientLevel level;
     private int ticksElapsed;
@@ -63,7 +69,7 @@ public class NavigateActorCommand implements EventCommand {
         this.targetY = y;
         this.targetZ = z;
         this.relative = relative;
-        this.speedBlocksPerTick = Math.max(0.02D, speedBlocksPerTick);
+        this.speedBlocksPerTick = speedBlocksPerTick;
         this.anchor = anchor;
     }
 
@@ -92,88 +98,123 @@ public class NavigateActorCommand implements EventCommand {
             endZ = targetZ + CutsceneAnchorRegistry.offsetZ(anchor);
         }
 
-        path = buildPath(level, actor, new Vec3(actor.getX(), actor.getY(), actor.getZ()), new Vec3(endX, endY, endZ));
-        if (path.size() < 2) {
-            setWalking(false);
-            done = true;
-            return;
+        actor.getNavigation().stop();
+        actor.setDeltaMovement(Vec3.ZERO);
+        if (actor instanceof EventActorEntity npc) {
+            npc.stopWalking();
+            npc.clearCustomAnimation();
+            var model = NativeNpcAssets.model(NativeNpcAssets.renderId(npc.getNpcId()));
+            var profile = model == null ? null : model.profile();
+            walkSpeed = ActorWalkPace.normalSpeed(
+                    profile == null || profile.gait() == null ? 0 : profile.gait().previewSpeed(),
+                    profile == null ? 0 : profile.walkStride(), speedBlocksPerTick);
+        } else {
+            walkSpeed = ActorWalkPace.normalSpeed(0, 0, speedBlocksPerTick);
         }
-
-        segmentIndex = 0;
-        segmentStart = path.get(0);
-        segmentEnd = path.get(1);
-        segmentProgress = 0.0D;
-        setWalking(true);
-        faceSegment();
-        updateDoors(actor.position());
+        currentSpeed = 0;
+        verticalVelocity = 0;
+        blockedTicks = 0;
+        replans = 0;
         done = false;
+        destination = new Vec3(endX, endY, endZ);
+        planRoute();
+        setWalking(false);
+    }
+
+    private void planRoute() {
+        path = buildPath(level, actor, actor.position(), destination);
+        if (path.size() < 2) {
+            failRoute("no supported route");
+        }
+        segmentIndex = 1;
     }
 
     @Override
     public void tick(EventPlayer player) {
         if (done || actor == null) return;
-
+        if (actor.isRemoved()) failRoute("actor removed during walk");
         ticksElapsed++;
-
-        double length = segmentStart.distanceTo(segmentEnd);
-        if (length < 1.0E-5D) {
-            advanceSegment();
-            return;
+        Vec3 target = path.get(segmentIndex);
+        Vec3 before = actor.position();
+        double dx = target.x - before.x;
+        double dz = target.z - before.z;
+        double distance = Math.hypot(dx, dz);
+        double yawError = 0;
+        if (distance > 1.0E-5) {
+            float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90;
+            float facing = Mth.approachDegrees(actor.getYRot(), yaw, ActorWalkPace.TURN_PER_TICK);
+            actor.setYRot(facing);
+            actor.setYHeadRot(facing);
+            actor.setYBodyRot(facing);
+            yawError = Mth.wrapDegrees(yaw - facing);
         }
-
-        segmentProgress = Math.min(1.0D, segmentProgress + speedBlocksPerTick / length);
-        double x = Mth.lerp(segmentProgress, segmentStart.x, segmentEnd.x);
-        double y = Mth.lerp(segmentProgress, segmentStart.y, segmentEnd.y);
-        double z = Mth.lerp(segmentProgress, segmentStart.z, segmentEnd.z);
-        updateDoors(new Vec3(x, y, z));
-        actor.setPos(x, y, z);
+        // Preserve pace through collinear waypoints; brake for the destination or a corner.
+        double remaining = distance;
+        if (segmentIndex < path.size() - 1) {
+            Vec3 next = path.get(segmentIndex + 1).subtract(target);
+            if (distance > 0 && (dx * next.x + dz * next.z) / distance > next.horizontalDistance() * .99) {
+                remaining += next.horizontalDistance();
+            }
+        }
+        currentSpeed = ActorWalkPace.nextSpeed(currentSpeed, walkSpeed, remaining, yawError);
+        double step = Math.min(distance, currentSpeed);
+        double moveX = distance > 1.0E-5 ? dx * step / distance : 0;
+        double moveZ = distance > 1.0E-5 ? dz * step / distance : 0;
+        verticalVelocity = actor.onGround() ? -0.04 : (verticalVelocity - 0.08) * 0.98;
+        updateDoors(before.add(moveX, 0, moveZ));
+        // Only step towards a higher route surface, never climb an unrelated side obstacle.
+        var stepAttribute = actor.getAttribute(Attributes.STEP_HEIGHT);
+        double oldStep = stepAttribute == null ? 0 : stepAttribute.getBaseValue();
+        if (stepAttribute != null) stepAttribute.setBaseValue(Math.min(oldStep, Math.max(0, target.y - before.y + 1.0E-5)));
+        try {
+            actor.move(MoverType.SELF, new Vec3(moveX, verticalVelocity, moveZ));
+        } finally {
+            if (stepAttribute != null) stepAttribute.setBaseValue(oldStep);
+        }
+        actor.setDeltaMovement(Vec3.ZERO);
+        double travelled = Math.hypot(actor.getX() - before.x, actor.getZ() - before.z);
+        setWalking(actor.onGround() && travelled > 1.0E-5);
         closePassedDoors(false);
 
-        if (segmentProgress >= 1.0D) {
-            advanceSegment();
+        boolean reached = Math.hypot(target.x - actor.getX(), target.z - actor.getZ()) < 0.015
+                && Math.abs(target.y - actor.getY()) < 0.08 && actor.onGround();
+        if (reached) {
+            blockedTicks = 0;
+            if (++segmentIndex >= path.size()) {
+                setWalking(false);
+                closePassedDoors(true);
+                done = true;
+            }
+            return;
         }
+        // Waiting never accumulates speed or position debt. Replan a changed obstacle,
+        // then abort playback cleanly if the authored destination is inaccessible.
+        boolean stalled = Math.abs(yawError) < 60 && travelled < 1.0E-5
+                && Math.abs(actor.getY() - before.y) < 1.0E-5;
+        blockedTicks = stalled ? blockedTicks + 1 : 0;
+        if (blockedTicks >= 40) {
+            currentSpeed = 0;
+            blockedTicks = 0;
+            if (++replans > 2) failRoute("blocked route");
+            planRoute();
+        }
+        if (ticksElapsed > 20 * 180) failRoute("walk timeout");
+    }
+
+    private void failRoute(String reason) {
+        setWalking(false);
+        closePassedDoors(true);
+        throw new IllegalStateException("Cutscene walk " + actorTag + " to " + destination + ": " + reason);
     }
 
     @Override
-    public boolean isComplete() {
-        return done;
-    }
+    public boolean isComplete() { return done; }
 
     @Override
     public void onSkip(EventPlayer player) {
         setWalking(false);
-        if (!path.isEmpty() && actor != null) {
-            Vec3 end = path.get(path.size() - 1);
-            actor.setPos(end.x, end.y, end.z);
-        }
         closePassedDoors(true);
         done = true;
-    }
-
-    private void advanceSegment() {
-        segmentIndex++;
-        if (segmentIndex >= path.size() - 1) {
-            Vec3 end = path.get(path.size() - 1);
-            actor.setPos(end.x, end.y, end.z);
-            setWalking(false);
-            closePassedDoors(true);
-            done = true;
-            return;
-        }
-        segmentStart = path.get(segmentIndex);
-        segmentEnd = path.get(segmentIndex + 1);
-        segmentProgress = 0.0D;
-        faceSegment();
-    }
-
-    private void faceSegment() {
-        double dirX = segmentEnd.x - segmentStart.x;
-        double dirZ = segmentEnd.z - segmentStart.z;
-        if (dirX == 0.0D && dirZ == 0.0D) return;
-        float yaw = (float) (Mth.atan2(dirZ, dirX) * Mth.RAD_TO_DEG) - 90.0f;
-        actor.setYRot(yaw);
-        actor.setYHeadRot(yaw);
-        actor.setYBodyRot(yaw);
     }
 
     private void setWalking(boolean walking) {
@@ -193,18 +234,10 @@ public class NavigateActorCommand implements EventCommand {
         if (level == null || actor == null) {
             return;
         }
-        openDoorsAround(actor.blockPosition());
-        openDoorsAround(BlockPos.containing(nextPosition));
-    }
-
-    private void openDoorsAround(BlockPos center) {
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                BlockPos base = center.offset(dx, 0, dz);
-                openDoorAt(base.below());
-                openDoorAt(base);
-                openDoorAt(base.above());
-            }
+        AABB swept = actor.getBoundingBox().expandTowards(nextPosition.subtract(actor.position())).inflate(0.05);
+        for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(swept.minX, swept.minY, swept.minZ),
+                BlockPos.containing(swept.maxX, swept.maxY, swept.maxZ))) {
+            openDoorAt(pos);
         }
     }
 
@@ -266,64 +299,106 @@ public class NavigateActorCommand implements EventCommand {
         closed.forEach(openedDoors::remove);
     }
 
-    private static List<Vec3> buildPath(ClientLevel level, Mob actor, Vec3 start, Vec3 end) {
-        BlockPos startCell = BlockPos.containing(start.x, start.y, start.z);
-        BlockPos endCell = BlockPos.containing(end.x, end.y, end.z);
-        int y = startCell.getY();
+    private static List<Vec3> buildPath(ClientLevel level, Mob actor, Vec3 start, Vec3 authoredEnd) {
+        Vec3 end = supportedPosition(level, actor, authoredEnd.x, authoredEnd.y, authoredEnd.z, 0.6, 0.6);
+        if (end == null) return List.of();
+        // Most authored movements are short, clear approaches. Keep their exact X/Z
+        // rather than making every actor zigzag through tile centres.
+        List<Vec3> direct = directRoute(level, actor, start, end);
+        if (!direct.isEmpty()) return direct;
 
         PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fScore));
         Map<GridKey, Node> nodes = new HashMap<>();
         Set<GridKey> closed = new HashSet<>();
-
-        GridKey startKey = new GridKey(startCell.getX(), startCell.getZ());
-        GridKey endKey = new GridKey(endCell.getX(), endCell.getZ());
-        Node startNode = new Node(startKey, null, 0.0D, heuristic(startKey, endKey));
+        GridKey startKey = key(start);
+        GridKey endKey = key(end);
+        Node startNode = new Node(startKey, start, null, 0, heuristic(startKey, endKey));
         nodes.put(startKey, startNode);
         open.add(startNode);
-
         int searched = 0;
-        Node found = null;
         while (!open.isEmpty() && searched++ < MAX_SEARCH_NODES) {
             Node current = open.poll();
             if (!closed.add(current.key)) continue;
-            if (current.key.equals(endKey)) {
-                found = current;
-                break;
+            if (current.key.x == endKey.x && current.key.z == endKey.z
+                    && Math.abs(current.position.y - end.y) <= actor.maxUpStep() + 0.01) {
+                List<Vec3> tail = directRoute(level, actor, current.position, end);
+                if (!tail.isEmpty()) {
+                    List<Vec3> result = new ArrayList<>();
+                    for (Node n = current; n != null; n = n.parent) result.add(n.position);
+                    java.util.Collections.reverse(result);
+                    result.addAll(tail.subList(1, tail.size()));
+                    return result;
+                }
             }
-
             for (int[] dir : DIRS) {
-                GridKey nextKey = new GridKey(current.key.x + dir[0], current.key.z + dir[1]);
+                double x = current.key.x + dir[0] + .5;
+                double z = current.key.z + dir[1] + .5;
+                Vec3 nextPosition = supportedPosition(level, actor, x, current.position.y, z, actor.maxUpStep(), 1);
+                if (nextPosition == null || directRoute(level, actor, current.position, nextPosition).isEmpty()) continue;
+                GridKey nextKey = key(nextPosition);
                 if (closed.contains(nextKey)) continue;
-                if (!canStandAt(level, actor, nextKey.x + 0.5D, y, nextKey.z + 0.5D)) continue;
-
-                double tentativeG = current.gScore + 1.0D;
+                double cost = current.gScore + current.position.distanceTo(nextPosition);
                 Node existing = nodes.get(nextKey);
-                if (existing == null || tentativeG < existing.gScore) {
-                    Node next = new Node(nextKey, current, tentativeG, tentativeG + heuristic(nextKey, endKey));
+                if (existing == null || cost < existing.gScore) {
+                    Node next = new Node(nextKey, nextPosition, current, cost, cost + heuristic(nextKey, endKey));
                     nodes.put(nextKey, next);
                     open.add(next);
                 }
             }
         }
+        return List.of();
+    }
 
-        if (found == null) {
-            return List.of(start);
-        }
+    private static GridKey key(Vec3 position) {
+        return new GridKey(Mth.floor(position.x), Mth.floor(position.z), (int) Math.round(position.y * 16));
+    }
 
-        List<GridKey> cells = new ArrayList<>();
-        for (Node n = found; n != null; n = n.parent) {
-            cells.add(n.key);
+    private static List<Vec3> directRoute(ClientLevel level, Mob actor, Vec3 start, Vec3 end) {
+        int samples = Math.max(1, (int) Math.ceil(start.distanceTo(end) / .2));
+        if (samples > 2048) return List.of();
+        List<Vec3> points = new ArrayList<>();
+        points.add(start);
+        Vec3 previous = start;
+        for (int i = 1; i <= samples; i++) {
+            double t = (double) i / samples;
+            Vec3 point = supportedPosition(level, actor, Mth.lerp(t, start.x, end.x), previous.y,
+                    Mth.lerp(t, start.z, end.z), actor.maxUpStep(), 1);
+            if (point == null) return List.of();
+            // Preserve elevation transitions as waypoints; flat clear stretches stay straight.
+            if (Math.abs(point.y - previous.y) > .001) {
+                if (points.get(points.size() - 1).distanceToSqr(previous) > 1.0E-6) points.add(previous);
+                points.add(point);
+            }
+            previous = point;
         }
-        java.util.Collections.reverse(cells);
+        if (Math.abs(previous.y - end.y) > .08) return List.of();
+        points.add(end);
+        return points;
+    }
 
-        List<Vec3> result = new ArrayList<>();
-        result.add(start);
-        for (int i = 1; i < cells.size() - 1; i++) {
-            GridKey cell = cells.get(i);
-            result.add(new Vec3(cell.x + 0.5D, start.y, cell.z + 0.5D));
+    /** Resolve actual floor shapes, including thin paving and stairs. Air is never a route floor. */
+    private static Vec3 supportedPosition(ClientLevel level, Mob actor, double x, double y, double z,
+                                          double rise, double drop) {
+        AABB feet = actor.getBoundingBox().move(x - actor.getX(), y - actor.getY(), z - actor.getZ());
+        List<Double> heights = new ArrayList<>();
+        for (BlockPos pos : BlockPos.betweenClosed(Mth.floor(feet.minX), Mth.floor(y - drop - 1), Mth.floor(feet.minZ),
+                Mth.floor(feet.maxX), Mth.floor(y + rise), Mth.floor(feet.maxZ))) {
+            if (!level.hasChunkAt(pos)) return null;
+            BlockState state = level.getBlockState(pos);
+            if (state.getBlock() instanceof DoorBlock) continue;
+            for (AABB local : state.getCollisionShape(level, pos).toAabbs()) {
+                AABB shape = local.move(pos);
+                if (shape.maxX <= feet.minX + 1.0E-6 || shape.minX >= feet.maxX - 1.0E-6
+                        || shape.maxZ <= feet.minZ + 1.0E-6 || shape.minZ >= feet.maxZ - 1.0E-6) continue;
+                if (shape.maxY >= y - drop - .001 && shape.maxY <= y + rise + .001) heights.add(shape.maxY);
+            }
         }
-        result.add(end);
-        return result;
+        heights.sort(Comparator.reverseOrder());
+        for (double height : heights) {
+            if (!level.getFluidState(BlockPos.containing(x, height, z)).isEmpty()) continue;
+            if (canStandAt(level, actor, x, height, z)) return new Vec3(x, height, z);
+        }
+        return null;
     }
 
     private static boolean canStandAt(ClientLevel level, Mob actor, double x, double y, double z) {
@@ -367,17 +442,19 @@ public class NavigateActorCommand implements EventCommand {
         return Math.abs(a.x - b.x) + Math.abs(a.z - b.z);
     }
 
-    private record GridKey(int x, int z) {
+    private record GridKey(int x, int z, int height) {
     }
 
     private static final class Node {
         private final GridKey key;
+        private final Vec3 position;
         private final Node parent;
         private final double gScore;
         private final double fScore;
 
-        private Node(GridKey key, Node parent, double gScore, double fScore) {
+        private Node(GridKey key, Vec3 position, Node parent, double gScore, double fScore) {
             this.key = key;
+            this.position = position;
             this.parent = parent;
             this.gScore = gScore;
             this.fScore = fScore;

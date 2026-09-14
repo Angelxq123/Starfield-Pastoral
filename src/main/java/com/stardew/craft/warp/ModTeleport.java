@@ -22,11 +22,13 @@ public final class ModTeleport {
 
     public static void to(ServerPlayer player, ServerLevel target,
                           double x, double y, double z, float yaw, float pitch) {
+        com.stardew.craft.server.performance.ServerStallDiagnostics.teleportStarted(player, target, x, y, z);
         if (player.level() != target) {
             CrossDimensionTeleporter.markSkipAutoTeleport(player.getUUID());
         }
         player.teleportTo(target, x, y, z, yaw, pitch);
         com.stardew.craft.event.PlayerLocationStateGuardEvents.reconcileLocationState(player, true);
+        com.stardew.craft.server.performance.ServerStallDiagnostics.teleportReturned(player.server);
     }
 
     public static void to(ServerPlayer player, ServerLevel target, BlockPos pos,

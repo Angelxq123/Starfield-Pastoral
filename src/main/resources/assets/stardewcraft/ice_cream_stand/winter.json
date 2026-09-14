@@ -1,0 +1,300 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_000",
+      "scene_offset": [
+        8,
+        -7,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_001",
+      "scene_offset": [
+        8,
+        1,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_002",
+      "scene_offset": [
+        8,
+        9,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_003",
+      "scene_offset": [
+        -6,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_004",
+      "scene_offset": [
+        -6,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_005",
+      "scene_offset": [
+        21,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_006",
+      "scene_offset": [
+        21,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_007",
+      "scene_offset": [
+        8,
+        -4,
+        38
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_008",
+      "scene_offset": [
+        8,
+        -4,
+        -7
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_009",
+      "scene_offset": [
+        48,
+        -7,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_010",
+      "scene_offset": [
+        48,
+        1,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_011",
+      "scene_offset": [
+        48,
+        9,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_012",
+      "scene_offset": [
+        42,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_013",
+      "scene_offset": [
+        42,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_014",
+      "scene_offset": [
+        53,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_015",
+      "scene_offset": [
+        53,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_016",
+      "scene_offset": [
+        48,
+        -4,
+        38
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_017",
+      "scene_offset": [
+        48,
+        -4,
+        -7
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_018",
+      "scene_offset": [
+        32,
+        -7,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_019",
+      "scene_offset": [
+        32,
+        1,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_020",
+      "scene_offset": [
+        32,
+        8,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_021",
+      "scene_offset": [
+        22,
+        3,
+        8
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_022",
+      "scene_offset": [
+        22,
+        3,
+        27
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_023",
+      "scene_offset": [
+        41,
+        3,
+        8
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_024",
+      "scene_offset": [
+        41,
+        3,
+        27
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_025",
+      "scene_offset": [
+        0,
+        11,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_026",
+      "scene_offset": [
+        16,
+        11,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_027",
+      "scene_offset": [
+        16,
+        11,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_028",
+      "scene_offset": [
+        48,
+        11,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_029",
+      "scene_offset": [
+        32,
+        11,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_030",
+      "scene_offset": [
+        16,
+        13,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_031",
+      "scene_offset": [
+        16,
+        17,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_032",
+      "scene_offset": [
+        16,
+        19,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_033",
+      "scene_offset": [
+        10,
+        11,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_034",
+      "scene_offset": [
+        22,
+        11,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_035",
+      "scene_offset": [
+        16,
+        11,
+        10
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/winter/part_036",
+      "scene_offset": [
+        16,
+        11,
+        22
+      ]
+    }
+  ]
+}

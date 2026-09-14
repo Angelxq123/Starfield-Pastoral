@@ -3,6 +3,18 @@
     {
       "type": "single",
       "resource": "stardewcraft:gui/powers/special_charm"
+    },
+    {
+      "type": "single",
+      "resource": "stardewcraft:decor/common/street_lamp_0"
+    },
+    {
+      "type": "single",
+      "resource": "stardewcraft:decor/common/street_lamp_1"
+    },
+    {
+      "type": "single",
+      "resource": "stardewcraft:entity/special_effect/ice_spine"
     }
   ]
 }

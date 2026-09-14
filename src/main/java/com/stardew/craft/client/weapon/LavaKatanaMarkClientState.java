@@ -5,6 +5,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LavaKatanaMarkClientState {
@@ -12,6 +13,7 @@ public final class LavaKatanaMarkClientState {
     private record MarkData(long endTick, int heat) {}
 
     private static final Map<Integer, MarkData> MARKS = new ConcurrentHashMap<>();
+    private static net.minecraft.client.multiplayer.ClientLevel activeLevel;
 
     private LavaKatanaMarkClientState() {}
 
@@ -20,6 +22,7 @@ public final class LavaKatanaMarkClientState {
         if (mc.level == null) {
             return;
         }
+        ensureLevel(mc.level);
         long nowTick = mc.level.getGameTime();
         int clampedHeat = Math.max(0, heat);
         int clampedRemaining = Math.max(0, remainingTicks);
@@ -40,8 +43,21 @@ public final class LavaKatanaMarkClientState {
         return data != null ? data.heat : 0;
     }
 
+    public static Set<Integer> markedEntityIds() {
+        ensureLevel(Minecraft.getInstance().level);
+        return Set.copyOf(MARKS.keySet());
+    }
+
+    private static void ensureLevel(net.minecraft.client.multiplayer.ClientLevel level) {
+        if (activeLevel != level) {
+            MARKS.clear();
+            activeLevel = level;
+        }
+    }
+
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
+        ensureLevel(mc.level);
         if (mc.level == null) {
             MARKS.clear();
             return;

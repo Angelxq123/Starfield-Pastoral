@@ -139,6 +139,7 @@ public record WickedKrisPoisonStatusPayload(
         if (minecraft.level == null) {
             return;
         }
+        com.stardew.craft.client.weapon.CrystalVenomVisuals.ensureLevel();
         long nowTick = minecraft.level.getGameTime();
         switch (payload.operation()) {
             case UPSERT -> WickedKrisPoisonClientState.upsert(

@@ -113,6 +113,8 @@ final class TemplarVowExecutionState
     }
 
     void cancel(ServerPlayer player, long nowTick, boolean notifyClient) {
+        if (!settled && notifyClient) com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                player, "templars_blade", "templar_vow_end", 4);
         settle(player, nowTick, notifyClient);
     }
 
@@ -155,6 +157,8 @@ final class TemplarVowExecutionState
     @SuppressWarnings("null")
     private void applyExpirySlash(SkillExecutionContext context) {
         ServerPlayer player = context.player();
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                player, "templars_blade", "templar_vow_strike", 8);
         MobEffect shelter = Objects.requireNonNull(
                 ModMobEffects.SHELTER.get(),
                 "shelter"

@@ -137,6 +137,30 @@ public class FishPondWorldData extends SavedData {
         return pondId;
     }
 
+    /** Preserve stock, requests, produce and crackers while the prefab journal moves its geometry. */
+    public void movePrefab(com.stardew.craft.building.runtime.BuildingRecord before,
+                           com.stardew.craft.building.runtime.BuildingRecord after) {
+        var existing=findPondByManagerAnyOwner(before.dimension().toString(),before.manager()).orElse(null);
+        if(existing==null)return; // A durable transfer replay may already have moved the record.
+        var tag=existing.save();
+        java.util.function.Function<BlockPos,BlockPos> move=pos->com.stardew.craft.building.runtime.BuildingTransfer.destination(before,after,pos);
+        tag.put("managerPos",net.minecraft.nbt.NbtUtils.writeBlockPos(after.manager()));
+        tag.put("bucketPos",net.minecraft.nbt.NbtUtils.writeBlockPos(move.apply(existing.bucketPos())));
+        var nets=new net.minecraft.nbt.ListTag();
+        for(var pos:existing.netPositions()){var cell=new net.minecraft.nbt.CompoundTag();cell.put("Pos",net.minecraft.nbt.NbtUtils.writeBlockPos(move.apply(pos)));nets.add(cell);}
+        tag.put("netPositions",nets);
+        var water=new net.minecraft.nbt.ListTag();
+        int minX=Integer.MAX_VALUE,minY=Integer.MAX_VALUE,minZ=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,maxY=Integer.MIN_VALUE,maxZ=Integer.MIN_VALUE;
+        for(long packed:existing.waterCells()) {
+            var pos=move.apply(BlockPos.of(packed));var cell=new net.minecraft.nbt.CompoundTag();cell.putLong("cell",pos.asLong());water.add(cell);
+            minX=Math.min(minX,pos.getX());minY=Math.min(minY,pos.getY());minZ=Math.min(minZ,pos.getZ());
+            maxX=Math.max(maxX,pos.getX());maxY=Math.max(maxY,pos.getY());maxZ=Math.max(maxZ,pos.getZ());
+        }
+        tag.put("waterCells",water);tag.putInt("minX",minX);tag.putInt("minY",minY);tag.putInt("minZ",minZ);
+        tag.putInt("maxX",maxX);tag.putInt("maxY",maxY);tag.putInt("maxZ",maxZ);
+        ponds.put(existing.pondId(),FishPondRecord.load(tag));setDirty();
+    }
+
     public Optional<FishPondRecord> getPond(String pondId) {
         return Optional.ofNullable(ponds.get(pondId));
     }

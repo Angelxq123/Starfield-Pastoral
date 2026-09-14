@@ -31,7 +31,7 @@ public record CrystalDaggerBurstPayload() implements CustomPacketPayload {
     private static void handleClient(CrystalDaggerBurstPayload payload) {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null) {
-            com.stardew.craft.client.weapon.SkillEffectsClient.playSkillEffects("crystal_dagger_burst", mc.player);
+            com.stardew.craft.client.weapon.CrystalVenomVisuals.crystalBurst();
         }
     }
 }

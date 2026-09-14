@@ -1,0 +1,237 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "surface": "stardewcraft:block/outdoor_table/fall/outdoor_table",
+    "particle": "stardewcraft:block/outdoor_table/fall/outdoor_table_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            1.0625,
+            0.0,
+            2.0625,
+            0.125
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            7.4375,
+            9.5625,
+            8.4375,
+            10.5625
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            5.3125,
+            0.0,
+            6.3125,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        11,
+        13
+      ],
+      "to": [
+        16,
+        14,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            11.6875,
+            7.4375,
+            12.6875,
+            7.625
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            12.75,
+            7.4375,
+            13.75,
+            7.625
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            8.25,
+            0.0,
+            8.375,
+            0.1875
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            8.4375,
+            0.0,
+            8.5625,
+            0.1875
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            14.875,
+            7.4375,
+            15.875,
+            7.5625
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        3,
+        14,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            8.5625,
+            5.3125,
+            8.75,
+            6.1875
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            8.8125,
+            5.3125,
+            9.0,
+            6.1875
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            9.0625,
+            5.3125,
+            9.25,
+            6.1875
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            9.3125,
+            5.3125,
+            9.5,
+            6.1875
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            9.8125,
+            5.3125,
+            10.0,
+            5.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        3,
+        13
+      ],
+      "to": [
+        16,
+        5,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            0.0,
+            8.5,
+            1.0,
+            8.625
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            1.0625,
+            8.5,
+            2.0625,
+            8.625
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            15.125,
+            0.0,
+            15.25,
+            0.125
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            15.3125,
+            0.0,
+            15.4375,
+            0.125
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            2.125,
+            8.5,
+            3.125,
+            8.625
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            3.1875,
+            8.5,
+            4.1875,
+            8.625
+          ]
+        }
+      }
+    }
+  ]
+}

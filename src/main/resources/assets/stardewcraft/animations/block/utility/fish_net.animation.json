@@ -3,16 +3,7 @@
   "animations": {
     "idle": {
       "loop": true,
-      "animation_length": 1.0,
-      "bones": {
-        "bone": {
-          "rotation": {
-            "0.0": { "vector": [0, 0, 0] },
-            "1.0": { "vector": [0, 0, 0] }
-          }
-        }
-      }
+      "bones": {}
     }
-  },
-  "geckolib_format_version": 2
+  }
 }

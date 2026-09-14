@@ -9,8 +9,8 @@ package com.stardew.craft.client.combat;
  */
 public final class CombatCollapseTimeline {
     public static final int TOTAL_TICKS = 60;
-    public static final int BODY_FALL_TICKS = 12;
-    public static final int JITTER_TICKS = 30;
+    public static final int BODY_FALL_TICKS = CombatCollapsePose.FALL_TICKS;
+    public static final int JITTER_TICKS = 10;
     public static final int RED_RAMP_TICKS = 8;
     public static final int RED_HOLD_TICKS = 28;
     public static final int RED_END_TICK = 45;

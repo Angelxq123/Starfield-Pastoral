@@ -106,6 +106,11 @@ public final class FarmDailyProcessHelper {
      * @return true 表示应该处理
      */
     public static boolean shouldProcessPosition(ServerLevel level, BlockPos pos) {
+        return shouldProcessPosition(level, pos, 8);
+    }
+
+    /** Crops use zero; larger daily objects retain their own neighborhood radius. */
+    public static boolean shouldProcessPosition(ServerLevel level, BlockPos pos, int radius) {
         // 不在农场实例区域 → 公共区域，始终处理
         if (!FarmInstanceAllocator.isInFarmInstanceRegion(pos)) return true;
 
@@ -117,7 +122,7 @@ public final class FarmDailyProcessHelper {
         if (farm == null) return false;
         if (cachedActiveFarmOwners != null) {
             if (cachedActiveFarmOwners.contains(owner)) {
-                ensurePositionNeighborhoodLoaded(level, pos, 8);
+                ensurePositionNeighborhoodLoaded(level, pos, radius);
                 return true;
             }
             return false;
@@ -125,7 +130,7 @@ public final class FarmDailyProcessHelper {
         if (cachedOnlinePlayers != null) {
             for (UUID farmer : farm.getAllFarmers()) {
                 if (cachedOnlinePlayers.contains(farmer)) {
-                    ensurePositionNeighborhoodLoaded(level, pos, 8);
+                    ensurePositionNeighborhoodLoaded(level, pos, radius);
                     return true;
                 }
             }

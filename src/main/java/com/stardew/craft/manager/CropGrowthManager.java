@@ -78,6 +78,11 @@ public class CropGrowthManager extends SavedData {
          */
         public int phase;
         public boolean regrowing;
+        public boolean sourcePhases = true;
+        public int sourcePhaseVersion;
+        public int lastDailyDay = -1;
+        public boolean lastDailyWatered;
+        public int lastGiantDay = -1;
         public UUID planterUuid;
 
         public CropGrowthState() {
@@ -106,6 +111,13 @@ public class CropGrowthManager extends SavedData {
         @SuppressWarnings("null")
         GlobalPos globalPos = GlobalPos.of(level.dimension(), pos.immutable());
         return cropStates.get(globalPos);
+    }
+
+    /** Restore a root after a rejected giant block-plan commit; preserves its daily stamps. */
+    public void restoreGrowthState(ServerLevel level, BlockPos pos, CropGrowthState saved) {
+        addCrop(level, pos, saved.planterUuid);
+        cropStates.put(GlobalPos.of(level.dimension(), pos.immutable()), saved);
+        setDirty();
     }
 
     public void setRegrowing(Level level, BlockPos pos, boolean regrowing, int dayInPhase, int phase) {
@@ -220,71 +232,60 @@ public class CropGrowthManager extends SavedData {
      */
     @SuppressWarnings("null")
     public void growDaily(ServerLevel serverLevel) {
-        isProcessing = true;
-        try {
-            // 使用快照遍历，避免方块替换触发 add/remove 导致 HashSet 迭代器 CME
-            java.util.List<GlobalPos> snapshot = new java.util.ArrayList<>(cropPositions);
-            for (GlobalPos globalPos : snapshot) {
-
-                // 确保是当前处理的维度
-                if (globalPos.dimension() != serverLevel.dimension()) {
-                    continue;
-                }
-
-                BlockPos pos = globalPos.pos();
-
-                // 多人农场优化：跳过离线玩家农场中的作物
-                if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(serverLevel, pos)) {
-                    continue;
-                }
-
-                // 检查区块是否加载 (避免加载未加载的区块造成卡顿)
-                if (serverLevel.isLoaded(pos)) {
-                    @SuppressWarnings("null")
-                    BlockState state = serverLevel.getBlockState(pos);
-                    Block block = state.getBlock();
-
-                    boolean coreCrop = block instanceof StardewCropBlock;
-                    StardewCropState runtimeCrop = coreCrop
-                            ? StardewCropRuntimeRegistry.inspect(serverLevel, pos)
-                            : StardewCropRuntimeRegistry.inspectAddon(serverLevel, pos);
-                    if (runtimeCrop != null) {
-                        boolean isWatered = runtimeCrop.soilPositions().stream()
-                                .map(serverLevel::getBlockState)
-                                .anyMatch(soil -> soil.getBlock() instanceof FarmBlock
-                                        && soil.getValue(FarmBlock.MOISTURE) > 0);
-
-                        // 运行时桥会重验作物身份；附属负责自己的生长持久化。
-                        StardewCropRuntimeAdapter.DailyResult result =
-                                StardewCropRuntimeRegistry.growOneDay(
-                                        serverLevel, pos, isWatered, false);
-                        setDirty();
-                        if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) {
-                            removeCrop(serverLevel, pos);
-                            continue;
-                        }
-
-                        // SDV: 核心作物成熟当日 1% 概率长成 3×3 巨型作物。
-                        // 附属作物可在自身 daily adapter 中实现其巨型形态，不强制核心几何。
-                        BlockState afterGrow = serverLevel.getBlockState(pos);
-                        if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck
-                                && afterGrow.hasProperty(StardewCropBlock.AGE)
-                                && afterGrow.getValue(StardewCropBlock.AGE) == StardewCropBlock.MAX_AGE) {
-                            com.stardew.craft.spawner.GiantCropSpawner.tryRoll(serverLevel, pos, matureCheck);
-                        }
-                    } else {
-                        // 只要发现位置上不是作物了，就清理掉脏数据
-                        removeCrop(serverLevel, pos);
-                    }
-                }
+        var active = new java.util.ArrayList<GlobalPos>();
+        for (var global : getAllCropPositions()) {
+            if (global.dimension().equals(serverLevel.dimension())
+                    && com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(serverLevel, global.pos(), 0)
+                    && serverLevel.isLoaded(global.pos())) {
+                int radius = StardewCropRuntimeRegistry.dailyNeighborhoodRadius(serverLevel.getBlockState(global.pos()));
+                if (radius > 0) com.stardew.craft.farm.FarmDailyProcessHelper.ensurePositionNeighborhoodLoaded(serverLevel, global.pos(), radius);
+                active.add(global);
             }
+        }
+        int day = com.stardew.craft.farm.OfflineFarmCatchUp.computeAbsoluteDay();
+        settleCrops(serverLevel, active, day, Math.floorMod((day - 1) / 28, 4), false);
+        dryAllFarmland(serverLevel);
+    }
+
+    /** Shared date-explicit pass. Roots are loaded by the caller; never force-loads whole farms.
+     * Advance all crops first, then try giants in stable spatial order. Replaying a date is safe.
+     */
+    public com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.Statistics settleCrops(
+            ServerLevel level, java.util.List<GlobalPos> positions, int day, int season, boolean offline) {
+        isProcessing = true;
+        var roots = new java.util.ArrayList<BlockPos>();
+        var watered = new java.util.HashSet<BlockPos>();
+        try {
+            for (var global : positions) {
+                var pos = global.pos();
+                if (!global.dimension().equals(level.dimension()) || !level.hasChunkAt(pos)) continue;
+                var crop = StardewCropRuntimeRegistry.inspect(level, pos);
+                if (crop == null) { removeCrop(level, pos); continue; }
+                if (crop.part() != StardewCropState.Part.ROOT || !crop.root().equals(pos)) continue;
+                var growth = getOrCreateState(level, pos);
+                if (growth.lastDailyDay > day) continue;
+                if (growth.lastDailyDay < day) {
+                    // Preserve the existing offline watering policy; pass the actual historical date.
+                    boolean wet = offline || crop.soilPositions().stream().anyMatch(soil -> level.hasChunkAt(soil)
+                            && level.getBlockState(soil).getBlock() instanceof FarmBlock
+                            && level.getBlockState(soil).getValue(FarmBlock.MOISTURE) > 0);
+                    var result = StardewCropRuntimeRegistry.growOneDay(level, pos, wet, offline, day, season);
+                    growth.lastDailyDay = day;
+                    // Paddy crops may irrigate their soil during their own daily update.
+                    growth.lastDailyWatered = wet || crop.soilPositions().stream().anyMatch(soil -> level.hasChunkAt(soil)
+                            && level.getBlockState(soil).getBlock() instanceof FarmBlock
+                            && level.getBlockState(soil).getValue(FarmBlock.MOISTURE) > 0);
+                    setDirty();
+                    if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) { removeCrop(level, pos); continue; }
+                }
+                roots.add(pos);
+                if (growth.lastDailyWatered) watered.add(pos);
+            }
+            return com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.process(level, roots, watered, day, offline);
         } finally {
             isProcessing = false;
             applyPendingChanges();
         }
-
-        // 暴力处理所有加载区块的耕地 (干燥化)
-        dryAllFarmland(serverLevel);
     }
 
     /**
@@ -419,7 +420,7 @@ public class CropGrowthManager extends SavedData {
                                         // 在还原为黄土前，清理该位置残留的肥料数据，避免下次再耕后无法施肥
                                         fertilizerManager.removeFertilizer(level, realPos);
                                         level.setBlock(realPos,
-                                            com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
+                                            (state.is(com.stardew.craft.block.ModBlocks.FARMLAND.get()) ? com.stardew.craft.block.ModBlocks.DIRT.get() : com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()).defaultBlockState(), Block.UPDATE_ALL);
                                         continue;
                                     }
                                 }
@@ -436,13 +437,20 @@ public class CropGrowthManager extends SavedData {
                                         // 在还原为黄土前，清理该位置残留的肥料数据，避免下次再耕后无法施肥
                                         fertilizerManager.removeFertilizer(level, realPos);
                                         level.setBlock(realPos,
-                                            com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get().defaultBlockState(), Block.UPDATE_ALL);
+                                            (state.is(com.stardew.craft.block.ModBlocks.FARMLAND.get()) ? com.stardew.craft.block.ModBlocks.DIRT.get() : com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()).defaultBlockState(), Block.UPDATE_ALL);
                                         continue;
                                     }
                                 }
 
                                 @SuppressWarnings("null")
                                 int moisture = state.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE);
+                                BlockPos cropPos = realPos.above();
+                                if (level.getBlockState(cropPos).getBlock()
+                                        instanceof com.stardew.craft.block.crop.RiceCropBlock
+                                        && com.stardew.craft.block.crop.RiceCropBlock
+                                        .keepPaddySoilWatered(level, cropPos)) {
+                                    continue;
+                                }
                                 if (moisture > 0) {
                                     // 保水土壤：按概率过夜保留水分（对齐 Stardew 的 retaining soil 概念）
                                     float retain = fertilizerManager.getWaterRetention(level, realPos);
@@ -493,6 +501,11 @@ public class CropGrowthManager extends SavedData {
                 posTag.putInt("DayInPhase", state.dayInPhase);
                 posTag.putInt("Phase", state.phase);
                 posTag.putBoolean("Regrowing", state.regrowing);
+                posTag.putBoolean("SourcePhases", state.sourcePhases);
+                posTag.putInt("SourcePhaseVersion", state.sourcePhaseVersion);
+                posTag.putInt("LastDailyDay", state.lastDailyDay);
+                posTag.putBoolean("LastDailyWatered", state.lastDailyWatered);
+                posTag.putInt("LastGiantDay", state.lastGiantDay);
                 if (state.planterUuid != null) {
                     posTag.putUUID("PlanterUuid", state.planterUuid);
                 }
@@ -527,7 +540,13 @@ public class CropGrowthManager extends SavedData {
                 int phase = posTag.contains("Phase", Tag.TAG_INT) ? posTag.getInt("Phase") : 0;
                 boolean regrowing = posTag.contains("Regrowing", Tag.TAG_BYTE) && posTag.getBoolean("Regrowing");
                 UUID planterUuid = posTag.hasUUID("PlanterUuid") ? posTag.getUUID("PlanterUuid") : null;
-                manager.cropStates.put(gp, new CropGrowthState(dayInPhase, phase, regrowing, planterUuid));
+                CropGrowthState growth = new CropGrowthState(dayInPhase, phase, regrowing, planterUuid);
+                growth.sourcePhases = posTag.getBoolean("SourcePhases");
+                growth.sourcePhaseVersion = posTag.getInt("SourcePhaseVersion");
+                growth.lastDailyDay = posTag.contains("LastDailyDay") ? posTag.getInt("LastDailyDay") : -1;
+                growth.lastDailyWatered = posTag.getBoolean("LastDailyWatered");
+                growth.lastGiantDay = posTag.contains("LastGiantDay") ? posTag.getInt("LastGiantDay") : -1;
+                manager.cropStates.put(gp, growth);
             }
         }
         if (tag.contains("PublicTilledChunks", Tag.TAG_LONG_ARRAY)) {

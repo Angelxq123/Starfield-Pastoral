@@ -1,0 +1,247 @@
+{
+  "parent": "minecraft:block/block",
+  "credit": "StardewCraft: source stone 847 reference; original per-face pixel art matched to mine environment",
+  "textures": {
+    "0": "stardewcraft:block/mine/nodes/stone_847",
+    "particle": "stardewcraft:block/mine/nodes/stone_847_particle"
+  },
+  "stardewcraft:collision": {
+    "mode": "aabb"
+  },
+  "elements": [
+    {
+      "name": "深紫岩躯",
+      "from": [
+        3,
+        -4,
+        4
+      ],
+      "to": [
+        13,
+        7,
+        13
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          2,
+          8
+        ],
+        "axis": "y",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            0.0,
+            2.5,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.75,
+            0.0,
+            5.25,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            5.5,
+            0.0,
+            8.0,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.25,
+            0.0,
+            10.75,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.0,
+            0.0,
+            13.25,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.5,
+            0.0,
+            15.75,
+            2.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "右后高峰",
+      "from": [
+        7,
+        5,
+        5
+      ],
+      "to": [
+        13,
+        10,
+        11
+      ],
+      "rotation": {
+        "origin": [
+          10,
+          6,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            3.0,
+            1.5,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1.75,
+            3.0,
+            3.25,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            3.5,
+            3.0,
+            5.0,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.25,
+            3.0,
+            6.75,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            7.0,
+            3.0,
+            8.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8.75,
+            3.0,
+            10.25,
+            4.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "左低岩肩",
+      "from": [
+        2,
+        2,
+        3
+      ],
+      "to": [
+        8,
+        7,
+        9
+      ],
+      "rotation": {
+        "origin": [
+          5,
+          3,
+          6
+        ],
+        "axis": "z",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            10.5,
+            3.0,
+            12.0,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            12.25,
+            3.0,
+            13.75,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            14.0,
+            3.0,
+            15.5,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.0,
+            4.75,
+            1.5,
+            6.0
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            1.75,
+            4.75,
+            3.25,
+            6.0
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3.5,
+            4.75,
+            5.0,
+            6.0
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

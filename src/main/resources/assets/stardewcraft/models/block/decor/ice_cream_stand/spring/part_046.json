@@ -1,0 +1,61 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "0": "stardewcraft:block/decor/ice_cream_stand/spring/ice_cream_stand_spring",
+    "particle": "stardewcraft:block/decor/ice_cream_stand/spring/stand_pot_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        7,
+        5
+      ],
+      "to": [
+        9,
+        9,
+        11
+      ],
+      "faces": {
+        "east": {
+          "texture": "#0",
+          "uv": [
+            10.5,
+            7.125,
+            10.875,
+            7.25
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            10.9375,
+            7.125,
+            11.3125,
+            7.25
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            3.75,
+            5.9375,
+            3.875,
+            6.3125
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            3.9375,
+            5.9375,
+            4.0625,
+            6.3125
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

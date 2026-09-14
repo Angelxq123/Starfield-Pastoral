@@ -3,7 +3,7 @@ package com.stardew.craft.fishing.server;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.Config;
 import com.stardew.craft.fishing.TreasureChestMenu;
-import com.stardew.craft.fishpond.service.FishPondInteractionService;
+import com.stardew.craft.fishpond.service.FishPondHusbandry;
 import com.stardew.craft.enchantment.StardewEnchantments;
 import com.stardew.craft.item.tool.FishingRodItem;
 import com.stardew.craft.fishing.network.FishingCatchVisualPayload;
@@ -48,6 +48,42 @@ public final class FishingSessionManager {
 	}
 
 	private final Map<UUID, FishingSession> sessionsByPlayer = new HashMap<>();
+	private final Map<UUID, RodUse> usesByPlayer = new HashMap<>();
+    private final Map<UUID, PendingLaunch> pendingLaunches = new HashMap<>();
+    private record PendingLaunch(FishingHook hook, long at, float yaw, float pitch) {}
+
+	private record RodUse(UUID id, int slot, ItemStack rod, ServerLevel level) {
+		boolean matches(ServerPlayer player) {
+			return player.isAlive() && !player.isSpectator() && player.serverLevel() == level
+					&& player.getInventory().selected == slot && player.getMainHandItem() == rod
+					&& !rod.isEmpty() && player.getOffhandItem().isEmpty();
+		}
+	}
+
+	public UUID useId(ServerPlayer player) {
+		RodUse use = usesByPlayer.get(player.getUUID());
+		return use == null ? new UUID(0, 0) : use.id();
+	}
+
+	public boolean hasValidUse(ServerPlayer player) {
+		RodUse use = usesByPlayer.get(player.getUUID());
+		return use != null && use.matches(player);
+	}
+
+	public void prepareUse(ServerPlayer player, UUID id) {
+		if (!isHoldingStardewFishingRod(player) || getState(player) != null || player.isUsingItem()) {
+			PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingUsePayload(id, false));
+			return;
+		}
+		cancel(player);
+		usesByPlayer.put(player.getUUID(), new RodUse(id, player.getInventory().selected, player.getMainHandItem(), player.serverLevel()));
+		FishingPresentationEvents.phase(player, id, com.stardew.craft.fishing.FishingPresentationPhase.CHARGE, -1);
+	}
+
+	public void cancelIfInvalid(ServerPlayer player) {
+		if (usesByPlayer.containsKey(player.getUUID()) && !hasValidUse(player)) cancel(player);
+	}
+
 	private final Map<UUID, PendingTreasureChest> pendingTreasureByPlayer = new HashMap<>();
 	private final com.stardew.craft.fishing.data.TreasureLootManager lootManager = createLootManager();
 	private final MinecraftServer server;
@@ -69,7 +105,7 @@ public final class FishingSessionManager {
 		if (!com.stardew.craft.festival.FestivalOfIceService.canStartFishingCast(player)) {
 			return false;
 		}
-		if (!isHoldingStardewFishingRod(player)) {
+		if (!isHoldingStardewFishingRod(player) || !hasValidUse(player)) {
 			return false;
 		}
 
@@ -124,16 +160,18 @@ public final class FishingSessionManager {
 		}
 
 		// Placeholder pos/depth; the session will update them once the hook actually lands in water.
-		FishingSession session = new FishingSession(UUID.randomUUID(), player.blockPosition(), 1, ticksUntilBite);
+		FishingSession session = new FishingSession(useId(player), player.blockPosition(), 1, ticksUntilBite);
 		session.setCastFromDryLand(FishingWaterDepthService.isDryLandCastOrigin(player));
 
-		// 使用原版 FishingHook：直接获得原版鱼线/鱼钩渲染。
+		// Keep vanilla hook physics; the native rig owns rendering and releases it at the cast keyframe.
 		FishingHook hook = spawnVanillaHook(player, castPower01);
 		if (hook != null) {
 			session.setHookEntityId(hook.getId());
+            pendingLaunches.put(playerId, new PendingLaunch(hook, player.level().getGameTime()+7, player.getYRot(), player.getXRot()));
 		}
 
 		sessionsByPlayer.put(playerId, session);
+		FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.CAST, -1);
 		com.stardew.craft.player.PlayerDataManager.getPlayerData(player)
 				.incrementStat("timesFished", 1);
 		return true;
@@ -141,13 +179,9 @@ public final class FishingSessionManager {
 
 	private static ItemStack getRodFromPlayer(ServerPlayer player) {
 		ItemStack main = player.getMainHandItem();
-		ItemStack off = player.getOffhandItem();
 		if (com.stardew.craft.festival.fair.FairFishingGameService.isFishingGameActive(player)) {
 			if (com.stardew.craft.festival.fair.FairFishingGameService.isUsableFishingGameRod(player, main)) {
 				return main;
-			}
-			if (com.stardew.craft.festival.fair.FairFishingGameService.isUsableFishingGameRod(player, off)) {
-				return off;
 			}
 			return ItemStack.EMPTY;
 		}
@@ -167,7 +201,7 @@ public final class FishingSessionManager {
 		if (session.state() != FishingSession.State.BITE_READY) {
 			return false;
 		}
-		if (!isHoldingStardewFishingRod(player)) {
+		if (!isHoldingStardewFishingRod(player) || !hasValidUse(player)) {
 			return false;
 		}
 		if (!isHookAlive(player.serverLevel(), session)) {
@@ -181,7 +215,8 @@ public final class FishingSessionManager {
 		}
 		if (!Config.ENABLE_FISHING_MINIGAME.get()) {
 			session.startMinigame(-1);
-			handleResult(player, session.id(), true, 1.0f, false, 1, true, session.caughtFishSize());
+			// The server already rolled treasure at bite time; skipping the UI also collects that chest.
+			handleResult(player, session.id(), true, 1.0f, session.hasTreasure(), 1, true, session.caughtFishSize());
 			return true;
 		}
 
@@ -189,7 +224,8 @@ public final class FishingSessionManager {
 		// Match FishingCatchVisuals HOOKED popup duration (450ms) => 9 ticks.
 		final int hookedAnimTicks = 9;
 		session.startHookedAnim(hookedAnimTicks);
-		PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingHookedAnimPayload(hookedAnimTicks));
+		FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.HOOK, session.hookEntityId());
+		PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingHookedAnimPayload(session.id(), hookedAnimTicks));
 		player.serverLevel().playSound(null, player.blockPosition(), ModSounds.FISH_HIT.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 		return true;
 	}
@@ -204,25 +240,21 @@ public final class FishingSessionManager {
 		if (session == null || session.state() != FishingSession.State.WAITING_BITE) {
 			return false;
 		}
-		if (!isHookAlive(player.serverLevel(), session)) {
+		if (!hasValidUse(player) || !isHookAlive(player.serverLevel(), session)) {
 			return false;
 		}
 
-		ItemStack fish = FishPondInteractionService.pullFishForFishingRod(player.serverLevel(), session.bobberPos());
+		ItemStack fish = FishPondHusbandry.pullFishForFishingRod(player.serverLevel(), session.bobberPos());
 		if (fish.isEmpty()) {
 			return false;
 		}
 
-		boolean added = player.getInventory().add(fish.copy());
-		if (!added) {
-			player.drop(fish.copy(), false);
-		}
+		giveOrDrop(player, fish);
 
 		player.playNotifySound(ModSounds.PULL_ITEM_FROM_WATER.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 		player.playNotifySound(ModSounds.DWOP.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 
-		var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(fish.getItem());
-		PacketDistributor.sendToPlayer(player, new FishingCatchVisualPayload(id, fish.getCount()));
+		PacketDistributor.sendToPlayer(player, catchVisual(player, session, fish, true));
 
 		cleanupHook(player.serverLevel(), session);
 		session.finish();
@@ -314,6 +346,7 @@ public final class FishingSessionManager {
 				|| com.stardew.craft.festival.fair.FairFishingGameService.isFishingGameActive(player)
 				|| com.stardew.craft.festival.FestivalOfIceService.isFishingContestActive(player);
 
+		FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.MINIGAME, session.hookEntityId());
 		PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.StartMinigamePayload(
 				session.id(),
 				minigameDifficulty,
@@ -351,19 +384,13 @@ public final class FishingSessionManager {
 		}
 
 		if (!festivalFishingGame) {
-			@SuppressWarnings("null")
-			boolean added = player.getInventory().add(caughtStack.copy());
-			if (!added) {
-				player.drop(caughtStack.copy(), false);
-			}
+			giveOrDrop(player, caughtStack);
 		}
 
 		player.playNotifySound(ModSounds.PULL_ITEM_FROM_WATER.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 		player.playNotifySound(ModSounds.DWOP.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 
-		@SuppressWarnings("null")
-		var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(caughtStack.getItem());
-		PacketDistributor.sendToPlayer(player, new FishingCatchVisualPayload(id, caughtStack.getCount()));
+		PacketDistributor.sendToPlayer(player, catchVisual(player, session, caughtStack, false));
 
 		if (fairFishingGame) {
 			com.stardew.craft.festival.fair.FairFishingGameService.onFishingCatch(player, false, 0, false);
@@ -397,19 +424,55 @@ public final class FishingSessionManager {
 		return session.state();
 	}
 
-	public boolean cancel(ServerPlayer player) {
+	/** Voluntary empty retrieval retains the use identity until the presentation ends or equipment changes. */
+	public void retrieve(ServerPlayer player) {
+        if (pendingLaunches.containsKey(player.getUUID())) { cancel(player); return; }
 		FishingSession session = sessionsByPlayer.remove(player.getUUID());
-		if (session == null) {
-			return false;
-		}
+		if (session == null) return;
+		FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.RETRIEVE, session.hookEntityId());
 		cleanupHook(player.serverLevel(), session);
 		session.finish();
 		clearAllRodCastFlags(player);
-		return true;
+	}
+
+	public boolean cancel(ServerPlayer player) {
+		PendingLaunch pending = pendingLaunches.remove(player.getUUID());
+        if (pending != null) pending.hook().discard();
+        RodUse use = usesByPlayer.remove(player.getUUID());
+		FishingSession session = sessionsByPlayer.remove(player.getUUID());
+		if (session != null) {
+			cleanupHook(use == null ? player.serverLevel() : use.level(), session);
+			session.finish();
+		}
+		if (use != null || session != null) {
+			FishingPresentationEvents.phase(player, use != null ? use.id() : session.id(), com.stardew.craft.fishing.FishingPresentationPhase.STOP, -1);
+			if (player.getUseItem().getItem() instanceof FishingRodItem) player.stopUsingItem();
+			clearAllRodCastFlags(player);
+			PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingUsePayload(
+					use != null ? use.id() : session.id(), false));
+		}
+		// Rewards are already earned. Interrupting the presentation delivers them without reopening a menu.
+		givePendingTreasure(player);
+		return use != null || session != null;
+	}
+
+	private void givePendingTreasure(ServerPlayer player) {
+		PendingTreasureChest pending = pendingTreasureByPlayer.remove(player.getUUID());
+		if (pending != null) for (ItemStack stack : pending.loot()) giveOrDrop(player, stack);
+	}
+
+	private static void giveOrDrop(ServerPlayer player, ItemStack stack) {
+		ItemStack remainder = stack.copy();
+		player.getInventory().add(remainder);
+		if (!remainder.isEmpty()) player.drop(remainder, false);
 	}
 
 	@SuppressWarnings("null")
 	public void openPendingTreasureChest(ServerPlayer player, long chestId) {
+		if (!hasValidUse(player)) {
+			givePendingTreasure(player);
+			return;
+		}
 		PendingTreasureChest pending = pendingTreasureByPlayer.get(player.getUUID());
 		if (pending == null || pending.chestId() != chestId) {
 			return;
@@ -451,6 +514,10 @@ public final class FishingSessionManager {
 			return;
 		}
 		if (!session.id().equals(sessionId)) {
+			return;
+		}
+		if (!hasValidUse(player)) {
+			cancel(player);
 			return;
 		}
 		if (session.state() != FishingSession.State.MINIGAME) {
@@ -573,9 +640,7 @@ public final class FishingSessionManager {
 			player.playNotifySound(ModSounds.JINGLE1.get(), net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.0f);
 
 			// Client-side post-catch visuals (SV-style popup then item-activation).
-			@SuppressWarnings("null")
-			var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(fish.getItem());
-			PacketDistributor.sendToPlayer(player, new FishingCatchVisualPayload(id, fish.getCount()));
+			PacketDistributor.sendToPlayer(player, catchVisual(player, session, fish, true));
 			
 			if (!festivalFishingGame) {
 				int baseExp = 10 + session.difficulty();
@@ -597,7 +662,8 @@ public final class FishingSessionManager {
 				PlayerStardewDataAPI.addExperience(player, SkillType.FISHING, 2);
 			}
 			// Client-side failure feedback (short visual).
-			PacketDistributor.sendToPlayer(player, new FishingFailVisualPayload());
+			FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.FAIL, session.hookEntityId(), FishingPresentationEvents.position(player, Vec3.atCenterOf(session.bobberPos())), ItemStack.EMPTY, false);
+			PacketDistributor.sendToPlayer(player, new FishingFailVisualPayload(session.id()));
 
 			if (!festivalFishingGame) {
 				// 失败时也消耗鱼饵（SV：若有 Preserving 则 50% 概率保留；Deluxe Bait 不影响消耗）
@@ -610,6 +676,14 @@ public final class FishingSessionManager {
 		session.finish();
 		sessionsByPlayer.remove(player.getUUID());
 		clearAllRodCastFlags(player);
+	}
+
+	private static FishingCatchVisualPayload catchVisual(ServerPlayer player, FishingSession session, ItemStack stack, boolean fish) {
+		var hook = player.serverLevel().getEntity(session.hookEntityId());
+		Vec3 origin = hook == null ? Vec3.atCenterOf(session.bobberPos()) : hook.position();
+		origin = FishingPresentationEvents.position(player, origin);
+		FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.CATCH, session.hookEntityId(), origin, stack, fish);
+		return new FishingCatchVisualPayload(session.id(), stack.copy(), fish, origin.x, origin.y, origin.z);
 	}
 
 	private static int fairFishingScoreSize(FishingSession session) {
@@ -634,21 +708,27 @@ public final class FishingSessionManager {
 
 	@SuppressWarnings("null")
 	private void tick() {
-		Iterator<Map.Entry<UUID, FishingSession>> it = sessionsByPlayer.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<UUID, FishingSession> entry = it.next();
+		// Check equipment even when Stardew time is paused, including before the hook exists.
+		for (UUID id : List.copyOf(usesByPlayer.keySet())) {
+			ServerPlayer player = getAnyPlayer(id);
+			if (player != null) { cancelIfInvalid(player); FishingPresentationEvents.tick(player); }
+		}
+		// Auto-hook can finish an instant catch during iteration.
+		for (Map.Entry<UUID, FishingSession> entry : new ArrayList<>(sessionsByPlayer.entrySet())) {
 			UUID playerId = entry.getKey();
 			FishingSession session = entry.getValue();
 			ServerPlayer player = getAnyPlayer(playerId);
 			if (player == null) {
-				it.remove();
+                PendingLaunch pending = pendingLaunches.remove(playerId);
+                if (pending != null) pending.hook().discard();
+				RodUse use = usesByPlayer.remove(playerId);
+				if (use != null) cleanupHook(use.level(), session);
+				sessionsByPlayer.remove(playerId, session);
 				continue;
 			}
 			ServerLevel level = player.serverLevel();
 			if (festivalBlocksFishing(player)) {
-				cleanupHook(level, session);
-				clearAllRodCastFlags(player);
-				it.remove();
+				cancel(player);
 				continue;
 			}
 			if (com.stardew.craft.time.StardewTimePauseService.shouldPauseLevel(level)) {
@@ -656,23 +736,34 @@ public final class FishingSessionManager {
 			}
 			if (!isHoldingStardewFishingRod(player)) {
 				// 玩家不再持竿（切换物品/死亡等）：直接取消会话。
-				cleanupHook(player.serverLevel(), session);
-				clearAllRodCastFlags(player);
-				it.remove();
+				cancel(player);
 				continue;
 			}
-			if (!isHookAlive(level, session)) {
-				clearAllRodCastFlags(player);
-				it.remove();
+			PendingLaunch launch = pendingLaunches.get(playerId);
+            if (launch != null) {
+                if (level.getGameTime() < launch.at()) continue;
+                pendingLaunches.remove(playerId);
+                var release=com.stardew.craft.fishing.FishingCastPose.release(player.getXRot(),player.getMainArm()==net.minecraft.world.entity.HumanoidArm.LEFT);
+                double yaw=Math.toRadians(180-player.getYRot());
+                launch.hook().setPos(player.getX()+release.x*Math.cos(yaw)+release.z*Math.sin(yaw),player.getY()+release.y-.14,player.getZ()-release.x*Math.sin(yaw)+release.z*Math.cos(yaw));
+                // Follow turning during the wind-up without rolling gameplay RNG a second time.
+                var previousAim=new org.joml.Matrix4f().rotateY((float)Math.toRadians(-launch.yaw())).rotateX((float)Math.toRadians(launch.pitch()));
+                var aim=new org.joml.Matrix4f().rotateY((float)Math.toRadians(-player.getYRot())).rotateX((float)Math.toRadians(player.getXRot())).mul(previousAim.invert());
+                var velocity=launch.hook().getDeltaMovement();var redirected=aim.transformDirection(new org.joml.Vector3f((float)velocity.x,(float)velocity.y,(float)velocity.z));
+                launch.hook().setDeltaMovement(redirected.x,redirected.y,redirected.z);
+                level.addFreshEntity(launch.hook());
+                FishingPresentationEvents.launched(player, launch.hook());
+                level.playSound(null, player.blockPosition(), ModSounds.CAST.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
+            }
+            if (!isHookAlive(level, session)) {
+				cancel(player);
 				continue;
 			}
 			RandomSource random = player.getRandom();
 			FishingSession.State before = session.state();
 			boolean stillActive = session.tick(player, level, random);
 			if (!stillActive) {
-				cleanupHook(level, session);
-				clearAllRodCastFlags(player);
-				it.remove();
+				cancel(player);
 				continue;
 			}
 
@@ -683,16 +774,15 @@ public final class FishingSessionManager {
 				}
 				// Bite prompt: show a clear visual cue (exclamation + bobber dip) without chat spam.
 				int hookId = session.hookEntityId();
-				PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingBitePromptPayload(hookId, 10));
+				FishingPresentationEvents.phase(player, session.id(), com.stardew.craft.fishing.FishingPresentationPhase.BITE, hookId);
+				PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingBitePromptPayload(session.id(), hookId, 10));
 				level.playSound(null, player.blockPosition(), pickFishBiteChime(player), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 			}
 			if (session.state() == FishingSession.State.HOOKED_ANIM && session.ticksUntilTimeout() <= 0) {
 				startMinigameNow(player, session);
 			}
 			if (session.state() == FishingSession.State.DONE) {
-				cleanupHook(level, session);
-				clearAllRodCastFlags(player);
-				it.remove();
+				cancel(player);
 			}
 		}
 	}
@@ -701,7 +791,7 @@ public final class FishingSessionManager {
 		return com.stardew.craft.festival.ActiveFestivalHandlers.blocksFishingDuringActiveFestival(player);
 	}
 
-	private static void clearAllRodCastFlags(ServerPlayer player) {
+	private void clearAllRodCastFlags(ServerPlayer player) {
 		// Ensure we don't leave the client in a stuck "cast" model state.
 		boolean hadAny = false;
 		var inv = player.getInventory();
@@ -728,7 +818,7 @@ public final class FishingSessionManager {
 			com.stardew.craft.item.tool.FishingRodItem.setCastActive(off, false);
 		}
 		if (hadAny) {
-			net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingRodCastStatePayload(false));
+			net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.stardew.craft.fishing.network.FishingRodCastStatePayload(useId(player), false));
 		}
 	}
 
@@ -795,8 +885,14 @@ public final class FishingSessionManager {
 			// at level horizon. Calibrate so targetTiles maps directly to blocks of horizontal travel.
 			float velocity = Mth.clamp(targetTiles / 4.5f, 0.45f, 2.0f);
 			hook.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
-			level.addFreshEntity(hook);
-			return hook;
+			// Approved cast_release at 0.35 s. The physical hook starts at the visible bobber,
+            // retaining the existing power/skill velocity and vanilla flight/collision.
+            double yaw = Math.toRadians(180-player.getYRot());
+            var release = com.stardew.craft.fishing.FishingCastPose.release(player.getXRot(),player.getMainArm()==net.minecraft.world.entity.HumanoidArm.LEFT);
+            double x=release.x,z=release.z;
+            hook.setPos(player.getX()+x*Math.cos(yaw)+z*Math.sin(yaw), player.getY()+release.y-.14,
+                    player.getZ()-x*Math.sin(yaw)+z*Math.cos(yaw));
+            return hook;
 		} catch (Throwable t) {
 			StardewCraft.LOGGER.error("Failed to spawn vanilla FishingHook", t);
 			return null;
@@ -804,7 +900,7 @@ public final class FishingSessionManager {
 	}
 
 	private static boolean isHoldingStardewFishingRod(ServerPlayer player) {
-		return !getRodFromPlayer(player).isEmpty();
+		return player.getOffhandItem().isEmpty() && !getRodFromPlayer(player).isEmpty();
 	}
 
 	private ServerPlayer getAnyPlayer(UUID playerId) {
@@ -844,12 +940,13 @@ public final class FishingSessionManager {
 		session.setTreasureLoot(loot);
 
 		long chestId = player.server.getTickCount() * 100000L + Math.floorMod(player.getId(), 100000);
+		givePendingTreasure(player);
 		pendingTreasureByPlayer.put(player.getUUID(), new PendingTreasureChest(chestId, loot, session.isGoldenTreasure()));
 
 		// 发送开箱提示到客户端：客户端只播放动画并在结束后请求服务端打开容器。
 		net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
 				player, 
-				new com.stardew.craft.network.payload.OpenTreasureChestPayload(chestId, session.isGoldenTreasure())
+				new com.stardew.craft.network.payload.OpenTreasureChestPayload(session.id(), chestId, session.isGoldenTreasure())
 		);
 
 		// 播放宝箱打开音效

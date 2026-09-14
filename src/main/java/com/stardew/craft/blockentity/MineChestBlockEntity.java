@@ -1,6 +1,7 @@
 package com.stardew.craft.blockentity;
 
 import com.stardew.craft.block.mine.MineChestBlock;
+import com.stardew.craft.block.mine.MineChestLidMotion;
 import com.stardew.craft.block.utility.WoodenChestColorPalette;
 import com.stardew.craft.menu.WoodenChestMenu;
 import com.stardew.craft.mining.MineChestLootTable;
@@ -28,13 +29,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -47,21 +41,19 @@ import java.util.*;
  */
 @SuppressWarnings("null")
 public class MineChestBlockEntity extends net.minecraft.world.level.block.entity.BlockEntity
-        implements MenuProvider, GeoBlockEntity {
+        implements MenuProvider {
 
     private static final int SLOT_COUNT = 27;
-    private static final RawAnimation OPEN_ANIM = RawAnimation.begin().thenPlayAndHold("OPEN");
-    private static final RawAnimation CLOSE_ANIM = RawAnimation.begin().thenPlayAndHold("CLOSE");
 
     /** 每个玩家独立的库存 */
     private final Map<UUID, NonNullList<ItemStack>> playerInventories = new HashMap<>();
 
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final MineChestLidMotion lidMotion = new MineChestLidMotion();
     private int openCount;
-    private boolean lastAnimatedOpen;
+    private boolean lidInitialized;
     private int colorSelection = -1;
-    /** 骷髅矿井宝藏室（220/320/420）每日刷新用：记录上次生成奖励的绝对天数。 */
-    private int lastRefreshDay = -1;
+    /** Negative identity of this generated Skull Cavern chest; ordinary rewards use their floor. */
+    private int rewardKey;
 
     public MineChestBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MINE_CHEST.get(), pos, state);
@@ -78,27 +70,19 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
 
     private NonNullList<ItemStack> getOrCreatePlayerInventory(UUID playerId, @Nullable net.minecraft.server.level.ServerPlayer player) {
         int floor = getFloorNumber();
-        // 骷髅矿井宝藏室每日刷新：新的一天清空所有玩家的宝箱库存，重新生成奖励
-        if (MineChestLootTable.isSkullCavernTreasureFloor(floor)) {
-            int today = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
-            if (lastRefreshDay != today) {
-                lastRefreshDay = today;
-                playerInventories.clear();
-                setChanged();
-            }
-        }
+        claimKeyForFloor(floor);
         return playerInventories.computeIfAbsent(playerId, id -> {
             NonNullList<ItemStack> inv = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
             // 根据宝箱所在层数生成奖励，但如果玩家已在本存档领过该层，就不再给
             if (!hasClaimedReward(playerId, floor)) {
                 ItemStack reward;
-                if (MineChestLootTable.isSkullCavernTreasureFloor(floor)) {
-                    // 骷髅矿井宝藏室（220/320/420）：26 选 1 随机池
-                    // 使用 (floor, playerId, chestPos) 作为种子，保证同一玩家同一宝箱奖励稳定
+                if (floor>120) {
+                    // Random and forced Skull Cavern treasure rooms share the 26-slot source pool.
+                    // Include the generated chest identity: revisiting this instance preserves loot; new runs reroll.
                     long seed = ((long) floor * 341873128712L)
                             ^ playerId.getMostSignificantBits()
                             ^ playerId.getLeastSignificantBits()
-                            ^ (worldPosition.asLong() * 132897987541L);
+                            ^ (worldPosition.asLong() * 132897987541L) ^ rewardKey;
                         reward = com.stardew.craft.mining.SkullCavernTreasurePool.roll(
                             net.minecraft.util.RandomSource.create(seed), player);
                 } else {
@@ -130,27 +114,30 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
         MineRewardClaimManager.get(serverLevel).markClaimed(playerId, claimKeyForFloor(floor));
     }
 
-    /**
-     * 骷髅矿井宝藏室 (220/320/420) 一层多个宝箱，需按宝箱位置区分 claim 状态；
-     * 且每天刷新，所以 claim key 还要包含绝对天数。
-     * 普通楼层一层一个宝箱，沿用 floor 作为 key 即可（保持老存档兼容）。
-     */
+    /** Each generated Skull chest has its own persisted identity, independent of other
+     * chests, players, days and runs. Normal mine rewards remain once per floor. */
     private int claimKeyForFloor(int floor) {
-        if (!MineChestLootTable.isSkullCavernTreasureFloor(floor)) {
-            return floor;
+        if(floor<=120)return floor;
+        if(rewardKey==0 && level instanceof ServerLevel serverLevel) {
+            rewardKey=MineRewardClaimManager.get(serverLevel).allocateTemporaryKey();
+            var floors=com.stardew.craft.mining.MineFloorDataManager.get(serverLevel);
+            var data=floors.getFloorData(floor);
+            if(data!=null){data.addTreasureKey(rewardKey);floors.setFloorData(floor,data);}
+            setChanged();syncToClient();
         }
-        int day = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
-        return Objects.hash(floor, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), day);
+        return rewardKey;
     }
 
     /**
      * 根据方块坐标反推矿井层数。
      */
     private int getFloorNumber() {
-        int z = worldPosition.getZ();
-        if (z <= 0) return 0;
-        // floor = (z - 14) / FLOOR_SPACING
-        return (z - 14) / MiningCoordinates.FLOOR_SPACING;
+        return com.stardew.craft.mining.OrdinaryMineRuntime.floorAt(worldPosition);
+    }
+
+    public void consumeStoryReward(net.minecraft.server.level.ServerPlayer player) {
+        markRewardClaimed(player.getUUID(),getFloorNumber());
+        playerInventories.remove(player.getUUID());setChanged();
     }
 
     // ── 颜色 ──
@@ -169,8 +156,22 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
 
     // ── 开关动画 ──
 
+    private boolean personalRewardChest() {
+        return level != null && level.dimension() == com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING
+                && getFloorNumber() > 0;
+    }
+
     public void startOpen(Player player) {
         if (player.isSpectator()) return;
+        if (personalRewardChest() && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            var manager=MineRewardClaimManager.get(serverPlayer.serverLevel());
+            if (!manager.hasOpened(player.getUUID(),claimKeyForFloor(getFloorNumber()))) {
+                manager.markOpened(player.getUUID(),claimKeyForFloor(getFloorNumber()));
+                serverPlayer.playNotifySound(ModSounds.OPEN_CHEST.get(),SoundSource.BLOCKS,.7f,1f);
+            }
+            manager.sync(serverPlayer);
+            return;
+        }
         openCount++;
         if (openCount == 1 && level != null) {
             level.playSound(null, worldPosition, ModSounds.OPEN_CHEST.get(), SoundSource.BLOCKS, 0.7f, 1.0f);
@@ -179,7 +180,7 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
     }
 
     public void stopOpen(Player player) {
-        if (player.isSpectator()) return;
+        if (player.isSpectator() || personalRewardChest()) return;
         openCount = Math.max(0, openCount - 1);
         if (openCount == 0 && level != null) {
             level.playSound(null, worldPosition, ModSounds.DOOR_CREAK_REVERSE.get(), SoundSource.BLOCKS, 0.7f, 1.0f);
@@ -268,7 +269,7 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
         initializing[0] = false;
 
         return new WoodenChestMenu(containerId, playerInventory, container,
-                this::setColorSelection, getColorSelection());
+                this::setColorSelection, getColorSelection(), personalRewardChest());
     }
 
     // ── NBT ──
@@ -277,7 +278,7 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
     protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putInt("colorSelection", colorSelection);
-        tag.putInt("lastRefreshDay", lastRefreshDay);
+        tag.putInt("rewardKey",rewardKey);
 
         ListTag playersList = new ListTag();
         for (var entry : playerInventories.entrySet()) {
@@ -304,7 +305,7 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
         super.loadAdditional(tag, registries);
         colorSelection = tag.contains("colorSelection")
                 ? WoodenChestColorPalette.clampIndex(tag.getInt("colorSelection")) : -1;
-        lastRefreshDay = tag.contains("lastRefreshDay") ? tag.getInt("lastRefreshDay") : -1;
+        rewardKey = tag.getInt("rewardKey");
 
         playerInventories.clear();
         if (tag.contains("PlayerInventories")) {
@@ -338,27 +339,20 @@ public class MineChestBlockEntity extends net.minecraft.world.level.block.entity
         CompoundTag tag = super.getUpdateTag(registries);
         // 客户端只需要颜色信息，不需要玩家库存
         tag.putInt("colorSelection", colorSelection);
+        tag.putInt("rewardKey",rewardKey);
         return tag;
     }
 
-    // ── GeckoLib ──
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main", 0, state -> {
-            BlockState blockState = getBlockState();
-            boolean openNow = blockState.hasProperty(MineChestBlock.OPEN) && blockState.getValue(MineChestBlock.OPEN);
-            if (openNow != lastAnimatedOpen) {
-                state.setAndContinue(openNow ? OPEN_ANIM : CLOSE_ANIM);
-                lastAnimatedOpen = openNow;
-            }
-            return PlayState.CONTINUE;
-        }));
+    public static void clientTick(Level level, BlockPos pos, BlockState state, MineChestBlockEntity chest) {
+        boolean open = chest.personalRewardChest()
+                ? com.stardew.craft.client.mining.ClientMineRewardState.isOpen(chest.claimKeyForFloor(chest.getFloorNumber()))
+                : state.getValue(MineChestBlock.OPEN);
+        if (!chest.lidInitialized) { chest.lidMotion.snap(open); chest.lidInitialized=true; }
+        chest.lidMotion.tick(open);
     }
 
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
+    public float getLidAngle(float partialTick) {
+        return lidMotion.angle(partialTick);
     }
 
     public AABB getRenderBoundingBox() {

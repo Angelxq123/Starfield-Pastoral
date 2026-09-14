@@ -1,0 +1,304 @@
+{
+  "variants": {
+    "facing=north,section=0,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_0"
+    },
+    "facing=north,section=0,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_0"
+    },
+    "facing=north,section=1,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_1"
+    },
+    "facing=north,section=1,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_1"
+    },
+    "facing=north,section=2,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_2"
+    },
+    "facing=north,section=2,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_2"
+    },
+    "facing=north,section=3,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_3"
+    },
+    "facing=north,section=3,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_3"
+    },
+    "facing=north,section=4,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_4"
+    },
+    "facing=north,section=4,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_4"
+    },
+    "facing=north,section=5,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_5"
+    },
+    "facing=north,section=5,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_5"
+    },
+    "facing=north,section=6,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=6,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=7,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=7,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=8,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=8,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=9,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=north,section=9,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty"
+    },
+    "facing=east,section=0,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_0",
+      "y": 90
+    },
+    "facing=east,section=0,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_0",
+      "y": 90
+    },
+    "facing=east,section=1,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_1",
+      "y": 90
+    },
+    "facing=east,section=1,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_1",
+      "y": 90
+    },
+    "facing=east,section=2,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_2",
+      "y": 90
+    },
+    "facing=east,section=2,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_2",
+      "y": 90
+    },
+    "facing=east,section=3,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_3",
+      "y": 90
+    },
+    "facing=east,section=3,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_3",
+      "y": 90
+    },
+    "facing=east,section=4,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_4",
+      "y": 90
+    },
+    "facing=east,section=4,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_4",
+      "y": 90
+    },
+    "facing=east,section=5,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_5",
+      "y": 90
+    },
+    "facing=east,section=5,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_5",
+      "y": 90
+    },
+    "facing=east,section=6,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=6,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=7,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=7,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=8,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=8,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=9,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=east,section=9,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 90
+    },
+    "facing=south,section=0,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_0",
+      "y": 180
+    },
+    "facing=south,section=0,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_0",
+      "y": 180
+    },
+    "facing=south,section=1,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_1",
+      "y": 180
+    },
+    "facing=south,section=1,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_1",
+      "y": 180
+    },
+    "facing=south,section=2,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_2",
+      "y": 180
+    },
+    "facing=south,section=2,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_2",
+      "y": 180
+    },
+    "facing=south,section=3,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_3",
+      "y": 180
+    },
+    "facing=south,section=3,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_3",
+      "y": 180
+    },
+    "facing=south,section=4,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_4",
+      "y": 180
+    },
+    "facing=south,section=4,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_4",
+      "y": 180
+    },
+    "facing=south,section=5,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_5",
+      "y": 180
+    },
+    "facing=south,section=5,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_5",
+      "y": 180
+    },
+    "facing=south,section=6,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=6,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=7,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=7,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=8,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=8,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=9,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=south,section=9,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 180
+    },
+    "facing=west,section=0,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_0",
+      "y": 270
+    },
+    "facing=west,section=0,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_0",
+      "y": 270
+    },
+    "facing=west,section=1,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_1",
+      "y": 270
+    },
+    "facing=west,section=1,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_1",
+      "y": 270
+    },
+    "facing=west,section=2,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_2",
+      "y": 270
+    },
+    "facing=west,section=2,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_2",
+      "y": 270
+    },
+    "facing=west,section=3,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_3",
+      "y": 270
+    },
+    "facing=west,section=3,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_3",
+      "y": 270
+    },
+    "facing=west,section=4,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_4",
+      "y": 270
+    },
+    "facing=west,section=4,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_4",
+      "y": 270
+    },
+    "facing=west,section=5,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_0_5",
+      "y": 270
+    },
+    "facing=west,section=5,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_1_5",
+      "y": 270
+    },
+    "facing=west,section=6,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=6,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=7,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=7,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=8,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=8,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=9,lit=false": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    },
+    "facing=west,section=9,lit=true": {
+      "model": "stardewcraft:block/mine/skull_lobby/skull_shrine_wall_empty",
+      "y": 270
+    }
+  }
+}

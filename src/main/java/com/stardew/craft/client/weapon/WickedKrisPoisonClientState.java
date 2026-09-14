@@ -145,6 +145,11 @@ public final class WickedKrisPoisonClientState {
         pruneExpired(minecraft.level.getGameTime());
     }
 
+    public static Status visualStatus(UUID target,long nowTick) {
+        Status status=STATUSES.get(target);
+        return status!=null&&(status.hasPoison(nowTick)||status.hasDetonation(nowTick))?status:null;
+    }
+
     static int trackedTargetCount() {
         return STATUSES.size();
     }
@@ -206,7 +211,7 @@ public final class WickedKrisPoisonClientState {
                 : minecraft.level.getGameTime();
     }
 
-    private record Status(
+    public record Status(
             int stacks,
             long poisonEndTick,
             int poisonTotalTicks,

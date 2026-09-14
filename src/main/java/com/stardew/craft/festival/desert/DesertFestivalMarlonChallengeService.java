@@ -70,7 +70,7 @@ public final class DesertFestivalMarlonChallengeService {
         if (!data.hasMailFlag(INTRO_FLAG)) {
             data.addMailFlag(INTRO_FLAG);
             PlayerDataEventHandler.syncPlayerData(player, data);
-            PacketDistributor.sendToPlayer(player,
+            com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
                 new OpenNpcDialogueScreenPayload("marlon", "stardewcraft.desert_festival.marlon.challenge.intro", 0));
             return;
         }
@@ -80,7 +80,7 @@ public final class DesertFestivalMarlonChallengeService {
         ActiveChallenge active = activeChallenge(data);
         if (active != null && active.rewardClaimed()) {
             int festivalDay = FestivalService.getDayOfPassiveFestival(DesertFestivalService.FESTIVAL_ID);
-            PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload("marlon", festivalDay == 3
+            com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload("marlon", festivalDay == 3
                 ? "stardewcraft.desert_festival.marlon.challenge.finished_last_day"
                 : "stardewcraft.desert_festival.marlon.challenge.finished", 0));
             return;

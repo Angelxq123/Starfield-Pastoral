@@ -1,0 +1,14 @@
+// Run with: ./gradlew -I compatibility/farm-soil-tests.gradle classes test
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/farm-soil')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/farm/LegacyFarmSoilMigrationTest.class'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/farm-soil')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/farm-soil')
+            }
+        }
+    }
+}

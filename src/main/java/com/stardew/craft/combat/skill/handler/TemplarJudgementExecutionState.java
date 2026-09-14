@@ -16,8 +16,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -37,6 +35,7 @@ final class TemplarJudgementExecutionState
     }
 
     private final ResourceKey<Level> casterDimension;
+    private final long castTick;
     private final long endTick;
     private final List<TargetRef> targets;
     private final WeaponDamageSnapshot weaponSnapshot;
@@ -63,6 +62,7 @@ final class TemplarJudgementExecutionState
                 casterDimension,
                 "casterDimension"
         );
+        this.castTick = nowTick;
         this.endTick = nowTick + durationTicks;
         List<TargetRef> targetRefs = new ArrayList<>(targets.size());
         for (LivingEntity target : targets) {
@@ -87,10 +87,12 @@ final class TemplarJudgementExecutionState
         if (!(player.level() instanceof ServerLevel level)) {
             return;
         }
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                player, "templars_blade", "templar_judgement", 10);
         for (LivingEntity target : markedTargets) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                     target,
-                    new TemplarMarkPayload(target.getId(), durationTicks)
+                    new TemplarMarkPayload(player.getId(), castTick, target.getId(), durationTicks)
             );
             level.sendParticles(
                     ParticleTypes.END_ROD,
@@ -104,14 +106,7 @@ final class TemplarJudgementExecutionState
                     0.01D
             );
         }
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.AMETHYST_BLOCK_CHIME,
-                SoundSource.PLAYERS,
-                0.6F,
-                1.7F
-        );
+
     }
 
     boolean isActive(
@@ -149,6 +144,14 @@ final class TemplarJudgementExecutionState
         settle(context);
         settled = true;
         return SkillTickResult.COMPLETE;
+    }
+
+    void endPresentation(ServerPlayer player) {
+        if (player.getServer() == null) return;
+        for (LivingEntity target : resolveTargets(player.getServer())) {
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,
+                    new TemplarMarkPayload(player.getId(), castTick, target.getId(), 0));
+        }
     }
 
     void cancel() {

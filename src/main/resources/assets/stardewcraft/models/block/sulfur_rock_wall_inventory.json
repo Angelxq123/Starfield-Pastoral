@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/wall_inventory",
-  "textures": {
-    "wall": "stardewcraft:block/mine/sulfur_rock",
-    "particle": "stardewcraft:block/mine/sulfur_rock"
-  }
-}

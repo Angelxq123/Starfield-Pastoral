@@ -1,5 +1,8 @@
 package com.stardew.craft.client.gui.mastery;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+import com.stardew.craft.client.gui.common.StardewGuiContentSize;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.font.StardewFonts;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
@@ -31,7 +34,7 @@ import java.util.Random;
  *   标题 "选择一个" 居中放在 +20 sdv-px 处
  *   黑色 fade overlay 0.7 透明
  */
-public final class DwarfStatueChoiceScreen extends Screen {
+public final class DwarfStatueChoiceScreen extends Screen implements StardewGuiContentSize {
 
     private static final ResourceLocation CURSORS_1_6 =
         ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/cursors_1_6.png");
@@ -51,6 +54,7 @@ public final class DwarfStatueChoiceScreen extends Screen {
     private float guiScale = 1f;
     private int panelX, panelY, panelW, panelH;
     private int slot1X, slot2X, slotY;
+    private int sourceY;
     private int slotW, slotH;
     private int tipBoxH;             // 描述框总高度（含内边距）
     private int tipTextW;            // 描述文字最大宽度（GUI 像素）
@@ -80,8 +84,7 @@ public final class DwarfStatueChoiceScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        Minecraft mc = Minecraft.getInstance();
-        guiScale = (float) mc.getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
 
         // 描述文字换行（用 GUI px 宽度）
         tipTextW = ui(TIP_WIDTH_SDV - TIP_BOX_PADDING_SDV);
@@ -90,22 +93,30 @@ public final class DwarfStatueChoiceScreen extends Screen {
         tip1 = this.font.split(d1, tipTextW);
         tip2 = this.font.split(d2, tipTextW);
 
-        int textH = Math.max(tip1.size(), tip2.size()) * this.font.lineHeight;
+        int textH = Math.max(tip1.size(), tip2.size()) * StardewFonts.lineHeight(this.font);
         tipBoxH = textH + ui(TIP_BOX_PADDING_SDV);
 
         slotW = Math.max(ui(ICON_BACK_SDV), ui(TIP_WIDTH_SDV));
         slotH = ui(ICON_BACK_SDV) + ui(8) + tipBoxH;
 
         int totalW = slotW * 2 + ui(ICON_SPACING_SDV);
-        panelW = totalW + ui(80);
-        panelH = slotH + ui(120);
+        Component heading = StardewFonts.title(title);
+        Component source = Component.translatable("stardewcraft.mastery.dwarf_statue.source");
+        panelW = Math.max(totalW + ui(80), Math.max(font.width(heading), font.width(source)) + ui(48));
+        int sourceOffset = ui(24) + (int) Math.ceil(StardewFonts.lineHeight(StardewFonts.Role.SPRITE_TEXT_COLORED)) + ui(12);
+        int headerHeight = sourceOffset + StardewFonts.lineHeight(font) + ui(24);
+        panelH = headerHeight + slotH + ui(40);
         panelX = this.width / 2 - panelW / 2;
         panelY = this.height / 2 - panelH / 2;
 
-        slotY = panelY + ui(80);
+        sourceY = panelY + sourceOffset;
+        slotY = panelY + headerHeight;
         slot1X = panelX + (panelW - totalW) / 2;
         slot2X = slot1X + slotW + ui(ICON_SPACING_SDV);
     }
+
+    @Override public int minimumCanvasWidth() { return panelW + 32; }
+    @Override public int minimumCanvasHeight() { return panelH + 32; }
 
     private static String descKey(int idx) {
         return "stardewcraft.mastery.dwarf_statue.desc_" + idx;
@@ -135,7 +146,7 @@ public final class DwarfStatueChoiceScreen extends Screen {
         int tw = this.font.width(title);
         g.drawString(this.font, title, panelX + panelW / 2 - tw / 2, panelY + ui(24), 0x000000, false);
         int sw = this.font.width(source);
-        g.drawString(this.font, source, panelX + panelW / 2 - sw / 2, panelY + ui(48), 0x554433, false);
+        g.drawString(this.font, source, panelX + panelW / 2 - sw / 2, sourceY, 0x554433, false);
 
         // 计算 hover（基于背框 84×84 命中即可，不含描述）
         int backSz = ui(ICON_BACK_SDV);
@@ -192,7 +203,7 @@ public final class DwarfStatueChoiceScreen extends Screen {
         int textY = boxY + ui(TIP_BOX_PADDING_SDV / 2);
         for (FormattedCharSequence line : tip) {
             g.drawString(this.font, line, textX, textY, 0x1A1A2B, false); // SDV (26, 26, 43)
-            textY += this.font.lineHeight;
+            textY += StardewFonts.lineHeight(this.font);
         }
     }
 

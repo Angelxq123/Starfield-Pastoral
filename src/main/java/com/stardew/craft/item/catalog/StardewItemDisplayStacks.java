@@ -33,6 +33,92 @@ public final class StardewItemDisplayStacks {
         if (isHiddenBaseItem(item)) {
             return List.of();
         }
+        if (item instanceof net.minecraft.world.item.BlockItem blockItem
+                && blockItem.getBlock() instanceof com.stardew.craft.block.decor.NaturalPlantBlock plant
+                && plant.kind().variants > 1) {
+            List<ItemStack> variants = new ArrayList<>();
+            for (int i = 0; i < plant.kind().variants; i++) {
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, net.minecraft.world.item.component.BlockItemStateProperties.EMPTY
+                        .with(com.stardew.craft.block.decor.NaturalPlantBlock.VARIANT,
+                                plant.defaultBlockState().setValue(com.stardew.craft.block.decor.NaturalPlantBlock.VARIANT, i)));
+                variants.add(stack);
+            }
+            return variants;
+        }
+
+        if (item == ModItems.MINE_CHEST.get()) {
+            ItemStack special = new ItemStack(item);
+            special.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(
+                    java.util.Map.of("special", "true")));
+            special.set(DataComponents.ITEM_NAME, net.minecraft.network.chat.Component.translatable("item.stardewcraft.special_mine_chest"));
+            return List.of(new ItemStack(item), special);
+        }
+        if (item == ModItems.MINE_COAL_BACKPACK.get()) {
+            List<ItemStack> variants = new ArrayList<>();
+            for (int theme = 0; theme < 3; theme++) for (boolean open : new boolean[]{false, true}) {
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(
+                        java.util.Map.of("dark", Boolean.toString(theme == 1), "desert", Boolean.toString(theme == 2),
+                                "open", Boolean.toString(open))));
+                variants.add(stack);
+            }
+            return variants;
+        }
+
+        if (item == ModItems.MINE_SERPENT_PILLAR.get()) {
+            List<ItemStack> variants = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(
+                        java.util.Map.of("variant", Integer.toString(i))));
+                variants.add(stack);
+            }
+            return variants;
+        }
+
+        if (item instanceof net.minecraft.world.item.BlockItem themedItem
+                && themedItem.getBlock().defaultBlockState().hasProperty(com.stardew.craft.block.mine.MineBuildingTheme.PROPERTY)) {
+            List<ItemStack> variants = new ArrayList<>();
+            boolean container = themedItem.getBlock() instanceof com.stardew.craft.block.mine.MineBarrelBlock;
+            for (var theme : com.stardew.craft.block.mine.MineBuildingTheme.values()) {
+                if (container && theme.id().endsWith("_dark")) continue;
+                if (themedItem.getBlock() instanceof com.stardew.craft.block.mine.MineTimberSupportBlock
+                        && (theme.id().startsWith("frost") || theme.id().startsWith("desert"))) continue;
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(
+                        java.util.Map.of("theme", theme.id())));
+                variants.add(stack);
+            }
+            return variants;
+        }
+
+        if (item == ModItems.MINE_EXIT.get() || item == ModItems.MINE_STEP_STONE.get() || item == ModItems.MINE_LADDER.get()) {
+            List<ItemStack> variants = new ArrayList<>();
+            for (var theme : com.stardew.craft.block.mine.MineLadderBlock.Theme.values()) {
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(
+                        java.util.Map.of("theme", theme.getSerializedName())));
+                variants.add(stack);
+            }
+            if (item == ModItems.MINE_LADDER.get()) for (String theme : java.util.List.of("desert", "desert_dark")) {
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(java.util.Map.of("theme", theme, "shaft", "true")));
+                variants.add(stack);
+            }
+            return variants;
+        }
+
+        if (item == ModItems.MINE_LAMP.get()) {
+            List<ItemStack> variants = new ArrayList<>();
+            for (var theme : com.stardew.craft.block.mine.MineLampBlock.Theme.values()) {
+                ItemStack stack = new ItemStack(item);
+                stack.set(DataComponents.BLOCK_STATE, new net.minecraft.world.item.component.BlockItemStateProperties(
+                        java.util.Map.of("theme", theme.getSerializedName())));
+                variants.add(stack);
+            }
+            return variants;
+        }
 
         if (item == ModItems.SECRET_NOTE.get()) {
             List<ItemStack> stacks = new ArrayList<>();

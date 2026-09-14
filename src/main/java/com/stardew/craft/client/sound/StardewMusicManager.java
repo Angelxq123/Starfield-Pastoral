@@ -142,6 +142,10 @@ public final class StardewMusicManager {
     private static boolean oneShotCutsceneMusic = false;
     private static int oneShotCutsceneTicks = 0;
 
+    public static boolean hasActiveMusic() {
+        return currentMusic != null && Minecraft.getInstance().getSoundManager().isActive(currentMusic);
+    }
+
     /**
      * Play a track for a cutscene event. Registers as currentMusic so stopAll() works,
      * and sets cutsceneOverride to prevent evaluateAndPlay() from overriding it.

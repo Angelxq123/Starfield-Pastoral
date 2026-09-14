@@ -1,0 +1,83 @@
+{
+  "intent": "成年男性，原版 Shy/Negative，退伍军人；直立、目标明确，摆臂沿前后方向，肩头较稳；不是正步或锁膝。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.8313671875,
+  "attentionRig": {
+    "hipHeight": 12,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 2.25,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "kent",
+    "revision": "character-articulated-3",
+    "rootMean": 0.4,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -0.8,
+    "headPitch": 0.2,
+    "halfStance": 2.25,
+    "intent": "成年男性，原版 Shy/Negative，退伍军人；直立、目标明确，摆臂沿前后方向，肩头较稳；不是正步或锁膝。",
+    "stance": 0.56,
+    "strideRatio": 1.76,
+    "bob": 0.256,
+    "sway": 0.36,
+    "rootYaw": 1.5,
+    "bodyYaw": 3.7,
+    "bodyRoll": 0.6,
+    "bodyNod": 0.55,
+    "headYaw": 1.65,
+    "headRoll": 0.35,
+    "armSwing": 16.5,
+    "armOpening": 5.4,
+    "elbowBase": 8,
+    "elbowSwing": 6,
+    "footLift": 0.266,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "breathSeconds": 9.4,
+    "idleScale": 0.98,
+    "stride": 13.301875,
+    "reachMargin": 0.04798,
+    "legLengthStride": 21.12,
+    "previewSpeed": 0.746468,
+    "levelWalk": true
+  }
+}

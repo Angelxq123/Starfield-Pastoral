@@ -175,9 +175,9 @@ public final class DamagePipeline {
             DamageRequest.DefenseRule rule,
             float decayRoll
     ) {
-        if (damage <= 0.0f || defense <= 0.0f) {
-            return 0.0f;
-        }
+        if (damage <= 0.0f) return 0.0f;
+        // Farmer.takeDamage subtracts signed buff Defense: Jinxed can increase received damage.
+        if (defense <= 0.0f) return rule == DamageRequest.DefenseRule.STARDEW_PLAYER_DEFENSE ? defense : 0.0f;
         if (rule == DamageRequest.DefenseRule.FIXED_RESILIENCE
                 || defense < damage * 0.5f) {
             return defense;

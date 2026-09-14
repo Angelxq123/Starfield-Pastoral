@@ -1,0 +1,1449 @@
+{
+  "Green Slime": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "766",
+        "chance": 0.75
+      },
+      {
+        "item": "766",
+        "chance": 0.05
+      },
+      {
+        "item": "153",
+        "chance": 0.1
+      },
+      {
+        "item": "66",
+        "chance": 0.015
+      },
+      {
+        "item": "92",
+        "chance": 0.15
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Dust Spirit": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "382",
+        "chance": 0.5
+      },
+      {
+        "item": "433",
+        "chance": 0.01
+      },
+      {
+        "item": "336",
+        "chance": 0.001
+      },
+      {
+        "item": "84",
+        "chance": 0.02
+      },
+      {
+        "item": "414",
+        "chance": 0.02
+      },
+      {
+        "item": "97",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Bat": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "767",
+        "chance": 0.9
+      },
+      {
+        "item": "767",
+        "chance": 0.4
+      },
+      {
+        "item": "108",
+        "chance": 0.001
+      },
+      {
+        "item": "287",
+        "chance": 0.02
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Frost Bat": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "767",
+        "chance": 0.9
+      },
+      {
+        "item": "767",
+        "chance": 0.55
+      },
+      {
+        "item": "108",
+        "chance": 0.001
+      },
+      {
+        "item": "287",
+        "chance": 0.02
+      },
+      {
+        "item": "97",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Lava Bat": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "767",
+        "chance": 0.9
+      },
+      {
+        "item": "767",
+        "chance": 0.7
+      },
+      {
+        "item": "108",
+        "chance": 0.001
+      },
+      {
+        "item": "287",
+        "chance": 0.02
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Iridium Bat": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "386",
+        "chance": 0.9
+      },
+      {
+        "item": "386",
+        "chance": 0.5
+      },
+      {
+        "item": "386",
+        "chance": 0.25
+      },
+      {
+        "item": "386",
+        "chance": 0.1
+      },
+      {
+        "item": "288",
+        "chance": 0.05
+      },
+      {
+        "item": "768",
+        "chance": 0.5
+      },
+      {
+        "item": "773",
+        "chance": 0.05
+      },
+      {
+        "item": "349",
+        "chance": 0.05
+      },
+      {
+        "item": "787",
+        "chance": 0.05
+      },
+      {
+        "item": "337",
+        "chance": 0.008
+      }
+    ]
+  },
+  "Stone Golem": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "390",
+        "chance": 0.9
+      },
+      {
+        "item": "80",
+        "chance": 0.1
+      },
+      {
+        "item": "382",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Wilderness Golem": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "771",
+        "chance": 0.9
+      },
+      {
+        "item": "771",
+        "chance": 0.5
+      },
+      {
+        "item": "770",
+        "chance": 0.5
+      },
+      {
+        "item": "382",
+        "chance": 0.1
+      },
+      {
+        "item": "86",
+        "chance": 0.005
+      },
+      {
+        "item": "72",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Iridium Golem": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "771",
+        "chance": 0.9
+      },
+      {
+        "item": "771",
+        "chance": 0.5
+      },
+      {
+        "item": "770",
+        "chance": 0.5
+      },
+      {
+        "item": "382",
+        "chance": 0.1
+      },
+      {
+        "item": "86",
+        "chance": 0.005
+      },
+      {
+        "item": "72",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Grub": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "684",
+        "chance": 0.6
+      },
+      {
+        "item": "273",
+        "chance": 0.05
+      },
+      {
+        "item": "273",
+        "chance": 0.05
+      },
+      {
+        "item": "157",
+        "chance": 0.02
+      },
+      {
+        "item": "114",
+        "chance": 0.005
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Fly": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "684",
+        "chance": 0.9
+      },
+      {
+        "item": "157",
+        "chance": 0.02
+      },
+      {
+        "item": "114",
+        "chance": 0.005
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Frost Jelly": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "766",
+        "chance": 0.75
+      },
+      {
+        "item": "412",
+        "chance": 0.08
+      },
+      {
+        "item": "70",
+        "chance": 0.02
+      },
+      {
+        "item": "98",
+        "chance": 0.015
+      },
+      {
+        "item": "92",
+        "chance": 0.5
+      },
+      {
+        "item": "97",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Sludge": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "766",
+        "chance": 0.8
+      },
+      {
+        "item": "157",
+        "chance": 0.1
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "72",
+        "chance": 0.01
+      },
+      {
+        "item": "92",
+        "chance": 0.5
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Shadow Guy": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.75
+      },
+      {
+        "item": "769",
+        "chance": 0.1
+      },
+      {
+        "item": "329",
+        "chance": 0.02
+      },
+      {
+        "item": "337",
+        "chance": 0.002
+      },
+      {
+        "item": "336",
+        "chance": 0.01
+      },
+      {
+        "item": "335",
+        "chance": 0.02
+      },
+      {
+        "item": "334",
+        "chance": 0.04
+      },
+      {
+        "item": "203",
+        "chance": 0.04
+      },
+      {
+        "item": "293",
+        "chance": 0.03
+      },
+      {
+        "item": "108",
+        "chance": 0.003
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Ghost": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "768",
+        "chance": 0.95
+      },
+      {
+        "item": "768",
+        "chance": 0.1
+      },
+      {
+        "item": "156",
+        "chance": 0.08
+      },
+      {
+        "item": "338",
+        "chance": 0.08
+      },
+      {
+        "item": "-6",
+        "chance": 0.2
+      },
+      {
+        "item": "97",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Carbon Ghost": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "749",
+        "chance": 0.99
+      },
+      {
+        "item": "338",
+        "chance": 0.1
+      }
+    ]
+  },
+  "Duggy": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "286",
+        "chance": 0.25
+      },
+      {
+        "item": "535",
+        "chance": 0.25
+      },
+      {
+        "item": "280",
+        "chance": 0.03
+      },
+      {
+        "item": "105",
+        "chance": 0.02
+      },
+      {
+        "item": "86",
+        "chance": 0.1
+      },
+      {
+        "item": "72",
+        "chance": 0.01
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Rock Crab": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "717",
+        "chance": 0.15
+      },
+      {
+        "item": "286",
+        "chance": 0.4
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Truffle Crab": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "430",
+        "chance": 0.999
+      },
+      {
+        "item": "430",
+        "chance": 0.5
+      },
+      {
+        "item": "430",
+        "chance": 0.1
+      },
+      {
+        "item": "717",
+        "chance": 0.25
+      },
+      {
+        "item": "432",
+        "chance": 0.1
+      }
+    ]
+  },
+  "Lava Crab": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "717",
+        "chance": 0.25
+      },
+      {
+        "item": "287",
+        "chance": 0.4
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Iridium Crab": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "732",
+        "chance": 0.5
+      },
+      {
+        "item": "386",
+        "chance": 0.5
+      },
+      {
+        "item": "386",
+        "chance": 0.5
+      },
+      {
+        "item": "386",
+        "chance": 0.5
+      }
+    ]
+  },
+  "Fireball": {
+    "mine_monster": false,
+    "drops": [
+      {
+        "item": "72",
+        "chance": 1e-07
+      }
+    ]
+  },
+  "Squid Kid": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "768",
+        "chance": 0.75
+      },
+      {
+        "item": "814",
+        "chance": 0.2
+      },
+      {
+        "item": "336",
+        "chance": 0.05
+      },
+      {
+        "item": "287",
+        "chance": 0.1
+      },
+      {
+        "item": "288",
+        "chance": 0.05
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Skeleton Warrior": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.25
+      },
+      {
+        "item": "105",
+        "chance": 0.03
+      },
+      {
+        "item": "106",
+        "chance": 0.03
+      },
+      {
+        "item": "166",
+        "chance": 0.001
+      },
+      {
+        "item": "60",
+        "chance": 0.04
+      },
+      {
+        "item": "232",
+        "chance": 0.04
+      },
+      {
+        "item": "72",
+        "chance": 0.03
+      },
+      {
+        "item": "74",
+        "chance": 0.01
+      },
+      {
+        "item": "97",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Crow": {
+    "mine_monster": false,
+    "drops": [
+      {
+        "item": "-4",
+        "chance": 0.9
+      }
+    ]
+  },
+  "Frog": {
+    "mine_monster": false,
+    "drops": [
+      {
+        "item": "-4",
+        "chance": 0.9
+      }
+    ]
+  },
+  "Cat": {
+    "mine_monster": false,
+    "drops": [
+      {
+        "item": "-6",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Shadow Brute": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.75
+      },
+      {
+        "item": "769",
+        "chance": 0.1
+      },
+      {
+        "item": "337",
+        "chance": 0.002
+      },
+      {
+        "item": "336",
+        "chance": 0.01
+      },
+      {
+        "item": "335",
+        "chance": 0.02
+      },
+      {
+        "item": "334",
+        "chance": 0.04
+      },
+      {
+        "item": "203",
+        "chance": 0.04
+      },
+      {
+        "item": "108",
+        "chance": 0.003
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      },
+      {
+        "item": "74",
+        "chance": 0.0005
+      }
+    ]
+  },
+  "Shadow Shaman": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.75
+      },
+      {
+        "item": "769",
+        "chance": 0.2
+      },
+      {
+        "item": "337",
+        "chance": 0.002
+      },
+      {
+        "item": "336",
+        "chance": 0.01
+      },
+      {
+        "item": "335",
+        "chance": 0.02
+      },
+      {
+        "item": "334",
+        "chance": 0.04
+      },
+      {
+        "item": "108",
+        "chance": 0.003
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      },
+      {
+        "item": "74",
+        "chance": 0.0005
+      }
+    ]
+  },
+  "Skeleton": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "881",
+        "chance": 0.5
+      },
+      {
+        "item": "881",
+        "chance": 0.4
+      },
+      {
+        "item": "881",
+        "chance": 0.2
+      },
+      {
+        "item": "579",
+        "chance": 0.005
+      }
+    ]
+  },
+  "Skeleton Mage": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "80",
+        "chance": 0.0
+      }
+    ]
+  },
+  "Metal Head": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "768",
+        "chance": 0.65
+      },
+      {
+        "item": "378",
+        "chance": 0.1
+      },
+      {
+        "item": "378",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "382",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Spiker": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "378",
+        "chance": 0.1
+      },
+      {
+        "item": "378",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "382",
+        "chance": 0.1
+      }
+    ]
+  },
+  "Bug": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "684",
+        "chance": 0.76
+      },
+      {
+        "item": "157",
+        "chance": 0.02
+      },
+      {
+        "item": "114",
+        "chance": 0.005
+      },
+      {
+        "item": "96",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Mummy": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "768",
+        "chance": 0.99
+      },
+      {
+        "item": "428",
+        "chance": 0.2
+      },
+      {
+        "item": "428",
+        "chance": 0.05
+      },
+      {
+        "item": "768",
+        "chance": 0.15
+      },
+      {
+        "item": "243",
+        "chance": 0.04
+      },
+      {
+        "item": "856",
+        "chance": 0.01
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      },
+      {
+        "item": "74",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Big Slime": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "766",
+        "chance": 0.99
+      },
+      {
+        "item": "766",
+        "chance": 0.9
+      },
+      {
+        "item": "766",
+        "chance": 0.4
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Serpent": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.99
+      },
+      {
+        "item": "769",
+        "chance": 0.15
+      },
+      {
+        "item": "287",
+        "chance": 0.15
+      },
+      {
+        "item": "226",
+        "chance": 0.06
+      },
+      {
+        "item": "446",
+        "chance": 0.008
+      },
+      {
+        "item": "74",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Pepper Rex": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "80",
+        "chance": 0.0
+      }
+    ]
+  },
+  "Tiger Slime": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "766",
+        "chance": 0.8
+      },
+      {
+        "item": "157",
+        "chance": 0.1
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "72",
+        "chance": 0.01
+      },
+      {
+        "item": "92",
+        "chance": 0.5
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Lava Lurk": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "881",
+        "chance": 0.5
+      },
+      {
+        "item": "881",
+        "chance": 0.4
+      },
+      {
+        "item": "881",
+        "chance": 0.2
+      },
+      {
+        "item": "852",
+        "chance": 0.15
+      }
+    ]
+  },
+  "Hot Head": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "768",
+        "chance": 0.65
+      },
+      {
+        "item": "287",
+        "chance": 0.1
+      },
+      {
+        "item": "378",
+        "chance": 0.1
+      },
+      {
+        "item": "378",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "380",
+        "chance": 0.1
+      },
+      {
+        "item": "382",
+        "chance": 0.1
+      },
+      {
+        "item": "833",
+        "chance": 0.1
+      },
+      {
+        "item": "833",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Magma Sprite": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "848",
+        "chance": 0.5
+      },
+      {
+        "item": "848",
+        "chance": 0.2
+      }
+    ]
+  },
+  "Magma Duggy": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "831",
+        "chance": 0.5
+      },
+      {
+        "item": "831",
+        "chance": 0.5
+      },
+      {
+        "item": "288",
+        "chance": 0.4
+      },
+      {
+        "item": "848",
+        "chance": 0.4
+      },
+      {
+        "item": "848",
+        "chance": 0.15
+      }
+    ]
+  },
+  "Magma Sparker": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "848",
+        "chance": 0.5
+      },
+      {
+        "item": "848",
+        "chance": 0.2
+      }
+    ]
+  },
+  "False Magma Cap": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "851",
+        "chance": 0.99
+      },
+      {
+        "item": "848",
+        "chance": 0.5
+      },
+      {
+        "item": "848",
+        "chance": 0.2
+      }
+    ]
+  },
+  "Dwarvish Sentry": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "60",
+        "chance": 0.1
+      },
+      {
+        "item": "62",
+        "chance": 0.1
+      },
+      {
+        "item": "64",
+        "chance": 0.1
+      },
+      {
+        "item": "66",
+        "chance": 0.1
+      },
+      {
+        "item": "68",
+        "chance": 0.1
+      },
+      {
+        "item": "70",
+        "chance": 0.1
+      },
+      {
+        "item": "72",
+        "chance": 0.1
+      }
+    ]
+  },
+  "Putrid Ghost": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "749",
+        "chance": 0.99
+      }
+    ]
+  },
+  "Shadow Sniper": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.75
+      },
+      {
+        "item": "769",
+        "chance": 0.1
+      },
+      {
+        "item": "337",
+        "chance": 0.002
+      },
+      {
+        "item": "336",
+        "chance": 0.01
+      },
+      {
+        "item": "335",
+        "chance": 0.02
+      },
+      {
+        "item": "334",
+        "chance": 0.04
+      },
+      {
+        "item": "203",
+        "chance": 0.04
+      },
+      {
+        "item": "108",
+        "chance": 0.003
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      },
+      {
+        "item": "74",
+        "chance": 0.0005
+      }
+    ]
+  },
+  "Spider": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.75
+      },
+      {
+        "item": "769",
+        "chance": 0.1
+      },
+      {
+        "item": "337",
+        "chance": 0.002
+      },
+      {
+        "item": "336",
+        "chance": 0.01
+      },
+      {
+        "item": "335",
+        "chance": 0.02
+      },
+      {
+        "item": "334",
+        "chance": 0.04
+      },
+      {
+        "item": "203",
+        "chance": 0.04
+      },
+      {
+        "item": "108",
+        "chance": 0.003
+      },
+      {
+        "item": "-4",
+        "chance": 0.1
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      },
+      {
+        "item": "74",
+        "chance": 0.0005
+      }
+    ]
+  },
+  "Royal Serpent": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "769",
+        "chance": 0.99
+      },
+      {
+        "item": "769",
+        "chance": 0.15
+      },
+      {
+        "item": "287",
+        "chance": 0.15
+      },
+      {
+        "item": "226",
+        "chance": 0.06
+      },
+      {
+        "item": "446",
+        "chance": 0.008
+      },
+      {
+        "item": "74",
+        "chance": 0.001
+      }
+    ]
+  },
+  "Blue Squid": {
+    "mine_monster": true,
+    "drops": [
+      {
+        "item": "768",
+        "chance": 0.75
+      },
+      {
+        "item": "814",
+        "chance": 0.2
+      },
+      {
+        "item": "336",
+        "chance": 0.05
+      },
+      {
+        "item": "287",
+        "chance": 0.1
+      },
+      {
+        "item": "288",
+        "chance": 0.05
+      },
+      {
+        "item": "98",
+        "chance": 0.005
+      },
+      {
+        "item": "99",
+        "chance": 0.001
+      }
+    ]
+  }
+}

@@ -1,43 +1,124 @@
 {
   "variants": {
-    "facing=north,left_connected=false,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_base" },
-    "facing=east,left_connected=false,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_base", "y": 90 },
-    "facing=south,left_connected=false,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_base", "y": 180 },
-    "facing=west,left_connected=false,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_base", "y": 270 },
-
-    "facing=north,left_connected=false,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_right" },
-    "facing=east,left_connected=false,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_right", "y": 90 },
-    "facing=south,left_connected=false,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_right", "y": 180 },
-    "facing=west,left_connected=false,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_right", "y": 270 },
-
-    "facing=north,left_connected=true,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_left" },
-    "facing=east,left_connected=true,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_left", "y": 90 },
-    "facing=south,left_connected=true,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_left", "y": 180 },
-    "facing=west,left_connected=true,right_connected=false,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_left", "y": 270 },
-
-    "facing=north,left_connected=true,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_mid" },
-    "facing=east,left_connected=true,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_mid", "y": 90 },
-    "facing=south,left_connected=true,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_mid", "y": 180 },
-    "facing=west,left_connected=true,right_connected=true,has_hay=false": { "model": "stardewcraft:block/utility/feed_trough_side_mid", "y": 270 },
-
-    "facing=north,left_connected=false,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_base" },
-    "facing=east,left_connected=false,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_base", "y": 90 },
-    "facing=south,left_connected=false,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_base", "y": 180 },
-    "facing=west,left_connected=false,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_base", "y": 270 },
-
-    "facing=north,left_connected=false,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_right" },
-    "facing=east,left_connected=false,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_right", "y": 90 },
-    "facing=south,left_connected=false,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_right", "y": 180 },
-    "facing=west,left_connected=false,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_right", "y": 270 },
-
-    "facing=north,left_connected=true,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_left" },
-    "facing=east,left_connected=true,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_left", "y": 90 },
-    "facing=south,left_connected=true,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_left", "y": 180 },
-    "facing=west,left_connected=true,right_connected=false,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_left", "y": 270 },
-
-    "facing=north,left_connected=true,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_mid" },
-    "facing=east,left_connected=true,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_mid", "y": 90 },
-    "facing=south,left_connected=true,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_mid", "y": 180 },
-    "facing=west,left_connected=true,right_connected=true,has_hay=true": { "model": "stardewcraft:block/utility/feed_trough_side_mid", "y": 270 }
+    "facing=north,left_connected=false,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_base"
+    },
+    "facing=east,left_connected=false,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_base",
+      "y": 90
+    },
+    "facing=south,left_connected=false,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_base",
+      "y": 180
+    },
+    "facing=west,left_connected=false,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_base",
+      "y": 270
+    },
+    "facing=north,left_connected=false,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right"
+    },
+    "facing=east,left_connected=false,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right",
+      "y": 90
+    },
+    "facing=south,left_connected=false,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right",
+      "y": 180
+    },
+    "facing=west,left_connected=false,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right",
+      "y": 270
+    },
+    "facing=north,left_connected=true,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left"
+    },
+    "facing=east,left_connected=true,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left",
+      "y": 90
+    },
+    "facing=south,left_connected=true,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left",
+      "y": 180
+    },
+    "facing=west,left_connected=true,right_connected=false,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left",
+      "y": 270
+    },
+    "facing=north,left_connected=true,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid"
+    },
+    "facing=east,left_connected=true,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid",
+      "y": 90
+    },
+    "facing=south,left_connected=true,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid",
+      "y": 180
+    },
+    "facing=west,left_connected=true,right_connected=true,has_hay=false": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid",
+      "y": 270
+    },
+    "facing=north,left_connected=false,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_base_full"
+    },
+    "facing=east,left_connected=false,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_base_full",
+      "y": 90
+    },
+    "facing=south,left_connected=false,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_base_full",
+      "y": 180
+    },
+    "facing=west,left_connected=false,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_base_full",
+      "y": 270
+    },
+    "facing=north,left_connected=false,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right_full"
+    },
+    "facing=east,left_connected=false,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right_full",
+      "y": 90
+    },
+    "facing=south,left_connected=false,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right_full",
+      "y": 180
+    },
+    "facing=west,left_connected=false,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_right_full",
+      "y": 270
+    },
+    "facing=north,left_connected=true,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left_full"
+    },
+    "facing=east,left_connected=true,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left_full",
+      "y": 90
+    },
+    "facing=south,left_connected=true,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left_full",
+      "y": 180
+    },
+    "facing=west,left_connected=true,right_connected=false,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_left_full",
+      "y": 270
+    },
+    "facing=north,left_connected=true,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid_full"
+    },
+    "facing=east,left_connected=true,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid_full",
+      "y": 90
+    },
+    "facing=south,left_connected=true,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid_full",
+      "y": 180
+    },
+    "facing=west,left_connected=true,right_connected=true,has_hay=true": {
+      "model": "stardewcraft:block/utility/feed_trough_side_mid_full",
+      "y": 270
+    }
   }
 }

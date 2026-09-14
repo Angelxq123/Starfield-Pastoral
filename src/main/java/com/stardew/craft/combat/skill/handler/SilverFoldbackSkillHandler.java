@@ -120,7 +120,10 @@ public final class SilverFoldbackSkillHandler implements RuntimeWeaponSkillHandl
                                 context.weaponSnapshot(),
                                 cooldown
                         );
+                        SilverSaberSkillHelper.sendAction(context.player(), weaponId, "silver_foldback");
                         teleport(context.player(), plan.destination);
+                        com.stardew.craft.combat.network.PirateSilverEffectPayload.send(context.player(),
+                                com.stardew.craft.combat.network.PirateSilverEffectPayload.Phase.BLINK, origin, context.player().position(), 6);
                         faceTarget(context.player(), plan.target);
                         SilverSaberSkillHelper.attackWithSkillContext(
                                 context.player(),
@@ -129,12 +132,8 @@ public final class SilverFoldbackSkillHandler implements RuntimeWeaponSkillHandl
                                 context.nowTick(),
                                 context.weaponSnapshot()
                         );
-                        SilverSaberSkillHelper.sendCooldownAnimation(
-                                context.player(),
-                                weaponId,
-                                context.skillData(),
-                                context.nowTick()
-                        );
+                        com.stardew.craft.combat.skill.WeaponSkillAnimationLock.setLock(
+                                context.player(), context.nowTick(), SilverSaberSkillHelper.SKILL_ANIM_TICKS);
                     } catch (RuntimeException exception) {
                         SilverSaberSkillHelper.cancelFoldback(
                                 context.player(),
@@ -161,13 +160,12 @@ public final class SilverFoldbackSkillHandler implements RuntimeWeaponSkillHandl
                                 weaponId,
                                 context.skillData(),
                                 context.nowTick(),
-                                (player, distance) ->
-                                        DashMovementTracker.start(
-                                                context.player(),
-                                                context.nowTick(),
-                                                plan.destination,
-                                                EMPTY_DASH_DURATION_TICKS
-                                        )
+                                (player, distance) -> {
+                                    Vec3 visualOrigin = player.position();
+                                    var dash = DashMovementTracker.startExact(context.player(), context.nowTick(), plan.destination, EMPTY_DASH_DURATION_TICKS);
+                                    if (dash != null) com.stardew.craft.combat.network.PirateSilverEffectPayload.send(player,
+                                            com.stardew.craft.combat.network.PirateSilverEffectPayload.Phase.DASH, visualOrigin, visualOrigin, EMPTY_DASH_DURATION_TICKS);
+                                }
                         )
                 );
             }

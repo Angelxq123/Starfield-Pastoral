@@ -11,6 +11,8 @@ public final class YetiMarkClientState {
 
     private static final Map<Integer, Long> MARKS = new ConcurrentHashMap<>();
 
+    private static net.minecraft.client.multiplayer.ClientLevel activeLevel;
+
     private YetiMarkClientState() {}
 
     public static void apply(int entityId, int durationTicks) {
@@ -18,8 +20,19 @@ public final class YetiMarkClientState {
         if (mc.level == null) {
             return;
         }
+        ensureLevel(mc.level);
         long nowTick = mc.level.getGameTime();
         MARKS.put(entityId, nowTick + durationTicks);
+    }
+
+    public static java.util.Set<Integer> markedEntityIds() {
+        ensureLevel(Minecraft.getInstance().level);
+        return java.util.Set.copyOf(MARKS.keySet());
+    }
+    private static void ensureLevel(net.minecraft.client.multiplayer.ClientLevel level) {
+        if (activeLevel == level) return;
+        activeLevel = level;
+        MARKS.clear();
     }
 
     public static boolean isMarked(int entityId, long nowTick) {
@@ -29,6 +42,7 @@ public final class YetiMarkClientState {
 
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
+        ensureLevel(mc.level);
         if (mc.level == null) {
             MARKS.clear();
             return;

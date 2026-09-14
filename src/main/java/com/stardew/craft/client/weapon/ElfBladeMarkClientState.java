@@ -21,9 +21,16 @@ public final class ElfBladeMarkClientState {
 
     private static final Map<Integer, MarkInfo> MARKS = new ConcurrentHashMap<>();
 
+    private static net.minecraft.client.multiplayer.ClientLevel activeLevel;
     private ElfBladeMarkClientState() {}
+    private static void ensureLevel() {
+        var level = Minecraft.getInstance().level;
+        if (level != activeLevel) { activeLevel = level; MARKS.clear(); }
+    }
+    public static java.util.Set<Integer> markedEntityIds() { ensureLevel(); return java.util.Set.copyOf(MARKS.keySet()); }
 
     public static void apply(int entityId, int durationTicks, int stacks) {
+        ensureLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             return;
@@ -45,6 +52,7 @@ public final class ElfBladeMarkClientState {
     }
 
     public static void onClientTick(ClientTickEvent.Post event) {
+        ensureLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             MARKS.clear();

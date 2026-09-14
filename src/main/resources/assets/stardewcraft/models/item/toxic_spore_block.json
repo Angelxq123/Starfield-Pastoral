@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/toxic_spore_block",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/toxic_spore_block"
-                 }
-}

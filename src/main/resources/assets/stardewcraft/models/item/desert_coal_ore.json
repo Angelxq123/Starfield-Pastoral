@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/desert_coal_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/desert_coal_ore"
-                 }
-}

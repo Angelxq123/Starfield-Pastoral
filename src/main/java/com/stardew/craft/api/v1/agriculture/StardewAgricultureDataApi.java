@@ -88,7 +88,10 @@ public final class StardewAgricultureDataApi {
                 logFailure("animal", entry.id(), BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), exception);
             }
         }
-        return entity.getType().builtInRegistryHolder().getData(StardewDataMaps.ANIMAL_DATA);
+        // Builtin animals share a visual projection entity, but their data-map identity
+        // remains the EntityType configured by the animal definition.
+        var type=entity instanceof com.stardew.craft.animal.runtime.LivestockEntity animal?animal.species().entityType():entity.getType();
+        return type==null?null:type.builtInRegistryHolder().getData(StardewDataMaps.ANIMAL_DATA);
     }
 
     @Nullable

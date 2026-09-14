@@ -1,105 +1,59 @@
 {
-    "parent":  "stardewcraft:block/ladder",
-    "display":  {
-                    "gui":  {
-                                "rotation":  [
-                                                 30,
-                                                 225,
-                                                 0
-                                             ],
-                                "translation":  [
-                                                    0,
-                                                    0,
-                                                    0
-                                                ],
-                                "scale":  [
-                                              0.5,
-                                              0.5,
-                                              0.5
-                                          ]
-                            },
-                    "ground":  {
-                                   "translation":  [
-                                                       0,
-                                                       3,
-                                                       0
-                                                   ],
-                                   "scale":  [
-                                                 0.25,
-                                                 0.25,
-                                                 0.25
-                                             ]
-                               },
-                    "fixed":  {
-                                  "rotation":  [
-                                                   0,
-                                                   0,
-                                                   0
-                                               ],
-                                  "translation":  [
-                                                      0,
-                                                      0,
-                                                      0
-                                                  ],
-                                  "scale":  [
-                                                0.5,
-                                                0.5,
-                                                0.5
-                                            ]
-                              },
-                    "thirdperson_righthand":  {
-                                                  "rotation":  [
-                                                                   75,
-                                                                   45,
-                                                                   0
-                                                               ],
-                                                  "translation":  [
-                                                                      0,
-                                                                      2.5,
-                                                                      0
-                                                                  ],
-                                                  "scale":  [
-                                                                0.375,
-                                                                0.375,
-                                                                0.375
-                                                            ]
-                                              },
-                    "firstperson_righthand":  {
-                                                  "rotation":  [
-                                                                   0,
-                                                                   45,
-                                                                   0
-                                                               ],
-                                                  "translation":  [
-                                                                      0,
-                                                                      0,
-                                                                      0
-                                                                  ],
-                                                  "scale":  [
-                                                                0.40,
-                                                                0.40,
-                                                                0.40
-                                                            ]
-                                              },
-                    "firstperson_lefthand":  {
-                                                 "rotation":  [
-                                                                  0,
-                                                                  225,
-                                                                  0
-                                                              ],
-                                                 "translation":  [
-                                                                     0,
-                                                                     0,
-                                                                     0
-                                                                 ],
-                                                 "scale":  [
-                                                               0.40,
-                                                               0.40,
-                                                               0.40
-                                                           ]
-                                             }
-                },
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/ladder"
-                 }
+  "parent": "stardewcraft:item/mine_ladder_earth",
+  "overrides": [
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.1111111111111111
+      },
+      "model": "stardewcraft:item/mine_ladder_frost"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.2222222222222222
+      },
+      "model": "stardewcraft:item/mine_ladder_lava"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.3333333333333333
+      },
+      "model": "stardewcraft:item/mine_ladder_desert"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.4444444444444444
+      },
+      "model": "stardewcraft:item/mine_ladder_earth_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.5555555555555556
+      },
+      "model": "stardewcraft:item/mine_ladder_frost_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.6666666666666666
+      },
+      "model": "stardewcraft:item/mine_ladder_lava_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.7777777777777778
+      },
+      "model": "stardewcraft:item/mine_ladder_desert_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 0.8888888888888888
+      },
+      "model": "stardewcraft:item/mine_shaft_desert"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_entrance_theme": 1.0
+      },
+      "model": "stardewcraft:item/mine_shaft_desert_dark"
+    }
+  ]
 }

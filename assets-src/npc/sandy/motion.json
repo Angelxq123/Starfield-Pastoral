@@ -1,0 +1,98 @@
+{
+  "intent": "高挑成年女性、长裙高马尾；舒展自信，步幅从容，裙面连续贴体，马尾随头不甩进背部。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.809690625,
+  "attentionRig": {
+    "hipHeight": 12,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 1.9,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 24,
+    "pitch": 8
+  },
+  "cloth": {
+    "bone": "dress",
+    "kind": "skirt",
+    "anchorY": 14,
+    "hemY": 4,
+    "margin": 0.7,
+    "standingDepthMargin": 0.3,
+    "contactBlend": 1.2,
+    "preserveLayerOffset": true,
+    "clearancePart": "dress_core"
+  },
+  "gait": {
+    "id": "sandy",
+    "revision": "character-articulated-3",
+    "rootMean": 0.41600000000000004,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -0.7,
+    "headPitch": 0.3,
+    "halfStance": 1.9,
+    "intent": "高挑成年女性、长裙高马尾；舒展自信，步幅从容，裙面连续贴体，马尾随头不甩进背部。",
+    "stance": 0.58,
+    "strideRatio": 1.68,
+    "bob": 0.2688,
+    "sway": 0.5,
+    "rootYaw": 2.0,
+    "bodyYaw": 4.7,
+    "bodyRoll": 0.9,
+    "bodyNod": 0.65,
+    "headYaw": 1.9,
+    "headRoll": 0.45,
+    "armSwing": 15,
+    "armOpening": 6.5,
+    "elbowBase": 10,
+    "elbowSwing": 6,
+    "footLift": 0.28,
+    "heelPitch": 4.199999999999999,
+    "toePitch": 8.399999999999999,
+    "breathSeconds": 8.8,
+    "idleScale": 1.0,
+    "stride": 12.95505,
+    "reachMargin": 0.035077,
+    "legLengthStride": 20.16,
+    "previewSpeed": 0.754008,
+    "levelWalk": true
+  }
+}

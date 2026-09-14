@@ -3,12 +3,10 @@ package com.stardew.craft.client.weapon;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -20,15 +18,7 @@ import java.util.List;
 
 public final class StarfallMeteorEffectClient {
 
-    private static final ResourceLocation METEOR_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_c.png"
-    );
 
-    private static final ResourceLocation TRAIL_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_d.png"
-    );
 
     private static final List<Meteor> METEORS = new ArrayList<>();
 
@@ -72,26 +62,14 @@ public final class StarfallMeteorEffectClient {
             return;
         }
 
-        var shader = WeaponShaderRegistry.getWeaponEffect();
 
         Vec3 camPos = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-        RenderType trailType = WeaponEffectRenderTypes.weaponEffect(TRAIL_TEXTURE);
+        RenderType trailType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer trailConsumer = buffer.getBuffer(trailType);
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        float shaderTime = mc.level.getGameTime() + partial;
-        if (shader != null) {
-            shader.safeGetUniform("Time").set(shaderTime);
-            shader.safeGetUniform("FlowStrength").set(1.1f);
-            shader.safeGetUniform("NoiseStrength").set(0.7f);
-            shader.safeGetUniform("TextureColorStrength").set(0.75f);
-            shader.safeGetUniform("AlphaFloor").set(0.08f);
-            shader.safeGetUniform("GlowStrength").set(0.4f);
-            shader.safeGetUniform("ErosionStrength").set(0.0f);
-            shader.safeGetUniform("AlphaBoost").set(1.5f);
-        }
-        RenderType headType = WeaponEffectRenderTypes.weaponEffect(METEOR_TEXTURE);
+        RenderType headType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer headConsumer = buffer.getBuffer(headType);
 
         for (Meteor meteor : METEORS) {

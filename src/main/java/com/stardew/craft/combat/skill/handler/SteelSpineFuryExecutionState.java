@@ -1,7 +1,7 @@
 package com.stardew.craft.combat.skill.handler;
 
-import com.stardew.craft.combat.network.SteelSpineFuryEnterPayload;
-import com.stardew.craft.combat.network.SteelSpineFuryHitPayload;
+import com.stardew.craft.combat.network.GuardSpineStatePayload;
+import com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher;
 import com.stardew.craft.combat.network.SteelSpineFuryPayload;
 import com.stardew.craft.combat.skill.runtime.DeferredSkillCooldown;
 import com.stardew.craft.combat.skill.runtime.SkillExecutionContext;
@@ -51,10 +51,8 @@ final class SteelSpineFuryExecutionState
                 player,
                 new SteelSpineFuryPayload(true, durationTicks)
         );
-        PacketDistributor.sendToPlayer(
-                player,
-                new SteelSpineFuryEnterPayload()
-        );
+        GuardSpineStatePayload.send(player, GuardSpineStatePayload.WAIT, durationTicks);
+        WeaponSkillAnimationDispatcher.sendSkillAnim(player,"iron_edge","steel_spine_fury_enter",8);
     }
 
     @SuppressWarnings("null")
@@ -83,10 +81,7 @@ final class SteelSpineFuryExecutionState
                 1.0F,
                 1.8F
         );
-        PacketDistributor.sendToPlayer(
-                player,
-                new SteelSpineFuryHitPayload()
-        );
+        GuardSpineStatePayload.send(player, GuardSpineStatePayload.CHARGED, 0);
     }
 
     SteelSpineFurySkillHandler.AttackBoost consumeAttack(
@@ -156,6 +151,7 @@ final class SteelSpineFuryExecutionState
                 ready = true;
                 weak = true;
                 bonusDamage = 0;
+                GuardSpineStatePayload.send(context.player(), GuardSpineStatePayload.WEAK, 0);
             }
             commitCooldownAndClose(
                     context.player(),
@@ -172,6 +168,7 @@ final class SteelSpineFuryExecutionState
             return;
         }
         interrupted = true;
+        GuardSpineStatePayload.send(player, GuardSpineStatePayload.CLEAR, 0);
         commitCooldownAndClose(player, nowTick);
     }
 

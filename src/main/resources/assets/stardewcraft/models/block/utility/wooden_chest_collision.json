@@ -2,7 +2,7 @@
   "ambientocclusion": false,
   "textures": {
     "0": "stardewcraft:block/utility/wooden_chest_default",
-    "particle": "stardewcraft:block/utility/wooden_chest_default"
+    "particle": "stardewcraft:block/wood/oak_planks"
   },
   "elements": [
     {

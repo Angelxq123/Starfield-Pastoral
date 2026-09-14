@@ -77,6 +77,9 @@ final class IridiumNeedleThrustExecutionState
             LivingEntity target,
             boolean guaranteedCrit
     ) {
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                executionContext.player(), executionContext.weaponId().getPath(),
+                guaranteedCrit ? "iridium_needle_final" : "iridium_needle_strike", 3);
         SkillContext hitContext = SkillContext.builder()
                 .skillId(executionContext.skillData().getId())
                 .tier(SkillContext.SkillTier.MINOR)

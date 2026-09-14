@@ -1,0 +1,9 @@
+{
+  "intervalMin": 3.7,
+  "intervalMax": 7.0,
+  "durationMin": 0.95,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0.25,
+  "walkStride": 1.625
+}

@@ -201,13 +201,7 @@ public class HayHopperBlock extends Block implements EntityBlock {
         BlockState extensionState = state.setValue(PART, Part.EXTENSION);
         level.setBlock(extensionPos, extensionState, 3);
 
-        if (!(placer instanceof Player player)) {
-            return;
-        }
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof HayHopperBlockEntity hopper) {
-            hopper.setOwnerIfAbsent(player.getUUID());
-        }
+
     }
 
     @SuppressWarnings("null")

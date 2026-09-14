@@ -1,0 +1,292 @@
+{
+  "variants": {
+    "facing=north,part=main,cell=0": {
+      "model": "stardewcraft:block/decor/manhole",
+      "y": 0
+    },
+    "facing=north,part=main,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=main,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=0": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=north,part=extension,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 0
+    },
+    "facing=east,part=main,cell=0": {
+      "model": "stardewcraft:block/decor/manhole",
+      "y": 90
+    },
+    "facing=east,part=main,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=main,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=0": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=east,part=extension,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 90
+    },
+    "facing=south,part=main,cell=0": {
+      "model": "stardewcraft:block/decor/manhole",
+      "y": 180
+    },
+    "facing=south,part=main,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=main,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=0": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=south,part=extension,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 180
+    },
+    "facing=west,part=main,cell=0": {
+      "model": "stardewcraft:block/decor/manhole",
+      "y": 270
+    },
+    "facing=west,part=main,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=main,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=0": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=1": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=2": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=3": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=4": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=5": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=6": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=7": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    },
+    "facing=west,part=extension,cell=8": {
+      "model": "stardewcraft:block/decor/manhole/empty",
+      "y": 270
+    }
+  }
+}

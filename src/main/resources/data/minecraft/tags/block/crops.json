@@ -40,6 +40,10 @@
     "stardewcraft:tomato_crop",
     "stardewcraft:tulip_crop",
     "stardewcraft:wheat_crop",
-    "stardewcraft:yam_crop"
+    "stardewcraft:yam_crop",
+    "stardewcraft:taro_root_crop",
+    "stardewcraft:pineapple_crop",
+    "stardewcraft:cactus_fruit_crop",
+    "stardewcraft:qi_fruit_crop"
   ]
 }

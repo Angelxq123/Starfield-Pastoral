@@ -1,34 +1,308 @@
 {
   "variants": {
-    "facing=north,shaft=false": {
-      "model": "stardewcraft:block/ladder"
+    "facing=north,shaft=false,theme=earth": {
+      "model": "stardewcraft:block/mine/earth_ladder",
+      "uvlock": true
     },
-    "facing=south,shaft=false": {
-      "model": "stardewcraft:block/ladder",
-      "y": 180
+    "facing=east,shaft=false,theme=earth": {
+      "model": "stardewcraft:block/mine/earth_ladder",
+      "y": 90,
+      "uvlock": true
     },
-    "facing=west,shaft=false": {
-      "model": "stardewcraft:block/ladder",
-      "y": 270
+    "facing=south,shaft=false,theme=earth": {
+      "model": "stardewcraft:block/mine/earth_ladder",
+      "y": 180,
+      "uvlock": true
     },
-    "facing=east,shaft=false": {
-      "model": "stardewcraft:block/ladder",
-      "y": 90
+    "facing=west,shaft=false,theme=earth": {
+      "model": "stardewcraft:block/mine/earth_ladder",
+      "y": 270,
+      "uvlock": true
     },
-    "facing=north,shaft=true": {
-      "model": "stardewcraft:block/ladder"
+    "facing=north,shaft=true,theme=earth": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "uvlock": true
     },
-    "facing=south,shaft=true": {
-      "model": "stardewcraft:block/ladder",
-      "y": 180
+    "facing=east,shaft=true,theme=earth": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 90,
+      "uvlock": true
     },
-    "facing=west,shaft=true": {
-      "model": "stardewcraft:block/ladder",
-      "y": 270
+    "facing=south,shaft=true,theme=earth": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 180,
+      "uvlock": true
     },
-    "facing=east,shaft=true": {
-      "model": "stardewcraft:block/ladder",
-      "y": 90
+    "facing=west,shaft=true,theme=earth": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=frost": {
+      "model": "stardewcraft:block/mine/frost_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=frost": {
+      "model": "stardewcraft:block/mine/frost_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=frost": {
+      "model": "stardewcraft:block/mine/frost_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=frost": {
+      "model": "stardewcraft:block/mine/frost_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=frost": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=frost": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=frost": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=frost": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lava_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lava_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lava_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lava_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=lava": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=lava": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=lava": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=lava": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=desert": {
+      "model": "stardewcraft:block/mine/desert_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/earth_dark_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/earth_dark_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/earth_dark_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/earth_dark_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/frost_dark_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/frost_dark_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/frost_dark_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/frost_dark_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lava_dark_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lava_dark_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lava_dark_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lava_dark_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_ladder",
+      "uvlock": true
+    },
+    "facing=east,shaft=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_ladder",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_ladder",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_ladder",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=north,shaft=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "uvlock": true
+    },
+    "facing=east,shaft=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,shaft=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,shaft=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/desert_dark_shaft",
+      "y": 270,
+      "uvlock": true
     }
   }
 }

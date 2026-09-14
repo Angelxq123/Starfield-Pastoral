@@ -1,0 +1,45 @@
+{
+  "time_multiplier": 1.0,
+  "cycles": {
+    "oak": {
+      "duration": {
+        "mornings": 7
+      },
+      "output": "stardewcraft:oak_resin",
+      "min_count": 1,
+      "max_count": 1
+    },
+    "maple": {
+      "duration": {
+        "mornings": 9
+      },
+      "output": "stardewcraft:maple_syrup",
+      "min_count": 1,
+      "max_count": 1
+    },
+    "pine": {
+      "duration": {
+        "mornings": 5
+      },
+      "output": "stardewcraft:pine_tar",
+      "min_count": 1,
+      "max_count": 1
+    },
+    "mahogany": {
+      "duration": {
+        "mornings": 1
+      },
+      "output": "stardewcraft:sap",
+      "min_count": 3,
+      "max_count": 8
+    },
+    "mystic_tree": {
+      "duration": {
+        "mornings": 7
+      },
+      "output": "stardewcraft:mystic_syrup",
+      "min_count": 1,
+      "max_count": 1
+    }
+  }
+}

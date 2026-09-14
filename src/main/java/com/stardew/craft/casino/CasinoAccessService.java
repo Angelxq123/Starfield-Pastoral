@@ -144,7 +144,7 @@ public final class CasinoAccessService {
         }
         bouncer.facePlayerTemporarily(player, 60, null);
         if (!hasClubCard(player)) {
-            PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+            com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
                     BOUNCER_NPC_ID, "stardewcraft.npc.bouncer.members_only", 0));
             return InteractionResult.SUCCESS;
         }

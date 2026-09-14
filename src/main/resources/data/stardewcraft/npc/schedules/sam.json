@@ -1,86 +1,188 @@
 {
   "npc_id": "sam",
   "override_vanilla": true,
-  "_format": "time -> \"location @namedPointId facing [behavior]\"",
-  "_note": "Sam: lives in SamHouse. Mon/Wed works at museum (post-JojaMart closure). Fri: skateboard+saloon. Seasonal outdoor destinations differ.",
-
-  "GreenRain": {
-    "610": "samhouse @sam_samhouse_living 1"
-  },
-
+  "_native_actions": true,
+  "_scope": "Unmarried; no island or festival schedules. Furniture points resolve from block state.",
   "rain": {
-    "1000": "samhouse @sam_samhouse_living 1",
-    "1100": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1500": "samhouse @sam_samhouse_sleep 2",
-    "2000": "samhouse @sam_samhouse_sleep 2 sam_sleep"
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1100": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1500": "samhouse @sam_schedule_03 1 sam_gameboy",
+    "1700": "samhouse @sam_schedule_04 0",
+    "1830": "samhouse @sam_schedule_05 0 sam_sit",
+    "2000": "samhouse @sam_schedule_06 0 sam_sleep"
   },
-
-  "Mon": {
-    "1000": "samhouse @sam_samhouse_guitar 0",
-    "1100": "archaeologyhouse @sam_museum_work 2 sam_work",
-    "1600": "samhouse @sam_samhouse_living 1",
-    "2130": "samhouse @sam_samhouse_sleep 2 sam_sleep"
+  "GreenRain": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "610": "samhouse @sam_schedule_07 2"
   },
-
-  "Wed": {
-    "1000": "samhouse @sam_samhouse_guitar 0",
-    "1100": "archaeologyhouse @sam_museum_work 2 sam_work",
-    "1600": "samhouse @sam_samhouse_living 1",
-    "2130": "samhouse @sam_samhouse_sleep 2 sam_sleep"
+  "rain2": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1100": "samhouse @sam_schedule_07 2",
+    "1400": "saloon @sam_schedule_21 0",
+    "1940": "samhouse @sam_schedule_06 0 sam_sleep"
   },
-
-  "Fri": {
-    "1000": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1100": "town @sam_town_skateboard 2 sam_skateboarding",
-    "1500": "saloon @sam_saloon_pool 3 sam_pool",
-    "2120": "samhouse @sam_samhouse_sleep 2 sam_sleep"
-  },
-
-  "Sat": {
-    "800": "town @sam_town_walk 2",
-    "1230": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1500": "samhouse @sam_samhouse_living 1",
-    "1800": "town @sam_town_walk 2",
-    "1940": "samhouse @sam_samhouse_sleep 2 sam_sleep"
-  },
-
-  "spring": {
-    "1000": "samhouse @sam_samhouse_living 1",
-    "1040": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1340": "town @sam_town_walk 2",
-    "1830": "samhouse @sam_samhouse_living 1",
-    "2100": "samhouse @sam_samhouse_sleep 2 sam_sleep"
-  },
-
   "summer": {
-    "1000": "samhouse @sam_samhouse_living 1",
-    "1040": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1340": "beach @sam_beach_hangout 1",
-    "1900": "samhouse @sam_samhouse_living 1",
-    "2100": "samhouse @sam_samhouse_sleep 2 sam_sleep"
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1040": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1340": "beach @sam_schedule_23 2",
+    "1900": "samhouse @sam_schedule_05 0 sam_sit",
+    "2100": "samhouse @sam_schedule_06 0 sam_sleep"
   },
-
   "fall": {
-    "1000": "samhouse @sam_samhouse_living 1",
-    "1040": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1320": "forest @sam_forest_walk 3",
-    "1900": "samhouse @sam_samhouse_living 1",
-    "2100": "samhouse @sam_samhouse_sleep 2 sam_sleep"
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1040": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1320": "forest @sam_schedule_25 2",
+    "1900": "samhouse @sam_schedule_05 0 sam_sit",
+    "2100": "samhouse @sam_schedule_06 0 sam_sleep"
   },
-
   "winter": {
-    "1000": "samhouse @sam_samhouse_living 1",
-    "1040": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1320": "saloon @sam_saloon_pool 3",
-    "1900": "samhouse @sam_samhouse_living 1",
-    "2100": "samhouse @sam_samhouse_sleep 2 sam_sleep"
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1040": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1320": "saloon @sam_schedule_22 3",
+    "1900": "samhouse @sam_schedule_05 0 sam_sit",
+    "2100": "samhouse @sam_schedule_06 0 sam_sleep"
   },
-
+  "fall_11": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1130": "hospital @sam_schedule_26 2 sam_gameboy",
+    "1330": "hospital @sam_schedule_27 0",
+    "1600": "town @sam_schedule_12 2",
+    "2100": "samhouse @sam_schedule_06 0 sam_sleep"
+  },
+  "Sat": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "800": "town @sam_schedule_16 2",
+    "1100": "town @sam_schedule_14 2 sam_gameboy",
+    "1230": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1500": "samhouse @sam_schedule_10 0",
+    "1800": "town @sam_schedule_13 2",
+    "1940": "samhouse @sam_schedule_06 0 sam_sleep"
+  },
+  "9_6": {
+    "_goto": "spring"
+  },
+  "23_6": {
+    "_goto": "spring"
+  },
+  "9": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "900": "samhouse @sam_schedule_01 0",
+    "1100": "town @sam_schedule_19 2",
+    "1600": "town @sam_schedule_15 2 sam_gameboy",
+    "1900": "samhouse @sam_schedule_04 0",
+    "2130": "samhouse @sam_schedule_06 0 sam_sleep"
+  },
+  "23": {
+    "_goto": "9"
+  },
+  "Mon": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_02 0",
+    "1100": "jojamart @sam_schedule_28 2 sam_work",
+    "1600": "samhouse @sam_schedule_04 0",
+    "2130": "samhouse @sam_schedule_06 0 sam_sleep"
+  },
+  "Wed": {
+    "_goto": "Mon"
+  },
+  "Fri": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1100": "town @sam_schedule_11 2 sam_skateboarding",
+    "1500": "saloon @sam_schedule_20 1 sam_pool",
+    "2120": "samhouse @sam_schedule_06 0 sam_sleep"
+  },
+  "spring": {
+    "0": "samhouse @sam_schedule_06 0 sam_sleep",
+    "1000": "samhouse @sam_schedule_01 0",
+    "1040": "samhouse @sam_schedule_02 0 sam_guitar",
+    "1340": "town @sam_schedule_18 2",
+    "1830": "samhouse @sam_schedule_05 0 sam_sit",
+    "2100": "samhouse @sam_schedule_06 0 sam_sleep"
+  },
   "default": {
-    "1000": "samhouse @sam_samhouse_living 1",
-    "1040": "samhouse @sam_samhouse_guitar 0 sam_guitar",
-    "1340": "town @sam_town_walk 2",
-    "1830": "samhouse @sam_samhouse_living 1",
-    "2100": "samhouse @sam_samhouse_sleep 2 sam_sleep"
-  }
+    "_goto": "spring"
+  },
+  "_selection_rules": [
+    {
+      "year": 1,
+      "weather_contains": [
+        "greenrain"
+      ],
+      "key": "GreenRain"
+    },
+    {
+      "season": "fall",
+      "days": [
+        11
+      ],
+      "key": "fall_11"
+    },
+    {
+      "days": [
+        9,
+        23
+      ],
+      "any_hearts_min": {
+        "sam": 6,
+        "penny": 6
+      },
+      "key": "spring"
+    },
+    {
+      "days": [
+        9,
+        23
+      ],
+      "key": "9"
+    },
+    {
+      "weather_contains": [
+        "rain",
+        "storm"
+      ],
+      "choose": [
+        "rain",
+        "rain2"
+      ]
+    },
+    {
+      "weekdays": [
+        0,
+        2
+      ],
+      "key": "Mon"
+    },
+    {
+      "weekdays": [
+        4
+      ],
+      "key": "Fri"
+    },
+    {
+      "weekdays": [
+        5
+      ],
+      "key": "Sat"
+    },
+    {
+      "key": "{season}"
+    }
+  ],
+  "_point_replacements": [
+    {
+      "from": "sam_schedule_28",
+      "event_seen": "191393",
+      "to": "sam_schedule_29",
+      "location": "archaeologyhouse",
+      "facing": 2
+    }
+  ],
+  "_context": "any_player"
 }

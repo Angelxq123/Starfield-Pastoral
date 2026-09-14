@@ -29,26 +29,47 @@ import javax.annotation.Nullable;
 
 /**
  * 矿井宝箱方块 — 不可破坏，右键打开 per-player 独立库存。
- * 复用 WoodenChest 的模型和渲染。
+ * 原生箱体／箱盖模型，客户端沿后铰轴连续开合。
  */
 @SuppressWarnings("null")
 public class MineChestBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty SPECIAL = BooleanProperty.create("special");
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
 
     private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes(
-            "stardewcraft:block/utility/wooden_chest_collision", Direction.NORTH);
+            "stardewcraft:block/mine/reward_chest/closed", Direction.NORTH);
+
+    private static final VoxelShape[] SPECIAL_SHAPES = ModelVoxelShapeCache.horizontalShapes(
+            "stardewcraft:block/mine/desert_special_chest/closed", Direction.NORTH);
 
     public MineChestBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(OPEN, false));
+                .setValue(OPEN, false).setValue(SPECIAL, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, OPEN);
+        builder.add(FACING, OPEN, SPECIAL);
+    }
+
+    @Override
+    public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext context) {
+        var saved = context.getItemInHand().getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                net.minecraft.world.item.component.BlockItemStateProperties.EMPTY);
+        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite())
+                .setValue(SPECIAL, Boolean.TRUE.equals(saved.get(SPECIAL)));
+    }
+
+    @Override
+    public net.minecraft.world.item.ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level,
+            BlockPos pos, BlockState state) {
+        var stack = new net.minecraft.world.item.ItemStack(this);
+        stack.set(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                net.minecraft.world.item.component.BlockItemStateProperties.EMPTY.with(SPECIAL, state));
+        return stack;
     }
 
     @Override
@@ -58,12 +79,12 @@ public class MineChestBlock extends Block implements EntityBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+        return (state.getValue(SPECIAL) ? SPECIAL_SHAPES : SHAPES)[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+        return (state.getValue(SPECIAL) ? SPECIAL_SHAPES : SHAPES)[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
     }
 
     @Nullable
@@ -75,7 +96,9 @@ public class MineChestBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return null;
+        if (!level.isClientSide || type != com.stardew.craft.blockentity.ModBlockEntities.MINE_CHEST.get()) return null;
+        return (world, blockPos, blockState, entity) -> MineChestBlockEntity.clientTick(
+                world, blockPos, blockState, (MineChestBlockEntity) entity);
     }
 
     @Override

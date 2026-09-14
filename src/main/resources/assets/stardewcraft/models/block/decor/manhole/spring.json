@@ -1,0 +1,7 @@
+{
+  "parent": "stardewcraft:block/decor/manhole",
+  "textures": {
+    "metal": "stardewcraft:block/decor/manhole/spring/manhole_spring",
+    "particle": "stardewcraft:block/decor/manhole/spring/manhole_spring_particle"
+  }
+}

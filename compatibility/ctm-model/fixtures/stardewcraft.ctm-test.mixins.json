@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.stardew.craft.mixin",
+  "plugin": "com.stardew.craft.mixin.StardewCraftMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["CtmModelInitializationMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

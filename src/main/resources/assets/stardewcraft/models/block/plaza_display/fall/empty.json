@@ -1,0 +1,7 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "stardewcraft:block/plaza_display/fall/plaza_fall_hay_particle"
+  },
+  "elements": []
+}

@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/topaz_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/topaz_ore"
-                 }
-}

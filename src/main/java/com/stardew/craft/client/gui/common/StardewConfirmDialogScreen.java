@@ -20,7 +20,7 @@ import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
-public class StardewConfirmDialogScreen extends Screen implements StardewCollectivePauseScreen {
+public class StardewConfirmDialogScreen extends Screen implements StardewCollectivePauseScreen, StardewGuiContentSize {
     private final StardewQuestionDialogSpec spec;
     private final boolean dialogueContinuation;
     private StardewRenderMapping mapping;
@@ -106,7 +106,7 @@ public class StardewConfirmDialogScreen extends Screen implements StardewCollect
     }
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private int px(int stardewPixels) {
@@ -158,6 +158,9 @@ public class StardewConfirmDialogScreen extends Screen implements StardewCollect
         boxX = mapping.centerX(boxWidth);
         boxDrawY = mapping.bottomY(boxHeight, spec.dialogBottomMargin());
     }
+
+    @Override public int minimumCanvasWidth() { return boxWidth + px(128); }
+    @Override public int minimumCanvasHeight() { return boxHeight + px(spec.dialogBottomMargin() + 80); }
 
     private int optionStartY() {
         if (isQuestionBlank()) {

@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
@@ -203,7 +207,7 @@ public class GeodeMenuScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        gs = (float) Minecraft.getInstance().getWindow().getGuiScale();
+        gs = (float) StardewGuiViewport.REFERENCE_SCALE;
 
         // Single dialogue box — SDV_W × SDV_H, centered on screen
         int mw = ui(SDV_W);
@@ -620,7 +624,7 @@ public class GeodeMenuScreen extends Screen {
                 int cw = font.width(cnt);
                 g.drawString(font, cnt,
                     mouseX + ui(8) + ui(64) - cw - 2,
-                    mouseY + ui(8) + ui(64) - font.lineHeight,
+                    mouseY + ui(8) + ui(64) - StardewFonts.lineHeight(font),
                     0xFFFFFF, false);
             }
         }
@@ -656,7 +660,7 @@ public class GeodeMenuScreen extends Screen {
         List<FormattedCharSequence> lines = font.split(Component.literal(t), mw);
         for (FormattedCharSequence line : lines) {
             g.drawString(font, line, tx, ty, 0xBF5C2B00, false);
-            ty += font.lineHeight + 2;
+            ty += StardewFonts.lineHeight(font) + 2;
         }
     }
 

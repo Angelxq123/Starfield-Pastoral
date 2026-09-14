@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:block/utility/garden_pot",
+  "textures": {
+    "2": "stardewcraft:block/terrain/fertilized/pot/basic_retaining_soil_dry"
+  }
+}

@@ -122,7 +122,9 @@ public final class ScytheHarvestEvents {
 			return false;
 		}
 		Block block = state.getBlock();
-		return block instanceof WildWeedsBlock
+		return block instanceof com.stardew.craft.block.mine.MineIceDebrisBlock
+				|| block instanceof com.stardew.craft.block.mine.MineGroundWeedsBlock
+				|| block instanceof WildWeedsBlock
 				|| block instanceof PastureGrassBlock
 				|| block == Blocks.SHORT_GRASS
 				|| block == Blocks.FERN
@@ -222,6 +224,14 @@ public final class ScytheHarvestEvents {
 					true,
 					forceScytheHarvest
 			).harvested();
+		}
+
+		if (state.getBlock() instanceof com.stardew.craft.block.mine.MineIceDebrisBlock) {
+			return canModify && com.stardew.craft.block.mine.MineIceDebrisBlock.breakBy(level, pos, player);
+		}
+
+		if (state.getBlock() instanceof com.stardew.craft.block.mine.MineGroundWeedsBlock) {
+			return canModify && com.stardew.craft.block.mine.MineGroundWeedsBlock.breakBy(level, pos, player, true);
 		}
 
 		if (state.getBlock() instanceof WildWeedsBlock) {
@@ -341,9 +351,7 @@ public final class ScytheHarvestEvents {
 		if (level.random.nextFloat() >= hayChance) {
 			return true;
 		}
-		java.util.UUID hayOwner = com.stardew.craft.core.FarmAreaResolver.getOwnerAt(pos);
-		int stored = com.stardew.craft.animal.data.AnimalWorldData.get(level)
-				.storeHay(hayOwner == null ? player.getUUID() : hayOwner, 1);
+		int stored = com.stardew.craft.animal.runtime.FarmFeed.store(level, pos, 1);
 		if (stored > 0) {
 			com.stardew.craft.network.HayHarvestHudMessagePacket.sendTo(player, stored, false);
 		}

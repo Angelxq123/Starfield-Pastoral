@@ -1,18 +1,6 @@
 {
   "replace": false,
   "values": [
-    "stardewcraft:earth_shale_slab",
-    "stardewcraft:frost_gneiss_slab",
-    "stardewcraft:lava_basalt_slab",
-    "stardewcraft:dark_earth_shale_slab",
-    "stardewcraft:dark_frost_gneiss_slab",
-    "stardewcraft:dark_lava_basalt_slab",
-    "stardewcraft:banded_marble_slab",
-    "stardewcraft:limestone_slab",
-    "stardewcraft:mossy_sandstone_slab",
-    "stardewcraft:cracked_slate_slab",
-    "stardewcraft:scoria_slab",
-    "stardewcraft:salt_rock_slab",
     "stardewcraft:oak_planks_slab",
     "stardewcraft:oak_checkerboard_planks_slab",
     "stardewcraft:oak_fishscale_planks_slab",
@@ -32,6 +20,12 @@
     "stardewcraft:maple_log_slab",
     "stardewcraft:pine_log_slab",
     "stardewcraft:mahogany_log_slab",
-    "stardewcraft:mystic_tree_log_slab"
+    "stardewcraft:mystic_tree_log_slab",
+    "stardewcraft:grass_slab",
+    "stardewcraft:dark_grass_slab",
+    "stardewcraft:grass_slab",
+    "stardewcraft:dark_grass_slab",
+    "stardewcraft:dirt_slab",
+    "stardewcraft:cliff_slab"
   ]
 }

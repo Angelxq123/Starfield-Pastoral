@@ -4,7 +4,6 @@ import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
 import com.stardew.craft.manager.CropGrowthManager;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FarmBlock;
-import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -25,8 +23,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -34,13 +30,18 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.function.Supplier;
 
-public class RiceCropBlock extends StardewCropBlock implements SimpleWaterloggedBlock {
+public class RiceCropBlock extends StardewCropBlock {
     private static final int[] PHASE_DAYS = new int[]{1, 2, 2, 3};
     private static final int[] OUTLINE_HEIGHTS = new int[]{20, 23, 28, 31};
     private static final int[] OUTLINE_WIDTHS = new int[]{8, 9, 10, 11};
     private static final float PADDY_SPEED_BOOST = 0.25f;
+    private static final int PADDY_WATER_RANGE = 3;
 
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
+    /**
+     * Kept only so block states saved by older versions still deserialize. Rice no longer
+     * contains or restores fluid; all newly written states use {@code false}.
+     */
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
     @SuppressWarnings("null")
@@ -70,7 +71,7 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
         if (level.isClientSide()) {
             return true;
         }
-        return StardewTimeManager.get().getCurrentSeason() == 0;
+        return seasonForGrowth() == 0;
     }
 
     @Override
@@ -102,7 +103,7 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
 
     @Override
     protected float getAdditionalSpeedBoost(ServerLevel level, BlockPos pos, CropGrowthManager.CropGrowthState growthState) {
-        return isPaddyWatered(level, pos, level.getBlockState(pos)) ? PADDY_SPEED_BOOST : 0f;
+        return hasNearbyPaddyWater(level, pos) ? PADDY_SPEED_BOOST : 0f;
     }
 
     @Override
@@ -142,6 +143,8 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape modelShape = CropModelShapes.shape(state, level, pos);
+        if (modelShape != null) return modelShape;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }
@@ -183,10 +186,6 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
             return below.getBlock() == this && below.getValue(HALF) == DoubleBlockHalf.LOWER;
         }
 
-        if (!isPaddyWatered(level, pos, state)) {
-            return false;
-        }
-
         BlockState below = level.getBlockState(pos.below());
         boolean farmland = below.getBlock() instanceof FarmBlock;
         if (!farmland) {
@@ -205,19 +204,13 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
     @Override
     protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
                                      net.minecraft.world.level.LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        if (state.getValue(WATERLOGGED)) {
-            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
-        }
         if (!state.canSurvive(level, pos)) {
-            return getRemovalReplacement(state);
+            return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         }
-        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    public FluidState getFluidState(BlockState state) {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+        BlockState normalized = state.getValue(WATERLOGGED)
+                ? state.setValue(WATERLOGGED, false)
+                : state;
+        return super.updateShape(normalized, direction, neighborState, level, pos, neighborPos);
     }
 
     @SuppressWarnings("null")
@@ -236,8 +229,7 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
             if (aboveState.isAir() || !(aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER)) {
-                boolean upperWaterlogged = level.getFluidState(above).is(FluidTags.WATER);
-                level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER).setValue(WATERLOGGED, upperWaterlogged), 3);
+                level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER).setValue(WATERLOGGED, false), 3);
             }
         }
         super.onPlace(state, level, pos, oldState, isMoving);
@@ -255,27 +247,16 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
             if (aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER) {
-                level.setBlock(above, getRemovalReplacement(aboveState), 3);
+                level.setBlock(above, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
             }
         } else {
             BlockPos below = pos.below();
             BlockState belowState = level.getBlockState(below);
             if (belowState.getBlock() == this && belowState.getValue(HALF) == DoubleBlockHalf.LOWER) {
-                level.setBlock(below, getRemovalReplacement(belowState), 3);
+                level.setBlock(below, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
             }
         }
         super.onRemove(state, level, pos, newState, isMoving);
-    }
-
-    @Override
-    protected BlockState getPostHarvestState(ServerLevel level, BlockPos pos, BlockState harvestedState) {
-        return getRemovalReplacement(harvestedState);
-    }
-
-    private BlockState getRemovalReplacement(BlockState state) {
-        return state.hasProperty(WATERLOGGED) && state.getValue(WATERLOGGED)
-                ? net.minecraft.world.level.block.Blocks.WATER.defaultBlockState()
-                : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
     }
 
     @SuppressWarnings("null")
@@ -285,7 +266,13 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
             return;
         }
 
-        super.growCropOneDay(level, pos, state, watered || isPaddyWatered(level, pos, state), growthState);
+        boolean paddyWatered = keepPaddySoilWatered(level, pos);
+        if (state.getValue(WATERLOGGED)) {
+            state = state.setValue(WATERLOGGED, false);
+            level.setBlock(pos, state, 2);
+        }
+
+        super.growCropOneDay(level, pos, state, watered || paddyWatered, growthState);
 
         BlockState lower = level.getBlockState(pos);
         if (lower.getBlock() != this) {
@@ -294,7 +281,7 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
         BlockPos above = pos.above();
         BlockState upper = level.getBlockState(above);
         BlockState expectedUpper = lower.setValue(HALF, DoubleBlockHalf.UPPER)
-                .setValue(WATERLOGGED, level.getFluidState(above).is(FluidTags.WATER));
+                .setValue(WATERLOGGED, false);
         if (upper.getBlock() != this || upper.getValue(HALF) != DoubleBlockHalf.UPPER) {
             level.setBlock(above, expectedUpper, 3);
         } else if (!upper.equals(expectedUpper)) {
@@ -302,10 +289,43 @@ public class RiceCropBlock extends StardewCropBlock implements SimpleWaterlogged
         }
     }
 
-    private boolean isPaddyWatered(LevelReader level, BlockPos pos, BlockState state) {
-        return state.hasProperty(WATERLOGGED)
-                && state.getValue(WATERLOGGED)
-                && level.getFluidState(pos).is(FluidTags.WATER);
+    /**
+     * Stardew paddy rule adapted to Minecraft: scan the 7x7 horizontal area centered on the
+     * tilled soil. Both the soil layer and the layer above it are checked because natural water
+     * surfaces and player-built irrigation channels do not always share the farmland's Y level.
+     */
+    public static boolean hasNearbyPaddyWater(LevelReader level, BlockPos cropPos) {
+        BlockPos soilPos = cropPos.below();
+        if (level.getBlockState(soilPos).getBlock()
+                instanceof com.stardew.craft.block.utility.GardenPotBlock) {
+            return false;
+        }
+        for (int dx = -PADDY_WATER_RANGE; dx <= PADDY_WATER_RANGE; dx++) {
+            for (int dz = -PADDY_WATER_RANGE; dz <= PADDY_WATER_RANGE; dz++) {
+                for (int dy = 0; dy <= 1; dy++) {
+                    BlockPos waterPos = soilPos.offset(dx, dy, dz);
+                    net.minecraft.world.level.material.FluidState fluid = level.getFluidState(waterPos);
+                    if (fluid.is(FluidTags.WATER) && fluid.isSource()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Keeps the real Minecraft farmland state in sync with the paddy auto-watering rule. */
+    public static boolean keepPaddySoilWatered(ServerLevel level, BlockPos cropPos) {
+        if (!hasNearbyPaddyWater(level, cropPos)) {
+            return false;
+        }
+        BlockPos soilPos = cropPos.below();
+        BlockState soil = level.getBlockState(soilPos);
+        if (soil.hasProperty(FarmBlock.MOISTURE)
+                && soil.getValue(FarmBlock.MOISTURE) < FarmBlock.MAX_MOISTURE) {
+            level.setBlock(soilPos, soil.setValue(FarmBlock.MOISTURE, FarmBlock.MAX_MOISTURE), 2);
+        }
+        return true;
     }
 
     @Override

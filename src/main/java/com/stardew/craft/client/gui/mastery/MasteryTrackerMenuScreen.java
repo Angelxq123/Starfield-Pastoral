@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.mastery;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.math.Axis;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
@@ -114,8 +116,7 @@ public final class MasteryTrackerMenuScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        Minecraft mc = Minecraft.getInstance();
-        guiScale = (float) mc.getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
 
         panelW = ui(SDV_WIDTH);
         rowHeights.clear();
@@ -312,7 +313,7 @@ public final class MasteryTrackerMenuScreen extends Screen {
         int y = descY;
         for (FormattedCharSequence line : this.font.split(Component.translatable(entry.descKey()), maxTextWidth)) {
             graphics.drawString(this.font, line, textX, y, 0x000000, false);
-            y += this.font.lineHeight + 2;
+            y += StardewFonts.lineHeight(this.font) + 2;
         }
     }
 
@@ -364,7 +365,7 @@ public final class MasteryTrackerMenuScreen extends Screen {
         if (lines.isEmpty()) {
             return 0;
         }
-        return lines.size() * (this.font.lineHeight + 2);
+        return lines.size() * (StardewFonts.lineHeight(this.font) + 2);
     }
 
     private void drawItemScaled(GuiGraphics graphics, ItemStack stack, int x, int y) {

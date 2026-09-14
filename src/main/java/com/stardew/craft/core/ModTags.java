@@ -20,10 +20,7 @@ public final class ModTags {
 		public static final TagKey<Block> ARTISAN_MACHINES = tag("machines/artisan");
 		public static final TagKey<Block> UTILITY_MACHINES = tag("machines/utility");
 		public static final TagKey<Block> FURNITURE = tag("furniture");
-		public static final TagKey<Block> STARDEW_STONES = tag("stardew_stones");
-		public static final TagKey<Block> STARDEW_ORES = tag("stardew_ores");
 		public static final TagKey<Block> STARDEW_MINERALS = tag("stardew_minerals");
-		public static final TagKey<Block> IRIDIUM_ORES = tag("iridium_ores");
 		public static final TagKey<Block> QUARRY_RESOURCES = tag("quarry_resources");
 		public static final TagKey<Block> CUSHION_USES_COLLISION_SHAPE = tag("cushion_uses_collision_shape");
 		public static final TagKey<Block> INTERACTION_HINT_NONE = tag("interaction_hints/none");

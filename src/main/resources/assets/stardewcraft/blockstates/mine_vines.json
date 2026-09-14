@@ -1,0 +1,244 @@
+{
+  "variants": {
+    "facing=north,variant=0,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_single"
+    },
+    "facing=east,variant=0,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_single",
+      "y": 90
+    },
+    "facing=south,variant=0,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_single",
+      "y": 180
+    },
+    "facing=west,variant=0,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_single",
+      "y": 270
+    },
+    "facing=north,variant=0,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_top"
+    },
+    "facing=east,variant=0,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_top",
+      "y": 90
+    },
+    "facing=south,variant=0,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_top",
+      "y": 180
+    },
+    "facing=west,variant=0,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_top",
+      "y": 270
+    },
+    "facing=north,variant=0,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_middle"
+    },
+    "facing=east,variant=0,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_middle",
+      "y": 90
+    },
+    "facing=south,variant=0,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_middle",
+      "y": 180
+    },
+    "facing=west,variant=0,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/0_middle",
+      "y": 270
+    },
+    "facing=north,variant=0,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_tip"
+    },
+    "facing=east,variant=0,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_tip",
+      "y": 90
+    },
+    "facing=south,variant=0,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_tip",
+      "y": 180
+    },
+    "facing=west,variant=0,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/0_tip",
+      "y": 270
+    },
+    "facing=north,variant=1,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_single"
+    },
+    "facing=east,variant=1,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_single",
+      "y": 90
+    },
+    "facing=south,variant=1,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_single",
+      "y": 180
+    },
+    "facing=west,variant=1,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_single",
+      "y": 270
+    },
+    "facing=north,variant=1,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_top"
+    },
+    "facing=east,variant=1,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_top",
+      "y": 90
+    },
+    "facing=south,variant=1,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_top",
+      "y": 180
+    },
+    "facing=west,variant=1,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_top",
+      "y": 270
+    },
+    "facing=north,variant=1,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_middle"
+    },
+    "facing=east,variant=1,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_middle",
+      "y": 90
+    },
+    "facing=south,variant=1,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_middle",
+      "y": 180
+    },
+    "facing=west,variant=1,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/1_middle",
+      "y": 270
+    },
+    "facing=north,variant=1,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_tip"
+    },
+    "facing=east,variant=1,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_tip",
+      "y": 90
+    },
+    "facing=south,variant=1,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_tip",
+      "y": 180
+    },
+    "facing=west,variant=1,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/1_tip",
+      "y": 270
+    },
+    "facing=north,variant=2,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_single"
+    },
+    "facing=east,variant=2,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_single",
+      "y": 90
+    },
+    "facing=south,variant=2,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_single",
+      "y": 180
+    },
+    "facing=west,variant=2,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_single",
+      "y": 270
+    },
+    "facing=north,variant=2,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_top"
+    },
+    "facing=east,variant=2,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_top",
+      "y": 90
+    },
+    "facing=south,variant=2,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_top",
+      "y": 180
+    },
+    "facing=west,variant=2,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_top",
+      "y": 270
+    },
+    "facing=north,variant=2,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_middle"
+    },
+    "facing=east,variant=2,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_middle",
+      "y": 90
+    },
+    "facing=south,variant=2,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_middle",
+      "y": 180
+    },
+    "facing=west,variant=2,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/2_middle",
+      "y": 270
+    },
+    "facing=north,variant=2,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_tip"
+    },
+    "facing=east,variant=2,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_tip",
+      "y": 90
+    },
+    "facing=south,variant=2,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_tip",
+      "y": 180
+    },
+    "facing=west,variant=2,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/2_tip",
+      "y": 270
+    },
+    "facing=north,variant=3,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_single"
+    },
+    "facing=east,variant=3,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_single",
+      "y": 90
+    },
+    "facing=south,variant=3,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_single",
+      "y": 180
+    },
+    "facing=west,variant=3,above=false,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_single",
+      "y": 270
+    },
+    "facing=north,variant=3,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_top"
+    },
+    "facing=east,variant=3,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_top",
+      "y": 90
+    },
+    "facing=south,variant=3,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_top",
+      "y": 180
+    },
+    "facing=west,variant=3,above=false,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_top",
+      "y": 270
+    },
+    "facing=north,variant=3,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_middle"
+    },
+    "facing=east,variant=3,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_middle",
+      "y": 90
+    },
+    "facing=south,variant=3,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_middle",
+      "y": 180
+    },
+    "facing=west,variant=3,above=true,below=true": {
+      "model": "stardewcraft:block/mine_vines/3_middle",
+      "y": 270
+    },
+    "facing=north,variant=3,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_tip"
+    },
+    "facing=east,variant=3,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_tip",
+      "y": 90
+    },
+    "facing=south,variant=3,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_tip",
+      "y": 180
+    },
+    "facing=west,variant=3,above=true,below=false": {
+      "model": "stardewcraft:block/mine_vines/3_tip",
+      "y": 270
+    }
+  }
+}

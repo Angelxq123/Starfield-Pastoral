@@ -1,9 +1,12 @@
 package com.stardew.craft.entity.npc;
 
+import com.stardew.craft.npc.animation.SamActivity;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.npc.data.NpcCapabilityProfile;
 import com.stardew.craft.npc.data.NpcDataRegistry;
 import com.stardew.craft.npc.runtime.NpcInteractionService;
+import com.stardew.craft.npc.attention.SamAttentionController;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -35,7 +38,16 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     private static final int INVALID_ID_GRACE_TICKS = 40;
     private static final EntityDataAccessor<String> DATA_NPC_ID = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<CompoundTag> DATA_MOTION_PROFILE = SynchedEntityData.defineId(StardewNpcEntity.class,EntityDataSerializers.COMPOUND_TAG);
+    private long motionRevision = -1;
     private static final EntityDataAccessor<Boolean> DATA_IS_WALKING = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_WALK_ANIMATION = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<CompoundTag> DATA_ATTENTION = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    private static final EntityDataAccessor<Long> DATA_GUITAR_START = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<String> DATA_NATIVE_ACTIVITY = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<CompoundTag> DATA_SCHEDULE_ACTIVITY = SynchedEntityData.defineId(StardewNpcEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    private final com.stardew.craft.npc.animation.NpcScheduleActivity scheduleActivity = new com.stardew.craft.npc.animation.NpcScheduleActivity(this);
+    private final SamAttentionController attention = new SamAttentionController(this);
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("walk");
 
@@ -43,6 +55,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     private boolean hasLastServerWalkPosition;
     private double lastServerWalkX;
     private double lastServerWalkZ;
+    private boolean resolvingWalkCollision;
 
     /** NPC 转向状态机 */
     private enum FacingState { NONE, TURNING_TO, HOLDING, TURNING_BACK }
@@ -55,6 +68,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     private static final float TURN_SPEED = 60f;
     /** 转到位后的保持时间（tick）。单人 GUI 期间 tick 暂停，所以实际保持到对话关闭后 */
     private int facingHoldTicks;
+    private boolean facingSessionSeen;
     /** Action opened only after the NPC has finished turning toward the player. */
     @javax.annotation.Nullable
     private Runnable facingOnComplete;
@@ -81,6 +95,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         // Replace the default LookControl with one that yields to our facing state machine.
         // Vanilla LookControl.tick() sets yHeadRot every tick, fighting our smooth rotation.
         this.lookControl = new NpcLookControl(this);
+        this.moveControl = new NpcMoveControl(this);
     }
 
     @Override
@@ -105,7 +120,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         }
         @Override
         public void tick() {
-            if (owner.facingState != FacingState.NONE || owner.lookingAtPlayer) {
+            if (owner.facingState != FacingState.NONE || owner.isIdleLookActive()) {
                 return; // Our state machine controls rotation — don't interfere.
             }
             super.tick();
@@ -116,15 +131,21 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         return Mob.createMobAttributes()
             .add(Attributes.MAX_HEALTH, 20.0D)
             .add(Attributes.MOVEMENT_SPEED, 0.20D)
-            .add(Attributes.FOLLOW_RANGE, 384.0D)
+            .add(Attributes.FOLLOW_RANGE, 96.0D)
             .add(Attributes.STEP_HEIGHT, 0.6D);
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        builder.define(DATA_MOTION_PROFILE,new CompoundTag());
         builder.define(DATA_NPC_ID, "");
         builder.define(DATA_IS_WALKING, false);
+        builder.define(DATA_HAS_WALK_ANIMATION, false);
+        builder.define(DATA_ATTENTION, new CompoundTag());
+        builder.define(DATA_GUITAR_START, -1L);
+        builder.define(DATA_NATIVE_ACTIVITY, "");
+        builder.define(DATA_SCHEDULE_ACTIVITY, new CompoundTag());
     }
 
     @Override
@@ -151,7 +172,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         if (this.level().isClientSide) {
             return InteractionResult.sidedSuccess(true);
         }
-        if (facingOnComplete != null) {
+        if (facingOnComplete != null || scheduleActivity.hasPendingInteraction()) {
             return InteractionResult.SUCCESS;
         }
         return NpcInteractionService.onInteract(player, this, hand);
@@ -167,7 +188,11 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     }
 
     public void setNpcId(String npcId) {
+        motionRevision = -1;
         this.entityData.set(DATA_NPC_ID, npcId == null ? "" : npcId.toLowerCase());
+        if (!this.level().isClientSide) {
+            syncAnimationCapabilities();
+        }
     }
 
     @Override
@@ -182,6 +207,26 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     public boolean hasValidNpcId() {
         String npcId = getNpcId();
         return npcId != null && !npcId.isBlank() && NpcDataRegistry.capabilities().containsKey(npcId);
+    }
+
+    @Override
+    public void move(net.minecraft.world.entity.MoverType type, net.minecraft.world.phys.Vec3 movement) {
+        boolean previous = resolvingWalkCollision;
+        resolvingWalkCollision = !level().isClientSide && type == net.minecraft.world.entity.MoverType.SELF;
+        try {
+            super.move(type, movement);
+        } finally {
+            resolvingWalkCollision = previous;
+        }
+    }
+
+    @Override
+    public float maxUpStep() {
+        float maximum = super.maxUpStep();
+        // Path search must retain the configured capability, including full-block hills.
+        // Only physical movement is limited to the rise requested by its steering target.
+        return resolvingWalkCollision && moveControl instanceof NpcMoveControl control
+                ? control.collisionStepHeight(maximum) : maximum;
     }
 
     @Override
@@ -214,6 +259,9 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         }
         super.tick();
         if (!this.level().isClientSide) {
+            // Refresh after data-pack reloads as well as when an observer first tracks this NPC.
+            syncAnimationCapabilities();
+            if (tickCount % 20 == 0) com.stardew.craft.npc.runtime.NpcActorPersistence.capture(this);
             // 同步行走状态到客户端（用于 GeckoLib 动画控制器）
             boolean walking = false;
             if (hasLastServerWalkPosition) {
@@ -234,8 +282,55 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         // This is the fix for "NPC turns briefly then snaps back" — the vanilla
         // Mob AI loop was overwriting our rotation every tick.
         if (!this.level().isClientSide) {
-            tickFacingState();
+            boolean autonomous = com.stardew.craft.npc.runtime.NpcExecutionCoordinator.autonomous(this);
+            if (autonomous) {
+                scheduleActivity.tick();
+            } else if (isNativeActivityMovementLocked()) {
+                scheduleActivity.cancel();
+            }
+            // Festival staging stops the daily schedule, but an accepted conversation still
+            // owns its turn/hold/return sequence. Higher-priority scene takeovers can revoke it.
+            boolean dialogue = (isFacingOverrideActive() || NpcInteractionService.isDialogueMovementLocked(getNpcId()))
+                    && com.stardew.craft.npc.runtime.NpcExecutionCoordinator.claim(this,
+                            com.stardew.craft.npc.runtime.NpcExecutionCoordinator.DIALOGUE,80,2) >= 0;
+            if (autonomous || dialogue) {
+                tickFacingState();
+            } else {
+                if (isAttentionActive()) attention.cancel();
+                facingOnComplete=null;
+                facingState=FacingState.NONE;
+            }
         }
+    }
+
+    /** All authoritative relocations revoke motion/activity callbacks before moving the entity. */
+    public void prepareForNpcRelocation() {
+        cancelAutonomousActions();
+        getNavigation().stop();
+        com.stardew.craft.npc.runtime.NpcExecutionCoordinator.cancel(this);
+    }
+
+    /** Cancel autonomous callbacks on ownership transfer without revoking the new owner's lease. */
+    public void cancelAutonomousActions() {
+        scheduleActivity.cancel();
+        attention.cancel();
+        if(!level().isClientSide) NpcInteractionService.cancelNpcSessions(getNpcId());
+        facingOnComplete=null;
+        facingState=FacingState.NONE;
+    }
+
+    public long getGuitarStartTick() { return entityData.get(DATA_GUITAR_START); }
+    public long getNativeActivityStartTick() { return getGuitarStartTick(); }
+    public SamActivity getNativeActivity() { return SamActivity.fromAnimation(entityData.get(DATA_NATIVE_ACTIVITY)); }
+    public boolean isPlayingNativeActivity() { return !getScheduleActivityEvent().isEmpty() || getNativeActivity() != null && getNativeActivityStartTick() >= 0; }
+    public boolean isNativeActivityMovementLocked() { return isPlayingNativeActivity() || scheduleActivity.isSettling(); }
+    public boolean isPlayingGuitar() { return isPlayingNativeActivity() && getNativeActivity() == SamActivity.GUITAR; }
+
+    public CompoundTag getScheduleActivityEvent() { return entityData.get(DATA_SCHEDULE_ACTIVITY); }
+    public void setScheduleActivityEvent(CompoundTag event) {
+        entityData.set(DATA_SCHEDULE_ACTIVITY,event);
+        entityData.set(DATA_NATIVE_ACTIVITY,event.getString("action"));
+        entityData.set(DATA_GUITAR_START,event.isEmpty() ? -1L : event.getLong("start"));
     }
 
     /**
@@ -245,7 +340,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
      */
     @Override
     protected float tickHeadTurn(float renderYawOffset, float distance) {
-        if (facingState != FacingState.NONE || lookingAtPlayer) {
+        if (facingState != FacingState.NONE || isIdleLookActive() || isNativeActivityMovementLocked()) {
             // Don't let vanilla adjust body rotation; return 0 delta.
             return distance;
         }
@@ -254,6 +349,10 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
 
     /** 每 tick 处理 NPC 平滑转向 */
     private void tickFacingState() {
+        if (attention.enabled() && facingState != FacingState.NONE && getAttentionEvent().getBoolean("dialogue")) {
+            tickNativeDialogueFacing();
+            return;
+        }
         switch (facingState) {
             case TURNING_TO: {
                 // 平滑转向目标角度
@@ -265,15 +364,15 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
                     if (onComplete != null) {
                         onComplete.run();
                     }
+                    facingSessionSeen = NpcInteractionService.isDialogueMovementLocked(getNpcId());
                 }
                 break;
             }
             case HOLDING: {
-                // 保持面朝玩家。单人 GUI 打开后 tick 暂停，这里不执行。
-                // GUI 关闭后 tick 恢复，倒计时 → 转回去。
-                if (facingHoldTicks > 0) {
-                    facingHoldTicks--;
-                } else {
+                // Multiplayer keeps ticking while the dialogue window is open.
+                if (NpcInteractionService.isDialogueMovementLocked(getNpcId())) {
+                    facingSessionSeen = true;
+                } else if (facingSessionSeen || facingHoldTicks-- <= 0) {
                     facingState = FacingState.TURNING_BACK;
                 }
                 break;
@@ -289,12 +388,60 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
                 break;
         }
 
+        // Only explicit conversations may turn festival actors away from their authored heading.
+        if (!com.stardew.craft.npc.runtime.NpcExecutionCoordinator.autonomous(this)) return;
+
         // 空闲时自动朝向附近玩家
-        if (facingState == FacingState.NONE) {
+        if (attention.enabled()) {
+            lookingAtPlayer = false;
+            attention.tick();
+        } else if (facingState == FacingState.NONE) {
             tickIdleLookAtPlayer();
         } else if (lookingAtPlayer) {
             // 对话系统接管了，取消 idle look 状态
             lookingAtPlayer = false;
+        }
+    }
+
+    /** Keep the server heading stable; the synchronized pose supplies the actual turning steps. */
+    private void tickNativeDialogueFacing() {
+        var event=getAttentionEvent();
+        long now=level().getGameTime();
+        applyYaw(event.getFloat("baseYaw"));
+        getNavigation().stop();
+        setWalking(false);
+        switch (facingState) {
+            case TURNING_TO -> {
+                var target=level().getEntity(event.getInt("target"));
+                boolean valid=target instanceof Player player && player.isAlive() && !player.isSpectator()
+                        && target.distanceToSqr(this)<=64;
+                // Each queued callback validates its own player; the first observer leaving must not drop the others.
+                // Finish planting the feet even if the initiating player leaves before the GUI opens.
+                if ((now-event.getLong("start"))/20.0>=SamAttentionController.dialogueReadyTime(event)) {
+                    facingState=FacingState.HOLDING;
+                    Runnable onComplete=facingOnComplete;
+                    facingOnComplete=null;
+                    if (onComplete!=null) onComplete.run();
+                    facingSessionSeen=NpcInteractionService.isDialogueMovementLocked(getNpcId());
+                    if (!valid) facingHoldTicks=0;
+                }
+            }
+            case HOLDING -> {
+                if (NpcInteractionService.isDialogueMovementLocked(getNpcId())) {
+                    facingSessionSeen=true;
+                } else if (facingSessionSeen || facingHoldTicks--<=0) {
+                    attention.releaseDialogue();
+                    facingState=FacingState.TURNING_BACK;
+                }
+            }
+            case TURNING_BACK -> {
+                if (!SamAttentionController.isActive(event,now)) {
+                    setAttentionEvent(new CompoundTag());
+                    applyYaw(savedYaw);
+                    facingState=FacingState.NONE;
+                }
+            }
+            default -> { }
         }
     }
 
@@ -377,32 +524,67 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
 
     /** Whether the NPC is currently idle-looking at a nearby player. */
     public boolean isIdleLookActive() {
-        return lookingAtPlayer;
+        return lookingAtPlayer || isAttentionActive();
+    }
+
+    public CompoundTag getAttentionEvent() { return entityData.get(DATA_ATTENTION); }
+    public void setAttentionEvent(CompoundTag event) { entityData.set(DATA_ATTENTION,event); }
+    public boolean isAttentionActive() {
+        return SamAttentionController.isActive(getAttentionEvent(),level().getGameTime());
     }
 
     /**
-     * 让 NPC 快速平滑转向玩家，转到位后再执行 onComplete 回调。
-     * 对话结束（GUI 关闭、tick 恢复）后 NPC 会平滑转回原始朝向。
+     * 转到位后执行 onComplete；原生 Sam 使用同步转步，保持至对话会话关闭后转回。
+     * 其他角色暂时沿用原朝向状态机，待模型迁移后再接入原生转步。
      *
      * @param target     要面对的玩家
-     * @param holdTicks  转到位后保持的 tick 数（单人 GUI 期间 tick 冻结，不消耗）
+     * @param holdTicks  无对话会话的交互／旧角色转向使用的回退保持时长
      * @param onComplete 转身完成后的回调（用于发送对话/礼物确认包），可为 null
      */
     public void facePlayerTemporarily(Player target, int holdTicks, @javax.annotation.Nullable Runnable onComplete) {
         if (this.level().isClientSide) return;
+        if (isPlayingNativeActivity()) {
+            scheduleActivity.interrupt(() -> {
+                if (target.isAlive() && target.level() == level() && distanceToSqr(target) < 64)
+                    facePlayerTemporarily(target,holdTicks,onComplete);
+            });
+            return;
+        }
+        if (com.stardew.craft.npc.runtime.NpcExecutionCoordinator.claim(this,
+                com.stardew.craft.npc.runtime.NpcExecutionCoordinator.DIALOGUE,80,2)<0) return;
+        if(facingState==FacingState.TURNING_TO) {
+            var previous=facingOnComplete;
+            facingOnComplete=()->{
+                if(previous!=null) previous.run();
+                if(onComplete!=null && target.isAlive() && target.level()==level() && distanceToSqr(target)<64) onComplete.run();
+            };
+            facingHoldTicks=Math.max(facingHoldTicks,holdTicks);
+            return;
+        }
+        if (attention.enabled() && facingState==FacingState.HOLDING && getAttentionEvent().getBoolean("dialogue")) {
+            // A second conversation shares the existing facing; do not restart or retarget the body.
+            facingHoldTicks=Math.max(facingHoldTicks,holdTicks);
+            if (onComplete!=null) onComplete.run();
+            facingSessionSeen |= NpcInteractionService.isDialogueMovementLocked(getNpcId());
+            return;
+        }
+        if (!attention.enabled()) attention.cancel();
         // If currently idle-looking, save the original schedule yaw (not the
         // mid-turn yaw) so TURNING_BACK returns to the correct orientation.
         if (lookingAtPlayer) {
             this.savedYaw = this.idleSavedYaw;
             lookingAtPlayer = false;
         } else {
-            this.savedYaw = this.getYRot();
+            this.savedYaw = attention.enabled() ? this.yBodyRot : this.getYRot();
         }
         double dx = target.getX() - this.getX();
         double dz = target.getZ() - this.getZ();
         this.facingTargetYaw = (float) (Math.atan2(-dx, dz) * (180.0 / Math.PI));
         this.facingHoldTicks = holdTicks;
-        this.facingOnComplete = onComplete;
+        this.facingSessionSeen = false;
+        this.facingOnComplete = onComplete==null?null:()->{
+            if(target.isAlive() && target.level()==level() && distanceToSqr(target)<64) onComplete.run();
+        };
         this.facingState = FacingState.TURNING_TO;
         this.getNavigation().stop();
         this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
@@ -410,6 +592,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         this.hasLastServerWalkPosition = true;
         this.lastServerWalkX = this.getX();
         this.lastServerWalkZ = this.getZ();
+        if (attention.enabled()) attention.beginDialogue(target);
     }
 
     public boolean isPathingEnabled() {
@@ -417,10 +600,46 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
         return profile != null && profile.canRunPathing();
     }
 
-    /** 客户端使用：当前 NPC 是否有行走动画资源。 */
-    public boolean hasWalkAnimation() {
+    private void syncAnimationCapabilities() {
+        if (motionRevision != NpcDataRegistry.revision()) {
+            var motion=com.stardew.craft.npc.runtime.NpcMotionProfile.forActor(getNpcId());
+            CompoundTag tag=new CompoundTag();
+            tag.putFloat("width",motion.width()); tag.putFloat("height",motion.height()); tag.putFloat("eye",motion.eyeHeight());
+            tag.putBoolean("attention",motion.attention());
+            this.entityData.set(DATA_MOTION_PROFILE,tag);
+            var speed=getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speed!=null) speed.setBaseValue(motion.speed());
+            var step=getAttribute(Attributes.STEP_HEIGHT);
+            if (step!=null) step.setBaseValue(motion.stepHeight());
+            if (getNavigation() instanceof NpcPathNavigation navigation) navigation.refreshSearchBudget();
+            var range=getAttribute(Attributes.FOLLOW_RANGE);
+            if (range!=null) range.setBaseValue(com.stardew.craft.npc.runtime.NpcNavigationPolicy.current().searchRange());
+            refreshDimensions();
+            motionRevision=NpcDataRegistry.revision();
+        }
         NpcCapabilityProfile profile = NpcDataRegistry.capabilities().get(getNpcId());
-        return profile != null && profile.hasWalkAnimation();
+        this.entityData.set(DATA_HAS_WALK_ANIMATION, profile != null && profile.hasWalkAnimation());
+    }
+
+    public boolean usesNativeAttention() { return entityData.get(DATA_MOTION_PROFILE).getBoolean("attention"); }
+
+    @Override
+    public net.minecraft.world.entity.EntityDimensions getDefaultDimensions(net.minecraft.world.entity.Pose pose) {
+        var profile=entityData.get(DATA_MOTION_PROFILE);
+        return profile.isEmpty() ? super.getDefaultDimensions(pose)
+                : net.minecraft.world.entity.EntityDimensions.scalable(profile.getFloat("width"),profile.getFloat("height"))
+                    .withEyeHeight(profile.getFloat("eye"));
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_MOTION_PROFILE.equals(key)) refreshDimensions();
+    }
+
+    /** Remote clients do not load NpcDataRegistry; animation capability travels with entity metadata. */
+    public boolean hasWalkAnimation() {
+        return this.entityData.get(DATA_HAS_WALK_ANIMATION);
     }
 
     /** 服务端设置行走状态，通过 SynchedEntityData 自动同步到客户端。 */
@@ -481,6 +700,15 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     @Override
     public boolean shouldBeSaved() {
         return false;
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!isRemoved() && reason == RemovalReason.UNLOADED_TO_CHUNK
+                && level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            com.stardew.craft.npc.runtime.NpcSpawnManager.onNpcChunkUnloaded(serverLevel,this);
+        }
+        super.remove(reason);
     }
 
     @Override

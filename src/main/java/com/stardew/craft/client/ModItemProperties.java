@@ -20,6 +20,26 @@ public final class ModItemProperties {
 
 	@SuppressWarnings("null")
 	public static void register() {
+        ItemProperties.register(ModItems.MINE_CHEST.get(), ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "mine_chest_special"),
+                (stack, level, entity, seed) -> Boolean.TRUE.equals(stack.getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                        net.minecraft.world.item.component.BlockItemStateProperties.EMPTY).get(com.stardew.craft.block.mine.MineChestBlock.SPECIAL)) ? 1 : 0);
+        ItemProperties.register(ModItems.MINE_COAL_BACKPACK.get(), ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "mine_backpack_variant"),
+                (stack, level, entity, seed) -> {
+                    var saved = stack.getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                            net.minecraft.world.item.component.BlockItemStateProperties.EMPTY);
+                    int theme = Boolean.TRUE.equals(saved.get(com.stardew.craft.block.mine.MineCoalBackpackBlock.DESERT)) ? 2
+                            : Boolean.TRUE.equals(saved.get(com.stardew.craft.block.mine.MineCoalBackpackBlock.DARK)) ? 1 : 0;
+                    return theme * 2 + (Boolean.TRUE.equals(saved.get(com.stardew.craft.block.mine.MineCoalBackpackBlock.OPEN)) ? 1 : 0);
+                });
+        ItemProperties.register(ModItems.MINE_STEP_STONE.get(), ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "mine_step_stone_theme"),
+                (stack, level, entity, seed) -> com.stardew.craft.item.MineStepStoneItem.theme(stack).ordinal() / 7.0F);
+        ItemProperties.register(ModItems.MINE_LADDER.get(), ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "mine_entrance_theme"),
+                (stack, level, entity, seed) -> com.stardew.craft.item.MineEntranceItem.modelIndex(stack) / 9.0F);
+        ItemProperties.register(ModItems.MINE_EXIT.get(), ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "mine_exit_theme"),
+                (stack, level, entity, seed) -> com.stardew.craft.item.MineExitItem.theme(stack).ordinal() / 7.0F);
+        ItemProperties.register(ModItems.MINE_LAMP.get(), ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "mine_lamp_theme"),
+                (stack, level, entity, seed) -> com.stardew.craft.item.MineLampItem.theme(stack).ordinal() / 7.0F);
+
 		StardewCraft.LOGGER.info("Registering item properties");
 
 		var castProperty = (net.minecraft.client.renderer.item.ClampedItemPropertyFunction) (stack, level, entity, seed) -> {

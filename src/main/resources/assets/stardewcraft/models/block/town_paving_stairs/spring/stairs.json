@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "top": "stardewcraft:block/town_paving_stairs/spring/tread",
+    "side": "stardewcraft:block/town_paving/spring/side",
+    "bottom": "stardewcraft:block/town_paving/spring/side",
+    "particle": "stardewcraft:block/town_paving/spring/side"
+  }
+}

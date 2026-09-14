@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": { "model": "stardewcraft:block/wild_tree/mystic_tree/branch1", "y": 270 },
-    "facing=east": { "model": "stardewcraft:block/wild_tree/mystic_tree/branch1", "y": 0 },
-    "facing=south": { "model": "stardewcraft:block/wild_tree/mystic_tree/branch1", "y": 90 },
-    "facing=west": { "model": "stardewcraft:block/wild_tree/mystic_tree/branch1", "y": 180 }
-  }
-}

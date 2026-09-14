@@ -65,6 +65,15 @@ public final class PaintbrushInputHandler {
         PaintbrushSelectionManager mgr = PaintbrushSelectionManager.get();
         if (mgr.getMode() != Mode.REGION_SELECT) return;
 
+        // Region-selection input only owns wallpaper/flooring clicks. Furniture
+        // (including beds) must still reach the paintbrush item's useOn path.
+        HitResult hit = player.pick(REGION_PICK_RANGE, 1.0f, false);
+        if (!(hit instanceof BlockHitResult bhr) || bhr.getType() != HitResult.Type.BLOCK) return;
+
+        BlockPos clickPos = bhr.getBlockPos();
+        BlockState clicked = mc.level.getBlockState(clickPos);
+        if (!isDecoBlock(clicked.getBlock())) return;
+
         // Shift+right-click: clear selection
         if (player.isShiftKeyDown()) {
             mgr.clearSelection();
@@ -72,16 +81,6 @@ public final class PaintbrushInputHandler {
             event.setSwingHand(false);
             return;
         }
-
-        // Long-range pick — not limited by default block interaction range
-        HitResult hit = player.pick(REGION_PICK_RANGE, 1.0f, false);
-        if (!(hit instanceof BlockHitResult bhr) || bhr.getType() != HitResult.Type.BLOCK) return;
-
-        BlockPos clickPos = bhr.getBlockPos();
-        BlockState clicked = mc.level.getBlockState(clickPos);
-
-        // Only intercept on wallpaper/flooring blocks
-        if (!isDecoBlock(clicked.getBlock())) return;
 
         if (!mgr.hasFirstPos()) {
             // First corner — record and CANCEL so no packet is sent to server
@@ -134,7 +133,8 @@ public final class PaintbrushInputHandler {
     }
 
     private static boolean isDecoBlock(Block block) {
-        return block == ModBlocks.WALLPAPER_BLOCK.get()
+        return block instanceof com.stardew.craft.block.utility.WallpaperBlock
+            || block == ModBlocks.WALLPAPER_BLOCK.get()
             || block == ModBlocks.FLOORING_BLOCK.get();
     }
 }

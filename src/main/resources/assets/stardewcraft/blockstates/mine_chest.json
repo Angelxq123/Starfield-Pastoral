@@ -1,12 +1,64 @@
 {
   "variants": {
-    "facing=north,open=false": { "model": "stardewcraft:block/utility/mine_chest" },
-    "facing=east,open=false": { "model": "stardewcraft:block/utility/mine_chest", "y": 90 },
-    "facing=south,open=false": { "model": "stardewcraft:block/utility/mine_chest", "y": 180 },
-    "facing=west,open=false": { "model": "stardewcraft:block/utility/mine_chest", "y": 270 },
-    "facing=north,open=true": { "model": "stardewcraft:block/utility/mine_chest" },
-    "facing=east,open=true": { "model": "stardewcraft:block/utility/mine_chest", "y": 90 },
-    "facing=south,open=true": { "model": "stardewcraft:block/utility/mine_chest", "y": 180 },
-    "facing=west,open=true": { "model": "stardewcraft:block/utility/mine_chest", "y": 270 }
+    "facing=north,open=false,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest"
+    },
+    "facing=north,open=false,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed"
+    },
+    "facing=north,open=true,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest"
+    },
+    "facing=north,open=true,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed"
+    },
+    "facing=east,open=false,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest",
+      "y": 90
+    },
+    "facing=east,open=false,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed",
+      "y": 90
+    },
+    "facing=east,open=true,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest",
+      "y": 90
+    },
+    "facing=east,open=true,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed",
+      "y": 90
+    },
+    "facing=south,open=false,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest",
+      "y": 180
+    },
+    "facing=south,open=false,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed",
+      "y": 180
+    },
+    "facing=south,open=true,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest",
+      "y": 180
+    },
+    "facing=south,open=true,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed",
+      "y": 180
+    },
+    "facing=west,open=false,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest",
+      "y": 270
+    },
+    "facing=west,open=false,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed",
+      "y": 270
+    },
+    "facing=west,open=true,special=false": {
+      "model": "stardewcraft:block/utility/mine_chest",
+      "y": 270
+    },
+    "facing=west,open=true,special=true": {
+      "model": "stardewcraft:block/mine/desert_special_chest/closed",
+      "y": 270
+    }
   }
 }

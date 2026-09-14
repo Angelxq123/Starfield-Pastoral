@@ -45,15 +45,10 @@ public class ElfBladeLeafEntity extends ThrowableProjectile {
     private static final double TURN_RATE = 0.22;
     private static final int MAX_HOMING_TICKS = 60;
 
-    private static final double TRAIL_MIN_DIST = 0.006;
-    private static final int TRAIL_MAX_AGE_ORBIT = 30;
-    private static final int TRAIL_MAX_AGE_FIRED = 46;
-    private static final int TRAIL_MAX_POINTS_ORBIT = 90;
-    private static final int TRAIL_MAX_POINTS_FIRED = 150;
-    private static final float TRAIL_MIN_SPEED = 0.03f;
-    private static final int TRAIL_UPDATE_FREQUENCY = 1;
-    private static final double TRAIL_MOTION_SHIFT = 0.18;
-    private static final Vec3 TRAIL_POSITION_OFFSET = new Vec3(0.0, 0.02, 0.0);
+    private static final int TRAIL_MAX_AGE_ORBIT = 6;
+    private static final int TRAIL_MAX_AGE_FIRED = 10;
+    private static final int TRAIL_MAX_POINTS_ORBIT = 24;
+    private static final int TRAIL_MAX_POINTS_FIRED = 32;
 
     private float damageMultiplier = 0.50f;
     private String skillId = "elf_blade_leaf";
@@ -63,9 +58,6 @@ public class ElfBladeLeafEntity extends ThrowableProjectile {
     private WeaponDamageSnapshot releaseWeaponSnapshot;
 
     private final Deque<TrailPoint> trailPoints = new ArrayDeque<>();
-    private Vec3 lastEmitPos = null;
-    private Vec3 prevPos = null;
-    private Vec3 smoothVel = Vec3.ZERO;
 
     public ElfBladeLeafEntity(EntityType<? extends ThrowableProjectile> type, Level level) {
         super(type, level);
@@ -132,6 +124,8 @@ public class ElfBladeLeafEntity extends ThrowableProjectile {
         this.targetId = target.getUUID();
         this.entityData.set(STATE, STATE_HOMING);
         this.homingTicks = 0;
+        if (this.level() instanceof ServerLevel level) level.playSound(null, getX(), getY(), getZ(),
+                SoundEvents.TRIDENT_THROW.value(), SoundSource.PLAYERS, 0.28f, 1.75f);
     }
 
     @SuppressWarnings("null")
@@ -152,16 +146,12 @@ public class ElfBladeLeafEntity extends ThrowableProjectile {
             }
 
             Vec3 center = owner.position().add(0, owner.getBbHeight() * 0.6, 0);
-            double angle = (this.level().getGameTime() * ORBIT_SPEED)
-                + (this.getOrbitIndex() * (Math.PI * 2.0 / 3.0));
-            double x = center.x + Math.cos(angle) * ORBIT_RADIUS;
-            double z = center.z + Math.sin(angle) * ORBIT_RADIUS;
-            double y = center.y + Math.sin(angle * 2.0) * ORBIT_BOB;
-            this.setPos(x, y, z);
+            Vec3 orbit = center.add(orbitOffset(this.level().getGameTime(), getOrbitIndex()));
+            this.setPos(orbit.x, orbit.y, orbit.z);
             this.setDeltaMovement(Vec3.ZERO);
             if (this.level().isClientSide) {
                 ageTrailPoints();
-                recordTrailPoint();
+                trailPoints.clear();
             }
             return;
         }
@@ -215,48 +205,20 @@ public class ElfBladeLeafEntity extends ThrowableProjectile {
         return null;
     }
 
-    @SuppressWarnings("null")
+    /** Shared analytic orbit for simulation and fractional render-time sampling. */
+    public static Vec3 orbitOffset(double tick, int index) {
+        double angle = tick * ORBIT_SPEED + index * (Math.PI * 2.0 / 3.0);
+        return new Vec3(Math.cos(angle) * ORBIT_RADIUS, Math.sin(angle * 2) * ORBIT_BOB,
+                Math.sin(angle) * ORBIT_RADIUS);
+    }
+
     private void recordTrailPoint() {
-        if (this.tickCount % TRAIL_UPDATE_FREQUENCY != 0) {
-            return;
-        }
-
-        Vec3 pos = (this.tickCount > 1 ? this.getPosition(1.0f) : this.position()).add(TRAIL_POSITION_OFFSET);
-        Vec3 motion = this.getDeltaMovement();
-        if (this.entityData.get(STATE) != STATE_ORBIT
-            && motion.lengthSqr() < (double) (TRAIL_MIN_SPEED * TRAIL_MIN_SPEED)) {
-            return;
-        }
-        if (motion.lengthSqr() > 1.0E-6) {
-            pos = pos.add(motion.normalize().scale(-TRAIL_MOTION_SHIFT));
-        }
-        if (prevPos == null) {
-            prevPos = pos;
-        }
-        Vec3 vel = pos.subtract(prevPos);
-        smoothVel = smoothVel.add(vel.subtract(smoothVel).scale(0.25));
-        prevPos = pos;
-        Vec3 smoothPos = pos.add(smoothVel.scale(0.4));
-
-        if (lastEmitPos == null) {
-            addTrailPoint(smoothPos);
-            lastEmitPos = smoothPos;
-            return;
-        }
-
-        double minDist = this.entityData.get(STATE) == STATE_ORBIT ? 0.008 : TRAIL_MIN_DIST;
-        double dist = lastEmitPos.distanceTo(smoothPos);
-        if (dist < minDist) {
-            return;
-        }
-
-        int steps = Math.max(1, (int) Math.ceil(dist / minDist));
-        for (int i = 1; i <= steps; i++) {
-            double t = (double) i / (double) steps;
-            Vec3 p = lastEmitPos.lerp(smoothPos, t);
-            addTrailPoint(p);
-        }
-        lastEmitPos = smoothPos;
+        Vec3 pos = position();
+        TrailPoint last = trailPoints.peekLast();
+        if (last != null && last.position.distanceToSqr(pos) > 16) trailPoints.clear();
+        if (last != null && last.position.distanceToSqr(pos) < 0.000001) return;
+        // One real position per tick: no forward prediction or sub-millimetre samples exhausting the history.
+        addTrailPoint(pos);
     }
 
     @SuppressWarnings("null")
@@ -357,20 +319,7 @@ public class ElfBladeLeafEntity extends ThrowableProjectile {
                 );
             }
 
-            if (this.level() instanceof ServerLevel serverLevel) {
-                double x = this.getX();
-                double y = this.getY() + 0.1;
-                double z = this.getZ();
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
-                    x, y, z,
-                    8, 0.3, 0.15, 0.3, 0.02);
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.GLOW,
-                    x, y, z,
-                    6, 0.2, 0.1, 0.2, 0.01);
-                serverLevel.playSound(null, target.blockPosition(),
-                    SoundEvents.AMETHYST_BLOCK_CHIME,
-                    SoundSource.PLAYERS, 0.6f, 1.4f);
-            }
+
         }
 
         this.setDeltaMovement(Vec3.ZERO);

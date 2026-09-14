@@ -1,0 +1,33 @@
+{
+  "ambientocclusion": true,
+  "textures": {
+    "surface": "stardewcraft:block/surface_floor/wood_path",
+    "particle": "stardewcraft:block/surface_floor/wood_path_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        16,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#surface",
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

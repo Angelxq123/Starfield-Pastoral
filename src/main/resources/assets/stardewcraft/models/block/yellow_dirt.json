@@ -1,9 +1,9 @@
 {
   "textures": {
-    "top": "stardewcraft:block/yellow_dirt_top",
-    "side": "stardewcraft:block/yellow_dirt_side",
-    "bottom": "stardewcraft:block/yellow_dirt_bottom",
-    "particle": "stardewcraft:block/yellow_dirt_side"
+    "top": "stardewcraft:block/terrain/yellow_earth_top",
+    "side": "stardewcraft:block/terrain/yellow_earth_side",
+    "bottom": "stardewcraft:block/terrain/yellow_earth_side",
+    "particle": "stardewcraft:block/terrain/yellow_earth_side"
   },
   "elements": [
     {

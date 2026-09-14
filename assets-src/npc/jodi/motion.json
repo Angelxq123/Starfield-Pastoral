@@ -1,0 +1,87 @@
+{
+  "intent": "成年女性，原版 Polite/Neutral；日常利落、双臂靠近身体，躯干柔和反向协调，肩前辫限制颈部角度。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.809690625,
+  "attentionRig": {
+    "hipHeight": 12,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 1.82,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 8,
+    "pitch": 5
+  },
+  "gait": {
+    "id": "jodi",
+    "revision": "character-articulated-3",
+    "rootMean": 0.4,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -1.6,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          1.6,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -1.2,
+    "headPitch": 0.5,
+    "halfStance": 1.82,
+    "intent": "成年女性，原版 Polite/Neutral；日常利落、双臂靠近身体，躯干柔和反向协调，肩前辫限制颈部角度。",
+    "stance": 0.57,
+    "strideRatio": 1.68,
+    "bob": 0.26239999999999997,
+    "sway": 0.48,
+    "rootYaw": 2.1,
+    "bodyYaw": 4.9,
+    "bodyRoll": 1.05,
+    "bodyNod": 0.7,
+    "headYaw": 2.1,
+    "headRoll": 0.5,
+    "armSwing": 15.5,
+    "armOpening": 5.3,
+    "elbowBase": 9,
+    "elbowSwing": 6,
+    "footLift": 0.28,
+    "heelPitch": 4.8999999999999995,
+    "toePitch": 9.1,
+    "breathSeconds": 8.6,
+    "idleScale": 1.0,
+    "stride": 12.95505,
+    "reachMargin": 0.048397,
+    "legLengthStride": 20.16,
+    "previewSpeed": 0.739003,
+    "levelWalk": true
+  }
+}

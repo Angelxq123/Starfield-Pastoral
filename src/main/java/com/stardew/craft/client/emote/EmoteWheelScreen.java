@@ -34,6 +34,7 @@ public final class EmoteWheelScreen extends Screen implements com.stardew.craft.
 
 	private int selectedIndex = -1;
 	private long openedAtMs;
+	private boolean scanCodeHeld = true;
 	private final float[] hoverProgress = new float[32]; // For smooth scaling animations
 
 	public EmoteWheelScreen() {
@@ -59,13 +60,25 @@ public final class EmoteWheelScreen extends Screen implements com.stardew.craft.
 	@Override
 	public void tick() {
 		super.tick();
-		if (minecraft == null || minecraft.player == null || minecraft.level == null) {
+		if (minecraft == null || minecraft.player == null || minecraft.level == null || !minecraft.isWindowActive()) {
 			onClose();
 			return;
 		}
 		if (!EmoteWheelClient.isWheelKeyHeld()) {
 			confirmAndClose();
 		}
+	}
+
+	boolean isScanCodeHeld() {
+		return scanCodeHeld;
+	}
+
+	@Override
+	public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+		if (com.stardew.craft.client.ModKeyMappings.EMOTE_WHEEL.matches(keyCode, scanCode)) {
+			scanCodeHeld = false;
+		}
+		return super.keyReleased(keyCode, scanCode, modifiers);
 	}
 
 	@Override
@@ -134,6 +147,9 @@ public final class EmoteWheelScreen extends Screen implements com.stardew.craft.
 	}
 
 	public void confirmAndClose() {
+		if (minecraft == null || minecraft.screen != this) {
+			return;
+		}
 		if (selectedIndex >= 0 && selectedIndex < EmoteCatalog.WHEEL_ITEMS.size()) {
 			EmoteType emote = EmoteCatalog.WHEEL_ITEMS.get(selectedIndex);
 			PacketDistributor.sendToServer(new EmoteUsePayload(emote.id()));

@@ -32,6 +32,13 @@ public class FishPondBucketBlockEntityRenderer implements BlockEntityRenderer<Fi
     }
 
     @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(FishPondBucketBlockEntity be) {
+        var box=new net.minecraft.world.phys.AABB(be.getBlockPos());
+        for(long packed:be.getPondWaterCells())box=box.minmax(new net.minecraft.world.phys.AABB(BlockPos.of(packed)));
+        return box.inflate(1,2,1);
+    }
+
+    @Override
     public void render(@Nonnull FishPondBucketBlockEntity be, float partialTick, @Nonnull PoseStack poseStack, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ClientFishPondSwimVisuals.render(be, partialTick, poseStack, buffer, packedLight, packedOverlay);
 
@@ -176,6 +183,10 @@ public class FishPondBucketBlockEntityRenderer implements BlockEntityRenderer<Fi
     }
 
     private SignPose resolveSignPose(BlockState signState) {
+        if (signState.getBlock() instanceof com.stardew.craft.block.utility.WoodSignBlock) {
+            Direction facing = signState.getValue(com.stardew.craft.block.utility.WoodSignBlock.FACING);
+            return new SignPose(0.5D, 14.0D/16.0D, 0.5D, -facing.toYRot(), 2.0D/16.0D+0.012D);
+        }
         if (signState.hasProperty(BlockStateProperties.ROTATION_16)) {
             int rotation = signState.getValue(BlockStateProperties.ROTATION_16);
             float yawDegrees = -(rotation * 360.0F / 16.0F);

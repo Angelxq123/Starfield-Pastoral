@@ -1,0 +1,179 @@
+package com.stardew.craft.pet;
+
+import com.stardew.craft.StardewCraft;
+import com.stardew.craft.core.ModDimensions;
+import com.stardew.craft.entity.ModEntities;
+import com.stardew.craft.farm.FarmInstance;
+import com.stardew.craft.farm.FarmInstanceRegistry;
+import com.stardew.craft.item.cosmetic.StardewHatItem;
+import com.stardew.craft.time.StardewTimeManager;
+import java.util.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+
+@EventBusSubscriber(modid = StardewCraft.MODID)
+public final class PetService {
+    private static final Map<UUID, FarmInstance> farms = new HashMap<>();
+    private PetService() {}
+    public static FarmInstance farm(UUID id) {
+        var cached = farms.get(id);
+        if (cached != null) return cached;
+        for (var farm : FarmInstanceRegistry.get().getAllFarms()) if (farm.getInstanceId().equals(id)) { farms.put(id, farm); return farm; }
+        return null;
+    }
+    public static boolean manages(ServerPlayer player, UUID id) {
+        var farm = FarmInstanceRegistry.get().getFarmForPlayer(player.getUUID());
+        return farm != null && farm.getInstanceId().equals(id);
+    }
+    public static boolean selectInitial(ServerPlayer player, FarmInstance farm, String variantId, String name) {
+        if (!farm.getOwnerUUID().equals(player.getUUID()) || !manages(player, farm.getInstanceId())) return false;
+        var variant = PetVariant.find(variantId).filter(PetVariant::initial).orElse(null);
+        String cleaned = PetRecord.cleanName(name);
+        if (!variantId.isEmpty() && (variant == null || cleaned.isBlank())) return false;
+        var data = PetWorldData.get(player.server);
+        if (!data.chooseInitial(farm.getInstanceId())) return false;
+        if (variant == null) return true;
+        var pet = new PetRecord(UUID.randomUUID(), farm.getInstanceId(), variant, cleaned, StardewTimeManager.get().getAbsoluteDay());
+        if (farm.isInitialized() && player.level().dimension() == ModDimensions.STARDEW_VALLEY && farm.contains(player.blockPosition())) {
+            var near = PetHomes.near(player.serverLevel(), farm, player.blockPosition().relative(player.getDirection().getOpposite(), 2), variant, 3);
+            if (near != null) pet.position = Vec3.atBottomCenterOf(near);
+        }
+        data.put(pet); return true;
+    }
+    public static void remember(ServerLevel level, PetEntity entity) {
+        var data = PetWorldData.get(level.getServer()); var pet = data.find(entity.getUUID());
+        if (pet == null || level.dimension() != ModDimensions.STARDEW_VALLEY) return;
+        if (!entity.position().equals(pet.position) || pet.yaw != entity.getYRot()) { pet.position = entity.position(); pet.yaw = entity.getYRot(); data.setDirty(); }
+    }
+    @SubscribeEvent public static void stopped(ServerStoppedEvent event) { farms.clear(); PetManagement.clear(); }
+    @SubscribeEvent public static void stopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+        var level = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY); if (level == null) return;
+        for (var pet : PetWorldData.get(event.getServer()).all()) if (level.getEntity(pet.id) instanceof PetEntity entity) remember(level, entity);
+    }
+    @SubscribeEvent public static void tick(ServerTickEvent.Post event) {
+        var server = event.getServer(); if (server.getTickCount() % 100 != 0) return;
+        var level = server.getLevel(ModDimensions.STARDEW_VALLEY); if (level == null) return;
+        farms.clear(); for (var farm : FarmInstanceRegistry.get().getAllFarms()) farms.put(farm.getInstanceId(), farm);
+        for (var farm : farms.values()) PetHomes.prepare(level, farm);
+        onNewDay(level); updateBowls(level); project(level);
+    }
+    public static void onNewDay(ServerLevel level) {
+        var data = PetWorldData.get(level.getServer()); int day = StardewTimeManager.get().getAbsoluteDay();
+        for (var pet : data.all()) {
+            if (pet.settledDay >= day) continue;
+            if (!pet.variant.available()) { pet.settledDay = day; data.setDirty(); continue; }
+            assignFreeBowl(data, pet);
+            var bowl = pet.bowl == null ? null : data.bowl(pet.bowl);
+            if (bowl == null) { pet.friendship(-10 * (day - pet.settledDay)); pet.bowlSadDay = day; }
+            else if (bowl.wateredDay() >= pet.settledDay && bowl.wateredDay() < day) pet.friendship(6);
+            pet.settledDay = day;
+            pet.petted.entrySet().removeIf(entry -> entry.getValue() < day - 1);
+            if (pet.friendship == 1000) data.markLoved(pet.farm);
+            data.setDirty();
+        }
+    }
+    public static void assignFreeBowl(PetWorldData data, PetRecord pet) {
+        if (pet.bowl != null && data.bowl(pet.bowl) != null) return;
+        for (var bowl : data.bowls()) if (bowl.farm().equals(pet.farm) && data.occupant(bowl.position()) == null) { pet.bowl = bowl.position(); data.setDirty(); return; }
+    }
+    private static void updateBowls(ServerLevel level) {
+        var data = PetWorldData.get(level.getServer()); int day = StardewTimeManager.get().getAbsoluteDay(); int season = StardewTimeManager.get().getCurrentSeason();
+        boolean rain = com.stardew.craft.weather.WeatherManager.isRaining(level);
+        for (var bowl : data.bowls()) {
+            var pos = bowl.position();
+            if (!level.hasChunkAt(pos)) { if (rain && bowl.outdoors() && bowl.wateredDay() != day) data.bowl(bowl.watered(day)); continue; }
+            boolean outdoors = level.canSeeSky(pos.above());
+            if (bowl.outdoors() != outdoors) data.bowl(new PetWorldData.Bowl(bowl.farm(), pos, bowl.style(), bowl.wateredDay(), outdoors));
+            var state = level.getBlockState(pos);
+            if (!(state.getBlock() instanceof PetBowlBlock)) { data.removeBowl(pos); continue; }
+            PetBowlBuildings.ensure(level, pos);
+            boolean full = bowl.wateredDay() == day;
+            if (rain && outdoors) { if (!full) data.bowl(new PetWorldData.Bowl(bowl.farm(), pos, bowl.style(), day, outdoors)); full = true; }
+            var next = state.setValue(PetBowlBlock.FULL, full).setValue(PetBowlBlock.SEASON, season);
+            if (next != state) level.setBlock(pos, next, 3);
+        }
+    }
+    public static void project(ServerLevel level) {
+        var data = PetWorldData.get(level.getServer());
+        for (var pet : data.all()) {
+            if (!pet.variant.available()) { if (level.getEntity(pet.id) instanceof PetEntity missing) missing.discard(); continue; }
+            var farm = farm(pet.farm); if (farm == null || !farm.isInitialized()) continue;
+            var existing = level.getEntity(pet.id);
+            if (existing instanceof PetEntity entity) { entity.refresh(pet); continue; }
+            if (existing != null) continue;
+            if (pet.position == null) {
+                var player = level.players().stream().filter(p -> farm.isFarmer(p.getUUID()) && farm.contains(p.blockPosition())).findFirst().orElse(null);
+                if (player == null) continue;
+                var near = PetHomes.near(level, farm, player.blockPosition().relative(player.getDirection().getOpposite(), 2), pet.variant, 3);
+                if (near == null) continue;
+                pet.position = Vec3.atBottomCenterOf(near); assignFreeBowl(data, pet); data.setDirty();
+            }
+            var pos = BlockPos.containing(pet.position);
+            // A terrain chunk can exist before entity storage is ready, or while it is being unloaded.
+            if (!level.isPositionEntityTicking(pos) || !level.areEntitiesLoaded(new net.minecraft.world.level.ChunkPos(pos).toLong())) continue;
+            if (!PetHomes.safePosition(level, farm, pet.position, pet.variant)) {
+                var safe = PetHomes.near(level, farm, pos, pet.variant, 4);
+                if (safe == null) safe = PetHomes.near(level, farm, farm.getSpawnPoint(), pet.variant, 4);
+                if (safe == null) continue;
+                pet.position = Vec3.atBottomCenterOf(safe); data.setDirty();
+            }
+            var entity = ModEntities.PET.get().create(level); if (entity == null) continue;
+            entity.setUUID(pet.id); entity.refresh(pet); entity.moveTo(pet.position.x, pet.position.y, pet.position.z, pet.yaw, 0);
+            level.addFreshEntity(entity);
+        }
+    }
+    public static void environment(ServerLevel level, PetRecord pet, PetEntity entity) {
+        var farm = farm(pet.farm); if (farm == null) { entity.discard(); return; }
+        boolean indoors = StardewTimeManager.get().getCurrentTime() >= 1200 || com.stardew.craft.weather.WeatherManager.isRaining(level) || pet.bowl == null;
+        boolean unsafe = !farm.contains(entity.blockPosition()) || entity.getY() < farm.getOrigin().getY() - 5 || entity.isInWater();
+        int day = StardewTimeManager.get().getAbsoluteDay();
+        boolean night = StardewTimeManager.get().getCurrentTime() >= 1200;
+        if (night && pet.restDay != day) {
+            var rest = PetHomes.rest(level, farm, pet, entity.getRandom());
+            if (rest != null) { pet.restPosition = rest; pet.restDay = day; PetWorldData.get(level.getServer()).setDirty(); }
+        }
+        if (night && pet.restPosition != null && PetHomes.safePosition(level, farm, pet.restPosition, pet.variant)) {
+            if (entity.position().distanceToSqr(pet.restPosition) > .0025) { entity.getNavigation().stop(); entity.teleportTo(pet.restPosition.x, pet.restPosition.y, pet.restPosition.z); }
+            if (!pet.indoors) { pet.indoors = true; PetWorldData.get(level.getServer()).setDirty(); }
+            remember(level, entity); return;
+        }
+        if (indoors == pet.indoors && !unsafe) return;
+        BlockPos target = indoors ? PetHomes.home(farm) : pet.bowl != null ? pet.bowl : farm.getSpawnPoint();
+        var safe = PetHomes.near(level, farm, target, pet.variant, 4);
+        if (safe != null) { entity.getNavigation().stop(); entity.teleportTo(safe.getX() + .5, safe.getY(), safe.getZ() + .5); pet.indoors = indoors; remember(level, entity); PetWorldData.get(level.getServer()).setDirty(); }
+    }
+    public static void interact(ServerPlayer player, PetEntity entity) {
+        var data = PetWorldData.get(player.server); var pet = data.find(entity.getUUID());
+        if (pet == null || !pet.variant.available() || !manages(player, pet.farm)) return;
+        ItemStack held = player.getMainHandItem();
+        if (held.getItem() instanceof StardewHatItem && pet.variant.wearsHat()) {
+            ItemStack old = ItemStack.parseOptional(player.registryAccess(), pet.hat);
+            if (!old.isEmpty()) { pet.hat = new CompoundTag(); if (!player.getInventory().add(old)) player.drop(old, false); }
+            else { pet.hat = (CompoundTag) held.copyWithCount(1).save(player.registryAccess()); held.shrink(1); }
+            entity.playSound(com.stardew.craft.sound.ModSounds.DIRTY_HIT.get(), .6f, 1);
+            data.setDirty(); entity.refresh(pet); return;
+        }
+        if (held.is(com.stardew.craft.item.ModItems.BUTTERFLY_POWDER.get())) { PetManagement.confirmRemoval(player, pet); return; }
+        if (player.isShiftKeyDown()) { PetManagement.open(player, pet.id); return; }
+        int day = StardewTimeManager.get().getAbsoluteDay();
+        if (pet.petted.getOrDefault(player.getUUID(), -1) == day) { PetManagement.open(player, pet.id); return; }
+        pet.petted.put(player.getUUID(), day);
+        if (pet.careDay != day) {
+            pet.careDay = day; pet.friendship(12);
+            PetGifts.give(player, entity, pet); pet.timesPet++;
+            if (pet.friendship == 1000 && !data.loved(pet.farm)) { data.markLoved(pet.farm); message(player, "loves_you", pet.name); }
+        }
+        data.setDirty(); entity.feedback.content(); entity.feedback.emote(20);
+    }
+    public static void message(ServerPlayer player, String key, Object... arguments) { com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player, Component.translatable("pet.stardewcraft." + key, arguments)); }
+}

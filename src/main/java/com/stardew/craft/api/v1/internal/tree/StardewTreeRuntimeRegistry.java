@@ -300,9 +300,6 @@ public final class StardewTreeRuntimeRegistry {
         WildTrees.Def matureDef = WildTrees.findByAnyPart(state);
         if (matureDef != null) {
             BlockPos root = WildTrees.findGeneratedModernRoot(level, position, matureDef);
-            if (root == null && matureDef.isTrunk0(state)) {
-                root = position;
-            }
             if (root != null) {
                 return new StardewTreeState(
                         wildId(matureDef),

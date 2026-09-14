@@ -28,28 +28,39 @@ public class WoodenChestMenu extends AbstractContainerMenu {
     @Nullable
     private final IntConsumer colorHandler;
     private int colorSelection;
+    private boolean colorAvailable;
+    private boolean woodenPreview;
 
     public WoodenChestMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, new SimpleContainer(CHEST_SIZE), null);
+        // Client-side placeholder: wait for the server's capabilities before enabling actions.
+        this(containerId, playerInventory, new SimpleContainer(CHEST_SIZE), null, null, -1, true);
     }
 
     public WoodenChestMenu(int containerId, Inventory playerInventory, Container container, @Nullable WoodenChestBlockEntity chestEntity) {
-        this(containerId, playerInventory, container, chestEntity, null, chestEntity != null ? chestEntity.getColorSelection() : 0);
+        this(containerId, playerInventory, container, chestEntity, null, chestEntity != null ? chestEntity.getColorSelection() : 0, false);
     }
 
     /** 带通用颜色处理器的构造函数，供 MineChest 等非 WoodenChest 使用 */
     public WoodenChestMenu(int containerId, Inventory playerInventory, Container container,
                            @Nullable IntConsumer colorHandler, int initialColor) {
-        this(containerId, playerInventory, container, null, colorHandler, initialColor);
+        this(containerId, playerInventory, container, null, colorHandler, initialColor, false);
+    }
+
+    public WoodenChestMenu(int containerId, Inventory playerInventory, Container container,
+                           @Nullable IntConsumer colorHandler, int initialColor, boolean rewardOnly) {
+        this(containerId,playerInventory,container,null,colorHandler,initialColor,rewardOnly);
     }
 
     private WoodenChestMenu(int containerId, Inventory playerInventory, Container container,
                             @Nullable WoodenChestBlockEntity chestEntity,
-                            @Nullable IntConsumer colorHandler, int initialColor) {
+                            @Nullable IntConsumer colorHandler, int initialColor, boolean rewardOnly) {
         super(ModMenuTypes.WOODEN_CHEST.get(), containerId);
+        this.rewardOnly=rewardOnly;
         this.container = container;
         this.chestEntity = chestEntity;
         this.colorHandler = colorHandler;
+        this.colorAvailable = chestEntity != null || colorHandler != null;
+        this.woodenPreview = chestEntity != null;
         this.colorSelection = initialColor;
 
         checkContainerSize(container, CHEST_SIZE);
@@ -67,9 +78,26 @@ public class WoodenChestMenu extends AbstractContainerMenu {
             }
         });
 
+        this.addDataSlot(new DataSlot() {
+            @Override
+            public int get() {
+                return (WoodenChestMenu.this.rewardOnly ? 1 : 0) | (WoodenChestMenu.this.colorAvailable ? 2 : 0)
+                        | (WoodenChestMenu.this.woodenPreview ? 4 : 0);
+            }
+
+            @Override
+            public void set(int value) {
+                WoodenChestMenu.this.rewardOnly = (value & 1) != 0;
+                WoodenChestMenu.this.colorAvailable = (value & 2) != 0;
+                WoodenChestMenu.this.woodenPreview = (value & 4) != 0;
+            }
+        });
+
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                this.addSlot(new Slot(container, col + row * COLS, 8 + col * 18, 18 + row * 18));
+                this.addSlot(new Slot(container, col + row * COLS, 8 + col * 18, 18 + row * 18) {
+                    @Override public boolean mayPlace(ItemStack stack) { return !WoodenChestMenu.this.rewardOnly; }
+                });
             }
         }
 
@@ -86,15 +114,29 @@ public class WoodenChestMenu extends AbstractContainerMenu {
         }
     }
 
+    private boolean rewardOnly;
+
+    public boolean canChangeColor() {
+        return !rewardOnly && colorAvailable;
+    }
+
+    public boolean canOrganize() {
+        return !rewardOnly;
+    }
+
+    public boolean hasWoodenPreview() { return woodenPreview; }
+
     public int getColorSelection() {
         return colorSelection;
     }
 
     public void setClientPreviewColorSelection(int selection) {
+        if (!canChangeColor()) return;
         colorSelection = WoodenChestColorPalette.clampIndex(selection);
     }
 
     public void setColorSelectionFromClient(int selection) {
+        if (!canChangeColor()) return;
         if (chestEntity != null) {
             chestEntity.setColorSelection(selection);
         } else if (colorHandler != null) {
@@ -103,6 +145,7 @@ public class WoodenChestMenu extends AbstractContainerMenu {
     }
 
     public void organizeContainer() {
+        if (rewardOnly) return;
         InventoryOrganizeService.organizeContainer(container, CHEST_SIZE);
         for (int i = 0; i < CHEST_SIZE; i++) {
             this.slots.get(i).setChanged();

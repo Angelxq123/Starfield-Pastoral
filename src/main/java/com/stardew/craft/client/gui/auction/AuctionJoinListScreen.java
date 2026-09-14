@@ -1,293 +1,78 @@
 package com.stardew.craft.client.gui.auction;
 
-import com.stardew.craft.client.gui.common.CommonGuiTextures;
-import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
-import com.stardew.craft.network.payload.OpenAuctionJoinListPayload;
-import com.stardew.craft.sound.ModSounds;
+import com.stardew.craft.network.payload.OpenAuctionJoinListPayload.AuctionSummary;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-
-import javax.annotation.Nonnull;
+import java.util.Comparator;
 import java.util.List;
 
+/** Chronological programme: each dated entry opens its own consignment form. */
 @SuppressWarnings("null")
-public class AuctionJoinListScreen extends Screen {
-    // Fixed design canvas, scaled uniformly to fit the screen so the layout is identical at every GUI scale.
-    private static final int DESIGN_W = 700;
-    private static final int DESIGN_H = 456;
-    private final List<OpenAuctionJoinListPayload.AuctionSummary> auctions;
-    private float fitScale = 1.0f;
-    private int fitOriginX, fitOriginY;
-    private int panelX, panelY, panelW, panelH;
-    private int contentX, contentY, contentW, contentH;
-    private int listX, listY, listW, listH;
-    private int detailX, detailY, detailW, detailH;
-    private int joinX, joinY, joinW, joinH;
-    private int rowH;
-    private int maxVisible;
-    private int scrollOffset;
-    private int selectedIndex;
-    private boolean singleColumn;
-    private boolean opened;
-
-    public AuctionJoinListScreen(List<OpenAuctionJoinListPayload.AuctionSummary> auctions) {
-        super(Component.translatable("stardewcraft.auction.join_list.title"));
-        this.auctions = auctions;
+public class AuctionJoinListScreen extends AuctionScreen {
+    private final List<AuctionSummary> auctions;
+    public AuctionJoinListScreen(List<AuctionSummary> auctions) {
+        super("stardewcraft.auction.join_list.title");
+        this.auctions = auctions.stream().sorted(Comparator.comparingInt(AuctionSummary::scheduledDay)
+                .thenComparingInt(AuctionSummary::startMinute)).toList();
     }
-
-    @Override
-    protected void init() {
-        fitScale = Math.min(1.5f, 0.94f * Math.min(width / (float) DESIGN_W, height / (float) DESIGN_H));
-        fitOriginX = Math.round((width - DESIGN_W * fitScale) / 2f);
-        fitOriginY = Math.round((height - DESIGN_H * fitScale) / 2f);
-        panelW = DESIGN_W;
-        panelH = DESIGN_H;
-        panelX = 0;
-        panelY = 0;
-        int pad = Math.max(14, Math.min(24, panelW / 24));
-        contentX = panelX + pad;
-        contentY = panelY + pad;
-        contentW = panelW - pad * 2;
-        contentH = panelH - pad * 2;
-        singleColumn = contentW < 540;
-        int bodyY = contentY + 50;
-        int bodyH = contentH - 50;
-        int gap = Math.max(12, contentW / 42);
-        if (singleColumn) {
-            listX = contentX + 8;
-            listY = bodyY;
-            listW = contentW - 16;
-            listH = Math.max(104, bodyH - 70);
-            detailX = listX;
-            detailY = listY + listH + gap;
-            detailW = listW;
-            detailH = Math.max(54, contentY + contentH - detailY);
-        } else {
-            listX = contentX + 8;
-            listY = bodyY;
-            listW = Math.max(278, (contentW - gap - 16) * 58 / 100);
-            listH = bodyH;
-            detailX = listX + listW + gap;
-            detailY = bodyY;
-            detailW = contentX + contentW - 8 - detailX;
-            detailH = bodyH;
-        }
-        rowH = 58;
-        maxVisible = Math.max(1, listH / (rowH + 8));
-        scrollOffset = Math.min(scrollOffset, maxScroll());
-        selectedIndex = auctions.isEmpty() ? -1 : Math.min(Math.max(0, selectedIndex), auctions.size() - 1);
-        if (selectedIndex >= 0) {
-            ensureVisible(selectedIndex);
-        }
-        joinW = Math.min(168, Math.max(132, detailW - 24));
-        joinH = 31;
-        joinX = detailX + detailW - joinW - 12;
-        joinY = detailY + detailH - joinH - 12;
-        if (!opened) {
-            opened = true;
-            playOpen();
-        }
+    @Override protected int preferredWidth() { return 416; }
+    @Override protected int preferredHeight() {
+        if (!auctions.isEmpty()) return super.preferredHeight();
+        int w = Math.min(preferredWidth(), width - 12) - 34;
+        return Math.max(38, line + 24) + 112 + controlH
+                + wrappedHeight(tr("join_list.empty"), w) + wrappedHeight(tr("join_list.empty_hint"), w);
     }
-
-    @Override
-    public void render(@Nonnull GuiGraphics g, int rawMouseX, int rawMouseY, float partialTick) {
-        renderTransparentBackground(g);
-        int mouseX = lmx(rawMouseX);
-        int mouseY = lmy(rawMouseY);
-        g.pose().pushPose();
-        g.pose().translate(fitOriginX, fitOriginY, 0);
-        g.pose().scale(fitScale, fitScale, 1f);
-        StardewGuiUtil.drawDialogueBoxFrame(g, panelX, panelY, panelW, panelH);
-        AuctionUi.ledgerPanel(g, contentX, contentY, contentW, contentH);
-        AuctionUi.title(g, font, Component.translatable("stardewcraft.auction.join_list.title"),
-            Component.translatable("stardewcraft.auction.join_list.subtitle"),
-            contentX + 8, contentY + 7, contentW - 16);
-        if (auctions.isEmpty()) {
-            drawEmpty(g);
-        } else {
-            drawList(g, mouseX, mouseY);
-            drawDetail(g, mouseX, mouseY);
+    @Override protected void layout() {
+        int y = wrappedHeight(tr("join_list.subtitle"), contentW) + 14;
+        for (AuctionSummary a : auctions) {
+            int rowH = Math.max(60 + line, wrappedHeight(Component.literal(a.name()), contentW - 88) + 2 * (line + 5) + 16);
+            actionArea(0, y, contentW, rowH, narration(a),
+                    () -> minecraft.setScreen(new AuctionConsignScreen(a, this)), (g, b) -> {
+                int x = b.getX(), yy = b.getY();
+                if (b.isHoveredOrFocused()) g.fill(x + 60, yy + 1, x + contentW, yy + rowH - 8, 0x33D2AE76);
+                AuctionUi.sprite(g, "date_leaf", x + 6, yy + 5, 40, 48);
+                String day = String.valueOf(Math.max(0, a.scheduledDay() - 1) % 28 + 1);
+                number(g, day, x + 26 - font.width(day), yy + 17, 2, AuctionUi.INK);
+                String season = season(a.scheduledDay()).getString();
+                String fitted = font.plainSubstrByWidth(season, 56);
+                g.drawString(font, fitted, x + 26 - font.width(fitted) / 2, yy + 56, AuctionUi.MUTED, false);
+                if (b.isHovered()) tooltip(narration(a));
+                int tx = x + 66, tw = contentW - 88;
+                String time = time(a.startMinute());
+                g.drawString(font, time, tx, yy + 4, AuctionUi.GOLD, false);
+                Component count = tr("join_list.lots", a.lotCount());
+                String countText = font.plainSubstrByWidth(count.getString(), Math.max(1, tw - font.width(time) - 12));
+                g.drawString(font, countText, x + contentW - 14 - font.width(countText), yy + 4, AuctionUi.MUTED, false);
+                int end = paragraph(g, Component.literal(a.name()), tx, yy + line + 13, tw, AuctionUi.INK);
+                String host = tr("join_list.detail_host", a.creatorName()).getString();
+                g.drawString(font, font.plainSubstrByWidth(host, tw), tx, end + 4, AuctionUi.MUTED, false);
+                AuctionUi.rule(g, x + 66, yy + rowH - 3, contentW - 66);
+                // A small forward chevron makes the whole entry's destination explicit.
+                for (int i = 0; i < 4; i++) {
+                    g.fill(x + contentW - 7 + i, yy + rowH / 2 - 4 + i, x + contentW - 5 + i, yy + rowH / 2 - 3 + i, AuctionUi.GOLD);
+                    g.fill(x + contentW - 7 + i, yy + rowH / 2 + 3 - i, x + contentW - 5 + i, yy + rowH / 2 + 4 - i, AuctionUi.GOLD);
+                }
+            });
+            y += rowH + 6;
         }
-        g.pose().popPose();
+        contentHeight = auctions.isEmpty() ? wrappedHeight(tr("join_list.empty"), contentW)
+                + wrappedHeight(tr("join_list.empty_hint"), contentW) + 92 : y;
+        footer(tr("picker.cancel"), false, false, this::onClose);
     }
-
-    private int lmx(double mouseX) { return (int) Math.round((mouseX - fitOriginX) / fitScale); }
-    private int lmy(double mouseY) { return (int) Math.round((mouseY - fitOriginY) / fitScale); }
-    private double ldx(double mouseX) { return (mouseX - fitOriginX) / fitScale; }
-    private double ldy(double mouseY) { return (mouseY - fitOriginY) / fitScale; }
-
-    private void drawEmpty(GuiGraphics g) {
-        AuctionUi.card(g, listX, listY + 8, listW, Math.min(98, listH), false, false);
-        g.drawString(font, Component.translatable("stardewcraft.auction.join_list.empty"), listX + 14, listY + 30, AuctionUi.BODY, false);
-        AuctionUi.drawClamped(g, font, Component.translatable("stardewcraft.auction.join_list.empty_hint"),
-            listX + 14, listY + 50, listW - 28, AuctionUi.MUTED);
+    private Component narration(AuctionSummary a) {
+        return Component.literal(a.name()).append("\n").append(tr("join_list.meta", a.creatorName(),
+                tr("join_list.day_time", season(a.scheduledDay()), Math.max(0, a.scheduledDay() - 1) % 28 + 1, time(a.startMinute())), a.lotCount()))
+                .append("\n").append(tr("join_list.join"));
     }
-
-    private void drawList(GuiGraphics g, int mouseX, int mouseY) {
-        for (int i = 0; i < Math.min(maxVisible, auctions.size() - scrollOffset); i++) {
-            int y = listY + i * (rowH + 8);
-            int index = i + scrollOffset;
-            drawRow(g, auctions.get(index), index, listX, y, listW, mouseX, mouseY);
-        }
-        if (maxScroll() > 0) {
-            drawScrollbar(g);
-        }
-    }
-
-    private void drawRow(GuiGraphics g, OpenAuctionJoinListPayload.AuctionSummary summary, int index, int x, int y, int w, int mouseX, int mouseY) {
-        boolean hover = AuctionUi.inside(mouseX, mouseY, x, y, w, rowH);
-        boolean selected = selectedIndex == index;
-        AuctionUi.noticeSlip(g, x, y, w, rowH, selected, hover);
-        CommonGuiTextures.drawQuestTimed(g, x + 17, y + 16, 1.0f);
-        AuctionUi.drawClamped(g, font, summary.name(), x + 40, y + 10, w - 52, AuctionUi.INK);
-        String meta = Component.translatable("stardewcraft.auction.join_list.meta",
-            summary.creatorName(), formatDayTime(summary.scheduledDay(), summary.startMinute()), summary.lotCount()).getString();
-        AuctionUi.drawClamped(g, font, meta, x + 40, y + 31, w - 52, selected || hover ? AuctionUi.GOLD : AuctionUi.MUTED);
-    }
-
-    private void drawDetail(GuiGraphics g, int mouseX, int mouseY) {
-        AuctionUi.card(g, detailX, detailY, detailW, detailH, false, false);
-        OpenAuctionJoinListPayload.AuctionSummary selected = selectedIndex >= 0 ? auctions.get(selectedIndex) : null;
-        if (selected == null) {
-            return;
-        }
-        AuctionUi.sectionLabel(g, font, Component.translatable("stardewcraft.auction.join.target"), detailX + 14, detailY + 13, detailW - 28);
-        AuctionUi.drawClamped(g, font, selected.name(), detailX + 16, detailY + 40, detailW - 32, AuctionUi.INK);
-        AuctionUi.drawClamped(g, font, Component.translatable("stardewcraft.auction.join_list.detail_host", selected.creatorName()),
-            detailX + 16, detailY + 61, detailW - 32, AuctionUi.BODY);
-        AuctionUi.drawClamped(g, font, Component.translatable("stardewcraft.auction.join_list.detail_time",
-            formatDayTime(selected.scheduledDay(), selected.startMinute())), detailX + 16, detailY + 79, detailW - 32, AuctionUi.MUTED);
-        AuctionUi.drawClamped(g, font, Component.translatable("stardewcraft.auction.join_list.detail_lots", selected.lotCount()),
-            detailX + 16, detailY + 97, detailW - 32, AuctionUi.MUTED);
-        boolean hover = AuctionUi.inside(mouseX, mouseY, joinX, joinY, joinW, joinH);
-        AuctionUi.actionButton(g, font, Component.translatable("stardewcraft.auction.join_list.join"), joinX, joinY, joinW, joinH, true, hover);
-    }
-
-    private void drawScrollbar(GuiGraphics g) {
-        int trackX = listX + listW - 7;
-        int trackY = listY;
-        int trackH = Math.max(rowH, Math.min(listH, maxVisible * (rowH + 8) - 8));
-        CommonGuiTextures.drawScrollTrackBox(g, trackX, trackY, 6, trackH, 1.0f);
-        float ratio = scrollOffset / (float) Math.max(1, maxScroll());
-        int thumbH = Math.max(18, trackH * maxVisible / auctions.size());
-        int thumbY = trackY + Math.round((trackH - thumbH) * ratio);
-        CommonGuiTextures.drawScrollBarThumb(g, trackX, thumbY, 1.0f);
-    }
-
-    @Override
-    public boolean mouseClicked(double rawX, double rawY, int button) {
-        double mouseX = ldx(rawX);
-        double mouseY = ldy(rawY);
-        for (int i = 0; i < Math.min(maxVisible, auctions.size() - scrollOffset); i++) {
-            int y = listY + i * (rowH + 8);
-            if (AuctionUi.inside(mouseX, mouseY, listX, y, listW, rowH)) {
-                selectedIndex = i + scrollOffset;
-                playSelect();
-                return true;
-            }
-        }
-        if (!auctions.isEmpty() && AuctionUi.inside(mouseX, mouseY, joinX, joinY, joinW, joinH)) {
-            openSelected();
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (auctions.isEmpty()) {
-            return super.keyPressed(keyCode, scanCode, modifiers);
-        }
-        if (keyCode == 257 || keyCode == 335) {
-            openSelected();
-            return true;
-        }
-        if (keyCode == 265 && selectedIndex > 0) {
-            selectedIndex--;
-            ensureVisible(selectedIndex);
-            playSelect();
-            return true;
-        }
-        if (keyCode == 264 && selectedIndex < auctions.size() - 1) {
-            selectedIndex++;
-            ensureVisible(selectedIndex);
-            playSelect();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    @Override
-    public boolean mouseScrolled(double rawX, double rawY, double scrollX, double scrollY) {
-        double mouseX = ldx(rawX);
-        double mouseY = ldy(rawY);
-        if (!AuctionUi.inside(mouseX, mouseY, listX, listY, listW, listH)) {
-            return super.mouseScrolled(rawX, rawY, scrollX, scrollY);
-        }
-        if (scrollY > 0 && scrollOffset > 0) {
-            scrollOffset--;
-            selectedIndex = Math.max(0, scrollOffset);
-            playSelect();
-            return true;
-        }
-        if (scrollY < 0 && scrollOffset < maxScroll()) {
-            scrollOffset++;
-            selectedIndex = Math.min(auctions.size() - 1, scrollOffset + maxVisible - 1);
-            playSelect();
-            return true;
-        }
-        return true;
-    }
-
-    private int maxScroll() {
-        return Math.max(0, auctions.size() - maxVisible);
-    }
-
-    private String formatDayTime(int day, int minute) {
-        return Component.translatable("stardewcraft.auction.join_list.day_time",
-            seasonName(day), dayOfSeason(day), String.format(java.util.Locale.ROOT, "%02d:%02d", minute / 60, minute % 60)).getString();
-    }
-
-    private static int dayOfSeason(int absoluteDay) {
-        return Math.max(0, absoluteDay - 1) % 28 + 1;
-    }
-
-    private static Component seasonName(int absoluteDay) {
-        int season = (Math.max(0, absoluteDay - 1) / 28) % 4;
-        return Component.translatable("stardewcraft.season." + switch (season) {
-            case 1 -> "summer";
-            case 2 -> "fall";
-            case 3 -> "winter";
-            default -> "spring";
+    static String time(int minute) { return String.format(java.util.Locale.ROOT, "%02d:%02d", minute / 60, minute % 60); }
+    static Component season(int day) {
+        return Component.translatable("stardewcraft.season." + switch ((Math.max(0, day - 1) / 28) % 4) {
+            case 1 -> "summer"; case 2 -> "fall"; case 3 -> "winter"; default -> "spring";
         });
     }
-
-    private void ensureVisible(int index) {
-        if (index < scrollOffset) {
-            scrollOffset = index;
-        } else if (index >= scrollOffset + maxVisible) {
-            scrollOffset = index - maxVisible + 1;
-        }
-        scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll()));
-    }
-
-    private void openSelected() {
-        if (minecraft != null && selectedIndex >= 0 && selectedIndex < auctions.size()) {
-            minecraft.setScreen(new AuctionConsignScreen(auctions.get(selectedIndex)));
-        }
-    }
-
-    private void playSelect() {
-        if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.SMALL_SELECT.get(), 0.7f, 1.05f));
-        }
-    }
-
-    private void playOpen() {
-        if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.BOOK_READ.get(), 0.82f, 0.70f));
-        }
+    @Override protected void drawBody(GuiGraphics g, float partialTick) {
+        if (auctions.isEmpty()) AuctionUi.illustration(g, "register", (contentW - 64) / 2, 2);
+        int y = paragraph(g, tr(auctions.isEmpty() ? "join_list.empty" : "join_list.subtitle"), 0, auctions.isEmpty() ? 80 : 0, contentW, AuctionUi.MUTED);
+        if (auctions.isEmpty()) paragraph(g, tr("join_list.empty_hint"), 0, y + 10, contentW, AuctionUi.BODY);
     }
 }

@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "stardewcraft:block/ice_cream_stand/spring/empty"
+      }
+    }
+  ]
+}

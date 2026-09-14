@@ -1,0 +1,204 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "part": "0",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_straight",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "part": "0",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_straight",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "part": "0",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_straight",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "part": "0",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_straight",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "part": "1",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_corner",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "part": "1",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_corner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "part": "1",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_corner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "part": "1",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_corner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "part": "2",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_end",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "part": "2",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_end",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "part": "2",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_end",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "part": "2",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_end",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "part": "3",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_post",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "part": "3",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_post",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "part": "3",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_post",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "part": "3",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/construction_fence_post",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "notice": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/upgrade_notice_fence",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "notice": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/upgrade_notice_fence",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "notice": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/upgrade_notice_fence",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "notice": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "stardewcraft:block/construction/upgrade_notice_fence",
+        "y": 270
+      }
+    }
+  ]
+}

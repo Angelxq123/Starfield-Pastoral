@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "source_name": "Serpent",
+  "family": "serpent",
+  "health": 150,
+  "damage": 23,
+  "resilience": 0,
+  "miss_chance": 0,
+  "experience": 20,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:void_essence",
+      "chance": 0.99
+    },
+    {
+      "item": "stardewcraft:void_essence",
+      "chance": 0.15
+    },
+    {
+      "item": "stardewcraft:bomb_item",
+      "chance": 0.15
+    },
+    {
+      "item": "stardewcraft:spicy_eel",
+      "chance": 0.06
+    },
+    {
+      "item": "stardewcraft:rabbits_foot",
+      "chance": 0.008
+    },
+    {
+      "item": "stardewcraft:prismatic_shard",
+      "chance": 0.001
+    }
+  ]
+}

@@ -143,6 +143,12 @@ public final class InsectDashSkillHandler implements RuntimeWeaponSkillHandler {
         instance.initializeExecutionState(executionState);
         instance.registerCommittedEffect(() -> {
             try {
+                WeaponSkillAnimationDispatcher.sendSkillAnim(
+                        context.player(),
+                        weaponId,
+                        skillId,
+                        ANIMATION_TICKS
+                );
                 for (LivingEntity target : targets) {
                     WeaponSkillDamage.apply(
                             context.player(),
@@ -180,12 +186,6 @@ public final class InsectDashSkillHandler implements RuntimeWeaponSkillHandler {
                 WeaponSkillAnimationLock.setLock(
                         context.player(),
                         context.nowTick(),
-                        ANIMATION_TICKS
-                );
-                WeaponSkillAnimationDispatcher.sendSkillAnim(
-                        context.player(),
-                        weaponId,
-                        skillId,
                         ANIMATION_TICKS
                 );
             } catch (RuntimeException exception) {

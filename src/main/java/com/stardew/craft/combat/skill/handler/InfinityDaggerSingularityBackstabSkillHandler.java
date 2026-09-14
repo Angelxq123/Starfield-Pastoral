@@ -21,11 +21,7 @@ import com.stardew.craft.player.PlayerStardewDataAPI;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -144,8 +140,18 @@ public final class InfinityDaggerSingularityBackstabSkillHandler
                 );
         instance.initializeExecutionState(executionState);
         instance.registerCommittedEffect(() -> {
+            Vec3 departure = context.player().position();
             teleportPlayer(context.player(), plan.destination());
             faceTarget(context.player(), target);
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(),
+                    weaponId,
+                    skillId,
+                    FINAL_ANIMATION_TICKS
+            );
+            com.stardew.craft.combat.network.InfinityPhasePayload.send(context.player(), context.nowTick(),
+                    com.stardew.craft.combat.network.InfinityPhasePayload.Phase.LEAP, departure, context.player().position(), 8, marked);
+
             attack(
                     context,
                     target,
@@ -164,12 +170,6 @@ public final class InfinityDaggerSingularityBackstabSkillHandler
                 return;
             }
             if (shouldStrikeSecond(target.isAlive())) {
-                WeaponSkillAnimationDispatcher.sendSkillAnim(
-                        context.player(),
-                        weaponId,
-                        skillId,
-                        SECOND_HIT_ANIMATION_TICKS
-                );
                 WeaponSkillAnimationLock.setLock(
                         context.player(),
                         context.nowTick(),
@@ -187,9 +187,6 @@ public final class InfinityDaggerSingularityBackstabSkillHandler
                                 .BYPASS_FOR_AUTHORED_SEQUENCE
                 );
             }
-            if (marked) {
-                playConsumedMarkEffects(target);
-            }
             if (executionState.settleControl()) {
                 YetiFreezeTracker.applyWithEquipmentProtection(
                         target,
@@ -201,16 +198,9 @@ public final class InfinityDaggerSingularityBackstabSkillHandler
             }
         });
 
-        // Preserve the original final cast notification order.
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                FINAL_ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 FINAL_ANIMATION_TICKS
         );
     }
@@ -486,6 +476,9 @@ public final class InfinityDaggerSingularityBackstabSkillHandler
         );
         player.setYRot(yaw);
         player.setYHeadRot(yaw);
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.teleport(player.getX(), player.getY(), player.getZ(), yaw, player.getXRot());
+        }
     }
 
     private static void attack(
@@ -505,61 +498,7 @@ public final class InfinityDaggerSingularityBackstabSkillHandler
         );
     }
 
-    private static void playConsumedMarkEffects(
-            LivingEntity target
-    ) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
 
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.6D;
-        double z = target.getZ();
-        double radius = 0.32D;
-        for (int index = 0; index < 12; index++) {
-            double angle = Math.PI * 2.0D * index / 12.0D;
-            double particleX = x + Math.cos(angle) * radius;
-            double particleZ = z + Math.sin(angle) * radius;
-            double velocityX = (x - particleX) * 0.08D;
-            double velocityZ = (z - particleZ) * 0.08D;
-            serverLevel.addParticle(
-                    ParticleTypes.PORTAL,
-                    particleX,
-                    y,
-                    particleZ,
-                    velocityX,
-                    0.0D,
-                    velocityZ
-            );
-        }
-        serverLevel.sendParticles(
-                ParticleTypes.END_ROD,
-                x,
-                y,
-                z,
-                10,
-                0.25D,
-                0.18D,
-                0.25D,
-                0.02D
-        );
-        serverLevel.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.END_PORTAL_FRAME_FILL,
-                SoundSource.PLAYERS,
-                0.5F,
-                0.75F
-        );
-        serverLevel.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.END_PORTAL_SPAWN,
-                SoundSource.PLAYERS,
-                0.35F,
-                0.75F
-        );
-    }
 
     private record CastPlan(
             LivingEntity target,

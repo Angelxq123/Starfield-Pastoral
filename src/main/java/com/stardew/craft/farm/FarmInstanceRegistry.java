@@ -230,6 +230,19 @@ public class FarmInstanceRegistry extends SavedData {
         StardewFarmLifecycle.FarmContext context = new StardewFarmLifecycle.FarmContext(
                 server, StardewFarmSnapshots.from(farm));
         StardewFarmLifecycleRegistry.beforeDelete(context);
+        if(server!=null) {
+            var caveLevel=server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+            if(caveLevel!=null)com.stardew.craft.interior.FarmCaveData.get(caveLevel).allocate(caveLevel,farm);
+        }
+
+        if (server != null) {
+            com.stardew.craft.animal.runtime.LivestockService.recover(server);
+            var buildings = com.stardew.craft.building.runtime.BuildingWorldData.get(server);
+            var homes = buildings.all().stream().filter(b -> b.farmId().equals(farm.getInstanceId())).map(com.stardew.craft.building.runtime.BuildingRecord::id).collect(java.util.stream.Collectors.toSet());
+            com.stardew.craft.animal.runtime.LivestockWorldData.get(server).removeFarm(farm.getInstanceId(), homes);
+            com.stardew.craft.pet.PetWorldData.get(server).removeFarm(farm.getInstanceId());
+            buildings.removeFarm(farm.getInstanceId());
+        }
 
         instances.remove(playerUUID);
         slotToOwner.remove(farm.getSlotIndex());
@@ -258,6 +271,10 @@ public class FarmInstanceRegistry extends SavedData {
         StardewFarmLifecycleRegistry.beforeTransfer(new StardewFarmLifecycle.TransferRequest(
                 server, sourceSnapshot, toUUID, newOwnerName));
 
+        if(server!=null) {
+            var caveLevel=server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+            if(caveLevel!=null)com.stardew.craft.interior.FarmCaveData.get(caveLevel).allocate(caveLevel,farm);
+        }
         instances.remove(fromUUID);
         // 创建新实例保持相同槽位和坐标
         FarmInstance transferred = new FarmInstance(
@@ -472,6 +489,9 @@ public class FarmInstanceRegistry extends SavedData {
         ListTag list = tag.getList("Instances", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             FarmInstance instance = FarmInstance.load(list.getCompound(i));
+            if (!list.getCompound(i).hasUUID("InstanceId")) {
+                registry.setDirty();
+            }
             registry.instances.put(instance.getOwnerUUID(), instance);
             registry.slotToOwner.put(instance.getSlotIndex(), instance.getOwnerUUID());
         }

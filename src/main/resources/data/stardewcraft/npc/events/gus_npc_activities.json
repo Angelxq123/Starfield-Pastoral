@@ -1,0 +1,47 @@
+{
+  "event_id": "gus:npc_activities",
+  "activities": {
+    "clean": {
+      "actors": [
+        "gus"
+      ],
+      "aliases": [
+        "gus_clean"
+      ],
+      "asset": "gus_clean",
+      "clip_prefix": "animation.gus.clean",
+      "enter_ticks": 32,
+      "exit_ticks": 32,
+      "support": "",
+      "transition": "clips"
+    },
+    "sit": {
+      "actors": [
+        "gus"
+      ],
+      "aliases": [
+        "gus_sit_down"
+      ],
+      "asset": "gus_sit",
+      "clip_prefix": "animation.gus.sit",
+      "enter_ticks": 48,
+      "exit_ticks": 48,
+      "support": "chair",
+      "transition": "clips"
+    },
+    "sleep": {
+      "actors": [
+        "gus"
+      ],
+      "aliases": [
+        "gus_sleep"
+      ],
+      "asset": "gus_sleep",
+      "clip_prefix": "animation.gus.sleep",
+      "enter_ticks": 112,
+      "exit_ticks": 112,
+      "support": "bed",
+      "transition": "clips"
+    }
+  }
+}

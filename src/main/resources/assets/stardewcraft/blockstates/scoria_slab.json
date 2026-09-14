@@ -1,7 +1,0 @@
-{
-  "variants": {
-    "type=bottom": { "model": "stardewcraft:block/scoria_slab" },
-    "type=double": { "model": "stardewcraft:block/scoria" },
-    "type=top": { "model": "stardewcraft:block/scoria_slab_top" }
-  }
-}

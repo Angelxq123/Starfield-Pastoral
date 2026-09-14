@@ -1,0 +1,89 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0.35,
+  "walkStride": 0.7808719375,
+  "attentionRig": {
+    "hipHeight": 11.0,
+    "soleY": -0.35,
+    "toeDepth": 2.35,
+    "halfStance": 2.2,
+    "rightZ": 0.1,
+    "leftZ": -0.16,
+    "rightYaw": -4,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "cloth": {
+    "bone": "bone1",
+    "kind": "cape",
+    "anchorY": 24,
+    "hemY": 1.4,
+    "margin": 0.35
+  },
+  "gait": {
+    "id": "wizard",
+    "revision": "character-articulated-3",
+    "rootMean": 0.44000000000000006,
+    "groundOffset": 0.35,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      }
+    },
+    "bodyPitch": -2.5999999999999996,
+    "headPitch": 1.15,
+    "halfStance": 2.4299999999999997,
+    "stride": 12.493951,
+    "reachMargin": 0.044041,
+    "legLengthStride": 19.25,
+    "approvedBaseStride": 19.25,
+    "stance": 0.61,
+    "bob": 0.26239999999999997,
+    "sway": 0.49,
+    "rootYaw": 1.4,
+    "bodyYaw": 3.8,
+    "armSwing": 13.0,
+    "armPhase": 0.06,
+    "footLift": 0.2436,
+    "swingPeak": 0.55,
+    "elbowBase": 10,
+    "bodyRoll": 0.7,
+    "strideScale": 0.98,
+    "intent": "成年男性、长袍；从容、上身较稳，肩臂跟随稍迟，袍面为开口衣尾，单独检查净空。",
+    "bodyLag": 0.09,
+    "headLag": 0.125,
+    "headYawLag": 0.075,
+    "headNod": 0.34,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.808965,
+    "levelWalk": true
+  }
+}

@@ -485,5 +485,6 @@
 
                                     ]
                    }
-               ]
+               ],
+  "stardewcraft:collision": {"mode": "custom", "boxes": [{"from": [4, 3, 12], "to": [12, 14, 16]}]}
 }

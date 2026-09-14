@@ -26,7 +26,7 @@ import java.util.Set;
 /** Source-backed view of the bundled SDV {@code Data/Objects} table. */
 @SuppressWarnings("null")
 public final class VanillaObjectCatalog {
-    private static final String OBJECTS_RESOURCE = "data/stardewcraft/npc/vanilla/data/Objects.json";
+    private static final String OBJECTS_RESOURCE = "data/stardewcraft/npc/vanilla/data/objects.json";
     private static final CatalogData DATA = load();
 
     private VanillaObjectCatalog() {

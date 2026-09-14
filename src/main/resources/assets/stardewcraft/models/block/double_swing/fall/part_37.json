@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/fall/swing_fall",
+    "particle": "stardewcraft:block/double_swing/fall/swing_seat_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -13,
+        -2,
+        -13
+      ],
+      "to": [
+        -3,
+        0,
+        -3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            15.0625,
+            2.0625,
+            15.375,
+            2.125
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            0.0,
+            3.09375,
+            0.3125,
+            3.15625
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            15.40625,
+            2.0625,
+            15.71875,
+            2.125
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            0.34375,
+            3.09375,
+            0.65625,
+            3.15625
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            0.6875,
+            3.09375,
+            1.0,
+            3.40625
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            1.03125,
+            3.09375,
+            1.34375,
+            3.40625
+          ]
+        }
+      }
+    }
+  ]
+}

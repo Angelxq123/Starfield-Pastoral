@@ -13,6 +13,9 @@ import com.stardew.craft.item.catalog.StardewItemCatalog;
 import com.stardew.craft.item.catalog.StardewItemDisplayStacks;
 import com.stardew.craft.item.quality.QualityHelper;
 import com.stardew.craft.client.gui.WorkbenchScreen;
+import com.stardew.craft.client.gui.WoodenChestScreen;
+import com.stardew.craft.client.gui.StoneChestScreen;
+import com.stardew.craft.client.gui.MiniForgeScreen;
 import com.stardew.craft.client.gui.menu.StardewGameMenuScreen;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -33,6 +36,7 @@ import mezz.jei.api.runtime.IJeiRuntime;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.api.runtime.IIngredientManager;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -46,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * JEI 插件 - 钓鱼信息展示
@@ -94,6 +99,10 @@ public class StardewJeiPlugin implements IModPlugin {
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
         IIngredientManager ingredientManager = registration.getJeiHelpers().getIngredientManager();
+
+        registerExtraAreas(registration, WoodenChestScreen.class, WoodenChestScreen::jeiGuiExtraAreas);
+        registerExtraAreas(registration, StoneChestScreen.class, StoneChestScreen::jeiGuiExtraAreas);
+        registerExtraAreas(registration, MiniForgeScreen.class, MiniForgeScreen::jeiGuiExtraAreas);
 
         // The V-menu is a real container now, but only its inventory and crafting tabs
         // should reserve space for JEI. Other tabs use the full screen for non-item UI.
@@ -147,6 +156,16 @@ public class StardewJeiPlugin implements IModPlugin {
         });
     }
 
+    private static <T extends AbstractContainerScreen<?>> void registerExtraAreas(
+            IGuiHandlerRegistration registration, Class<T> screenClass, Function<T, List<Rect2i>> areas) {
+        registration.addGuiContainerHandler(screenClass, new IGuiContainerHandler<T>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(T screen) {
+                return areas.apply(screen);
+            }
+        });
+    }
+
     /**
      * Unsupported V-menu tabs deliberately claim the whole screen, leaving JEI no
      * legal overlay area even when a JEI version applies generic container handling.
@@ -193,6 +212,8 @@ public class StardewJeiPlugin implements IModPlugin {
         for (Item item : StardewItemCatalog.visibleItems()) {
             if (StardewItemDisplayStacks.hasQualityVariants(item)) {
                 registration.registerSubtypeInterpreter(item, qualitySubtype);
+            } else if (item instanceof net.minecraft.world.item.BlockItem) {
+                registration.registerSubtypeInterpreter(item, new BlockStateSubtypeInterpreter());
             }
         }
         registration.registerSubtypeInterpreter(ModItems.JELLY.get(), new PreserveSubtypeInterpreter());
@@ -205,6 +226,8 @@ public class StardewJeiPlugin implements IModPlugin {
         registration.registerSubtypeInterpreter(ModItems.JUICE.get(), new FlavoredDrinkSubtypeInterpreter());
         registration.registerSubtypeInterpreter(ModItems.TARGETED_BAIT.get(), new SpecificBaitSubtypeInterpreter());
         registration.registerSubtypeInterpreter(ModItems.SECRET_NOTE.get(), new SecretNoteSubtypeInterpreter());
+        // The unbound base is hidden, so this item is absent from visibleItems().
+        registration.registerSubtypeInterpreter(ModItems.JUNIMO_NOTE.get(), new BlockStateSubtypeInterpreter());
     }
 
     @Override
@@ -535,6 +558,24 @@ public class StardewJeiPlugin implements IModPlugin {
     }
 
     private record QualitySubtype(int quality, Integer flowerColor) {
+    }
+
+    private static final class BlockStateSubtypeInterpreter implements ISubtypeInterpreter<ItemStack> {
+        @Override
+        public Object getSubtypeData(ItemStack stack, UidContext context) {
+            return context == UidContext.Ingredient
+                    ? stack.getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                            net.minecraft.world.item.component.BlockItemStateProperties.EMPTY)
+                    : null;
+        }
+
+        @Override
+        public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) {
+            if (context != UidContext.Ingredient) return "";
+            var state = stack.getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                    net.minecraft.world.item.component.BlockItemStateProperties.EMPTY);
+            return new java.util.TreeMap<>(state.properties()).toString();
+        }
     }
 
     private record SourceQualitySubtype(String source, int quality) {

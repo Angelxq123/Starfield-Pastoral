@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-public record FishingRodCastStatePayload(boolean active) implements CustomPacketPayload {
+public record FishingRodCastStatePayload(java.util.UUID sessionId, boolean active) implements CustomPacketPayload {
 	@SuppressWarnings("null")
 	public static final Type<FishingRodCastStatePayload> TYPE = new Type<>(
 			ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "fishing_cast_state")
@@ -18,6 +18,7 @@ public record FishingRodCastStatePayload(boolean active) implements CustomPacket
 
 	@SuppressWarnings("null")
 	public static final StreamCodec<ByteBuf, FishingRodCastStatePayload> STREAM_CODEC = StreamCodec.composite(
+			net.minecraft.core.UUIDUtil.STREAM_CODEC, FishingRodCastStatePayload::sessionId,
 			ByteBufCodecs.BOOL,
 			FishingRodCastStatePayload::active,
 			FishingRodCastStatePayload::new
@@ -34,6 +35,7 @@ public record FishingRodCastStatePayload(boolean active) implements CustomPacket
 
 	@net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
 	private static void handleClient(FishingRodCastStatePayload payload) {
+		if (!com.stardew.craft.client.fishing.FishingInteractionState.accepts(payload.sessionId())) return;
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		if (mc.player == null) {
 			return;

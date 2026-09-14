@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "source_name": "Lava Bat",
+  "family": "bat",
+  "health": 80,
+  "damage": 15,
+  "resilience": 1,
+  "miss_chance": 0,
+  "experience": 15,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:bat_wing",
+      "chance": 0.9
+    },
+    {
+      "item": "stardewcraft:bat_wing",
+      "chance": 0.7
+    },
+    {
+      "item": "stardewcraft:rare_disc",
+      "chance": 0.001
+    },
+    {
+      "item": "stardewcraft:bomb_item",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

@@ -29,8 +29,6 @@ public final class FarmAreaResolver {
     public static boolean isInAnyFarm(Level level, BlockPos pos) {
         if (level.dimension() != ModDimensions.STARDEW_VALLEY) return false;
 
-        if (!FarmInstanceAllocator.isInFarmInstanceRegion(pos)) return false;
-
         // 通过网格数学确认该槽位确实有人拥有
         return getOwnerAt(pos) != null;
     }
@@ -50,7 +48,12 @@ public final class FarmAreaResolver {
      */
     @Nullable
     public static UUID getOwnerAt(BlockPos pos) {
-        if (!FarmInstanceAllocator.isInFarmInstanceRegion(pos)) return null;
+        if (!FarmInstanceAllocator.isInFarmInstanceRegion(pos)) {
+            var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            var level=server==null?null:server.getLevel(ModDimensions.STARDEW_VALLEY);
+            var cave=level==null?null:com.stardew.craft.interior.FarmCaveRuntime.farmAt(level,pos);
+            return cave==null?null:cave.getOwnerUUID();
+        }
         int slotIndex = FarmInstanceAllocator.getSlotIndexAt(pos);
         if (slotIndex < 0) return null;
         return FarmInstanceRegistry.get().getOwnerBySlot(slotIndex);

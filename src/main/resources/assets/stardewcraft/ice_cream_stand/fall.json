@@ -1,0 +1,436 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_000",
+      "scene_offset": [
+        8,
+        -7,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_001",
+      "scene_offset": [
+        8,
+        1,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_002",
+      "scene_offset": [
+        8,
+        9,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_003",
+      "scene_offset": [
+        -6,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_004",
+      "scene_offset": [
+        -6,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_005",
+      "scene_offset": [
+        21,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_006",
+      "scene_offset": [
+        21,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_007",
+      "scene_offset": [
+        8,
+        -4,
+        38
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_008",
+      "scene_offset": [
+        8,
+        -4,
+        -7
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_009",
+      "scene_offset": [
+        48,
+        -7,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_010",
+      "scene_offset": [
+        48,
+        1,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_011",
+      "scene_offset": [
+        48,
+        9,
+        16
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_012",
+      "scene_offset": [
+        42,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_013",
+      "scene_offset": [
+        42,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_014",
+      "scene_offset": [
+        53,
+        1,
+        -6
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_015",
+      "scene_offset": [
+        53,
+        1,
+        37
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_016",
+      "scene_offset": [
+        48,
+        -4,
+        38
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_017",
+      "scene_offset": [
+        48,
+        -4,
+        -7
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_018",
+      "scene_offset": [
+        32,
+        -7,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_019",
+      "scene_offset": [
+        32,
+        1,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_020",
+      "scene_offset": [
+        32,
+        8,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_021",
+      "scene_offset": [
+        28,
+        9,
+        28
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_022",
+      "scene_offset": [
+        28,
+        10,
+        27
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_023",
+      "scene_offset": [
+        28,
+        9,
+        36
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_024",
+      "scene_offset": [
+        28,
+        10,
+        35
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_025",
+      "scene_offset": [
+        36,
+        9,
+        28
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_026",
+      "scene_offset": [
+        36,
+        10,
+        27
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_027",
+      "scene_offset": [
+        36,
+        9,
+        36
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_028",
+      "scene_offset": [
+        36,
+        10,
+        35
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_029",
+      "scene_offset": [
+        8,
+        16,
+        -4
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_030",
+      "scene_offset": [
+        -5,
+        17,
+        -4
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_031",
+      "scene_offset": [
+        21,
+        17,
+        -4
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_032",
+      "scene_offset": [
+        6,
+        14,
+        26
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_033",
+      "scene_offset": [
+        6,
+        19,
+        26
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_034",
+      "scene_offset": [
+        19,
+        11,
+        12
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_035",
+      "scene_offset": [
+        19,
+        16,
+        12
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_036",
+      "scene_offset": [
+        20,
+        11,
+        32
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_037",
+      "scene_offset": [
+        22,
+        3,
+        8
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_038",
+      "scene_offset": [
+        22,
+        3,
+        27
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_039",
+      "scene_offset": [
+        41,
+        3,
+        8
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_040",
+      "scene_offset": [
+        41,
+        3,
+        27
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_041",
+      "scene_offset": [
+        48,
+        11,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_042",
+      "scene_offset": [
+        48,
+        14,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_043",
+      "scene_offset": [
+        48,
+        18,
+        13
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_044",
+      "scene_offset": [
+        48,
+        18,
+        5
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_045",
+      "scene_offset": [
+        44,
+        18,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_046",
+      "scene_offset": [
+        52,
+        18,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_047",
+      "scene_offset": [
+        48,
+        17,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_048",
+      "scene_offset": [
+        48,
+        25,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_049",
+      "scene_offset": [
+        48,
+        25,
+        9
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_050",
+      "scene_offset": [
+        3,
+        10,
+        5
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_051",
+      "scene_offset": [
+        3,
+        14,
+        5
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_052",
+      "scene_offset": [
+        3,
+        18,
+        5
+      ]
+    },
+    {
+      "model": "stardewcraft:block/decor/ice_cream_stand/fall/part_053",
+      "scene_offset": [
+        3,
+        20,
+        5
+      ]
+    }
+  ]
+}

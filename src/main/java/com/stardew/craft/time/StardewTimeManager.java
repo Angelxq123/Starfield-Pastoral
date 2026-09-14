@@ -88,6 +88,7 @@ public class StardewTimeManager extends SavedData {
     public static final int MINUTES_PER_DAY = 1440;
     
     // 时间状态
+    private long clockRevision; // Transient: explicit time edits invalidate in-flight schedule cursors.
     private int currentTime = MORNING_START;  // 当前时间（分钟），从MC dayTime同步
     private int currentDay = 1;                // 当前日期
     private int currentSeason = 0;             // 当前季节 (0=春, 1=夏, 2=秋, 3=冬)
@@ -221,6 +222,7 @@ public class StardewTimeManager extends SavedData {
     public void setCurrentTimeFromMC(int stardewMinutes) {
         // 只有时间变化时才更新
         if (stardewMinutes != currentTime) {
+            if (stardewMinutes < currentTime || stardewMinutes - currentTime > 10) clockRevision++;
             currentTime = stardewMinutes;
             
             // 检查关键时间点
@@ -249,6 +251,7 @@ public class StardewTimeManager extends SavedData {
                     .performTenMinuteUpdate(server);
                 com.stardew.craft.festival.FestivalService.onTimeChanged(server);
                 com.stardew.craft.auction.AuctionService.onTimeChanged(server);
+                com.stardew.craft.mining.OrdinaryMineEncounters.performTenMinuteUpdate(server);
             }
         }
 
@@ -353,6 +356,7 @@ public class StardewTimeManager extends SavedData {
                 // 对齐 Stardew 的日结算语义：先确定“今天”的天气，再结算昨夜生长。
                 com.stardew.craft.weather.WeatherManager.applyWeatherForNewDay(stardewLevel, currentDay, getSeasonName(), totalDaysPlayed);
                 com.stardew.craft.npc.runtime.NpcSpawnManager.resetScheduledNpcsForNewDay(stardewLevel);
+                runWorldDailyStep("farm_buildings", () -> com.stardew.craft.building.runtime.BuildingRuntimeEvents.onNewDay(stardewLevel));
                 // 确保所有室内区块（含温室）在日结算期间已加载，
                 // 否则 growDaily / waterDaily 会因 isLoaded(pos)==false 跳过温室作物。
                 com.stardew.craft.interior.InteriorSubspaceManager.setInteriorChunksForced(stardewLevel, true, "daily_settlement");
@@ -366,8 +370,8 @@ public class StardewTimeManager extends SavedData {
                     runWorldDailyStep("farm_debris", () -> com.stardew.craft.farm.FarmDebrisDailyService.onNewDay(stardewLevel));
                     runWorldDailyStep("sprinklers", () -> com.stardew.craft.manager.SprinklerManager.get(stardewLevel).waterDaily(stardewLevel));
                     runWorldDailyStep("pasture_grass", () -> com.stardew.craft.manager.PastureGrassGrowthManager.get(stardewLevel).growDaily(stardewLevel));
-                    runWorldDailyStep("animals", () -> com.stardew.craft.manager.AnimalGrowthManager.get(stardewLevel).growDaily(stardewLevel, timeWentToSleepMinutes));
-                    runWorldDailyStep("fish_ponds", () -> com.stardew.craft.fishpond.service.FishPondDailyUpdateService.onNewDay(stardewLevel));
+                    runWorldDailyStep("livestock", () -> com.stardew.craft.animal.runtime.LivestockService.onNewDay(stardewLevel, timeWentToSleepMinutes));
+                    runWorldDailyStep("fish_ponds", () -> com.stardew.craft.fishpond.service.FishPondHusbandry.onNewDay(stardewLevel));
                     runWorldDailyStep("forage", () -> com.stardew.craft.manager.ForageSpawnService.onNewDay(stardewLevel, currentSeason));
                     runWorldDailyStep("forest_farm_forage", () -> com.stardew.craft.manager.ForageSpawnService.onNewDayForestFarms(stardewLevel, currentSeason));
                     runWorldDailyStep("artifact_spots", () -> com.stardew.craft.manager.ArtifactSpotSpawnService.onNewDay(stardewLevel, currentSeason));
@@ -769,6 +773,7 @@ public class StardewTimeManager extends SavedData {
     
     // Getters
     public int getCurrentTime() { return currentTime; }
+    public long getClockRevision() { return clockRevision; }
     public int getCurrentDay() { return currentDay; }
     public int getCurrentSeason() { return currentSeason; }
     public int getCurrentYear() { return currentYear; }
@@ -780,7 +785,8 @@ public class StardewTimeManager extends SavedData {
     
     // Setters (用于调试或特殊情况)
     public void setCurrentTime(int time) { 
-        this.currentTime = time; 
+        this.currentTime = time;
+        clockRevision++;
         setDirty(); 
     }
     

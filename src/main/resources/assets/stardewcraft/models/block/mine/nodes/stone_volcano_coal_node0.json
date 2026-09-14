@@ -1,0 +1,247 @@
+{
+  "parent": "minecraft:block/block",
+  "credit": "StardewCraft: source stone VolcanoCoalNode0 reference; original per-face pixel art matched to mine environment",
+  "textures": {
+    "0": "stardewcraft:block/mine/nodes/stone_volcano_coal_node0",
+    "particle": "stardewcraft:block/mine/nodes/stone_volcano_coal_node0_particle"
+  },
+  "stardewcraft:collision": {
+    "mode": "aabb"
+  },
+  "elements": [
+    {
+      "name": "宽底煤岩",
+      "from": [
+        2,
+        -4,
+        3
+      ],
+      "to": [
+        14,
+        6,
+        13
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            0.0,
+            3.0,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.25,
+            0.0,
+            6.25,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            6.5,
+            0.0,
+            9.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            9.75,
+            0.0,
+            12.75,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.0,
+            0.0,
+            15.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0.0,
+            2.75,
+            2.5,
+            5.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "左侧煤峰",
+      "from": [
+        2,
+        2,
+        5
+      ],
+      "to": [
+        8,
+        9,
+        12
+      ],
+      "rotation": {
+        "origin": [
+          5,
+          4,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            2.75,
+            2.75,
+            4.25,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.5,
+            2.75,
+            6.0,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            6.25,
+            2.75,
+            7.75,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.0,
+            2.75,
+            9.5,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            9.75,
+            2.75,
+            11.5,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.75,
+            2.75,
+            13.5,
+            4.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "右后煤峰",
+      "from": [
+        8,
+        3,
+        6
+      ],
+      "to": [
+        14,
+        10,
+        13
+      ],
+      "rotation": {
+        "origin": [
+          11,
+          5,
+          9
+        ],
+        "axis": "z",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            13.75,
+            2.75,
+            15.25,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.0,
+            5.5,
+            1.5,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            1.75,
+            5.5,
+            3.25,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.5,
+            5.5,
+            5.0,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5.25,
+            5.5,
+            7.0,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            5.5,
+            9.0,
+            7.25
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

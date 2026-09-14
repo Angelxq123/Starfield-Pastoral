@@ -1,0 +1,11 @@
+{
+  "output": "stardewcraft:gravel_path",
+  "output_count": 1,
+  "ingredients": [
+    {
+      "item": "stardewcraft:stone",
+      "count": 1
+    }
+  ],
+  "legacy_unlock_condition": "default"
+}

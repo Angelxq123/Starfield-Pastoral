@@ -1,0 +1,91 @@
+{
+  "intent": "较宽厚的成年男性，原版 Outgoing/Positive；更宽支撑、较长承重、较短前伸，平滑侧向移重；温和松弛，不夸张鸭子步。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.5322031875,
+  "attentionRig": {
+    "hipHeight": 10,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 2.65,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "gus",
+    "revision": "character-articulated-3",
+    "rootMean": 0.4,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -1.4,
+    "headPitch": 0.6,
+    "halfStance": 2.65,
+    "intent": "较宽厚的成年男性，原版 Outgoing/Positive；更宽支撑、较长承重、较短前伸，平滑侧向移重；温和松弛，不夸张鸭子步。",
+    "stance": 0.64,
+    "strideRatio": 1.48,
+    "bob": 0.2304,
+    "sway": 0.72,
+    "rootYaw": 1.7,
+    "bodyYaw": 3.9,
+    "bodyRoll": 1.15,
+    "bodyNod": 0.65,
+    "headYaw": 1.9,
+    "headRoll": 0.55,
+    "armSwing": 12.5,
+    "armOpening": 8.3,
+    "elbowBase": 12,
+    "elbowSwing": 5,
+    "footLift": 0.22400000000000003,
+    "heelPitch": 3.5,
+    "toePitch": 7.0,
+    "breathSeconds": 9.2,
+    "idleScale": 1.0,
+    "stride": 8.515251,
+    "reachMargin": 0.041692,
+    "legLengthStride": 14.8,
+    "previewSpeed": 0.769318,
+    "levelWalk": true
+  },
+  "requiredClips": [
+    "animation.gus.idle",
+    "animation.gus.blink",
+    "animation.gus.walk",
+    "animation.gus.clean_enter",
+    "animation.gus.clean_play",
+    "animation.gus.clean_exit"
+  ]
+}

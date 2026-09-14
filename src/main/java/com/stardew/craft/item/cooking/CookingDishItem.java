@@ -1,20 +1,15 @@
 package com.stardew.craft.item.cooking;
 
-import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.client.TooltipConstants;
 import com.stardew.craft.item.IStardewItem;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,11 +17,8 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.registries.DeferredBlock;
 
 /**
  * Generic Stardew cooking dish item.
@@ -143,36 +135,7 @@ public class CookingDishItem extends Item implements IStardewItem {
             return super.useOn(context);
         }
 
-        ResourceLocation itemKey = BuiltInRegistries.ITEM.getKey(this);
-        DeferredBlock<? extends net.minecraft.world.level.block.Block> foodBlock =
-                ModBlocks.getPlacedCookingFoodBlock(itemKey.getPath());
-        if (foodBlock == null) {
-            return super.useOn(context);
-        }
-
-        Level level = context.getLevel();
-        BlockPlaceContext placeContext = new BlockPlaceContext(context);
-        BlockPos placePos = placeContext.getClickedPos();
-        if (!level.getBlockState(placePos).canBeReplaced(placeContext)) {
-            return InteractionResult.PASS;
-        }
-
-        BlockState foodState = foodBlock.get().getStateForPlacement(placeContext);
-        if (foodState == null || !foodState.canSurvive(level, placePos)) {
-            return InteractionResult.FAIL;
-        }
-
-        if (!level.isClientSide) {
-            if (!level.setBlock(placePos, foodState, 3)) {
-                return InteractionResult.FAIL;
-            }
-            level.playSound(null, placePos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 0.7F, 1.0F);
-            if (!context.getPlayer().getAbilities().instabuild) {
-                context.getItemInHand().shrink(1);
-            }
-        }
-
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return PlacedFoodPlacement.place(context);
     }
 
     @SuppressWarnings("null")
@@ -222,6 +185,9 @@ public class CookingDishItem extends Item implements IStardewItem {
                 }
             }
 
+            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(this).toString().equals("stardewcraft:squid_ink_ravioli"))
+                serverPlayer.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        com.stardew.craft.effect.ModMobEffects.SQUID_INK_RAVIOLI, 3600, 0));
             for (DishBuff buff : buffs) {
                 applyBuff(serverPlayer, buff);
             }

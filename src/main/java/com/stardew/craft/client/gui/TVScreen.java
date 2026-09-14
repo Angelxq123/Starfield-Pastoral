@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.tv.TVChannelData;
 import com.stardew.craft.client.PlayerGenderText;
@@ -116,7 +120,7 @@ public class TVScreen extends Screen {
     }
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private int px(int stardewPixels) {
@@ -526,7 +530,7 @@ public class TVScreen extends Screen {
         List<net.minecraft.util.FormattedCharSequence> lines =
                 this.font.split(Component.literal(visibleText), wrapWidth);
         for (int i = 0; i < lines.size(); i++) {
-            graphics.drawString(this.font, lines.get(i), textX, textY + i * (this.font.lineHeight + 2), 0x5B2812, false);
+            graphics.drawString(this.font, lines.get(i), textX, textY + i * (StardewFonts.lineHeight(this.font) + 2), 0x5B2812, false);
         }
     }
 

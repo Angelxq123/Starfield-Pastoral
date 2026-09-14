@@ -3,6 +3,7 @@ package com.stardew.craft.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.stardew.craft.npc.animation.SamActivity;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.stardew.craft.cutscene.runtime.EventActorEntity;
@@ -99,7 +100,7 @@ public final class ActorCommand {
     private static com.mojang.brigadier.builder.RequiredArgumentBuilder<CommandSourceStack, String>
     animationArgument(boolean all) {
         return Commands.argument("animation", StringArgumentType.word())
-            .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[] {"idle", "walk"}, builder))
+            .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[] {"idle", "walk", "sam_guitar", "sam_gameboy", "sam_skateboard"}, builder))
             .executes(context -> setAnimation(context, all));
     }
 
@@ -236,7 +237,8 @@ public final class ActorCommand {
     private static int setAnimation(CommandContext<CommandSourceStack> context, boolean all) {
         CommandSourceStack source = context.getSource();
         String animation = StringArgumentType.getString(context, "animation").toLowerCase(Locale.ROOT);
-        if (!"idle".equals(animation) && !"walk".equals(animation)) {
+        var activity = SamActivity.fromAnimation(animation);
+        if (!"idle".equals(animation) && !"walk".equals(animation) && activity == null) {
             source.sendFailure(Component.literal("Unknown actor animation: " + animation + ". Use idle or walk."));
             return 0;
         }
@@ -244,8 +246,20 @@ public final class ActorCommand {
         if (actors.isEmpty()) {
             return noActors(source);
         }
-        boolean walking = "walk".equals(animation);
-        actors.forEach(actor -> actor.setWalking(walking));
+        if (activity != null) {
+            actors = actors.stream().filter(actor -> "sam".equals(actor.getNpcId())).toList();
+            if (actors.isEmpty()) {
+                source.sendFailure(Component.literal("Unknown actor animation: " + animation + ". Use idle or walk."));
+                return 0;
+            }
+            actors.forEach(actor -> actor.setCustomAnimation(animation, true));
+        } else {
+            boolean walking = "walk".equals(animation);
+            actors.forEach(actor -> {
+                actor.clearCustomAnimation();
+                actor.setWalking(walking);
+            });
+        }
         sendChanged(source, actors.size(), "Set " + animation + " animation on");
         return actors.size();
     }

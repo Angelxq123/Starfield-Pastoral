@@ -1,0 +1,47 @@
+{
+  "event_id": "evelyn:npc_activities",
+  "activities": {
+    "sit": {
+      "actors": [
+        "evelyn"
+      ],
+      "aliases": [
+        "evelyn_sit_left"
+      ],
+      "asset": "evelyn_sit",
+      "clip_prefix": "animation.evelyn.sit",
+      "enter_ticks": 60,
+      "exit_ticks": 60,
+      "support": "chair",
+      "transition": "clips"
+    },
+    "sleep": {
+      "actors": [
+        "evelyn"
+      ],
+      "aliases": [
+        "evelyn_sleep"
+      ],
+      "asset": "evelyn_sleep",
+      "clip_prefix": "animation.evelyn.sleep",
+      "enter_ticks": 144,
+      "exit_ticks": 144,
+      "support": "bed",
+      "transition": "clips"
+    },
+    "garden": {
+      "actors": [
+        "evelyn"
+      ],
+      "aliases": [
+        "evelyn_garden"
+      ],
+      "asset": "evelyn_garden",
+      "clip_prefix": "animation.evelyn.garden",
+      "enter_ticks": 40,
+      "exit_ticks": 40,
+      "support": "",
+      "transition": "clips"
+    }
+  }
+}

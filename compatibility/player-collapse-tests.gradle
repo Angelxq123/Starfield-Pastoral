@@ -1,0 +1,16 @@
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/player-collapse')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/client/combat/*Test.class'
+                if (System.getProperty('hospital.preview') != null)
+                    systemProperty 'hospital.preview', System.getProperty('hospital.preview')
+                workingDir project.projectDir
+                if (System.getProperty('collapse.preview') != null)
+                    systemProperty 'collapse.preview', System.getProperty('collapse.preview')
+            }
+        }
+    }
+}

@@ -1,0 +1,170 @@
+{
+  "textures": {
+    "wood": "stardewcraft:block/mine/mine_timber_support",
+    "particle": "stardewcraft:block/mine/particles/mine_mine_timber_support"
+  },
+  "elements": [
+    {
+      "name": "post",
+      "from": [
+        6,
+        0,
+        0
+      ],
+      "to": [
+        10,
+        16,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.0,
+            4.0,
+            2.0,
+            6.0
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            2.0,
+            4.0,
+            3.25,
+            6.0
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0.0,
+            4.0,
+            1.0,
+            6.0
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            4.0,
+            4.5,
+            6.0
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "crossbeam",
+      "from": [
+        0,
+        12,
+        4
+      ],
+      "to": [
+        16,
+        16,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.0,
+            2.25,
+            10.0,
+            2.75
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            6.0,
+            1.25,
+            10.0,
+            1.75
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            6.0,
+            4.0,
+            10.0,
+            4.75
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "lower_pin",
+      "from": [
+        7,
+        14,
+        10
+      ],
+      "to": [
+        9,
+        16,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.0,
+            5.0,
+            11.5,
+            5.25
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            11.0,
+            5.0,
+            11.25,
+            5.25
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            11.0,
+            5.0,
+            11.5,
+            5.25
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            11.0,
+            5.0,
+            11.25,
+            5.25
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            11.0,
+            5.0,
+            11.5,
+            5.125
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            11.0,
+            5.0,
+            11.5,
+            5.125
+          ],
+          "texture": "#wood"
+        }
+      }
+    }
+  ]
+}

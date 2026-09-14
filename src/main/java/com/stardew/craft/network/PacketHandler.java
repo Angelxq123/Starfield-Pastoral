@@ -17,15 +17,11 @@ import com.stardew.craft.fishing.network.FishingHookedAnimPayload;
 import com.stardew.craft.combat.network.DamageNumberPayload;
 import com.stardew.craft.combat.network.WeaponSkillAnimPayload;
 import com.stardew.craft.combat.network.WeaponSkillImpactPayload;
-import com.stardew.craft.combat.network.WeaponSkillCounterAnimPayload;
 import com.stardew.craft.combat.network.SkillFailFeedbackPayload;
 import com.stardew.craft.combat.network.SilverSaberFoldbackPayload;
 import com.stardew.craft.combat.network.ForestBlessingPayload;
 import com.stardew.craft.combat.network.SteelSpineFuryPayload;
 import com.stardew.craft.combat.network.WindSpirePayload;
-import com.stardew.craft.combat.network.SteelSpineFuryEnterPayload;
-import com.stardew.craft.combat.network.SteelSpineFuryHitPayload;
-import com.stardew.craft.combat.network.SteelSpineFuryStrikePayload;
 import com.stardew.craft.combat.network.CarvingKnifeThrustStrikePayload;
 import com.stardew.craft.combat.network.SkillCooldownSyncPayload;
 import com.stardew.craft.combat.network.WeaponSkillUsePayload;
@@ -44,7 +40,6 @@ import com.stardew.craft.combat.network.TideMarkPayload;
 import com.stardew.craft.combat.network.WaterRingEffectPayload;
 import com.stardew.craft.combat.network.YetiToothMarkPayload;
 import com.stardew.craft.combat.network.YetiFreezePayload;
-import com.stardew.craft.network.payload.MummyCollapsePayload;
 import com.stardew.craft.combat.network.LavaKatanaMarkPayload;
 import com.stardew.craft.combat.network.LavaKatanaReverbPayload;
 import com.stardew.craft.combat.network.GalaxyDaggerMarkPayload;
@@ -71,10 +66,8 @@ import com.stardew.craft.combat.network.BlackHolePostPayload;
 import com.stardew.craft.combat.network.BurglarShankLootPayload;
 import com.stardew.craft.combat.network.CrystalDaggerLayerPayload;
 import com.stardew.craft.combat.network.CrystalDaggerBurstPayload;
-import com.stardew.craft.combat.network.StarfallShockwavePostPayload;
 import com.stardew.craft.combat.network.TremorBlockPayload;
 import com.stardew.craft.combat.network.BrokenTridentCatchPayload;
-import com.stardew.craft.combat.network.BrokenTridentThrustStrikePayload;
 import com.stardew.craft.combat.network.IridiumNeedleCritPayload;
 import com.stardew.craft.combat.network.IridiumNeedleFrenzyPayload;
 import com.stardew.craft.combat.network.IridiumNeedleThrustStrikePayload;
@@ -96,8 +89,25 @@ public class PacketHandler {
         // separates overnight collapse presentation from the final multiplayer settlement,
         // including the pre-2AM multiplayer return-to-bed acknowledgement.
         // Reject mixed old/new clients explicitly.
-        final PayloadRegistrar registrar = event.registrar("11");
+        // Adds the per-player daily-info snapshot for HUD addons.
+        // Fishing now carries use identities and complete catch stacks plus their world origins.
+        // Pet selection now carries namespaced breed IDs and validates the addon catalog before login.
+        final PayloadRegistrar registrar = event.registrar("28");
 
+        registrar.configurationToClient(com.stardew.craft.pet.PetCatalogHandshake.Offer.TYPE, com.stardew.craft.pet.PetCatalogHandshake.Offer.CODEC, com.stardew.craft.pet.PetCatalogHandshake.Offer::handle);
+        registrar.configurationToServer(com.stardew.craft.pet.PetCatalogHandshake.Ack.TYPE, com.stardew.craft.pet.PetCatalogHandshake.Ack.CODEC, com.stardew.craft.pet.PetCatalogHandshake.Ack::handle);
+
+        registrar.playToServer(com.stardew.craft.pet.PetActionPayload.TYPE, com.stardew.craft.pet.PetActionPayload.CODEC, com.stardew.craft.pet.PetActionPayload::handle);
+        registrar.playToClient(com.stardew.craft.pet.PetScreenPayload.TYPE, com.stardew.craft.pet.PetScreenPayload.CODEC, com.stardew.craft.pet.PetScreenPayload::handle);
+        registrar.playToClient(com.stardew.craft.pet.PetSoundPayload.TYPE, com.stardew.craft.pet.PetSoundPayload.CODEC, com.stardew.craft.pet.PetSoundPayload::handle);
+
+        registrar.playToServer(com.stardew.craft.animal.runtime.LivestockManagePayload.TYPE, com.stardew.craft.animal.runtime.LivestockManagePayload.CODEC, com.stardew.craft.animal.runtime.LivestockManagePayload::handle);
+        registrar.playToClient(com.stardew.craft.animal.runtime.LivestockShopPayload.TYPE, com.stardew.craft.animal.runtime.LivestockShopPayload.CODEC, com.stardew.craft.animal.runtime.LivestockShopPayload::handle);
+        registrar.playToServer(com.stardew.craft.animal.runtime.LivestockPurchasePayload.TYPE, com.stardew.craft.animal.runtime.LivestockPurchasePayload.CODEC, com.stardew.craft.animal.runtime.LivestockPurchasePayload::handle);
+
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingLedgerPayload.TYPE, com.stardew.craft.network.payload.BuildingLedgerPayload.CODEC, com.stardew.craft.network.payload.BuildingLedgerPayload::handle);
+        registrar.playToServer(com.stardew.craft.network.payload.BuildingLedgerActionPayload.TYPE, com.stardew.craft.network.payload.BuildingLedgerActionPayload.CODEC, com.stardew.craft.network.payload.BuildingLedgerActionPayload::handle);
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingPinnedPreviewsPayload.TYPE, com.stardew.craft.network.payload.BuildingPinnedPreviewsPayload.CODEC, com.stardew.craft.network.payload.BuildingPinnedPreviewsPayload::handle);
         final PayloadRegistrar capabilityRegistrar = registrar.optional();
         capabilityRegistrar.configurationToClient(
                 CapabilityHelloPayload.TYPE,
@@ -108,6 +118,18 @@ public class PacketHandler {
                 CapabilityAckPayload.STREAM_CODEC,
                 CapabilityAckPayload::handle);
         
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingTemplatePreviewPayload.TYPE, com.stardew.craft.network.payload.BuildingTemplatePreviewPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingTemplatePreviewPayload::handle);
+        registrar.playToClient(com.stardew.craft.network.payload.OpenBuildingRoutesPayload.TYPE, com.stardew.craft.network.payload.OpenBuildingRoutesPayload.STREAM_CODEC, com.stardew.craft.network.payload.OpenBuildingRoutesPayload::handle);
+        registrar.playToServer(com.stardew.craft.network.payload.BuildingWorkRequestPayload.TYPE, com.stardew.craft.network.payload.BuildingWorkRequestPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingWorkRequestPayload::handle);
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingWorkPayload.TYPE, com.stardew.craft.network.payload.BuildingWorkPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingWorkPayload::handle);
+        registrar.playToServer(com.stardew.craft.network.payload.BuildingPurchasePayload.TYPE, com.stardew.craft.network.payload.BuildingPurchasePayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingPurchasePayload::handle);
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingManagerInfoPayload.TYPE, com.stardew.craft.network.payload.BuildingManagerInfoPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingManagerInfoPayload::handle);
+        registrar.playToServer(com.stardew.craft.network.payload.BuildingRotatePayload.TYPE, com.stardew.craft.network.payload.BuildingRotatePayload.CODEC, com.stardew.craft.network.payload.BuildingRotatePayload::handle);
+        registrar.playToServer(com.stardew.craft.network.payload.BuildingDraftCancelPayload.TYPE, com.stardew.craft.network.payload.BuildingDraftCancelPayload.CODEC, com.stardew.craft.network.payload.BuildingDraftCancelPayload::handle);
+        registrar.playToServer(com.stardew.craft.network.payload.BuildingPreviewRequestPayload.TYPE, com.stardew.craft.network.payload.BuildingPreviewRequestPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingPreviewRequestPayload::handle);
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingManagerReadyPayload.TYPE, com.stardew.craft.network.payload.BuildingManagerReadyPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingManagerReadyPayload::handle);
+        registrar.playToClient(com.stardew.craft.network.payload.BuildingPreviewPayload.TYPE, com.stardew.craft.network.payload.BuildingPreviewPayload.STREAM_CODEC, com.stardew.craft.network.payload.BuildingPreviewPayload::handle);
+
         // 客户端 -> 服务端
         registrar.playToServer(
             GrowCropsPayload.TYPE,
@@ -218,6 +240,10 @@ public class PacketHandler {
         );
 
         // 服务端 -> 客户端
+        registrar.playToClient(com.stardew.craft.combat.network.CrescentFalchionEndPayload.TYPE,
+                com.stardew.craft.combat.network.CrescentFalchionEndPayload.STREAM_CODEC,com.stardew.craft.combat.network.CrescentFalchionEndPayload::handle);
+        registrar.playToClient(com.stardew.craft.combat.network.GuardSpineStatePayload.TYPE,
+                com.stardew.craft.combat.network.GuardSpineStatePayload.STREAM_CODEC,com.stardew.craft.combat.network.GuardSpineStatePayload::handle);
         registrar.playToClient(
             PlayerDataSyncPacket.TYPE,
             PlayerDataSyncPacket.STREAM_CODEC,
@@ -295,22 +321,20 @@ public class PacketHandler {
             com.stardew.craft.network.payload.RouteGuidanceStartPayload::handle
         );
         
+        registrar.playToClient(DailyInfoSyncPayload.TYPE, DailyInfoSyncPayload.CODEC, DailyInfoSyncPayload::handle);
+
         registrar.playToClient(
             TimeSyncPacket.TYPE,
             TimeSyncPacket.STREAM_CODEC,
             TimeSyncPacket::handle
         );
 
+        registrar.playToClient(MineFogPacket.TYPE, MineFogPacket.STREAM_CODEC, MineFogPacket::handle);
+        registrar.playToClient(MineRewardStatePacket.TYPE, MineRewardStatePacket.STREAM_CODEC, MineRewardStatePacket::handle);
         registrar.playToClient(
             MiningFloorSyncPacket.TYPE,
             MiningFloorSyncPacket.STREAM_CODEC,
             MiningFloorSyncPacket::handle
-        );
-
-        registrar.playToClient(
-            LadderSyncPacket.TYPE,
-            LadderSyncPacket.STREAM_CODEC,
-            LadderSyncPacket::handle
         );
 
         registrar.playToClient(
@@ -360,6 +384,19 @@ public class PacketHandler {
             MuseumStandSyncPacket.STREAM_CODEC,
             MuseumStandSyncPacket::handle
         );
+
+        registrar.playToClient(com.stardew.craft.fishing.network.BobberMenuPayload.TYPE, com.stardew.craft.fishing.network.BobberMenuPayload.CODEC, com.stardew.craft.fishing.network.BobberMenuPayload::handle);
+        registrar.playToServer(com.stardew.craft.fishing.network.BobberSelectPayload.TYPE, com.stardew.craft.fishing.network.BobberSelectPayload.CODEC, com.stardew.craft.fishing.network.BobberSelectPayload::handle);
+        registrar.playToClient(com.stardew.craft.fishing.network.BobberStyleStatePayload.TYPE, com.stardew.craft.fishing.network.BobberStyleStatePayload.CODEC, com.stardew.craft.fishing.network.BobberStyleStatePayload::handle);
+        registrar.playToClient(com.stardew.craft.fishing.network.FishingPresentationPayload.TYPE,
+                com.stardew.craft.fishing.network.FishingPresentationPayload.STREAM_CODEC, com.stardew.craft.fishing.network.FishingPresentationPayload::handle);
+        registrar.playToServer(com.stardew.craft.fishing.network.FishingMotionInputPayload.TYPE,
+                com.stardew.craft.fishing.network.FishingMotionInputPayload.STREAM_CODEC, com.stardew.craft.fishing.network.FishingMotionInputPayload::handle);
+		registrar.playBidirectional(
+			com.stardew.craft.fishing.network.FishingUsePayload.TYPE,
+			com.stardew.craft.fishing.network.FishingUsePayload.STREAM_CODEC,
+			com.stardew.craft.fishing.network.FishingUsePayload::handle
+		);
 
 		registrar.playToClient(
 			FishingStartPayload.TYPE,
@@ -502,12 +539,6 @@ public class PacketHandler {
         );
 
         registrar.playToClient(
-            BrokenTridentThrustStrikePayload.TYPE,
-            BrokenTridentThrustStrikePayload.STREAM_CODEC,
-            BrokenTridentThrustStrikePayload::handle
-        );
-
-        registrar.playToClient(
             IridiumNeedleCritPayload.TYPE,
             IridiumNeedleCritPayload.STREAM_CODEC,
             IridiumNeedleCritPayload::handle
@@ -538,10 +569,50 @@ public class PacketHandler {
         );
 
         registrar.playToClient(
-            WeaponSkillCounterAnimPayload.TYPE,
-            WeaponSkillCounterAnimPayload.STREAM_CODEC,
-            WeaponSkillCounterAnimPayload::handle
+            com.stardew.craft.combat.network.LavaKatanaImpactPayload.TYPE,
+            com.stardew.craft.combat.network.LavaKatanaImpactPayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.LavaKatanaImpactPayload::handle
         );
+        registrar.playToClient(
+            com.stardew.craft.combat.network.TidePhasePayload.TYPE,
+            com.stardew.craft.combat.network.TidePhasePayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.TidePhasePayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.combat.network.InfinityPhasePayload.TYPE,
+            com.stardew.craft.combat.network.InfinityPhasePayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.InfinityPhasePayload::handle
+        );
+        registrar.playToClient(
+            com.stardew.craft.combat.network.GalaxyPhasePayload.TYPE,
+            com.stardew.craft.combat.network.GalaxyPhasePayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.GalaxyPhasePayload::handle
+        );
+        registrar.playToClient(com.stardew.craft.combat.network.DragonRapierFxPayload.TYPE,
+                com.stardew.craft.combat.network.DragonRapierFxPayload.STREAM_CODEC,
+                com.stardew.craft.combat.network.DragonRapierFxPayload::handle);
+        registrar.playToClient(com.stardew.craft.combat.network.SlammerDwarfFxPayload.TYPE,
+                com.stardew.craft.combat.network.SlammerDwarfFxPayload.STREAM_CODEC,
+                com.stardew.craft.combat.network.SlammerDwarfFxPayload::handle);
+        registrar.playToClient(com.stardew.craft.combat.network.IronClubFxPayload.TYPE,
+                com.stardew.craft.combat.network.IronClubFxPayload.STREAM_CODEC,
+                com.stardew.craft.combat.network.IronClubFxPayload::handle);
+        registrar.playToClient(com.stardew.craft.combat.network.WoodWeaponFxPayload.TYPE,
+                com.stardew.craft.combat.network.WoodWeaponFxPayload.STREAM_CODEC,
+                com.stardew.craft.combat.network.WoodWeaponFxPayload::handle);
+        registrar.playToClient(com.stardew.craft.combat.network.HeavyHammerFxPayload.TYPE,
+                com.stardew.craft.combat.network.HeavyHammerFxPayload.STREAM_CODEC,
+                com.stardew.craft.combat.network.HeavyHammerFxPayload::handle);
+        registrar.playToServer(com.stardew.craft.combat.network.HeavyHammerInputPayload.TYPE,
+                com.stardew.craft.combat.network.HeavyHammerInputPayload.STREAM_CODEC,
+                com.stardew.craft.combat.network.HeavyHammerInputPayload::handle);
+        registrar.playToClient(
+            com.stardew.craft.combat.network.MeleeImpactPayload.TYPE,
+            com.stardew.craft.combat.network.MeleeImpactPayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.MeleeImpactPayload::handle
+        );
+
+
 
         registrar.playToClient(
             SkillFailFeedbackPayload.TYPE,
@@ -573,23 +644,11 @@ public class PacketHandler {
             WindSpirePayload::handle
         );
 
-        registrar.playToClient(
-            SteelSpineFuryEnterPayload.TYPE,
-            SteelSpineFuryEnterPayload.STREAM_CODEC,
-            SteelSpineFuryEnterPayload::handle
-        );
 
-        registrar.playToClient(
-            SteelSpineFuryHitPayload.TYPE,
-            SteelSpineFuryHitPayload.STREAM_CODEC,
-            SteelSpineFuryHitPayload::handle
-        );
 
-        registrar.playToClient(
-            SteelSpineFuryStrikePayload.TYPE,
-            SteelSpineFuryStrikePayload.STREAM_CODEC,
-            SteelSpineFuryStrikePayload::handle
-        );
+
+
+
 
         registrar.playToClient(
             CarvingKnifeThrustStrikePayload.TYPE,
@@ -651,11 +710,6 @@ public class PacketHandler {
             BlackHolePostPayload::handle
         );
 
-        registrar.playToClient(
-            StarfallShockwavePostPayload.TYPE,
-            StarfallShockwavePostPayload.STREAM_CODEC,
-            StarfallShockwavePostPayload::handle
-        );
 
         registrar.playToClient(
             TremorBlockPayload.TYPE,
@@ -855,6 +909,14 @@ public class PacketHandler {
             SteelFalchionTracePayload::handle
         );
 
+        registrar.playToClient(com.stardew.craft.combat.network.TemperedRingPayload.TYPE,
+            com.stardew.craft.combat.network.TemperedRingPayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.TemperedRingPayload::handle);
+
+        registrar.playToClient(com.stardew.craft.combat.network.BloodForgeEffectPayload.TYPE,
+            com.stardew.craft.combat.network.BloodForgeEffectPayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.BloodForgeEffectPayload::handle);
+
         registrar.playToClient(
             DarkSwordBloodDebtPayload.TYPE,
             DarkSwordBloodDebtPayload.STREAM_CODEC,
@@ -865,6 +927,30 @@ public class PacketHandler {
             DarkSwordBloodMoonPayload.TYPE,
             DarkSwordBloodMoonPayload.STREAM_CODEC,
             DarkSwordBloodMoonPayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.combat.network.PirateSilverEffectPayload.TYPE,
+            com.stardew.craft.combat.network.PirateSilverEffectPayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.PirateSilverEffectPayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.combat.network.IronWindMovePayload.TYPE,
+            com.stardew.craft.combat.network.IronWindMovePayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.IronWindMovePayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.combat.network.BoneFractureTracePayload.TYPE,
+            com.stardew.craft.combat.network.BoneFractureTracePayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.BoneFractureTracePayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.combat.network.DwarfShockPayload.TYPE,
+            com.stardew.craft.combat.network.DwarfShockPayload.STREAM_CODEC,
+            com.stardew.craft.combat.network.DwarfShockPayload::handle
         );
 
         registrar.playToClient(
@@ -1148,12 +1234,6 @@ public class PacketHandler {
             com.stardew.craft.network.payload.ApplyDecorationStylePayload.TYPE,
             com.stardew.craft.network.payload.ApplyDecorationStylePayload.STREAM_CODEC,
             com.stardew.craft.network.payload.ApplyDecorationStylePayload::handle
-        );
-
-        registrar.playToServer(
-            com.stardew.craft.network.payload.SetWallpaperSegmentPayload.TYPE,
-            com.stardew.craft.network.payload.SetWallpaperSegmentPayload.STREAM_CODEC,
-            com.stardew.craft.network.payload.SetWallpaperSegmentPayload::handle
         );
 
         registrar.playToServer(
@@ -1448,11 +1528,6 @@ public class PacketHandler {
             com.stardew.craft.network.payload.HoldUpItemPayload::handle
         );
 
-        registrar.playToClient(
-            MummyCollapsePayload.TYPE,
-            MummyCollapsePayload.STREAM_CODEC,
-            MummyCollapsePayload::handle
-        );
 
         registrar.playToClient(
             com.stardew.craft.network.payload.ReadBookVisualPayload.TYPE,
@@ -1564,6 +1639,12 @@ public class PacketHandler {
             com.stardew.craft.network.payload.FarmJoinResponsePayload.TYPE,
             com.stardew.craft.network.payload.FarmJoinResponsePayload.STREAM_CODEC,
             com.stardew.craft.network.payload.FarmJoinResponsePayload::handle
+        );
+
+        registrar.playToClient(
+            com.stardew.craft.network.payload.PublicBuildingRuleSyncPayload.TYPE,
+            com.stardew.craft.network.payload.PublicBuildingRuleSyncPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.PublicBuildingRuleSyncPayload::handle
         );
 
         // Farm permission update (C→S) — 玩家修改农场权限
@@ -2324,6 +2405,7 @@ public class PacketHandler {
     public static void registerConfigurationTasks(
             RegisterConfigurationTasksEvent event
     ) {
+        event.register(new com.stardew.craft.pet.PetCatalogHandshake());
         if (event.getListener().hasChannel(CapabilityHelloPayload.TYPE)
                 && event.getListener().hasChannel(
                         CapabilityAckPayload.TYPE)) {

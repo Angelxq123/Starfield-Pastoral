@@ -1,0 +1,271 @@
+{
+  "format_version": 1,
+  "family": "coop",
+  "authored_front": "south",
+  "anchor_convention": "northwest corner vertex of all-tier reservation, floor layer",
+  "reservation_bounds_from_anchor": {
+    "min": [
+      0,
+      0,
+      0
+    ],
+    "max_exclusive": [
+      17,
+      14,
+      16
+    ]
+  },
+  "tiers": [
+    {
+      "tier": 1,
+      "structure": "stardewcraft:farm_buildings/coop_1",
+      "size": [
+        14,
+        11,
+        13
+      ],
+      "anchor": [
+        -1,
+        0,
+        -2
+      ],
+      "bounds_from_anchor": {
+        "min": [
+          1,
+          0,
+          2
+        ],
+        "max_exclusive": [
+          15,
+          11,
+          15
+        ]
+      },
+      "manager": {
+        "position": [
+          5,
+          1,
+          6
+        ],
+        "facing": "south",
+        "approach": [
+          5,
+          1,
+          7
+        ]
+      },
+      "entry": {
+        "doors": [
+          [
+            3,
+            1,
+            9
+          ]
+        ],
+        "outside": [
+          3,
+          1,
+          10
+        ],
+        "inside": [
+          3,
+          1,
+          8
+        ]
+      },
+      "animal_spawn": [
+        3,
+        1,
+        7
+      ],
+      "construction_worker": {
+        "animation": "animation.robin.construction_low",
+        "horizontal_offset_from_anchor": [
+          0,
+          -2
+        ],
+        "facing": "north",
+        "height_policy": "stand_on_current_surface"
+      },
+      "facilities": {
+        "troughs": 4,
+        "automatic_troughs": 0,
+        "hoppers": 1,
+        "incubators": 0
+      }
+    },
+    {
+      "tier": 2,
+      "structure": "stardewcraft:farm_buildings/coop_2",
+      "size": [
+        15,
+        14,
+        14
+      ],
+      "anchor": [
+        0,
+        0,
+        0
+      ],
+      "bounds_from_anchor": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max_exclusive": [
+          15,
+          14,
+          14
+        ]
+      },
+      "manager": {
+        "position": [
+          6,
+          1,
+          8
+        ],
+        "facing": "south",
+        "approach": [
+          6,
+          1,
+          9
+        ]
+      },
+      "entry": {
+        "doors": [
+          [
+            4,
+            1,
+            11
+          ]
+        ],
+        "outside": [
+          4,
+          1,
+          12
+        ],
+        "inside": [
+          4,
+          1,
+          10
+        ]
+      },
+      "animal_spawn": [
+        4,
+        1,
+        9
+      ],
+      "construction_worker": {
+        "animation": "animation.robin.construction_low",
+        "horizontal_offset_from_anchor": [
+          0,
+          -2
+        ],
+        "facing": "north",
+        "height_policy": "stand_on_current_surface"
+      },
+      "facilities": {
+        "troughs": 8,
+        "automatic_troughs": 0,
+        "hoppers": 1,
+        "incubators": 1
+      },
+      "upgrade": {
+        "money": 10000,
+        "wood": 400,
+        "stone": 150,
+        "days": 2
+      }
+    },
+    {
+      "tier": 3,
+      "structure": "stardewcraft:farm_buildings/coop_3",
+      "size": [
+        17,
+        14,
+        16
+      ],
+      "anchor": [
+        0,
+        0,
+        0
+      ],
+      "bounds_from_anchor": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max_exclusive": [
+          17,
+          14,
+          16
+        ]
+      },
+      "manager": {
+        "position": [
+          6,
+          1,
+          8
+        ],
+        "facing": "south",
+        "approach": [
+          6,
+          1,
+          9
+        ]
+      },
+      "entry": {
+        "doors": [
+          [
+            4,
+            1,
+            11
+          ]
+        ],
+        "outside": [
+          4,
+          1,
+          12
+        ],
+        "inside": [
+          4,
+          1,
+          10
+        ]
+      },
+      "animal_spawn": [
+        4,
+        1,
+        9
+      ],
+      "construction_worker": {
+        "animation": "animation.robin.construction_low",
+        "horizontal_offset_from_anchor": [
+          0,
+          -2
+        ],
+        "facing": "north",
+        "height_policy": "stand_on_current_surface"
+      },
+      "facilities": {
+        "troughs": 0,
+        "automatic_troughs": 12,
+        "hoppers": 1,
+        "incubators": 1
+      },
+      "upgrade": {
+        "money": 20000,
+        "wood": 500,
+        "stone": 200,
+        "days": 2
+      }
+    }
+  ],
+  "self_build": {
+    "radius": 5,
+    "height": 8,
+    "manager_price": 500
+  }
+}

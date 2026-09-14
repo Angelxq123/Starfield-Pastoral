@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "theme=earth,variant=0": {
+      "model": "stardewcraft:block/mine_paving/earth/0"
+    },
+    "theme=earth,variant=1": {
+      "model": "stardewcraft:block/mine_paving/earth/1"
+    },
+    "theme=frost,variant=0": {
+      "model": "stardewcraft:block/mine_paving/frost/0"
+    },
+    "theme=frost,variant=1": {
+      "model": "stardewcraft:block/mine_paving/frost/1"
+    },
+    "theme=lava,variant=0": {
+      "model": "stardewcraft:block/mine_paving/lava/0"
+    },
+    "theme=lava,variant=1": {
+      "model": "stardewcraft:block/mine_paving/lava/1"
+    },
+    "theme=desert,variant=0": {
+      "model": "stardewcraft:block/mine_paving/desert/0"
+    },
+    "theme=desert,variant=1": {
+      "model": "stardewcraft:block/mine_paving/desert/1"
+    },
+    "theme=earth_dark,variant=0": {
+      "model": "stardewcraft:block/mine_paving/earth_dark/0"
+    },
+    "theme=earth_dark,variant=1": {
+      "model": "stardewcraft:block/mine_paving/earth_dark/1"
+    },
+    "theme=frost_dark,variant=0": {
+      "model": "stardewcraft:block/mine_paving/frost_dark/0"
+    },
+    "theme=frost_dark,variant=1": {
+      "model": "stardewcraft:block/mine_paving/frost_dark/1"
+    },
+    "theme=lava_dark,variant=0": {
+      "model": "stardewcraft:block/mine_paving/lava_dark/0"
+    },
+    "theme=lava_dark,variant=1": {
+      "model": "stardewcraft:block/mine_paving/lava_dark/1"
+    },
+    "theme=desert_dark,variant=0": {
+      "model": "stardewcraft:block/mine_paving/desert_dark/0"
+    },
+    "theme=desert_dark,variant=1": {
+      "model": "stardewcraft:block/mine_paving/desert_dark/1"
+    }
+  }
+}

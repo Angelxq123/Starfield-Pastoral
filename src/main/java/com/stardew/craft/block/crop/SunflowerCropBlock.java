@@ -3,7 +3,6 @@ package com.stardew.craft.block.crop;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -58,8 +57,7 @@ public class SunflowerCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 1 || timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 1 || seasonForGrowth() == 2;
     }
 
     @Override
@@ -75,12 +73,7 @@ public class SunflowerCropBlock extends StardewCropBlock {
         return stack;
     }
 
-    /**
-     * SDV 原版：向日葵收获时除了花朵，还会额外掉 0-2 颗向日葵种子。
-     * 参见 Data/Crops.xnb 中 sunflower 的 HarvestItems：
-     *   - 1× Sunflower (421)
-     *   - 0-2× Sunflower Seeds (431)，每颗独立 50% 概率
-     */
+    /** SDV Crop.harvest: Next(1, 4) followed by numToHarvest - 1 gives 0–2 seeds uniformly. */
     @SuppressWarnings("null")
     @Override
     protected void spawnHarvestDrops(ServerLevel level, BlockPos pos, BlockState state,
@@ -92,12 +85,7 @@ public class SunflowerCropBlock extends StardewCropBlock {
             return;
         }
 
-        int seedCount = 0;
-        for (int i = 0; i < 2; i++) {
-            if (random.nextFloat() < 0.5f) {
-                seedCount++;
-            }
-        }
+        int seedCount = random.nextInt(3);
         if (seedCount > 0) {
             ItemStack seeds = new ItemStack(ModItems.SUNFLOWER_SEEDS.get(), seedCount);
             net.minecraft.world.level.block.Block.popResource(level, pos, seeds);
@@ -132,6 +120,8 @@ public class SunflowerCropBlock extends StardewCropBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape cropShape = CropModelShapes.shape(state, level, pos);
+        if (cropShape != null) return cropShape;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }
@@ -196,7 +186,7 @@ public class SunflowerCropBlock extends StardewCropBlock {
         if (level instanceof ServerLevel) {
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
-            if (aboveState.isAir() || !(aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER)) {
+            if (aboveState.isAir() || (aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER)) {
                 level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER), 3);
             }
         }

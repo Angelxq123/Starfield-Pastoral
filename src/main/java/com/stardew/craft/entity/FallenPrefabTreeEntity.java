@@ -32,9 +32,8 @@ import java.util.List;
 /**
  * 预制树倒下动画实体。
  *
- * <p>与旧版 {@link FallenOakTreeEntity} 的关键区别：piece 不再只存 blockId + 单个 facing，
- * 而是用「调色板（完整 BlockState）+ piece 引用调色板下标」存储，从而能忠实还原栏杆、
- * 栅栏、楼梯、台阶等带复杂状态的预制方块。倒下的旋转/粒子/音效曲线沿用旧版。
+ * <p>使用「调色板（完整 BlockState）+ piece 引用调色板下标」存储，从而能忠实还原栏杆、
+ * 栅栏、楼梯、台阶等带复杂状态的预制方块。
  */
 public class FallenPrefabTreeEntity extends Entity {
 	private static final String TAG_PALETTE = "palette";

@@ -39,6 +39,7 @@ public final class NpcContentFilter {
     public static JsonObject filterSchedules(JsonObject input, Set<String> knownLocations) {
         JsonObject out = input.deepCopy();
         for (String key : out.keySet()) {
+            if (key.startsWith("_")) continue;
             JsonElement element = out.get(key);
             if (!element.isJsonObject()) {
                 continue;
@@ -47,6 +48,10 @@ public final class NpcContentFilter {
             JsonObject filtered = new JsonObject();
             for (String timeKey : daySchedule.keySet()) {
                 JsonElement routeEl = daySchedule.get(timeKey);
+                if (routeEl.isJsonObject()) {
+                    filtered.add(timeKey,routeEl.deepCopy());
+                    continue;
+                }
                 if (!routeEl.isJsonPrimitive()) {
                     continue;
                 }
@@ -60,8 +65,11 @@ public final class NpcContentFilter {
                 String location = firstToken(route);
                 if (location == null
                     || isIntegerToken(location)
+                    || route.contains(" @")
                     || knownLocations.contains(location.toLowerCase(Locale.ROOT))) {
                     filtered.addProperty(timeKey, route);
+                } else {
+                    com.mojang.logging.LogUtils.getLogger().warn("Excluded legacy NPC schedule node {} / {}: unknown location {}",key,timeKey,location);
                 }
             }
             out.add(key, filtered);

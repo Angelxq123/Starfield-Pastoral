@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.network.payload.OpenWardrobePayload;
@@ -178,7 +182,7 @@ public class WardrobeScreen extends Screen {
         if (visible.isEmpty()) {
             GuiText.drawCenteredClamped(graphics, this.font,
                 Component.translatable("stardewcraft.wardrobe.empty"),
-                panelX + panelW / 2, panelY + mainH / 2 - font.lineHeight / 2,
+                panelX + panelW / 2, panelY + mainH / 2 - StardewFonts.lineHeight(font) / 2,
                 Math.max(1, panelW - ui(96)), 0x5C2B00, false);
             return;
         }
@@ -605,7 +609,7 @@ public class WardrobeScreen extends Screen {
     }
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private static List<ItemStack> copyItems(List<ItemStack> source) {

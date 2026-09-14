@@ -1,0 +1,7 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "stardewcraft:block/deco/misc/common/junimo_plush_particle"
+  },
+  "elements": []
+}

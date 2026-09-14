@@ -1,0 +1,146 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        14,
+        -7,
+        -7
+      ],
+      "to": [
+        14,
+        11,
+        7
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            14.90625,
+            5.9375,
+            15.125,
+            6.21875
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            15.15625,
+            5.9375,
+            15.375,
+            6.21875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        13,
+        11,
+        -8
+      ],
+      "to": [
+        13,
+        15,
+        8
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            4.0,
+            6.65625,
+            4.25,
+            6.71875
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            4.28125,
+            6.65625,
+            4.53125,
+            6.71875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        14,
+        12,
+        8
+      ],
+      "to": [
+        16,
+        16,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.46875,
+            7.28125,
+            2.5,
+            7.34375
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2.53125,
+            7.28125,
+            2.5625,
+            7.34375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2.59375,
+            7.28125,
+            2.625,
+            7.34375
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.65625,
+            7.28125,
+            2.6875,
+            7.34375
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            2.71875,
+            7.28125,
+            2.75,
+            7.3125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.78125,
+            7.28125,
+            2.8125,
+            7.3125
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

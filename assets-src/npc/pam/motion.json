@@ -1,0 +1,87 @@
+{
+  "intent": "宽厚成年女性；稳重落脚、较长承重，肩臂松弛，横向移重明确但不摇摆作态。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.5546741875,
+  "attentionRig": {
+    "hipHeight": 9,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 2.55,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 28,
+    "pitch": 10
+  },
+  "gait": {
+    "id": "pam",
+    "revision": "character-articulated-3",
+    "rootMean": 0.40800000000000003,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          9.0,
+          0.0
+        ],
+        "knee": 4.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          9.0,
+          0.0
+        ],
+        "knee": 4.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -1.8,
+    "headPitch": 0.7,
+    "halfStance": 2.55,
+    "intent": "宽厚成年女性；稳重落脚、较长承重，肩臂松弛，横向移重明确但不摇摆作态。",
+    "stance": 0.62,
+    "strideRatio": 1.55,
+    "bob": 0.2464,
+    "sway": 0.63,
+    "rootYaw": 2.0,
+    "bodyYaw": 4.3,
+    "bodyRoll": 1.0,
+    "bodyNod": 0.7,
+    "headYaw": 1.9,
+    "headRoll": 0.5,
+    "armSwing": 14,
+    "armOpening": 7.5,
+    "elbowBase": 10,
+    "elbowSwing": 5,
+    "footLift": 0.23800000000000002,
+    "heelPitch": 3.5,
+    "toePitch": 7.0,
+    "breathSeconds": 9.4,
+    "idleScale": 1.0,
+    "stride": 8.874787,
+    "reachMargin": 0.037517,
+    "legLengthStride": 13.950000000000001,
+    "previewSpeed": 0.769317,
+    "levelWalk": true
+  }
+}

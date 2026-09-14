@@ -4,6 +4,7 @@ import com.stardew.craft.api.v1.agriculture.StardewCropRuntime;
 import com.stardew.craft.api.v1.agriculture.StardewCropState;
 import com.stardew.craft.api.v1.agriculture.StardewCropTypes;
 import com.stardew.craft.block.crop.StardewCropBlock;
+import com.stardew.craft.block.crop.RiceCropBlock;
 import com.stardew.craft.block.nature.TeaBushBlock;
 import com.stardew.craft.block.animal.AnimalProduceSpotBlock;
 import com.stardew.craft.block.utility.AbstractTwoBlockUtilityBlock;
@@ -81,6 +82,7 @@ public class JadePlugin implements IWailaPlugin {
     private static final String NBT_CROP_STAGE = "Stardew_CropStage";
     private static final String NBT_CROP_MAX_STAGE = "Stardew_CropMaxStage";
     private static final String NBT_CROP_WATERED = "Stardew_CropWatered";
+    private static final String NBT_CROP_PADDY_BONUS = "Stardew_CropPaddyBonus";
     private static final String NBT_CROP_SCYTHE = "Stardew_CropScythe";
     private static final String NBT_POTTED_CROP = "Stardew_PottedCrop";
     private static final String NBT_VANILLA_CROP = "Stardew_VanillaCrop";
@@ -304,6 +306,15 @@ public class JadePlugin implements IWailaPlugin {
                 return;
             }
 
+            boolean paddyBonus = cropBlock instanceof RiceCropBlock
+                    && RiceCropBlock.hasNearbyPaddyWater(serverLevel, rootPos);
+            boolean soilWatered = runtime.soilPositions().stream()
+                    .map(serverLevel::getBlockState)
+                    .anyMatch(soil -> soil.hasProperty(FarmBlock.MOISTURE)
+                            && soil.getValue(FarmBlock.MOISTURE) > 0);
+            tag.putBoolean(NBT_CROP_PADDY_BONUS, paddyBonus);
+            tag.putBoolean(NBT_CROP_WATERED, soilWatered || paddyBonus);
+
             int age = state.getValue(Objects.requireNonNull(StardewCropBlock.AGE, "AGE"));
             CropGrowthManager.CropGrowthState gs = CropGrowthManager.get(serverLevel).getState(serverLevel, rootPos);
             if (StardewCropBlock.isPlayerPlacedDecorative(serverLevel, rootPos, state)) {
@@ -485,9 +496,10 @@ public class JadePlugin implements IWailaPlugin {
                 // 检查是否浇水 (检查下方耕地湿润度)
                 BlockPos belowPos = rootPos.below();
                 BlockState belowState = accessor.getLevel().getBlockState(belowPos);
-                boolean isWatered = false;
+                boolean isWatered = serverData != null
+                        && serverData.getBoolean(NBT_CROP_WATERED);
                 if (belowState.getBlock() instanceof FarmBlock) {
-                    isWatered = belowState.getValue(Objects.requireNonNull(FarmBlock.MOISTURE, "MOISTURE")) > 0;
+                    isWatered |= belowState.getValue(Objects.requireNonNull(FarmBlock.MOISTURE, "MOISTURE")) > 0;
                 } else {
                      // 兼容其他模组耕地，只要block id包含farmland
                      var block = Objects.requireNonNull(belowState.getBlock(), "block");
@@ -497,7 +509,7 @@ public class JadePlugin implements IWailaPlugin {
                          // 尝试获取MOISTURE属性，如果没有则默认不可知或算作wet? 通常模组耕地也会有moisture
                             var moisture = Objects.requireNonNull(FarmBlock.MOISTURE, "MOISTURE");
                             if (belowState.hasProperty(moisture)) {
-                                isWatered = belowState.getValue(moisture) > 0;
+                                isWatered |= belowState.getValue(moisture) > 0;
                          }
                      }
                 }
@@ -517,6 +529,11 @@ public class JadePlugin implements IWailaPlugin {
                     } else {
                         tooltip.add(Component.translatable("stardewcraft.tooltip.watered.no").withStyle(net.minecraft.ChatFormatting.RED));
                     }
+                }
+
+                if (serverData != null && serverData.getBoolean(NBT_CROP_PADDY_BONUS)) {
+                    tooltip.add(Component.translatable("stardewcraft.tooltip.rice_paddy_bonus")
+                            .withStyle(net.minecraft.ChatFormatting.AQUA));
                 }
 
                 if (mature) {

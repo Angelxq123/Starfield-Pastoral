@@ -1,0 +1,32 @@
+{
+  "variants": {
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/utility/wood_sign_standing",
+      "y": 0
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/utility/wood_sign_extension"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/utility/wood_sign_standing",
+      "y": 90
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/utility/wood_sign_extension"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/utility/wood_sign_standing",
+      "y": 180
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/utility/wood_sign_extension"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/utility/wood_sign_standing",
+      "y": 270
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/utility/wood_sign_extension"
+    }
+  }
+}

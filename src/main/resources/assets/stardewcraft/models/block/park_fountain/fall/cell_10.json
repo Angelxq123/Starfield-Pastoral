@@ -1,0 +1,222 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/fall/surface",
+    "particle": "stardewcraft:block/park_fountain/fall/particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        -15
+      ],
+      "to": [
+        17,
+        3,
+        17
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            9.0,
+            0.0,
+            9.53125,
+            1.0
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            9.5625,
+            0.0,
+            10.09375,
+            1.0
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        0,
+        0,
+        -15
+      ],
+      "to": [
+        8,
+        4,
+        17
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.90625,
+            1.03125,
+            12.15625,
+            1.15625
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            12.46875,
+            1.03125,
+            13.46875,
+            1.15625
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            13.5,
+            1.03125,
+            14.5,
+            1.15625
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            14.53125,
+            1.03125,
+            14.78125,
+            2.03125
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            14.8125,
+            1.03125,
+            15.0625,
+            2.03125
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        1,
+        4,
+        -14
+      ],
+      "to": [
+        7,
+        14,
+        18
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.34375,
+            3.5,
+            4.53125,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            4.78125,
+            3.5,
+            5.78125,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            5.8125,
+            3.5,
+            6.8125,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            6.84375,
+            3.5,
+            7.03125,
+            4.5
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            7.0625,
+            3.5,
+            7.25,
+            4.5
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        0,
+        14,
+        -15
+      ],
+      "to": [
+        6,
+        18,
+        17
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.25,
+            4.875,
+            11.4375,
+            5.0
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            11.6875,
+            4.875,
+            12.6875,
+            5.0
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            12.71875,
+            4.875,
+            13.71875,
+            5.0
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            13.75,
+            4.875,
+            13.9375,
+            5.875
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            13.96875,
+            4.875,
+            14.15625,
+            5.875
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

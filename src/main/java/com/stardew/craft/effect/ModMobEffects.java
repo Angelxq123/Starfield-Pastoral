@@ -65,6 +65,17 @@ public final class ModMobEffects {
 
     public static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(net.minecraft.core.registries.Registries.MOB_EFFECT, StardewCraft.MODID);
 
+    public static final DeferredHolder<MobEffect, MobEffect> JINXED = MOB_EFFECTS.register(
+            "jinxed", () -> new SimpleHarmfulEffect(0xFF69B4));
+    public static final DeferredHolder<MobEffect, MobEffect> SQUID_INK_RAVIOLI = MOB_EFFECTS.register(
+            "squid_ink_ravioli", () -> new SimpleBeneficialEffect(0x504A64));
+
+    public static final DeferredHolder<MobEffect, MobEffect> SLIMED = MOB_EFFECTS.register(
+            "slimed", () -> new SimpleHarmfulEffect(0x64BD43).addAttributeModifier(
+                    Attributes.MOVEMENT_SPEED,
+                    ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "effect.slimed"),
+                    -.8D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
     /**
      * 活力充沛：用于“最大能量”类增益（每级 +30 Max Energy，持续时间由食物决定）。
      */

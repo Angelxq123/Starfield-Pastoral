@@ -140,7 +140,7 @@ public class KegBlockEntity extends TimedProductionBlockEntity {
 			return InsertResult.missing(new MissingItemRequirement(stack.getItem(), consumeCount));
 		}
 		Item outputItem = BuiltInRegistries.ITEM.get(recipe.outputId());
-		ItemStack output = new ItemStack(outputItem, recipe.outputCount());
+		ItemStack output = new ItemStack(outputItem, recipe.rollOutputCount(level.random));
 		if (recipe.preserveType() != null) {
 			FlavoredArtisanOutputResolver.apply(recipe.preserveType(), stack, output);
 		}
@@ -196,7 +196,7 @@ public class KegBlockEntity extends TimedProductionBlockEntity {
 			return stack;
 		}
 		Item outputItem = BuiltInRegistries.ITEM.get(recipe.outputId());
-		ItemStack output = new ItemStack(outputItem, recipe.outputCount());
+		ItemStack output = new ItemStack(outputItem, (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
 		if (recipe.preserveType() != null) {
 			FlavoredArtisanOutputResolver.apply(recipe.preserveType(), stack, output);
 		}

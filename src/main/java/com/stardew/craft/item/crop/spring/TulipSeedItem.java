@@ -45,7 +45,7 @@ public class TulipSeedItem extends Item implements IStardewItem {
 
         BlockPos abovePos = pos.above();
         BlockState aboveState = level.getBlockState(abovePos);
-        if (!aboveState.isAir()) {
+        if (!aboveState.isAir() || !level.getBlockState(abovePos.above()).isAir()) {
             return InteractionResult.PASS;
         }
 
@@ -83,4 +83,3 @@ public class TulipSeedItem extends Item implements IStardewItem {
         return blockId.contains("farmland");
     }
 }
-

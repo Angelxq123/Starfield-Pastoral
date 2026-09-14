@@ -24,6 +24,11 @@ public final class SilverSaberSkillHelper {
 
     private SilverSaberSkillHelper() {}
 
+    public static void sendAction(Player player, String weaponId, String actionId) {
+        if (player instanceof ServerPlayer serverPlayer)
+            WeaponSkillAnimationDispatcher.sendSkillAnim(serverPlayer, weaponId, actionId, SKILL_ANIM_TICKS);
+    }
+
     /**
      * 攻击目标（带技能上下文）
      */
@@ -82,6 +87,8 @@ public final class SilverSaberSkillHelper {
                 weaponSnapshot,
                 cooldown
         );
+        com.stardew.craft.combat.network.PirateSilverEffectPayload.send(player,
+                com.stardew.craft.combat.network.PirateSilverEffectPayload.Phase.ANCHOR, origin, origin, SilverSaberFoldbackState.DEFAULT_DURATION_TICKS);
         if (player instanceof ServerPlayer serverPlayer) {
             PacketDistributor.sendToPlayer(
                     serverPlayer,
@@ -98,6 +105,8 @@ public final class SilverSaberSkillHelper {
      */
     public static void exitFoldbackState(Player player) {
         SilverSaberFoldbackState.clear(player);
+        com.stardew.craft.combat.network.PirateSilverEffectPayload.send(player,
+                com.stardew.craft.combat.network.PirateSilverEffectPayload.Phase.END, player.position(), player.position(), 0);
         if (player instanceof ServerPlayer serverPlayer) {
             PacketDistributor.sendToPlayer(serverPlayer, new SilverSaberFoldbackPayload(false, 0));
         }
@@ -151,6 +160,8 @@ public final class SilverSaberSkillHelper {
         RuntimeException failure = null;
         try {
             exitFoldbackState(player);
+            sendAction(player, weaponId, "silver_foldback_return");
+            Vec3 visualOrigin = player.position();
             if (target != null) {
                 attackWithSkillContext(
                         player,
@@ -161,6 +172,8 @@ public final class SilverSaberSkillHelper {
                 );
             }
             teleportFunc.teleport(player, origin);
+            com.stardew.craft.combat.network.PirateSilverEffectPayload.send(player,
+                    com.stardew.craft.combat.network.PirateSilverEffectPayload.Phase.BLINK, visualOrigin, player.position(), 6);
         } catch (RuntimeException exception) {
             failure = exception;
         }
@@ -168,7 +181,7 @@ public final class SilverSaberSkillHelper {
         if (failure != null) {
             throw failure;
         }
-        sendCooldownAnimation(player, weaponId, skill, nowTick);
+        WeaponSkillAnimationLock.setLock(player, nowTick, SKILL_ANIM_TICKS);
     }
 
     /**
@@ -212,6 +225,7 @@ public final class SilverSaberSkillHelper {
         RuntimeException failure = null;
         try {
             exitFoldbackState(player);
+            sendAction(player, weaponId, "silver_foldback_stay");
             if (target != null) {
                 attackWithSkillContext(
                         player,
@@ -228,7 +242,7 @@ public final class SilverSaberSkillHelper {
         if (failure != null) {
             throw failure;
         }
-        sendCooldownAnimation(player, weaponId, skill, nowTick);
+        WeaponSkillAnimationLock.setLock(player, nowTick, SKILL_ANIM_TICKS);
     }
 
     /**
@@ -276,8 +290,9 @@ public final class SilverSaberSkillHelper {
      */
     public static void executeEmptyDash(Player player, String weaponId, WeaponSkillData skill,
                                         long nowTick, DashFunction dashFunc) {
+        sendAction(player, weaponId, "silver_foldback_empty");
         dashFunc.dash(player, 5.0);
-        sendCooldownAnimation(player, weaponId, skill, nowTick);
+        WeaponSkillAnimationLock.setLock(player, nowTick, SKILL_ANIM_TICKS);
     }
 
     /**

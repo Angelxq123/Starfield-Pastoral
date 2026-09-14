@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.network.payload.GilClaimRewardPayload;
@@ -85,7 +87,7 @@ public class GilGoalsScreen extends Screen {
         GuiText.drawCenteredClamped(g, font, title, boxX + boxW / 2, titleY, boxW - INNER_PAD * 2, COL_TITLE, false);
 
         // Separator line below title
-        int sepY = titleY + font.lineHeight + 6;
+        int sepY = titleY + StardewFonts.lineHeight(font) + 6;
         StardewGuiUtil.drawHorizontalPartitionSmall(g, boxX, sepY, boxW, 1.0f);
 
         // Clip region for goal rows
@@ -146,7 +148,7 @@ public class GilGoalsScreen extends Screen {
 
         // Progress bar
         int barX = leftX;
-        int barY = rowY + 4 + font.lineHeight + 2;
+        int barY = rowY + 4 + StardewFonts.lineHeight(font) + 2;
         float progress = Math.min(1.0f, (float) goal.currentKills() / Math.max(1, goal.requiredKills()));
 
         // Bar border
@@ -195,7 +197,7 @@ public class GilGoalsScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            int clipTop = boxY + 52 + font.lineHeight + 18;
+            int clipTop = boxY + 52 + StardewFonts.lineHeight(font) + 18;
             int clipBottom = boxY + boxH - 24;
             int rowStartY = clipTop - scrollOffset;
 

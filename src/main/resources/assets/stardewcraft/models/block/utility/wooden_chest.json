@@ -1,8 +1,5 @@
 {
-  "ambientocclusion": false,
-  "parent": "block/cube_all",
   "textures": {
-    "all": "stardewcraft:block/utility/wooden_chest_default",
-    "particle": "stardewcraft:block/utility/wooden_chest_default"
+    "particle": "stardewcraft:block/wood/oak_planks"
   }
 }

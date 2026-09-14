@@ -1,0 +1,97 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/mine/shrine/altar_active_stone",
+    "1": "stardewcraft:block/mine/shrine/altar_active_glow",
+    "2": "stardewcraft:block/mine/shrine/shrine_stone_particle",
+    "particle": "stardewcraft:block/mine/shrine/shrine_stone_particle"
+  },
+  "elements": [
+    {
+      "name": "台身削角_(46, 6)",
+      "from": [
+        -0.8284300000000009,
+        1,
+        6
+      ],
+      "to": [
+        4.828430000000001,
+        11,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.4375,
+            0.0625,
+            7.79105375,
+            0.6875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            7.875,
+            0.0625,
+            8.22855375,
+            0.6875
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          2,
+          6,
+          6
+        ],
+        "axis": "y",
+        "angle": -45,
+        "rescale": false
+      }
+    },
+    {
+      "name": "台面削角封边_(46.5, 6.5)",
+      "from": [
+        -0.6213200000000008,
+        11,
+        6.5
+      ],
+      "to": [
+        3.6213200000000008,
+        13,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.625,
+            1.375,
+            3.890165,
+            1.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4.0,
+            1.375,
+            4.265165,
+            1.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          1.5,
+          12,
+          6.5
+        ],
+        "axis": "y",
+        "angle": -45,
+        "rescale": false
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

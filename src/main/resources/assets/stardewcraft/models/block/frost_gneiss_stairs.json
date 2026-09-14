@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/stairs",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/frost_gneiss",
-                     "top":  "stardewcraft:block/mine/frost_gneiss",
-                     "side":  "stardewcraft:block/mine/frost_gneiss",
-                     "particle":  "stardewcraft:block/mine/frost_gneiss"
-                 }
-}

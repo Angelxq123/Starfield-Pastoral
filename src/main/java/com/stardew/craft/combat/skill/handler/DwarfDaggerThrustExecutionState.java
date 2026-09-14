@@ -17,17 +17,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -112,46 +108,15 @@ final class DwarfDaggerThrustExecutionState
         }
 
         Vec3 current = player.position();
-        Vec3 desired = current.add(step);
-        if (shouldSnapToEnd(context.nowTick(), endTick)) {
-            desired = end;
-        }
-        desired = new Vec3(desired.x, player.getY(), desired.z);
-
-        Vec3 safe = findSafePosition(
-                player,
-                adjustForCollision(player, desired)
-        );
-        if (safe == null) {
-            return SkillTickResult.CANCEL;
-        }
-
         Vec3 from = lastPos != null ? lastPos : current;
-        applyHits(context, level, player, from, safe);
-
-        Vec3 desiredVelocity = safe.subtract(current);
-        Vec3 currentVelocity = player.getDeltaMovement();
-        Vec3 nextVelocity = currentVelocity.add(
-                desiredVelocity.subtract(currentVelocity).scale(0.6)
-        );
-        player.setDeltaMovement(
-                nextVelocity.x,
-                currentVelocity.y,
-                nextVelocity.z
-        );
+        lastPos = current;
+        // Resolve the segment actually travelled after vanilla collision, never a predicted endpoint.
+        applyHits(context, level, player, from, current);
+        if (!WeaponSkillMovementArbiter.owns(movementLease)) return SkillTickResult.CANCEL;
+        Vec3 velocity = com.stardew.craft.combat.skill.DashMotionRules.horizontalVelocity(
+                current, end, step.horizontalDistance());
+        player.setDeltaMovement(velocity.x, player.getDeltaMovement().y, velocity.z);
         player.hasImpulse = true;
-        player.move(MoverType.SELF, player.getDeltaMovement());
-        player.fallDistance = 0.0F;
-
-        Vec3 afterMove = player.position();
-        if (afterMove.subtract(current).horizontalDistanceSqr() < 1.0E-4) {
-            player.teleportTo(safe.x, safe.y, safe.z);
-            player.fallDistance = 0.0F;
-            afterMove = player.position();
-        }
-
-        lastPos = afterMove;
-        spawnTrail(level, player.position());
         return SkillTickResult.CONTINUE;
     }
 
@@ -168,10 +133,6 @@ final class DwarfDaggerThrustExecutionState
 
     static boolean isWithinExecutionWindow(long nowTick, long endTick) {
         return nowTick <= endTick;
-    }
-
-    static boolean shouldSnapToEnd(long nowTick, long endTick) {
-        return nowTick + 1L >= endTick;
     }
 
     static boolean shouldApplyHitBonus(
@@ -330,86 +291,6 @@ final class DwarfDaggerThrustExecutionState
         interpolation = Math.max(0.0, Math.min(1.0, interpolation));
         Vec3 closest = start.add(segment.scale(interpolation));
         return point.distanceToSqr(closest);
-    }
-
-    private static Vec3 adjustForCollision(
-            ServerPlayer player,
-            Vec3 desired
-    ) {
-        Vec3 start = player.position();
-        Vec3 look = desired.subtract(start);
-        if (look.lengthSqr() < 1.0E-6) {
-            return desired;
-        }
-        Vec3 direction = new Vec3(look.x, 0.0, look.z).normalize();
-        HitResult hit = player.level().clip(new ClipContext(
-                start.add(0.0, player.getBbHeight() * 0.5, 0.0),
-                desired.add(0.0, player.getBbHeight() * 0.5, 0.0),
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                player
-        ));
-        if (hit.getType() != HitResult.Type.MISS) {
-            return hit.getLocation().subtract(direction.scale(0.4));
-        }
-        return desired;
-    }
-
-    private static Vec3 findSafePosition(Player player, Vec3 desired) {
-        AABB box = player.getBoundingBox().move(
-                desired.x - player.getX(),
-                desired.y - player.getY(),
-                desired.z - player.getZ()
-        );
-        if (player.level().noCollision(player, box)) {
-            return desired;
-        }
-        Vec3 raised = desired.add(0.0, 0.25, 0.0);
-        AABB raisedBox = player.getBoundingBox().move(
-                raised.x - player.getX(),
-                raised.y - player.getY(),
-                raised.z - player.getZ()
-        );
-        return player.level().noCollision(player, raisedBox)
-                ? raised
-                : null;
-    }
-
-    private static void spawnTrail(ServerLevel level, Vec3 position) {
-        double y = position.y + 0.6;
-        level.sendParticles(
-                ParticleTypes.ENCHANT,
-                position.x,
-                y,
-                position.z,
-                6,
-                0.2,
-                0.15,
-                0.2,
-                0.02
-        );
-        level.sendParticles(
-                ParticleTypes.CRIT,
-                position.x,
-                y,
-                position.z,
-                4,
-                0.25,
-                0.15,
-                0.25,
-                0.03
-        );
-        level.sendParticles(
-                ParticleTypes.ELECTRIC_SPARK,
-                position.x,
-                y,
-                position.z,
-                3,
-                0.2,
-                0.1,
-                0.2,
-                0.03
-        );
     }
 
     private static void sendClientState(

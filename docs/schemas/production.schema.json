@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StardewCraft machine production profile",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "time_multiplier": {
+      "type": "number",
+      "minimum": 1e-06,
+      "maximum": 1000000,
+      "default": 1
+    },
+    "minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "coal_per_batch": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 64
+    },
+    "aging_rates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 1e-06,
+        "maximum": 1000000
+      }
+    },
+    "cycles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "output": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$"
+          },
+          "min_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999
+          },
+          "max_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999
+          },
+          "duration": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "minutes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2147483647
+              },
+              "mornings": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000000
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "minutes"
+                ],
+                "not": {
+                  "required": [
+                    "mornings"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "mornings"
+                ],
+                "not": {
+                  "required": [
+                    "minutes"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

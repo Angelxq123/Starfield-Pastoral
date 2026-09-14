@@ -1,0 +1,24 @@
+// Focused cave tests need the real Stardew dimension, which GameTestServer does not create.
+// ./gradlew -I compatibility/farm-cave-runtime-tests.gradle runServer
+// Console: test run migrationdoortraveltransferandmissingfloor
+// Console: test run missinglegacyroomandfailedarrivalremainsafe
+// Require both [FARM-CAVE-TEST] PASS lines, then stop. No game client is launched.
+allprojects {
+    afterEvaluate {
+        def caveTestDirectory = file('build/farm-cave-test-server')
+        neoForge.runs.server.gameDirectory = caveTestDirectory
+        neoForge.runs.server.systemProperty 'neoforge.enabledGameTestNamespaces', 'stardewcraft_farm_cave'
+        neoForge.runs.server.systemProperty 'neoforge.enableGameTest', 'true'
+        tasks.named('runServer') {
+            standardInput = System.in
+            doFirst {
+                def dir = caveTestDirectory
+                dir.mkdirs()
+                def eula = new File(dir, 'eula.txt')
+                if (!eula.exists()) eula.text = 'eula=true\n'
+                def properties = new File(dir, 'server.properties')
+                if (!properties.exists()) properties.text = 'server-ip=127.0.0.1\nserver-port=25588\nview-distance=2\nsimulation-distance=2\n'
+            }
+        }
+    }
+}

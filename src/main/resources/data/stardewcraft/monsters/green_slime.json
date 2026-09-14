@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "source_name": "Green Slime",
+  "family": "slime",
+  "health": 24,
+  "damage": 5,
+  "resilience": 1,
+  "miss_chance": 0,
+  "experience": 3,
+  "mine_monster": true,
+  "drops": [
+    {"item": "stardewcraft:slime_item", "chance": 0.75},
+    {"item": "stardewcraft:slime_item", "chance": 0.05},
+    {"item": "stardewcraft:green_algae", "chance": 0.1},
+    {"item": "stardewcraft:amethyst", "chance": 0.015},
+    {"item": "stardewcraft:sap", "chance": 0.15},
+    {"item": "stardewcraft:dwarf_scroll_i", "chance": 0.005},
+    {"item": "stardewcraft:dwarf_scroll_iv", "chance": 0.001}
+  ]
+}

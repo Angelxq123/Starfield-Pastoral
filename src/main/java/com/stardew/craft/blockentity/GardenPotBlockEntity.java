@@ -327,6 +327,10 @@ public final class GardenPotBlockEntity extends BlockEntity
         if (level == null) {
             return null;
         }
+        // Vanilla Crops/499 excludes GardenPot, including automated planting.
+        if (seed.is(com.stardew.craft.item.ModItems.ANCIENT_FRUIT_SEEDS.get())) {
+            return null;
+        }
         if (seed.is(com.stardew.craft.item.ModItems.MIXED_SEEDS.get())) {
             return com.stardew.craft.item.MixedSeedsItem.pickCropStateForSeason(
                     StardewTimeManager.get().getCurrentSeason(), level.getRandom());

@@ -10,8 +10,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,6 +29,10 @@ public class TemperedBilletProjectileEntity extends ThrowableProjectile {
     private static final double SPEED = 1.1;
     private static final double TURN_RATE = 0.18;
     private static final int MAX_LIFE_TICKS = 60;
+
+    public record TrailPoint(Vec3 position, int tick) {}
+    private final java.util.ArrayList<TrailPoint> trail = new java.util.ArrayList<>();
+    public java.util.List<TrailPoint> trail() { return java.util.Collections.unmodifiableList(trail); }
 
     private float damage = 10.0f;
     private String skillId = "tempered_billet";
@@ -74,6 +76,11 @@ public class TemperedBilletProjectileEntity extends ThrowableProjectile {
     @Override
     public void tick() {
         super.tick();
+        if (this.level().isClientSide) {
+            if (!trail.isEmpty() && trail.getLast().position().distanceToSqr(position()) > 16) trail.clear();
+            trail.add(new TrailPoint(position(), tickCount));
+            while (trail.size() > 8 || (!trail.isEmpty() && tickCount - trail.getFirst().tick() > 6)) trail.removeFirst();
+        }
 
         if (!this.level().isClientSide) {
             if (this.tickCount > MAX_LIFE_TICKS) {
@@ -103,7 +110,7 @@ public class TemperedBilletProjectileEntity extends ThrowableProjectile {
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.96));
             }
 
-            spawnTrailParticles();
+
         }
     }
 
@@ -141,20 +148,6 @@ public class TemperedBilletProjectileEntity extends ThrowableProjectile {
             return living;
         }
         return null;
-    }
-
-    @SuppressWarnings("null")
-    private void spawnTrailParticles() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        Vec3 pos = this.position();
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-            pos.x, pos.y + 0.05, pos.z,
-            2, 0.12, 0.06, 0.12, 0.01);
-        serverLevel.sendParticles(ParticleTypes.SMOKE,
-            pos.x, pos.y + 0.05, pos.z,
-            1, 0.08, 0.04, 0.08, 0.01);
     }
 
     @SuppressWarnings("null")
@@ -204,16 +197,6 @@ public class TemperedBilletProjectileEntity extends ThrowableProjectile {
 
         }
 
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.playSound(null, target.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.9f, 0.9f);
-            serverLevel.playSound(null, target.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.7f, 1.1f);
-            serverLevel.sendParticles(ParticleTypes.LAVA,
-                this.getX(), this.getY() + 0.2, this.getZ(),
-                8, 0.3, 0.1, 0.3, 0.02);
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                this.getX(), this.getY() + 0.2, this.getZ(),
-                12, 0.35, 0.15, 0.35, 0.02);
-        }
         this.setDeltaMovement(Vec3.ZERO);
         this.discard();
     }

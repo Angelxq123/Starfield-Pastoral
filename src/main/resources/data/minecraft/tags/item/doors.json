@@ -1,6 +1,10 @@
 {
   "replace": false,
   "values": [
-    "stardewcraft:friendship_door"
+    "stardewcraft:friendship_door",
+    "stardewcraft:green_panel_door",
+    "stardewcraft:red_glass_door",
+    "stardewcraft:shop_glass_door",
+    "stardewcraft:brown_glass_door"
   ]
 }

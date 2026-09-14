@@ -1,0 +1,42 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/mine/frost_wall_ice",
+    "particle": "stardewcraft:block/mine/frost_wall_ice_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        15.98
+      ],
+      "to": [
+        16,
+        16,
+        15.98
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            4.0,
+            12.0,
+            2.0,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            2.0,
+            12.0,
+            4.0,
+            16.0
+          ]
+        }
+      }
+    }
+  ]
+}

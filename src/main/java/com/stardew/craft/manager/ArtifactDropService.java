@@ -8,10 +8,8 @@ import com.google.gson.GsonBuilder;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.api.v1.world.StardewWorldLootPools;
 import com.stardew.craft.api.v1.world.StardewArtifactSpotDrops;
-import com.stardew.craft.desert.DesertConstants;
 import com.stardew.craft.festival.desert.DesertFestivalService;
 import com.stardew.craft.item.ModItems;
-import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewData;
@@ -40,62 +38,16 @@ import java.util.*;
  * SDV-parity artifact drop service for hoe digging (artifact spots).
  * Replicates GameLocation.digUpArtifactSpot() + ItemQueryResolver RANDOM_ARTIFACT_FOR_DIG_SPOT.
  *
- * <p>This project intentionally does not execute the vanilla Default artifact-spot table.
- * Only three runtime groups are used: Beach, Desert, and one mixed outdoor table for every
- * other outdoor valley location.
+ * <p>Default and the mapped location are evaluated in source order; missing mod items are skipped.
  */
 @SuppressWarnings("null")
 public final class ArtifactDropService {
 
     private ArtifactDropService() {}
 
-    // ======================== Zone Definition ========================
-
-    private record ZoneRect(int minX, int minZ, int maxX, int maxZ) {
-        boolean contains(int x, int z) {
-            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
-        }
-    }
-
-    private static ZoneRect rect(int x1, int z1, int x2, int z2) {
-        return new ZoneRect(Math.min(x1, x2), Math.min(z1, z2), Math.max(x1, x2), Math.max(z1, z2));
-    }
-
-    private static final Map<String, List<ZoneRect>> ZONE_RECTS = new LinkedHashMap<>();
-        private static final String DEFAULT_LOCATION = "Default";
-        private static final String BEACH_LOCATION = "Beach";
-        private static final String DESERT_LOCATION = "Desert";
-        private static final String UNDERGROUND_MINE_LOCATION = "UndergroundMine";
-        private static final String MIXED_OUTDOOR_LOCATION = "OtherOutdoorsMixed";
-        private static final List<String> MIXED_OUTDOOR_SOURCE_LOCATIONS = List.of(
-            "Town",
-            "Forest",
-            "Mountain",
-            "BusStop",
-            "Backwoods",
-            "Railroad",
-            "Farm"
-        );
-            private static final DropEntry SYNTHETIC_RANDOM_ARTIFACT_DROP = new DropEntry(
-                "RANDOM_ARTIFACT_FOR_DIG_SPOT",
-                1.0,
-                -100,
-                false,
-                null,
-                null,
-                -1,
-                -1,
-                    (location, season, totalDaysPlayed, random, player) -> true
-            );
-
-    static {
-        ZONE_RECTS.put(MIXED_OUTDOOR_LOCATION, List.of(
-            rect(-151, -237, 200, 79)
-        ));
-        ZONE_RECTS.put("Beach", List.of(
-            rect(-4, 77, 239, 186)
-        ));
-    }
+    private static final String DEFAULT_LOCATION = "Default";
+    private static final String DESERT_LOCATION = "Desert";
+    private static final String UNDERGROUND_MINE_LOCATION = "UndergroundMine";
 
     // ======================== Unified Drop Entry ========================
 
@@ -108,7 +60,10 @@ public final class ArtifactDropService {
             List<DeferredItem<? extends Item>> randomItems,
             int minStack,
             int maxStack,
-            DropCondition condition
+            DropCondition condition,
+            String itemQuery,
+            boolean generous,
+            boolean oneDebrisPerDrop
     ) {}
 
     @FunctionalInterface
@@ -152,7 +107,7 @@ public final class ArtifactDropService {
     private record ArtifactChance(DeferredItem<? extends Item> item, double chance) {}
 
     private static final String VANILLA_OBJECTS_RESOURCE =
-            "data/stardewcraft/npc/vanilla/data/Objects.json";
+            "data/stardewcraft/npc/vanilla/data/objects.json";
     private static final Map<String, DeferredItem<? extends Item>> OBJECT_ID_TO_ARTIFACT_ITEM = Map.ofEntries(
             Map.entry("100", ModItems.CHIPPED_AMPHORA),
             Map.entry("101", ModItems.ARROWHEAD),
@@ -191,10 +146,7 @@ public final class ArtifactDropService {
             Map.entry("586", ModItems.NAUTILUS_FOSSIL),
             Map.entry("587", ModItems.AMPHIBIAN_FOSSIL),
             Map.entry("588", ModItems.PALM_FOSSIL),
-            Map.entry("589", ModItems.TRILOBITE),
-            Map.entry("590", ModItems.BONE_FLUTE),
-            Map.entry("591", ModItems.ANCIENT_DOLL),
-            Map.entry("592", ModItems.CHEWING_STICK)
+            Map.entry("589", ModItems.TRILOBITE)
     );
     private static final Map<String, List<ArtifactChance>> ARTIFACT_SPOT_CHANCES = new LinkedHashMap<>();
 
@@ -233,7 +185,7 @@ public final class ArtifactDropService {
                         }
                     }
                 }
-                buildMixedOutdoorDropTable(prepared);
+
             } catch (RuntimeException exception) {
                 StardewCraft.LOGGER.error("[Artifact spots] Rejected reload; keeping {} groups: {}",
                         locationDrops.size(), exception.getMessage());
@@ -246,57 +198,6 @@ public final class ArtifactDropService {
         }
     }
 
-    private static void buildMixedOutdoorDropTable(Map<String, List<DropEntry>> dropsByLocation) {
-        LinkedHashMap<String, Double> mergedChances = new LinkedHashMap<>();
-        LinkedHashMap<String, Integer> mergedCounts = new LinkedHashMap<>();
-        LinkedHashMap<String, DropEntry> prototypes = new LinkedHashMap<>();
-        for (String sourceLocation : MIXED_OUTDOOR_SOURCE_LOCATIONS) {
-            List<DropEntry> drops = dropsByLocation.get(sourceLocation);
-            if (drops == null) {
-                continue;
-            }
-            for (DropEntry drop : drops) {
-                String key = dropMergeKey(drop);
-                prototypes.putIfAbsent(key, drop);
-                mergedChances.merge(key, drop.chance, Double::sum);
-                mergedCounts.merge(key, 1, Integer::sum);
-            }
-        }
-
-        List<DropEntry> mixedDrops = new ArrayList<>();
-        for (Map.Entry<String, DropEntry> entry : prototypes.entrySet()) {
-            DropEntry prototype = entry.getValue();
-            double averageChance = mergedChances.getOrDefault(entry.getKey(), 0.0)
-                    / Math.max(1, mergedCounts.getOrDefault(entry.getKey(), 1));
-            mixedDrops.add(new DropEntry(
-                    prototype.id,
-                    Math.min(1.0, averageChance),
-                    prototype.precedence,
-                    prototype.continueOnDrop,
-                    prototype.item,
-                    prototype.randomItems,
-                    prototype.minStack,
-                    prototype.maxStack,
-                    prototype.condition
-            ));
-        }
-        dropsByLocation.put(MIXED_OUTDOOR_LOCATION, List.copyOf(mixedDrops));
-    }
-
-    private static String dropMergeKey(DropEntry drop) {
-        String itemId = drop.item == null ? "" : String.valueOf(drop.item.getId());
-        String randomItemIds = "";
-        if (drop.randomItems != null && !drop.randomItems.isEmpty()) {
-            StringJoiner joiner = new StringJoiner("|");
-            for (DeferredItem<? extends Item> randomItem : drop.randomItems) {
-                joiner.add(String.valueOf(randomItem.getId()));
-            }
-            randomItemIds = joiner.toString();
-        }
-        return drop.id + "#" + itemId + "#" + randomItemIds + "#" + drop.precedence + "#"
-                + drop.continueOnDrop + "#" + drop.minStack + "#" + drop.maxStack;
-    }
-
     private static DropEntry parseDropEntry(JsonObject json) {
         return new DropEntry(
                 json.get("Id").getAsString(),
@@ -307,7 +208,10 @@ public final class ArtifactDropService {
                 resolveRandomItemIds(json.get("RandomItemId")),
                 json.get("MinStack").getAsInt(),
                 json.get("MaxStack").getAsInt(),
-                parseCondition(getNullableString(json, "Condition"))
+                parseCondition(getNullableString(json, "Condition")),
+                getNullableString(json, "ItemId"),
+                json.has("ApplyGenerousEnchantment") && json.get("ApplyGenerousEnchantment").getAsBoolean(),
+                json.has("OneDebrisPerDrop") && json.get("OneDebrisPerDrop").getAsBoolean()
         );
     }
 
@@ -326,7 +230,7 @@ public final class ArtifactDropService {
         }
         DeferredItem<? extends Item> item = DROP_ITEM_IDS.get(itemId);
         if (item == null && itemId.startsWith("(O)")) {
-            item = OBJECT_ID_TO_ARTIFACT_ITEM.get(itemId.substring(3, itemId.length() - 1));
+            item = OBJECT_ID_TO_ARTIFACT_ITEM.get(itemId.substring(3));
         }
         return item;
     }
@@ -383,10 +287,11 @@ public final class ArtifactDropService {
                             && PlayerStardewDataAPI.isSpecialOrderRuleActive(player, parts[2]);
             case "PLAYER_HAS_MAIL" ->
                     (location, season, totalDaysPlayed, random, player) -> player != null
-                            && getPlayerData(player) != null
-                            && getPlayerData(player).hasMailFlag(parts[2]);
+                            && ("Host".equals(parts[1]) ? hasHostMail(player, parts[2])
+                                : getPlayerData(player).hasMailFlag(parts[2]));
             case "PLAYER_SPECIAL_ORDER_ACTIVE" ->
-                    (location, season, totalDaysPlayed, random, player) -> false;
+                    (location, season, totalDaysPlayed, random, player) -> player != null
+                            && com.stardew.craft.specialorder.SpecialOrderManager.hasActiveIncompleteOrder(player, parts[2]);
             case "DAYS_PLAYED" ->
                     (location, season, totalDaysPlayed, random, player) -> totalDaysPlayed >= Integer.parseInt(parts[1]);
             default -> {
@@ -421,6 +326,13 @@ public final class ArtifactDropService {
         return PlayerDataManager.getPlayerData(player);
     }
 
+    private static boolean hasHostMail(ServerPlayer player, String flag) {
+        var host = player.server.getSingleplayerProfile();
+        if (host != null) return PlayerDataManager.getPlayerData(host.getId()).hasMailFlag(flag);
+        // Dedicated servers have no host farmer: shared special-order rewards are stored on recipients.
+        return PlayerDataManager.get().getAllPlayerData().values().stream().anyMatch(data -> data.hasMailFlag(flag));
+    }
+
     private static void loadArtifactSpotChances() {
         try (InputStream stream = ArtifactDropService.class.getClassLoader().getResourceAsStream(VANILLA_OBJECTS_RESOURCE)) {
             if (stream == null) {
@@ -438,6 +350,7 @@ public final class ArtifactDropService {
                 if (item == null) {
                     continue;
                 }
+                if (!"Arch".equals(getNullableString(entry.getValue().getAsJsonObject(), "Type"))) continue;
                 JsonElement artifactSpotChances = entry.getValue().getAsJsonObject().get("ArtifactSpotChances");
                 if (artifactSpotChances == null || artifactSpotChances.isJsonNull() || !artifactSpotChances.isJsonObject()) {
                     continue;
@@ -449,34 +362,12 @@ public final class ArtifactDropService {
                             .add(new ArtifactChance(item, chanceEntry.getValue().getAsDouble()));
                 }
             }
-            buildMixedOutdoorArtifactChanceTable();
+
         } catch (Exception exception) {
             StardewCraft.LOGGER.warn("Failed to load artifact spot chances from {}: {}",
                     VANILLA_OBJECTS_RESOURCE, exception.getMessage());
             ARTIFACT_SPOT_CHANCES.clear();
         }
-    }
-
-    private static void buildMixedOutdoorArtifactChanceTable() {
-        LinkedHashMap<DeferredItem<? extends Item>, Double> mergedChances = new LinkedHashMap<>();
-        LinkedHashMap<DeferredItem<? extends Item>, Integer> mergedCounts = new LinkedHashMap<>();
-        for (String sourceLocation : MIXED_OUTDOOR_SOURCE_LOCATIONS) {
-            List<ArtifactChance> chances = ARTIFACT_SPOT_CHANCES.get(sourceLocation);
-            if (chances == null) {
-                continue;
-            }
-            for (ArtifactChance chance : chances) {
-                mergedChances.merge(chance.item, chance.chance, Double::sum);
-                mergedCounts.merge(chance.item, 1, Integer::sum);
-            }
-        }
-
-        List<ArtifactChance> mixedChances = new ArrayList<>();
-        for (Map.Entry<DeferredItem<? extends Item>, Double> entry : mergedChances.entrySet()) {
-            double averageChance = entry.getValue() / Math.max(1, mergedCounts.getOrDefault(entry.getKey(), 1));
-            mixedChances.add(new ArtifactChance(entry.getKey(), averageChance));
-        }
-        ARTIFACT_SPOT_CHANCES.put(MIXED_OUTDOOR_LOCATION, List.copyOf(mixedChances));
     }
 
     private static String normalizeArtifactChanceLocation(String locationKey) {
@@ -486,55 +377,21 @@ public final class ArtifactDropService {
     // ======================== Zone Resolution ========================
 
     public static String resolveLocation(ServerLevel level, BlockPos pos) {
-        if (level.dimension().equals(ModMiningDimensions.STARDEW_MINING)) {
-            return UNDERGROUND_MINE_LOCATION;
-        }
-        if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) {
-            return DEFAULT_LOCATION;
-        }
-        if (DesertConstants.isInDesertRegion(pos)) {
-            return DESERT_LOCATION;
-        }
-        int x = pos.getX();
-        int z = pos.getZ();
-        for (Map.Entry<String, List<ZoneRect>> entry : ZONE_RECTS.entrySet()) {
-            for (ZoneRect r : entry.getValue()) {
-                if (r.contains(x, z)) {
-                    return entry.getKey();
-                }
-            }
-        }
-        return DEFAULT_LOCATION;
-    }
-
-    private static String resolveDropGroup(ServerLevel level, String actualLocation) {
-        if (level.dimension().equals(ModMiningDimensions.STARDEW_MINING)) {
-            return UNDERGROUND_MINE_LOCATION;
-        }
-        if (!level.dimension().equals(ModDimensions.STARDEW_VALLEY)) {
-            return actualLocation;
-        }
-        if (BEACH_LOCATION.equals(actualLocation) || DESERT_LOCATION.equals(actualLocation)) {
-            return actualLocation;
-        }
-        return MIXED_OUTDOOR_LOCATION;
+        if (level.dimension().equals(ModMiningDimensions.STARDEW_MINING)) return UNDERGROUND_MINE_LOCATION;
+        return ArtifactSpotSpawnService.locationName(level, pos);
     }
 
     private static List<DropEntry> dropsForGroup(String dropGroup) {
         List<DropEntry> drops = new ArrayList<>();
         List<DropEntry> defaultDrops = locationDrops.get(DEFAULT_LOCATION);
         if (defaultDrops == null || defaultDrops.isEmpty()) {
-            drops.add(SYNTHETIC_RANDOM_ARTIFACT_DROP);
+            // No fallback table is invented when data is unavailable.
         } else {
             drops.addAll(defaultDrops);
         }
         List<DropEntry> locDrops = DEFAULT_LOCATION.equals(dropGroup) ? null : locationDrops.get(dropGroup);
         if (locDrops != null) {
-            for (DropEntry drop : locDrops) {
-                if (!"RANDOM_ARTIFACT_FOR_DIG_SPOT".equals(drop.id)) {
-                    drops.add(drop);
-                }
-            }
+            drops.addAll(locDrops);
         }
         return drops;
     }
@@ -566,6 +423,12 @@ public final class ArtifactDropService {
         }
         if (drop.randomItems != null) {
             drop.randomItems.forEach(item -> items.add(item.getId()));
+        }
+        if (drop.itemQuery != null && drop.itemQuery.startsWith("(O)")) {
+            var resolved = com.stardew.craft.fishpond.service.FishPondQualifiedItemService.resolve(drop.itemQuery);
+            resolved.filter(item -> item.item() != null && item.registryId() != null
+                    && item.registryId().getNamespace().equals(StardewCraft.MODID))
+                    .ifPresent(item -> items.add(item.registryId()));
         }
         boolean randomArtifact =
                 "RANDOM_ARTIFACT_FOR_DIG_SPOT".equals(drop.id);
@@ -608,9 +471,17 @@ public final class ArtifactDropService {
 
     @SuppressWarnings("null")
     public static List<ItemStack> rollDrops(ServerLevel level, BlockPos pos, ServerPlayer player) {
-        RandomSource random = level.getRandom();
+        return rollDrops(level, pos, player, player == null ? ItemStack.EMPTY : player.getMainHandItem());
+    }
+
+    public static List<ItemStack> rollDrops(ServerLevel level, BlockPos pos, ServerPlayer player, ItemStack tool) {
+        RandomSource random = digRandom(level, pos, false);
         String actualLocation = resolveLocation(level, pos);
-        String dropGroup = resolveDropGroup(level, actualLocation);
+        String dropGroup = actualLocation;
+        boolean generous = com.stardew.craft.enchantment.StardewEnchantments.has(tool,
+                com.stardew.craft.enchantment.StardewEnchantments.GENEROUS);
+        boolean archaeologist = com.stardew.craft.enchantment.StardewEnchantments.has(tool,
+                com.stardew.craft.enchantment.StardewEnchantments.ARCHAEOLOGIST);
         List<ItemStack> addonDrops =
                 com.stardew.craft.api.v1.internal.world
                         .StardewArtifactSpotDropRegistry.resolve(
@@ -633,8 +504,10 @@ public final class ArtifactDropService {
         List<ItemStack> results = new ArrayList<>();
 
         if (DESERT_LOCATION.equals(actualLocation) && DesertFestivalService.isFestivalOpen()) {
-            results.add(new ItemStack(ModItems.CALICO_EGG.get(), 3 + random.nextInt(4)));
-            return results;
+            // DesertFestival.digUpArtifactSpot uses its own stream, without the treasure-totem seed term.
+            var festivalRandom = RandomSource.create(level.getSeed() / 2 + ArtifactSpotSpawnService.totalDays()
+                    + pos.getX() * 2000L + pos.getZ());
+            results.add(new ItemStack(ModItems.CALICO_EGG.get(), 3 + festivalRandom.nextInt(4)));
         }
 
         List<ItemStack> extensionDrops = WorldLootPoolData.resolve(
@@ -648,6 +521,7 @@ public final class ArtifactDropService {
             return results;
         }
 
+        addRareDrops(player, totalDaysPlayed, random, results);
         for (DropEntry drop : allDrops) {
             if (random.nextDouble() >= drop.chance) {
                 continue;
@@ -657,7 +531,7 @@ public final class ArtifactDropService {
             }
 
             if ("RANDOM_ARTIFACT_FOR_DIG_SPOT".equals(drop.id)) {
-                ItemStack artifact = rollRandomArtifact(dropGroup, random);
+                ItemStack artifact = rollRandomArtifact(dropGroup, random, archaeologist ? 2 : 1);
                 if (artifact != null) {
                     results.add(artifact);
                     if (!drop.continueOnDrop) break;
@@ -675,7 +549,9 @@ public final class ArtifactDropService {
 
             ItemStack stack = resolveDropItem(drop, random, player);
             if (!stack.isEmpty()) {
-                results.add(stack);
+                addDrop(results, stack, drop.oneDebrisPerDrop);
+                if (generous && drop.generous && random.nextBoolean())
+                    addDrop(results, stack.copyWithCount(rollCount(drop, random)), drop.oneDebrisPerDrop);
                 if (!drop.continueOnDrop) {
                     break;
                 }
@@ -730,15 +606,29 @@ public final class ArtifactDropService {
         } else if (drop.item != null) {
             item = drop.item.get();
         } else {
-            return ItemStack.EMPTY;
+            ItemStack resolved = com.stardew.craft.fishpond.service.FishPondQualifiedItemService
+                    .createItemStack(drop.itemQuery, 1);
+            if (resolved.isEmpty() || !net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(resolved.getItem())
+                    .getNamespace().equals(StardewCraft.MODID)) return ItemStack.EMPTY;
+            item = resolved.getItem();
         }
+        return new ItemStack(item, rollCount(drop, random));
+    }
+
+    private static void addDrop(List<ItemStack> results, ItemStack stack, boolean oneDebrisPerDrop) {
+        if (oneDebrisPerDrop) {
+            for (int n = 0; n < stack.getCount(); n++) results.add(stack.copyWithCount(1));
+        } else results.add(stack);
+    }
+
+    private static int rollCount(DropEntry drop, RandomSource random) {
         int minStack = normalizeStackValue(drop.minStack);
         int maxStack = Math.max(minStack, normalizeStackValue(drop.maxStack));
         int count = minStack;
         if (maxStack > minStack) {
             count = minStack + random.nextInt(maxStack - minStack + 1);
         }
-        return new ItemStack(item, count);
+        return count;
     }
 
     private static ItemStack resolveSpecialQueryDrop(String itemId, RandomSource random) {
@@ -757,14 +647,95 @@ public final class ArtifactDropService {
      * Rolls RANDOM_ARTIFACT_FOR_DIG_SPOT: iterates all artifacts with ArtifactSpotChances
      * for the current location, returns the first match.
      */
-    private static ItemStack rollRandomArtifact(String location, RandomSource random) {
+    private static ItemStack rollRandomArtifact(String location, RandomSource random, int multiplier) {
         List<ArtifactChance> chances = ARTIFACT_SPOT_CHANCES.get(location);
         if (chances == null) return null;
         for (ArtifactChance ac : chances) {
-            if (random.nextDouble() < ac.chance) {
+            if (random.nextDouble() < ac.chance * multiplier) {
                 return new ItemStack(ac.item.get());
             }
         }
         return null;
     }
+    /** Separate source streams for tool rewards and location rewards; independent of global RNG use. */
+    public static RandomSource digRandom(ServerLevel level, BlockPos ground, boolean toolRewards) {
+        long x = ground.getX(), z = ground.getZ();
+        return RandomSource.create(level.getSeed() / 2 + ArtifactSpotSpawnService.totalDays()
+                + (toolRewards ? -x * 7 + z * 777 : x * 2000 + z)
+                + ArtifactSpotSpawnService.treasureTotemsUsed(level) * 777);
+    }
+
+    public static int seedSeason(int season, int day) {
+        return day > (season == 0 ? 23 : 20) ? (season + 1) % 4 : season;
+    }
+
+    public static ItemStack rollSeedDrop(int season, int day, double averageLuck, RandomSource random) {
+        int count = 2 + random.nextInt(2);
+        while (random.nextDouble() < .1 + averageLuck) count++;
+        Item item = switch (seedSeason(season, day)) {
+            case 0 -> ModItems.CARROT_SEEDS.get();
+            case 1 -> ModItems.SUMMER_SQUASH_SEEDS.get();
+            case 2 -> ModItems.BROCCOLI_SEEDS.get();
+            default -> ModItems.POWDER_MELON_SEEDS.get();
+        };
+        return new ItemStack(item, count);
+    }
+
+    public static double averageDailyLuck(ServerPlayer player) {
+        if (player == null) return 0;
+        return player.getServer().getPlayerList().getPlayers().stream()
+                .mapToDouble(PlayerStardewDataAPI::getDailyLuck).average()
+                .orElseGet(() -> PlayerStardewDataAPI.getDailyLuck(player));
+    }
+
+    private static void addRareDrops(ServerPlayer player, int days, RandomSource random, List<ItemStack> drops) {
+        if (player == null) return;
+        var data = PlayerDataManager.getPlayerData(player);
+        double luck = averageDailyLuck(player);
+        if (data.hasMailFlag("sawQiPlane") && random.nextDouble() < .05 + luck / 2)
+            drops.add(new ItemStack(ModItems.MYSTERY_BOX.get(), 1 + random.nextInt(2)));
+        if (data.hasMastery(com.stardew.craft.player.SkillType.FARMING) && random.nextDouble() < .009 * (1 + luck))
+            drops.add(new ItemStack(ModItems.GOLDEN_ANIMAL_CRACKER.get()));
+        if (days > 2 && random.nextDouble() < .018) {
+            ItemStack cosmetic = rollCosmetic(random);
+            if (!cosmetic.isEmpty()) drops.add(cosmetic);
+        }
+        if (days > 2 && random.nextDouble() < .0054)
+            drops.add(new ItemStack(ModItems.BOOKS.get("skill_book_" + random.nextInt(5)).get()));
+    }
+
+    public static ItemStack rollCosmetic(RandomSource random) {
+        if (random.nextDouble() < .2) {
+            // These source furniture IDs have no qualified-ID mapping in the mod; do not substitute another item.
+            if (random.nextDouble() >= .05) {
+                switch (random.nextInt(3)) {
+                    case 0 -> { switch (random.nextInt(3)) {
+                        case 0 -> random.nextInt(10);
+                        case 1 -> random.nextInt(15);
+                        default -> random.nextInt(6);
+                    } }
+                    case 1 -> random.nextInt(8);
+                    default -> random.nextInt(15);
+                }
+            }
+            return ItemStack.EMPTY;
+        }
+        var slot = com.stardew.craft.item.cosmetic.StardewCosmeticSlot.SHIRT;
+        int id;
+        if (random.nextDouble() < .25) {
+            int[] hats = {45,46,47,49,52,53,54,55,57,58,59,62,63,68,69,70,84,85,87,88,89,90};
+            id = hats[random.nextInt(hats.length)];
+            slot = com.stardew.craft.item.cosmetic.StardewCosmeticSlot.HAT;
+        } else {
+            var excluded = Set.of(1038,1041,1129,1130,1132,1133,1136,1152,1176,1177,1201,1202,1127);
+            do { id = 1112 + random.nextInt(179); } while (excluded.contains(id));
+        }
+        for (Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+            if (item instanceof com.stardew.craft.item.cosmetic.StardewCosmeticItem cosmetic
+                    && cosmetic.getCosmeticSlot() == slot && cosmetic.getVanillaId().equals(Integer.toString(id)))
+                return new ItemStack(item);
+        }
+        return ItemStack.EMPTY;
+    }
+
 }

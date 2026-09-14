@@ -26,8 +26,13 @@ public final class SeedMakerOutputResolver {
         }
 
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(input);
-        if ("stardewcraft".equals(id.getNamespace()) && "sweet_gem_berry".equals(id.getPath())) {
-            return ModItems.RARE_SEED.get();
+        if ("stardewcraft".equals(id.getNamespace())) {
+            // These harvested crops do not use the usual <crop>_seeds registry ID.
+            switch (id.getPath()) {
+                case "sweet_gem_berry": return ModItems.RARE_SEED.get();
+                case "unmilled_rice": return ModItems.RICE_SHOOT.get();
+                case "qi_fruit": return ModItems.VANILLA_CATEGORY_ITEMS.get("qi_bean").get();
+            }
         }
 
         Item seasonal = seasonalWildSeedFor(id.getPath());

@@ -1,0 +1,99 @@
+{
+  "intent": "年长男性冒险者；稳健、警觉而不立正，低抬脚、较长承重。单肩披风侧手臂收拢，另一侧自然摆动；不编造跛行。",
+  "intervalMin": 4.1,
+  "intervalMax": 8.0,
+  "durationMin": 0.96,
+  "durationMax": 1.15,
+  "doubleChance": 0.045,
+  "groundOffset": 0,
+  "walkStride": 0.769186625,
+  "lookLimits": {
+    "yaw": 27,
+    "pitch": 8
+  },
+  "attentionRig": {
+    "hipHeight": 12,
+    "soleY": 0,
+    "toeDepth": 2.6,
+    "halfStance": 2.25,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.55,
+    "lean": 1.0,
+    "armSwing": 2.0
+  },
+  "cloth": {
+    "bone": "cape",
+    "kind": "mantle",
+    "anchorY": 23,
+    "hemY": 2.9,
+    "margin": 0.9,
+    "standingDepthMargin": 0.55,
+    "contactBlend": 1.2,
+    "preserveLayerOffset": true
+  },
+  "gait": {
+    "intent": "年长男性冒险者；稳健、警觉而不立正，低抬脚、较长承重。单肩披风侧手臂收拢，另一侧自然摆动；不编造跛行。",
+    "stance": 0.6,
+    "strideRatio": 1.58,
+    "bob": 0.23,
+    "sway": 0.39,
+    "rootYaw": 1.35,
+    "bodyYaw": 3.2,
+    "bodyRoll": 0.7,
+    "bodyNod": 0.5,
+    "headYaw": 1.5,
+    "headRoll": 0.3,
+    "armSwing": 13,
+    "armOpening": 4.5,
+    "elbowBase": 7,
+    "elbowSwing": 4,
+    "footLift": 0.23,
+    "heelPitch": 4.2,
+    "toePitch": 7.7,
+    "bodyPitch": -1.2,
+    "headPitch": 0.65,
+    "rootMean": 0.38,
+    "breathSeconds": 9.8,
+    "idleScale": 1.0,
+    "halfStance": 2.25,
+    "id": "marlon",
+    "revision": "character-articulated-3",
+    "levelWalk": true,
+    "groundOffset": 0,
+    "stride": 12.306986,
+    "previewSpeed": 0.7,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.25,
+          12.0,
+          0.0
+        ],
+        "knee": 6,
+        "ankle": 1.5,
+        "sole": 0,
+        "heel": 2.6,
+        "toe": -2.4
+      },
+      "left": {
+        "hip": [
+          2.25,
+          12.0,
+          0.0
+        ],
+        "knee": 6,
+        "ankle": 1.5,
+        "sole": 0,
+        "heel": 2.6,
+        "toe": -2.4
+      }
+    },
+    "reachMargin": 0.048645,
+    "armScaleLeft": 0.22,
+    "armOpeningLeft": 1.3,
+    "armYawLeft": 0
+  }
+}

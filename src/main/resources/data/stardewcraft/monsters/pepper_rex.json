@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "source_name": "Pepper Rex",
+  "family": "pepper_rex",
+  "health": 300,
+  "damage": 15,
+  "resilience": 5,
+  "miss_chance": 0,
+  "experience": 7,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:quartz",
+      "chance": 0
+    }
+  ]
+}

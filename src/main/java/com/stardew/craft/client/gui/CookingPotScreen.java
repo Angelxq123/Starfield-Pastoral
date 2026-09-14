@@ -1,511 +1,416 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.api.v1.production.StardewCookingIngredient;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.CookingIngredientAvailabilityCache;
-import net.minecraft.client.resources.language.I18n;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.stardew.craft.StardewCraft;
-import com.stardew.craft.client.gui.common.CommonGuiTextures;
+import com.stardew.craft.client.font.StardewFonts;
 import com.stardew.craft.cooking.service.VanillaCookingRecipeData;
-import com.stardew.craft.api.v1.production.StardewCookingIngredient;
 import com.stardew.craft.item.cooking.CookingDishItem;
 import com.stardew.craft.menu.CookingPotMenu;
 import com.stardew.craft.network.payload.CookingPotCookSubmitPayload;
+import com.stardew.craft.sound.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
+/** A stable recipe selection, explicit cooking action and native inventory rendering. */
 @SuppressWarnings("null")
 public class CookingPotScreen extends AbstractContainerScreen<CookingPotMenu> {
-    private static final int UI_WIDTH = 360;
-    private static final int UI_HEIGHT = 260;
+    private enum View { CATALOGUE, RECIPE, INVENTORY }
+    private record Recipe(ResourceLocation id, ItemStack output) { }
+    private record Detail(Component text, ItemStack icon, int color, Component count) { }
+    private final List<Recipe> recipes = new ArrayList<>();
+    private final List<Recipe> filtered = new ArrayList<>();
+    private final List<Detail> details = new ArrayList<>();
+    private final List<Detail> ingredients = new ArrayList<>();
+    private CookingLayout.Grid grid;
+    private int gridTop;
+    private CookingLayout.Page page;
+    private Recipe selected;
+    private View view = View.CATALOGUE, beforeInventory = View.CATALOGUE;
+    private EditBox search;
+    private String query = "";
+    private boolean readyOnly, opened, filterDirty;
+    private int line, listScroll, detailScroll, detailHeight, detailBottom, amount = 1, cooldown, ticks;
+    private int quantityY, actionY, actionHeight, toolbarY, toolbarHeight, listBottom;
+    private Button cook;
+    private final List<Button> quantities = new ArrayList<>();
+    private ItemStack hoverItem = ItemStack.EMPTY;
+    private Component hoverText;
+    private int mx, my, dragArea;
 
-    private static final int BG_OVERLAY = 0xD8111116;
-    private static final int TITLE_COLOR = 0xFFF7F2DB; 
-    private static final int TEXT_MUTED = 0xFFA0A0A0;
-    private static final ResourceLocation ENERGY_ICON = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/energy.png");
-    private static final ResourceLocation HEALTH_ICON = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/health.png");
-
-    private final List<ItemStack> availableRecipes = new ArrayList<>();
-    private final List<ResourceLocation> recipeIds = new ArrayList<>();
-    private int recipePage = 0;
-
-    private int currentFocusIndex = 0;
-    private float[] itemHoverScales = new float[45];
-    private float showcaseAlpha = 1.0f;
-
-    public CookingPotScreen(CookingPotMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
-        this.imageWidth = UI_WIDTH;
-        this.imageHeight = UI_HEIGHT;
+    public CookingPotScreen(CookingPotMenu menu, Inventory inventory, Component title) { super(menu, inventory, title); }
+    private Component tr(String key, Object... args) { return Component.translatable("stardewcraft.cooking.ui." + key, args); }
+    private Component name(Recipe recipe) { return unlocked(recipe) ? recipe.output.getHoverName() : Component.literal("???"); }
+    private boolean unlocked(Recipe recipe) { return recipe != null && ClientPlayerDataCache.hasRecipe(VanillaCookingRecipeData.storageId(recipe.id)); }
+    private List<StardewCookingIngredient> requirements(Recipe recipe) { return VanillaCookingRecipeData.getRequirements(recipe.id); }
+    private int countMatching(StardewCookingIngredient ingredient) {
+        int count = CookingIngredientAvailabilityCache.getFridgeTokenCount(ingredient.matcherKey());
+        // Match the server's consumable inventory, which excludes armour and off-hand slots.
+        for (ItemStack stack : minecraft.player.getInventory().items)
+            if (!stack.isEmpty() && VanillaCookingRecipeData.matches(stack, ingredient)) count += stack.getCount();
+        return count;
     }
-
-    private int getGridX() {
-        int startIndex = recipePage * 45;
-        int pageSize = Math.max(0, Math.min(45, availableRecipes.size() - startIndex));
-        int cols = Math.min(9, Math.max(1, pageSize));
-        return this.leftPos + 156 + (204 - cols * 22) / 2;
+    private int available(Recipe recipe) {
+        if (!unlocked(recipe)) return 0;
+        List<StardewCookingIngredient> reqs = requirements(recipe);
+        if (reqs.isEmpty()) return 1;
+        int max = Integer.MAX_VALUE;
+        for (var req : reqs) if (req.count() > 0) max = Math.min(max, countMatching(req) / req.count());
+        return max == Integer.MAX_VALUE ? 0 : max;
     }
+    private int requested() { return amount == -1 ? Math.max(1, available(selected)) : amount; }
+    private boolean catalogueVisible() { return view != View.INVENTORY && (page.wide() || view == View.CATALOGUE); }
+    private boolean recipeVisible() { return view != View.INVENTORY && (page.wide() || view == View.RECIPE); }
+    private boolean inventoryVisible() { return page.wide() || view == View.INVENTORY; }
 
-    private int getGridY() {
-        int startIndex = recipePage * 45;
-        int pageSize = Math.max(0, Math.min(45, availableRecipes.size() - startIndex));
-        int rows = Math.max(1, (pageSize + 8) / 9);
-        return this.topPos + 24 + (142 - rows * 22) / 2;
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        availableRecipes.clear();
-        recipeIds.clear();
-
-        List<ResourceLocation> allIds = new ArrayList<>();
-        for (ResourceLocation recipeId : VanillaCookingRecipeData.getRecipeIds()) {
-            if (!VanillaCookingRecipeData.getOutputStack(recipeId, 1).isEmpty()) allIds.add(recipeId);
+    @Override protected void init() {
+        super.init(); font = StardewFonts.small(); line = StardewFonts.lineHeight(font);
+        recipes.clear();
+        for (ResourceLocation id : VanillaCookingRecipeData.getRecipeIds()) {
+            ItemStack stack = VanillaCookingRecipeData.getOutputStack(id, 1);
+            if (!stack.isEmpty()) recipes.add(new Recipe(id, stack));
         }
-
-        allIds.sort((r1, r2) -> {
-            boolean unlocked1 = isUnlocked(r1);
-            boolean unlocked2 = isUnlocked(r2);
-            boolean craftable1 = canCraft(r1);
-            boolean craftable2 = canCraft(r2);
-
-            int rank1 = craftable1 ? 1 : (unlocked1 ? 2 : 3);
-            int rank2 = craftable2 ? 1 : (unlocked2 ? 2 : 3);
-
-            if (rank1 != rank2) return Integer.compare(rank1, rank2);
-            return r1.toString().compareTo(r2.toString());
+        recipes.sort(Comparator.<Recipe>comparingInt(r -> available(r) > 0 ? 0 : unlocked(r) ? 1 : 2).thenComparing(r -> r.id.toString()));
+        if (selected != null) selected = recipes.stream().filter(r -> r.id.equals(selected.id)).findFirst().orElse(null);
+        filter();
+        if (selected == null && !filtered.isEmpty()) selected = filtered.getFirst();
+        buildControls();
+        if (!opened) {
+            opened = true;
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.BOOK_READ.get(), 1f, .25f));
+        }
+    }
+    private void filter() {
+        recipes.sort(Comparator.<Recipe>comparingInt(r -> available(r) > 0 ? 0 : unlocked(r) ? 1 : 2).thenComparing(r -> r.id.toString()));
+        filtered.clear();
+        String term = query.strip().toLowerCase(Locale.ROOT);
+        for (Recipe recipe : recipes)
+            if ((!readyOnly || available(recipe) > 0) && (term.isEmpty() || name(recipe).getString().toLowerCase(Locale.ROOT).contains(term))) filtered.add(recipe);
+    }
+    private int buttonHeight(Component label, int w) { return Math.max(24, font.split(label, Math.max(1, w - 12)).size() * (line + 2) + 8); }
+    private void buildControls() {
+        boolean editing = search != null && search.isFocused();
+        int cursor = search == null ? 0 : search.getCursorPosition();
+        setFocused(null); clearWidgets(); quantities.clear(); cook = null; search = null;
+        int cw = Math.min(456, width - 12) - 32;
+        int navH = Math.max(24, line + 12);
+        boolean wide = cw >= 382 && Math.min(364, height - 12) >= 340 + 8 * Math.max(0, navH - 24);
+        if (wide && view == View.INVENTORY) view = beforeInventory;
+        toolbarHeight = view == View.CATALOGUE || wide ? navH + 10 : 0;
+        page = CookingLayout.fit(width, height, navH + 14, toolbarHeight, navH);
+        imageWidth = page.width(); imageHeight = page.height(); leftPos = page.x(); topPos = page.y();
+        toolbarY = page.bodyTop();
+        gridTop = page.bodyTop() + toolbarHeight;
+        int cx = page.contentX();
+        Component back = Component.translatable("gui.back");
+        button(cx, topPos + 15, 24, navH, back, "back", false, () -> {
+            if (view == View.INVENTORY) { view = beforeInventory; buildControls(); }
+            else if (!page.wide() && view == View.RECIPE) { view = View.CATALOGUE; buildControls(); }
+            else onClose();
         });
-
-        for (ResourceLocation rl : allIds) {
-            availableRecipes.add(VanillaCookingRecipeData.getOutputStack(rl, 1));
-            recipeIds.add(rl);
+        button(leftPos + imageWidth - 36, topPos + 15, 24, navH, Component.translatable("gui.done"), "close", false, this::onClose);
+        if (catalogueVisible()) {
+            int gx = page.listX(), sw = page.listWidth() - 32;
+            search = new EditBox(font, gx + 16, toolbarY + (navH - line) / 2, sw - 20, line + 4, tr("search"));
+            search.setBordered(false); search.setTextColor(CookingArt.INK); search.setTextColorUneditable(CookingArt.MUTED);
+            search.setMaxLength(80); search.setValue(query); search.setHint(tr("search").copy().withStyle(st -> st.withColor(CookingArt.MUTED)));
+            search.setResponder(value -> { query = value; listScroll = 0; filterDirty = true; });
+            addRenderableWidget(search);
+            button(gx + sw + 4, toolbarY, 24, navH, tr("ready_only"), "check", readyOnly, () -> {
+                readyOnly = !readyOnly; listScroll = 0; filter(); buildControls();
+            });
+            listBottom = page.wide() ? page.bodyBottom() : page.footerY() - 8;
+            grid = CookingLayout.grid(gx, page.listWidth(), listBottom - gridTop);
+            int totalRows = (filtered.size() + grid.columns() - 1) / grid.columns();
+            listScroll = CookingLayout.clampScroll(listScroll, totalRows, grid.rows());
+            int start = listScroll * grid.columns();
+            for (int i = start; i < Math.min(filtered.size(), start + grid.rows() * grid.columns()); i++) {
+                int index = i - start;
+                addRenderableWidget(new RecipeButton(grid.startX() + index % grid.columns() * grid.cell(),
+                        gridTop + index / grid.columns() * grid.cell(), grid.cell() - 2, grid.cell() - 2, filtered.get(i)));
+            }
+        }
+        if (recipeVisible()) {
+            actionHeight = buttonHeight(tr("cook"), page.detailWidth());
+            actionY = page.wide() ? page.bodyBottom() - actionHeight : page.footerY() + Math.max(24, line + 12) - actionHeight;
+            int qh = Math.max(24, buttonHeight(tr("all"), (page.detailWidth() - 8) / 3));
+            quantityY = actionY - qh - 5; detailBottom = quantityY - 8;
+            int qw = (page.detailWidth() - 8) / 3;
+            int[] values = {1, 5, -1};
+            for (int i = 0; i < 3; i++) {
+                int value = values[i]; Component label = value == -1 ? tr("all") : Component.literal(Integer.toString(value));
+                Button q = button(page.detailX() + i * (qw + 4), quantityY, i == 2 ? page.detailWidth() - 2 * (qw + 4) : qw, qh,
+                        label, null, amount == value, () -> { amount = value; detailScroll = 0; buildControls(); });
+                q.setTooltip(net.minecraft.client.gui.components.Tooltip.create(value == -1 ? tr("all_hint") : tr("quantity", value)));
+                quantities.add(q);
+            }
+            cook = button(page.detailX(), actionY, page.detailWidth(), actionHeight, tr("cook"), null, true, this::submit);
+            rebuildDetails(); updateAction();
+        }
+        if (!page.wide()) {
+            if (view == View.CATALOGUE) button(cx, page.footerY(), cw, navH, Component.translatable("container.inventory"), null, false, this::showInventory);
+            else if (view == View.RECIPE) {
+                // Inventory access stays separate from the cooking action, even in a narrow viewport.
+                button(leftPos + imageWidth - 66, topPos + 15, 24, navH, Component.translatable("container.inventory"), "inventory", false, this::showInventory);
+            }
+        }
+        positionSlots();
+        if (editing && search != null) { setInitialFocus(search); search.moveCursorTo(Math.min(cursor, query.length()), false); }
+    }
+    private void showInventory() { beforeInventory = view; view = View.INVENTORY; buildControls(); }
+    private void positionSlots() {
+        int x = (imageWidth - 162) / 2;
+        int y = page.wide() ? page.inventoryY() - topPos + 4 : Math.max(page.bodyTop() - topPos + 24, (imageHeight - 76) / 2);
+        for (int i = 0; i < menu.slots.size(); i++) {
+            Slot slot = menu.slots.get(i);
+            slot.x = inventoryVisible() ? x + (i < 27 ? i % 9 : i - 27) * 18 : -10000;
+            slot.y = inventoryVisible() ? y + (i < 27 ? i / 9 * 18 : 58) : -10000;
         }
     }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
-        super.render(g, mouseX, mouseY, partialTick);
-        
-        int gridX = getGridX();
-        int gridY = getGridY();
-        int startIndex = recipePage * 45;
-        
-        for (int i = 0; i < 45; i++) {
-            int cx = gridX + (i % 9) * 22;
-            int cy = gridY + (i / 9) * 22;
-            int dataIndex = startIndex + i;
-            if (dataIndex >= availableRecipes.size()) break;
-            
-            if (mouseX >= cx && mouseX <= cx + 16 && mouseY >= cy && mouseY <= cy + 16) {
-                ResourceLocation rl = recipeIds.get(dataIndex);
-                if (!isUnlocked(rl)) {
-                    List<Component> tooltip = List.of(Component.literal("???"));
-                    g.renderTooltip(this.font, tooltip, java.util.Optional.empty(), mouseX, mouseY);
-                } else {
-                    g.renderTooltip(this.font, availableRecipes.get(dataIndex), mouseX, mouseY);
-                }
-                break;
-            }
-        }
-        
-        if (currentFocusIndex >= 0 && currentFocusIndex < availableRecipes.size()) {
-            ResourceLocation recipeId = recipeIds.get(currentFocusIndex);
-            List<StardewCookingIngredient> reqs = VanillaCookingRecipeData.getRequirements(recipeId);
-            if (!reqs.isEmpty()) {
-                int startY = this.topPos + 10 + 128;
-                int exactCount = Math.min(4, reqs.size());
-                int reqSpacing = 28;
-                int totalReqWidth = (exactCount - 1) * reqSpacing + 16;
-                int startX = this.leftPos + 8 + (130 - totalReqWidth) / 2;
-                
-                for (int i = 0; i < exactCount; i++) {
-                    int rx = startX + i * reqSpacing;
-                    if (mouseX >= rx && mouseX <= rx + 16 && mouseY >= startY && mouseY <= startY + 16) {
-                        g.renderTooltip(this.font, resolveRequirementIcon(reqs.get(i)), mouseX, mouseY);
-                        break;
-                    }
-                }
-            }
-        }
-
-        this.renderTooltip(g, mouseX, mouseY);
+    private void updateAction() {
+        if (cook == null) return;
+        cook.active = selected != null && unlocked(selected) && available(selected) >= requested() && cooldown == 0;
+        for (Button q : quantities) q.active = unlocked(selected);
     }
-
-    @Override
-    protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+    private void submit() {
+        updateAction();
+        if (cook == null || !cook.active) return;
+        PacketDistributor.sendToServer(new CookingPotCookSubmitPayload(selected.id.toString(), amount));
+        cooldown = 8; updateAction();
     }
-
-    @Override
-    protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
-        int x = this.leftPos;
-        int y = this.topPos;
-
-        g.fill(x - 20, y - 10, x + imageWidth + 20, y + imageHeight + 10, BG_OVERLAY);
-
-        for (Slot slot : this.menu.slots) {
-            int sx = x + slot.x;
-            int sy = y + slot.y;
-            g.fill(sx, sy, sx + 16, sy + 16, 0x4A000000);
-        }
-
-        g.fillGradient(x + 144, y + 10, x + 145, y + 150, 0x40FFFFFF, 0x00FFFFFF);
-
-        updateVisualFocus(mouseX, mouseY, partialTick);
-
-        if (currentFocusIndex >= 0 && currentFocusIndex < availableRecipes.size()) {
-            drawElegantShowcase(g, x + 8, y + 10, currentFocusIndex, partialTick);
-        }
-
-        int gridX = getGridX();
-        int gridY = getGridY();
-        int startIndex = recipePage * 45;
-
-        for (int i = 0; i < 45; i++) {
-            int dataIndex = startIndex + i;
-            if (dataIndex >= availableRecipes.size()) break;
-
-            int cx = gridX + (i % 9) * 22;
-            int cy = gridY + (i / 9) * 22;
-
-            ItemStack stack = availableRecipes.get(dataIndex);
-
-            float scale = itemHoverScales[i];
-
-            float lift = scale > 1.0f ? (scale - 1.0f) * -5.0f : 0.0f;
-            int itemSize = CommonGuiTextures.itemSize(scale);
-            int itemX = Math.round(cx + 8 - itemSize / 2.0f);
-            int itemY = Math.round(cy + 8 + lift - itemSize / 2.0f);
-
-            ResourceLocation rl = recipeIds.get(dataIndex);
-            boolean unlocked = isUnlocked(rl);
-            boolean craftable = canCraft(rl);
-
-            if (!unlocked) {
-                CommonGuiTextures.drawItemTint(g, stack, itemX, itemY, scale, 0.0F, 0.0F, 0.0F, 1.0F);
-            } else if (!craftable) {
-                CommonGuiTextures.drawItemTint(g, stack, itemX, itemY, scale, 0.35F, 0.35F, 0.35F, 1.0F);
-            } else {
-                CommonGuiTextures.drawItem(g, stack, itemX, itemY, scale);
-            }
-        }
-
-        g.drawString(this.font, Component.translatable("stardewcraft.ui.cooking_pot.title"), x + 158, y + 6, TITLE_COLOR, false);
-
-        int maxPage = Math.max(1, ((availableRecipes.size() - 1) / 45) + 1);
-        String pageTxt = (recipePage + 1) + " / " + maxPage;
-        g.drawString(this.font, pageTxt, x + 350 - this.font.width(pageTxt), y + 6, TEXT_MUTED, false);
-    }
-
-    private void updateVisualFocus(int mouseX, int mouseY, float partialTick) {
-        int gridX = getGridX();
-        int gridY = getGridY();
-
-        for (int i = 0; i < 45; i++) {
-            int cx = gridX + (i % 9) * 22;
-            int cy = gridY + (i / 9) * 22;
-            int dataIndex = recipePage * 45 + i;
-
-            boolean isHover = dataIndex < availableRecipes.size() &&
-                              mouseX >= cx - 2 && mouseX <= cx + 20 &&
-                              mouseY >= cy - 2 && mouseY <= cy + 20;
-
-            if (isHover) {
-                if (currentFocusIndex != dataIndex) {
-                    currentFocusIndex = dataIndex;
-                    showcaseAlpha = 0.0f;
-                }
-                itemHoverScales[i] = Mth.lerp(0.3f, itemHoverScales[i], 1.45f);
-            } else {
-                itemHoverScales[i] = Mth.lerp(0.15f, itemHoverScales[i], 1.0f);
-            }
-        }
-
-        if (showcaseAlpha < 1.0f) {
-            showcaseAlpha = Mth.lerp(0.1f, showcaseAlpha, 1.0f);
-        }
-    }
-
-    private void drawElegantShowcase(GuiGraphics g, int px, int py, int focusIdx, float partialTick) {
-        int width = 130;
-        ItemStack selStack = availableRecipes.get(focusIdx);
-        ResourceLocation recipeId = recipeIds.get(focusIdx);
-        boolean unlocked = isUnlocked(recipeId);
-
-        int alpha = (int)(showcaseAlpha * 255);
-        alpha = Mth.clamp(alpha, 0, 255);
-        int alphaMask = alpha << 24;
-
-        Component title = unlocked ? selStack.getHoverName().copy().withStyle(net.minecraft.ChatFormatting.BOLD) : Component.literal("???").withStyle(net.minecraft.ChatFormatting.BOLD);
-        String printTitle = title.getString();
-        
-        g.pose().pushPose();
-        float titleScale = 1.3f;
-        int scaledWidth = (int)(width / titleScale);
-        if (this.font.width(printTitle) > scaledWidth - 4) {
-            printTitle = this.font.plainSubstrByWidth(printTitle, scaledWidth - 12) + "...";
-        }
-        int tx = px + (width - (int)(this.font.width(printTitle) * titleScale)) / 2;
-        g.pose().translate(tx, py, 0);
-        g.pose().scale(titleScale, titleScale, 1.0f);
-        
-        // 🌟 视觉优化：标题流光溢彩（在暗金与琥珀金之间自然呼吸）
-        int shimmerR = 255;
-        int shimmerG = 200 + (int)(30 * Math.sin(System.currentTimeMillis() / 250.0));
-        int shimmerB = 100;
-        int shimmerColor = (shimmerR << 16) | (shimmerG << 8) | shimmerB;
-        g.drawString(this.font, printTitle, 0, 0, alphaMask | shimmerColor, false);
-        g.pose().popPose();
-
-        if (unlocked) {
-            String descKey = selStack.getItem().getDescriptionId() + ".desc";
-            if (net.minecraft.client.resources.language.I18n.exists(descKey)) {
-            Component desc = Component.translatable(descKey);
-            List<FormattedCharSequence> descLines = this.font.split(desc, width - 6);
-            int descY = py + 16;
-            for (int i = 0; i < Math.min(3, descLines.size()); i++) {
-                int dx = px + (width - this.font.width(descLines.get(i))) / 2;
-                g.drawString(this.font, descLines.get(i), dx, descY, alphaMask | 0xFFAAAAAA, false);
-                descY += this.font.lineHeight;
-            }
-            }
-        }
-
-        float floatY = (float)Math.sin((System.currentTimeMillis() % 6000) / 6000.0f * Math.PI * 2) * 5.0f;
-        
-        // 🌟 视觉优化：底部动态椭圆阴影，配合上下浮动产生真实的空间Z轴感
-        float shadowScale = 1.0f - (floatY + 5.0f) / 20.0f;
-        int shadowWidth = (int)(22 * shadowScale);
-        int shadowAlpha = (int)(showcaseAlpha * 90 * shadowScale);
-        g.fillGradient(px + 65 - shadowWidth, py + 88, px + 65 + shadowWidth, py + 93, (shadowAlpha << 24) | 0x000000, 0x00000000);
-
-        float selectedScale = 4.0f;
-        int selectedSize = CommonGuiTextures.itemSize(selectedScale);
-        int selectedX = px + 65 - selectedSize / 2;
-        int selectedY = Math.round(py + 62 + floatY - selectedSize / 2.0f);
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 150);
-        if (!unlocked) {
-            CommonGuiTextures.drawItemTint(g, selStack, selectedX, selectedY, selectedScale, 0.0F, 0.0F, 0.0F, 1.0F);
-        } else {
-            CommonGuiTextures.drawItem(g, selStack, selectedX, selectedY, selectedScale);
-        }
-        g.pose().popPose();
-
-        if (!unlocked) {
-            Component unlockTxt = Component.translatable("stardewcraft.cooking.unlock_method",
-                    Component.translatable("recipe.stardewcraft." + recipeId.getPath() + ".unlock_condition"));
-            List<FormattedCharSequence> lines = this.font.split(unlockTxt, width - 6);
-            int yPos = py + 110;
-            for (FormattedCharSequence line : lines) {
-                int dx = px + (width - this.font.width(line)) / 2;
-                g.drawString(this.font, line, dx, yPos, alphaMask | 0xFFFFAA, false);
-                yPos += this.font.lineHeight;
-            }
+    private void addDetail(Component text, int color) { details.add(new Detail(text, ItemStack.EMPTY, color, null)); }
+    private void rebuildDetails() {
+        details.clear(); ingredients.clear();
+        if (selected == null) { addDetail(tr("select"), CookingArt.MUTED); return; }
+        if (!unlocked(selected)) {
+            addDetail(tr("learn"), CookingArt.MUTED);
             return;
         }
-
-        Item item = selStack.getItem();
-        int statY = py + 110;
-        if (item instanceof CookingDishItem dish) {
-            int e = dish.getEnergy(selStack);
-            int h = dish.getHealth(selStack);
-            List<CookingDishItem.DishBuff> buffs = dish.getBuffs();
-            
-            int statWidth = 0;
-            if (e > 0) statWidth += 18 + this.font.width(String.valueOf(e));
-            if (h > 0) statWidth += 18 + this.font.width(String.valueOf(h));
-            
-            for (int i = 0; i < Math.min(3, buffs.size()); i++) statWidth += 18;
-            
-            int curX = px + (width - statWidth) / 2;
-            
-            RenderSystem.enableBlend();
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, showcaseAlpha); 
-            
-            if (e > 0) {
-                g.blit(ENERGY_ICON, curX, statY - 2, 0, 0, 16, 16, 16, 16);
-                g.drawString(this.font, String.valueOf(e), curX + 16, statY + 2, alphaMask | 0xFFFFFF, false);
-                curX += 18 + this.font.width(String.valueOf(e));
-            }
-            if (h > 0) {
-                g.blit(HEALTH_ICON, curX, statY - 2, 0, 0, 16, 16, 16, 16);
-                g.drawString(this.font, String.valueOf(h), curX + 16, statY + 2, alphaMask | 0xFFFFFF, false);
-                curX += 18 + this.font.width(String.valueOf(h));
-            }
-            
-            for (int i = 0; i < Math.min(3, buffs.size()); i++) {
-                CookingDishItem.DishBuff buff = buffs.get(i);
-                ResourceLocation buffIcon = getStardewBuffIcon(buff.type());
-                g.blit(buffIcon, curX, statY - 2, 0, 0, 18, 18, 18, 18);
-                curX += 18;
-            }
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        for (var req : requirements(selected)) {
+            ItemStack icon = VanillaCookingRecipeData.getDisplayStack(req);
+            int count = countMatching(req); long needed = (long) req.count() * requested();
+            ingredients.add(new Detail(VanillaCookingRecipeData.describe(req), icon.isEmpty() ? new ItemStack(Items.BARRIER) : icon,
+                    count >= needed ? CookingArt.GREEN : CookingArt.RED, Component.literal(count + " / " + needed)));
         }
-
-        List<StardewCookingIngredient> reqs = VanillaCookingRecipeData.getRequirements(recipeId);
-        if (!reqs.isEmpty()) {
-            int startY = py + 128;
-            int exactCount = Math.min(4, reqs.size());
-            int reqSpacing = 28;
-            int totalReqWidth = (exactCount - 1) * reqSpacing + 16;
-            int startX = px + (width - totalReqWidth) / 2;
-
-            for (int i = 0; i < exactCount; i++) {
-                StardewCookingIngredient req = reqs.get(i);
-                ItemStack icon = resolveRequirementIcon(req);
-                int has = countMatching(req);
-                int need = req.count();
-                boolean enough = has >= need;
-
-                int rx = startX + i * reqSpacing;
-                
-                float itemScale;
-                float red;
-                float green;
-                float blue;
-                if (enough) {
-                    float beat = 1.0f + 0.04f * (float)Math.sin(System.currentTimeMillis() / 150.0);
-                    itemScale = beat;
-                    red = 1.0F;
-                    green = 1.0F;
-                    blue = 1.0F;
+        addDetail(tr("source"), CookingArt.MUTED);
+        if (available(selected) < requested()) addDetail(tr("missing"), CookingArt.RED);
+        String desc = selected.output.getDescriptionId() + ".desc";
+        if (I18n.exists(desc)) addDetail(Component.translatable(desc), CookingArt.MUTED);
+        if (selected.output.getItem() instanceof CookingDishItem dish) {
+            addDetail(Component.translatable("stardewcraft.cooking.energy", dish.getEnergy(selected.output)).copy().append("  ").append(Component.translatable("stardewcraft.cooking.health", dish.getHealth(selected.output))), CookingArt.GREEN);
+            for (var buff : dish.getBuffs()) {
+                String suffix = switch (buff.type()) {
+                    case MAX_ENERGY -> "max_energy"; case FISHING -> "fishing_level"; case FARMING -> "farming_level";
+                    case FORAGING -> "foraging_level"; case MINING -> "mining_level"; case MAGNETIC_RADIUS -> "magnetic_radius";
+                    default -> buff.type().name().toLowerCase(Locale.ROOT);
+                };
+                int seconds = buff.durationTicks() / 20;
+                addDetail(Component.translatable("stardewcraft.tooltip.buff." + suffix, buff.amount()).copy().append("  " + seconds / 60 + ":" + String.format(Locale.ROOT, "%02d", seconds % 60)), CookingArt.GREEN);
+            }
+        }
+    }
+    @Override protected void containerTick() {
+        super.containerTick(); if (cooldown > 0) cooldown--;
+        if (filterDirty) { filterDirty = false; filter(); buildControls(); }
+        if (++ticks % 5 == 0) {
+            List<Recipe> old = List.copyOf(filtered); filter();
+            if (!old.equals(filtered)) buildControls();
+            else if (recipeVisible()) rebuildDetails();
+        }
+        updateAction();
+    }
+    @Override protected void renderLabels(GuiGraphics g, int x, int y) { }
+    @Override protected void renderBg(GuiGraphics g, float tick, int mouseX, int mouseY) {
+        CookingArt.page(g, page);
+        Component heading = view == View.INVENTORY ? Component.translatable("container.inventory") : Component.translatable("stardewcraft.cooking.title");
+        int titleW = imageWidth - (!page.wide() && view == View.RECIPE ? 132 : 102);
+        clippedText(g, heading, page.contentX() + 34, topPos + 15 + (Math.max(24, line + 12) - line) / 2, titleW, CookingArt.INK);
+        if (catalogueVisible()) {
+            int gx = page.listX(), sw = page.listWidth() - 32;
+            CookingArt.sprite(g, "search", gx + 2, toolbarY + (Math.max(24, line + 12) - 8) / 2, 8, 8);
+            CookingArt.rule(g, gx, toolbarY + Math.max(24, line + 12) - 1, sw);
+            if (filtered.isEmpty()) paragraph(g, tr("empty"), gx + 8, gridTop + 12, page.listWidth() - 24, CookingArt.MUTED);
+            int totalRows = (filtered.size() + grid.columns() - 1) / grid.columns();
+            scrollbar(g, gx + page.listWidth() - 4, gridTop, listBottom - gridTop, listScroll,
+                    Math.max(0, totalRows - grid.rows()), grid.rows(), totalRows);
+        }
+        if (recipeVisible()) drawDetails(g);
+        if (inventoryVisible()) {
+            for (Slot slot : menu.slots) CookingArt.box(g, "slot", leftPos + slot.x - 1, topPos + slot.y - 1, 18, 18);
+        }
+    }
+    private void drawDetails(GuiGraphics g) {
+        int w = page.detailWidth() - 10;
+        int heroH = selected == null ? 0 : 60 + font.split(name(selected), w).size() * (line + 3);
+        int headingH = ingredients.isEmpty() ? 0 : font.split(tr("ingredients", requested()), w).size() * (line + 3) + 6;
+        int countWidth = ingredients.stream().mapToInt(d -> font.width(d.count)).max().orElse(0);
+        int columns = CookingLayout.ingredientColumns(w, countWidth), cellW = w / columns;
+        int countLines = ingredients.stream().mapToInt(d -> font.split(d.count, cellW - 4).size()).max().orElse(1);
+        int cellH = 24 + countLines * (line + 2), ingredientH = ((ingredients.size() + columns - 1) / columns) * cellH;
+        detailHeight = heroH + headingH + ingredientH;
+        for (Detail d : details) detailHeight += font.split(d.text, w).size() * (line + 3) + 10;
+        int viewHeight = Math.max(1, detailBottom - page.bodyTop());
+        detailScroll = Math.max(0, Math.min(detailScroll, detailHeight - viewHeight));
+        g.enableScissor(page.detailX(), page.bodyTop(), page.detailX() + page.detailWidth(), detailBottom);
+        int y = page.bodyTop() - detailScroll;
+        if (selected != null) {
+            int plateX = page.detailX() + (w - 48) / 2;
+            CookingArt.icon(g, "plate", plateX, y, 3);
+            CookingArt.dish(g, selected.output, plateX + 8, y + 4, 2, !unlocked(selected) ? 0f : available(selected) > 0 ? 1f : .66f);
+            if (inside(mx, my, plateX, Math.max(y, page.bodyTop()), 48, Math.min(y + 48, detailBottom) - Math.max(y, page.bodyTop())) && unlocked(selected)) hoverItem = selected.output;
+            int ty = y + 54;
+            for (var part : font.split(name(selected), w)) {
+                g.drawString(font, part, page.detailX() + (w - font.width(part)) / 2, ty, CookingArt.INK, false); ty += line + 3;
+            }
+            y += heroH;
+        }
+        if (!ingredients.isEmpty()) {
+            paragraph(g, tr("ingredients", requested()), page.detailX(), y, w, CookingArt.INK); y += headingH;
+            for (int i = 0; i < ingredients.size(); i++) {
+                Detail d = ingredients.get(i); int cellX = page.detailX() + i % columns * cellW, cellY = y + i / columns * cellH;
+                g.renderItem(d.icon, cellX + (cellW - 16) / 2, cellY + 2);
+                int ty = cellY + 21;
+                for (var part : font.split(d.count, cellW - 4)) { g.drawString(font, part, cellX + (cellW - font.width(part)) / 2, ty, d.color, false); ty += line + 2; }
+                if (inside(mx, my, cellX, Math.max(cellY, page.bodyTop()), cellW,
+                        Math.min(cellY + cellH, detailBottom) - Math.max(cellY, page.bodyTop())))
+                    hoverText = d.text.copy().append("  ").append(d.count).append("\n").append(tr("source"));
+            }
+            y += ingredientH;
+        }
+        for (Detail d : details) y = paragraph(g, d.text, page.detailX(), y, w, d.color) + 10;
+        g.disableScissor();
+        scrollbar(g, page.detailX() + page.detailWidth() - 4, page.bodyTop(), viewHeight, detailScroll, Math.max(0, detailHeight - viewHeight), viewHeight, detailHeight);
+    }
+    private int paragraph(GuiGraphics g, Component text, int x, int y, int w, int color) {
+        for (FormattedCharSequence part : font.split(text, Math.max(1, w))) { g.drawString(font, part, x, y, color, false); y += line + 3; }
+        return y;
+    }
+    private void clippedText(GuiGraphics g, Component text, int x, int y, int w, int color) {
+        String s = text.getString();
+        if (font.width(s) > w) {
+            s = font.plainSubstrByWidth(s, Math.max(0, w - font.width("..."))) + "...";
+            if (inside(mx, my, x, y, w, line + 3)) hoverText = text;
+        }
+        g.drawString(font, s, x, y, color, false);
+    }
+    private void scrollbar(GuiGraphics g, int x, int y, int h, int offset, int max, int visible, int total) {
+        if (max <= 0 || h <= 0) return;
+        int thumb = Math.min(h, Math.max(12, h * visible / Math.max(1, total)));
+        int ty = y + (h - thumb) * offset / max;
+        g.fill(x, y, x + 3, y + h, 0xFFDBCEB5); g.fill(x - 1, ty, x + 4, ty + thumb, 0xFFA45D43);
+    }
+    @Override public void render(GuiGraphics g, int mouseX, int mouseY, float tick) {
+        mx = mouseX; my = mouseY; hoverItem = ItemStack.EMPTY; hoverText = null;
+        renderTransparentBackground(g);
+        super.render(g, mouseX, mouseY, tick);
+        if (!hoverItem.isEmpty()) g.renderTooltip(minecraft.font, hoverItem, mouseX, mouseY);
+        else if (hoverText != null) g.renderTooltip(font, font.split(hoverText, Math.min(240, width - 24)), mouseX, mouseY);
+        else renderTooltip(g, mouseX, mouseY);
+    }
+    private boolean inside(double x, double y, int rx, int ry, int w, int h) { return x >= rx && x < rx + w && y >= ry && y < ry + h; }
+    @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        if (vertical == 0) return super.mouseScrolled(x, y, horizontal, vertical);
+        if (catalogueVisible() && inside(x, y, page.listX(), gridTop, page.listWidth(), listBottom - gridTop)) {
+            listScroll += vertical < 0 ? 1 : -1; buildControls(); return true;
+        }
+        if (recipeVisible() && inside(x, y, page.detailX(), page.bodyTop(), page.detailWidth(), detailBottom - page.bodyTop())) {
+            detailScroll = Math.max(0, Math.min(detailScroll + (vertical < 0 ? 24 : -24), detailHeight - (detailBottom - page.bodyTop()))); return true;
+        }
+        return super.mouseScrolled(x, y, horizontal, vertical);
+    }
+    @Override public boolean mouseClicked(double x, double y, int button) {
+        if (button == 0) {
+            if (catalogueVisible() && inside(x, y, page.listX() + page.listWidth() - 6, gridTop, 9, listBottom - gridTop)) dragArea = 1;
+            else if (recipeVisible() && inside(x, y, page.detailX() + page.detailWidth() - 6, page.bodyTop(), 9, detailBottom - page.bodyTop())) dragArea = 2;
+            if (dragArea != 0) { dragScroll(y); return true; }
+        }
+        return super.mouseClicked(x, y, button);
+    }
+    private void dragScroll(double y) {
+        int top = dragArea == 1 ? gridTop : page.bodyTop();
+        int h = (dragArea == 1 ? listBottom : detailBottom) - top;
+        int visible = dragArea == 1 ? grid.rows() : h;
+        int total = dragArea == 1 ? (filtered.size() + grid.columns() - 1) / grid.columns() : detailHeight;
+        int max = Math.max(0, total - visible), thumb = Math.min(h, Math.max(12, h * visible / Math.max(1, total)));
+        int value = (int) Math.round(Math.max(0, Math.min(1, (y - top - thumb / 2.0) / Math.max(1, h - thumb))) * max);
+        if (dragArea == 1) { listScroll = value; buildControls(); } else detailScroll = value;
+    }
+    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        if (dragArea != 0 && button == 0) { dragScroll(y); return true; }
+        return super.mouseDragged(x, y, button, dx, dy);
+    }
+    @Override public boolean mouseReleased(double x, double y, int button) {
+        if (dragArea != 0) { dragArea = 0; return true; }
+        return super.mouseReleased(x, y, button);
+    }
+    @Override public boolean keyPressed(int key, int scan, int mods) {
+        if (key == 256 && !page.wide() && view != View.CATALOGUE) {
+            view = view == View.INVENTORY ? beforeInventory : View.CATALOGUE; buildControls(); return true;
+        }
+        if (search != null && search.isFocused() && key != 256 && key != 258) return search.keyPressed(key, scan, mods);
+        if (key == 266 || key == 267) {
+            if (catalogueVisible()) { listScroll += key == 267 ? 3 : -3; buildControls(); }
+            else if (recipeVisible()) detailScroll = Math.max(0, Math.min(detailScroll + (key == 267 ? 60 : -60), detailHeight - (detailBottom - page.bodyTop())));
+            return true;
+        }
+        return super.keyPressed(key, scan, mods);
+    }
+    private Button button(int x, int y, int w, int h, Component label, String icon, boolean primary, Runnable action) {
+        Button button = new Button(x, y, w, h, label, b -> action.run(), supplier -> supplier.get()) {
+            @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float tick) {
+                CookingArt.box(g, !active ? "disabled" : primary ? isHoveredOrFocused() ? "button_hover" : "button" : isHoveredOrFocused() ? "secondary_hover" : "secondary", getX(), getY(), getWidth(), getHeight());
+                if (icon != null) {
+                    if (icon.equals("inventory")) g.renderItem(new ItemStack(Items.CHEST), getX() + (getWidth() - 16) / 2, getY() + (getHeight() - 16) / 2);
+                    else CookingArt.sprite(g, primary && icon.equals("check") ? "check_light" : icon, getX() + (getWidth() - 8) / 2, getY() + (getHeight() - 8) / 2, 8, 8);
+                    if (isHoveredOrFocused()) hoverText = getMessage();
                 } else {
-                    itemScale = 0.85f;
-                    red = 1.0F;
-                    green = 0.4F;
-                    blue = 0.4F;
+                    var parts = font.split(getMessage(), getWidth() - 12); int yy = getY() + (getHeight() - parts.size() * (line + 2) + 2) / 2;
+                    for (var part : parts) { g.drawString(font, part, getX() + (getWidth() - font.width(part)) / 2, yy, !active ? CookingArt.MUTED : primary ? 0xFFFFF3D7 : CookingArt.INK, false); yy += line + 2; }
                 }
-                int reqItemSize = CommonGuiTextures.itemSize(itemScale);
-                int reqItemX = Math.round(rx + 8 - reqItemSize / 2.0f);
-                int reqItemY = Math.round(startY + 8 - reqItemSize / 2.0f);
-                g.pose().pushPose();
-                g.pose().translate(0, 0, 50);
-                CommonGuiTextures.drawItemTint(g, icon, reqItemX, reqItemY, itemScale, red, green, blue, showcaseAlpha);
-                g.pose().popPose();
-
-                String ratio = has + "/" + need;
-                int ratioColor = enough ? (alphaMask | 0xEEFFEE) : (alphaMask | 0xFF8888);
-                float rScale = 0.8f;
-                g.pose().pushPose();
-                g.pose().translate(rx + 8 - (this.font.width(ratio)*rScale)/2, startY + 16, 200);
-                g.pose().scale(rScale, rScale, 1.0f);
-                g.drawString(this.font, ratio, 0, 0, ratioColor, false);
-                g.pose().popPose();
+                if (isFocused()) { g.renderOutline(getX() + 3, getY() + 3, getWidth() - 6, getHeight() - 6, primary ? 0xFFE9CBA0 : CookingArt.RED); }
             }
-        }
-    }
-
-    private ResourceLocation getStardewBuffIcon(CookingDishItem.BuffType type) {
-        String tex = switch (type) {
-            case FARMING -> "farmer_blessing";
-            case FISHING -> "sea_king_blessing";
-            case MINING -> "miner_blessing";
-            case LUCK -> "spirit_blessing";
-            case FORAGING -> "forager_blessing";
-            case MAX_ENERGY -> "vigorous";
-            case MAGNETIC_RADIUS -> "magnetism";
-            case SPEED -> "speed";
-            case DEFENSE -> "guardian_blessing";
-            case ATTACK -> "warrior_blessing";
-            default -> "spirit_blessing";
+            @Override public void playDownSound(net.minecraft.client.sounds.SoundManager sounds) { sounds.play(SimpleSoundInstance.forUI(ModSounds.SMALL_SELECT.get(), 1f, .25f)); }
         };
-        return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/mob_effect/" + tex + ".png");
+        return addRenderableWidget(button);
     }
-
-    private boolean canCraft(ResourceLocation recipeId) {
-        if (!isUnlocked(recipeId)) return false;
-        List<StardewCookingIngredient> reqs = VanillaCookingRecipeData.getRequirements(recipeId);
-        for (StardewCookingIngredient req : reqs) {
-            if (countMatching(req) < req.count()) {
-                return false;
+    private final class RecipeButton extends Button {
+        private final Recipe recipe;
+        RecipeButton(int x, int y, int w, int h, Recipe recipe) {
+            super(x, y, w, h, name(recipe), b -> {
+                selected = recipe; detailScroll = 0;
+                if (!page.wide()) view = View.RECIPE;
+                buildControls();
+            }, supplier -> supplier.get()); this.recipe = recipe;
+        }
+        @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float tick) {
+            boolean chosen = selected != null && selected.id.equals(recipe.id), known = unlocked(recipe);
+            if (chosen || isHoveredOrFocused()) {
+                g.fill(getX() + 1, getY() + 1, getX() + getWidth() - 1, getY() + getHeight() - 1, 0xFFEAD3A4);
+                int c = isFocused() ? CookingArt.RED : 0xFFA5774E;
+                for (int xx : new int[]{getX(), getX() + getWidth() - 5}) for (int yy : new int[]{getY(), getY() + getHeight() - 1}) g.fill(xx, yy, xx + 5, yy + 1, c);
+                for (int xx : new int[]{getX(), getX() + getWidth() - 1}) for (int yy : new int[]{getY(), getY() + getHeight() - 5}) g.fill(xx, yy, xx + 1, yy + 5, c);
             }
+            CookingArt.dish(g, recipe.output, getX() + (getWidth() - 16) / 2, getY() + (getHeight() - 16) / 2, 1,
+                    !known ? 0f : available(recipe) > 0 ? 1f : .66f);
+            if (isHoveredOrFocused()) { if (known) hoverItem = recipe.output; else hoverText = Component.literal("???"); }
         }
-        return true;
-    }
-
-    private int countMatching(StardewCookingIngredient ingredient) {
-        if (this.minecraft == null || this.minecraft.player == null) return 0;
-        int count = 0;
-        for (int i = 0; i < this.minecraft.player.getInventory().getContainerSize(); i++) {
-            ItemStack stack = this.minecraft.player.getInventory().getItem(i);
-            if (!stack.isEmpty() && VanillaCookingRecipeData.matches(stack, ingredient)) {
-                count += stack.getCount();
-            }
-        }
-        return count + CookingIngredientAvailabilityCache.getFridgeTokenCount(ingredient.matcherKey());
-    }
-
-    private ItemStack resolveRequirementIcon(StardewCookingIngredient ingredient) {
-        ItemStack icon = VanillaCookingRecipeData.getDisplayStack(ingredient);
-        return icon.isEmpty() ? new ItemStack(Items.BARRIER) : icon;
-    }
-
-    private boolean isUnlocked(ResourceLocation recipeId) {
-        return ClientPlayerDataCache.hasRecipe(VanillaCookingRecipeData.storageId(recipeId));
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int x = this.leftPos;
-        int y = this.topPos;
-
-        if (button == 0 && mouseX >= x + 280 && mouseX <= x + 360 && mouseY >= y + 0 && mouseY <= y + 20) {
-            if (hasShiftDown()) recipePage = Math.max(0, recipePage - 1);
-            else recipePage = Math.min((availableRecipes.size() - 1) / 45, recipePage + 1);
-            return true;
-        }
-
-        int gridX = getGridX();
-        int gridY = getGridY();
-        int startIndex = recipePage * 45;
-
-        for (int i = 0; i < 45; i++) {
-            int cx = gridX + (i % 9) * 22;
-            int cy = gridY + (i / 9) * 22;
-            int dataIndex = startIndex + i;
-
-            if (dataIndex >= availableRecipes.size()) break;
-
-            if (mouseX >= cx - 2 && mouseX <= cx + 20 && mouseY >= cy - 2 && mouseY <= cy + 20) {
-                String recipeId = recipeIds.get(dataIndex).toString();
-                if (isUnlocked(recipeIds.get(dataIndex))) {
-                    int craftCount = button == 1 ? 5 : 1;
-                    if (hasShiftDown()) craftCount = -1;
-
-                    PacketDistributor.sendToServer(new CookingPotCookSubmitPayload(recipeId, craftCount));
-                }
-                return true;
-            }
-        }
-
-        if (super.mouseClicked(mouseX, mouseY, button)) return true;
-        return false;
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hDelta, double vDelta) {
-        if (vDelta > 0 && recipePage > 0) {
-            recipePage--;
-            return true;
-        } else if (vDelta < 0 && recipePage < (availableRecipes.size() - 1) / 45) {
-            recipePage++;
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, hDelta, vDelta);
+        @Override public void playDownSound(net.minecraft.client.sounds.SoundManager sounds) { sounds.play(SimpleSoundInstance.forUI(ModSounds.SMALL_SELECT.get(), 1f, .25f)); }
     }
 }

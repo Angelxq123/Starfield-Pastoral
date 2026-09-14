@@ -1,0 +1,1 @@
+{"type": "minecraft:block", "pools": [{"rolls": 1, "entries": [{"type": "minecraft:item", "name": "stardewcraft:mayor_pickup"}], "conditions": [{"condition": "minecraft:block_state_property", "block": "stardewcraft:mayor_pickup", "properties": {"part": "main"}}]}]}

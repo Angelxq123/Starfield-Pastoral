@@ -1,0 +1,14 @@
+// Run with: ./gradlew -I compatibility/leaderboard-layout-tests.gradle classes test
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/leaderboard-layout')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/client/gui/menu/MenuPageLayoutTest.class'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/leaderboard-layout')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/leaderboard-layout')
+            }
+        }
+    }
+}

@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/fall/plaza_display_fall",
+    "particle": "stardewcraft:block/plaza_display/fall/plaza_fall_pumpkin_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        7,
+        3
+      ],
+      "to": [
+        13,
+        9,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.625,
+            6.5,
+            12.25,
+            6.625
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.125,
+            6.5,
+            13.75,
+            6.625
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12.375,
+            6.5,
+            13.0,
+            6.625
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.875,
+            6.5,
+            14.5,
+            6.625
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            14.625,
+            6.5,
+            15.25,
+            7.125
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.125,
+            7.25,
+            0.75,
+            7.875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

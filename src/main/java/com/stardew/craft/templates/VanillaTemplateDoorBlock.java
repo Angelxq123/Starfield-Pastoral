@@ -1,0 +1,18 @@
+package com.stardew.craft.templates;
+
+import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+
+public final class VanillaTemplateDoorBlock extends DoorBlock implements EntityBlock, TemplateBlock {
+    public VanillaTemplateDoorBlock(BlockBehaviour.Properties properties) { super(BlockSetType.OAK, properties); }
+    @Override public TemplateShape templateShape() { return TemplateShape.DOOR; }
+    @Nullable @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TemplateBlockEntity(pos, state);
+    }
+}

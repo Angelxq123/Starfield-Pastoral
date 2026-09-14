@@ -1,0 +1,68 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        2,
+        10,
+        -14
+      ],
+      "to": [
+        2,
+        20,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            2.375,
+            0.90625,
+            2.8125,
+            1.0625
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.84375,
+            0.90625,
+            3.28125,
+            1.0625
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        -2,
+        10,
+        -2
+      ],
+      "to": [
+        2,
+        10,
+        30
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            8.1875,
+            0.96875,
+            8.25,
+            1.46875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

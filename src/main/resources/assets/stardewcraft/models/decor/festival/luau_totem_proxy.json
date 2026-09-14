@@ -30,5 +30,6 @@
         "down": { "uv": [0, 0, 16, 16], "texture": "#0" }
       }
     }
-  ]
+  ],
+  "stardewcraft:collision": {"mode": "custom", "boxes": [{"from": [0, 0, 0], "to": [16, 40, 16]}]}
 }

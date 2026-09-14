@@ -1,0 +1,13 @@
+{
+  "time_multiplier": 1.0,
+  "cycles": {
+    "default": {
+      "duration": {
+        "mornings": 1
+      },
+      "output": "stardewcraft:battery_pack",
+      "min_count": 1,
+      "max_count": 1
+    }
+  }
+}

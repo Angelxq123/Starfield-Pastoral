@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
  * A single source-aware item implementation for Stardew's dynamically flavored
  * Wine and Juice objects.
  */
-public final class FlavoredArtisanDrinkItem extends ArtisanDrinkItem {
+public final class FlavoredArtisanDrinkItem extends PlaceableArtisanDrinkItem {
     private static final String TAG_TYPE = "FlavorType";
     private static final String TAG_SOURCE_ID = "FlavorSourceId";
     private static final String TAG_PRICE = "FlavorPrice";
@@ -50,7 +50,7 @@ public final class FlavoredArtisanDrinkItem extends ArtisanDrinkItem {
             @Nullable ResourceLocation legacySourceId,
             Item.Properties properties
     ) {
-        super(defaultPrice(flavorType), defaultEnergy(flavorType), defaultHealth(flavorType),
+        super(flavorType == PreserveType.WINE ? "wine" : "juice", defaultPrice(flavorType), defaultEnergy(flavorType), defaultHealth(flavorType),
                 flavorType == PreserveType.WINE ? -1 : 0,
                 flavorType == PreserveType.WINE ? 30 * 20 : 0,
                 flavorType == PreserveType.WINE,

@@ -1,0 +1,86 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.84342775,
+  "attentionRig": {
+    "hipHeight": 12.0,
+    "soleY": 0.0,
+    "toeDepth": 3.0,
+    "halfStance": 2.16,
+    "rightZ": 0.14,
+    "leftZ": -0.22,
+    "rightYaw": -4,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 18,
+    "pitch": 9
+  },
+  "gait": {
+    "id": "leah",
+    "revision": "character-articulated-3",
+    "rootMean": 0.41600000000000004,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -3.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -3.0
+      }
+    },
+    "bodyPitch": -1.7,
+    "headPitch": 1.15,
+    "halfStance": 2.16,
+    "stride": 13.494844,
+    "reachMargin": 0.042324,
+    "legLengthStride": 21.0,
+    "approvedBaseStride": 21.0,
+    "stance": 0.57,
+    "bob": 0.2752,
+    "sway": 0.55,
+    "rootYaw": 2.15,
+    "bodyYaw": 5.2,
+    "armSwing": 16.5,
+    "armPhase": 0.042,
+    "footLift": 0.28840000000000005,
+    "swingPeak": 0.49,
+    "elbowBase": 10,
+    "bodyRoll": 1.0,
+    "strideScale": 1.0,
+    "intent": "成年女性、礼貌；舒展自然，躯干柔和配合，肩前发层沿用已认可的连接限制。",
+    "bodyLag": 0.07200000000000001,
+    "headLag": 0.10700000000000001,
+    "headYawLag": 0.057,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.754008,
+    "levelWalk": true
+  }
+}

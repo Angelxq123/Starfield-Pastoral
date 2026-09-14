@@ -1,9 +1,9 @@
 package com.stardew.craft.blockentity;
 
+import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.api.v1.internal.tree.StardewTreeRuntimeRegistry;
 import com.stardew.craft.api.v1.tree.StardewTreeRuntimeAdapter;
 import com.stardew.craft.api.v1.tree.StardewTreeState;
-import com.stardew.craft.item.ModItems;
 import com.stardew.craft.time.StardewTimeManager;
 import com.stardew.craft.block.utility.TapperBlock;
 import com.stardew.craft.tree.WildTrees;
@@ -19,11 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nullable;
 
 public class TapperBlockEntity extends TimedProductionBlockEntity {
-	private static final int OAK_RESIN_DAYS = 7;
-	private static final int MAPLE_SYRUP_DAYS = 9;
-	private static final int PINE_TAR_DAYS = 5;
-	private static final int MAHOGANY_SAP_DAYS = 1;
-	private static final int MYSTIC_SYRUP_DAYS = 7;
 
 	private String treeId;
 
@@ -141,16 +136,14 @@ public class TapperBlockEntity extends TimedProductionBlockEntity {
 			return;
 		}
 
-		Cycle cycle = getCycleForTreeId(supportDef.id());
+		var cycle = MachineProductionData.cycle("tapper", supportDef.id());
 		if (cycle == null) {
 			return;
 		}
 
 		this.treeId = supportDef.id();
-		product = cycle.createProduct(level);
-		long dayIndex = getCurrentDayIndex();
-		// Tapper output in Stardew appears in the morning after N nights.
-		readyAtAbsMinute = (dayIndex + cycle.daysUntilReady) * EFFECTIVE_MINUTES_PER_DAY;
+		product = cycle.createOutput(level.random);
+		readyAtAbsMinute = cycle.deadline(getCurrentAbsMinute(), "tapper");
 		ready = false;
 		setChanged();
 		syncToClient();
@@ -182,13 +175,15 @@ public class TapperBlockEntity extends TimedProductionBlockEntity {
 		StardewTreeRuntimeAdapter.TapperCycle cycle =
 				StardewTreeRuntimeRegistry.resolveAddonTapperCycle(
 						serverLevel, expectedTree, supportPosition);
-		if (cycle == null) {
+		var configured = MachineProductionData.cycle("tapper", expectedTree.typeId().toString());
+		if (cycle == null && configured == null) {
 			return;
 		}
 		treeId = expectedTree.typeId().toString();
-		product = cycle.output();
-		readyAtAbsMinute =
-				(getCurrentDayIndex() + cycle.daysUntilReady()) * EFFECTIVE_MINUTES_PER_DAY;
+		product = configured != null ? configured.createOutput(level.random) : cycle.output();
+		readyAtAbsMinute = configured != null ? configured.deadline(getCurrentAbsMinute(), "tapper") :
+				getCurrentAbsMinute() + MachineProductionData.minutes("tapper", Math.toIntExact(
+                        (getCurrentDayIndex() - 1 + cycle.daysUntilReady()) * EFFECTIVE_MINUTES_PER_DAY - getCurrentAbsMinute()));
 		ready = false;
 		setChanged();
 		syncToClient();
@@ -277,36 +272,6 @@ public class TapperBlockEntity extends TimedProductionBlockEntity {
 		return worldPosition.relative(state.getValue(TapperBlock.FACING));
 	}
 
-	private record Cycle(String treeId, int daysUntilReady) {
-		@SuppressWarnings("null")
-		ItemStack createProduct(Level level) {
-			return switch (treeId) {
-				case "oak" -> new ItemStack(ModItems.OAK_RESIN.get());
-				case "maple" -> new ItemStack(ModItems.MAPLE_SYRUP.get());
-				case "pine" -> new ItemStack(ModItems.PINE_TAR.get());
-				case "mahogany" -> {
-					@SuppressWarnings("null")
-					ItemStack stack = new ItemStack(ModItems.SAP.get());
-					int count = 3 + level.random.nextInt(6); // 3-8
-					stack.setCount(count);
-					yield stack;
-				}
-				case "mystic_tree" -> new ItemStack(ModItems.MYSTIC_SYRUP.get());
-				default -> ItemStack.EMPTY;
-			};
-		}
-	}
-
-	private static Cycle getCycleForTreeId(String treeId) {
-		return switch (treeId) {
-			case "oak" -> new Cycle(treeId, OAK_RESIN_DAYS);
-			case "maple" -> new Cycle(treeId, MAPLE_SYRUP_DAYS);
-			case "pine" -> new Cycle(treeId, PINE_TAR_DAYS);
-			case "mahogany" -> new Cycle(treeId, MAHOGANY_SAP_DAYS);
-			case "mystic_tree" -> new Cycle(treeId, MYSTIC_SYRUP_DAYS);
-			default -> null;
-		};
-	}
 
 	@SuppressWarnings("null")
 	@Override

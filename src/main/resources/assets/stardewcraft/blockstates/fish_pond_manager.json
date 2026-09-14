@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=north": {
       "model": "stardewcraft:block/fish_pond_manager"
+    },
+    "facing=east": {
+      "model": "stardewcraft:block/fish_pond_manager",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "stardewcraft:block/fish_pond_manager",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "stardewcraft:block/fish_pond_manager",
+      "y": 270
     }
   }
 }

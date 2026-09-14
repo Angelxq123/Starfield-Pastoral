@@ -62,40 +62,30 @@ public class WildTreeSeedManager extends SavedData {
 		);
 	}
 
-	public void trackTree(ServerLevel level, BlockPos trunk0Pos, WildTrees.Def def) {
+	public void trackTree(ServerLevel level, BlockPos rootPos, WildTrees.Def def) {
 		@SuppressWarnings("null")
-		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
+		GlobalPos gp = GlobalPos.of(level.dimension(), rootPos.immutable());
 		entries.computeIfAbsent(gp, k -> {
 			setDirty();
 			return new Entry(def.id());
 		});
 	}
 
-	public void untrackTree(ServerLevel level, BlockPos trunk0Pos) {
+	public void untrackTree(ServerLevel level, BlockPos rootPos) {
 		@SuppressWarnings("null")
-		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
+		GlobalPos gp = GlobalPos.of(level.dimension(), rootPos.immutable());
 		if (entries.remove(gp) != null) {
 			setDirty();
 		}
 	}
 
-	public boolean tryMigrateGeneratedTreeMarker(ServerLevel level, BlockPos rootPos, WildTrees.Def def) {
-		@SuppressWarnings("null")
-		GlobalPos gp = GlobalPos.of(level.dimension(), rootPos.immutable());
-		Entry entry = entries.get(gp);
-		if (entry == null || !def.id().equals(entry.treeId)) {
-			return false;
-		}
-		return WildTrees.markGeneratedModernTree(level, rootPos, def);
-	}
-
 	/**
 	 * 右键摇树：返回 true 表示本次“摇树动作”有效（会消耗今天的摇树机会）。
 	 */
-	public boolean shake(ServerLevel level, BlockPos trunk0Pos, WildTrees.Def def, ServerPlayer player) {
+	public boolean shake(ServerLevel level, BlockPos rootPos, WildTrees.Def def, ServerPlayer player) {
 		int absDay = getAbsDay();
 		@SuppressWarnings("null")
-		GlobalPos gp = GlobalPos.of(level.dimension(), trunk0Pos.immutable());
+		GlobalPos gp = GlobalPos.of(level.dimension(), rootPos.immutable());
 		Entry entry = entries.computeIfAbsent(gp, k -> new Entry(def.id()));
 
 		// 同一天只允许摇一次（对齐 wasShakenToday 防重复）
@@ -103,7 +93,7 @@ public class WildTreeSeedManager extends SavedData {
 			return false;
 		}
 
-		ensureRolledForDay(level, trunk0Pos, def, entry, absDay);
+		ensureRolledForDay(level, rootPos, def, entry, absDay);
 
 		entry.lastShakenAbsDay = absDay;
 		// 采集等级门槛：单人 >=1；多人允许 0 级拿到种子（对齐 SV 的 multiplayer 分支）。
@@ -112,7 +102,7 @@ public class WildTreeSeedManager extends SavedData {
 		if (entry.hasSeed && canDropSeed) {
 			Item drop = getShakeDropItem(def);
 			if (drop != null) {
-				Block.popResource(level, trunk0Pos, new ItemStack(drop, 1));
+				Block.popResource(level, rootPos, new ItemStack(drop, 1));
 			}
 			entry.hasSeed = false;
 		}
@@ -150,11 +140,9 @@ public class WildTreeSeedManager extends SavedData {
 				continue;
 			}
 			BlockState treeState = level.getBlockState(pos);
-			if (treeState.getBlock() != def.trunk0().get() && !def.isModernRoot(treeState)) {
+			if (!def.isModernRoot(treeState)) {
 				it.remove();
 				changed = true;
-			} else if (def.isModernRoot(treeState)) {
-				tryMigrateGeneratedTreeMarker(level, pos, def);
 			}
 		}
 
@@ -203,14 +191,8 @@ public class WildTreeSeedManager extends SavedData {
 		}
 	}
 
-	private static boolean isFullTree(ServerLevel level, BlockPos trunk0Pos, WildTrees.Def def) {
-		@SuppressWarnings("null")
-		BlockState state = level.getBlockState(trunk0Pos);
-		if (def.isModernRoot(state)) {
-			return WildTrees.isModernCompleteTree(level, trunk0Pos, def);
-		}
-		BlockState above = level.getBlockState(trunk0Pos.above());
-		return state.getBlock() == def.trunk0().get() && above.getBlock() == def.trunk1().get();
+	private static boolean isFullTree(ServerLevel level, BlockPos rootPos, WildTrees.Def def) {
+		return WildTrees.isModernCompleteTree(level, rootPos, def);
 	}
 
 	private static boolean tryPlaceSapling(ServerLevel level, BlockPos saplingPos, WildTrees.Def def) {
@@ -240,7 +222,7 @@ public class WildTreeSeedManager extends SavedData {
 		if (state.getBlock() instanceof FarmBlock) {
 			return false;
 		}
-		return state.is(net.minecraft.tags.BlockTags.DIRT) || state.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK);
+		return state.is(net.minecraft.tags.BlockTags.DIRT) || state.getBlock() instanceof net.minecraft.world.level.block.GrassBlock;
 	}
 
 	private static float seedOnShakeChance(WildTrees.Def def) {
@@ -251,7 +233,7 @@ public class WildTreeSeedManager extends SavedData {
 		return def.seedSpreadChance();
 	}
 
-	private static void ensureRolledForDay(ServerLevel level, BlockPos trunk0Pos, WildTrees.Def def, Entry entry, int absDay) {
+	private static void ensureRolledForDay(ServerLevel level, BlockPos rootPos, WildTrees.Def def, Entry entry, int absDay) {
 		if (entry.lastSeedRollAbsDay == absDay) {
 			return;
 		}

@@ -44,8 +44,10 @@ public class BushBlockEntityRenderer implements BlockEntityRenderer<BushBlockEnt
     }
 
     @Override
-    public boolean shouldRenderOffScreen(@Nonnull BushBlockEntity blockEntity) {
-        return true;
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(@Nonnull BushBlockEntity blockEntity) {
+        // The bush spans several cells. Supply its real bounds instead of bypassing
+        // frustum culling and redrawing every bush within 128 blocks behind the camera.
+        return blockEntity.getRenderBoundingBox();
     }
 
     @Override

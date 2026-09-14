@@ -3,7 +3,6 @@ package com.stardew.craft.block.crop;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -61,8 +60,7 @@ public class FairyRoseCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 2;
     }
 
     @Override
@@ -150,6 +148,8 @@ public class FairyRoseCropBlock extends StardewCropBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape modelShape = CropModelShapes.shape(state, level, pos);
+        if (modelShape != null) return modelShape;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }
@@ -214,7 +214,7 @@ public class FairyRoseCropBlock extends StardewCropBlock {
         if (level instanceof ServerLevel) {
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
-            if (aboveState.isAir() || !(aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER)) {
+            if (aboveState.isAir() || (aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER)) {
                 level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER), 3);
             }
         }

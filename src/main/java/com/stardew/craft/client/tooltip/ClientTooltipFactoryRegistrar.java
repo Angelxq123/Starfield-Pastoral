@@ -18,7 +18,10 @@ public final class ClientTooltipFactoryRegistrar {
 
 	@SubscribeEvent
 	public static void onRegisterTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
+        event.register(com.stardew.craft.tooltip.SlingshotAmmoTooltip.class, SlingshotAmmoClientTooltip::new);
+        event.register(PlaceableFoodTooltip.class, component -> component);
 		event.register(BookTooltipComponent.class, BookClientTooltipComponent::new);
+        event.register(com.stardew.craft.tooltip.WeaponTooltipComponent.class, WeaponClientTooltipComponent::create);
 		event.register(MaxChargeRangeTooltipComponent.class, MaxChargeRangeClientTooltipComponent::new);
 		event.register(FishingRodSlotsTooltipComponent.class, FishingRodSlotsClientTooltipComponent::new);
 		event.register(FishingRodSlotRowTooltipComponent.class, FishingRodSlotRowClientTooltipComponent::new);

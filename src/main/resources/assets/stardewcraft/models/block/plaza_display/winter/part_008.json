@@ -1,0 +1,43 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/winter/plaza_display_winter",
+    "particle": "stardewcraft:block/plaza_display/winter/plaza_winter_needles_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        8,
+        -15,
+        -8
+      ],
+      "to": [
+        8,
+        31,
+        24
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0.125,
+            3.125,
+            2.125,
+            6.0
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.125,
+            3.125,
+            0.125,
+            6.0
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": false
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

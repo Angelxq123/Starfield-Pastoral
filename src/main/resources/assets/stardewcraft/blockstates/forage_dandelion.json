@@ -1,5 +1,1 @@
-{
-  "variants": {
-    "": { "model": "stardewcraft:block/forage/dandelion" }
-  }
-}
+{"variants":{"":{"model":"stardewcraft:block/crop3d/forage_dandelion/mature"}}}

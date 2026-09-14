@@ -3,83 +3,277 @@
   "skippable": true,
   "trigger": {
     "type": "enter_area",
-    "location": "mine"
+    "location": "mine",
+    "area_min": [
+      -20,
+      63,
+      -14
+    ],
+    "area_max": [
+      33,
+      75,
+      6
+    ]
   },
   "preconditions": [
-    { "type": "not_saw_event", "id": "marlon_mine_intro" },
-    { "type": "time", "min": 600, "max": 2600 }
+    {
+      "type": "not_saw_event",
+      "id": "marlon_mine_intro"
+    },
+    {
+      "type": "time",
+      "min": 600,
+      "max": 2600
+    }
   ],
   "commands": [
-    { "cmd": "comment", "text": "=== SDV Event 100162: Marlon mine introduction ===" },
-
-    { "cmd": "lock_player" },
-    { "cmd": "fade", "mode": "out", "ticks": 10 },
-
-    { "cmd": "comment", "text": "--- Setup: hide real Marlon, spawn actors ---" },
-    { "cmd": "hide_npc", "npc_id": "marlon" },
-    { "cmd": "spawn_actor", "actor": "marlon", "npc_id": "marlon",
-      "x": -1, "y": 66, "z": -13, "relative": false, "facing": 180 },
-
-    { "cmd": "comment", "text": "--- M1: Establishing shot — Marlon alone at mine shaft, no player ---" },
-    { "cmd": "camera", "x": -2.733, "y": 67.87, "z": -8.051,
-      "yaw": -153.9, "pitch": 33.7, "relative": false },
-
-    { "cmd": "music", "track": "MUSIC_ADVENTURER_GUILD" },
-    { "cmd": "fade", "mode": "in", "ticks": 20 },
-    { "cmd": "pause", "ticks": 40 },
-
-    { "cmd": "speak", "npc_id": "marlon", "text": "event.marlon_mine_intro.hmm" },
-    { "cmd": "pause", "ticks": 15 },
-
-    { "cmd": "comment", "text": "--- M2: Player appears and walks toward Marlon ---" },
-    { "cmd": "camera", "x": 3.441, "y": 66.008, "z": -13.131,
-      "yaw": 43.3, "pitch": 3.5, "relative": false },
-
-    { "cmd": "spawn_actor", "actor": "fake_player", "npc_id": "player",
-      "x": 0, "y": 66, "z": -8, "relative": false, "facing": 180 },
-
-    { "cmd": "play_sound", "sound": "stardewcraft:stone_step" },
-    { "cmd": "move_actor", "actor": "fake_player",
-      "x": 0, "y": 66, "z": -11, "ticks": 40, "relative": false },
-
-    { "cmd": "pause", "ticks": 10 },
-
-    { "cmd": "comment", "text": "Marlon hears footsteps, turns to face player" },
-    { "cmd": "face_actor", "actor": "marlon", "face_actor": "fake_player" },
-    { "cmd": "pause", "ticks": 15 },
-
-    { "cmd": "comment", "text": "--- M3: Close-up two-shot, Marlon speaks ---" },
-    { "cmd": "camera", "x": 1.704, "y": 66.739, "z": -12.418,
-      "yaw": 53.2, "pitch": 14.3, "relative": false },
-
-    { "cmd": "speak", "npc_id": "marlon", "text": "event.marlon_mine_intro.old_mine" },
-
-    { "cmd": "pause", "ticks": 10 },
-    { "cmd": "speak", "npc_id": "marlon", "text": "event.marlon_mine_intro.danger" },
-
-    { "cmd": "pause", "ticks": 10 },
-    { "cmd": "speak", "npc_id": "marlon", "text": "event.marlon_mine_intro.take_this" },
-
-    { "cmd": "comment", "text": "--- Give sword: sound + item display above player head ---" },
-    { "cmd": "play_sound", "sound": "stardewcraft:dwop" },
-    { "cmd": "face_actor", "actor": "fake_player", "face_actor": "marlon" },
-    { "cmd": "add_item", "item": "stardewcraft:rusty_sword", "count": 1 },
-    { "cmd": "hold_item", "actor": "fake_player", "item": "stardewcraft:rusty_sword", "ticks": 66, "offset_y": 0.2 },
-    { "cmd": "add_quest", "quest_id": "14" },
-
-    { "cmd": "comment", "text": "Player turns back to face Marlon after receiving sword" },
-    { "cmd": "face_actor", "actor": "fake_player", "face_actor": "marlon" },
-    { "cmd": "pause", "ticks": 10 },
-
-    { "cmd": "speak", "npc_id": "marlon", "text": "event.marlon_mine_intro.guild" },
-
-    { "cmd": "comment", "text": "--- Cleanup ---" },
-    { "cmd": "pause", "ticks": 20 },
-    { "cmd": "stop_music" },
-    { "cmd": "fade", "mode": "out", "ticks": 20 },
-    { "cmd": "pause", "ticks": 20 },
-    { "cmd": "show_npc", "npc_id": "marlon" },
-    { "cmd": "skippable" },
-    { "cmd": "end" }
+    {
+      "cmd": "comment",
+      "text": "SDV Mine event 100162; source tiles map to earth_lobby at (-18,66,-12). Camera JSON y is feet-height (+1.62 eye)."
+    },
+    {
+      "cmd": "lock_player"
+    },
+    {
+      "cmd": "fade",
+      "mode": "out",
+      "ticks": 10
+    },
+    {
+      "cmd": "hide_npc",
+      "npc_id": "marlon"
+    },
+    {
+      "cmd": "spawn_actor",
+      "actor": "marlon",
+      "npc_id": "marlon",
+      "x": 5.5,
+      "y": 66.0,
+      "z": -5.5,
+      "relative": false,
+      "facing": 0
+    },
+    {
+      "cmd": "camera",
+      "x": 2.3,
+      "y": 67.63,
+      "z": -0.4,
+      "yaw": -140.631,
+      "pitch": 23.083,
+      "relative": false
+    },
+    {
+      "cmd": "music",
+      "track": "MUSIC_ADVENTURER_GUILD"
+    },
+    {
+      "cmd": "add_quest",
+      "quest_id": "14"
+    },
+    {
+      "cmd": "fade",
+      "mode": "in",
+      "ticks": 20
+    },
+    {
+      "cmd": "pause",
+      "ticks": 20
+    },
+    {
+      "cmd": "move_actor",
+      "actor": "marlon",
+      "x": 5.5,
+      "y": 66.0,
+      "z": -3.5,
+      "relative": false,
+      "ticks": 28
+    },
+    {
+      "cmd": "pause",
+      "ticks": 30
+    },
+    {
+      "cmd": "speak",
+      "npc_id": "marlon",
+      "text": "event.marlon_mine_intro.hmm"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "camera",
+      "x": 2.2,
+      "y": 67.58,
+      "z": 0.1,
+      "yaw": 142.125,
+      "pitch": 63.127,
+      "relative": false
+    },
+    {
+      "cmd": "spawn_actor",
+      "actor": "fake_player",
+      "npc_id": "player",
+      "x": 0.5,
+      "y": 66.0,
+      "z": 1.5,
+      "relative": false,
+      "facing": 180
+    },
+    {
+      "cmd": "play_sound",
+      "sound": "stardewcraft:stone_step"
+    },
+    {
+      "cmd": "move_actor",
+      "actor": "fake_player",
+      "x": 0.5,
+      "y": 66.0,
+      "z": -1.5,
+      "relative": false,
+      "ticks": 42
+    },
+    {
+      "cmd": "move_actor",
+      "actor": "fake_player",
+      "x": 5.5,
+      "y": 66.125,
+      "z": -1.5,
+      "relative": false,
+      "ticks": 70
+    },
+    {
+      "cmd": "face_actor",
+      "actor": "fake_player",
+      "face_actor": "marlon"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "face_actor",
+      "actor": "marlon",
+      "face_actor": "fake_player"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "camera",
+      "x": 2.2,
+      "y": 66.33,
+      "z": -1.55,
+      "yaw": -106.06,
+      "pitch": 14.686,
+      "relative": false
+    },
+    {
+      "cmd": "speak",
+      "npc_id": "marlon",
+      "text": "event.marlon_mine_intro.old_mine"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "speak",
+      "npc_id": "marlon",
+      "text": "event.marlon_mine_intro.danger"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "speak",
+      "npc_id": "marlon",
+      "text": "event.marlon_mine_intro.take_this"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "camera",
+      "x": 2.4,
+      "y": 66.68,
+      "z": 0.25,
+      "yaw": -124.743,
+      "pitch": 14.846,
+      "relative": false
+    },
+    {
+      "cmd": "play_sound",
+      "sound": "stardewcraft:dwop"
+    },
+    {
+      "cmd": "add_item",
+      "item": "stardewcraft:rusty_sword",
+      "count": 1
+    },
+    {
+      "cmd": "hold_item",
+      "actor": "fake_player",
+      "item": "stardewcraft:rusty_sword",
+      "ticks": 66,
+      "offset_y": 0.2
+    },
+    {
+      "cmd": "pause",
+      "ticks": 6
+    },
+    {
+      "cmd": "face_actor",
+      "actor": "fake_player",
+      "face_actor": "marlon"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "camera",
+      "x": 2.2,
+      "y": 66.33,
+      "z": -1.55,
+      "yaw": -106.06,
+      "pitch": 14.686,
+      "relative": false
+    },
+    {
+      "cmd": "speak",
+      "npc_id": "marlon",
+      "text": "event.marlon_mine_intro.guild"
+    },
+    {
+      "cmd": "pause",
+      "ticks": 10
+    },
+    {
+      "cmd": "stop_music"
+    },
+    {
+      "cmd": "fade",
+      "mode": "out",
+      "ticks": 20
+    },
+    {
+      "cmd": "place_player",
+      "x": 5.5,
+      "y": 66.125,
+      "z": -1.5,
+      "yaw": 180,
+      "pitch": 0
+    },
+    {
+      "cmd": "show_npc",
+      "npc_id": "marlon"
+    },
+    {
+      "cmd": "end"
+    }
   ]
 }

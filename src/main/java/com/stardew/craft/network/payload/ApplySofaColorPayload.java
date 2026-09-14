@@ -1,6 +1,7 @@
 package com.stardew.craft.network.payload;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.block.decor.BedDecorBlock;
 import com.stardew.craft.block.utility.CushionBlock;
 import com.stardew.craft.block.utility.OfficeChair2Block;
 import com.stardew.craft.block.utility.OfficeStoolBlock;
@@ -78,6 +79,12 @@ public record ApplySofaColorPayload(BlockPos targetPos, int colorIndex, int targ
             }
 
             BlockState state = player.level().getBlockState(payload.targetPos());
+
+            if (state.getBlock() instanceof BedDecorBlock bedBlock) {
+                bedBlock.applyColor(player.level(), payload.targetPos(), state,
+                        payload.colorIndex() < 0 ? -1 : clamped);
+                return;
+            }
 
             if (state.getBlock() instanceof SofaBlock) {
                 for (BlockPos sofaPos : collectConnectedSofas(payload.targetPos(), player.level())) {

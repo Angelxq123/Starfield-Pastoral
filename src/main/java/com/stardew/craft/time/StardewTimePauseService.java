@@ -177,8 +177,6 @@ public final class StardewTimePauseService {
         List<ServerPlayer> players = server.getPlayerList().getPlayers().stream()
             .filter(player -> isStardewTimeDimension(player.serverLevel()))
             .toList();
-        boolean overnightSettlementActive = players.stream()
-            .anyMatch(player -> OVERNIGHT_SETTLEMENT_PLAYERS.contains(player.getUUID()));
         int simulationNonGameplayPlayers = 0;
         int clockNonGameplayPlayers = 0;
         for (ServerPlayer player : players) {
@@ -192,10 +190,10 @@ public final class StardewTimePauseService {
             }
         }
 
-        boolean nextSimulationPaused = shouldPauseDuringOvernight(
-            overnightSettlementActive, players.size(), simulationNonGameplayPlayers);
-        boolean nextClockPaused = shouldPauseDuringOvernight(
-            overnightSettlementActive, players.size(), clockNonGameplayPlayers);
+        boolean nextSimulationPaused = shouldPauseForCounts(
+            players.size(), simulationNonGameplayPlayers);
+        boolean nextClockPaused = shouldPauseForCounts(
+            players.size(), clockNonGameplayPlayers);
         StardewTimeManager timeManager = StardewTimeManager.get();
         timeManager.initializeSimulationGameTime(timeManager.getIndependentDayTime());
 
@@ -238,14 +236,6 @@ public final class StardewTimePauseService {
 
     static boolean shouldPauseForCounts(int playerCount, int nonGameplayPlayerCount) {
         return playerCount == 0 || nonGameplayPlayerCount >= playerCount;
-    }
-
-    static boolean shouldPauseDuringOvernight(
-            boolean overnightSettlementActive,
-            int playerCount,
-            int nonGameplayPlayerCount
-    ) {
-        return overnightSettlementActive || shouldPauseForCounts(playerCount, nonGameplayPlayerCount);
     }
 
     static boolean countsAsSimulationNonGameplay(boolean cutsceneActive, boolean baseNonGameplay) {

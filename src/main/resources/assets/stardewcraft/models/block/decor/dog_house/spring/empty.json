@@ -1,0 +1,10 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/decor/dog_house/spring/atlas",
+    "1": "stardewcraft:block/decor/dog_house/spring/wood_particle",
+    "particle": "stardewcraft:block/decor/dog_house/spring/wood_particle"
+  },
+  "elements": []
+}

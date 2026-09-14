@@ -130,6 +130,11 @@ public final class ObsidianCrackSkillHandler
         ).advance(context);
     }
 
+    @Override
+    public void finish(SkillExecutionContext context, SkillInstance instance, SkillInstance.EndReason reason) {
+        instance.executionState(ObsidianCrackExecutionState.class).ifPresent(ObsidianCrackExecutionState::cancel);
+    }
+
     static CrackLine createCrackLine(
             Vec3 playerPosition,
             Vec3 horizontalLook

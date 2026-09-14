@@ -105,115 +105,12 @@ final class LegacyWeaponHitPresentation {
                     net.minecraft.sounds.SoundEvents.TRIDENT_RIPTIDE_1.value(),
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.55f, 1.1f);
         }
-        if ("crystal_dagger_burst".equals(skillId)) {
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
-                    x, y, z, 18, 0.45, 0.35, 0.45, 0.02);
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
-                    x, y, z, 14, 0.45, 0.35, 0.45, 0.05);
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
-                    x, y, z, 10, 0.35, 0.25, 0.35, 0.06);
-            serverLevel.playSound(null, target.blockPosition(),
-                    net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_BREAK,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.15f);
-        }
-        if ("shadow_dagger_execute".equals(skillId)
-                || "shadow_dagger_execute_bonus".equals(skillId)) {
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
-                    x, y, z, 16, 0.35, 0.25, 0.35, 0.02);
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
-                    x, y, z, 10, 0.25, 0.2, 0.25, 0.01);
-            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
-                    x, y, z, 10, 0.35, 0.25, 0.35, 0.04);
-            serverLevel.playSound(null, target.blockPosition(),
-                    net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.7f, 1.4f);
-            if (!target.isAlive() || target.getHealth() <= 0.0f) {
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
-                        x, y + 0.15, z, 20, 0.45, 0.35, 0.45, 0.03);
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
-                        x, y, z, 16, 0.35, 0.25, 0.35, 0.08);
-                serverLevel.playSound(null, target.blockPosition(),
-                        net.minecraft.sounds.SoundEvents.WITHER_SPAWN,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 0.45f, 1.2f);
-                serverLevel.playSound(null, target.blockPosition(),
-                        net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                        net.minecraft.sounds.SoundSource.PLAYERS, 0.5f, 1.2f);
-            }
-        }
+
     }
 
-    static void emitInsectEyeImpact(LivingEntity target) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.55;
-        double z = target.getZ();
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
-                x, y, z, 10, 0.35, 0.2, 0.35, 0.02);
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
-                x, y, z, 6, 0.25, 0.15, 0.25, 0.05);
-        serverLevel.playSound(null, target.blockPosition(),
-                net.minecraft.sounds.SoundEvents.BEEHIVE_WORK,
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.5f, 1.4f);
-    }
 
-    static void emitObsidianResonance(LivingEntity target) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        serverLevel.playSound(
-                null,
-                target.blockPosition(),
-                net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
-                net.minecraft.sounds.SoundSource.PLAYERS,
-                0.5F,
-                1.6F
-        );
-        serverLevel.sendParticles(
-                net.minecraft.core.particles.ParticleTypes.CRIT,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.6,
-                target.getZ(),
-                1,
-                0.0,
-                0.0,
-                0.0,
-                0.0
-        );
-    }
 
-    static void emitInsectDashImpact(LivingEntity target) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.6;
-        double z = target.getZ();
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
-                x, y, z, 1, 0.0, 0.0, 0.0, 0.0);
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
-                x, y, z, 8, 0.3, 0.18, 0.3, 0.06);
-        serverLevel.playSound(null, target.blockPosition(),
-                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.6f, 1.15f);
-    }
 
-    static void emitOssifiedMarkBonus(LivingEntity target) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.6;
-        double z = target.getZ();
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ASH,
-                x, y, z, 8, 0.25, 0.18, 0.25, 0.02);
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
-                x, y, z, 6, 0.2, 0.12, 0.2, 0.05);
-        serverLevel.playSound(null, target.blockPosition(),
-                net.minecraft.sounds.SoundEvents.BONE_BLOCK_BREAK,
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.6f, 1.2f);
-    }
 
     static void emitGalaxyMarkBonus(LivingEntity target) {
         if (!(target.level() instanceof ServerLevel serverLevel)) {

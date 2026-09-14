@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.festival;
 
+import com.stardew.craft.client.font.StardewFonts;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.network.payload.FairStrengthGameResultPayload;
 import com.stardew.craft.sound.ModSounds;
@@ -182,11 +184,11 @@ public class FairStrengthGameScreen extends Screen implements com.stardew.craft.
         List<FormattedCharSequence> lines = font.split(Component.literal(text), boxW - 20);
         int y = boxY + 9;
         for (FormattedCharSequence line : lines) {
-            if (y + font.lineHeight > boxY + boxH - 6) {
+            if (y + StardewFonts.lineHeight(font) > boxY + boxH - 6) {
                 break;
             }
             graphics.drawString(font, line, boxX + 10, y, 0xFF3F2A13, false);
-            y += font.lineHeight + 2;
+            y += StardewFonts.lineHeight(font) + 2;
         }
     }
 

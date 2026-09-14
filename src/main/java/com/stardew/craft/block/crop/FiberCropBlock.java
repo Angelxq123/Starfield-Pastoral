@@ -30,6 +30,8 @@ public class FiberCropBlock extends StardewCropBlock {
     private static final int[] OUTLINE_HEIGHTS = new int[]{28, 29, 29, 29};
     private static final int[] OUTLINE_WIDTHS = new int[]{13, 13, 14, 13};
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
+    public static final net.minecraft.world.level.block.state.properties.IntegerProperty SEASON =
+            net.minecraft.world.level.block.state.properties.IntegerProperty.create("season", 0, 2);
 
     @SuppressWarnings("null")
     public FiberCropBlock() {
@@ -37,7 +39,7 @@ public class FiberCropBlock extends StardewCropBlock {
             .mapColor(MapColor.PLANT)
             .pushReaction(PushReaction.DESTROY)
             .sound(SoundType.CROP), false);
-        registerDefaultState(defaultBlockState().setValue(AGE, 0).setValue(HALF, DoubleBlockHalf.LOWER));
+        registerDefaultState(defaultBlockState().setValue(AGE, 0).setValue(HALF, DoubleBlockHalf.LOWER).setValue(SEASON, 0));
     }
 
     @Override
@@ -112,11 +114,13 @@ public class FiberCropBlock extends StardewCropBlock {
 
     @Override
     protected void addExtraProperties(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
-        builder.add(HALF);
+        builder.add(HALF, SEASON);
     }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape model = CropModelShapes.shape(state, level, pos);
+        if (model != null) return model;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }
@@ -195,6 +199,9 @@ public class FiberCropBlock extends StardewCropBlock {
             }
         }
         super.onPlace(state, level, pos, oldState, isMoving);
+        if (level instanceof ServerLevel server) {
+            syncVisualStage(server, pos, com.stardew.craft.manager.CropGrowthManager.get(server).getOrCreateState(server, pos));
+        }
     }
 
     @SuppressWarnings("null")
@@ -239,9 +246,42 @@ public class FiberCropBlock extends StardewCropBlock {
         BlockState upper = level.getBlockState(above);
         if (upper.getBlock() != this || upper.getValue(HALF) != DoubleBlockHalf.UPPER) {
             level.setBlock(above, lower.setValue(HALF, DoubleBlockHalf.UPPER), 3);
-        } else if (upper.getValue(AGE) != lower.getValue(AGE)) {
-            level.setBlock(above, upper.setValue(AGE, lower.getValue(AGE)), 3);
+        } else if (upper != lower.setValue(HALF, DoubleBlockHalf.UPPER)) {
+            level.setBlock(above, lower.setValue(HALF, DoubleBlockHalf.UPPER), 3);
         }
+    }
+
+    @Override
+    public void syncVisualStage(ServerLevel level, BlockPos pos, com.stardew.craft.manager.CropGrowthManager.CropGrowthState growth) {
+        super.syncVisualStage(level, pos, growth);
+        BlockState state = level.getBlockState(pos);
+        if (!state.is(this) || state.getValue(HALF) == DoubleBlockHalf.UPPER) return;
+        int season = localSeason(level, pos);
+        int visual = season == 2 ? 1 : season == 3 ? 2 : 0;
+        if (state.getValue(SEASON) != visual) level.setBlock(pos, state.setValue(SEASON, visual), 2);
+        syncUpper(level, pos);
+    }
+
+    private static int localSeason(ServerLevel level, BlockPos pos) {
+        // The original Island and Desert location contexts stay in summer.
+        for (var location : com.stardew.craft.api.v1.world.StardewLocations.hierarchy(level.dimension().location(), pos)) {
+            String override = location.properties().get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("stardewcraft", "season_override"));
+            if (override != null) {
+                int season = switch (override.toLowerCase(java.util.Locale.ROOT)) {
+                    case "spring" -> 0;
+                    case "summer" -> 1;
+                    case "fall" -> 2;
+                    case "winter" -> 3;
+                    default -> -1;
+                };
+                if (season >= 0) return season;
+            }
+            if (com.stardew.craft.mining.IslandStoneRewards.isIsland(location)
+                    || location.ledgerId().equalsIgnoreCase("Desert")
+                    || location.id().getPath().equals("desert")
+                    || location.aliases().stream().anyMatch(alias -> alias.equalsIgnoreCase("Desert"))) return 1;
+        }
+        return com.stardew.craft.time.StardewTimeManager.get().getCurrentSeason();
     }
 
     @Override

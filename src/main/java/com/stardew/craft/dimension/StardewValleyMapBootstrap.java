@@ -365,6 +365,7 @@ public final class StardewValleyMapBootstrap {
                     }
 
                     pos.set(worldX, worldY, worldZ);
+                    target = com.stardew.craft.block.terrain.TerrainWorldUpgrade.varied(target, level.getSeed(), pos);
                     level.setBlock(pos, target, PLACE_FLAGS);
                 }
             }
@@ -807,7 +808,8 @@ public final class StardewValleyMapBootstrap {
                     if (level.isInWorldBounds(mutablePos)) {
                         int paletteIndex = schematic.nonAirPaletteIndexes[cursor];
                         if (paletteIndex >= 0 && paletteIndex < schematic.palette.length) {
-                            BlockState target = schematic.palette[paletteIndex];
+                            BlockState target = com.stardew.craft.block.terrain.TerrainWorldUpgrade
+                                    .varied(schematic.palette[paletteIndex], level.getSeed(), mutablePos);
                             if (skipReadCompare) {
                                 level.setBlock(mutablePos, target, PLACE_FLAGS);
                                 writes++;

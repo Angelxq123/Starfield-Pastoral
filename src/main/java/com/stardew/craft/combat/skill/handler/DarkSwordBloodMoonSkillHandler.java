@@ -1,6 +1,5 @@
 package com.stardew.craft.combat.skill.handler;
 
-import com.stardew.craft.combat.network.DarkSwordBloodMoonPayload;
 import com.stardew.craft.combat.WeaponStats;
 import com.stardew.craft.combat.skill.DarkSwordEffects;
 import com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher;
@@ -15,7 +14,6 @@ import com.stardew.craft.effect.ModMobEffects;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Server-authoritative lifecycle for Dark Sword's original Blood Moon Harvest.
@@ -25,7 +23,7 @@ public final class DarkSwordBloodMoonSkillHandler
     public static final float ENERGY_COST = 10.0F;
     public static final int ACTIVE_DURATION_TICKS = 80;
     public static final int BURN_INTERVAL_TICKS = 10;
-    public static final int PRESENTATION_NOTIFICATION_TICKS = 1;
+    public static final int PRESENTATION_NOTIFICATION_TICKS = 10;
     public static final float LIFESTEAL_RATIO = 0.30F;
     public static final float DAMAGE_BONUS_MULTIPLIER = 1.35F;
     public static final float BURN_MAXIMUM_HEALTH_RATIO = 0.01F;
@@ -95,17 +93,11 @@ public final class DarkSwordBloodMoonSkillHandler
         );
         instance.registerCommittedEffect(() -> {
             DarkSwordEffects.playBloodMoonStart(context.player());
-            PacketDistributor.sendToPlayer(
-                    context.player(),
-                    new DarkSwordBloodMoonPayload(
-                            true,
-                            ACTIVE_DURATION_TICKS
-                    )
-            );
+            instance.requireExecutionState(DarkSwordBloodMoonExecutionState.class)
+                    .startPresentation(context.player(),instance.startGameTick());
         });
 
-        // The authored skill had no attack lock or held-item motion, but its
-        // one-shot local cast effect still needs a server-authored notification.
+        // Brief presentation only; the authored state still adds no attack lock.
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,
@@ -154,13 +146,7 @@ public final class DarkSwordBloodMoonSkillHandler
                     context.skillData().getCooldown() * 20
             );
         }
-        if (commitCooldown
-                && reason != SkillInstance.EndReason.CASTER_UNAVAILABLE) {
-            PacketDistributor.sendToPlayer(
-                    context.player(),
-                    new DarkSwordBloodMoonPayload(false, 0)
-            );
-        }
+
     }
 
     static boolean shouldCommitCooldown(

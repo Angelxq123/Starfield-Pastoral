@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui.quest;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
@@ -93,7 +97,7 @@ public class BillboardScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        float guiScale = (float) minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         s4 = 4.0f / guiScale;
 
         // Clamp: largest tab is QUEST_W×QUEST_H (338×198), ensure it fits
@@ -129,7 +133,7 @@ public class BillboardScreen extends Screen {
                 .withStyle(net.minecraft.ChatFormatting.BOLD);
         int buttonPadding = Math.max(6, Math.round(24 * s4 / 4));
         acceptW2 = font.width(acceptText) + buttonPadding;
-        acceptH2 = font.lineHeight + buttonPadding;
+        acceptH2 = StardewFonts.lineHeight(font) + buttonPadding;
         acceptX = windowX + windowW / 2 - acceptW2 / 2;
         acceptY = windowY + windowH - Math.round(32 * s4);
     }
@@ -317,7 +321,7 @@ public class BillboardScreen extends Screen {
     private Map<Integer, String> buildBirthdayMap(String season) {
         Map<Integer, String> result = new java.util.HashMap<>();
         try {
-            JsonObject root = NpcDataRegistry.events().get("npc_birthdays");
+            JsonObject root = NpcDataRegistry.clientEvents().get("npc_birthdays");
             if (root == null || !root.has("birthdays")) return result;
             JsonObject birthdays = root.getAsJsonObject("birthdays");
             for (Map.Entry<String, JsonElement> entry : birthdays.entrySet()) {
@@ -454,7 +458,7 @@ public class BillboardScreen extends Screen {
         List<FormattedCharSequence> descLines = font.split(daily.getDescriptionComponent(), descW);
         for (FormattedCharSequence line : descLines) {
             g.drawString(font, line, descX, descY, TEXT_COLOR, false);
-            descY += font.lineHeight + 2;
+            descY += StardewFonts.lineHeight(font) + 2;
         }
 
         // 进度（非原版 Billboard 标准 — 原版在 QuestLog 显示目标，但我们让玩家能直接在公告栏看进度）
@@ -463,7 +467,7 @@ public class BillboardScreen extends Screen {
             Component line = Component.literal("> ").append(obj)
                 .withStyle(net.minecraft.ChatFormatting.BOLD);
             g.drawString(font, line, descX, descY, TEXT_COLOR, false);
-            descY += font.lineHeight + 2;
+            descY += StardewFonts.lineHeight(font) + 2;
         }
 
         // 奖励（非原版 Billboard，SDV 奖励在 questComplete 弹窗里显示 — 这里保留给玩家决策参考）
@@ -481,7 +485,7 @@ public class BillboardScreen extends Screen {
                 .withStyle(net.minecraft.ChatFormatting.BOLD);
             int acceptedCenterX = windowX + windowW / 2;
             g.drawString(font, accepted, acceptedCenterX - font.width(accepted) / 2,
-                acceptY + acceptH2 / 2 - font.lineHeight / 2, 0xFF888888, false);
+                acceptY + acceptH2 / 2 - StardewFonts.lineHeight(font) / 2, 0xFF888888, false);
         } else {
             boolean hov = isIn(mouseX, mouseY, acceptX, acceptY, acceptW2, acceptH2);
             // SDV: (scale>1 ? LightPink : White) — hover 时按钮染粉
@@ -494,7 +498,7 @@ public class BillboardScreen extends Screen {
             Component acceptText = Component.translatable("gui.stardewcraft.billboard.accept")
                 .withStyle(net.minecraft.ChatFormatting.BOLD);
             int textX = acceptX + (acceptW2 - font.width(acceptText)) / 2;
-            int textY = acceptY + acceptH2 / 2 - font.lineHeight / 2;
+            int textY = acceptY + acceptH2 / 2 - StardewFonts.lineHeight(font) / 2;
             g.drawString(font, acceptText, textX, textY, TEXT_COLOR, false);
         }
 

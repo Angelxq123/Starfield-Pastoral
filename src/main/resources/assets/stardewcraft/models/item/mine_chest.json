@@ -1,0 +1,49 @@
+{
+  "parent": "stardewcraft:block/mine/reward_chest/closed",
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        135,
+        0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "stardewcraft:mine_chest_special": 1
+      },
+      "model": "stardewcraft:item/mine_chest_special"
+    }
+  ]
+}

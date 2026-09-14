@@ -5,7 +5,6 @@ import com.stardew.craft.blockentity.FishPondBucketBlockEntity;
 import com.stardew.craft.fishpond.data.FishPondWorldData;
 import com.stardew.craft.fishpond.model.FishPondRecord;
 import com.stardew.craft.fishpond.service.FishPondColorSyncService;
-import com.stardew.craft.fishpond.service.FishPondManagerValidationService;
 import com.stardew.craft.fishpond.service.FishPondQualifiedItemService;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
@@ -139,18 +138,7 @@ public class FishPondManagerMenu extends AbstractContainerMenu {
         FishPondWorldData worldData = FishPondWorldData.get(level);
         worldData.reconcileFarmOwnership(level);
         Optional<FishPondRecord> anyOwner = worldData.findPondByManagerAnyOwner(level.dimension().location().toString(), managerPos);
-        if (anyOwner.isEmpty()) {
-            FishPondManagerValidationService.ValidationResult validation = FishPondManagerValidationService.validate(level, managerPos);
-            FishPondManagerValidationService.ScanResult scan = validation.scan();
-            waterCellCount = scan.waterCells().size();
-            netCount = scan.netPositions().size();
-            currentBucketCount = scan.bucketPositions().size();
-            hasBucket = currentBucketCount == 1 ? 1 : 0;
-            curWaterWidth = scan.width();
-            curWaterLength = scan.length();
-            canBuildPond = validation.ok() ? 1 : 0;
-            return;
-        }
+        if (anyOwner.isEmpty()) return;
 
         FishPondRecord pond = anyOwner.get();
         formed = 1;
@@ -216,7 +204,7 @@ public class FishPondManagerMenu extends AbstractContainerMenu {
             return false;
         }
         FishPondRecord pond = pondOpt.get();
-        pond.clearPondContents();
+        com.stardew.craft.fishpond.service.FishPondHusbandry.clear(level, pond);
         worldData.markChanged();
         FishPondBucketBlockEntity.syncVisualState(level, pond.bucketPos());
         FishPondColorSyncService.broadcastSnapshot(level);

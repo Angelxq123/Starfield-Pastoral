@@ -24,7 +24,7 @@ public final class FruitTreeRules {
         if (ground.getBlock() instanceof FarmBlock) {
             return true;
         }
-        if (ground.getBlock() == ModBlocks.YELLOW_DIRT.get()) {
+        if ((ground.getBlock() == ModBlocks.YELLOW_DIRT.get() || ground.getBlock() == ModBlocks.DIRT.get())) {
             return true;
         }
         return ground.is(BlockTags.DIRT);
@@ -117,8 +117,7 @@ public final class FruitTreeRules {
         if (state.getBlock() instanceof WildTreeSaplingBlock) {
             return true;
         }
-        return WildTrees.isAnyWildTreeTrunk0(state)
-                || WildTrees.findByModernRoot(state) != null
+        return WildTrees.findByModernRoot(state) != null
                 || StardewTreeRuntimeRegistry.inspectAddon(level, pos) != null;
     }
 }

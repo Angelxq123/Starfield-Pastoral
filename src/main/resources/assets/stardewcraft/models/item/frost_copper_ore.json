@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/frost_copper_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/frost_copper_ore"
-                 }
-}

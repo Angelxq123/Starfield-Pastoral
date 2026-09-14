@@ -51,6 +51,13 @@ public final class TreeBlessingSkillHandler implements RuntimeWeaponSkillHandler
                 context.skillData().getCooldown() * 20
         );
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         LivingEntity target = SkillTargeting.findTargetEntity(
                 context.player(),
                 TARGET_RANGE
@@ -87,12 +94,7 @@ public final class TreeBlessingSkillHandler implements RuntimeWeaponSkillHandler
                 context.nowTick(),
                 ANIMATION_TICKS
         );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
+
     }
 
     static SkillContext createHitContext(WeaponSkillData skillData) {

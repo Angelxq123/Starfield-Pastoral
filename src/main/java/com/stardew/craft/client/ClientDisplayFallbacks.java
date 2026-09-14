@@ -11,6 +11,17 @@ public final class ClientDisplayFallbacks {
     private ClientDisplayFallbacks() {
     }
 
+    /** Missing NPC artwork must never borrow another character's identity. */
+    public static ResourceLocation socialPortrait(
+            com.stardew.craft.api.v1.npc.StardewNpcDisplay display,
+            Predicate<ResourceLocation> available
+    ) {
+        if (display == null) return null;
+        if (available.test(display.mugshotTexture())) return display.mugshotTexture();
+        if (available.test(display.portraitTexture())) return display.portraitTexture();
+        return null;
+    }
+
     public static ResourceLocation availableResource(
             ResourceLocation requested,
             ResourceLocation fallback,

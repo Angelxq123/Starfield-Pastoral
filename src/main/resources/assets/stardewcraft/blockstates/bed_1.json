@@ -1,31 +1,20 @@
 {
   "variants": {
-    "part=main,facing=north": {
-      "model": "stardewcraft:decor/common/bed_1"
-    },
-    "part=main,facing=east": {
-      "model": "stardewcraft:decor/common/bed_1",
-      "y": 90
-    },
-    "part=main,facing=south": {
-      "model": "stardewcraft:decor/common/bed_1",
-      "y": 180
-    },
-    "part=main,facing=west": {
-      "model": "stardewcraft:decor/common/bed_1",
-      "y": 270
-    },
-    "part=extension,facing=north": {
-      "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty"
-    },
-    "part=extension,facing=east": {
-      "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty"
-    },
-    "part=extension,facing=south": {
-      "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty"
-    },
-    "part=extension,facing=west": {
-      "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty"
-    }
+    "part=main,facing=north,dyed=false": { "model": "stardewcraft:decor/common/bed_1" },
+    "part=main,facing=east,dyed=false": { "model": "stardewcraft:decor/common/bed_1", "y": 90 },
+    "part=main,facing=south,dyed=false": { "model": "stardewcraft:decor/common/bed_1", "y": 180 },
+    "part=main,facing=west,dyed=false": { "model": "stardewcraft:decor/common/bed_1", "y": 270 },
+    "part=main,facing=north,dyed=true": { "model": "stardewcraft:decor/common/bed_1_tinted" },
+    "part=main,facing=east,dyed=true": { "model": "stardewcraft:decor/common/bed_1_tinted", "y": 90 },
+    "part=main,facing=south,dyed=true": { "model": "stardewcraft:decor/common/bed_1_tinted", "y": 180 },
+    "part=main,facing=west,dyed=true": { "model": "stardewcraft:decor/common/bed_1_tinted", "y": 270 },
+    "part=extension,facing=north,dyed=false": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=east,dyed=false": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=south,dyed=false": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=west,dyed=false": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=north,dyed=true": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=east,dyed=true": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=south,dyed=true": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" },
+    "part=extension,facing=west,dyed=true": { "model": "stardewcraft:block/decor/extensions/bed_1_extension_empty" }
   }
 }

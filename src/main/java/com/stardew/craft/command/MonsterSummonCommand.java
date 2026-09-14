@@ -24,7 +24,7 @@ public final class MonsterSummonCommand {
         dispatcher.register(
                 Commands.literal("stardew")
                         .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("summon")
+                        .then(Commands.literal("monster")
                                 .then(Commands.argument("monsterId", StringArgumentType.word())
                                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(
                                                 MineMonsterSpawnHandler.getSummonableMonsterIds(), builder))
@@ -52,11 +52,10 @@ public final class MonsterSummonCommand {
 
         String monsterId = StringArgumentType.getString(context, "monsterId");
         ServerLevel level = player.serverLevel();
-        Vec3 lookAhead = player.getLookAngle().normalize().scale(2.5D);
+        Vec3 lookAhead = player.getLookAngle().multiply(1, 0, 1).normalize().scale(2.5D);
         Vec3 base = player.position().add(lookAhead).add(0.0D, 0.1D, 0.0D);
 
         int spawned = 0;
-        Mob lastMob = null;
         for (int index = 0; index < count; index++) {
             Vec3 position = count == 1
                     ? base
@@ -64,7 +63,6 @@ public final class MonsterSummonCommand {
             Mob mob = MineMonsterSpawnHandler.spawnConfiguredMonster(level, monsterId, position, player.getYRot(), floor);
             if (mob != null) {
                 spawned++;
-                lastMob = mob;
             }
         }
 
@@ -73,12 +71,9 @@ public final class MonsterSummonCommand {
             return 0;
         }
 
-        Mob resultMob = lastMob;
         int resultCount = spawned;
         int resultFloor = floor;
-        Component monsterName = resultMob != null
-                ? resultMob.getDisplayName()
-                : MineMonsterNames.displayName(monsterId);
+        Component monsterName = MineMonsterNames.displayName(monsterId);
         source.sendSuccess(() -> Component.translatable(
                 "stardewcraft.command.summon.success", resultCount, monsterName, resultFloor), true);
         return spawned;

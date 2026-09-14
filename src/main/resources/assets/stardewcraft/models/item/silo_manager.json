@@ -1,6 +1,3 @@
 {
-    "parent": "stardewcraft:block/silo_manager",
-    "textures": {
-        "particle": "stardewcraft:block/building/silo_manager"
-    }
+  "parent": "stardewcraft:block/silo_manager"
 }

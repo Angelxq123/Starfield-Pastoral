@@ -122,6 +122,8 @@ public abstract class StardewCropBlock extends Block {
     
     // 作物生长阶段 (0-3, 4个阶段)
     public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 3);
+    /** 0 = legacy age fallback, 1..7 = original phase + 1, 8 = post-harvest regrowth. */
+    public static final IntegerProperty GROWTH_STAGE = IntegerProperty.create("growth_stage", 0, 8);
     /** Server-synced render marker: the real crop block is a hidden carrier above a Garden Pot. */
     public static final BooleanProperty POTTED = BooleanProperty.create("potted");
     /**
@@ -161,16 +163,27 @@ public abstract class StardewCropBlock extends Block {
         super(configureProperties(properties, solidCollision));
         this.solidCollision = solidCollision;
         this.outlineShapeByAge = buildOutlineShapes(getOutlineHeightsPxByAge(), getOutlineWidthsPxByAge(), solidCollision);
-        this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0).setValue(POTTED, false));
+        this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0).setValue(POTTED, false).setValue(GROWTH_STAGE, 0));
     }
 
     private static Properties configureProperties(Properties properties, boolean solidCollision) {
-        Properties p = properties.instabreak().noOcclusion();
+        Properties p = properties.instabreak().noOcclusion().dynamicShape();
         // 普通作物：不阻挡行走；藤架/作物架：需要碰撞。
         if (!solidCollision) {
             p = p.noCollission();
         }
         return p;
+    }
+
+    @Override
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+        // Selection bounds depend on soil/pot placement. Lighting must not load those chunks.
+        return true;
+    }
+
+    @Override
+    protected int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+        return 0;
     }
 
     /**
@@ -377,7 +390,7 @@ public abstract class StardewCropBlock extends Block {
     
     @Override
     protected void createBlockStateDefinition(@SuppressWarnings("null") StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AGE, POTTED);
+        builder.add(AGE, POTTED, GROWTH_STAGE);
         addExtraProperties(builder);
     }
 
@@ -440,7 +453,7 @@ public abstract class StardewCropBlock extends Block {
         if (belowState.is(net.minecraft.tags.BlockTags.DIRT)) {
             return true;
         }
-        if (belowState.is(Blocks.GRASS_BLOCK)
+        if (block instanceof net.minecraft.world.level.block.GrassBlock
                 || blockStateIsAny(belowState,
                         Blocks.DIRT,
                         Blocks.COARSE_DIRT,
@@ -480,6 +493,8 @@ public abstract class StardewCropBlock extends Block {
     @SuppressWarnings("null")
     @Override
     protected VoxelShape getShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
+        VoxelShape modelShape = CropModelShapes.shape(state, level, pos);
+        if (modelShape != null) return modelShape;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) {
             return net.minecraft.world.phys.shapes.Shapes.empty();
         }
@@ -493,10 +508,12 @@ public abstract class StardewCropBlock extends Block {
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) {
             return net.minecraft.world.phys.shapes.Shapes.empty();
         }
-        // 普通作物：无碰撞；藤架/作物架：给满格碰撞，避免穿帮与可穿过。
+        // 普通作物保持可穿行；藤架采用当前模型的整体包络。
         if (!solidCollision) {
             return net.minecraft.world.phys.shapes.Shapes.empty();
         }
+        VoxelShape modelShape = CropModelShapes.shape(state, level, pos);
+        if (modelShape != null) return modelShape;
         VoxelShape[] shapes = getResolvedShapeByAge(state);
         return shapes[state.getValue(AGE)];
     }
@@ -717,7 +734,7 @@ public abstract class StardewCropBlock extends Block {
         if (canRegrow()) {
             // 重新生长：重置为regrow阶段
             int regrowAge = getRegrowAge();
-            BlockState regrowState = currentState.setValue(AGE, regrowAge);
+            BlockState regrowState = currentState.setValue(AGE, regrowAge).setValue(GROWTH_STAGE, 8);
             level.setBlock(harvestPos, regrowState, 3);
             syncMultiBlockPartnerFromRoot(level, harvestPos, regrowState);
 
@@ -825,7 +842,7 @@ public abstract class StardewCropBlock extends Block {
         level.playSound(null, harvestPos, SoundEvents.CROP_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
         if (canRegrow()) {
             int regrowAge = getRegrowAge();
-            BlockState regrowState = harvestState.setValue(AGE, regrowAge);
+            BlockState regrowState = harvestState.setValue(AGE, regrowAge).setValue(GROWTH_STAGE, 8);
             level.setBlock(harvestPos, regrowState, 3);
             syncMultiBlockPartnerFromRoot(level, harvestPos, regrowState);
 
@@ -1032,6 +1049,12 @@ public abstract class StardewCropBlock extends Block {
     /**
      * 判断当前是否在合适的季节
      */
+    /** A date-scoped season for daily growth, without changing the world's calendar. */
+    protected static int seasonForGrowth() {
+        var day = com.stardew.craft.api.v1.internal.crop.StardewCropRuntimeRegistry.activeDay();
+        return day == null ? com.stardew.craft.time.StardewTimeManager.get().getCurrentSeason() : day.season();
+    }
+
     protected abstract boolean isInSeason(Level level);
     
     /**
@@ -1103,13 +1126,27 @@ public abstract class StardewCropBlock extends Block {
      */
     @SuppressWarnings("null")
     public void growCropOneDay(ServerLevel level, BlockPos pos, BlockState state, boolean watered, CropGrowthManager.CropGrowthState growthState) {
+        syncVisualStage(level, pos, growthState);
+        try {
+            growCropOneDayInternal(level, pos, state, watered, growthState);
+        } finally {
+            syncVisualStage(level, pos, growthState);
+        }
+    }
+
+    private void growCropOneDayInternal(ServerLevel level, BlockPos pos, BlockState state, boolean watered, CropGrowthManager.CropGrowthState growthState) {
         // 检查是否在星露谷维度
         if (level.dimension() != ModDimensions.STARDEW_VALLEY) {
             return;
         }
         
         // 检查季节（对齐 Stardew 的 SeedsIgnoreSeasonsHere 语义）。
-        if (!SeasonLocationRules.seedsIgnoreSeasonsHere(level, pos) && !isInSeason(level)) {
+        var calendar = com.stardew.craft.api.v1.internal.crop.StardewCropRuntimeRegistry.activeDay();
+        var historicalData = calendar != null && calendar.offlineCatchUp()
+                ? com.stardew.craft.api.v1.agriculture.StardewAgricultureDataApi.crop(level, pos, state) : null;
+        boolean inSeason = historicalData == null ? isInSeason(level)
+                : historicalData.seasons().contains(new String[]{"spring", "summer", "fall", "winter"}[calendar.season()]);
+        if (!SeasonLocationRules.seedsIgnoreSeasonsHere(level, pos) && !inSeason) {
             // 原版: Kill() -> replace with Dead Crop
             level.setBlock(pos, com.stardew.craft.block.ModBlocks.DEAD_CROP.get().defaultBlockState()
                     .setValue(com.stardew.craft.block.crop.DeadCropBlock.VARIANT, level.random.nextInt(4)), 3);
@@ -1204,6 +1241,45 @@ public abstract class StardewCropBlock extends Block {
                 level.setBlock(pos, nextState, 2);
                 syncMultiBlockPartnerFromRoot(level, pos, nextState);
             }
+        }
+    }
+
+    /** Sync even when legacy AGE stays at 2 while several original phases pass. */
+    public void syncVisualStage(ServerLevel level, BlockPos pos, CropGrowthManager.CropGrowthState growth) {
+        BlockState state = level.getBlockState(pos);
+        if (growth == null || state.getBlock() != this
+                || (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
+                && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER)) return;
+        int sourcePhaseVersion = CropVisualStageSync.sourcePhaseVersion(this);
+        if (!growth.sourcePhases || growth.sourcePhaseVersion < sourcePhaseVersion) {
+            int[] oldDays = CropVisualStageSync.legacyDays(this, getPhaseDays());
+            float boost = getTotalSpeedBoost(level, pos, growth);
+            int[] oldSchedule = applySpeedGroToPhaseDays(oldDays, boost);
+            int[] schedule = applySpeedGroToPhaseDays(getPhaseDays(), boost);
+            if (growth.regrowing || state.getValue(AGE) == MAX_AGE) {
+                growth.phase = schedule.length;
+            } else {
+                int elapsed = growth.dayInPhase;
+                for (int i = 0; i < Math.min(growth.phase, oldSchedule.length); i++) elapsed += oldSchedule[i];
+                growth.phase = 0;
+                while (growth.phase < schedule.length && elapsed >= schedule[growth.phase]) {
+                    elapsed -= schedule[growth.phase++];
+                }
+                growth.dayInPhase = elapsed;
+            }
+            growth.sourcePhases = true;
+            growth.sourcePhaseVersion = sourcePhaseVersion;
+            CropGrowthManager.get(level).setDirty();
+        }
+        int phase = growth.phase;
+        if (phase == 0 && growth.dayInPhase == 0 && !growth.regrowing && state.getValue(AGE) > 0) {
+            phase = state.getValue(AGE) == MAX_AGE ? getPhaseDays().length : state.getValue(AGE);
+        }
+        int visual = growth.regrowing && growth.dayInPhase > 0 ? 8 : Math.min(7, phase + 1);
+        if (state.getValue(GROWTH_STAGE) != visual) {
+            BlockState updated = state.setValue(GROWTH_STAGE, visual);
+            level.setBlock(pos, updated, Block.UPDATE_CLIENTS);
+            syncMultiBlockPartnerFromRoot(level, pos, updated);
         }
     }
 

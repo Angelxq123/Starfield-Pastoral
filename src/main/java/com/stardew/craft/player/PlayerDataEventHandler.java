@@ -29,12 +29,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -54,11 +51,6 @@ public class PlayerDataEventHandler {
     
     private static int tickCounter = 0;
     private static final int AUTO_SAVE_INTERVAL = 6000; // 5分钟 (6000 ticks)
-    private static final double MAGNET_DIRECT_PICKUP_DISTANCE = 1.35D;
-    private static final double MAGNET_BASE_ACCELERATION = 0.18D;
-    private static final double MAGNET_NEAR_ACCELERATION = 0.48D;
-    private static final double MAGNET_MAX_SPEED = 1.35D;
-    
     /**
      * 玩家登录时初始化数据
      */
@@ -353,7 +345,6 @@ public class PlayerDataEventHandler {
                             player.server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
                     if (stardewLevel != null) {
                         int sleepMinute = com.stardew.craft.event.SleepVoteTracker.getLatestSleepMinute();
-                        com.stardew.craft.event.SleepVoteTracker.clearVotes();
                         com.stardew.craft.event.DimensionEventHandler.triggerAdvance(stardewLevel, sleepMinute, "sleep_vote_logout");
                     }
                 }
@@ -475,6 +466,7 @@ public class PlayerDataEventHandler {
             }
             com.stardew.craft.combat.skill.LightCounterParryHandler
                     .onPlayerHurt(event);
+            com.stardew.craft.combat.skill.handler.DragonRapierSkillHandler.parry(event);
             amount = event.getAmount() * shelterMultiplier;
             event.setAmount(amount);
             return;
@@ -529,7 +521,8 @@ public class PlayerDataEventHandler {
 
         net.minecraft.world.entity.Entity dmgSourceEntity = event.getSource().getEntity();
         DamageRequest.SourceKind sourceKind;
-        if (dmgSourceEntity instanceof net.minecraft.world.entity.Mob) {
+        if (event.getSource() instanceof com.stardew.craft.monster.MonsterDamageSource
+                || dmgSourceEntity instanceof net.minecraft.world.entity.Mob) {
             sourceKind = DamageRequest.SourceKind.MONSTER_ATTACK;
         } else if (dmgSourceEntity != null) {
             sourceKind = DamageRequest.SourceKind.DIRECT_ENTITY;
@@ -541,6 +534,8 @@ public class PlayerDataEventHandler {
                 dmgSourceEntity instanceof net.minecraft.world.entity.Mob sourceMob
                         ? MonsterStats.fromEntity(sourceMob).getDamage()
                         : 0.0f;
+        authoritativeMonsterDamage = com.stardew.craft.monster.MonsterDamageSource.resolveBaseDamage(
+                event.getSource(), authoritativeMonsterDamage);
         IncomingDamageResolver.DamageRange incomingRange =
                 IncomingDamageResolver.resolveRange(
                         rawAmount,
@@ -587,7 +582,8 @@ public class PlayerDataEventHandler {
         // 装备防御（戒指+靴子）
         com.stardew.craft.combat.equipment.EquipmentStats eqStats = com.stardew.craft.combat.equipment.EquipmentResolver.getMergedStats(player);
         float equipDefense = eqStats.getDefense();
-        float totalDefense = weaponDefense + foodDefense + equipDefense + bookDefense;
+        float totalDefense = weaponDefense + foodDefense + equipDefense + bookDefense
+                - (player.hasEffect(ModMobEffects.JINXED) ? 8 : 0);
         incomingDamage
                 .defense(totalDefense, false)
                 .defenseRule(DamageRequest.DefenseRule.STARDEW_PLAYER_DEFENSE);
@@ -622,7 +618,7 @@ public class PlayerDataEventHandler {
         }
 
         // 约巴之戒：概率随当前生命降低而上升，触发后获得 5 秒完全保护。
-        if (eqStats.hasYobaProtection()) {
+        if (eqStats.hasYobaProtection() && !(event.getSource() instanceof com.stardew.craft.monster.MonsterDamageSource)) {
             float luckLevel = PlayerStardewDataAPI.getLuckBuffLevel(player);
             float protectionChance = CombatRingRules.yobaProtectionChance(data.getHealth(), luckLevel);
             if (player.getRandom().nextFloat() < protectionChance) {
@@ -649,8 +645,16 @@ public class PlayerDataEventHandler {
         }
         com.stardew.craft.combat.skill.LightCounterParryHandler
                 .onPlayerHurt(event);
+        com.stardew.craft.combat.skill.handler.DragonRapierSkillHandler.parry(event);
         rawAmount = event.getAmount();
         event.setAmount(0.0F);
+        if (event.getSource() instanceof com.stardew.craft.monster.MonsterDamageSource) {
+            if (rawAmount <= 0.0F) return;
+            if (com.stardew.craft.monster.MonsterCombatBridge.beforePlayerDamage(event.getSource(), player, data.getHealth())) {
+                player.setHealth(player.getMaxHealth());
+                return;
+            }
+        }
 
         float originalAmount = event.getOriginalAmount();
         float incomingEventMultiplier = originalAmount > 0.0f
@@ -936,7 +940,7 @@ public class PlayerDataEventHandler {
         com.stardew.craft.hotspring.HotSpringRuntimeService.tick(player);
         com.stardew.craft.combat.equipment.EquipmentPlayerAttributes.sync(player);
         com.stardew.craft.combat.equipment.EquipmentFireProtection.tick(player);
-        applyMagneticPull(player, PlayerDataManager.getPlayerData(player));
+        PlayerMagnetHandler.tick(player);
 
         // 发光戒指：动态光源
         PlayerGlowHandler.tick(player);
@@ -1119,81 +1123,6 @@ public class PlayerDataEventHandler {
                 )
         );
         data.markVitalsSyncClean();
-    }
-
-    /**
-     * 吸附掉落物：远处快速拉近，靠近后直接尝试放入玩家背包。
-     */
-    @SuppressWarnings("null")
-    private static void applyMagneticPull(ServerPlayer player, PlayerStardewData data) {
-        int radiusBonus = data.getTempMagneticRadiusBonus();
-        // Add equipment magnetic radius (rings/boots).
-        com.stardew.craft.combat.equipment.EquipmentStats eqStats = com.stardew.craft.combat.equipment.EquipmentResolver.getMergedStats(player);
-        radiusBonus += eqStats.getMagneticRadius();
-        if (radiusBonus <= 0) {
-            return;
-        }
-        if (player.isSpectator()) {
-            return;
-        }
-
-        // Radius is configured directly in blocks (e.g. +3 => pull items within 3 blocks).
-        double radius = Math.max(1.0, radiusBonus);
-        AABB playerBox = player.getBoundingBox();
-        AABB range = playerBox.inflate(radius, Math.max(2.0, radius * 0.65), radius);
-        Vec3 target = player.position().add(0.0, 0.45, 0.0);
-
-        for (ItemEntity item : player.level().getEntitiesOfClass(ItemEntity.class, range, ItemEntity::isAlive)) {
-            if (!canMagnetAffectItem(player, item)) {
-                continue;
-            }
-
-            Vec3 itemPos = item.position().add(0.0, 0.1, 0.0);
-            Vec3 delta = target.subtract(itemPos);
-            double dist = delta.length();
-            if (dist < 0.05 || dist > radius) {
-                continue;
-            }
-
-            if (dist <= MAGNET_DIRECT_PICKUP_DISTANCE && tryPickupMagneticItem(player, item)) {
-                continue;
-            }
-
-            Vec3 dir = delta.scale(1.0 / dist);
-            double t = 1.0 - (dist / radius);
-            double accel = MAGNET_BASE_ACCELERATION + t * MAGNET_NEAR_ACCELERATION;
-            Vec3 pull = dir.scale(accel);
-
-            Vec3 nextMotion = item.getDeltaMovement().scale(0.55).add(pull);
-            if (nextMotion.lengthSqr() > MAGNET_MAX_SPEED * MAGNET_MAX_SPEED) {
-                nextMotion = nextMotion.normalize().scale(MAGNET_MAX_SPEED);
-            }
-
-            item.setPickUpDelay(0);
-            item.setDeltaMovement(nextMotion);
-            item.hasImpulse = true;
-            item.hurtMarked = true;
-        }
-    }
-
-    private static boolean canMagnetAffectItem(ServerPlayer player, ItemEntity item) {
-        if (item.getItem().isEmpty()) {
-            return false;
-        }
-        Entity owner = item.getOwner();
-        return !(owner instanceof ServerPlayer ownerPlayer) || ownerPlayer.getUUID().equals(player.getUUID());
-    }
-
-    private static boolean tryPickupMagneticItem(ServerPlayer player, ItemEntity item) {
-        ItemStack stack = item.getItem();
-        if (stack.isEmpty()) {
-            return false;
-        }
-
-        int originalCount = stack.getCount();
-        item.setPickUpDelay(0);
-        item.playerTouch(player);
-        return !item.isAlive() || item.getItem().isEmpty() || item.getItem().getCount() < originalCount;
     }
 
     // ═══════════════════════════════════════════════════════════

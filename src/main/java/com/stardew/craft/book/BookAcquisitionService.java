@@ -59,9 +59,14 @@ public final class BookAcquisitionService {
 
     public static void recordMonsterKilledAndMaybeAddVoidBook(ServerPlayer player, Collection<ItemEntity> drops,
                                                               LivingEntity entity, RandomSource random) {
+        recordMonsterKilledAndMaybeAddVoidBook(player, drops, entity, random, true);
+    }
+
+    public static void recordMonsterKilledAndMaybeAddVoidBook(ServerPlayer player, Collection<ItemEntity> drops,
+                                                              LivingEntity entity, RandomSource random, boolean allowDrop) {
         PlayerStardewData data = PlayerDataManager.getPlayerData(player);
         int monstersKilled = data.incrementStat("MonstersKilled", 1);
-        if (monstersKilled <= 10) {
+        if (!allowDrop || monstersKilled <= 10) {
             PlayerDataEventHandler.syncPlayerData(player, data);
             return;
         }

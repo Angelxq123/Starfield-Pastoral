@@ -1,5 +1,265 @@
 # Changelog
 
+## 0.6.1 - 2026-09-14
+
+### 更新日志（中文）
+
+**0.6.1 · 宠物更新**
+
+农场里终于有了可以认真照顾的小伙伴。这次更新围绕宠物的领养、日常生活和互动展开，并接入重建后的农场洞穴，修复旧档进洞与多人传送中的问题。
+
+#### 宠物与日常照顾
+
+- 加入五种猫、五种狗和两种乌龟，每个品种都有对应的模型、材质和选择图标。
+- 开局可以选择并命名第一只猫或狗；还没有完成初始选择的旧农场，会在登录后的其他设置结束后补上选择界面。
+- 宠物会在农场活动、休息和睡觉，雨天回到室内。猫、狗和乌龟使用各自的行为与动作，包括猫的洗脸、伏卧，狗的坐卧、喘气，以及乌龟的缩壳与探头。
+- 抚摸宠物、给水碗添水可以培养感情；室外水碗在雨天自动蓄水。符合好感条件时，抚摸还有机会收到宠物带来的礼物。
+- 猫和狗支持戴帽子、取回帽子；新增对应叫声、动作音效和互动表情。
+- 达到领养条件后，可以在玛妮处领养更多宠物。新增宠物需要空闲水碗；罗宾出售木质、石质和干草三种水碗设施。
+- 加入宠物管理界面，可以查看好感、照顾状态，修改名字、分配水碗和取下帽子。水碗接入建筑管理，支持搬迁与拆除。
+- 蝴蝶粉支持在确认后送别宠物，并返还佩戴的帽子。
+- 宠物记录跟随农场保存，领养费用、每日照顾和管理操作由服务端校验，避免重复请求产生重复领取或扣款。
+
+#### 农场洞穴与传送修复
+
+- 正式接入按原版地图关系重建的洞穴，使用矿井岩壁、土质地面与矿井灯笼，配套调整六个蘑菇盆和脱水机的位置。
+- 修复建洞失败仍传送、旧存档只有建成标记却缺少实际房间时掉入虚空的问题。现在等待区块、光照、出口和安全落点就绪后再传送，失败时保留玩家在原处。
+- 洞口支持走入触发传送，并保留右键操作；出口返回当前洞穴所属的农场。访问其他玩家农场时，不再误入自己的洞穴。
+- 旧农场自动准备新洞穴，迁移箱子库存、蘑菇盆产物和能够容纳的玩家方块；保留旧房间作为备份，空间不足时停止迁移，不强行清空。后续补修不会整屋覆盖玩家布置。
+- 洞穴绑定农场身份，转让不会更换洞穴；删除后重建不会再次导入同一份旧库存。已经搬走的赠送脱水机不会重复补发。
+
+#### 附属开发
+
+- 开放实验性宠物 API，允许附属登记新的种类、品种、模型、行为、声音与礼物，并接入本体的选择和管理流程；提供独立示例工程。
+- 客户端与服务端登录时校验宠物定义，避免双方安装内容不一致。宠物附属需要与本体 0.6.1 配套安装；实验接口暂不承诺后续版本的二进制兼容。
+
+#### 旧存档说明
+
+农场洞穴升级自动进行，无需为此重开农场。实体形式的装饰物及第三方方块内部自定义的坐标关系不保证自动迁移，旧房间仍保留。洞穴接入不表示原版生产周期、果实池和氛围表现等全部差异已经处理完毕。
+
+GitHub 上次公开版本为 0.5.6；从该版本升级还会包含下方 0.6.0 大更新中的系统和资源变化。洞穴迁移验证不等于整个 0.5.6 世界的升级验收，更新前请保留完整存档备份。
+
+### Update Log (English)
+
+**0.6.1 · The Pet Update**
+
+#### Pets and Daily Care
+
+- Added five cat breeds, five dog breeds and two turtles, each with its own model, texture and selection icon.
+- Choose and name your first cat or dog during farm setup. Existing farms without an initial choice receive the selection screen after other login setup is complete.
+- Pets roam, rest and sleep on the farm, taking shelter indoors when it rains. Cats, dogs and turtles have distinct actions, including grooming, lying down, panting and retreating into their shells.
+- Build friendship through petting and watering their bowls. Outdoor bowls fill in the rain, and eligible pets can bring gifts when petted.
+- Cats and dogs can wear hats. Added pet voices, action sounds and interaction expressions.
+- Adopt additional pets from Marnie once eligible and with a spare bowl available. Robin offers wood, stone and hay bowl facilities.
+- Manage names, friendship, daily care, bowl assignments and hats through the pet interface. Bowls support relocation and demolition through building management.
+- Butterfly Powder lets you say goodbye after confirmation and returns the pet's hat.
+- Pet records belong to the farm. Adoption payments, daily care and management requests are validated by the server.
+
+#### Farm Caves and Safe Travel
+
+- Connected the rebuilt cave to gameplay, with mine walls, earthen floors, lanterns and updated positions for the six mushroom boxes and dehydrator.
+- Fixed entering a missing or unsuccessfully built room and falling into the void. Travel now waits for chunks, lighting, exits and a safe landing; a failed attempt leaves the player outside.
+- Cave doors support walking through as well as right-clicking. Visiting another farm enters that farm's cave, and leaving returns to its entrance.
+- Existing farms automatically prepare the new cave and migrate chest inventories, mushroom outputs and player blocks that fit. The original room remains as a backup; insufficient space stops migration instead of clearing belongings.
+- Repairs no longer overwrite the entire room. Ownership transfers preserve the cave, recreated farms cannot import the same old inventory twice, and moving the gifted dehydrator does not grant another one.
+
+#### Addon Support and Existing Worlds
+
+- Added an experimental pet API and a standalone example for registering species, breeds, models, behaviors, sounds and gifts through the built-in pet flow. Client/server pet definitions are checked at login. Match pet addons to 0.6.1; future binary compatibility is not yet promised.
+- Cave migration does not require a new farm. Entity-based decorations and custom absolute coordinates inside third-party block entities are not covered by generic migration; the original room is retained.
+- This does not complete every difference in cave production timing, fruit selection or ambient effects.
+- The previous GitHub release was 0.5.6. Upgrading from it also includes the broader 0.6.0 changes below. Cave migration tests do not establish compatibility for an entire 0.5.6 world; keep a full world backup before upgrading.
+
+## 0.6.0 - Earlier development notes / 先前开发记录
+
+以下保留 0.6.0 开发阶段的记录，其中“尚未发布”及升级说明描述当时状态；本次发布情况以上方 0.6.1 为准。
+
+The following preserves the earlier development notes; unreleased-status wording describes that stage. See 0.6.1 above for this release.
+
+### Update Log (English)
+
+**0.6.0 — The Overhaul Update**
+
+This update revisits much of everyday life in Starfield Pastoral: the way villagers move and respond to you, the feel of casting a fishing rod, the buildings you raise on your farm, and the mines beneath the Valley. Alongside new models and animations, we have reworked the systems behind those experiences.
+
+**Highlights**
+
+- Reworked villager models, individual walking styles, idle animations and reactions to nearby players.
+- A rebuilt fishing sequence, from preparing a cast to showing your catch, with new equipment visuals and selectable bobber styles.
+- Rebuilt ordinary mine floors, refreshed monsters, and revised exploration and combat rules.
+- New farm-building workflows, reworked animal care and fish ponds, and a large aquarium for displaying your catches.
+- Updated crops, terrain, building materials and furniture, with clearer interactions and more options for data packs and addons.
+
+#### Before Updating
+
+This version is not yet released. **The accompanying map and the upgrade procedure for existing worlds are still being finalized.** Some old building blocks and mine resources have been removed or replaced; the changes also affect building and animal save data. Do not assume that an existing world can be upgraded by simply replacing the JAR. The final release notes will include the supported upgrade procedure.
+
+#### Villagers: Appearance, Movement and Daily Life
+
+- Reworked models, hairstyles, clothing and textures across the villager roster, keeping each character's silhouette and appearance distinct.
+- Added visible breathing, blinking and smoother transitions between actions. Characters with closed or obscured eyes retain their appropriate appearance; Evelyn, for example, keeps her usual closed eyes.
+- Rebuilt walking animations so weight shifts through the body, with coordinated movement in the torso, shoulders, arms and head. Stride and rhythm vary with the character's age, build and personality, including distinct movement for children and heavier characters.
+- Adapted skirts, robes and long hair to movement. George uses a wheelchair-specific set of animations, with rotating wheels, pushing motions and coordinated body movement when moving and turning.
+- Idle villagers can notice a sustained gaze and glance or turn toward the player. Conversations use these turning animations too, including turning back afterward; a cooldown prevents repeated attention reactions.
+- Reworked schedule execution, indoor/outdoor transitions and pathfinding. Fixed cases where changing the time left villagers following an obsolete destination or standing still, and corrected doorway and landing-height checks that could block transitions.
+- Adjusted ground movement to avoid repeated jumping against block edges. Path searches share a per-tick budget, and failed routes wait before retrying instead of immediately searching again.
+- Added schedule-linked activities with entry, looping and exit animations. Sam has activity definitions for guitar playing, handheld gaming, skateboarding, sweeping, sitting, sleeping and his saloon pool-table stance, including the corresponding props and work outfit. **These activities require mapped destinations and, where applicable, furniture; this is not a complete activity schedule for every villager.**
+
+#### Fishing: From Cast to Catch
+
+- Rebuilt the transitions between charging, casting, waiting for a bite, hooking, reeling in and presenting a catch. The player's grip and arm movement now work together with the rod and fishing line.
+- Updated the in-world appearance of rods, bobbers, bait, tackle and catches, with three-dimensional models for supported equipment and fish.
+- Added a bobber-style machine. Catching different fish species unlocks more styles, with a random-style option and matching line colors.
+- Corrected fishing cleanup when changing the held item, moving between dimensions or leaving the game, so interrupted attempts do not leave an active session behind.
+- Fixed treasure-chest settlement when the fishing minigame is skipped, preserving an earned treasure opportunity through the catch process.
+
+#### Mines and Monsters
+
+- Replaced the ordinary mine lobby and floors 1–120 with authored floor structures, including new walls, floors, mine fittings and decorations.
+- Revised stone and ore placement, resource clusters, mining effort and energy rules against Stardew Valley's mechanics, while retaining the mod's established Minecraft pickaxe-tier speed adjustments.
+- Reworked ladder checks, floor refreshes and resource persistence. Returning to a still-active floor preserves its state; rebuilding a floor no longer automatically replenishes previously emptied coal carts or backpacks.
+- Reworked mine reward chests so opening and claiming are tracked separately for each player. One player's opened lid or claimed reward does not consume another player's reward, and reloading does not restore an already claimed reward.
+- Revised barrel and crate drops, tool and weapon hits, and supported area attacks. Breaking the upper half or using an explosion resolves the container once and uses the actual player's reward eligibility.
+- Reworked monster models and animations, with species-specific movement, attacks, flight, transformations and death sequences. Revised kill credit, drops and entity cleanup alongside them.
+- This mine overhaul primarily covers the ordinary mines. Dangerous, infested, prehistoric and quarry-mine variants are not enabled. Slingshots remain unfinished; floors 40 and 70 currently award a Cutlass and a Tempered Broadsword instead.
+
+#### Combat and Equipment
+
+- Reworked the execution of existing sword, dagger and club attacks and skills, including damage, defense, critical hits, knockback and attack timing.
+- Delayed hits, projectiles and continuing skill effects now retain the weapon state from the moment of activation. Switching weapons after using a skill no longer changes its subsequent damage.
+- Corrected cooldown, interruption and cleanup behavior, including duplicate damage settlement and follow-up effects triggered by invalid hits.
+- Reviewed registered weapon attributes and how professions, forging, rings and trinkets affect combat. These are revisions to the existing equipment and skill systems, not a new set of skills for every weapon.
+
+#### Farm Buildings and Animals
+
+- Rebuilt purchasing and placement for coops, barns, silos and fish ponds. Supported buildings offer a self-build manager or a prefab blueprint; fish ponds use the prefab route.
+- Prefab placement includes a preview, orientation controls and space checks. Construction and upgrades have their own progress and presentation, including Robin's construction animations.
+- Reworked upgrades, relocation and demolition, with shared records for costs, construction progress, ownership and management permissions.
+- Rebuilt animal purchasing, housing, relocation and daily care, covering growth, feeding, produce, incubation, reproduction and home capacity.
+- Updated building and animal management screens to reflect server-owned records. Revised checks around purchases, housing changes and produce collection to prevent inconsistent results from repeated or simultaneous operations.
+
+#### Fish Ponds and Aquariums
+
+- Reworked fish-pond breeding, population requests, capacity progression and produce. Fish species and the pond's actual state determine its output and water color.
+- Replaced flat fish silhouettes with three-dimensional fish swimming and jumping in the pond. Visual movement is separate from breeding and reward calculation.
+- Added a large aquarium to Willy's shop. Stock it with fish and decorations, with separate behavior for swimming fish and bottom-dwelling creatures and special display interactions for supported inhabitants.
+
+#### Crops, Terrain and Furniture
+
+- Reworked the growth stages and mature models of multiple crops, adding fuller stems, leaves, flowers, fruit and trellises that can be viewed from different sides.
+- Updated grass, dark grass and dirt terrain with seasonal appearances, surface variants and material transitions, including support for slabs and stairs.
+- Building grass remains grass when covered, shaded or exposed to fluids, grazing and tree growth. Mining it normally drops its own grass block, preserving the material used in a build.
+- Expanded building and scene assets, including doors, windows, railings, roof materials, paving, road markings, benches and playground furniture, with corresponding placement and collision behavior.
+- Corrected particle textures and material connections on affected blocks and model parts.
+
+#### Interfaces, Interaction and Production
+
+- Added contextual hints beside the crosshair for talking, gifting, reading, operating objects and harvesting. Supported conversation and reading targets also show when that interaction is already complete.
+- Revised menu scaling, clipping, tooltip placement and pointer-coordinate handling so drawing and interaction use consistent coordinates across window sizes and GUI scales.
+- Expanded data-pack control over machine processing times, passive production cycles, cask aging rates and Heavy Furnace coal consumption. Updated settings apply to subsequent production without restarting a batch already in progress.
+- Fixed an extra-night delay in newly started tapper cycles and corrected cask remaining-time displays to account for the actual aging rate.
+- Updated related JEI recipe displays and item variants, Jade production information, and resource validation. Corrected affected model references and missing resources that generated repeated warnings.
+
+#### For Data-Pack and Addon Authors
+
+- Extended NPC schedule and activity definitions, furniture support resolution and execution-control hooks for the shared NPC runtime. Existing extension entry points remain available.
+- Extended building-family, residence, animal and facility integration with the new building and animal records, including namespaced content and persistent custom state.
+- Added client HUD and daily-information APIs for luck, tomorrow's weather, birthdays, berry seasons, Traveling Cart and Bookseller visits, and tool-upgrade progress. Addon overlays can follow the mod's HUD position and scale.
+- Added interaction-hint extension points and machine-wide production profiles. See the [production data-pack guide](docs/production-datapacks.md), [NPC runtime guide](docs/npc-runtime-architecture.md), [building and animal integration guide](docs/building-animal-addon-runtime.md), and [HUD API guide](docs/hud-addon-api.md).
+- **New interfaces include experimental APIs.** Consult the documentation and maturity inventory when updating an addon; the `api.v1` package name does not by itself guarantee a stable contract. Existing custom mine integrations also need review because the old generator and related extension types have been removed or replaced.
+
+### 更新日志（中文）
+
+**0.6.0 · 大规模重制更新**
+
+这次更新，我们重新打磨了星露谷里许多日常可见的细节：村民如何走路、如何回应你的目光，鱼竿怎样抛出、渔获怎样收起，农场建筑如何建成，以及矿井中的探索与战斗。伴随新模型和新动画，这些体验背后的系统也经历了一次大范围重做。
+
+**本次重点**
+
+- 重制村民外观、角色步态、待机动画，以及面向玩家的回看和转身动作。
+- 重做从准备抛竿到展示渔获的钓鱼流程，更新装备表现，加入可选择的浮标外观。
+- 重制普通矿井楼层与怪物，修订探索、采掘和战斗规则。
+- 重做农场建筑、动物照料与鱼塘养殖，加入可以展示渔获的大型水族箱。
+- 更新作物、地形、建筑材料与家具，补充交互提示和数据包、附属模组的扩展能力。
+
+#### 更新前请留意
+
+当前版本尚未发布，**配套地图与旧存档升级方式仍在确定中**。本次移除或替换了部分旧建筑方块与矿井资源，也涉及建筑和动物存档数据的变化，不能默认通过直接替换 JAR 完成旧世界升级。正式发布时会补充支持的升级方式。
+
+#### 村民：外观、动作与日常生活
+
+- 大范围重制村民模型，重新刻画发型、服装与像素材质，保留各自的轮廓和外貌特点。
+- 加入更明显的呼吸、眨眼，以及动作之间的平滑过渡。闭眼或眼部被遮挡的角色保留对应表现，例如艾芙琳仍保持平时闭着眼睛的样子。
+- 重做行走动画，让躯干、肩膀、手臂与头部共同参与重心变化。根据年龄、体型和性格调整步幅与节奏，为儿童、较丰满的角色等制作不同的步态。
+- 为裙摆、长袍和长发适配运动。乔治使用独立的轮椅动作，移动和转向时由车轮转动、双手推动与身体动作共同完成。
+- 待机中的村民被持续注视后，会回头或转身看向玩家；聊天时同样使用转向动画，结束后再转回原方向。回看反应设有间隔，避免反复触发。
+- 重做日程执行、室内外路线衔接与寻路。修复调整时间后仍追赶过期目的地或停在原地的情况，以及门口判定、传送落点高度导致的通行问题。
+- 调整地面移动，避免蹭到方块边缘就反复起跳。多个 NPC 共用每刻的寻路预算，失败路线间隔重试，减少集中搜索与连续失败重试造成的负担。
+- 加入与日程关联的活动系统，支持进入、持续和退出动作。山姆已配置弹吉他、玩掌机、滑板、扫地、坐下、睡眠和餐吧台球桌旁站姿等活动，配套制作了道具与工作服。**活动仍需对应的地图点位，坐躺等还需要家具；这不代表所有村民的专属活动日程都已完成。**
+
+#### 钓鱼：从抛竿到收获
+
+- 重做蓄力、抛竿、等待、上钩、收线与展示渔获之间的动作衔接，让玩家的握持和手臂动作与鱼竿、鱼线配合。
+- 更新鱼竿、浮标、鱼饵、钓具与渔获的场景表现，为已适配装备和鱼类使用立体模型。
+- 加入浮标外观选择机，根据已钓获的鱼类种类解锁更多样式，支持随机外观与对应的鱼线颜色。
+- 修正更换手持物品、切换维度和离开游戏时的钓鱼取消与清理，避免中断后仍残留进行中的钓鱼状态。
+- 修复跳过钓鱼小游戏时的宝箱结算，让已获得的宝箱机会正确保留到收获流程。
+
+#### 矿井与怪物
+
+- 普通矿井大厅与 1–120 层改用重新制作的楼层建筑，更新岩壁、地板、矿井构件和场景装饰。
+- 对照星露谷原版修订石头、矿石与资源簇分布，以及采掘次数和能量规则，同时保留本模组既定的 Minecraft 镐等级速度调整。
+- 重做梯子判定、楼层刷新和资源保存。重新进入仍有效的楼层会保留其状态，楼层重建也不会自动补回已经取空的煤炭矿车或背包。
+- 重做矿井奖励箱，按玩家分别记录开启与领取。一位玩家打开箱盖或取走奖励，不会消耗其他玩家的奖励；重新加载也不会恢复已领取的奖励。
+- 修订桶与板条箱的掉落、工具和武器命中，以及已适配的范围攻击。破坏上半部分或使用爆炸时，同一个容器只结算一次，并采用实际破坏者的奖励资格。
+- 重制怪物模型与动画，按物种制作移动、攻击、飞行、变形与死亡表现，同时修订击杀归属、掉落和实体清理。
+- 本次矿井重制以普通矿井为主，尚未开放危险、感染、史前和采石场矿洞等变体。弹弓仍待制作，第 40、70 层暂以弯刀和淬火阔剑作为奖励。
+
+#### 战斗与装备
+
+- 重做现有剑、匕首和棍棒的普攻与技能执行，修订伤害、防御、暴击、击退和攻击时机。
+- 延迟命中、投射物和持续技能效果保留释放瞬间的武器状态；释放后切换武器，不再改变该技能后续的伤害。
+- 修正冷却、打断与结束清理中的问题，包括重复伤害结算，以及无效命中错误触发后续效果。
+- 核对已注册武器的属性，以及职业、锻造、戒指和饰品对战斗结果的影响。本轮是对既有装备与技能系统的修订，并非为每把武器新增一套技能。
+
+#### 农场建筑与动物
+
+- 重做鸡舍、畜棚、筒仓和鱼塘的购买与放置流程。适用建筑可选择自建管理器或预制建筑蓝图；鱼塘采用预制方案。
+- 预制建筑支持放置预览、朝向调整与空间检查，建造和升级拥有对应的进度与表现，并接入罗宾的施工动画。
+- 重做升级、搬迁和拆除流程，统一记录费用、施工进度、建筑归属与管理权限。
+- 重做动物购买、入住、搬家与日常照料，涵盖成长、喂食、产物、孵化、繁殖和住所容量。
+- 更新建筑与动物管理界面，以服务端记录显示实际状态；修订购买、住所变更和产物领取检查，防止重复或同时操作产生不一致结果。
+
+#### 鱼塘与水族箱
+
+- 重做鱼塘繁殖、扩容请求、容量提升与产物规则，由鱼种和实际养殖状态决定产出与水色。
+- 将鱼塘中的平面鱼影替换为立体鱼模型，展示游动与跳跃；视觉运动与繁殖、奖励结算分别处理。
+- 在威利的商店加入大型水族箱，可以放入鱼类与装饰物。游泳鱼类与底栖生物采用不同的活动方式，部分生物还支持特殊展示交互。
+
+#### 作物、地形与家具
+
+- 重制多种作物的生长阶段与成熟模型，补充枝叶、花果和支架，让植株从不同方向观看都有对应结构。
+- 更新草地、深色草地和泥土地形，加入季节外观、表面变体与材质过渡，并适配半砖和楼梯。
+- 建筑草地方块在覆盖、阴暗、流体、啃食和树木生长影响下仍保持草地；正常挖掘掉落对应的草地方块，保留建筑使用的材质。
+- 扩充建筑与场景资产，包括门窗、栏杆、屋顶材料、铺装、道路标线、长椅和游乐设施，并适配放置与碰撞行为。
+- 修正部分方块和模型部件的粒子贴图、材质衔接问题。
+
+#### 界面、交互与生产
+
+- 在准星旁补充交谈、送礼、阅读、操作与收获提示；已适配的交谈和阅读对象还会显示该项交互是否已经完成。
+- 修订界面缩放、裁切、提示位置与鼠标坐标处理，让不同窗口尺寸和 GUI 缩放下的绘制与操作使用一致坐标。
+- 扩展数据包对机器加工时间、被动生产周期、陈酿速率与重型熔炉煤耗的配置。新配置用于后续生产，不会重置已经开始的加工任务。
+- 修复树液采集器新周期额外多等一夜的问题，并让陈酿桶按实际陈酿速率显示剩余时间。
+- 更新相关 JEI 配方与物品变体显示、Jade 生产信息和资源校验，修正部分会持续产生警告的模型引用与资源缺失。
+
+#### 给数据包与附属模组作者
+
+- 扩展 NPC 日程、活动定义、家具支撑解析与动作控制接口，接入共享 NPC 运行系统，并保留既有扩展入口。
+- 扩展建筑族、住宅、动物与设施的接入方式，使新建筑和动物记录支持命名空间内容与自定义持久状态。
+- 新增客户端 HUD 与每日信息接口，提供幸运、明日天气、生日、浆果季、旅行货车、书商到访与工具升级进度；附属界面可跟随本模组 HUD 的位置和缩放。
+- 补充交互提示扩展入口和按机器配置的生产规则。用法见[生产数据包指南](docs/production-datapacks.md)、[NPC 运行系统指南](docs/npc-runtime-architecture.md)、[建筑与动物接入指南](docs/building-animal-addon-runtime.md)及 [HUD 接口指南](docs/hud-addon-api.md)。
+- **新增接口中仍包含实验性 API。** 更新附属时请核对文档与成熟度清单，不能仅凭 `api.v1` 包名假定契约稳定。旧矿井生成器及相关扩展类型已有移除或替换，自定义矿井附属也需要检查适配。
+
 ## 0.5.6 - 2026-08-14
 
 ### Update Log (English)

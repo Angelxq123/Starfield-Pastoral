@@ -17,7 +17,12 @@ import net.minecraft.world.level.block.Block;
 import java.io.IOException;
 
 /** Places footprint decals; sneak-use exports all authored footprints in this dimension. */
-public final class ShadowFootprintBlockItem extends BlockItem {
+public final class ShadowFootprintBlockItem extends BlockItem implements com.stardew.craft.item.IStardewItem {
+    @Override
+    public String getItemTypeKey() {
+        return "stardewcraft.type.building";
+    }
+
     public ShadowFootprintBlockItem(Block block, Properties properties) {
         super(block, properties);
     }

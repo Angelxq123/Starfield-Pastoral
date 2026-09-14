@@ -143,6 +143,8 @@ public final class TeaBushManager extends SavedData {
                     .onCropMatured(level.getServer(), "815");
         }
         BlockState desiredLower = lower.setValue(TeaBushBlock.STAGE, stage)
+                .setValue(TeaBushBlock.SEASON, cosmeticSeasonFor(
+                        StardewTimeManager.get().getCurrentSeason(), isSheltered(level, lowerPos)))
                 .setValue(TeaBushBlock.HALF, DoubleBlockHalf.LOWER);
         if (!desiredLower.equals(lower)) {
             level.setBlock(lowerPos, desiredLower, Block.UPDATE_ALL);
@@ -176,6 +178,10 @@ public final class TeaBushManager extends SavedData {
                 time.getCurrentSeason(),
                 isSheltered(level, lowerPos),
                 entry.harvestedDay == today);
+    }
+
+    static int cosmeticSeasonFor(int season, boolean sheltered) {
+        return sheltered ? 0 : season;
     }
 
     static int visualStageFor(int ageDays, int dayOfMonth, int season, boolean sheltered, boolean harvestedToday) {

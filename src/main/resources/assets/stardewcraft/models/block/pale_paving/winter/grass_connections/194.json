@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "stardewcraft:block/pale_paving/winter/grass_connections/194",
+    "side": "stardewcraft:block/pale_paving/winter/side",
+    "bottom": "stardewcraft:block/pale_paving/winter/bottom"
+  }
+}

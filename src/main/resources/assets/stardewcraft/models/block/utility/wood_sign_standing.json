@@ -1,0 +1,428 @@
+{
+  "credit": "Made with Blockbench",
+  "texture_size": [
+    128,
+    64
+  ],
+  "textures": {
+    "wood_sign": "stardewcraft:block/wood_sign",
+    "particle": "stardewcraft:block/wood_sign_particle"
+  },
+  "elements": [
+    {
+      "name": "立桩",
+      "from": [
+        6,
+        0,
+        8
+      ],
+      "to": [
+        10,
+        24,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.125,
+            0.25,
+            0.625,
+            6.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "east": {
+          "uv": [
+            1.875,
+            0.25,
+            2.25,
+            6.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "south": {
+          "uv": [
+            0.75,
+            0.25,
+            1.25,
+            6.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "west": {
+          "uv": [
+            1.375,
+            0.25,
+            1.75,
+            6.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "up": {
+          "uv": [
+            1.75,
+            6.5,
+            2.25,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "down": {
+          "uv": [
+            2.375,
+            6.5,
+            2.875,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        }
+      }
+    },
+    {
+      "name": "牌面",
+      "from": [
+        2,
+        8,
+        6
+      ],
+      "to": [
+        14,
+        20,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.875,
+            0.25,
+            7.375,
+            3.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            0.25,
+            9.75,
+            3.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "south": {
+          "uv": [
+            7.5,
+            0.25,
+            9,
+            3.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "west": {
+          "uv": [
+            9.125,
+            0.25,
+            9.375,
+            3.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "up": {
+          "uv": [
+            4.5,
+            6.5,
+            6,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "down": {
+          "uv": [
+            6.125,
+            6.5,
+            7.625,
+            7
+          ],
+          "texture": "#wood_sign"
+        }
+      }
+    },
+    {
+      "name": "左框",
+      "from": [
+        0,
+        6,
+        5
+      ],
+      "to": [
+        2,
+        22,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.375,
+            0.25,
+            4.625,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "east": {
+          "uv": [
+            2.875,
+            0.25,
+            3.25,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "south": {
+          "uv": [
+            4.75,
+            0.25,
+            5,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "west": {
+          "uv": [
+            2.375,
+            0.25,
+            2.75,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "up": {
+          "uv": [
+            3,
+            6.5,
+            3.25,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "down": {
+          "uv": [
+            3.375,
+            6.5,
+            3.625,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        }
+      }
+    },
+    {
+      "name": "右框",
+      "from": [
+        14,
+        6,
+        5
+      ],
+      "to": [
+        16,
+        22,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.125,
+            0.25,
+            5.375,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "east": {
+          "uv": [
+            3.875,
+            0.25,
+            4.25,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "south": {
+          "uv": [
+            5.5,
+            0.25,
+            5.75,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "west": {
+          "uv": [
+            3.375,
+            0.25,
+            3.75,
+            4.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "up": {
+          "uv": [
+            3.75,
+            6.5,
+            4,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        },
+        "down": {
+          "uv": [
+            4.125,
+            6.5,
+            4.375,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        }
+      }
+    },
+    {
+      "name": "上框",
+      "from": [
+        2,
+        20,
+        5
+      ],
+      "to": [
+        14,
+        22,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.75,
+            6.5,
+            9.25,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "east": {
+          "uv": [
+            14.75,
+            6.5,
+            15.125,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "south": {
+          "uv": [
+            9.375,
+            6.5,
+            10.875,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "west": {
+          "uv": [
+            14.25,
+            6.5,
+            14.625,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "up": {
+          "uv": [
+            9.875,
+            0.25,
+            11.375,
+            1
+          ],
+          "texture": "#wood_sign"
+        },
+        "down": {
+          "uv": [
+            11.5,
+            0.25,
+            13,
+            1
+          ],
+          "texture": "#wood_sign"
+        }
+      }
+    },
+    {
+      "name": "下框",
+      "from": [
+        2,
+        6,
+        5
+      ],
+      "to": [
+        14,
+        8,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11,
+            6.5,
+            12.5,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "east": {
+          "uv": [
+            0.125,
+            7.5,
+            0.5,
+            8
+          ],
+          "texture": "#wood_sign"
+        },
+        "south": {
+          "uv": [
+            12.625,
+            6.5,
+            14.125,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "west": {
+          "uv": [
+            15.25,
+            6.5,
+            15.625,
+            7
+          ],
+          "texture": "#wood_sign"
+        },
+        "up": {
+          "uv": [
+            13.125,
+            0.25,
+            14.625,
+            1
+          ],
+          "texture": "#wood_sign"
+        },
+        "down": {
+          "uv": [
+            0.125,
+            6.5,
+            1.625,
+            7.25
+          ],
+          "texture": "#wood_sign"
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block"
+}

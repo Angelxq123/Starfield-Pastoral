@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "variant=0,type=bottom": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_bottom"
+    },
+    "variant=0,type=top": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_top"
+    },
+    "variant=0,type=double": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_double"
+    },
+    "variant=1,type=bottom": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_bottom"
+    },
+    "variant=1,type=top": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_top"
+    },
+    "variant=1,type=double": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_double"
+    },
+    "variant=2,type=bottom": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_bottom"
+    },
+    "variant=2,type=top": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_top"
+    },
+    "variant=2,type=double": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_double"
+    },
+    "variant=3,type=bottom": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_bottom"
+    },
+    "variant=3,type=top": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_top"
+    },
+    "variant=3,type=double": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_double"
+    },
+    "variant=4,type=bottom": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_bottom"
+    },
+    "variant=4,type=top": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_top"
+    },
+    "variant=4,type=double": {
+      "model": "stardewcraft:block/terrain/shapes/dirt_slab_double"
+    }
+  }
+}

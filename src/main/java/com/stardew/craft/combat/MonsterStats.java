@@ -44,6 +44,9 @@ public class MonsterStats {
             return empty();
         }
         
+        if (entity instanceof com.stardew.craft.monster.StardewMonsterEntity monster && monster.initialized()) {
+            return monster.monsterState().stats();
+        }
         // 尝试从NBT读取自定义属性
         if (entity instanceof Mob mob) {
             CompoundTag persistentData = mob.getPersistentData();
@@ -89,7 +92,9 @@ public class MonsterStats {
      */
     @SuppressWarnings("null")
     public void writeToEntity(Mob mob) {
-        mob.getPersistentData().put(TAG_STARDEW_MONSTER, toNBT());
+        if (mob instanceof com.stardew.craft.monster.StardewMonsterEntity monster) {
+            monster.replaceCombatStats(this);
+        } else mob.getPersistentData().put(TAG_STARDEW_MONSTER, toNBT());
     }
     
     /**

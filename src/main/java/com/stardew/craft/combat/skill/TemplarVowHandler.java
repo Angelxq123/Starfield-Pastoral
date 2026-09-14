@@ -40,6 +40,7 @@ public final class TemplarVowHandler {
         event.setAmount(0.0f);
         level.playSound(null, player.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.9f, 1.1f);
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(player, "templars_blade", "templar_vow_strike", 8);
         player.swing(InteractionHand.MAIN_HAND, true);
 
         Entity src = event.getSource().getEntity();

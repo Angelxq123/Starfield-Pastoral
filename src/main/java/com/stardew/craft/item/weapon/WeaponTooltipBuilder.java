@@ -6,6 +6,7 @@ import com.stardew.craft.combat.StardewWeaponCriticalRules;
 import com.stardew.craft.combat.WeaponStats;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.ChatFormatting;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -46,6 +47,11 @@ public class WeaponTooltipBuilder {
             // Shift held: show only skill details
             if (hasSkills()) {
                 addSkills();
+                if ((hasAuthoredDetails(data.getSkill1()) || hasAuthoredDetails(data.getSkill2()))
+                        && Language.getInstance().has("stardewcraft.weapon.tooltip.damage_basis")) {
+                    lines.add(Component.translatable("stardewcraft.weapon.tooltip.damage_basis")
+                            .withStyle(ChatFormatting.DARK_GRAY));
+                }
             }
         } else {
             // Default: attributes + compact skill summary
@@ -63,6 +69,56 @@ public class WeaponTooltipBuilder {
         }
         
         return lines;
+    }
+
+    /** Data for the visual tooltip; values share the combat model used above. */
+    public record Stat(String icon, Component label, Component value) {}
+
+    public List<Stat> cardStats() {
+        WeaponStats stats = WeaponStats.fromItemStack(stack);
+        List<Stat> result = new ArrayList<>();
+        result.add(new Stat(WeaponIcons.ICON_DAMAGE, Component.translatable("stardewcraft.weapon.tooltip.damage"),
+                Component.translatable("stardewcraft.weapon.tooltip.damage_range", formatNumber(stats.getMinDamage()), formatNumber(stats.getMaxDamage()))));
+        result.add(new Stat(WeaponIcons.ICON_SPEED, Component.translatable("stardewcraft.weapon.tooltip.speed"), Component.literal(formatSignedNumber(stats.getSpeed()))));
+        result.add(new Stat(WeaponIcons.ICON_CRIT_CHANCE, Component.translatable("stardewcraft.weapon.tooltip.crit_chance"),
+                Component.literal(formatPercent(StardewWeaponCriticalRules.displayedChance(stats)))));
+        result.add(new Stat(WeaponIcons.ICON_CRIT_POWER, Component.translatable("stardewcraft.weapon.tooltip.critical_multiplier"),
+                Component.literal(String.format(java.util.Locale.ROOT, "%.2f", StardewWeaponCriticalRules.multiplier(stats))
+                        .replaceFirst("\\.?0+$", "") + "×")));
+        if (stats.getDefense() != 0) {
+            result.add(new Stat(WeaponIcons.ICON_DEFENSE, Component.translatable("stardewcraft.weapon.tooltip.defense"), Component.literal(formatSignedNumber(stats.getDefense()))));
+        }
+        int weight = StardewWeaponKnockbackRules.tooltipWeightPoints(stats.getWeaponType(), stats.getKnockback());
+        if (weight != 0) {
+            result.add(new Stat(WeaponIcons.ICON_WEIGHT, Component.translatable("stardewcraft.weapon.tooltip.weight"), Component.literal(Integer.toString(weight))));
+        }
+        return List.copyOf(result);
+    }
+
+    public List<Component> cardForgeLines() {
+        WeaponTooltipBuilder builder = new WeaponTooltipBuilder(stack, data, expanded);
+        builder.addForgeStatus();
+        return List.copyOf(builder.lines);
+    }
+
+    public static List<Component> skillParagraphs(WeaponSkillData skill, boolean expanded) {
+        Language language = Language.getInstance();
+        String key = skill.getNameKey() + (expanded ? ".details" : ".summary");
+        if (language.has(key)) {
+            return java.util.Arrays.stream(language.getOrDefault(key).split("\\n"))
+                    .map(Component::literal).map(Component.class::cast).toList();
+        }
+        List<Component> result = new ArrayList<>();
+        skill.getDescriptionKeys().forEach(k -> result.add(Component.translatable(k)));
+        if (expanded) {
+            skill.getEffectKeys().forEach(k -> result.add(Component.translatable(k)));
+        }
+        return List.copyOf(result);
+    }
+
+    public static Component skillBinding(WeaponSkillData skill, boolean minor) {
+        return skill.isPassive() ? Component.translatable("stardewcraft.weapon.tooltip.passive_label")
+                : Component.literal(getKeyLabel(minor));
     }
 
     private boolean hasSkills() {
@@ -347,7 +403,7 @@ public class WeaponTooltipBuilder {
 
     /**
      * 紧凑版技能信息（默认显示）
-     * 每个技能一行：图标 + 名称 [按键] — 伤害% · CD秒
+     * 名称、操作和冷却；有新版文案时另列一句用途概述。
      */
     @SuppressWarnings("null")
     private void addSkillsCompact() {
@@ -359,46 +415,45 @@ public class WeaponTooltipBuilder {
         String majorKeyLabel = getKeyLabel(false);
 
         if (skill1 != null) {
-            lines.add(buildCompactSkillLine(skill1, minorKeyLabel));
+            addCompactSkill(skill1, minorKeyLabel);
         }
         if (skill2 != null) {
-            lines.add(buildCompactSkillLine(skill2, majorKeyLabel));
+            addCompactSkill(skill2, majorKeyLabel);
         }
     }
 
-    @SuppressWarnings("null")
-    private MutableComponent buildCompactSkillLine(WeaponSkillData skill, String keyLabel) {
-        MutableComponent line = Component.empty();
+    private void addCompactSkill(WeaponSkillData skill, String keyLabel) {
+        MutableComponent title = buildSkillTitle(skill, keyLabel);
+        if (!hasAuthoredDetails(skill)) {
+            if (!skill.isPassive() && skill.getDamagePercent() > 0) {
+                title.append(Component.literal(" "));
+                title.append(Component.translatable("stardewcraft.weapon.tooltip.skill_damage", skill.getDamagePercent())
+                        .withStyle(ChatFormatting.AQUA));
+            }
+            appendCooldown(title, skill);
+        }
+        lines.add(title);
+        String summaryKey = skill.getNameKey() + ".summary";
+        if (Language.getInstance().has(summaryKey)) {
+            lines.add(Component.translatable("stardewcraft.weapon.tooltip.skill_desc", Component.translatable(summaryKey))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+    }
 
-        // Icon
-        if (skill.getIconChar() != null) {
-            line.append(WeaponIcons.icon(skill.getIconChar()));
-        } else {
-            line.append(WeaponIcons.icon(WeaponIcons.ICON_SKILL));
+    private static boolean hasAuthoredDetails(WeaponSkillData skill) {
+        return skill != null && Language.getInstance().has(skill.getNameKey() + ".details");
+    }
+
+    private static void appendCooldown(MutableComponent line, WeaponSkillData skill) {
+        if (skill.isPassive() || skill.getCooldown() <= 0) {
+            return;
         }
         line.append(Component.literal(" "));
-
-        // Name [key]
-        line.append(Component.translatable(skill.getNameKey()).withStyle(ChatFormatting.YELLOW));
-        line.append(Component.translatable("stardewcraft.weapon.tooltip.trigger_format",
-                Component.literal(keyLabel)).withStyle(ChatFormatting.DARK_GRAY));
-
-        // Damage%
-        if (skill.getDamagePercent() > 0) {
-            line.append(Component.literal(" ").withStyle(ChatFormatting.DARK_GRAY));
-            line.append(Component.translatable("stardewcraft.weapon.tooltip.skill_damage", skill.getDamagePercent())
-                    .withStyle(ChatFormatting.AQUA));
-        }
-
-        // Cooldown
-        line.append(Component.literal(" ").withStyle(ChatFormatting.DARK_GRAY));
         line.append(WeaponIcons.icon(WeaponIcons.ICON_COOLDOWN));
         line.append(Component.translatable("stardewcraft.weapon.tooltip.cooldown_seconds", skill.getCooldown())
                 .withStyle(ChatFormatting.BLUE));
-
-        return line;
     }
-    
+
     /**
      * 添加单个技能区块
      */
@@ -415,13 +470,32 @@ public class WeaponTooltipBuilder {
         }
 
         titleLine.append(Component.translatable(skill.getNameKey()).withStyle(ChatFormatting.YELLOW));
-        titleLine.append(Component.translatable("stardewcraft.weapon.tooltip.trigger_format", Component.literal(keyLabel))
-                .withStyle(ChatFormatting.DARK_GRAY));
+        if (skill.isPassive()) {
+            titleLine.append(Component.literal(" "));
+            titleLine.append(Component.translatable("stardewcraft.weapon.skill.passive")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        } else {
+            titleLine.append(Component.translatable("stardewcraft.weapon.tooltip.trigger_format", Component.literal(keyLabel))
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+        if (hasAuthoredDetails(skill)) {
+            appendCooldown(titleLine, skill);
+        }
         return titleLine;
     }
 
     @SuppressWarnings("null")
     private void addSkillDetails(WeaponSkillData skill) {
+        if (hasAuthoredDetails(skill)) {
+            // Authored paragraphs keep conditions and outcomes together. Locales
+            // without the new copy retain their existing translated details.
+            String description = Language.getInstance().getOrDefault(skill.getNameKey() + ".details");
+            for (String line : description.split("\\n")) {
+                lines.add(Component.translatable("stardewcraft.weapon.tooltip.skill_desc", Component.literal(line))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            return;
+        }
         for (String descKey : skill.getDescriptionKeys()) {
             lines.add(Component.translatable("stardewcraft.weapon.tooltip.skill_desc", Component.translatable(descKey))
                     .withStyle(ChatFormatting.GRAY));
@@ -447,6 +521,10 @@ public class WeaponTooltipBuilder {
             lines.add(effectLine);
         }
         
+        // 被动的充能周期由文案解释，不显示成主动技能冷却。
+        if (skill.isPassive() || skill.getCooldown() <= 0) {
+            return;
+        }
         // 冷却时间（最后一项用 └）
         MutableComponent cooldownLine = Component.empty();
         cooldownLine.append(Component.translatable("stardewcraft.weapon.tooltip.cooldown_prefix").withStyle(ChatFormatting.DARK_GRAY));
@@ -489,7 +567,7 @@ public class WeaponTooltipBuilder {
         lines.add(Component.empty());
     }
     
-    private String getKeyLabel(boolean minor) {
+    private static String getKeyLabel(boolean minor) {
         try {
             if (minor) {
                 return com.stardew.craft.client.ModKeyMappings.SKILL_MINOR.getTranslatedKeyMessage().getString();

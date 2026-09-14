@@ -1,0 +1,328 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_000",
+      "scene_offset": [
+        2,
+        -3,
+        8
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_001",
+      "scene_offset": [
+        2,
+        -3,
+        22
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_002",
+      "scene_offset": [
+        -5,
+        -3,
+        15
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_003",
+      "scene_offset": [
+        9,
+        -3,
+        15
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_004",
+      "scene_offset": [
+        2,
+        -8,
+        15
+      ],
+      "material": "foot"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_005",
+      "scene_offset": [
+        2,
+        3,
+        7
+      ],
+      "material": "rim_rose"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_006",
+      "scene_offset": [
+        2,
+        3,
+        23
+      ],
+      "material": "rim_rose"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_007",
+      "scene_offset": [
+        -6,
+        3,
+        15
+      ],
+      "material": "rim_rose"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_008",
+      "scene_offset": [
+        10,
+        3,
+        15
+      ],
+      "material": "rim_rose"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_009",
+      "scene_offset": [
+        2,
+        0,
+        15
+      ],
+      "material": "soil"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_010",
+      "scene_offset": [
+        2,
+        23,
+        15
+      ],
+      "material": "plant"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_011",
+      "scene_offset": [
+        2,
+        23,
+        15
+      ],
+      "material": "plant"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_012",
+      "scene_offset": [
+        16,
+        -4,
+        27
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_013",
+      "scene_offset": [
+        16,
+        -4,
+        37
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_014",
+      "scene_offset": [
+        11,
+        -4,
+        32
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_015",
+      "scene_offset": [
+        21,
+        -4,
+        32
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_016",
+      "scene_offset": [
+        16,
+        -8,
+        32
+      ],
+      "material": "foot"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_017",
+      "scene_offset": [
+        16,
+        1,
+        26
+      ],
+      "material": "rim_plum"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_018",
+      "scene_offset": [
+        16,
+        1,
+        38
+      ],
+      "material": "rim_plum"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_019",
+      "scene_offset": [
+        10,
+        1,
+        32
+      ],
+      "material": "rim_plum"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_020",
+      "scene_offset": [
+        22,
+        1,
+        32
+      ],
+      "material": "rim_plum"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_021",
+      "scene_offset": [
+        16,
+        -2,
+        32
+      ],
+      "material": "soil"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_022",
+      "scene_offset": [
+        16,
+        15,
+        32
+      ],
+      "material": "plant"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_023",
+      "scene_offset": [
+        16,
+        15,
+        32
+      ],
+      "material": "plant"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_024",
+      "scene_offset": [
+        17,
+        -4,
+        -5
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_025",
+      "scene_offset": [
+        17,
+        -4,
+        3
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_026",
+      "scene_offset": [
+        13,
+        -4,
+        -1
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_027",
+      "scene_offset": [
+        21,
+        -4,
+        -1
+      ],
+      "material": "ceramic"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_028",
+      "scene_offset": [
+        17,
+        -8,
+        -1
+      ],
+      "material": "foot"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_029",
+      "scene_offset": [
+        17,
+        0,
+        -6
+      ],
+      "material": "rim_clay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_030",
+      "scene_offset": [
+        17,
+        0,
+        4
+      ],
+      "material": "rim_clay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_031",
+      "scene_offset": [
+        12,
+        0,
+        -1
+      ],
+      "material": "rim_clay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_032",
+      "scene_offset": [
+        22,
+        0,
+        -1
+      ],
+      "material": "rim_clay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_033",
+      "scene_offset": [
+        17,
+        -3,
+        -1
+      ],
+      "material": "soil"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_034",
+      "scene_offset": [
+        17,
+        11,
+        -1
+      ],
+      "material": "plant"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/summer/part_035",
+      "scene_offset": [
+        17,
+        11,
+        -1
+      ],
+      "material": "plant"
+    }
+  ]
+}

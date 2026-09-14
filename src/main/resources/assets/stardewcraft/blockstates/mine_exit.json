@@ -1,20 +1,484 @@
 {
   "variants": {
-    "facing=north": {
-      "model": "stardewcraft:block/mine_exit",
-      "y": 0
+    "facing=south,tier=0,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/0"
     },
-    "facing=south": {
-      "model": "stardewcraft:block/mine_exit",
+    "facing=west,tier=0,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/0",
       "y": 180
     },
-    "facing=west": {
-      "model": "stardewcraft:block/mine_exit",
+    "facing=east,tier=0,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/0",
       "y": 270
     },
-    "facing=east": {
-      "model": "stardewcraft:block/mine_exit",
+    "facing=south,tier=1,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/1"
+    },
+    "facing=west,tier=1,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/1",
       "y": 90
+    },
+    "facing=north,tier=1,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/2"
+    },
+    "facing=west,tier=2,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/3"
+    },
+    "facing=west,tier=3,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=earth": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/0"
+    },
+    "facing=west,tier=0,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/1"
+    },
+    "facing=west,tier=1,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/2"
+    },
+    "facing=west,tier=2,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/3"
+    },
+    "facing=west,tier=3,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=frost": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/0"
+    },
+    "facing=west,tier=0,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/1"
+    },
+    "facing=west,tier=1,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/2"
+    },
+    "facing=west,tier=2,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/3"
+    },
+    "facing=west,tier=3,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=lava": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/0"
+    },
+    "facing=west,tier=0,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/1"
+    },
+    "facing=west,tier=1,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/2"
+    },
+    "facing=west,tier=2,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/3"
+    },
+    "facing=west,tier=3,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=desert": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/0"
+    },
+    "facing=west,tier=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/1"
+    },
+    "facing=west,tier=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/2"
+    },
+    "facing=west,tier=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/3"
+    },
+    "facing=west,tier=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/earth_dark/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/0"
+    },
+    "facing=west,tier=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/1"
+    },
+    "facing=west,tier=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/2"
+    },
+    "facing=west,tier=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/3"
+    },
+    "facing=west,tier=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/frost_dark/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/0"
+    },
+    "facing=west,tier=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/1"
+    },
+    "facing=west,tier=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/2"
+    },
+    "facing=west,tier=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/3"
+    },
+    "facing=west,tier=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/lava_dark/3",
+      "y": 270
+    },
+    "facing=south,tier=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/0"
+    },
+    "facing=west,tier=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/0",
+      "y": 90
+    },
+    "facing=north,tier=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/0",
+      "y": 180
+    },
+    "facing=east,tier=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/0",
+      "y": 270
+    },
+    "facing=south,tier=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/1"
+    },
+    "facing=west,tier=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/1",
+      "y": 90
+    },
+    "facing=north,tier=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/1",
+      "y": 180
+    },
+    "facing=east,tier=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/1",
+      "y": 270
+    },
+    "facing=south,tier=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/2"
+    },
+    "facing=west,tier=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/2",
+      "y": 90
+    },
+    "facing=north,tier=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/2",
+      "y": 180
+    },
+    "facing=east,tier=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/2",
+      "y": 270
+    },
+    "facing=south,tier=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/3"
+    },
+    "facing=west,tier=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/3",
+      "y": 90
+    },
+    "facing=north,tier=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/3",
+      "y": 180
+    },
+    "facing=east,tier=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine_exit_ladder/desert_dark/3",
+      "y": 270
     }
   }
 }

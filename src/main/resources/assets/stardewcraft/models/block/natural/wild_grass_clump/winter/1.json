@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "stardewcraft:block/decor/wild_grass_clump_b_particle"
+  },
+  "elements": []
+}

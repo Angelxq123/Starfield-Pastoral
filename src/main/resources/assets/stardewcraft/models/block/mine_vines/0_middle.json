@@ -1,0 +1,84 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/mine/mine_vines",
+    "particle": "stardewcraft:block/mine/mine_vines_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        15.98
+      ],
+      "to": [
+        16,
+        16,
+        15.98
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            6.0,
+            0.0,
+            4.0,
+            4.0
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            4.0,
+            0.0,
+            6.0,
+            4.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        15.96
+      ],
+      "to": [
+        7,
+        11,
+        15.96
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            8.0,
+            0.0,
+            8.5,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            8.5,
+            0.0,
+            8.0,
+            1.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7,
+          11,
+          15.96
+        ],
+        "axis": "y",
+        "angle": -22.5,
+        "rescale": false
+      }
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 package com.stardew.craft.client.gui.overnight;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+import com.stardew.craft.client.gui.common.StardewGuiContentSize;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.font.StardewFonts;
@@ -34,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("null")
-public class LevelUpMenuScreen extends Screen {
+public class LevelUpMenuScreen extends Screen implements StardewGuiContentSize {
 
     private static final ResourceLocation TEX_ICON_FARMING = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/overnight/icon_farming.png");
     private static final ResourceLocation TEX_ICON_FISHING = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/overnight/icon_fishing.png");
@@ -59,7 +62,7 @@ public class LevelUpMenuScreen extends Screen {
     private static final int SPACE_SIDE = 16;
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private int px(int stardewPixels) {
@@ -73,6 +76,9 @@ public class LevelUpMenuScreen extends Screen {
     private int getMenuWidthPx() {
         return px(960);
     }
+
+    @Override public int minimumCanvasWidth() { return getMenuWidthPx() + px(256); }
+    @Override public int minimumCanvasHeight() { return getMenuHeightPx() + px(288); }
 
     private int getMenuHeightPx() {
         if (isProfessionChooser) {

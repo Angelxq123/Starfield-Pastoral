@@ -3,7 +3,6 @@ package com.stardew.craft.block.crop;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,7 +30,7 @@ import java.util.function.Supplier;
  */
 public class StarfruitCropBlock extends StardewCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{2, 4, 3, 4}; // SDV: 13 days
+    private static final int[] PHASE_DAYS = new int[]{2, 3, 2, 3, 3}; // SDV: 13 days
     private static final int[] OUTLINE_HEIGHTS = new int[]{25, 25, 29, 29};
     private static final int[] OUTLINE_WIDTHS = new int[]{8, 9, 9, 9};
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
@@ -60,8 +59,7 @@ public class StarfruitCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 1;
+        return seasonForGrowth() == 1;
     }
 
     @Override
@@ -109,6 +107,8 @@ public class StarfruitCropBlock extends StardewCropBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape model = CropModelShapes.shape(state, level, pos);
+        if (model != null) return model;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }

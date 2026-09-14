@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "source_name": "Frost Jelly",
+  "family": "slime",
+  "health": 106,
+  "damage": 7,
+  "resilience": 0,
+  "miss_chance": 0,
+  "experience": 6,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:slime_item",
+      "chance": 0.75
+    },
+    {
+      "item": "stardewcraft:winter_root",
+      "chance": 0.08
+    },
+    {
+      "item": "stardewcraft:jade",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iii",
+      "chance": 0.015
+    },
+    {
+      "item": "stardewcraft:sap",
+      "chance": 0.5
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_ii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

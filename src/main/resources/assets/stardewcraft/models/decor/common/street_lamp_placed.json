@@ -1,0 +1,27 @@
+{
+  "parent": "stardewcraft:decor/common/street_lamp",
+  "transform": {
+    "translation": [
+      0,
+      1,
+      0
+    ]
+  },
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          2,
+          0,
+          2
+        ],
+        "to": [
+          14,
+          47.5,
+          14
+        ]
+      }
+    ]
+  }
+}

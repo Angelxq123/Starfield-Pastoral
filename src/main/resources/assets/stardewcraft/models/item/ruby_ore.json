@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/ruby_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/ruby_ore"
-                 }
-}

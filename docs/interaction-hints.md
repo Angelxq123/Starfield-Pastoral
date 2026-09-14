@@ -11,12 +11,39 @@ it does not perform the interaction.
 | `GRAB` | Open, operate, pet, sit, travel, or collect a special object |
 | `GIFT` | Give a gift, quest item, or festival gift to an NPC |
 | `TALK` | Talk to an NPC or invite another player |
-| `LOOK` | Read a map-authored text point or lost book |
+| `LOOK` | Read a map-authored text point or lost book, or open a pet's management page |
 | `HARVEST` | Harvest a mature crop, forage, fruit, berry, produce, or machine output |
 
 `TALK` and `LOOK` support a `done` state. Pending hints use the supplied
 floating icon; completed hints use the supplied `_done` texture, stay still,
 and render at reduced opacity. The other semantic types are static.
+
+## Pets
+
+Pet hints use the existing crosshair-side sprites and server query; they do
+not add a separate HUD or synchronize a second copy of petting state.
+For a member of the pet's farm, ordinary right-click uses `GRAB` before that
+player has petted it today. The first interaction pets it; subsequent
+interactions use `LOOK` and open management with that pet selected.
+Opening the menu does not repeat friendship, gifts, or petting feedback.
+
+The daily record is per player: another member still gets `GRAB` until
+they pet it, and the next day restores `GRAB`. Sneak-right-click continues
+to open management without using the daily petting opportunity. A held
+hat for a cat/dog or Butterfly Powder takes precedence and uses `GRAB`;
+powder still requires confirmation. Missing records and players outside
+the pet's farm receive no built-in pet hint.
+
+These hints remain read-only, respect add-on overrides and the `none` tag,
+and refresh through the existing query interval (10 client ticks).
+
+2026-09-14 verification: `./gradlew classes runGameTestServer
+-PgameTestNamespaces=stardewcraft_pets` passed all 11 pet tests. The new
+interaction regression covers all 12 breeds, the per-player and next-day
+hint transitions, first petting versus subsequent menu payloads (including
+the selected pet ID and codec round-trip), permissions, sneak access, hats,
+and powder confirmation. The existing HUD renderer and GUI coordinates
+are unchanged; no client was launched for visual acceptance.
 
 ## Data-pack tags
 

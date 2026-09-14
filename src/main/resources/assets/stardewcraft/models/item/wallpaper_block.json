@@ -1,6 +1,3 @@
 {
-    "parent":  "stardewcraft:block/wallpaper_block",
-    "textures":  {
-                     "particle":  "stardewcraft:block/deco/wallpaper_0"
-                 }
+  "parent": "stardewcraft:block/deco/wallpaper/style_0_segment_0"
 }

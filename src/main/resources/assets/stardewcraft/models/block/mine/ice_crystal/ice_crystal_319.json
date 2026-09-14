@@ -1,0 +1,285 @@
+{
+  "credit": "Made with Blockbench",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "render_type": "minecraft:translucent",
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/mine/ice_crystal/ice_crystal_319",
+    "particle": "stardewcraft:block/mine/ice_crystal/ice_crystal_319_particle"
+  },
+  "elements": [
+    {
+      "name": "晶柱_0",
+      "from": [
+        5,
+        0,
+        5.5
+      ],
+      "to": [
+        11,
+        8,
+        10.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1.5,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.5,
+            0,
+            4.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1.75,
+            0,
+            3.25,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            5,
+            0,
+            6.25,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            6.5,
+            0,
+            8,
+            1.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "完整斜切晶尖_0",
+      "from": [
+        6,
+        6,
+        5.38
+      ],
+      "to": [
+        10,
+        10,
+        10.62
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "z",
+        "origin": [
+          8,
+          8,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            0,
+            11,
+            1
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.75,
+            0,
+            15.06,
+            1
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.25,
+            0,
+            12.25,
+            1
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            0,
+            13.5,
+            1.31
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "内部折射晶面_0",
+      "from": [
+        7.5,
+        1,
+        7.5
+      ],
+      "to": [
+        8.5,
+        7,
+        8.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            2.25,
+            3.25,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            2.25,
+            4.25,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.5,
+            2.25,
+            3.75,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            4.5,
+            2.25,
+            4.75,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            5,
+            2.25,
+            5.25,
+            2.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "外露肩沿_0_左",
+      "from": [
+        5,
+        8,
+        5.5
+      ],
+      "to": [
+        5.17157287525381,
+        8,
+        10.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            8.25,
+            0,
+            8.292893218813452,
+            1.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "外露肩沿_0_右",
+      "from": [
+        10.82842712474619,
+        8,
+        5.5
+      ],
+      "to": [
+        11,
+        8,
+        10.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            9.707106781186548,
+            0,
+            9.75,
+            1.25
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

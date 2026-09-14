@@ -211,6 +211,12 @@ public class AutoFeedTroughBlockEntity extends net.minecraft.world.level.block.e
         return taken;
     }
 
+    /** Exact local slot assignment for the new daily feed journal; never traverses neighbors. */
+    public void setHayPresent(boolean present) {
+        hayStack = present ? new ItemStack(ModItems.HAY.get(), 1) : ItemStack.EMPTY;
+        setChanged(); syncVisualState(); syncToClient();
+    }
+
     public ItemStack takeOneFromSelf(boolean simulate) {
         int taken = extractSelfUpTo(1, simulate);
         if (taken <= 0) {
@@ -337,8 +343,10 @@ public class AutoFeedTroughBlockEntity extends net.minecraft.world.level.block.e
             return;
         }
         boolean hasHay = !hayStack.isEmpty();
-        if (state.getValue(AutoFeedTroughBlock.HAS_HAY) != hasHay) {
-            currentLevel.setBlock(worldPosition, state.setValue(AutoFeedTroughBlock.HAS_HAY, hasHay), 3);
+        BlockState updated = AutoFeedTroughBlock.updateConnections(currentLevel, worldPosition, state)
+            .setValue(AutoFeedTroughBlock.HAS_HAY, hasHay);
+        if (updated != state) {
+            currentLevel.setBlock(worldPosition, updated, 3);
         }
     }
 

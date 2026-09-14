@@ -124,14 +124,6 @@ final class BuiltinWeaponPassiveAppliedHitRules {
         );
     }
 
-    static void emitObsidianResonancePresentation(ResolvedWeaponHit hit) {
-        if (!"obsidian_resonance".equals(hit.skillId())
-                || !hit.dealtPositiveDamage()) {
-            return;
-        }
-        LegacyWeaponHitPresentation.emitObsidianResonance(hit.target());
-    }
-
     static void triggerCrystalBurst(ResolvedWeaponHit hit) {
         if (!hit.dealtPositiveDamage()
                 || !(hit.attacker() instanceof ServerPlayer player)
@@ -235,7 +227,6 @@ final class BuiltinWeaponPassiveAppliedHitRules {
                         .build(),
                 DEFAULT_CHILD_CONTEXT_TICKS
         );
-        LegacyWeaponHitPresentation.emitOssifiedMarkBonus(hit.target());
     }
 
     static void applyYetiFollowup(ResolvedWeaponHit hit) {

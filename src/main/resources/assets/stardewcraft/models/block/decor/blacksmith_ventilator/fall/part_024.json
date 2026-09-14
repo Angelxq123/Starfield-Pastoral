@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "stardewcraft:block/decor/blacksmith_ventilator/fall/ventilator_fall",
+    "particle": "stardewcraft:block/decor/blacksmith_ventilator/fall/hardware_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        7,
+        7
+      ],
+      "to": [
+        11,
+        10,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            3.8125,
+            3.1875,
+            4.125,
+            3.375
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            4.5625,
+            3.1875,
+            4.6875,
+            3.375
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            4.1875,
+            3.1875,
+            4.5,
+            3.375
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            4.75,
+            3.1875,
+            4.875,
+            3.375
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            4.9375,
+            3.1875,
+            5.25,
+            3.3125
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            5.3125,
+            3.1875,
+            5.625,
+            3.3125
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

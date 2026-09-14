@@ -1,0 +1,165 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/mine/shrine/altar_inactive_stone",
+    "1": "stardewcraft:block/mine/shrine/shrine_stone_particle",
+    "particle": "stardewcraft:block/mine/shrine/shrine_stone_particle"
+  },
+  "elements": [
+    {
+      "name": "台身削角_(18, 6)",
+      "from": [
+        11.171570000000003,
+        1,
+        6
+      ],
+      "to": [
+        16.828429999999997,
+        11,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.5625,
+            0.0625,
+            6.91605375,
+            0.6875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            7.0,
+            0.0625,
+            7.35355375,
+            0.6875
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          14,
+          6,
+          6
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      }
+    },
+    {
+      "name": "台面削角封边_(17.5, 6.5)",
+      "from": [
+        12.378680000000003,
+        11,
+        6.5
+      ],
+      "to": [
+        16.621319999999997,
+        13,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.875,
+            1.375,
+            3.140165,
+            1.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.25,
+            1.375,
+            3.515165,
+            1.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.5,
+          12,
+          6.5
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      }
+    },
+    {
+      "name": "按钮嵌框_后",
+      "from": [
+        -5,
+        12,
+        2
+      ],
+      "to": [
+        5,
+        14,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.4375,
+            2.4375,
+            2.0625,
+            2.5625
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2.9375,
+            2.4375,
+            3.0,
+            2.5625
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2.125,
+            2.4375,
+            2.75,
+            2.5625
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2.8125,
+            2.4375,
+            2.875,
+            2.5625
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            3.0625,
+            2.4375,
+            3.6875,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.75,
+            2.4375,
+            4.375,
+            2.5
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

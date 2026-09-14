@@ -2,7 +2,6 @@ package com.stardew.craft.api.v1.mining;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.api.v1.internal.content.StardewContentRegistry;
-import com.stardew.craft.api.v1.internal.extension.OrderedExtensionRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
@@ -14,26 +13,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Namespaced mine-monster profiles and ordered profile selectors.
- *
- * <p>The older entity-type-only provider remains supported. Profiles are the
- * complete path for custom entities because they also define progress routing
- * and authoritative spawn configuration.
- */
+/** Namespaced mine-monster identities, progress routing and spawn configuration. */
 public final class StardewMineMonsterProfiles {
     private static final String PROFILE_DATA_KEY =
             "stardewcraftMineMonsterProfile";
-    private static final ResourceLocation SELECTOR_EXTENSION_POINT =
-            ResourceLocation.fromNamespaceAndPath(
-                    StardewCraft.MODID, "mining/monster_profile_selectors");
     private static final Map<ResourceLocation, Registered> PROFILES =
             new LinkedHashMap<>();
     private static volatile Catalog catalog =
             new Catalog(Map.of(), List.of());
-    private static final OrderedExtensionRegistry<
-            StardewMineMonsterProfileProvider> SELECTORS =
-            new OrderedExtensionRegistry<>(SELECTOR_EXTENSION_POINT);
 
     private StardewMineMonsterProfiles() {
     }
@@ -78,14 +65,7 @@ public final class StardewMineMonsterProfiles {
         StardewContentRegistry.invalidate();
     }
 
-    public static void registerSelector(
-            ResourceLocation id,
-            int priority,
-            StardewMineMonsterProfileProvider provider
-    ) {
-        SELECTORS.register(id, priority, provider);
-        StardewContentRegistry.invalidate();
-    }
+
 
     public static List<StardewMineMonsterProfile> all() {
         return catalog.profiles();
@@ -98,36 +78,7 @@ public final class StardewMineMonsterProfiles {
     }
 
     @Nullable
-    public static StardewMineMonsterProfile select(
-            StardewMineMonsterContext context
-    ) {
-        for (var selector : SELECTORS.entries()) {
-            try {
-                ResourceLocation selected =
-                        SELECTORS.invoke(
-                                selector,
-                                provider -> provider.select(context));
-                if (selected == null) {
-                    continue;
-                }
-                StardewMineMonsterProfile profile = find(selected);
-                if (profile != null) {
-                    return profile;
-                }
-                StardewCraft.LOGGER.error(
-                        "Mine monster profile selector {} returned "
-                                + "unknown profile {}",
-                        selector.id(), selected);
-            } catch (RuntimeException exception) {
-                StardewCraft.LOGGER.error(
-                        "Mine monster profile selector {} failed for floor {}",
-                        selector.id(),
-                        context == null ? "?" : context.floor(),
-                        exception);
-            }
-        }
-        return null;
-    }
+
 
     /** Marks a newly created entity before EntityJoinLevelEvent applies it. */
     public static boolean mark(
@@ -189,11 +140,6 @@ public final class StardewMineMonsterProfiles {
         }
     }
 
-    public static List<ResourceLocation> selectorIds() {
-        return SELECTORS.entries().stream()
-                .map(OrderedExtensionRegistry.Entry::id)
-                .toList();
-    }
 
     private record Registered(
             StardewMineMonsterProfile profile,

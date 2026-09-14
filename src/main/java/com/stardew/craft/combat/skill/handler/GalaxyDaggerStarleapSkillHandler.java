@@ -20,11 +20,7 @@ import com.stardew.craft.player.PlayerStardewDataAPI;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -127,8 +123,17 @@ public final class GalaxyDaggerStarleapSkillHandler
                 context.nowTick()
         );
         instance.registerCommittedEffect(() -> {
+            Vec3 departure = context.player().position();
             teleportPlayer(context.player(), plan.destination());
             faceTarget(context.player(), target);
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(),
+                    weaponId,
+                    skillId,
+                    ANIMATION_TICKS
+            );
+
+            com.stardew.craft.combat.network.GalaxyPhasePayload.send(context.player(), true, departure, context.player().position());
             WeaponSkillDamage.apply(
                     context.player(),
                     target,
@@ -138,21 +143,11 @@ public final class GalaxyDaggerStarleapSkillHandler
                     WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
                     WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
             );
-            if (marked) {
-                playConsumedMarkEffects(target);
-            }
         });
 
-        // Preserve the authored action notification order.
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 ANIMATION_TICKS
         );
     }
@@ -380,56 +375,10 @@ public final class GalaxyDaggerStarleapSkillHandler
         );
         player.setYRot(yaw);
         player.setYHeadRot(yaw);
-    }
-
-    private static void playConsumedMarkEffects(
-            LivingEntity target
-    ) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return;
+        if (player instanceof ServerPlayer serverPlayer) {
+            // Local clients need a position/rotation packet; entity tracking alone does not turn their camera.
+            serverPlayer.connection.teleport(player.getX(), player.getY(), player.getZ(), yaw, player.getXRot());
         }
-
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.6D;
-        double z = target.getZ();
-        serverLevel.sendParticles(
-                ParticleTypes.END_ROD,
-                x,
-                y,
-                z,
-                14,
-                0.35D,
-                0.2D,
-                0.35D,
-                0.04D
-        );
-        serverLevel.sendParticles(
-                ParticleTypes.ENCHANT,
-                x,
-                y,
-                z,
-                12,
-                0.35D,
-                0.2D,
-                0.35D,
-                0.05D
-        );
-        serverLevel.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.AMETHYST_BLOCK_BREAK,
-                SoundSource.PLAYERS,
-                0.6F,
-                1.35F
-        );
-        serverLevel.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.PLAYER_ATTACK_CRIT,
-                SoundSource.PLAYERS,
-                0.35F,
-                1.2F
-        );
     }
 
     private record CastPlan(

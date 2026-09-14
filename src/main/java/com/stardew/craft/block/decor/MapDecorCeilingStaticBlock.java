@@ -17,6 +17,10 @@ public class MapDecorCeilingStaticBlock extends MapDecorStaticBlock {
         super(properties, modelId);
     }
 
+    public MapDecorCeilingStaticBlock(Properties properties, String modelId, boolean boxCollision) {
+        super(properties, modelId, boxCollision);
+    }
+
     @Override
     @Nullable
     public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) {

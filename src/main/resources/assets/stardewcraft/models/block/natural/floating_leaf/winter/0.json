@@ -1,0 +1,327 @@
+{
+  "credit": "Made with Blockbench",
+  "ambientocclusion": false,
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/decor/winter/floating_leaf_winter",
+    "1": "stardewcraft:block/decor/winter/floating_leaf_ripples_0",
+    "particle": "stardewcraft:block/decor/winter/floating_leaf_winter_particle"
+  },
+  "elements": [
+    {
+      "name": "浮冰主体",
+      "from": [
+        3,
+        1,
+        4
+      ],
+      "to": [
+        12,
+        3,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            2.25,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5,
+            0,
+            7,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2.5,
+            0,
+            4.75,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            0,
+            9.25,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            9.5,
+            0,
+            11.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            12,
+            0,
+            14.25,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "冰缘侧翼",
+      "from": [
+        12,
+        1,
+        6
+      ],
+      "to": [
+        14,
+        2,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14.5,
+            0,
+            15,
+            0.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            2.25,
+            1,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            15.25,
+            0,
+            15.75,
+            0.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            1.25,
+            2.25,
+            2.25,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            2.5,
+            2.25,
+            3,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.25,
+            2.25,
+            3.75,
+            3.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "前侧冰缘",
+      "from": [
+        5,
+        1,
+        2
+      ],
+      "to": [
+        11,
+        2,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            2.25,
+            5.5,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            7.5,
+            2.25,
+            8,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.75,
+            2.25,
+            7.25,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8.25,
+            2.25,
+            8.75,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            9,
+            2.25,
+            10.5,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10.75,
+            2.25,
+            12.25,
+            2.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "积雪顶",
+      "from": [
+        4,
+        3,
+        5
+      ],
+      "to": [
+        10,
+        4,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12.5,
+            2.25,
+            14,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            3.5,
+            1.25,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14.25,
+            2.25,
+            15.75,
+            2.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            1.5,
+            3.5,
+            2.75,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            3,
+            3.5,
+            4.5,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.75,
+            3.5,
+            6.25,
+            4.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "独立水纹面",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        0,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout"
+}

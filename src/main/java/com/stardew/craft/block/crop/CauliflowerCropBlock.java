@@ -2,7 +2,6 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -17,7 +16,7 @@ import java.util.function.Supplier;
  */
 public class CauliflowerCropBlock extends StardewCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{1, 3, 4, 4}; // SDV: 12 days
+    private static final int[] PHASE_DAYS = new int[]{1, 2, 4, 4, 1}; // Original growth phases, followed by the harvest sentinel.
 
     @SuppressWarnings("null")
     public CauliflowerCropBlock() {
@@ -44,8 +43,7 @@ public class CauliflowerCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 0;
+        return seasonForGrowth() == 0;
     }
 
     @Override

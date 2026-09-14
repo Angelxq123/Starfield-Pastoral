@@ -47,6 +47,14 @@ public class FarmSelectionScreen extends Screen {
     private final Map<String, EditBox> fields = new HashMap<>();
     private final Random random = new Random();
     private FarmSetupLayout layout;
+    // Legacy addon injection anchors. Extra controls join the same scrolling canvas.
+    private int rightX, rightW;
+    private EditBox nameField;
+    private boolean buildingForm;
+    private final List<AbstractWidget> legacyControls = new ArrayList<>();
+    private boolean legacyFarmOptions() {
+        return !profileOnly && net.neoforged.fml.ModList.get().isLoaded("stardewcraftsve");
+    }
     private int scroll, contentHeight, farmPage;
     private double scrollbarGrab;
     private boolean defaultsSet, submitted, draggingScrollbar, pendingJoin, showLocked;
@@ -79,6 +87,7 @@ public class FarmSelectionScreen extends Screen {
 
     @Override
     protected void init() {
+        legacyControls.clear();
         font = StardewFonts.small();
         layout = FarmSetupLayout.fit(width, height, profileOnly);
         if (!defaultsSet) {
@@ -92,6 +101,7 @@ public class FarmSelectionScreen extends Screen {
     }
 
     private void buildForm() {
+        buildingForm = true;
         clearWidgets();
         content.clear(); footer.clear(); text.clear(); fields.clear(); papers.clear();
         layout = FarmSetupLayout.fit(width, height, profileOnly);
@@ -136,6 +146,35 @@ public class FarmSelectionScreen extends Screen {
             join.active = !submitted;
             footer.add(addRenderableWidget(join));
         }
+        nameField = fields.getOrDefault("farm_name", fields.get("preferred_name"));
+        rightX = layout.rightX() + 4;
+        rightW = layout.rightWidth() - 8;
+        if (nameField == null) nameField = new EditBox(font, rightX, layout.bodyTop(), rightW, lineHeight() + 8, Component.empty());
+        for (var widget : legacyControls) {
+            positionLegacyControl(widget);
+            super.addRenderableWidget(widget);
+        }
+        buildingForm = false;
+    }
+
+    @Override
+    protected <T extends net.minecraft.client.gui.components.events.GuiEventListener
+            & net.minecraft.client.gui.components.Renderable
+            & net.minecraft.client.gui.narration.NarratableEntry> T addRenderableWidget(T widget) {
+        if (!buildingForm && widget instanceof AbstractWidget control) {
+            if (profileOnly) return widget;
+            legacyControls.add(control);
+            positionLegacyControl(control);
+        }
+        return super.addRenderableWidget(widget);
+    }
+
+    private void positionLegacyControl(AbstractWidget widget) {
+        widget.setX(rightX);
+        widget.setWidth(rightW);
+        int y = content.getOrDefault(nameField, nameField.getY() + scroll) + nameField.getHeight() + 7;
+        content.put(widget, y);
+        widget.setY(y - scroll);
     }
 
     private int land(int x, int y, int w) {
@@ -193,7 +232,7 @@ public class FarmSelectionScreen extends Screen {
         }, () -> false);
         randomButton.style = "dice";
         addContent(randomButton);
-        return y + 4;
+        return y + 4 + (legacyFarmOptions() ? Math.max(13, font.lineHeight + 4) + 10 : 0);
     }
 
     private void changePage(int delta) {
@@ -384,11 +423,16 @@ public class FarmSelectionScreen extends Screen {
             PacketDistributor.sendToServer(new PlayerProfileSubmitPayload(draft.preferredName.trim(), draft.favoriteThing.trim(), draft.male));
         } else {
             var payload = draft.payload();
-            for (var option : options) StardewFarmSelectionOptionRegistry.dispatch(option,
-                    Boolean.TRUE.equals(draft.options.get(option.id())), payload.farmTypeId(), payload.farmName(), payload.forceCancelPending());
-            PacketDistributor.sendToServer(payload);
+            sendSelection(payload.farmTypeId(), payload.farmName(), payload.forceCancelPending());
         }
         minecraft.setScreen(null);
+    }
+
+    /** Legacy addons inject their option packet before the current combined farm/profile request. */
+    private void sendSelection(String farmTypeId, String farmName, boolean forceCancelPending) {
+        for (var option : options) StardewFarmSelectionOptionRegistry.dispatch(option,
+                Boolean.TRUE.equals(draft.options.get(option.id())), farmTypeId, farmName, forceCancelPending);
+        PacketDistributor.sendToServer(draft.payload());
     }
 
     @Override

@@ -23,6 +23,10 @@ public final class SdvTexture {
         return new SdvTexture(texture, width, height, width, height);
     }
 
+    public ResourceLocation texture() { return texture; }
+    public int width() { return width; }
+    public int height() { return height; }
+
     public void drawPixelZoom(GuiGraphics graphics, int x, int y, float scale) {
         drawPixelZoomTint(graphics, x, y, scale, 1.0F, 1.0F, 1.0F, 1.0F);
     }

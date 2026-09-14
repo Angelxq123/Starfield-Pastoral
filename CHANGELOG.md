@@ -30,6 +30,8 @@
 
 #### 附属开发
 
+- 补回旧版 SVE 使用的农场选项、动物购买贴图和陈酿扩展入口，使其接入当前界面与数据包规则。
+
 - 开放实验性宠物 API，允许附属登记新的种类、品种、模型、行为、声音与礼物，并接入本体的选择和管理流程；提供独立示例工程。
 - 客户端与服务端登录时校验宠物定义，避免双方安装内容不一致。宠物附属需要与本体 0.6.1 配套安装；实验接口暂不承诺后续版本的二进制兼容。
 
@@ -64,6 +66,8 @@ GitHub 上次公开版本为 0.5.6；从该版本升级还会包含下方 0.6.0 
 - Repairs no longer overwrite the entire room. Ownership transfers preserve the cave, recreated farms cannot import the same old inventory twice, and moving the gifted dehydrator does not grant another one.
 
 #### Addon Support and Existing Worlds
+
+- Restored legacy SVE hooks for farm options, animal-shop artwork and cask aging, connecting them to the current screens and data-pack rules.
 
 - Added an experimental pet API and a standalone example for registering species, breeds, models, behaviors, sounds and gifts through the built-in pet flow. Client/server pet definitions are checked at login. Match pet addons to 0.6.1; future binary compatibility is not yet promised.
 - Cave migration does not require a new farm. Entity-based decorations and custom absolute coordinates inside third-party block entities are not covered by generic migration; the original room is retained.

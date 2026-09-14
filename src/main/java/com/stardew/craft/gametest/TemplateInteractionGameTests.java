@@ -52,6 +52,10 @@ public final class TemplateInteractionGameTests {
                     }
                     var template = (TemplateBlockEntity) level.getBlockEntity(pos);
                     template.setMaterial(Blocks.GLASS.defaultBlockState());
+                    // Composite templates accept their second material before adjacent placement.
+                    if (state.getBlock() instanceof com.stardew.craft.templates.CompositeTemplateBlock) {
+                        template.setFillMaterial(Blocks.GLASS.defaultBlockState());
+                    }
                     player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                     player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
                     var stack = new ItemStack(placed, 3);
@@ -95,10 +99,13 @@ public final class TemplateInteractionGameTests {
         var stone = new ItemStack(Blocks.STONE, 3);
         player.setItemInHand(InteractionHand.MAIN_HAND, stone);
         player.gameMode.useItemOn(player, level, stone, InteractionHand.MAIN_HAND, hit);
-        helper.assertTrue(Blocks.STONE.defaultBlockState().equals(template.material()) && stone.getCount() == 2
-                && player.getInventory().countItem(Blocks.GLASS.asItem()) == 1, "Sneak replacement did not return the old material");
+        helper.assertTrue(template.material() == null && stone.getCount() == 3
+                && player.getInventory().countItem(Blocks.GLASS.asItem()) == 1, "Sneak removal did not return the old material");
 
         player.setShiftKeyDown(false);
+        player.gameMode.useItemOn(player, level, stone, InteractionHand.MAIN_HAND, hit);
+        helper.assertTrue(Blocks.STONE.defaultBlockState().equals(template.material()) && stone.getCount() == 2,
+                "Applying a new material after removal failed");
         var layers = new ItemStack(block, 3);
         player.setItemInHand(InteractionHand.MAIN_HAND, layers);
         player.gameMode.useItemOn(player, level, layers, InteractionHand.MAIN_HAND, hit);

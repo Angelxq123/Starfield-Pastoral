@@ -528,6 +528,7 @@ public final class ApiContractGameTests {
         StardewFishPondEventRegistry.announceDaily(
                 new StardewFishPondDailyContext(
                         helper.getLevel(), 10, pond));
+        // A real configured species at its first population gate requests a diamond.
         FishPondRecord mutablePond = new FishPondRecord(
                 pond.id(),
                 "",
@@ -542,15 +543,15 @@ public final class ApiContractGameTests {
                 pond.managerPosition().getX() + 2,
                 pond.managerPosition().getY(),
                 pond.managerPosition().getZ() + 2,
-                "minecraft:cod",
-                3,
-                3,
+                "stardewcraft:sturgeon",
+                1,
+                1,
                 "",
                 0,
                 "minecraft:diamond",
                 1,
                 false,
-                3,
+                1,
                 0,
                 -1,
                 0,

@@ -158,8 +158,8 @@ public final class OrdinaryMineRuntimeGameTests {
         h.assertTrue(count>0,"No approved alternate layouts packaged");
         var a=MineChestLootTable.getRewardForFloor(level,null,40,new Random(1));
         var b=MineChestLootTable.getRewardForFloor(level,null,70,new Random(1));
-        h.assertTrue(a!=null && a.is(com.stardew.craft.item.ModItems.CUTLASS.get()),"40F placeholder changed");
-        h.assertTrue(b!=null && b.is(com.stardew.craft.item.ModItems.TEMPERED_BROADSWORD.get()),"70F placeholder changed");
+        h.assertTrue(a!=null && a.is(com.stardew.craft.item.ModItems.SLINGSHOT.get()),"40F slingshot reward missing");
+        h.assertTrue(b!=null && b.is(com.stardew.craft.item.ModItems.MASTER_SLINGSHOT.get()),"70F master slingshot reward missing");
         h.assertTrue(OrdinaryMineEncounters.flyingMonster(10).isEmpty() && OrdinaryMineEncounters.flyingMonster(21).equals("fly")
                 && OrdinaryMineEncounters.flyingMonster(38).equals("bat") && OrdinaryMineEncounters.flyingMonster(63).equals("frost_bat")
                 && OrdinaryMineEncounters.flyingMonster(98).equals("lava_bat"),"Flying encounter theme mismatch");h.succeed();

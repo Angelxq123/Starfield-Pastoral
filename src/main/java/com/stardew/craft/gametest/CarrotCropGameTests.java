@@ -70,7 +70,7 @@ public final class CarrotCropGameTests {
                     helper.assertTrue(current.getCollisionShape(level, part).isEmpty(), "Carrot blocks movement");
                 }
                 helper.assertTrue(!level.getBlockState(pos).getShape(level, pos).isEmpty(), "Missing lower selection");
-                if (phase == 3) helper.assertTrue(!level.getBlockState(pos.above()).getShape(level, pos.above()).isEmpty(), "Missing mature upper selection");
+                CropSelectionAssertions.matchesStage(helper, pos);
             }
             for (boolean junimo : new boolean[]{false, true}) {
                 var mature = crop.defaultBlockState().setValue(StardewCropBlock.AGE, 3).setValue(StardewCropBlock.GROWTH_STAGE, 4);

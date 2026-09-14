@@ -223,6 +223,12 @@ public final class BuildingFoundationGameTests {
             registry.deleteFarm(visitor);
             helper.assertTrue(BuildingWorldData.get(server).find(record.id()) == null, "Farm deletion did not remove building");
             var replacement = registry.createFarm(visitor, "Visitor", "Replacement", FarmType.STANDARD);
+            // The shared suite may already have other freed slots ahead of this one in the FIFO.
+            for (int attempt = 0; replacement.getSlotIndex() != farm.getSlotIndex()
+                    && attempt < registry.getNextSlotIndex(); attempt++) {
+                registry.deleteFarm(visitor);
+                replacement = registry.createFarm(visitor, "Visitor", "Replacement", FarmType.STANDARD);
+            }
             helper.assertTrue(replacement.getSlotIndex() == farm.getSlotIndex(), "Test did not reuse farm slot");
             helper.assertTrue(!BuildingService.canManage(server, visitor, record), "New farm can manage previous farm's building");
         } finally {

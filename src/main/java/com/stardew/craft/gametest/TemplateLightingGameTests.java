@@ -43,7 +43,14 @@ public final class TemplateLightingGameTests {
                             "Glass template still has opaque occlusion: " + entry.getKey());
                     helper.assertTrue(glass.getLightBlock(level, pos) == 0, "Glass template blocks light: " + entry.getKey());
                     template.setMaterial(Blocks.STONE.defaultBlockState());
-                    helper.assertTrue(level.getBlockState(pos).getValue(MaterialTemplateBlock.SOLID), "Opaque material did not restore occlusion");
+                    var fill = template.effectiveFillMaterial();
+                    helper.assertTrue(level.getBlockState(pos).getValue(MaterialTemplateBlock.SOLID)
+                                    == (fill == null || fill.canOcclude()), "Combined material occlusion is incorrect");
+                    if (block instanceof com.stardew.craft.templates.CompositeTemplateBlock) {
+                        template.setFillMaterial(Blocks.STONE.defaultBlockState());
+                        helper.assertTrue(level.getBlockState(pos).getValue(MaterialTemplateBlock.SOLID),
+                                "Opaque primary and fill did not restore occlusion");
+                    }
                 }
             }
         }

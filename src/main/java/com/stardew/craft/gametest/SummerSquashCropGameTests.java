@@ -84,7 +84,7 @@ public final class SummerSquashCropGameTests {
                     helper.assertTrue(current.getCollisionShape(level, part).isEmpty(), "Ordinary crop blocks movement");
                 }
                 helper.assertTrue(!level.getBlockState(pos).getShape(level, pos).isEmpty(), "Missing lower model selection");
-                if (phase >= 3) helper.assertTrue(!level.getBlockState(pos.above()).getShape(level, pos.above()).isEmpty(), "Missing tall-stage upper selection");
+                CropSelectionAssertions.matchesStage(helper, pos);
             }
             for (boolean junimo : new boolean[]{false, true}) {
                 growth.phase = 5;

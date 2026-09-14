@@ -80,7 +80,7 @@ public final class HotPepperCropGameTests {
                     var state = level.getBlockState(part);
                     helper.assertTrue(state.is(crop) && state.getValue(StardewCropBlock.GROWTH_STAGE) == phase + 1, "Phase carriers differ");
                     helper.assertTrue(state.getCollisionShape(level, part).isEmpty(), "Pepper blocks movement");
-                    if (phase >= 4 || part.equals(pos)) helper.assertTrue(!state.getShape(level, part).isEmpty(), "Missing stage interaction shape");
+                    if (part.equals(pos)) CropSelectionAssertions.matchesStage(helper, pos);
                 }
             }
             // This server loads only the overworld, so natural valley-only daily ticks are not covered.

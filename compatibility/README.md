@@ -130,3 +130,8 @@ a shutdown that saves every dimension.
 Use `--scenario network-world` on the dedicated-server log after a real client
 joins. This additionally requires capability negotiation, player login,
 Stardew player-data load, at least ten stable seconds, and complete saving.
+
+The canary manifest also pins missing macOS native dependency hashes. The checkout
+helper adds only these exact checksums to the external metadata; Gradle's strict
+verification remains enabled. Each entry records its upstream checksum or artifact
+URL, and conflicting existing hashes are rejected.

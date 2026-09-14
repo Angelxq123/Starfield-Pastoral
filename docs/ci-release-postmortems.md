@@ -70,3 +70,7 @@ The full clean-checkout suite reported nine failures against contracts revised d
 ### 0.6.1 candidate — legacy SVE injection sites (2026-09-14)
 
 The pinned SVE source verifier found seven incompatibilities across three integration points: animal-shop static texture registration, the farm-selection fields/submission hook, and two cask rate-lookup invocation sites. Restore functional bridges: legacy artwork feeds the current shop snapshot, injected farm options share the current scrolled form and precede the combined setup packet, and cask Map lookups obtain current data-pack rates before addon overrides. Do not bypass the pinned canary or reintroduce the retired screens and hardcoded aging table. The external latest commit still targets 0.5.6, so changing the pin alone does not resolve these differences.
+
+### 0.6.1 candidate — macOS canary dependency metadata (2026-09-14)
+
+The pinned external addon lists Linux/Windows LWJGL hashes but omits sixteen macOS 3.3.3 native artifacts. Its strict Gradle dependency verification therefore stops before compilation on macOS with missing checksums, not mismatched downloads. Record exact SHA-256 hashes in the canary manifest, verified against Maven Central checksum endpoints (and the official Minecraft artifact for the patched FreeType binary). The checkout helper supplements only those exact artifacts and rejects conflicting existing hashes. Keep strict verification, the source commit pin and all compatibility checks enabled; no addon source or binaries are redistributed.

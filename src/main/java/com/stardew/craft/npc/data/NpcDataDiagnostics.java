@@ -37,11 +37,17 @@ public final class NpcDataDiagnostics {
             var schedule=schedules.get(npcId);
             if(schedule!=null) {
                 var missing=new java.util.TreeSet<String>();
+                var missingAreas=new java.util.TreeSet<String>();
                 for(var nodes:NpcScheduleCompiler.compile(schedule).values()) for(var node:nodes) {
                     String behavior=node.behavior();
+                    if(com.stardew.craft.npc.runtime.NpcSquareMovement.parse(behavior)!=null) {
+                        if(com.stardew.craft.npc.runtime.NpcSquareArea.forPoint(node.point())==null)missingAreas.add(node.point());
+                        continue;
+                    }
                     if(!behavior.isBlank() && !behavior.startsWith("dialogue") && NpcActivityCatalog.find(npcId,behavior)==null)
                         missing.add(behavior);
                 }
+                if(!missingAreas.isEmpty())LOGGER.debug("[NPC_DATA] npc={} square behaviors need confirmed MC areas at points={}",npcId,missingAreas);
                 if(!missing.isEmpty()) {
                     unboundActors++;
                     LOGGER.debug("[NPC_DATA] npc={} unbound behaviors={} (no activity will play)",npcId,missing);

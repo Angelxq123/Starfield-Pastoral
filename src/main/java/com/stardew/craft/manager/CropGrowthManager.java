@@ -420,7 +420,7 @@ public class CropGrowthManager extends SavedData {
                                         // 在还原为黄土前，清理该位置残留的肥料数据，避免下次再耕后无法施肥
                                         fertilizerManager.removeFertilizer(level, realPos);
                                         level.setBlock(realPos,
-                                            (state.is(com.stardew.craft.block.ModBlocks.FARMLAND.get()) ? com.stardew.craft.block.ModBlocks.DIRT.get() : com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()).defaultBlockState(), Block.UPDATE_ALL);
+                                            com.stardew.craft.block.terrain.TerrainSoils.restored(state).defaultBlockState(), Block.UPDATE_ALL);
                                         continue;
                                     }
                                 }
@@ -437,7 +437,7 @@ public class CropGrowthManager extends SavedData {
                                         // 在还原为黄土前，清理该位置残留的肥料数据，避免下次再耕后无法施肥
                                         fertilizerManager.removeFertilizer(level, realPos);
                                         level.setBlock(realPos,
-                                            (state.is(com.stardew.craft.block.ModBlocks.FARMLAND.get()) ? com.stardew.craft.block.ModBlocks.DIRT.get() : com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()).defaultBlockState(), Block.UPDATE_ALL);
+                                            com.stardew.craft.block.terrain.TerrainSoils.restored(state).defaultBlockState(), Block.UPDATE_ALL);
                                         continue;
                                     }
                                 }
@@ -481,7 +481,8 @@ public class CropGrowthManager extends SavedData {
             BlockState above
     ) {
         Block block = above.getBlock();
-        return block instanceof StardewCropBlock
+        return above.is(net.minecraft.tags.BlockTags.MAINTAINS_FARMLAND)
+            || block instanceof StardewCropBlock
             || block instanceof com.stardew.craft.block.nature.ForageBlock
             || StardewCropRuntimeRegistry.inspectAddon(level, abovePos) != null;
     }

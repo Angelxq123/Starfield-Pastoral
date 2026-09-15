@@ -2,6 +2,7 @@ package com.stardew.craft.client.model.terrain;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.block.terrain.TerrainSoils;
 import com.stardew.craft.block.terrain.TerrainVariants;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ public final class GrassTransitionModels {
     private GrassTransitionModels() {}
 
     private static List<Block> terrainBlocks() {
-        return List.of(ModBlocks.GRASS_BLOCK.get(), ModBlocks.DIRT.get(), ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get());
+        return List.of(ModBlocks.GRASS_BLOCK.get(), ModBlocks.DIRT.get(), ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get(), ModBlocks.SAND.get(), ModBlocks.SANDY_FARMLAND.get());
     }
 
     private static ModelResourceLocation standalone(String path) {
@@ -72,11 +73,11 @@ public final class GrassTransitionModels {
     }
 
     private static IntegerProperty variantProperty(BlockState state) {
-        return state.is(ModBlocks.FARMLAND.get()) ? net.minecraft.world.level.block.FarmBlock.MOISTURE : TerrainVariants.property(state);
+        return TerrainSoils.farmland(state) ? net.minecraft.world.level.block.FarmBlock.MOISTURE : TerrainVariants.property(state);
     }
 
-    private static ModelResourceLocation blendId(int season, boolean wet, int blend) {
-        return standalone(TerrainSeasonTextures.farmlandDirectory(season) + "blends/"
+    private static ModelResourceLocation blendId(int season, boolean wet, int blend, boolean sandy) {
+        return standalone(TerrainSeasonTextures.farmlandDirectory(season, sandy) + "blends/"
                 + (wet ? "wet" : "dry") + "_" + (blend / 4) + "_" + (blend % 4));
     }
 
@@ -87,7 +88,7 @@ public final class GrassTransitionModels {
             for (int layer = 0; layer < 2; layer++) for (int mask = 1; mask < 256; mask++)
                 if (GrassConnectionMask.canonical(mask) == mask) event.register(overlayId(season, layer, mask));
             for (boolean wet : new boolean[]{false, true}) for (int blend = 0; blend < (wet ? 4 : 16); blend++)
-                event.register(blendId(season, wet, blend));
+                for (boolean sandy : new boolean[]{false, true}) event.register(blendId(season, wet, blend, sandy));
             if (season > 0) for (Block block : terrainBlocks())
                 for (BlockState state : block.getStateDefinition().getPossibleStates()) event.register(seasonalId(season, state));
         }
@@ -96,20 +97,20 @@ public final class GrassTransitionModels {
     @SubscribeEvent
     public static void wrapTargets(ModelEvent.ModifyBakingResult event) {
         Map<ModelResourceLocation, BakedModel> models = event.getModels();
-        TerrainFarmlandQuads[][][] fertilizers = FertilizedSoilModels.bake(models);
+        TerrainFarmlandQuads[][][][] fertilizers = {FertilizedSoilModels.bake(models), FertilizedSoilModels.bakeSandy(models)};
         ConnectedTopQuads connections = new ConnectedTopQuads();
         BakedModel[][][] overlays = new BakedModel[4][2][256];
-        TerrainFarmlandQuads[][] farmland = new TerrainFarmlandQuads[4][2];
+        TerrainFarmlandQuads[][][] farmland = new TerrainFarmlandQuads[2][4][2];
         for (int season = 0; season < 4; season++) {
             for (int layer = 0; layer < 2; layer++) for (int mask = 1; mask < 256; mask++)
                 overlays[season][layer][mask] = Objects.requireNonNull(models.get(overlayId(season, layer, GrassConnectionMask.canonical(mask))));
-            for (int wet = 0; wet < 2; wet++) {
+            for (int family = 0; family < 2; family++) for (int wet = 0; wet < 2; wet++) {
                 BakedQuad[] quads = new BakedQuad[16];
                 for (int blend = 0; blend < (wet == 1 ? 4 : 16); blend++) {
-                    BakedModel model = Objects.requireNonNull(models.get(blendId(season, wet == 1, blend)));
+                    BakedModel model = Objects.requireNonNull(models.get(blendId(season, wet == 1, blend, family == 1)));
                     quads[blend] = model.getQuads(null, null, RandomSource.create(0)).getFirst();
                 }
-                farmland[season][wet] = new TerrainFarmlandQuads(quads, wet == 1);
+                farmland[family][season][wet] = new TerrainFarmlandQuads(quads, wet == 1);
             }
         }
         BakedModel[][][] recessedOverlays = new BakedModel[4][2][256];
@@ -130,10 +131,11 @@ public final class GrassTransitionModels {
                     int variant = property == null ? 0 : state.getValue(property);
                     for (int season = 0; season < 4; season++) itemSurfaces[season][variant] = surfaces[season];
                 }
-                boolean isFarmland = state.is(ModBlocks.FARMLAND.get());
+                boolean isFarmland = TerrainSoils.farmland(state);
+                int family = TerrainSoils.sandy(state) ? 1 : 0;
                 boolean wet = isFarmland && state.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE) > 0;
                 models.put(id, new ConnectedTop(surfaces, isFarmland ? recessedOverlays : overlays,
-                        isFarmland ? farmland : null, isFarmland ? fertilizers : null, wet, connections));
+                        isFarmland ? farmland[family] : null, isFarmland ? fertilizers[family] : null, wet, connections));
             }
             ModelResourceLocation itemId = new ModelResourceLocation(BuiltInRegistries.BLOCK.getKey(block), "inventory");
             BakedModel item = Objects.requireNonNull(models.get(itemId), itemId::toString);
@@ -218,8 +220,8 @@ public final class GrassTransitionModels {
                     if (snowy(adjacent) || !openTop(level, neighbor)) continue;
                     if (adjacent.is(ModBlocks.GRASS_BLOCK.get())) grass |= 1 << i;
                     else if (adjacent.is(ModBlocks.DARK_GRASS_BLOCK.get())) dark |= 1 << i;
-                    else if (farmland != null && adjacent.is(ModBlocks.DIRT.get())) soil |= 1 << i;
-                    else if (farmland != null && !wet && adjacent.is(ModBlocks.FARMLAND.get())
+                    else if (farmland != null && TerrainSoils.bare(adjacent)) soil |= 1 << i;
+                    else if (farmland != null && !wet && TerrainSoils.farmland(adjacent)
                             && adjacent.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE) > 0) moisture |= 1 << i;
                 }
             }

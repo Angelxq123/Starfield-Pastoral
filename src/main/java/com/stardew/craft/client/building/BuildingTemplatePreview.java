@@ -132,7 +132,12 @@ public final class BuildingTemplatePreview {
         covers.forEach((pos,cover) -> worldCovers.put((ghost ? relative(pos,rotation) : pos).offset(worldAnchor),cover));
         for (var part : parts) {
             BlockPos pos = ghost ? relative(part.pos(),rotation) : part.pos();
-            pose.pushPose(); pose.translate(pos.getX(), pos.getY(), pos.getZ());
+            pose.pushPose();
+            // The preview reuses the production surface-floor compositor.  Its
+            // floor-only quad is coplanar with the real floor while moving a
+            // building, which causes visible z-fighting.  Lift only that ghost
+            // layer by a tiny amount; structure blocks retain exact placement.
+            pose.translate(pos.getX(), pos.getY() + (ghost && part.floorOnly() ? 0.0025 : 0), pos.getZ());
             var state = part.state().rotate(rotation); var data = part.data();
             if (!worldCovers.isEmpty() && mc.level != null) data = com.stardew.craft.client.model.terrain.SurfaceFloorModels.previewData(
                     mc.getBlockRenderer().getBlockModel(state),mc.level,pos.offset(worldAnchor),state,data,worldCovers,part.floorOnly());

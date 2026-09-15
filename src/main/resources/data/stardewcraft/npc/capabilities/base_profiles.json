@@ -494,8 +494,8 @@
     },
     {
       "id": "kent",
-      "implemented": true,
-      "pathing_enabled": true,
+      "implemented": false,
+      "pathing_enabled": false,
       "animation_profile": "idle_walk",
       "age": 0,
       "manners": 0,
@@ -506,8 +506,8 @@
     },
     {
       "id": "leo",
-      "implemented": true,
-      "pathing_enabled": true,
+      "implemented": false,
+      "pathing_enabled": false,
       "animation_profile": "idle_walk",
       "age": 2,
       "manners": 0,

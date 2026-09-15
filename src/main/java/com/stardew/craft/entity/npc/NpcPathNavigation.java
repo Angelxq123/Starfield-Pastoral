@@ -37,6 +37,24 @@ public class NpcPathNavigation extends GroundPathNavigation {
         setMaxVisitedNodesMultiplier((float)com.stardew.craft.npc.runtime.NpcNavigationPolicy.current().maxVisitedNodes()/initialNodeBudget);
     }
 
+    /** Keep automatic path recomputation bounded too; stop/ordinary movement releases the restriction. */
+    public boolean moveWithin(Vec3 target,double speed,com.stardew.craft.npc.runtime.NpcSquareArea area) {
+        var evaluator=(NpcNodeEvaluator)nodeEvaluator;stop();evaluator.squareArea=area;
+        boolean started=false;
+        try {
+            var candidate=createPath(BlockPos.containing(target),0);
+            if(candidate==null||!candidate.canReach())return false;
+            for(int i=0;i<candidate.getNodeCount();i++)if(!area.contains(candidate.getEntityPosAtNode(mob,i),mob.getBbWidth()/2.))return false;
+            started=moveTo(candidate,speed);return started;
+        } finally {if(!started)evaluator.squareArea=null;}
+    }
+
+    @Override
+    public boolean moveTo(double x,double y,double z,double speed) {
+        ((NpcNodeEvaluator)nodeEvaluator).squareArea=null;
+        return super.moveTo(x,y,z,speed);
+    }
+
     @Override
     protected void followThePath() {
         Vec3 position = getTempMobPos();
@@ -101,6 +119,7 @@ public class NpcPathNavigation extends GroundPathNavigation {
     @Override
     public void stop() {
         super.stop();
+        ((NpcNodeEvaluator)nodeEvaluator).squareArea=null;
         watchedNode = null;
         recoveryRequested = false;
     }

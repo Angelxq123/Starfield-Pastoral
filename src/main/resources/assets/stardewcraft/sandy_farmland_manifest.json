@@ -1,0 +1,52 @@
+{
+  "seasons": [
+    "spring",
+    "summer",
+    "fall",
+    "winter"
+  ],
+  "fertilizers": [
+    "basic_fertilizer",
+    "quality_fertilizer",
+    "deluxe_fertilizer",
+    "basic_retaining_soil",
+    "quality_retaining_soil",
+    "deluxe_retaining_soil",
+    "speed_gro",
+    "deluxe_speed_gro",
+    "hyper_speed_gro"
+  ],
+  "tile_size": 16,
+  "top_height": 15,
+  "blend_weights": [
+    0,
+    0.3,
+    0.65,
+    1
+  ],
+  "priority": [
+    [
+      "dark_grass_block"
+    ],
+    [
+      "grass_block"
+    ],
+    [
+      "farmland:wet",
+      "sandy_farmland:wet"
+    ],
+    [
+      "farmland:dry",
+      "sandy_farmland:dry"
+    ],
+    [
+      "dirt"
+    ],
+    [
+      "sand"
+    ],
+    [
+      "cliff"
+    ]
+  ]
+}

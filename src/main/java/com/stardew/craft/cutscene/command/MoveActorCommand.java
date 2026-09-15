@@ -13,5 +13,6 @@ public class MoveActorCommand extends NavigateActorCommand {
     public MoveActorCommand(String actorTag, double x, double y, double z, int ticks,
                             boolean relative, String anchor) {
         super(actorTag, x, y, z, relative, 0, anchor);
+        this.authoredTicks = ticks;
     }
 }

@@ -130,7 +130,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
             .add(Attributes.MAX_HEALTH, 20.0D)
-            .add(Attributes.MOVEMENT_SPEED, 0.20D)
+            .add(Attributes.MOVEMENT_SPEED, 0.20D * com.stardew.craft.npc.runtime.NpcMotionProfile.TRAVEL_SPEED_MULTIPLIER)
             .add(Attributes.FOLLOW_RANGE, 96.0D)
             .add(Attributes.STEP_HEIGHT, 0.6D);
     }
@@ -608,7 +608,7 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
             tag.putBoolean("attention",motion.attention());
             this.entityData.set(DATA_MOTION_PROFILE,tag);
             var speed=getAttribute(Attributes.MOVEMENT_SPEED);
-            if (speed!=null) speed.setBaseValue(motion.speed());
+            if (speed!=null) speed.setBaseValue(motion.travelSpeed());
             var step=getAttribute(Attributes.STEP_HEIGHT);
             if (step!=null) step.setBaseValue(motion.stepHeight());
             if (getNavigation() instanceof NpcPathNavigation navigation) navigation.refreshSearchBudget();

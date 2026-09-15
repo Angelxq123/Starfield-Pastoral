@@ -551,7 +551,7 @@ public class HoeItem extends Item implements IStardewItem {
         level.setBlock(pos, modified, 11);
 
         // 公共区域耕地才需要登记次日复原；远古斑点恢复基础地块时不登记。
-        if ((modified.is(Blocks.FARMLAND) || modified.is(com.stardew.craft.block.ModBlocks.FARMLAND.get()))
+        if ((modified.getBlock() instanceof net.minecraft.world.level.block.FarmBlock)
                 && com.stardew.craft.core.FarmAreaResolver.isInStardewButNotFarm(level, pos)
                 && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, pos)) {
             com.stardew.craft.manager.CropGrowthManager.get(level).trackPublicTilledChunk(level, pos);

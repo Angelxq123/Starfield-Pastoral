@@ -42,6 +42,7 @@ public final class NpcRoutePoints {
                     for(String axis:java.util.List.of("x","y","z")) if(p.has(axis)) {finite(p,axis);axes++;}
                     if(axes!=0 && axes!=3) throw new IllegalArgumentException("Coordinates require x/y/z together");
                     if(p.has("yaw")) finite(p,"yaw");
+                    if(p.has("square_area"))com.stardew.craft.npc.runtime.NpcSquareArea.decode(p.getAsJsonObject("square_area"));
                     if(p.has("approach_yaw_offset")) finite(p,"approach_yaw_offset");
                     if(p.has("dimension") && ResourceLocation.tryParse(p.get("dimension").getAsString())==null)
                         throw new IllegalArgumentException("Invalid dimension");

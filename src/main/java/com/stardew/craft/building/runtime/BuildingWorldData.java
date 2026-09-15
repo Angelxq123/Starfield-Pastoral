@@ -19,7 +19,7 @@ import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-/** New building storage. Never reads AnimalWorldData. Use BuildingService for player requests. */
+/** New building storage. Use BuildingService for player requests and importLegacy for saved residences. */
 public final class BuildingWorldData extends SavedData {
     private static final String DATA_NAME = "stardew_buildings";
     private static final int FORMAT = 1;
@@ -27,6 +27,26 @@ public final class BuildingWorldData extends SavedData {
     public static BuildingWorldData peek(MinecraftServer server) { return LIVE.get(server); }
     public static void unload(MinecraftServer server) { LIVE.remove(server); }
     private final Map<UUID, BuildingRecord> buildings = new LinkedHashMap<>();
+    // Kept after demolition/farm deletion, so an archived legacy residence cannot return.
+    private final Map<String, UUID> legacyImports = new LinkedHashMap<>();
+    public synchronized UUID legacyImport(String sourceId) { return legacyImports.get(sourceId); }
+
+    /** Migration only: retains a paid tier without replaying construction or replacing world blocks. */
+    public synchronized Result importLegacy(String sourceId, BuildingRecord candidate) {
+        if (legacyImports.containsKey(sourceId)) return Result.SUCCESS;
+        if (candidate.mode() != BuildingRecord.Mode.SELF_BUILT
+                || candidate.phase() != BuildingRecord.Phase.READY && candidate.phase() != BuildingRecord.Phase.MISSING) return Result.INVALID_STATE;
+        for (var existing : buildings.values()) {
+            if (existing.dimension().equals(candidate.dimension()) && existing.manager().equals(candidate.manager())
+                    && existing.phase() != BuildingRecord.Phase.MISSING) {
+                if (!existing.farmId().equals(candidate.farmId()) || !existing.family().equals(candidate.family())) return Result.OVERLAP;
+                legacyImports.put(sourceId, existing.id()); setDirty(); return Result.SUCCESS;
+            }
+        }
+        if (buildings.containsKey(candidate.id())) return Result.DUPLICATE_ID;
+        if (candidate.phase() != BuildingRecord.Phase.MISSING && conflicting(candidate.dimension(), candidate.claim()) != null) return Result.OVERLAP;
+        insert(candidate); legacyImports.put(sourceId, candidate.id()); setDirty(); return Result.SUCCESS;
+    }
     private final Map<UUID, BuildingTransfer> transfers = new HashMap<>();
     public synchronized BuildingTransfer transfer(UUID id) { return transfers.get(id); }
     private final Map<UUID, ConstructionOrder> orders = new HashMap<>();
@@ -318,6 +338,7 @@ public final class BuildingWorldData extends SavedData {
     @Override
     public synchronized CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putInt("Format", FORMAT);
+        var imported = new CompoundTag(); legacyImports.forEach(imported::putUUID); tag.put("LegacyImports", imported);
         ListTag list = new ListTag();
         buildings.values().forEach(record -> list.add(record.save()));
         tag.put("Buildings", list);
@@ -341,6 +362,8 @@ public final class BuildingWorldData extends SavedData {
             throw new IllegalArgumentException("Unsupported building storage format");
         }
         BuildingWorldData data = new BuildingWorldData();
+        var imported = tag.getCompound("LegacyImports");
+        for (var key : imported.getAllKeys()) data.legacyImports.put(key, imported.getUUID(key));
         for (int day : tag.getIntArray("PausedDays")) if (day > 0) data.pausedDays.add(day);
         ListTag list = (ListTag) tag.get("Buildings");
         if (!list.isEmpty() && list.getElementType() != Tag.TAG_COMPOUND) {

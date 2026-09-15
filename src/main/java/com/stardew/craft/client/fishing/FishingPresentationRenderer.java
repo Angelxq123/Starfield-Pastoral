@@ -151,7 +151,10 @@ public final class FishingPresentationRenderer {
             for(int k=0;k<4;k++){int i=left?3-k:k;var v=face.vertices().get(i);var p=points[i];consumer.addVertex(stack.last().pose(),p.x,p.y,p.z).setColor(255,255,255,255).setUv(arm?skinU(v.uv()[0],v.uv()[1],face.part().endsWith("right"),slim,left):v.uv()[0],arm?skinV(v.uv()[1],face.part().endsWith("right"),left):v.uv()[1]).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(stack.last(),normal.x,normal.y,normal.z);}
             if(arm&&player.isModelPartShown((face.part().endsWith("right")!=left)?PlayerModelPart.RIGHT_SLEEVE:PlayerModelPart.LEFT_SLEEVE)) {
                 // Inflate the shared bind surface before skinning; adjacent sleeve faces stay connected.
-                var layer=buffers.getBuffer(RenderType.entityTranslucent(texture));
+                // A skin overlay is an opaque cutout layer.  Alpha blending the
+                // sleeve over the base arm makes the two layers flicker and lets
+                // transparent texels darken the hand during the fishing pose.
+                var layer=buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
                 for(int k=0;k<4;k++){int i=left?3-k:k;var v=face.vertices().get(i);var p=pose.skinVertex(v,new Vector3f(),.18f,slim?.75f:1,shift);boolean right=face.part().endsWith("right");float u=skinU(v.uv()[0],v.uv()[1],right,slim,left),vv=skinV(v.uv()[1],right,left);if(right!=left)vv+=.25f;else u+=.25f;layer.addVertex(stack.last().pose(),p.x,p.y,p.z).setColor(255,255,255,255).setUv(u,vv).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(stack.last(),normal.x,normal.y,normal.z);}
             }
             if(arm) {

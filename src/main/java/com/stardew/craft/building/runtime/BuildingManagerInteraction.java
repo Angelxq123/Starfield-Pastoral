@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 public final class BuildingManagerInteraction {
     private BuildingManagerInteraction() {}
     public static boolean open(ServerPlayer player, BlockPos pos) {
+        com.stardew.craft.animal.runtime.LivestockService.recover(player.server);
         var data = BuildingWorldData.get(player.serverLevel().getServer());
         var id = data.occupying(player.serverLevel().dimension().location(), pos);
         var record = id == null ? null : data.find(id);

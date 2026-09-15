@@ -4,7 +4,11 @@ package com.stardew.craft.client.gui.common;
 public final class GuiLayoutMath {
     private GuiLayoutMath() {}
 
-    public record Viewport(int width, int height, double scale, double x, double y, double windowScale) {
+    public record Viewport(int width, int height, double scale, double x, double y, double windowScale,
+                           double projectedWidth, double projectedHeight) {
+        public Viewport(int width, int height, double scale, double x, double y, double windowScale) {
+            this(width, height, scale, x, y, windowScale, width * scale + 2 * x, height * scale + 2 * y);
+        }
         public double mouseX(double screenX) { return (screenX - x) / scale; }
         public double mouseY(double screenY) { return (screenY - y) / scale; }
         public double windowMouseX(double rawX, int windowWidth) {
@@ -14,13 +18,13 @@ public final class GuiLayoutMath {
             return rawMouseY(rawY, windowHeight) * windowHeight / height;
         }
         public double rawMouseX(double rawX, int windowWidth) {
-            return mouseX(rawX * (width * scale + 2 * x) / windowWidth);
+            return mouseX(rawX * projectedWidth / windowWidth);
         }
         public double rawMouseY(double rawY, int windowHeight) {
-            return mouseY(rawY * (height * scale + 2 * y) / windowHeight);
+            return mouseY(rawY * projectedHeight / windowHeight);
         }
-        public double windowDeltaX(double delta) { return delta * (width * scale + 2 * x) / (width * scale); }
-        public double windowDeltaY(double delta) { return delta * (height * scale + 2 * y) / (height * scale); }
+        public double windowDeltaX(double delta) { return delta * projectedWidth / (width * scale); }
+        public double windowDeltaY(double delta) { return delta * projectedHeight / (height * scale); }
     }
 
     public static Viewport viewport(int pixelsWide, int pixelsHigh, double windowScale) {

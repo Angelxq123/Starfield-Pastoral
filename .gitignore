@@ -58,6 +58,7 @@ docs/*
 !docs/ordinary-mine-runtime.md
 !docs/farm-cave-runtime.md
 !docs/pet-addon-api.md
+!docs/legacy-livestock-migration.md
 !docs/ci-release-postmortems.md
 !docs/schemas/
 !docs/schemas/*.schema.json
@@ -130,6 +131,9 @@ scripts/*
 !scripts/verify_grass_connections.py
 !scripts/generate_farmland_blends.py
 !scripts/verify_farmland_quads.py
+!scripts/generate_sandy_farmland.py
+!scripts/verify_sandy_farmland.py
+!docs/sand-and-sandy-farmland.md
 !scripts/replace_pregen_terrain.py
 !scripts/data/
 !scripts/data/map_interaction_approvals_4_2_to_4_7.json
@@ -406,6 +410,7 @@ tools/npc/*
 !/tools/art/NativeJointSkinChecks.java
 !/tools/art/NativeKeyboardChecks.java
 !/tools/art/NativeNpcChecks.java
+!/tools/art/NativeNpcTextureChecks.java
 !/tools/art/NativeSmokingChecks.java
 !/tools/art/NpcModelOwnershipChecks.java
 !/tools/art/NpcMovementCapabilityChecks.java

@@ -55,24 +55,49 @@ public final class NativeNpcAssets implements ResourceManagerReloadListener {
     @Override
     public void onResourceManagerReload(ResourceManager resources) {
         var next = new java.util.LinkedHashMap<String,NativeNpcModel>();
-        resources.listResources("npc_native", path -> path.getPath().endsWith(".json"))
-                .keySet().stream().sorted().forEach(location -> {
-            String path = location.getPath();
-            String name = path.substring("npc_native/".length(),path.length()-5);
-            String id = location.getNamespace().equals(StardewCraft.MODID) ? name : location.getNamespace()+":"+name;
-            try (var reader = resources.openAsReader(location)) {
-                var loaded = new Gson().fromJson(reader,NativeNpcModel.class);
-                boolean legacyActivity = com.stardew.craft.npc.animation.SamActivity.fromAnimation(id) != null;
-                validate(loaded,legacyActivity,id);
-                if (resources.getResource(ResourceLocation.parse(loaded.texture())).isEmpty())
-                    throw new java.io.IOException("Missing native NPC texture: "+loaded.texture());
-                next.put(id,loaded);
-            } catch (Exception error) {
-                throw new IllegalStateException("Cannot load native NPC asset " + id + "; legacy fallback is forbidden", error);
+        var textures = new java.util.LinkedHashMap<ResourceLocation,com.mojang.blaze3d.platform.NativeImage>();
+        try {
+            resources.listResources("npc_native", path -> path.getPath().endsWith(".json"))
+                    .keySet().stream().sorted().forEach(location -> {
+                String path = location.getPath();
+                String name = path.substring("npc_native/".length(),path.length()-5);
+                String id = location.getNamespace().equals(StardewCraft.MODID) ? name : location.getNamespace()+":"+name;
+                try (var reader = resources.openAsReader(location)) {
+                    var loaded = new Gson().fromJson(reader,NativeNpcModel.class);
+                    boolean legacyActivity = com.stardew.craft.npc.animation.SamActivity.fromAnimation(id) != null;
+                    validate(loaded,legacyActivity,id);
+                    var texture = ResourceLocation.parse(loaded.texture());
+                    if (!textures.containsKey(texture)) {
+                        try (var input = resources.open(texture)) {
+                            textures.put(texture,com.mojang.blaze3d.platform.NativeImage.read(input));
+                        }
+                    }
+                    next.put(id,loaded);
+                } catch (Exception error) {
+                    throw new IllegalStateException("Cannot load native NPC asset " + id + "; legacy fallback is forbidden", error);
+                }
+            });
+            NpcModelOwnership.requireComplete(next.keySet());
+            // Publish the decoded textures with their models, rather than letting the first
+            // visible actor lazily load a changed file or reuse a cached missing texture.
+            var manager = net.minecraft.client.Minecraft.getInstance().getTextureManager();
+            var iterator = textures.entrySet().iterator();
+            while (iterator.hasNext()) {
+                var entry = iterator.next();
+                var texture = new net.minecraft.client.renderer.texture.DynamicTexture(entry.getValue());
+                iterator.remove(); // DynamicTexture now owns the native image.
+                try {
+                    manager.register(entry.getKey(),texture);
+                } catch (RuntimeException error) {
+                    texture.close();
+                    throw error;
+                }
             }
-        });
-        NpcModelOwnership.requireComplete(next.keySet());
-        models = java.util.Map.copyOf(next);
+            models = java.util.Map.copyOf(next);
+            StardewCraft.LOGGER.info("[NPC_ASSETS] Loaded {} native models with decoded textures",models.size());
+        } finally {
+            textures.values().forEach(com.mojang.blaze3d.platform.NativeImage::close);
+        }
     }
 
     static void validate(NativeNpcModel model) {

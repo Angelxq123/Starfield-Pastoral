@@ -44,6 +44,7 @@ public record InventoryOrganizePayload(int target) implements CustomPacketPayloa
                 return;
             }
 
+            if (!player.containerMenu.stillValid(player)) return;
             if (player.containerMenu instanceof WoodenChestMenu woodenChestMenu) {
                 woodenChestMenu.organizeContainer();
             } else if (player.containerMenu instanceof StoneChestMenu stoneChestMenu) {

@@ -39,9 +39,10 @@ public final class TemplateMaterials {
                         state.getShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
     }
 
-    /** Keep the new timber's grain along straight structural members after template rotation. */
+    /** Keep painted timber grain along straight structural members after template rotation. */
     public static BlockState orientTimber(BlockState material, TemplateShape shape, BlockState template) {
-        if (!material.is(com.stardew.craft.block.ModBlocks.BLUE_GRAY_TIMBER.get())) return material;
+        if (!material.is(com.stardew.craft.block.ModBlocks.BLUE_GRAY_TIMBER.get())
+                && !material.is(com.stardew.craft.block.ModBlocks.TEAL_PAINTED_TIMBER.get())) return material;
         net.minecraft.core.Direction.Axis axis = switch (shape) {
             case WALL_BEAM, ROOF_EAVE, HORIZONTAL_COLUMN, HORIZONTAL_POST,
                     HORIZONTAL_STICK, HORIZONTAL_POLE, FRAME_TOP, FRAME_BOTTOM ->

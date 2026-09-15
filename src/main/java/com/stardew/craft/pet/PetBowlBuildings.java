@@ -48,7 +48,9 @@ public final class PetBowlBuildings {
         var data = BuildingWorldData.get(player.server);
         if (!isBowl(record.family()) || !record.manager().equals(pos) || data.transfer(record.id()) != null
                 || !BuildingService.canManage(player, record)) { BuildingPlacementService.message(player, "overlap"); return false; }
-        for (var stack : player.getInventory().items) {
+        var held = new java.util.ArrayList<ItemStack>(player.getInventory().items);
+        held.add(player.getOffhandItem());
+        for (var stack : held) {
             if (BuildingBlueprintItem.isMove(stack) && record.equals(BuildingBlueprintItem.moving(level, stack))) {
                 BuildingPlacementService.message(player, "move_hint"); return true;
             }

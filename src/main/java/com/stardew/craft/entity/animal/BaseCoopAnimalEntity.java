@@ -196,6 +196,12 @@ public abstract class BaseCoopAnimalEntity extends Animal implements GeoEntity {
 		if (isFairTemporaryDecorAnimal()) {
 			return InteractionResult.sidedSuccess(this.level().isClientSide);
 		}
+
+		if (hand == InteractionHand.MAIN_HAND && player instanceof ServerPlayer actor
+				&& managedAnimalId > 0L
+				&& com.stardew.craft.animal.runtime.LegacyLivestockMigration.openLegacy(actor, this)) {
+			return InteractionResult.SUCCESS;
+		}
 		if (hand != InteractionHand.MAIN_HAND) {
 			return super.mobInteract(player, hand);
 		}

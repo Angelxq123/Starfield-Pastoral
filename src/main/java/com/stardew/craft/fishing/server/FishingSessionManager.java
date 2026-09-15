@@ -464,6 +464,12 @@ public final class FishingSessionManager {
 	private static void giveOrDrop(ServerPlayer player, ItemStack stack) {
 		ItemStack remainder = stack.copy();
 		player.getInventory().add(remainder);
+		// Direct inventory insertion does not emit ItemEntityPickupEvent. Like SDV's
+		// onItemCollected, only count the items actually received; overflow counts on pickup.
+		int received = stack.getCount() - remainder.getCount();
+		if (received > 0) {
+			com.stardew.craft.specialorder.SpecialOrderManager.recordItemReceived(player, stack, received);
+		}
 		if (!remainder.isEmpty()) player.drop(remainder, false);
 	}
 
@@ -600,25 +606,11 @@ public final class FishingSessionManager {
 			
 			// Give multiple fish if applicable.
 			if (!festivalFishingGame) {
-				if (finalNumCaught <= 1) {
-					@SuppressWarnings("null")
-					boolean added = player.getInventory().add(fish.copy());
-					if (!added) {
-						player.drop(fish.copy(), false);
-					}
-				} else {
-					int max = Math.max(1, fish.getMaxStackSize());
-					int remaining = finalNumCaught;
-					while (remaining > 0) {
-						int give = Math.min(max, remaining);
-						ItemStack stack = fish.copy();
-						stack.setCount(give);
-						boolean added = player.getInventory().add(stack);
-						if (!added) {
-							player.drop(stack, false);
-						}
-						remaining -= give;
-					}
+				int remaining = finalNumCaught;
+				while (remaining > 0) {
+					int give = Math.min(Math.max(1, fish.getMaxStackSize()), remaining);
+					giveOrDrop(player, fish.copyWithCount(give));
+					remaining -= give;
 				}
 				if (ornateNecklace) {
 					com.stardew.craft.quest.StardewQuestEvents.fireItemReceived(

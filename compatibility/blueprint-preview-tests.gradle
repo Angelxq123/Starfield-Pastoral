@@ -1,0 +1,14 @@
+// ./gradlew -I compatibility/blueprint-preview-tests.gradle classes test
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/blueprint-preview')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/building/runtime/BuildingBlueprintPreviewTest.class'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/blueprint-preview')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/blueprint-preview')
+            }
+        }
+    }
+}

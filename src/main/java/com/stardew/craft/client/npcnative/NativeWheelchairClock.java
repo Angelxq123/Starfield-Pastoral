@@ -9,8 +9,15 @@ public final class NativeWheelchairClock {
     private double lastTime=Double.NaN,lastX,lastZ,lastYaw;
     private final double[] distance=new double[2], phase=new double[2], blend=new double[2];
     private final double[] caster=new double[2],frontDistance=new double[2];
+    private final double travelScale;
     private Sample result=new Sample(new Wheel(0,0,0),new Wheel(0,0,0),0,0,0,0);
     private static double wrap(double d) { return d-360*Math.floor((d+180)/360); }
+
+    public NativeWheelchairClock() { this(1); }
+    public NativeWheelchairClock(double travelScale) {
+        if(!Double.isFinite(travelScale)||travelScale<=0)throw new IllegalArgumentException("Invalid travel scale");
+        this.travelScale=travelScale;
+    }
 
     /** x/z are the rendered rear axle centre in blocks; yaw is Minecraft facing in degrees. */
     public Sample sample(double time,double x,double z,double yaw,boolean grounded) {
@@ -32,7 +39,9 @@ public final class NativeWheelchairClock {
             distance[i]+=travel;
             boolean moving=Math.abs(travel)/dt>.4;
             if(blend[i]==0 && (moving || preparing))phase[i]=0;
-            if(moving) phase[i]+=travel/16;
+            // Keep the push cadence while translating faster; in-place turns retain their timing.
+            // Wheel/caster rolling above and below still uses the full physical distance.
+            if(moving) phase[i]+=(forward/travelScale+side*8.5*turn)/16;
             blend[i]=moving || grounded && preparing ? Math.min(1,blend[i]+dt/.30)
                     : Math.max(0,blend[i]-dt/.55);
             // Front axle is nine units ahead of rear axle. Fork yaw follows its local velocity.

@@ -51,10 +51,11 @@ public final class TerrainFaceConnections {
     }
 
     public static int rank(BlockState state) {
-        if (state.is(ModBlocks.DARK_GRASS_BLOCK.get())) return 5;
-        if (state.is(ModBlocks.GRASS_BLOCK.get())) return 4;
-        if (state.is(ModBlocks.FARMLAND.get())) return state.getValue(FarmBlock.MOISTURE) > 0 ? 3 : 2;
-        if (state.is(ModBlocks.DIRT.get())) return 1;
+        if (state.is(ModBlocks.DARK_GRASS_BLOCK.get())) return 6;
+        if (state.is(ModBlocks.GRASS_BLOCK.get())) return 5;
+        if (TerrainSoils.farmland(state)) return state.getValue(FarmBlock.MOISTURE) > 0 ? 4 : 3;
+        if (state.is(ModBlocks.DIRT.get())) return 2;
+        if (state.is(ModBlocks.SAND.get())) return 1;
         return state.is(ModBlocks.CLIFF.get()) ? 0 : -1;
     }
 
@@ -94,7 +95,7 @@ public final class TerrainFaceConnections {
     }
 
     private static boolean insetTop(BlockState state, Direction face) {
-        return state.is(ModBlocks.FARMLAND.get()) && face == Direction.UP;
+        return TerrainSoils.farmland(state) && face == Direction.UP;
     }
 
     public static List<Connection> collect(BlockGetter level, BlockPos pos, BlockState target, Direction face) {

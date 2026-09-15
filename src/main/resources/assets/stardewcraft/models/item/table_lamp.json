@@ -1,6 +1,6 @@
 {
   "parent": "stardewcraft:decor/common/table_lamp",
   "textures": {
-    "particle": "stardewcraft:block/decor/common/table_lamp"
+    "particle": "stardewcraft:block/decor/common/table_lamp_particle"
   }
 }

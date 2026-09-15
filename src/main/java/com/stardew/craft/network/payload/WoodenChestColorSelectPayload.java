@@ -34,6 +34,7 @@ public record WoodenChestColorSelectPayload(int colorSelection) implements Custo
             if (!(serverPlayer.containerMenu instanceof WoodenChestMenu menu)) {
                 return;
             }
+            if (!menu.stillValid(serverPlayer)) return;
             menu.setColorSelectionFromClient(WoodenChestColorPalette.clampIndex(payload.colorSelection));
         });
     }

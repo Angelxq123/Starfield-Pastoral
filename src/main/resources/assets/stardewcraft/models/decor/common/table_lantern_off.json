@@ -1,0 +1,858 @@
+{
+  "credit": "Made with Blockbench",
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/decor/common/table_lantern_metal",
+    "1": "stardewcraft:block/decor/common/table_lantern_shade_off",
+    "particle": "stardewcraft:block/decor/common/table_lantern_particle"
+  },
+  "elements": [
+    {
+      "name": "foot_plate",
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        1,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0.25,
+            1.75,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2,
+            0.25,
+            3.5,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.75,
+            0.25,
+            5.25,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            0.25,
+            7,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            7.25,
+            0.25,
+            8.75,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            9,
+            0.25,
+            10.5,
+            1.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "oil_reservoir",
+      "from": [
+        6,
+        1,
+        6
+      ],
+      "to": [
+        10,
+        2,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.75,
+            0.25,
+            11.75,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            12,
+            0.25,
+            13,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            13.25,
+            0.25,
+            14.25,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            14.5,
+            0.25,
+            15.5,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0.25,
+            2,
+            1.25,
+            3
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "lower_rim",
+      "from": [
+        5,
+        2,
+        5
+      ],
+      "to": [
+        11,
+        3,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.5,
+            2,
+            3,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.25,
+            2,
+            4.75,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5,
+            2,
+            6.5,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.75,
+            2,
+            8.25,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            2,
+            10,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10.25,
+            2,
+            11.75,
+            3.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "glass_chamber",
+      "from": [
+        6,
+        3,
+        6
+      ],
+      "to": [
+        10,
+        7,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0.25,
+            1.25,
+            1.25
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            1.5,
+            0.25,
+            2.5,
+            1.25
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            2.75,
+            0.25,
+            3.75,
+            1.25
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            4,
+            0.25,
+            5,
+            1.25
+          ],
+          "texture": "#1"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "left_guard",
+      "from": [
+        5,
+        3,
+        7
+      ],
+      "to": [
+        6,
+        7,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            2,
+            12.25,
+            3
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            12.5,
+            2,
+            13,
+            3
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            13.25,
+            2,
+            13.5,
+            3
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.75,
+            2,
+            14.25,
+            3
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "right_guard",
+      "from": [
+        10,
+        3,
+        7
+      ],
+      "to": [
+        11,
+        7,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14.5,
+            2,
+            14.75,
+            3
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            15,
+            2,
+            15.5,
+            3
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.25,
+            3.75,
+            0.5,
+            4.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0.75,
+            3.75,
+            1.25,
+            4.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "vent_hood",
+      "from": [
+        5,
+        7,
+        5
+      ],
+      "to": [
+        11,
+        8,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.5,
+            3.75,
+            3,
+            4
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.25,
+            3.75,
+            4.75,
+            4
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3.75,
+            6.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.75,
+            3.75,
+            8.25,
+            4
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            3.75,
+            10,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10.25,
+            3.75,
+            11.75,
+            5.25
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "hood_cap",
+      "from": [
+        6,
+        8,
+        6
+      ],
+      "to": [
+        10,
+        9,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            3.75,
+            13,
+            4
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.25,
+            3.75,
+            14.25,
+            4
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14.5,
+            3.75,
+            15.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0.25,
+            5.5,
+            1.25,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            1.5,
+            5.5,
+            2.5,
+            6.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "handle_left",
+      "from": [
+        6,
+        9,
+        7
+      ],
+      "to": [
+        7,
+        12,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.75,
+            5.5,
+            3,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.25,
+            5.5,
+            3.5,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.75,
+            5.5,
+            4,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            4.25,
+            5.5,
+            4.5,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4.75,
+            5.5,
+            5,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "handle_right",
+      "from": [
+        9,
+        9,
+        7
+      ],
+      "to": [
+        10,
+        12,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.25,
+            5.5,
+            5.5,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5.75,
+            5.5,
+            6,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            6.25,
+            5.5,
+            6.5,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.75,
+            5.5,
+            7,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            7.25,
+            5.5,
+            7.5,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "handle_bridge",
+      "from": [
+        7,
+        11,
+        7
+      ],
+      "to": [
+        9,
+        12,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.75,
+            5.5,
+            8.25,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            5.5,
+            9,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            9.25,
+            5.5,
+            9.75,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10,
+            5.5,
+            10.5,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "wick_adjuster",
+      "from": [
+        7,
+        1,
+        5
+      ],
+      "to": [
+        9,
+        2,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.75,
+            5.5,
+            11.25,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.5,
+            5.5,
+            11.75,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12,
+            5.5,
+            12.25,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            5.5,
+            13,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        145,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.85,
+        0.85,
+        0.85
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        -135,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    }
+  },
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          5,
+          0,
+          5
+        ],
+        "to": [
+          11,
+          12,
+          11
+        ]
+      }
+    ]
+  }
+}

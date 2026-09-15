@@ -47,7 +47,7 @@ public final class ArtifactSpotSpawnService {
     public static boolean isDiggableSurface(BlockState state) {
         // Deliberate project exception: grass is excluded even in winter.
         return state.is(ModBlocks.DIRT.get()) || state.is(ModBlocks.YELLOW_DIRT.get())
-                || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.SAND);
+                || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.SAND) || state.is(ModBlocks.SAND.get());
     }
 
     public static boolean canPlace(ServerLevel level, BlockPos marker) {

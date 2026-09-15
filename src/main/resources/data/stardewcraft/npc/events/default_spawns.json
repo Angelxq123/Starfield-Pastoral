@@ -190,10 +190,18 @@
       "point": "linus_schedule_01"
     },
     "marnie": {
-      "x": -87.5,
-      "y": 24.0,
+      "x": -86.5,
+      "y": 34,
       "z": 21.5,
-      "yaw": -90.0
+      "yaw": -90.0,
+      "point": "marnie_animalshop_counter",
+      "retired_positions": [
+        {
+          "x": -87.5,
+          "y": 24,
+          "z": 21.5
+        }
+      ]
     },
     "maru": {
       "x": 42.5,
@@ -240,10 +248,28 @@
       "yaw": 90.0
     },
     "sebastian": {
-      "x": 43.5,
-      "y": 80.0,
+      "x": 44.5,
+      "y": 46,
       "z": -104.5,
-      "yaw": 180.0
+      "yaw": 180.0,
+      "point": "sebastian_room_bed",
+      "retired_positions": [
+        {
+          "x": 43.5,
+          "y": 80,
+          "z": -104.5
+        },
+        {
+          "x": 41.5,
+          "y": 80,
+          "z": -108.5
+        },
+        {
+          "x": 36.5,
+          "y": 80,
+          "z": -107.5
+        }
+      ]
     },
     "shane": {
       "x": -67.5,

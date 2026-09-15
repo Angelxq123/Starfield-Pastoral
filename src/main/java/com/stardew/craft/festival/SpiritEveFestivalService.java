@@ -84,7 +84,9 @@ public final class SpiritEveFestivalService {
     private static final int REWARD_SLOT = 13;
     private static final int CHEST_BROWN_COLOR = 8;
     private static final AABB VENUE_BOUNDS = inclusiveBox(new BlockPos(-36, 63, -77), new BlockPos(74, 71, 22));
-    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-39, 84, -70), new BlockPos(78, 64, 29));
+    // Clear arrival space inside the shipped festival venue, independent of the approach direction.
+    private static final Vec3 SAFE_ENTRY_RETURN = new Vec3(3.5D, 64.0D, -1.5D);
+    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-39, 84, -70), new BlockPos(78, 64, 29)).expandTowards(0.0D, -1.0D, 0.0D);
     private static final AABB PIERRE_SHOP_BOUNDS = inclusiveBox(new BlockPos(2, 63, -16), new BlockPos(-1, 67, -19));
     private static final BlockPos GOLDEN_PUMPKIN_CHEST_POS = new BlockPos(67, 66, -58);
     private static final BlockPos SHORTCUT_MINECART_POS = new BlockPos(68, 66, -60);
@@ -744,11 +746,7 @@ public final class SpiritEveFestivalService {
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, false);
         syncFestivalMusic(player, FestivalMusicStatePayload.SPIRITS_EVE);
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, true);
-        Vec3 target = LAST_INSIDE_ENTRY.get(player.getUUID());
-        if (!isInsideEntryBounds(target)) {
-            target = pushInsideEntry(player.position());
-        }
-        target = safeInsideEntryTarget(player, target);
+        Vec3 target = safeInsideEntryTarget(player, SAFE_ENTRY_RETURN);
         ModTeleport.to(player, player.serverLevel(), target.x, target.y, target.z, player.getYRot(), player.getXRot());
         player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0F;
@@ -829,7 +827,7 @@ public final class SpiritEveFestivalService {
     }
 
     private static Vec3 safeInsideEntryTarget(ServerPlayer player, Vec3 preferred) {
-        Vec3 fallback = pushInsideEntry(player == null ? preferred : player.position());
+        Vec3 fallback = SAFE_ENTRY_RETURN;
         Vec3 target = FestivalBoundaryReturn.findSafeInside(player, ENTRY_EXIT_BOUNDS, preferred, fallback);
         return target != null ? target : fallback;
     }

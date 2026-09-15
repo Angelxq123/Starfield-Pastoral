@@ -71,7 +71,9 @@ public final class FestivalOfIceService {
     private static final int FISH_TO_WIN = 5;
     private static final float SOUTH_YAW = 0.0F;
 
-    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-187, 95, 13), new BlockPos(-61, 61, 82));
+    // Clear arrival space inside the shipped festival venue, independent of the approach direction.
+    private static final Vec3 SAFE_ENTRY_RETURN = new Vec3(-115.5D, 64.0D, 40.5D);
+    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-187, 95, 13), new BlockPos(-61, 61, 82)).expandTowards(0.0D, -1.0D, 0.0D);
     private static final BlockPos TRAVELING_MERCHANT_INTERACTION_POS = new BlockPos(-128, 65, 54);
     private static final BlockPos PLAYER_CONTEST_POS = new BlockPos(-110, 64, 57);
     private static final AABB TEMP_ROD_CLEANUP_BOUNDS = AABB.ofSize(
@@ -442,6 +444,7 @@ public final class FestivalOfIceService {
         startTimeFreeze(player.serverLevel());
         syncFestivalMusic(player, FestivalMusicStatePayload.CHRISTMAS_THEME);
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, true);
+        LAST_INSIDE_ENTRY.put(player.getUUID(), SAFE_ENTRY_RETURN);
         moveToLastInsideEntry(player.serverLevel(), player);
     }
 
@@ -803,7 +806,7 @@ public final class FestivalOfIceService {
         if (target == null || !ENTRY_EXIT_BOUNDS.contains(target)) {
             target = FestivalBoundaryReturn.pushInside(ENTRY_EXIT_BOUNDS, player.position());
         }
-        Vec3 fallback = FestivalBoundaryReturn.pushInside(ENTRY_EXIT_BOUNDS, player.position());
+        Vec3 fallback = SAFE_ENTRY_RETURN;
         Vec3 safeTarget = FestivalBoundaryReturn.findSafeInside(player, ENTRY_EXIT_BOUNDS, target, fallback);
         if (safeTarget != null) {
             target = safeTarget;

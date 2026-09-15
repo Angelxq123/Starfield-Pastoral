@@ -1,34 +1,29 @@
 package com.stardew.craft.block.decor;
 
-import com.stardew.craft.blockentity.ShrineBlockEntity;
+import javax.annotation.Nonnull;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-@SuppressWarnings("null")
-public class ShrineDecorBlock extends MapDecorStaticBlock implements EntityBlock {
-
-
+/** Static Grandpa's Shrine; placement and its three broad collision boxes share one profile. */
+public final class ShrineDecorBlock extends MapDecorStaticBlock {
     public ShrineDecorBlock(Properties properties, String modelId) {
-        super(properties, modelId, -16, 0, -16, 32, 32, 16);
+        super(properties, modelId);
     }
 
     @Override
-    public RenderShape getRenderShape(@Nonnull BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
-    }
-
-    @Override
-    @Nullable
-    public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        if (state.getValue(PART) != Part.MAIN) {
-            return null;
+    public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos,
+                         @Nonnull BlockState newState, boolean moving) {
+        if (!state.is(newState.getBlock()) && state.getValue(PART) == Part.EXTENSION && !level.isClientSide) {
+            BlockPos main = findMainPos(level, pos, state);
+            if (main != null && level.getBlockState(main).is(this)) {
+                if (!dropsSuppressed()) popResource(level, main, new ItemStack(this));
+                // Its footprint starts west of MAIN. Remove MAIN before any other
+                // extension, so explosions/automation cannot drop once per cell.
+                runWithDropsSuppressed(() -> level.removeBlock(main, false));
+            }
         }
-        return new ShrineBlockEntity(pos, state);
+        super.onRemove(state, level, pos, newState, moving);
     }
 }

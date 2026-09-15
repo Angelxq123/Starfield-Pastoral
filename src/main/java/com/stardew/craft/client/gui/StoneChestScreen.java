@@ -5,6 +5,7 @@ import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.common.ChestColorWheel;
 import com.stardew.craft.client.gui.common.ChestModelPreview;
+import com.stardew.craft.client.gui.common.ChestMenuBackground;
 import com.stardew.craft.menu.StoneChestMenu;
 import com.stardew.craft.network.payload.InventoryOrganizePayload;
 import com.stardew.craft.network.payload.StoneChestColorSelectPayload;
@@ -22,8 +23,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 @SuppressWarnings("null")
 public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
-    private static final ResourceLocation CHEST_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
-    private static final int ROWS = 6;
 
     private static final ResourceLocation COLOR_WHEEL = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/color_wheel.png");
     private static final int BUTTON_SIZE = 18;
@@ -32,6 +31,7 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
     private int colorButtonY;
     private int organizeButtonX;
     private int organizeButtonY;
+    private final com.stardew.craft.client.gui.common.ChestExtraActions extraActions = new com.stardew.craft.client.gui.common.ChestExtraActions(menu);
     private final ChestModelPreview modelPreview = new ChestModelPreview();
     private final ChestColorWheel wheel = new ChestColorWheel(ChestColorWheel.chestOptions(),
             color -> PacketDistributor.sendToServer(new StoneChestColorSelectPayload(color)),
@@ -39,7 +39,9 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
 
     public StoneChestScreen(StoneChestMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageHeight = 114 + ROWS * 18;
+        this.imageWidth = menu.layout().imageWidth();
+        this.imageHeight = menu.layout().imageHeight();
+        this.inventoryLabelX = menu.layout().playerX();
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
@@ -50,16 +52,22 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
         this.colorButtonY = this.topPos + 16;
         this.organizeButtonX = this.colorButtonX;
         this.organizeButtonY = this.colorButtonY + 30;
+        layoutExtraActions();
         wheel.layout(this.width, this.height, this.leftPos, this.leftPos + this.imageWidth, colorButtonY);
+    }
+
+    private void layoutExtraActions() {
+        extraActions.layout(organizeButtonX, organizeButtonY, true, true);
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
+        layoutExtraActions();
+        extraActions.render(graphics, mouseX, mouseY);
 
-        graphics.blit(CHEST_TEXTURE, x, y, 0, 0, this.imageWidth, ROWS * 18 + 17);
-        graphics.blit(CHEST_TEXTURE, x, y + ROWS * 18 + 17, 0, 126, this.imageWidth, 96);
+        ChestMenuBackground.draw(graphics, x, y, menu.layout());
 
         boolean hovered = isHoveringColorButton(mouseX, mouseY);
         if (hovered) {
@@ -87,9 +95,14 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (menu.layout().recoverySlots() > 0) {
+            graphics.drawString(this.font, GuiText.ellipsize(this.font,
+                    Component.translatable("stardewcraft.chest.recover_old_items"), this.imageWidth - 16),
+                    8, 72, 0x404040, false);
+        }
         graphics.drawString(this.font, GuiText.ellipsize(this.font, this.title, this.imageWidth - this.titleLabelX - 8),
             this.titleLabelX, this.titleLabelY, 0x404040, false);
-        graphics.drawString(this.font, GuiText.ellipsize(this.font, this.playerInventoryTitle, this.imageWidth - this.inventoryLabelX - 8),
+        graphics.drawString(this.font, GuiText.ellipsize(this.font, this.playerInventoryTitle, 162),
             this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
     }
 
@@ -104,6 +117,7 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
         }
 
         this.renderTooltip(graphics, mouseX, mouseY);
+        extraActions.tooltip(graphics, mouseX, mouseY);
 
         if (isHoveringColorButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.stone_chest.color_picker"), mouseX, mouseY);
@@ -128,6 +142,8 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
             playOrganizeSound();
             return true;
         }
+        layoutExtraActions();
+        if (extraActions.click(mouseX, mouseY, button)) return true;
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -179,10 +195,12 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
 
     /** Includes both side actions and the palette only while it is visible. */
     public List<Rect2i> jeiGuiExtraAreas() {
+        layoutExtraActions();
         List<Rect2i> areas = new ArrayList<>(3);
         areas.add(new Rect2i(colorButtonX - 1, colorButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 6));
         areas.add(new Rect2i(organizeButtonX - 1, organizeButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 2));
         if (wheel.active()) areas.add(wheel.bounds());
+        areas.addAll(extraActions.bounds());
         return List.copyOf(areas);
     }
 

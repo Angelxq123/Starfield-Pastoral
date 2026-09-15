@@ -143,8 +143,13 @@ public final class BuildingPlacementPreview {
         BlockPos next;
         if (pin != null) next = pin;
         else if (hitResult instanceof BlockHitResult hit && hitResult.getType() == HitResult.Type.BLOCK && (manager || hit.getDirection() == Direction.UP))
-            next = manager ? new BlockPlaceContext(mc.player, hand, stack, hit).getClickedPos() : BuildingBlueprintItem.targetAnchor(stack,hit.getBlockPos(),BuildingBlueprintItem.facing(stack,mc.player));
+            next = manager ? new BlockPlaceContext(mc.player, hand, stack, hit).getClickedPos() : BuildingBlueprintItem.previewTargetAnchor(stack,hit.getBlockPos(),BuildingBlueprintItem.facing(stack,mc.player));
         else {
+            preview = null; target = null; pinned = false;
+            while (com.stardew.craft.client.ModKeyMappings.BUILDING_ROTATE.consumeClick()) {}
+            return;
+        }
+        if (next == null) {
             preview = null; target = null; pinned = false;
             while (com.stardew.craft.client.ModKeyMappings.BUILDING_ROTATE.consumeClick()) {}
             return;
@@ -226,10 +231,18 @@ public final class BuildingPlacementPreview {
         if(mc.screen==null && mc.player!=null && upgradePreview!=null) {
             var text=Component.translatable("building.stardewcraft.range_close_hint");
             var g=event.getGuiGraphics();var font=com.stardew.craft.client.font.StardewFonts.small();
-            int w=Math.min(mc.getWindow().getGuiScaledWidth()-16,font.width(text)+24),h=font.split(text,w-20).size()*(font.lineHeight+2)+16;
-            int y=mc.getWindow().getGuiScaledHeight()-h-55;
-            com.stardew.craft.client.gui.common.CommonGuiTextures.drawTextureBox(g,8,y,w,h,1,true);
-            int yy=y+8;for(var line:font.split(text,w-20)){g.drawString(font,line,18,yy,0xFF5C2B00,false);yy+=font.lineHeight+2;}
+            float reading = com.stardew.craft.client.font.StardewFonts.readingScale();
+            int lineHeight = com.stardew.craft.client.font.StardewFonts.lineHeight(font);
+            int w = Math.max(24, Math.min((int) ((mc.getWindow().getGuiScaledWidth() - 16) / reading), font.width(text) + 24));
+            int h = font.split(text, w - 20).size() * (lineHeight + 2) + 16;
+            reading = com.stardew.craft.client.gui.common.ReadingTextLayout.fitHudScale(reading, w, h,
+                    mc.getWindow().getGuiScaledWidth() - 16, mc.getWindow().getGuiScaledHeight() - 55);
+            int y = mc.getWindow().getGuiScaledHeight() - Math.round(h * reading) - 55;
+            g.pose().pushPose(); g.pose().translate(8, y, 0); g.pose().scale(reading, reading, 1);
+            com.stardew.craft.client.gui.common.CommonGuiTextures.drawTextureBox(g, 0, 0, w, h, 1, true);
+            int yy = 8;
+            for (var line : font.split(text, w - 20)) { g.drawString(font, line, 10, yy, 0xFF5C2B00, false); yy += lineHeight + 2; }
+            g.pose().popPose();
         }
         if (mc.screen != null || mc.player == null || upgradePreview!=null || !held || target == null || self) {
             if (ownsActionbar) { mc.gui.setOverlayMessage(Component.empty(), false); ownsActionbar = false; }

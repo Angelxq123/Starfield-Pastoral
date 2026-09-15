@@ -1043,7 +1043,19 @@
       "y": 22,
       "z": -3,
       "indoor": true,
-      "note": "Evelyn 原版日程 01：灶台做饭"
+      "note": "Evelyn: user-confirmed square area MC (39,22,-3)..(42,22,-3), SDV (2,17)..(5,17); not a cooking animation",
+      "square_area": {
+        "min": [
+          39,
+          22,
+          -3
+        ],
+        "max": [
+          42,
+          22,
+          -3
+        ]
+      }
     },
     "evelyn_schedule_02": {
       "x": 57,
@@ -1072,7 +1084,19 @@
       "y": 22,
       "z": -3,
       "indoor": true,
-      "note": "Evelyn 原版日程 04：傍晚做饭"
+      "note": "Evelyn: user-confirmed square area MC (39,22,-3)..(42,22,-3), SDV (2,17)..(5,17); not a cooking animation",
+      "square_area": {
+        "min": [
+          39,
+          22,
+          -3
+        ],
+        "max": [
+          42,
+          22,
+          -3
+        ]
+      }
     },
     "evelyn_schedule_05": {
       "x": 58,

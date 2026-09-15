@@ -154,6 +154,11 @@
       "item": "recipe:stardewcraft:crystal_path",
       "price": 200,
       "stock": 1
+    },
+    {
+      "item": "recipe:stardewcraft:big_chest",
+      "price": 5000,
+      "stock": 1
     }
   ],
   "accepted_sell_types": [

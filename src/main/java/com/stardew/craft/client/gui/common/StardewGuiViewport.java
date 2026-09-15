@@ -18,6 +18,10 @@ public final class StardewGuiViewport {
     }
 
     public static boolean supports(Screen screen) {
+        return supportsBaseline(screen) || StardewReadingZoom.supportsAdditional(screen);
+    }
+
+    private static boolean supportsBaseline(Screen screen) {
         if (screen == null) return false;
         if (screen instanceof StardewGuiContentSize) return true;
         String name = screen.getClass().getName();
@@ -35,7 +39,11 @@ public final class StardewGuiViewport {
                 width = Math.max(width, content.minimumCanvasWidth());
                 height = Math.max(height, content.minimumCanvasHeight());
             }
-            return GuiLayoutMath.viewport(window.getWidth(), window.getHeight(), window.getGuiScale(), width, height);
+            GuiLayoutMath.Viewport base = supportsBaseline(screen)
+                    ? GuiLayoutMath.viewport(window.getWidth(), window.getHeight(), window.getGuiScale(), width, height)
+                    : new GuiLayoutMath.Viewport(window.getGuiScaledWidth(), window.getGuiScaledHeight(), 1, 0, 0,
+                            window.getGuiScale(), window.getWidth() / window.getGuiScale(), window.getHeight() / window.getGuiScale());
+            return StardewReadingZoom.apply(screen, window, base);
         } finally {
             restore(previous);
         }

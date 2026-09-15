@@ -67,6 +67,13 @@ public class ModBlocks {
                         BLOCKS.register("dirt", () -> new com.stardew.craft.block.terrain.TerrainDirtBlock(
                                         Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DIRT)));
 
+        public static final DeferredBlock<com.stardew.craft.block.terrain.TerrainSandBlock> SAND =
+                        BLOCKS.register("sand", () -> new com.stardew.craft.block.terrain.TerrainSandBlock(
+                                        Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.SAND)));
+        public static final DeferredBlock<com.stardew.craft.block.terrain.TerrainFarmlandBlock.Sandy> SANDY_FARMLAND =
+                        BLOCKS.register("sandy_farmland", () -> new com.stardew.craft.block.terrain.TerrainFarmlandBlock.Sandy(
+                                        Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.FARMLAND).mapColor(MapColor.SAND).sound(SoundType.SAND)));
+
         public static final DeferredBlock<com.stardew.craft.block.terrain.TerrainFarmlandBlock> FARMLAND =
                         BLOCKS.register("farmland", () -> new com.stardew.craft.block.terrain.TerrainFarmlandBlock(
                                         Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.FARMLAND)));
@@ -801,6 +808,16 @@ public class ModBlocks {
                                         "stardewcraft:block/decor/house/hanging_basket", 2, -3, 4, 14, 16, 12));
         public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> PALE_BLUE_WINDOW_GLASS = BLOCKS.register("pale_blue_window_glass",
                         () -> new net.minecraft.world.level.block.TransparentBlock(Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.GLASS)));
+
+        public static final DeferredBlock<Block> PALE_CYAN_PLASTER = BLOCKS.register("pale_cyan_plaster",
+                        () -> new Block(Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.TERRACOTTA).mapColor(MapColor.COLOR_LIGHT_BLUE)));
+
+        public static final DeferredBlock<net.minecraft.world.level.block.RotatedPillarBlock> TEAL_PAINTED_TIMBER = BLOCKS.register("teal_painted_timber",
+                        () -> new net.minecraft.world.level.block.RotatedPillarBlock(
+                                        Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_CYAN)));
+
+        public static final DeferredBlock<com.stardew.craft.block.decor.PaintedDoorBlock> BLUE_GLASS_DOOR = BLOCKS.register("blue_glass_door",
+                        () -> new com.stardew.craft.block.decor.PaintedDoorBlock(Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.OAK_DOOR)));
 
         public static final DeferredBlock<Block> CREAM_SIDING = BLOCKS.register("cream_siding",
                         () -> new Block(Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.OAK_PLANKS).mapColor(MapColor.SAND)));
@@ -2193,6 +2210,24 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .noOcclusion()
                                         .strength(1.5F, 3.0F)));
 
+        public static final DeferredBlock<Block> BIG_CHEST = BLOCKS.register("big_chest",
+                () -> new com.stardew.craft.block.utility.StorageChestBlock(Block.Properties.of()
+                        .mapColor(net.minecraft.world.level.material.MapColor.WOOD)
+                        .sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion().strength(1.5F, 3.0F),
+                        com.stardew.craft.block.utility.ChestVariant.BIG_WOOD));
+
+        public static final DeferredBlock<Block> BIG_STONE_CHEST = BLOCKS.register("big_stone_chest",
+                () -> new com.stardew.craft.block.utility.StorageChestBlock(Block.Properties.of()
+                        .mapColor(net.minecraft.world.level.material.MapColor.STONE)
+                        .sound(net.minecraft.world.level.block.SoundType.STONE).noOcclusion().strength(1.5F, 3.0F),
+                        com.stardew.craft.block.utility.ChestVariant.BIG_STONE));
+
+        public static final DeferredBlock<Block> JUNIMO_CHEST = BLOCKS.register("junimo_chest",
+                () -> new com.stardew.craft.block.utility.StorageChestBlock(Block.Properties.of()
+                        .mapColor(net.minecraft.world.level.material.MapColor.WOOD)
+                        .sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion().strength(1.5F, 3.0F),
+                        com.stardew.craft.block.utility.ChestVariant.JUNIMO));
+
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> FRIDGE = BLOCKS.register("fridge",
                         () -> new com.stardew.craft.block.utility.FridgeBlock(Block.Properties.of()
@@ -2472,7 +2507,7 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
 
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> LIGHT_5 = BLOCKS.register("light_5",
-                        () -> new com.stardew.craft.block.decor.ToggleableCeilingLightBlock(Block.Properties.of()
+                        () -> new com.stardew.craft.block.decor.ToggleableWallLightBlock(Block.Properties.of()
                                         .mapColor(net.minecraft.world.level.material.MapColor.METAL)
                                         .sound(net.minecraft.world.level.block.SoundType.LANTERN)
                                         .noOcclusion()
@@ -2493,6 +2528,22 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .sound(net.minecraft.world.level.block.SoundType.LANTERN)
                                         .noOcclusion()
                                         .strength(0.2F), "stardewcraft:decor/common/light_7"));
+
+        @SuppressWarnings("null")
+        public static final DeferredBlock<Block> LIGHT_8 = BLOCKS.register("light_8",
+                        () -> new com.stardew.craft.block.decor.ToggleableWallLightBlock(Block.Properties.of()
+                                        .mapColor(net.minecraft.world.level.material.MapColor.METAL)
+                                        .sound(net.minecraft.world.level.block.SoundType.LANTERN)
+                                        .noOcclusion()
+                                        .strength(0.2F), "stardewcraft:decor/common/light_8"));
+
+        @SuppressWarnings("null")
+        public static final DeferredBlock<Block> LIGHT_9 = BLOCKS.register("light_9",
+                        () -> new com.stardew.craft.block.decor.ToggleableWallLightBlock(Block.Properties.of()
+                                        .mapColor(net.minecraft.world.level.material.MapColor.METAL)
+                                        .sound(net.minecraft.world.level.block.SoundType.LANTERN)
+                                        .noOcclusion()
+                                        .strength(0.2F), "stardewcraft:decor/common/light_9"));
 
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> CUSHION = BLOCKS.register("cushion",
@@ -3501,7 +3552,7 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .mapColor(net.minecraft.world.level.material.MapColor.STONE)
                                         .sound(net.minecraft.world.level.block.SoundType.STONE)
                                         .noOcclusion()
-                                        .strength(1.5F, 6.0F), "stardewcraft:geo/block/decor/shrine_7.geo.json"));
+                                        .strength(1.5F, 6.0F), "stardewcraft:block/decor/grandpa_shrine/spring/grandpa_shrine"));
 
         // ── 稻草人系列（0=基础 9 格半径，1-8=Rarecrow 8 格半径） ──
         @SuppressWarnings("null")

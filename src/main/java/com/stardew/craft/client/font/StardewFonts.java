@@ -101,6 +101,12 @@ public final class StardewFonts {
         return spriteTextColored;
     }
 
+    /** Client preference shared by all languages; does not alter font atlas metrics. */
+    public static float readingScale() {
+        return com.stardew.craft.client.gui.common.ReadingTextLayout.scale(
+                Config.CLIENT_SPEC.isLoaded() ? Config.CLIENT.READING_TEXT_SCALE_PERCENT.get() : 100);
+    }
+
     /** Use Stardew's tintable SpriteText sheet for a colored screen heading. */
     public static MutableComponent title(Component text) {
         return text.copy().withStyle(style -> style

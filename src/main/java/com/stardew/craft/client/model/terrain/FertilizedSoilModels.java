@@ -44,7 +44,7 @@ public final class FertilizedSoilModels {
     }
 
     static void register(ModelEvent.RegisterAdditional event) {
-        for (String season : SEASONS) event.register(id(season));
+        for (String season : SEASONS) { event.register(id(season)); event.register(id("sandy/" + season)); }
         for (int wet = 0; wet < 2; wet++) for (FertilizerType type : FertilizerType.values()) {
             event.register(id(path("vanilla", type, wet)));
             event.register(id(path("pot", type, wet)));
@@ -53,17 +53,7 @@ public final class FertilizedSoilModels {
 
     static TerrainFarmlandQuads[][][] bake(Map<ModelResourceLocation, BakedModel> models) {
         int count = FertilizerType.values().length;
-        TerrainFarmlandQuads[][][] result = new TerrainFarmlandQuads[4][count][2];
-        for (int season = 0; season < 4; season++) {
-            BakedQuad atlas = Objects.requireNonNull(models.get(id(SEASONS[season])))
-                    .getQuads(null, null, RandomSource.create(0)).getFirst();
-            for (int fertilizer = 0; fertilizer < count; fertilizer++) for (int wet = 0; wet < 2; wet++) {
-                BakedQuad[] blends = new BakedQuad[16];
-                for (int blend = 0; blend < (wet == 0 ? 16 : 4); blend++)
-                    blends[blend] = tile(atlas, fertilizer, wet == 0 ? blend : 16 + blend);
-                result[season][fertilizer][wet] = new TerrainFarmlandQuads(blends, wet == 1);
-            }
-        }
+        TerrainFarmlandQuads[][][] result = bakeFamily(models, "");
         BakedModel[][] vanilla = new BakedModel[2][count];
         BakedModel[][] nextPots = new BakedModel[2][count];
         for (int wet = 0; wet < 2; wet++) for (FertilizerType type : FertilizerType.values()) {
@@ -74,6 +64,26 @@ public final class FertilizedSoilModels {
         for (BlockState state : Blocks.FARMLAND.getStateDefinition().getPossibleStates()) {
             var key = BlockModelShaper.stateToModelLocation(state);
             models.put(key, new VanillaSurface(Objects.requireNonNull(models.get(key)), vanilla[state.getValue(FarmBlock.MOISTURE) > 0 ? 1 : 0]));
+        }
+        return result;
+    }
+
+    static TerrainFarmlandQuads[][][] bakeSandy(Map<ModelResourceLocation, BakedModel> models) {
+        return bakeFamily(models, "sandy/");
+    }
+
+    private static TerrainFarmlandQuads[][][] bakeFamily(Map<ModelResourceLocation, BakedModel> models, String prefix) {
+        int count = FertilizerType.values().length;
+        TerrainFarmlandQuads[][][] result = new TerrainFarmlandQuads[4][count][2];
+        for (int season = 0; season < 4; season++) {
+            BakedQuad atlas = Objects.requireNonNull(models.get(id(prefix + SEASONS[season])))
+                    .getQuads(null, null, RandomSource.create(0)).getFirst();
+            for (int fertilizer = 0; fertilizer < count; fertilizer++) for (int wet = 0; wet < 2; wet++) {
+                BakedQuad[] blends = new BakedQuad[16];
+                for (int blend = 0; blend < (wet == 0 ? 16 : 4); blend++)
+                    blends[blend] = tile(atlas, fertilizer, wet == 0 ? blend : 16 + blend);
+                result[season][fertilizer][wet] = new TerrainFarmlandQuads(blends, wet == 1);
+            }
         }
         return result;
     }

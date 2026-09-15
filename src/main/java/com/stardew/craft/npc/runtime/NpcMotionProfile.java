@@ -6,6 +6,11 @@ import java.util.Map;
 
 /** Physics values are authored per actor, independently from visual gait and demographic traits. */
 public record NpcMotionProfile(float width,float height,float eyeHeight,double speed,double stepHeight,boolean attention) {
+    /** World travel scale for the larger MC map; compensate visual stride by the same factor. */
+    public static final double TRAVEL_SPEED_MULTIPLIER=1.5;
+
+    public double travelSpeed() { return speed*TRAVEL_SPEED_MULTIPLIER; }
+
     private static long revision=-1;
     private static Map<String,NpcMotionProfile> profiles=Map.of();
     public static NpcMotionProfile forActor(String id) {

@@ -285,6 +285,8 @@ public class StardewCraftClient {
                 ModBlocks.LIGHT_5.get(),
                 ModBlocks.LIGHT_6.get(),
                 ModBlocks.LIGHT_7.get(),
+                ModBlocks.LIGHT_8.get(),
+                ModBlocks.LIGHT_9.get(),
                 ModBlocks.OAK_TABLE.get(),
                 ModBlocks.SPRUCE_TABLE.get(),
                 ModBlocks.BIRCH_TABLE.get(),

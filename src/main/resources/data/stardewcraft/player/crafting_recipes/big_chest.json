@@ -1,0 +1,16 @@
+{
+  "output": "stardewcraft:big_chest",
+  "output_count": 1,
+  "big_craftable": true,
+  "ingredients": [
+    {
+      "item": "stardewcraft:wood_normal",
+      "count": 120
+    },
+    {
+      "item": "stardewcraft:copper_bar",
+      "count": 2
+    }
+  ],
+  "legacy_unlock_condition": "null"
+}

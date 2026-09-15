@@ -80,6 +80,27 @@ public class ModMenuTypes {
         MENU_TYPES.register("wooden_chest",
             () -> new MenuType<>(WoodenChestMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> BIG_CHEST =
+        MENU_TYPES.register("big_chest", () -> new MenuType<>((id, inv) ->
+                WoodenChestMenu.variantClient(id, inv, com.stardew.craft.block.utility.ChestVariant.BIG_WOOD), FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> BIG_STONE_CHEST =
+        MENU_TYPES.register("big_stone_chest", () -> new MenuType<>((id, inv) ->
+                WoodenChestMenu.variantClient(id, inv, com.stardew.craft.block.utility.ChestVariant.BIG_STONE), FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> JUNIMO_CHEST =
+        MENU_TYPES.register("junimo_chest", () -> new MenuType<>((id, inv) ->
+                WoodenChestMenu.variantClient(id, inv, com.stardew.craft.block.utility.ChestVariant.JUNIMO), FeatureFlags.DEFAULT_FLAGS));
+
+    // The old wooden menu is also used by 27-slot mine and festival rewards.
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> WOODEN_STORAGE =
+        MENU_TYPES.register("wooden_storage",
+            () -> new MenuType<>(WoodenChestMenu::storageClient, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<StoneChestMenu>> STONE_CHEST_RECOVERY =
+        MENU_TYPES.register("stone_chest_recovery",
+            () -> new MenuType<>(StoneChestMenu::recoveryClient, FeatureFlags.DEFAULT_FLAGS));
+
     @SuppressWarnings("null")
     public static final DeferredHolder<MenuType<?>, MenuType<StoneChestMenu>> STONE_CHEST =
         MENU_TYPES.register("stone_chest",

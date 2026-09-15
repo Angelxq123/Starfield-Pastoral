@@ -1,0 +1,723 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "frame": "stardewcraft:block/decor/house/blue_glass_door_frame",
+    "glass": "stardewcraft:block/decor/house/blue_glass_door_glass",
+    "particle": "stardewcraft:block/decor/house/blue_glass_door_particle"
+  },
+  "elements": [
+    {
+      "name": "左门梃",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        3,
+        16,
+        3
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0.75,
+            0.0,
+            0,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8,
+            0.0,
+            8.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            8,
+            0.0,
+            7.25,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9,
+            0.0,
+            9.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            0.75,
+            8,
+            0,
+            8.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "右门梃",
+      "from": [
+        0,
+        0,
+        13
+      ],
+      "to": [
+        3,
+        16,
+        16
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            0.0,
+            3.25,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8,
+            0.0,
+            8.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            4.75,
+            0.0,
+            4,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9,
+            0.0,
+            9.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            4,
+            8,
+            3.25,
+            8.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "中横档",
+      "from": [
+        0,
+        0,
+        3
+      ],
+      "to": [
+        3,
+        2,
+        13
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            3.25,
+            3.5,
+            0.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            3.5,
+            4.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            3.25,
+            8,
+            0.75,
+            8.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "顶档",
+      "from": [
+        0,
+        12,
+        3
+      ],
+      "to": [
+        3,
+        16,
+        13
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            3.25,
+            0.0,
+            0.75,
+            1.0
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            0.0,
+            4.75,
+            1.0
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            3.25,
+            8,
+            0.75,
+            8.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            3.25,
+            8,
+            0.75,
+            8.75
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "上窗左压条",
+      "from": [
+        -0.5,
+        2,
+        3
+      ],
+      "to": [
+        3.5,
+        12,
+        4
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1,
+            1.0,
+            0.75,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8,
+            1.0,
+            9,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            1.0,
+            7,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9,
+            1.0,
+            10,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            1,
+            8,
+            0.75,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            1,
+            8,
+            0.75,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "上窗右压条",
+      "from": [
+        -0.5,
+        2,
+        12
+      ],
+      "to": [
+        3.5,
+        12,
+        13
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            3.25,
+            1.0,
+            3,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8,
+            1.0,
+            9,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            5,
+            1.0,
+            4.75,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9,
+            1.0,
+            10,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            3.25,
+            8,
+            3,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            3.25,
+            8,
+            3,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "上窗下压条",
+      "from": [
+        -0.5,
+        2,
+        4
+      ],
+      "to": [
+        3.5,
+        3,
+        12
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            3,
+            3.25,
+            1,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            7,
+            3.25,
+            5,
+            3.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            3,
+            8,
+            1,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            3,
+            8,
+            1,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "上窗上压条",
+      "from": [
+        -0.5,
+        11,
+        4
+      ],
+      "to": [
+        3.5,
+        12,
+        12
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            3,
+            1.0,
+            1,
+            1.25
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            7,
+            1.0,
+            5,
+            1.25
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            3,
+            8,
+            1,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            3,
+            8,
+            1,
+            9
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "正面拉手上座",
+      "from": [
+        3,
+        1,
+        14
+      ],
+      "to": [
+        4,
+        2,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            12.5,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            12,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            12.5,
+            0.25,
+            12.75,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            0,
+            12.25,
+            0.25
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            12.75,
+            1.5,
+            12.5,
+            1.75
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "正面拉手",
+      "from": [
+        3.5,
+        0,
+        14
+      ],
+      "to": [
+        4.5,
+        1,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            12.5,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            12,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            12.75,
+            0.25,
+            12.5,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            12.5,
+            0.25,
+            12.75,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            0,
+            12.25,
+            0.25
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "背面拉手上座",
+      "from": [
+        -1,
+        1,
+        14
+      ],
+      "to": [
+        0,
+        2,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            12.75,
+            0.25,
+            12.5,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            12.5,
+            0.25,
+            12.75,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            0,
+            12.25,
+            0.25
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            12.75,
+            1.5,
+            12.5,
+            1.75
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "name": "背面拉手",
+      "from": [
+        -1.5,
+        0,
+        14
+      ],
+      "to": [
+        -0.5,
+        1,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            12.5,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            12,
+            0.25,
+            12.25,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            12.75,
+            0.25,
+            12.5,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            12.5,
+            0.25,
+            12.75,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            0,
+            12.25,
+            0.25
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    }
+  ]
+}

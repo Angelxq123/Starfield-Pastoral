@@ -251,8 +251,8 @@ public final class NpcSpawnManager {
             if(target==null && state.activeScheduleKey().isBlank()) {
                 var defaults=NpcDataRegistry.events().get("default_spawns");
                 var pos=defaults==null?null:resolveSpawnPos(defaults.getAsJsonObject("spawns"),npcId,npcId);
-                if(pos!=null && pos.has("x") && pos.has("y") && pos.has("z"))
-                    target=new NpcScheduleRuntimeService.TargetPoint(new Vec3(pos.get("x").getAsDouble(),pos.get("y").getAsDouble(),pos.get("z").getAsDouble()),false,false);
+                Vec3 home=resolveConfiguredHome(level,pos);
+                if(home!=null) target=new NpcScheduleRuntimeService.TargetPoint(home,false,false);
             }
             if (target == null || target.position() == null) {
                 skipped++;
@@ -451,7 +451,7 @@ public final class NpcSpawnManager {
                 z = pos.has("z") ? pos.get("z").getAsDouble() : z;
                 yaw = pos.has("yaw") ? pos.get("yaw").getAsFloat() : yaw;
                 if (pos.has("point")) {
-                    Vec3 home = NpcRoutePlanner.pointFromConfig(level,pos.get("point").getAsString(),null);
+                    Vec3 home = resolveConfiguredHome(level,pos);
                     // An explicitly referenced home must not silently fall back to stale XYZ.
                     homeAvailable = home != null;
                     if (home != null) { x=home.x; y=home.y; z=home.z; }
@@ -1127,6 +1127,13 @@ public final class NpcSpawnManager {
         applyScheduleFacing(npc, state);
         npc.setWalking(false);
         rememberRelocatedPosition(level,npc);
+    }
+
+    private static Vec3 resolveConfiguredHome(ServerLevel level, JsonObject spawn) {
+        if (spawn==null) return null;
+        if (spawn.has("point")) return NpcRoutePlanner.pointFromConfig(level,spawn.get("point").getAsString(),null);
+        if (!spawn.has("x") || !spawn.has("y") || !spawn.has("z")) return null;
+        return new Vec3(spawn.get("x").getAsDouble(),spawn.get("y").getAsDouble(),spawn.get("z").getAsDouble());
     }
 
     private static boolean isRetiredSpawnPosition(JsonObject spawn, Vec3 position) {

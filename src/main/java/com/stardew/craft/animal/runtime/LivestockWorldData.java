@@ -9,9 +9,32 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 import java.util.*;
 
-/** Independent storage; never loads, migrates or writes AnimalWorldData. Server-thread only. */
+/** Server-thread ledger. Legacy imports and their receipts are saved with the resulting state. */
 public final class LivestockWorldData extends SavedData {
     private final Map<UUID, LivestockRecord> animals = new LinkedHashMap<>();
+    // Receipts outlive sales, collection and farm deletion. They are never regenerated from live rows.
+    private final Map<String, UUID> legacyImports = new LinkedHashMap<>();
+    public UUID legacyImport(String source) { return legacyImports.get(source); }
+    public boolean importLegacyAnimal(String source, LivestockRecord animal, boolean newborn) {
+        if (legacyImports.containsKey(source)) return false;
+        if (animals.containsKey(animal.id())) throw new IllegalStateException("Legacy animal UUID collision");
+        put(animal); newborn(animal.id(), newborn); legacyImports.put(source, animal.id()); setDirty(); return true;
+    }
+    public boolean importLegacyProduct(String source, Product product) {
+        if (legacyImports.containsKey(source)) return false;
+        if (eggs.containsKey(product.id())) throw new IllegalStateException("Legacy product UUID collision");
+        product(product); legacyImports.put(source, product.id()); setDirty(); return true;
+    }
+    public void importLegacyHay(String source, UUID farm, int amount) {
+        if (legacyImports.containsKey(source)) return;
+        hay(farm, Math.addExact(hay(farm), Math.max(0, amount)));
+        legacyImports.put(source, farm); setDirty();
+    }
+    public void importLegacyHome(String source, UUID home, boolean doorOpen, int day) {
+        if (legacyImports.containsKey(source)) return;
+        outdoorsAllowed(home, doorOpen); feedDays.put(home, Math.max(feedDay(home), day));
+        legacyImports.put(source, home); setDirty();
+    }
     private final Map<UUID, Product> eggs = new LinkedHashMap<>();
     private final Map<UUID,Integer> birthDays = new HashMap<>();
     private final Set<UUID> newborns = new HashSet<>();
@@ -98,6 +121,7 @@ public final class LivestockWorldData extends SavedData {
     }
     @Override public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putInt("Format", 1); tag.putLong("NextRandomId", nextRandomId);
+        var imported = new CompoundTag(); legacyImports.forEach(imported::putUUID); tag.put("LegacyImports", imported);
         var rows = new ListTag(); animals.values().forEach(a -> rows.add(a.save())); tag.put("Animals", rows);
         var products = new ListTag(); eggs.values().forEach(e -> products.add(e.save())); tag.put("Eggs", products);
         var births = new CompoundTag(); birthDays.forEach((id,day)->births.putInt(id.toString(),day)); tag.put("BirthDays",births);
@@ -110,6 +134,8 @@ public final class LivestockWorldData extends SavedData {
     public static LivestockWorldData load(CompoundTag tag, HolderLookup.Provider registries) {
         if (tag.getInt("Format") != 1) throw new IllegalArgumentException("Unsupported livestock format");
         var data = new LivestockWorldData(); data.nextRandomId = tag.getLong("NextRandomId");
+        var imported = tag.getCompound("LegacyImports");
+        for (var key : imported.getAllKeys()) data.legacyImports.put(key, imported.getUUID(key));
         for (var row : tag.getList("Animals", Tag.TAG_COMPOUND)) { var a = LivestockRecord.load((CompoundTag)row); data.animals.put(a.id(), a); }
         for (var row : tag.getList("Eggs", Tag.TAG_COMPOUND)) { var e = Product.load((CompoundTag)row); data.eggs.put(e.id(), e); }
         var births = tag.getCompound("BirthDays");for(var key:births.getAllKeys())data.birthDays.put(UUID.fromString(key),births.getInt(key));

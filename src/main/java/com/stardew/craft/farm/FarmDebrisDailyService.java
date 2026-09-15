@@ -227,7 +227,7 @@ public final class FarmDebrisDailyService {
         int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
         BlockPos top = findTopBlock(level, x, z, min.getY(), max.getY());
         if (top == null || !isDiggableFarmGround(level.getBlockState(top).getBlock())
-                || (level.getBlockState(top).is(Blocks.FARMLAND) || level.getBlockState(top).is(ModBlocks.FARMLAND.get()))) {
+                || (level.getBlockState(top).is(Blocks.FARMLAND) || com.stardew.craft.block.terrain.TerrainSoils.farmland(level.getBlockState(top)))) {
             return null;
         }
         BlockPos place = top.above();
@@ -274,7 +274,7 @@ public final class FarmDebrisDailyService {
     private static boolean isDiggableFarmGround(Block block) {
         return block == ModBlocks.DIRT.get() || block == ModBlocks.YELLOW_DIRT.get()
                 || block instanceof net.minecraft.world.level.block.GrassBlock
-                || block == Blocks.FARMLAND || block == ModBlocks.FARMLAND.get();
+                || block == Blocks.FARMLAND || block instanceof com.stardew.craft.block.terrain.TerrainFarmlandBlock;
     }
 
     private static boolean canDebrisReplace(
@@ -295,8 +295,8 @@ public final class FarmDebrisDailyService {
     /** Spreading debris destroys HoeDirt in SDV, exposing the farm's dirt tile. */
     private static void clearTilledGroundBelow(ServerLevel level, BlockPos place) {
         BlockPos ground = place.below();
-        if (level.getBlockState(ground).is(Blocks.FARMLAND) || level.getBlockState(ground).is(ModBlocks.FARMLAND.get())) {
-            level.setBlock(ground, (level.getBlockState(ground).is(ModBlocks.FARMLAND.get()) ? ModBlocks.DIRT.get() : ModBlocks.YELLOW_DIRT.get()).defaultBlockState(), 3);
+        if (level.getBlockState(ground).is(Blocks.FARMLAND) || com.stardew.craft.block.terrain.TerrainSoils.farmland(level.getBlockState(ground))) {
+            level.setBlock(ground, com.stardew.craft.block.terrain.TerrainSoils.restored(level.getBlockState(ground)).defaultBlockState(), 3);
         }
     }
 

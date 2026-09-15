@@ -12,6 +12,24 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(GuiGraphics.class)
 public abstract class StardewGuiScissorMixin {
+    @WrapOperation(method = "renderTooltipInternal", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;positionTooltip(IIIIII)Lorg/joml/Vector2ic;"))
+    private org.joml.Vector2ic stardewcraft$visibleTooltip(
+            net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner positioner,
+            int width, int height, int mouseX, int mouseY, int tooltipWidth, int tooltipHeight,
+            Operation<org.joml.Vector2ic> original) {
+        var zoom = com.stardew.craft.client.gui.common.StardewReadingZoom.current(net.minecraft.client.Minecraft.getInstance().screen);
+        if (zoom == null || StardewGuiViewport.active() == null) {
+            return original.call(positioner, width, height, mouseX, mouseY, tooltipWidth, tooltipHeight);
+        }
+        var v = zoom.viewport();
+        int left = (int) Math.ceil(-v.x() / v.scale()), top = (int) Math.ceil(-v.y() / v.scale());
+        int visibleW = Math.max(1, (int) (zoom.viewWidth() / (v.scale() * v.windowScale())));
+        int visibleH = Math.max(1, (int) (zoom.viewHeight() / (v.scale() * v.windowScale())));
+        var pos = original.call(positioner, visibleW, visibleH, mouseX - left, mouseY - top, tooltipWidth, tooltipHeight);
+        return new org.joml.Vector2i(left + pos.x(), top + pos.y());
+    }
+
     @WrapMethod(method = "enableScissor")
     private void stardewcraft$pushClip(int left, int top, int right, int bottom, Operation<Void> original) {
         var layout = StardewGuiViewport.active();

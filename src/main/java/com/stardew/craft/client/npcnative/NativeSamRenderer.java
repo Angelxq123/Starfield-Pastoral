@@ -6,6 +6,7 @@ import com.stardew.craft.entity.npc.StardewNpcEntity;
 import com.stardew.craft.cutscene.runtime.EventActorEntity;
 import com.stardew.craft.npc.attention.NpcAttentionMotion;
 import com.stardew.craft.npc.attention.SamAttentionController;
+import com.stardew.craft.npc.runtime.NpcMotionProfile;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -109,7 +110,10 @@ public final class NativeSamRenderer<T extends Mob> extends EntityRenderer<T> {
         double time = (entity.tickCount + (double) partialTick) / 20;
         pose.reset();
         pose.apply("animation."+npcId+".idle", time + clock.idleOffset());
-        var walkClock=walkClocks.computeIfAbsent(entity,e->new NativeWalkClock(model.profile().walkStride()));
+        // Real NPCs cross the larger map faster, with the same animation cadence.
+        // Cutscene actors retain their separately authored movement and animation timing.
+        double travelScale=entity instanceof StardewNpcEntity ? NpcMotionProfile.TRAVEL_SPEED_MULTIPLIER : 1;
+        var walkClock=walkClocks.computeIfAbsent(entity,e->new NativeWalkClock(model.profile().walkStride()*travelScale));
         var walk=walkClock.sample(time,Mth.lerp(partialTick,entity.xo,entity.getX()),
                 Mth.lerp(partialTick,entity.zo,entity.getZ()),
                 entity instanceof EventActorEntity actor ? actor.isWalking()
@@ -148,7 +152,7 @@ public final class NativeSamRenderer<T extends Mob> extends EntityRenderer<T> {
             double base=Math.toRadians(bodyYaw);
             double axleX=Mth.lerp(partialTick,entity.xo,entity.getX())+2*Math.sin(base)/16;
             double axleZ=Mth.lerp(partialTick,entity.zo,entity.getZ())-2*Math.cos(base)/16;
-            var wheels=wheelchairClocks.computeIfAbsent(entity,e->new NativeWheelchairClock())
+            var wheels=wheelchairClocks.computeIfAbsent(entity,e->new NativeWheelchairClock(travelScale))
                     .sample(time,axleX,axleZ,bodyYaw-chairTurn,
                             (entity.onGround() || entity instanceof EventActorEntity actor && actor.isWalking()) && entity.isAlive()
                             && !entity.isInWaterOrBubble() && !entity.isPassenger(),chairPreparing);

@@ -40,6 +40,7 @@ public final class Config {
         public final ModConfigSpec.BooleanValue SHOW_MONSTER_HP_BAR;
         public final ModConfigSpec.BooleanValue ENABLE_STARDEW_FONTS;
         public final ModConfigSpec.BooleanValue USE_CHINESE_SMOOTH_FONT;
+        public final ModConfigSpec.IntValue READING_TEXT_SCALE_PERCENT;
         public final ModConfigSpec.BooleanValue LEGACY_COMMON_IMPORTED;
         public final ModConfigSpec.IntValue HUD_SCALE_PERCENT;
         public final ModConfigSpec.EnumValue<HudHorizontalAnchor> HUD_HORIZONTAL_ANCHOR;
@@ -74,6 +75,11 @@ public final class Config {
                     .comment("Use Stardew Valley's optional rounded Chinese font.",
                             "A resource reload or game restart is required after changing this value.")
                     .define("useChineseSmoothFont", false);
+
+            READING_TEXT_SCALE_PERCENT = builder
+                    .comment("Reading size of all StardewCraft screens and HUD elements. Text and its container scale together; oversized pages remain scrollable. Applies to every language without a resource reload.")
+                    .translation("config.stardewcraft.client.reading_text_scale")
+                    .defineInRange("readingTextScalePercent", 100, 75, 200);
 
             builder.push("migration");
             LEGACY_COMMON_IMPORTED = builder

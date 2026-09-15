@@ -16,9 +16,7 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("null")
 public class StoneChestMenu extends AbstractContainerMenu {
-    private static final int ROWS = 6;
-    private static final int COLS = 9;
-    private static final int CHEST_SIZE = ROWS * COLS;
+    private final ChestMenuLayout layout;
 
     private final Container container;
     @Nullable
@@ -26,16 +24,23 @@ public class StoneChestMenu extends AbstractContainerMenu {
     private int colorSelection;
 
     public StoneChestMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, new SimpleContainer(CHEST_SIZE), null);
+        this(containerId, playerInventory, new SimpleContainer(ChestMenuLayout.NORMAL_CAPACITY), null);
+    }
+
+    public static StoneChestMenu recoveryClient(int containerId, Inventory inventory) {
+        return new StoneChestMenu(containerId, inventory, new SimpleContainer(54), null);
     }
 
     public StoneChestMenu(int containerId, Inventory playerInventory, Container container, @Nullable StoneChestBlockEntity chestEntity) {
-        super(ModMenuTypes.STONE_CHEST.get(), containerId);
+        super(container.getContainerSize() > ChestMenuLayout.NORMAL_CAPACITY
+                ? ModMenuTypes.STONE_CHEST_RECOVERY.get() : ModMenuTypes.STONE_CHEST.get(), containerId);
+        this.layout = container.getContainerSize() > ChestMenuLayout.NORMAL_CAPACITY
+                ? ChestMenuLayout.STONE_RECOVERY : ChestMenuLayout.NORMAL;
         this.container = container;
         this.chestEntity = chestEntity;
         this.colorSelection = chestEntity != null ? chestEntity.getColorSelection() : -1;
 
-        checkContainerSize(container, CHEST_SIZE);
+        checkContainerSize(container, layout.visibleSlots());
         container.startOpen(playerInventory.player);
 
         this.addDataSlot(new DataSlot() {
@@ -50,24 +55,28 @@ public class StoneChestMenu extends AbstractContainerMenu {
             }
         });
 
-        for (int row = 0; row < ROWS; row++) {
-            for (int col = 0; col < COLS; col++) {
-                this.addSlot(new Slot(container, col + row * COLS, 8 + col * 18, 18 + row * 18));
-            }
+        for (int index = 0; index < layout.visibleSlots(); index++) {
+            final boolean recovery = index >= layout.storageSlots();
+            this.addSlot(new Slot(container, index, layout.slotX(index), layout.slotY(index)) {
+                @Override public boolean mayPlace(ItemStack stack) { return !recovery; }
+            });
         }
-
-        int playerInvY = 140;
         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < COLS; col++) {
-                this.addSlot(new Slot(playerInventory, col + row * COLS + COLS, 8 + col * 18, playerInvY + row * 18));
+            for (int col = 0; col < 9; col++) {
+                this.addSlot(new Slot(playerInventory, col + row * 9 + 9, layout.playerX() + col * 18, layout.playerY() + row * 18));
             }
         }
-
-        int hotbarY = 198;
-        for (int col = 0; col < COLS; col++) {
-            this.addSlot(new Slot(playerInventory, col, 8 + col * 18, hotbarY));
+        for (int col = 0; col < 9; col++) {
+            this.addSlot(new Slot(playerInventory, col, layout.playerX() + col * 18, layout.hotbarY()));
         }
     }
+
+    public ChestMenuLayout layout() { return layout; }
+    @Override public boolean clickMenuButton(Player player, int id) {
+        if (!stillValid(player)) return false;
+        return com.stardew.craft.inventory.ChestMenuActions.handle(this, container, layout.storageSlots(), player, id);
+    }
+
 
     public int getColorSelection() {
         return colorSelection;
@@ -85,8 +94,8 @@ public class StoneChestMenu extends AbstractContainerMenu {
     }
 
     public void organizeContainer() {
-        InventoryOrganizeService.organizeContainer(container, CHEST_SIZE);
-        for (int i = 0; i < CHEST_SIZE; i++) {
+        InventoryOrganizeService.organizeContainer(container, layout.storageSlots());
+        for (int i = 0; i < layout.visibleSlots(); i++) {
             this.slots.get(i).setChanged();
         }
         this.broadcastChanges();
@@ -94,6 +103,7 @@ public class StoneChestMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        if (index < 0 || index >= slots.size()) return ItemStack.EMPTY;
         ItemStack result = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
         if (!slot.hasItem()) {
@@ -103,11 +113,11 @@ public class StoneChestMenu extends AbstractContainerMenu {
         ItemStack stackInSlot = slot.getItem();
         result = stackInSlot.copy();
 
-        if (index < CHEST_SIZE) {
-            if (!this.moveItemStackTo(stackInSlot, CHEST_SIZE, this.slots.size(), true)) {
+        if (index < layout.visibleSlots()) {
+            if (!this.moveItemStackTo(stackInSlot, layout.visibleSlots(), this.slots.size(), true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!this.moveItemStackTo(stackInSlot, 0, CHEST_SIZE, false)) {
+        } else if (!this.moveItemStackTo(stackInSlot, 0, layout.storageSlots(), false)) {
             return ItemStack.EMPTY;
         }
 

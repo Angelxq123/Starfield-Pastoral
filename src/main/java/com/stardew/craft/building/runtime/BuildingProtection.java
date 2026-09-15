@@ -77,10 +77,13 @@ public final class BuildingProtection {
         return level.getBlockState(pos).getBlock() != next.getBlock();
     }
 
-    /** Stop extraction before a pot awards its flower or a template returns its material. */
+    /** Stop extraction or consumption before a protected decoration awards items or food effects. */
     public static boolean deniesInteraction(ServerLevel level, BlockPos pos) {
         var block = level.getBlockState(pos).getBlock();
         return (block instanceof net.minecraft.world.level.block.FlowerPotBlock
+                || block instanceof com.stardew.craft.block.cooking.CookingPlacedFoodBlock
+                || block instanceof net.minecraft.world.level.block.CakeBlock
+                || block instanceof net.minecraft.world.level.block.CandleCakeBlock
                 || block instanceof com.stardew.craft.templates.TemplateBlock) && protects(level, pos);
     }
 

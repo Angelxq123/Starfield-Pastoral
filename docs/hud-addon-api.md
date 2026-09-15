@@ -6,6 +6,23 @@ The new `api.v1.client` types are **experimental** under the repository's maturi
 from `api.v1` does not yet promise a frozen binary contract. This document describes the implemented
 contract. Server and client must run the matching new StardewCraft version (payload protocol 26).
 
+## Festival names
+
+`StardewFestivalClientSessionSnapshot.displayName()` returns a Minecraft `Component`:
+
+```java
+StardewFestivalClientSessions.find(festivalId).ifPresent(session -> {
+    Component name = session.displayName(); // Pass directly to your GUI or tooltip.
+    String plainName = name.getString();    // If your overlay needs a String.
+});
+```
+
+Built-in festival names follow the client's language using the existing calendar translations.
+Addon festivals use `display_name` from the synchronized festival definition. If the definition
+has not arrived or was removed, the namespaced festival ID is the fallback. Resolve the name again
+after a definition reload; do not permanently cache the plain string across language changes.
+This addition keeps the existing snapshot constructor and session payload format unchanged.
+
 ## Daily information
 
 Call `StardewClientDailyInfo.current()` on the client. It returns

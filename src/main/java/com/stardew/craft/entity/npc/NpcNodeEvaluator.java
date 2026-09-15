@@ -26,6 +26,7 @@ import java.util.Set;
  * no road is available.</p>
  */
 public class NpcNodeEvaluator extends WalkNodeEvaluator {
+    com.stardew.craft.npc.runtime.NpcSquareArea squareArea;
     private record Failure(float cost, long expiresAt) {}
     private final java.util.LinkedHashMap<BlockPos, Failure> failures = new java.util.LinkedHashMap<>();
 
@@ -104,6 +105,10 @@ public class NpcNodeEvaluator extends WalkNodeEvaluator {
         int accepted = 0;
         for (int i = 0; i < count; i++) {
             Node neighbor = buffer[i];
+            if(squareArea!=null&&(!squareArea.contains(new net.minecraft.world.phys.Vec3(neighbor.x+.5,
+                    getFloorLevel(new BlockPos(neighbor.x,neighbor.y,neighbor.z)),neighbor.z+.5),this.mob.getBbWidth()/2.)
+                    ||!com.stardew.craft.interior.InteriorRegionRegistry.fixedInteriorIdAt(this.mob.blockPosition())
+                    .equals(com.stardew.craft.interior.InteriorRegionRegistry.fixedInteriorIdAt(new BlockPos(neighbor.x,neighbor.y,neighbor.z)))))continue;
             // Vanilla accepts a one-block jump even with a 0.6 step height. Reject
             // that edge, not the cached node: the same node may have a level approach.
             if (!canStepBetween(node, neighbor)) continue;

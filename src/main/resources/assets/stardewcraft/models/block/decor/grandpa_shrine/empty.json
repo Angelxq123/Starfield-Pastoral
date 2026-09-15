@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "stardewcraft:block/decor/grandpa_shrine/spring/stone_particle"
+  },
+  "elements": []
+}

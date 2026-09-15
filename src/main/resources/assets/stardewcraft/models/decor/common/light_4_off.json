@@ -1,0 +1,781 @@
+{
+  "credit": "Made with Blockbench",
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/decor/common/light_4_metal",
+    "1": "stardewcraft:block/decor/common/light_4_glow_off",
+    "particle": "stardewcraft:block/decor/common/light_4_particle"
+  },
+  "elements": [
+    {
+      "name": "backplate",
+      "from": [
+        6,
+        2,
+        15
+      ],
+      "to": [
+        10,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0.25,
+            1.25,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            1.5,
+            0.25,
+            1.75,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.25,
+            8,
+            1.25,
+            11
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2,
+            0.25,
+            2.25,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            2.5,
+            0.25,
+            3.5,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.75,
+            0.25,
+            4.75,
+            0.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "backplate_crown",
+      "from": [
+        7,
+        14,
+        15
+      ],
+      "to": [
+        9,
+        15,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            0.25,
+            5.5,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5.75,
+            0.25,
+            6,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.25,
+            11.25,
+            0.75,
+            11.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6.25,
+            0.25,
+            6.5,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6.75,
+            0.25,
+            7.25,
+            0.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "backplate_tail",
+      "from": [
+        7,
+        1,
+        15
+      ],
+      "to": [
+        9,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.5,
+            0.25,
+            8,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            8.25,
+            0.25,
+            8.5,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.25,
+            11.75,
+            0.75,
+            12
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8.75,
+            0.25,
+            9,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            9.25,
+            0.25,
+            9.75,
+            0.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "arm_socket",
+      "from": [
+        7,
+        4,
+        13
+      ],
+      "to": [
+        9,
+        6,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            0.25,
+            10.5,
+            0.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10.75,
+            0.25,
+            11.25,
+            0.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.5,
+            0.25,
+            12,
+            0.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.25,
+            0.25,
+            12.75,
+            0.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            13,
+            0.25,
+            13.5,
+            0.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "short_support_arm",
+      "from": [
+        7,
+        4,
+        10
+      ],
+      "to": [
+        9,
+        5,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.75,
+            0.25,
+            14.25,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            14.5,
+            0.25,
+            15.25,
+            0.5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0.25,
+            3.5,
+            1,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            1.25,
+            3.5,
+            1.75,
+            4.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            3.5,
+            2.5,
+            4.25
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "upright_neck",
+      "from": [
+        7,
+        5,
+        9
+      ],
+      "to": [
+        9,
+        7,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.75,
+            3.5,
+            3.25,
+            4
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.5,
+            3.5,
+            4,
+            4
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4.25,
+            3.5,
+            4.75,
+            4
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            5,
+            3.5,
+            5.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            5.75,
+            3.5,
+            6.25,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10,
+            8,
+            10.5,
+            8.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "lower_collar",
+      "from": [
+        5,
+        7,
+        8
+      ],
+      "to": [
+        11,
+        8,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.5,
+            3.5,
+            8,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            8.25,
+            3.5,
+            9.25,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            9.5,
+            3.5,
+            11,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.25,
+            3.5,
+            12.25,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.5,
+            3.5,
+            14,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            14.25,
+            3.5,
+            15.75,
+            4.5
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "opal_main",
+      "from": [
+        6,
+        8,
+        8
+      ],
+      "to": [
+        10,
+        17,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0.25,
+            1.25,
+            2.5
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            1.5,
+            0.25,
+            2.5,
+            2.5
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            2.75,
+            0.25,
+            3.75,
+            2.5
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            4,
+            0.25,
+            5,
+            2.5
+          ],
+          "texture": "#1"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "top_collar",
+      "from": [
+        5,
+        17,
+        8
+      ],
+      "to": [
+        11,
+        18,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            4.75,
+            1.75,
+            5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2,
+            4.75,
+            3,
+            5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.25,
+            4.75,
+            4.75,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            5,
+            4.75,
+            6,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6.25,
+            4.75,
+            7.75,
+            5.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            8,
+            4.75,
+            9.5,
+            5.75
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "name": "top_button",
+      "from": [
+        7,
+        18,
+        9
+      ],
+      "to": [
+        9,
+        19,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            9.75,
+            4.75,
+            10.25,
+            5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10.5,
+            4.75,
+            11,
+            5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.25,
+            4.75,
+            11.75,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12,
+            4.75,
+            12.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.75,
+            4.75,
+            13.25,
+            5.25
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        145,
+        0
+      ],
+      "translation": [
+        0,
+        -1,
+        0
+      ],
+      "scale": [
+        0.85,
+        0.85,
+        0.85
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        -135,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    }
+  },
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          5,
+          1,
+          8
+        ],
+        "to": [
+          11,
+          19,
+          16
+        ]
+      }
+    ]
+  }
+}

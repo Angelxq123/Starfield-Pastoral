@@ -1,0 +1,12 @@
+{
+  "output": "stardewcraft:big_stone_chest",
+  "output_count": 1,
+  "big_craftable": true,
+  "ingredients": [
+    {
+      "item": "stardewcraft:stone",
+      "count": 250
+    }
+  ],
+  "legacy_unlock_condition": "null"
+}

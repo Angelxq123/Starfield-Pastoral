@@ -13,7 +13,10 @@ public abstract class StardewGuiKeyboardMixin {
     private void stardewcraft$key(long window, int key, int scanCode, int action, int modifiers, Operation<Void> original) {
         Minecraft minecraft = Minecraft.getInstance();
         var previous = StardewGuiViewport.enterForScreen(minecraft.screen, minecraft.getWindow());
-        try { original.call(window, key, scanCode, action, modifiers); }
+        try {
+            original.call(window, key, scanCode, action, modifiers);
+            if (key == 258 && action != 0) com.stardew.craft.client.gui.common.StardewReadingZoom.revealFocus(minecraft.screen);
+        }
         finally { StardewGuiViewport.restore(previous); }
     }
 

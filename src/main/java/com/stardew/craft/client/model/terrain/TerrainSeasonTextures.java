@@ -25,6 +25,10 @@ public final class TerrainSeasonTextures {
         return "block/terrain/farmland/" + (textureSet(season) == 0 ? "spring/" : directory(season));
     }
 
+    public static String farmlandDirectory(int season, boolean sandy) {
+        return sandy ? farmlandDirectory(season).replace("/farmland/", "/sandy_farmland/") : farmlandDirectory(season);
+    }
+
     public static int currentTextureSet() {
         return textureSet(currentSeason);
     }
@@ -40,6 +44,9 @@ public final class TerrainSeasonTextures {
         if (block.equals("cliff")) return "block/cliff/"
                 + new String[]{"spring", "summer", "fall", "winter"}[textureSet(season)] + "/"
                 + new String[]{"plain", "broad", "split", "plain_moss", "broad_moss", "split_moss"}[variant];
+        if (block.equals("sand")) return "block/terrain/sand/"
+                + new String[]{"spring", "summer", "fall", "winter"}[textureSet(season)] + "/sand";
+        if (block.equals("sandy_farmland")) return farmlandDirectory(season, true) + (variant > 0 ? "wet" : "dry");
         if (block.equals("farmland")) return farmlandDirectory(season) + (variant > 0 ? "wet" : "dry");
         String name = switch (block) {
             case "grass_block" -> GRASS[variant];

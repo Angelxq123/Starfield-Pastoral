@@ -37,7 +37,7 @@ public final class LivestockService {
     }
     public static void recover(MinecraftServer server) {
         var data = LivestockWorldData.get(server); var pending = data.pending();
-        if (pending == null) return;
+        if (pending == null) { LegacyLivestockMigration.ensure(server); return; }
         var home = BuildingWorldData.get(server).find(pending.home());
         if (home != null) {
             var level = level(server, home);
@@ -48,6 +48,7 @@ public final class LivestockService {
         }
         LivestockStats.apply(pending.statTargets());server.overworld().getDataStorage().save();
         data.finish(); server.overworld().getDataStorage().save();
+        LegacyLivestockMigration.ensure(server);
     }
     public static void onNewDay(ServerLevel clockLevel) { onNewDay(clockLevel, 1560); }
     public static void onNewDay(ServerLevel clockLevel, int sleptAtMinutes) {
@@ -59,7 +60,7 @@ public final class LivestockService {
         for (var id : homes) {
             var home = buildings.find(id);
             // Missing homes retain records and occupancy; they aren't silently sold or deleted.
-            if (home == null || !PrefabDefinitions.available(home) || buildings.transfer(id) != null) continue;
+            if (home == null || home.phase() == BuildingRecord.Phase.MISSING || !PrefabDefinitions.available(home) || buildings.transfer(id) != null) continue;
             var level = level(server, home); if (level == null) continue;
             var residents = data.all().stream().filter(a -> a.home().equals(id) && a.farm().equals(home.farmId())).toList();
             int first = residents.stream().mapToInt(LivestockRecord::settledDay).min().orElse(data.feedDay(id) < today ? today - 1 : today) + 1;
@@ -155,6 +156,7 @@ public final class LivestockService {
     }
     @SubscribeEvent public static void stopped(ServerStoppedEvent event) { LivestockShop.clear(); LivestockManagement.clear(); LivestockBirths.clear(); }
     public static void project(MinecraftServer server) {
+        recover(server);
         var data = LivestockWorldData.get(server); if (data.pending() != null) return;
         var buildings = BuildingWorldData.get(server);
         var spawns = new HashMap<UUID, BlockPos>();
@@ -178,7 +180,7 @@ public final class LivestockService {
             LivestockProjection.refresh(chicken,animal); level.addFreshEntity(chicken);
         }
         for (var egg : data.eggs()) {
-            var home = buildings.find(egg.home()); if (home == null || !PrefabDefinitions.available(home) || buildings.transfer(home.id()) != null) continue;
+            var home = buildings.find(egg.home()); if (home == null || home.phase() == BuildingRecord.Phase.MISSING || !PrefabDefinitions.available(home) || buildings.transfer(home.id()) != null) continue;
             var level = level(server, home); var bounds = LivestockHomes.bounds(home);
             if (level == null || !level.hasChunksAt(bounds.min(), bounds.maxInclusive()) || level.getEntity(egg.id()) != null) continue;
             var spawn = egg.position() == null ? spawns.computeIfAbsent(home.id(), ignored -> LivestockHomes.spawn(level, home)) : egg.position(); if (spawn == null) continue;

@@ -22,6 +22,7 @@ import java.util.UUID;
 
 public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleStardewItem {
     public static final String PERMIT = "BuildingPermit";
+    private static final String PREVIEW_DEPTH = "BlueprintPreviewDepth";
     private static final java.util.Map<UUID, Long> LAST_USE = new java.util.WeakHashMap<>();
     public static CompoundTag draft(ItemStack stack) { return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag(); }
     public static Direction facing(ItemStack stack) {
@@ -39,13 +40,31 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         if (draft(stack).getBoolean("MoveSelf")) return ground.above(1 - BlockPos.of(draft(stack).getLong("MoveMin")).getY());
         var item=(BuildingBlueprintItem)stack.getItem();
         // The clicked ground cell must lie inside the front-left corner, not beyond its vertex.
-        var frontCell=new BlockPos(0,0,PrefabDefinitions.get(item.family()).reservation().maxExclusive().getZ()-1);
-        return ground.subtract(PrefabDefinitions.rotateCell(frontCell,PrefabDefinitions.rotation(facing)));
+        return targetAnchor(ground, facing, PrefabDefinitions.get(item.family()).reservation().maxExclusive().getZ());
+    }
+    /** Remote clients have no server prefab table. Wait for the held item's synced geometry. */
+    @org.jetbrains.annotations.Nullable
+    public static BlockPos previewTargetAnchor(ItemStack stack, BlockPos ground, Direction facing) {
+        var tag = draft(stack);
+        if (tag.getBoolean("MoveSelf")) return ground.above(1 - BlockPos.of(tag.getLong("MoveMin")).getY());
+        if (!tag.contains(PREVIEW_DEPTH, net.minecraft.nbt.Tag.TAG_INT)) return null;
+        return targetAnchor(ground, facing, tag.getInt(PREVIEW_DEPTH));
+    }
+    private static BlockPos targetAnchor(BlockPos ground, Direction facing, int depth) {
+        var frontCell = new BlockPos(0, 0, depth - 1);
+        return ground.subtract(PrefabDefinitions.rotateCell(frontCell, PrefabDefinitions.rotation(facing)));
     }
     @Override public void inventoryTick(ItemStack stack,Level level,net.minecraft.world.entity.Entity entity,int slot,boolean selected) {
-        if (entity instanceof ServerPlayer player && (selected || player.getOffhandItem()==stack) && !draft(stack).contains("DraftFacing")) {
-            var tag=draft(stack);tag.putString("DraftFacing",player.getDirection().getOpposite().getName());
-            stack.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));player.getInventory().setChanged();
+        if (entity instanceof ServerPlayer player && (selected || player.getOffhandItem()==stack)) {
+            var before = draft(stack); var tag = before.copy();
+            if (!tag.contains("DraftFacing")) tag.putString("DraftFacing",player.getDirection().getOpposite().getName());
+            // Vanilla inventory synchronization covers initial selection, offhand and reconnects.
+            // Refresh after datapack reloads; placement still uses authoritative server definitions.
+            if (PrefabDefinitions.available(family)) tag.putInt(PREVIEW_DEPTH, PrefabDefinitions.get(family).reservation().maxExclusive().getZ());
+            else tag.remove(PREVIEW_DEPTH);
+            if (!tag.equals(before)) {
+                stack.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));player.getInventory().setChanged();
+            }
         }
     }
     public static BlockPos pinned(ItemStack stack, Level level) {
@@ -111,6 +130,18 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         return record != null && record.revision() == tag.getLong("MoveRevision") ? record : null;
     }
     public static boolean isMove(ItemStack stack) { return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().hasUUID("MoveBuilding"); }
+    /** Remove duplicate documents left by an interrupted/repeated move click. */
+    public static void consumeMoveDocuments(ServerPlayer player, UUID buildingId) {
+        var held = new java.util.ArrayList<ItemStack>(player.getInventory().items);
+        held.add(player.getOffhandItem());
+        for (var stack : held) {
+            var tag = draft(stack);
+            if (!tag.hasUUID("MoveBuilding") || !buildingId.equals(tag.getUUID("MoveBuilding"))) continue;
+            BuildingDrafts.get(player.server).consume(stack);
+            stack.shrink(1);
+        }
+        player.getInventory().setChanged();
+    }
     public static Direction moveFacing(ItemStack stack) { return Direction.byName(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getString("MoveFacing")); }
     public static UUID permit(ItemStack stack) {
         var tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
@@ -159,13 +190,18 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         }
         if (!aimsAtPinned(player, stack, family)) return InteractionResult.CONSUME;
         boolean placed;
+        UUID movedId = null;
         if (isMove(stack)) {
             var record = moving(serverPlayer.serverLevel(), stack);
+            movedId = record == null ? null : record.id();
             placed = record != null && record.family().equals(family)
                     && BuildingLifecycleService.move(serverPlayer, record, anchor, facing(stack));
             if (record == null) BuildingPlacementService.message(serverPlayer, "work_stale");
         } else placed = BuildingPlacementService.placePrefab(serverPlayer, anchor, facing(stack), permit(stack), family);
-        if (placed) { BuildingDrafts.get(serverPlayer.server).consume(stack); stack.shrink(1); player.getInventory().setChanged(); }
+        if (placed) {
+            if (movedId != null) consumeMoveDocuments(serverPlayer, movedId);
+            else { BuildingDrafts.get(serverPlayer.server).consume(stack); stack.shrink(1); player.getInventory().setChanged(); }
+        }
         return placed ? InteractionResult.CONSUME : InteractionResult.FAIL;
     }
 }

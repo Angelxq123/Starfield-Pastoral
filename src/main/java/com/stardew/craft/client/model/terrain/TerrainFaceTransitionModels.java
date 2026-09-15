@@ -2,6 +2,7 @@ package com.stardew.craft.client.model.terrain;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.block.terrain.TerrainSoils;
 import com.stardew.craft.block.terrain.TerrainFaceConnections;
 import com.stardew.craft.block.terrain.TerrainVariants;
 import java.util.ArrayList;
@@ -53,12 +54,12 @@ public final class TerrainFaceTransitionModels {
 
     private static List<Block> blocks() {
         return List.of(ModBlocks.CLIFF.get(), ModBlocks.DIRT.get(), ModBlocks.GRASS_BLOCK.get(),
-                ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get());
+                ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get(), ModBlocks.SAND.get(), ModBlocks.SANDY_FARMLAND.get());
     }
 
     private static ModelResourceLocation id(int season, BlockState state) {
         var property = TerrainVariants.property(state);
-        int variant = state.is(ModBlocks.FARMLAND.get()) ? state.getValue(FarmBlock.MOISTURE) : property == null ? 0 : state.getValue(property);
+        int variant = TerrainSoils.farmland(state) ? state.getValue(FarmBlock.MOISTURE) : property == null ? 0 : state.getValue(property);
         boolean snowy = state.hasProperty(BlockStateProperties.SNOWY) && state.getValue(BlockStateProperties.SNOWY);
         return new ModelResourceLocation(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID,
                 TerrainSeasonTextures.modelPath(season, BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath(), variant, snowy)), "standalone");
@@ -113,7 +114,9 @@ public final class TerrainFaceTransitionModels {
             for (Direction face : Direction.values()) {
                 var list=TerrainFaceConnections.collect(level,pos,state,face);
                 // Existing authored top masks and inset farmland finishing own coplanar top connections.
-                if (!cliff && face == Direction.UP) list=list.stream().filter(TerrainFaceConnections.Connection::folded).toList();
+                if (!cliff && face == Direction.UP) list=list.stream()
+                        .filter(c -> c.folded() || (state.is(ModBlocks.SAND.get()) && c.state().is(ModBlocks.DIRT.get())))
+                        .toList();
                 connections.add(list);
             }
             return base.derive().with(FACES,new Faces(season,List.copyOf(connections))).build();
@@ -132,7 +135,10 @@ public final class TerrainFaceTransitionModels {
             for (var connection : connections) {
                 BlockState donor=connection.state();
                 // Grooves and fertilizer stay on farmland; a folded farm face contributes its soil body.
-                if (donor.is(ModBlocks.FARMLAND.get()) && connection.face() == Direction.UP) donor=ModBlocks.DIRT.get().defaultBlockState();
+                if (TerrainSoils.farmland(donor) && connection.face() == Direction.UP)
+                    donor=TerrainSoils.substrate(donor).defaultBlockState();
+                else if (TerrainSoils.farmland(donor) && TerrainSoils.farmland(this.state))
+                    donor=this.state.setValue(FarmBlock.MOISTURE, donor.getValue(FarmBlock.MOISTURE));
                 paints.add(new TerrainFaceQuads.Paint(connection,nativeFace(raw.get(donor)[season],donor,connection.face())));
             }
             BakedQuad nativeQuad=nativeFace(raw.get(this.state)[season],this.state,side);

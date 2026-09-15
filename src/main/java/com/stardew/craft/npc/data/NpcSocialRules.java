@@ -7,9 +7,7 @@ import com.stardew.craft.api.v1.npc.StardewNpcInteractions;
 import com.stardew.craft.api.v1.npc.StardewNpcProfile;
 import com.stardew.craft.api.v1.npc.StardewNpcSocialContext;
 import com.stardew.craft.api.v1.npc.StardewNpcSocialRules;
-import com.stardew.craft.communitycenter.state.CCStoryFlags;
 import com.stardew.craft.npc.runtime.NpcFriendshipDataManager;
-import com.stardew.craft.player.PlayerStardewDataAPI;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -26,20 +24,22 @@ public final class NpcSocialRules {
 
     // Data/Characters CanSocialize + NPC.CanSocializePerData: unknown identities
     // default to false. A renderable/implemented NPC is not automatically a friend.
+    // Kent and Leo remain unavailable until their gameplay content is implemented.
     private static final Set<String> SOCIAL_NPCS = Set.of(
         "abigail", "alex", "caroline", "clint", "demetrius", "dwarf", "elliott", "emily",
-        "evelyn", "george", "gus", "haley", "harvey", "jas", "jodi", "kent", "krobus",
-        "leah", "leo", "lewis", "linus", "marnie", "maru", "pam", "penny", "pierre",
+        "evelyn", "george", "gus", "haley", "harvey", "jas", "jodi", "krobus",
+        "leah", "lewis", "linus", "marnie", "maru", "pam", "penny", "pierre",
         "robin", "sam", "sandy", "sebastian", "shane", "vincent", "willy", "wizard"
     );
 
     private static final Set<String> SOCIAL_TAB_ALWAYS_SHOWN = Set.of(
-        "lewis", "robin", "kent", "leo"
+        "lewis", "robin"
     );
 
     private static final Set<String> SOCIAL_TAB_HIDDEN_UNTIL_MET = Set.of(
         "krobus",
-        "dwarf"
+        "dwarf",
+        "sandy"
     );
 
     private static final Set<String> INTRODUCTIONS_EXCLUDED = Set.of(
@@ -70,10 +70,10 @@ public final class NpcSocialRules {
     public static boolean canSocialize(String npcId, ServerPlayer player) {
         String key = normalize(npcId);
         boolean proposed = SOCIAL_NPCS.contains(key);
-        if (proposed && "sandy".equals(key)) {
-            proposed = player != null
-                    && PlayerStardewDataAPI.getData(player).hasMailFlag(CCStoryFlags.CC_VAULT);
-        }
+        // World access belongs to the bus/map, not to a conversation with an actor
+        // the player has already reached. SDV gates Sandy on introduction event 67,
+        // not the interacting player's personal Community Center completion flag.
+        // Until that event is adapted, first contact uses the normal dialogue flow.
         return evaluate(key, player, null, null,
                 StardewNpcSocialRules.Rule.CAN_SOCIALIZE, proposed);
     }

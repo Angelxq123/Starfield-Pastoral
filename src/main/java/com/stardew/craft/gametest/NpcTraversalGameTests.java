@@ -506,7 +506,7 @@ public final class NpcTraversalGameTests {
 
     @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=480)
     public static void fenceGateOpensAndClosesOnEastWestRoute(GameTestHelper h) {
-        walkThroughFenceGate(h, net.minecraft.core.Direction.EAST, "kent");
+        walkThroughFenceGate(h, net.minecraft.core.Direction.EAST, "clint");
     }
 
     @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=480)

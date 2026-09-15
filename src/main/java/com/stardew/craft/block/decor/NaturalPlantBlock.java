@@ -71,7 +71,7 @@ public class NaturalPlantBlock extends Block implements SimpleWaterloggedBlock {
         if (kind.habitat == NaturalDecorKind.Habitat.UNDERWATER)
             return state.getValue(WATERLOGGED) && support.isFaceSturdy(level, below, Direction.UP);
         return !state.getValue(WATERLOGGED) && (support.isFaceSturdy(level, below, Direction.UP)
-                || support.is(Blocks.FARMLAND) || support.is(ModBlocks.FARMLAND.get())
+                || support.is(Blocks.FARMLAND) || com.stardew.craft.block.terrain.TerrainSoils.farmland(support)
                 || support.is(ModBlocks.GARDEN_PLANTER.get()));
     }
 

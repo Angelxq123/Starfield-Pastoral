@@ -5,6 +5,7 @@ import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.common.ChestColorWheel;
 import com.stardew.craft.client.gui.common.ChestModelPreview;
+import com.stardew.craft.client.gui.common.ChestMenuBackground;
 import com.stardew.craft.menu.WoodenChestMenu;
 import com.stardew.craft.network.payload.InventoryOrganizePayload;
 import com.stardew.craft.network.payload.WoodenChestColorSelectPayload;
@@ -22,8 +23,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 @SuppressWarnings("null")
 public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> {
-    private static final ResourceLocation CHEST_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
-    private static final int ROWS = 3;
 
     private static final ResourceLocation COLOR_WHEEL = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/color_wheel.png");
 
@@ -34,14 +33,17 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
     private int organizeButtonY;
     private static final int BUTTON_SIZE = 18;
     
+    private final com.stardew.craft.client.gui.common.ChestExtraActions extraActions = new com.stardew.craft.client.gui.common.ChestExtraActions(menu);
     private final ChestModelPreview modelPreview = new ChestModelPreview();
     private final ChestColorWheel wheel = new ChestColorWheel(ChestColorWheel.chestOptions(),
             color -> PacketDistributor.sendToServer(new WoodenChestColorSelectPayload(color)),
-            (graphics, x, y, color) -> modelPreview.draw(graphics, x, y, color, menu.hasWoodenPreview(), false));
+            (graphics, x, y, color) -> modelPreview.draw(graphics, x, y, color, menu.hasWoodenPreview() ? menu.previewVariant() : null));
 
     public WoodenChestScreen(WoodenChestMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageHeight = 114 + ROWS * 18;
+        this.imageWidth = menu.layout().imageWidth();
+        this.imageHeight = menu.layout().imageHeight();
+        this.inventoryLabelX = menu.layout().playerX();
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
@@ -52,17 +54,23 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         this.colorButtonX = this.leftPos + this.imageWidth + 6;
         this.colorButtonY = this.topPos + 16;
         this.organizeButtonX = this.colorButtonX;
-        this.organizeButtonY = this.colorButtonY + 30;
+        this.organizeButtonY = this.colorButtonY + (menu.canChangeColor() || menu.previewVariant() != com.stardew.craft.block.utility.ChestVariant.JUNIMO ? 30 : 0);
+        layoutExtraActions();
         wheel.layout(this.width, this.height, this.leftPos, this.leftPos + this.imageWidth, colorButtonY);
+    }
+
+    private void layoutExtraActions() {
+        extraActions.layout(organizeButtonX, organizeButtonY, menu.canOrganize(), menu.previewVariant() != com.stardew.craft.block.utility.ChestVariant.JUNIMO);
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
+        layoutExtraActions();
+        extraActions.render(graphics, mouseX, mouseY);
 
-        graphics.blit(CHEST_TEXTURE, x, y, 0, 0, this.imageWidth, ROWS * 18 + 17);
-        graphics.blit(CHEST_TEXTURE, x, y + ROWS * 18 + 17, 0, 126, this.imageWidth, 96);
+        ChestMenuBackground.draw(graphics, x, y, menu.layout());
 
         if (menu.canChangeColor()) {
             // Draw the sleek color wheel button without a vanilla button background
@@ -101,7 +109,7 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(this.font, GuiText.ellipsize(this.font, this.title, this.imageWidth - this.titleLabelX - 8),
             this.titleLabelX, this.titleLabelY, 0x404040, false);
-        graphics.drawString(this.font, GuiText.ellipsize(this.font, this.playerInventoryTitle, this.imageWidth - this.inventoryLabelX - 8),
+        graphics.drawString(this.font, GuiText.ellipsize(this.font, this.playerInventoryTitle, 162),
             this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
     }
 
@@ -117,6 +125,7 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         }
 
         this.renderTooltip(graphics, mouseX, mouseY);
+        extraActions.tooltip(graphics, mouseX, mouseY);
 
         if (isHoveringColorButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.wooden_chest.color_picker"), mouseX, mouseY);
@@ -152,6 +161,8 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
             playOrganizeSound();
             return true;
         }
+        layoutExtraActions();
+        if (extraActions.click(mouseX, mouseY, button)) return true;
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -193,6 +204,7 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
 
     /** Canvas coordinates: JEI render/input events share StardewGuiViewport's transform. */
     public List<Rect2i> jeiGuiExtraAreas() {
+        layoutExtraActions();
         List<Rect2i> areas = new ArrayList<>(3);
         if (menu.canChangeColor()) {
             // Include the hover highlight and the current-color indicator below the wheel.
@@ -202,6 +214,7 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         if (menu.canOrganize()) {
             areas.add(new Rect2i(organizeButtonX - 1, organizeButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 2));
         }
+        areas.addAll(extraActions.bounds());
         return List.copyOf(areas);
     }
 

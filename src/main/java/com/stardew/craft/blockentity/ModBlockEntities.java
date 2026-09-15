@@ -253,6 +253,10 @@ public final class ModBlockEntities {
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StoneChestBlockEntity>> STONE_CHEST =
 			BLOCK_ENTITIES.register("stone_chest", () -> BlockEntityType.Builder.of(StoneChestBlockEntity::new, ModBlocks.STONE_CHEST.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageChestBlockEntity>> STORAGE_CHEST =
+            BLOCK_ENTITIES.register("storage_chest", () -> BlockEntityType.Builder.of(StorageChestBlockEntity::new,
+                    ModBlocks.BIG_CHEST.get(), ModBlocks.BIG_STONE_CHEST.get(), ModBlocks.JUNIMO_CHEST.get()).build(null));
+
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FridgeBlockEntity>> FRIDGE =
 			BLOCK_ENTITIES.register("fridge", () -> BlockEntityType.Builder.of(FridgeBlockEntity::new, ModBlocks.FRIDGE.get()).build(null));
@@ -336,10 +340,6 @@ public final class ModBlockEntities {
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LargeFireplaceBlockEntity>> LARGE_FIREPLACE =
 			BLOCK_ENTITIES.register("large_fireplace", () -> BlockEntityType.Builder.of(LargeFireplaceBlockEntity::new, ModBlocks.FIREPLACE_LARGE.get()).build(null));
-
-	@SuppressWarnings("null")
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShrineBlockEntity>> SHRINE =
-			BLOCK_ENTITIES.register("shrine", () -> BlockEntityType.Builder.of(ShrineBlockEntity::new, ModBlocks.SHRINE.get()).build(null));
 
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ScarecrowBlockEntity>> SCARECROW =

@@ -53,6 +53,8 @@ public class NavigateActorCommand implements EventCommand {
     private int segmentIndex;
     private Vec3 destination;
     private double walkSpeed;
+    /** move_actor's legacy timeline is an authored travel duration, not an animation rate. */
+    protected int authoredTicks = -1;
     private double currentSpeed;
     private double verticalVelocity;
     private int blockedTicks;
@@ -105,9 +107,15 @@ public class NavigateActorCommand implements EventCommand {
             npc.clearCustomAnimation();
             var model = NativeNpcAssets.model(NativeNpcAssets.renderId(npc.getNpcId()));
             var profile = model == null ? null : model.profile();
-            walkSpeed = ActorWalkPace.normalSpeed(
-                    profile == null || profile.gait() == null ? 0 : profile.gait().previewSpeed(),
-                    profile == null ? 0 : profile.walkStride(), speedBlocksPerTick);
+            // A scripted navigate speed is the world-motion value authored by
+            // the event.  It must not be clamped to the model's preview speed:
+            // the walk clip has its own fixed cadence while the scene decides
+            // how quickly the actor crosses the floor.
+            walkSpeed = Double.isFinite(speedBlocksPerTick) && speedBlocksPerTick > 0
+                    ? speedBlocksPerTick
+                    : ActorWalkPace.normalSpeed(
+                            profile == null || profile.gait() == null ? 0 : profile.gait().previewSpeed(),
+                            profile == null ? 0 : profile.walkStride(), 0);
         } else {
             walkSpeed = ActorWalkPace.normalSpeed(0, 0, speedBlocksPerTick);
         }
@@ -118,6 +126,11 @@ public class NavigateActorCommand implements EventCommand {
         done = false;
         destination = new Vec3(endX, endY, endZ);
         planRoute();
+        if (authoredTicks > 0 && path.size() > 1) {
+            double distance = 0;
+            for (int i = 1; i < path.size(); i++) distance += path.get(i - 1).distanceTo(path.get(i));
+            if (distance > 1.0E-5) walkSpeed = distance / authoredTicks;
+        }
         setWalking(false);
     }
 
@@ -156,7 +169,12 @@ public class NavigateActorCommand implements EventCommand {
                 remaining += next.horizontalDistance();
             }
         }
-        currentSpeed = ActorWalkPace.nextSpeed(currentSpeed, walkSpeed, remaining, yawError);
+        // move_actor's ticks describe the authored travel timeline.  Starting it
+        // with the generic acceleration ramp would make every route arrive late
+        // (and changed the old 0.5.6 pacing); navigate_actor keeps the eased entry.
+        currentSpeed = authoredTicks > 0
+                ? Math.min(walkSpeed, remaining)
+                : ActorWalkPace.nextSpeed(currentSpeed, walkSpeed, remaining, yawError);
         double step = Math.min(distance, currentSpeed);
         double moveX = distance > 1.0E-5 ? dx * step / distance : 0;
         double moveZ = distance > 1.0E-5 ? dz * step / distance : 0;

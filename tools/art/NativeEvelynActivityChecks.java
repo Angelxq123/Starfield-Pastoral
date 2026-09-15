@@ -29,6 +29,8 @@ public final class NativeEvelynActivityChecks {
                         if(!q.sourcePart().startsWith("drop_")&&p.y<-.15)depth=-p.y;
                         if(variant.equals("sit")&&p.x>-7.4&&p.x<7.4&&p.z>-7.4&&p.z<7.4&&p.y>6.1&&p.y<8.9)depth=Math.max(depth,9-p.y);
                         if(variant.equals("sleep")&&p.x>-7.5&&p.x<26.5&&p.z>-6.9&&p.z<21&&p.y>2.1&&p.y<8.05)depth=Math.max(depth,8.15F-p.y);
+                        if(variant.equals("sleep")&&p.x>-5.4&&p.x<8.4&&p.z>21.4&&p.z<29.2&&p.y>7&&p.y<9.9)depth=Math.max(depth,10-p.y);
+                        if(variant.equals("sleep")&&p.x>-6&&p.x<25&&p.z>29.4&&p.z<31.2&&p.y>3&&p.y<12.9)depth=Math.max(depth,Math.min(13-p.y,p.z-29.3F));
                         // Water terminates at the soil; hidden or landing droplets are not rigid prop collisions.
                         if(variant.equals("garden")&&!q.sourcePart().startsWith("drop_")&&p.x>-7.9&&p.x<7.9&&p.z>-23.9&&p.z<-8.1&&p.y>0&&p.y<15.9)depth=Math.max(depth,16-p.y);
                         if(depth>deepest){deepest=depth;collision=clip+"@"+t+" "+q.sourcePart()+" "+p;}

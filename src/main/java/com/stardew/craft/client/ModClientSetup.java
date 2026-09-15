@@ -37,7 +37,6 @@ import com.stardew.craft.client.render.AutoPetterBlockEntityRenderer;
 import com.stardew.craft.client.render.HeaterBlockEntityRenderer;
 import com.stardew.craft.client.render.LargeFireplaceBlockEntityRenderer;
 import com.stardew.craft.client.render.LuauFestivalDecorBlockEntityRenderer;
-import com.stardew.craft.client.render.ShrineBlockEntityRenderer;
 import com.stardew.craft.client.render.PillarGeoBlockEntityRenderer;
 import com.stardew.craft.client.render.BushBlockEntityRenderer;
 import com.stardew.craft.client.render.RecyclingMachineBlockEntityRenderer;
@@ -176,6 +175,7 @@ public final class ModClientSetup {
 		event.registerBlockEntityRenderer(ModBlockEntities.MUSHROOM_BOX.get(), com.stardew.craft.client.render.MushroomBoxBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.AUTO_PETTER.get(), AutoPetterBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.WOODEN_CHEST.get(), WoodenChestBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.STORAGE_CHEST.get(), com.stardew.craft.client.render.StorageChestBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.MINE_CHEST.get(), com.stardew.craft.client.render.MineChestBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.STONE_CHEST.get(), StoneChestBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.SHIPPING_BIN.get(), ShippingBinBlockEntityRenderer::new);
@@ -185,7 +185,6 @@ public final class ModClientSetup {
 		event.registerBlockEntityRenderer(ModBlockEntities.ANIMAL_PRODUCE_SPOT.get(), AnimalProduceSpotBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.LUCKY_PURPLE_SHORTS.get(), LuckyPurpleShortsBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.LARGE_FIREPLACE.get(), LargeFireplaceBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(ModBlockEntities.SHRINE.get(), ShrineBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.JUNIMO_HUT_DECOR.get(), com.stardew.craft.client.render.JunimoHutDecorBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.WIZARD_BUILDING.get(), com.stardew.craft.client.render.WizardBuildingBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.FLOWER_DANCE_DECOR.get(), com.stardew.craft.client.render.FlowerDanceDecorBlockEntityRenderer::new);
@@ -223,8 +222,13 @@ public final class ModClientSetup {
 		event.register(ModMenuTypes.COOKING_POT.get(), com.stardew.craft.client.gui.CookingPotScreen::new);
 		event.register(ModMenuTypes.MINI_FORGE.get(), com.stardew.craft.client.gui.MiniForgeScreen::new);
 		event.register(ModMenuTypes.WOODEN_CHEST.get(), WoodenChestScreen::new);
+		event.register(ModMenuTypes.WOODEN_STORAGE.get(), WoodenChestScreen::new);
+        event.register(ModMenuTypes.BIG_CHEST.get(), WoodenChestScreen::new);
+        event.register(ModMenuTypes.BIG_STONE_CHEST.get(), WoodenChestScreen::new);
+        event.register(ModMenuTypes.JUNIMO_CHEST.get(), WoodenChestScreen::new);
 		event.register(ModMenuTypes.AQUARIUM.get(), com.stardew.craft.client.gui.AquariumScreen::new);
 		event.register(ModMenuTypes.STONE_CHEST.get(), StoneChestScreen::new);
+		event.register(ModMenuTypes.STONE_CHEST_RECOVERY.get(), StoneChestScreen::new);
 		event.register(ModMenuTypes.SHIPPING_BIN.get(), ShippingBinScreen::new);
 		event.register(ModMenuTypes.SPECIAL_ORDER_DROPBOX.get(), com.stardew.craft.client.gui.specialorder.SpecialOrderDropBoxScreen::new);
 		event.register(ModMenuTypes.FAIR_GRANGE_DISPLAY.get(), com.stardew.craft.client.gui.festival.FairGrangeDisplayScreen::new);

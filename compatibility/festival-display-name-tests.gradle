@@ -1,0 +1,14 @@
+// ./gradlew -I compatibility/festival-display-name-tests.gradle classes test
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/festival-display-name')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/api/v1/festival/FestivalDisplayNameTest.class'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/festival-display-name')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/festival-display-name')
+            }
+        }
+    }
+}

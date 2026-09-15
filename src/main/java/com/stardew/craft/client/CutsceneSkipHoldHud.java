@@ -130,6 +130,11 @@ public final class CutsceneSkipHoldHud {
         int cy = SDV_SKIP_MARGIN_TOP + BUTTON_SIZE / 2;
         float progress = Mth.clamp(heldTicks / (float) HOLD_TICKS, 0.0F, 1.0F);
 
+        float reading = readingScale();
+        graphics.pose().pushPose();
+        graphics.pose().translate(cx, cy, 0);
+        graphics.pose().scale(reading, reading, 1);
+        graphics.pose().translate(-cx, -cy, 0);
         drawFilledCircle(graphics, cx, cy, 16.0F, 0x66000000);
         drawArcRing(graphics, cx, cy, 17.0F, 19.0F, -90.0F, 360.0F, 0x44FFFFFF);
         drawArcRing(graphics, cx, cy, 17.0F, 19.0F, -90.0F, progress * 360.0F, 0xDDF2D56B);
@@ -139,6 +144,12 @@ public final class CutsceneSkipHoldHud {
 
         String keyText = "[" + ModKeyMappings.CUTSCENE_SKIP.getTranslatedKeyMessage().getString() + "]";
         graphics.drawString(font, keyText, cx - font.width(keyText) / 2, cy + 27, 0xFFFFFFFF, false);
+        graphics.pose().popPose();
+    }
+
+    private static float readingScale() {
+        return com.stardew.craft.client.gui.common.StardewReadingZoom.current(Minecraft.getInstance().screen) != null
+                ? 1.0F : StardewFonts.readingScale();
     }
 
     private static void reset() {
@@ -198,7 +209,7 @@ public final class CutsceneSkipHoldHud {
     private static boolean isInsideSkipButton(int guiWidth, double mouseX, double mouseY) {
         int cx = skipCenterX(guiWidth);
         int cy = SDV_SKIP_MARGIN_TOP + BUTTON_SIZE / 2;
-        int half = BUTTON_SIZE / 2;
+        int half = Math.round(BUTTON_SIZE * readingScale() / 2);
         return mouseX >= cx - half && mouseX <= cx + half
                 && mouseY >= cy - half && mouseY <= cy + half;
     }

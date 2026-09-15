@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.1fix1 - 2026-09-15
+
+### 更新日志（中文）
+
+**0.6.1fix1 · 稳定性与内容修复**
+
+- 安全迁移旧版畜牧数据，包括动物、住所、产品、孵化进度和干草；迁移凭据会随新存档保存，避免出售、收取产品或重新安置后旧数据再次出现。住所缺失时会保留动物并暂停对应周期，修复建筑后可以继续安置。
+- 修复 NPC 在限定活动区域内越界、日程切换后沿用失效路径、暂停期间计时错误，以及旧占位坐标覆盖正式路线的问题。
+- 修复钓鱼特别订单的收集顺序：只统计玩家实际收到的物品，并在启用或关闭钓鱼小游戏时都能正确记录垃圾类目标。
+- 修复建筑预览在主手、副手及重新连接后的同步，受保护的摆放食物不再错误给予物品或效果；节日边界允许正常坐下，同时仍能检测真正离场，复活节首次获胜奖励按玩家分别记录。
+- 扩展箱子系统，加入大箱子、大石箱和祝尼魔箱，补充染色、整理及向已有堆叠填充等操作，并加强服务端存储校验与旧箱子兼容。
+- 加入阅读文字缩放设置，并修正相关界面在不同窗口尺寸和 GUI 缩放下的排版、裁剪与交互坐标。
+- 加入四季沙地、沙质耕地及完整肥料状态；沙质耕地会保留自身材质和掉落，支持作物、浇水与保水土，同时不会被洒水器自动浇灌。
+- 补充诊所的浅青墙面、青绿色木梁和蓝色玻璃门；重制祖父神龛、木石箱、圆桌、台灯、落地灯和壁灯的模型、材质、碰撞、粒子与开关行为。
+
+### Update Log (English)
+
+**0.6.1fix1 · Stability and Content Fixes**
+
+- Safely migrates legacy livestock data, including animals, homes, products, incubation progress and hay. Persistent import receipts prevent sold, collected or rehomed records from returning, while animals with missing homes remain recoverable.
+- Fixes NPCs leaving bounded activity areas, retaining obsolete paths after schedule changes, advancing timers while paused, and preferring retired placeholder coordinates over official routes.
+- Corrects fishing special-order collection so only items actually received are counted and trash objectives work with either fishing-minigame setting.
+- Fixes blueprint-preview synchronization for either hand and reconnects. Protected placed food no longer grants items or effects, festival seats work inside event bounds, and first Egg Festival victories are tracked per player.
+- Adds Big Chests, Big Stone Chests and Junimo Chests, with dyeing, sorting, fill-existing-stacks actions, server-side storage validation and compatibility for existing chest data.
+- Adds a reading-text zoom setting and corrects the affected layout, clipping and pointer coordinates across window sizes and GUI scales.
+- Adds seasonal sand and sandy farmland with complete fertilizer states. Sandy farmland keeps its material identity and drops, supports crops, watering and retaining soil, and remains excluded from sprinkler watering.
+- Adds pale cyan clinic plaster, teal timber and a blue glass door, and refreshes the Grandpa's Shrine, wood and stone chests, round table, table lamps, floor lamps and wall lights with revised models, textures, collision, particles and switching behavior.
+
 ## 0.6.1 - 2026-09-14
 
 ### 更新日志（中文）

@@ -49,6 +49,7 @@
     "StardewGuiKeyboardMixin",
     "StardewGuiTickMixin",
     "StardewGuiScissorMixin",
+    "StardewReadingHudTextMixin",
     "RingLightLevelRendererMixin",
     "RingLightEntityRendererMixin",
     "SodiumRingLightPipelineMixin",

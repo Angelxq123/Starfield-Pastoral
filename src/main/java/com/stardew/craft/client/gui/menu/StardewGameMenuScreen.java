@@ -158,6 +158,8 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
             Map.entry("statue_of_blessings", 290),
             Map.entry("statue_of_dwarf_king", 292),
             Map.entry("stone_chest", 232),
+            Map.entry("big_chest", 304),
+            Map.entry("big_stone_chest", 328),
             Map.entry("tapper", 105),
             Map.entry("wooden_chest", 130),
             Map.entry("worm_bin", 154));

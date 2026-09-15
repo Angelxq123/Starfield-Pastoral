@@ -11,6 +11,7 @@ public final class NpcRuntimeRegression {
     private static int assertions;
     public static void main(String[] args) throws Exception {
         Path resources=Path.of(args[0]);
+        verifyUnimplementedSocialNpcs(resources);
         var compiled=NpcScheduleCompiler.compile(json("""
                 {"day":{"1100":"3 4 2 next","600":"Town @first 0 idle"}}
                 """));
@@ -133,6 +134,35 @@ public final class NpcRuntimeRegression {
                         "Legacy content selection preserved "+season+"/"+day+"/"+weather);
             }
         System.out.println("NPC runtime regression: "+assertions+" assertions; "+documents+" schedules; "+nodes+" nodes.");
+    }
+    private static void verifyUnimplementedSocialNpcs(Path resources) throws Exception {
+        Map<String,NpcCapabilityProfile> profiles=new LinkedHashMap<>();
+        for(var entry:json(Files.readString(resources.resolve("capabilities/base_profiles.json"))).getAsJsonArray("npcs")) {
+            var npc=entry.getAsJsonObject();
+            String id=npc.get("id").getAsString();
+            profiles.put(id,new NpcCapabilityProfile(id,npc.get("implemented").getAsBoolean(),
+                    npc.get("pathing_enabled").getAsBoolean(),npc.get("animation_profile").getAsString(),
+                    npc.get("age").getAsInt(),npc.get("manners").getAsInt(),npc.get("social_anxiety").getAsInt(),
+                    npc.get("optimism").getAsInt(),npc.get("gender").getAsInt(),npc.get("datable").getAsBoolean()));
+        }
+        for(String id:List.of("kent","leo")) {
+            var profile=profiles.get(id);
+            check(profile!=null && !profile.implemented() && !profile.pathingEnabled(),id+": unfinished NPC is disabled");
+            check(!profile.canRunPathing(),id+": unfinished NPC cannot enter the movement roster");
+            check(!NpcSocialRules.canSocialize(id) && !NpcSocialRules.canSocialize(id,null),id+": unfinished NPC cannot socialize");
+            check(!NpcSocialRules.shouldCreateFriendshipForSocialPage(id),id+": overview cannot create a friendship record");
+            check(!NpcSocialRules.shouldShowOnSocialPage(id,profile,null,null),id+": absent from a new player's social page");
+            var existing=new NpcFriendshipDataManager.FriendshipState();
+            existing.addPoints(1500,3500);
+            check(!NpcSocialRules.shouldShowOnSocialPage(id,profile,existing,null),id+": existing friendship cannot restore the social row");
+            check(!NpcSocialRules.isIntroductionsNpc(id,profile),id+": excluded from introductions");
+        }
+        for(String id:List.of("lewis","robin","abigail")) {
+            check(NpcSocialRules.canSocialize(id),id+": implemented social NPC remains available");
+            check(NpcSocialRules.shouldShowOnSocialPage(id,profiles.get(id),null,null),id+": existing social visibility is preserved");
+        }
+        check(NpcSocialRules.shouldCreateFriendshipForSocialPage("lewis")
+                && NpcSocialRules.shouldCreateFriendshipForSocialPage("robin"),"Existing introductory friendships are preserved");
     }
     private static void verifyDay(List<NpcScheduleCompiler.Node> nodes,String label) {
         if(nodes.isEmpty()) return;

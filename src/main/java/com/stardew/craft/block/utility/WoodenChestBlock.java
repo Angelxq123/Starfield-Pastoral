@@ -58,7 +58,7 @@ public class WoodenChestBlock extends Block implements EntityBlock {
 
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
-        return List.of(new ItemStack(ModBlocks.WOODEN_CHEST.get()));
+        return List.of(new ItemStack(this));
     }
 
     @Override
@@ -99,6 +99,12 @@ public class WoodenChestBlock extends Block implements EntityBlock {
     }
 
     @Override
+    protected net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
+            BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
+        return com.stardew.craft.inventory.ChestInteractions.swap(stack, level, pos, player);
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(BlockState state,
                                                Level level,
                                                BlockPos pos,
@@ -113,8 +119,7 @@ public class WoodenChestBlock extends Block implements EntityBlock {
                 && level.dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY
                 && !sp.isCreative()
                 && !com.stardew.craft.event.FarmAreaProtectionEvents.canModifyAt(sp, pos)) {
-            sp.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("stardewcraft.farm.build_farm_only"), true);
+            com.stardew.craft.inventory.ChestInteractions.message(sp, "stardewcraft.farm.build_farm_only");
             return InteractionResult.CONSUME;
         }
 
@@ -123,6 +128,7 @@ public class WoodenChestBlock extends Block implements EntityBlock {
             return InteractionResult.PASS;
         }
 
+        if (!com.stardew.craft.inventory.ChestInteractions.canOpen(player, chest)) return InteractionResult.CONSUME;
         player.openMenu(chest);
 
         // 打开箱子时清除初始物资 hint（如果有的话）

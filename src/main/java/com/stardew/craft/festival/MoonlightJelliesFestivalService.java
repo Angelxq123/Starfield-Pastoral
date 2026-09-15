@@ -66,7 +66,7 @@ public final class MoonlightJelliesFestivalService {
     private static final int JELLY_FADE_TICKS = 130;
     private static final Method DISPLAY_BRIGHTNESS_METHOD = resolveDisplayBrightnessMethod();
 
-    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(20, 68, 95), new BlockPos(157, 59, 172));
+    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(20, 68, 95), new BlockPos(157, 59, 172)).expandTowards(0.0D, -1.0D, 0.0D);
     private static final AABB PIERRE_SHOP_ZONE = inclusiveBox(new BlockPos(27, 63, 98), new BlockPos(33, 60, 102));
     private static final AABB JELLY_WATER_BOUNDS = inclusiveBox(new BlockPos(9, 59, 135), new BlockPos(151, 59, 217));
     private static final Vec3 SAFE_ENTRY_RETURN = new Vec3(30.5D, 60.0D, 100.5D);
@@ -429,11 +429,7 @@ public final class MoonlightJelliesFestivalService {
         player.getPersistentData().putBoolean(TAG_LEWIS_DIALOGUE_SEEN, false);
         syncFestivalMusic(player, FestivalMusicStatePayload.OCEAN_AMBIENCE);
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, true);
-        Vec3 target = LAST_INSIDE_ENTRY.get(player.getUUID());
-        if (!isInsideEntryBounds(target)) {
-            target = pushInsideEntry(player.position());
-        }
-        target = safeInsideEntryTarget(player, target);
+        Vec3 target = safeInsideEntryTarget(player, SAFE_ENTRY_RETURN);
         ModTeleport.to(player, player.serverLevel(), target.x, target.y, target.z, player.getYRot(), player.getXRot());
         player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0F;

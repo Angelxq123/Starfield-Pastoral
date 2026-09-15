@@ -87,7 +87,7 @@ public final class FishingMinigameHud {
     public static float nativeScale(int width,int height) {
         // Reserve the whole 48x210 entry, including the waterline below the 24x164 bubble.
         // With the bubble centred, that canvas reaches 120 native pixels below screen centre.
-        float preferred=height*.62f/164;
+        float preferred=height*.62f/164*StardewFonts.readingScale();
         return Math.max(0,Math.min(preferred,Math.min((height*.5f-12)/120,(width-24f)/78)));
     }
     private static float fade(float from,float to,float ms){return FishingPresentationClient.smooth((ms-from)/(to-from));}

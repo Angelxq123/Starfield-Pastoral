@@ -1,0 +1,14 @@
+// Run with: ./gradlew -I compatibility/npc-travel-tests.gradle classes test
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/npc-travel')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/npc/runtime/NpcTravelPaceTest.class'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/npc-travel')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/npc-travel')
+            }
+        }
+    }
+}

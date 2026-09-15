@@ -125,7 +125,8 @@ public final class CliffGameTests {
         var wet = dry.setValue(FarmBlock.MOISTURE,7);
         var grass = ModBlocks.GRASS_BLOCK.get().defaultBlockState();
         var dark = ModBlocks.DARK_GRASS_BLOCK.get().defaultBlockState();
-        var chain = new BlockState[]{cliff,dirt,dry,wet,grass,dark};
+        var sand = ModBlocks.SAND.get().defaultBlockState();
+        var chain = new BlockState[]{cliff,sand,dirt,dry,wet,grass,dark};
         for (int rank = 0; rank < chain.length; rank++) helper.assertTrue(TerrainFaceConnections.rank(chain[rank]) == rank,"Wrong material hierarchy");
         level.setBlock(pos,cliff,2); level.setBlock(pos.below().south(),wet,2);
         helper.assertTrue(TerrainFaceConnections.collect(level,pos,cliff,Direction.SOUTH).isEmpty(),"Connected through the inset farmland air gap");

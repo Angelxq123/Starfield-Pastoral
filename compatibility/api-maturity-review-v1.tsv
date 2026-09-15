@@ -119,7 +119,7 @@ com.stardew.craft.api.v1.festival.StardewFestivalActivityDecision	keep_experimen
 com.stardew.craft.api.v1.festival.StardewFestivalActivityHandler	keep_experimental	no	no	no	no	core_runtime_reference_missing
 com.stardew.craft.api.v1.festival.StardewFestivalActivityRegistration	keep_experimental	no	no	no	no	core_runtime_reference_missing
 com.stardew.craft.api.v1.festival.StardewFestivalActivityResult	keep_experimental	no	no	yes	yes	core_runtime_reference_missing
-com.stardew.craft.api.v1.festival.StardewFestivalClientSessionSnapshot	keep_experimental	yes	no	no	no	independent_sample_reference_missing
+com.stardew.craft.api.v1.festival.StardewFestivalClientSessionSnapshot	keep_experimental	yes	no	no	yes	independent_sample_reference_missing
 com.stardew.craft.api.v1.festival.StardewFestivalClientSessions	keep_experimental	no	no	no	yes	core_runtime_reference_missing
 com.stardew.craft.api.v1.festival.StardewFestivalMapOverlay	keep_experimental	yes	no	no	yes	independent_sample_reference_missing
 com.stardew.craft.api.v1.festival.StardewFestivalMapOverlays	keep_experimental	no	no	no	yes	core_runtime_reference_missing

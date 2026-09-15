@@ -30,6 +30,11 @@ public final class LivestockManagement {
             var row = new CompoundTag(); row.putUUID("Id", a.id()); row.putUUID("Home", a.home()); row.putString("Name", a.name());
             row.putString("Species", a.species().id()); row.putInt("SellPrice", a.species().sellPrice(a.care().friendship()));
             LivestockUiData.care(row,a); sessions.get(player.getUUID()).sellQuotes.put(a.id(),row.getInt("SellPrice"));
+            var residence = BuildingWorldData.get(server).find(a.home());
+            if (residence == null || residence.phase() == BuildingRecord.Phase.MISSING)
+                row.putString("HomeIssue", "livestock.stardewcraft.awaiting_home");
+            else if (residence.residence() != BuildingRecord.Residence.VALID)
+                row.putString("HomeIssue", "livestock.stardewcraft.home_needs_facilities");
             row.putBoolean("Newborn", data.newborn(a.id())); row.putBoolean("Reproduction", a.reproduction()); row.putBoolean("CanReproduce", a.species().pregnancy()); rows.add(row);
         }
         tag.put("Animals", rows); var homes = new ListTag(); var buildings = BuildingWorldData.get(server);
@@ -90,7 +95,12 @@ public final class LivestockManagement {
                 if (!LivestockHomes.accepts(level,home, animal.species())) return "unavailable";
                 if (!home.id().equals(animal.home()) && data.occupancy(home.id()) >= LivestockHomes.capacity(level,home)) return "full";
                 if (LivestockHomes.spawn(level, home, animal.species(), animal.baby()) == null) return "no_floor";
-                data.put(animal.rehome(home.id()));
+                var previousHome = buildings.find(animal.home());
+                var moved = animal.rehome(home.id());
+                // Animals without a home were paused, not neglected for the missing interval.
+                if (previousHome == null || previousHome.phase() == BuildingRecord.Phase.MISSING)
+                    moved = moved.withCare(com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay(), moved.care());
+                data.put(moved);
                 // Products stranded by removal of a self-built manager follow the recovered animal.
                 if (buildings.find(animal.home()) == null || buildings.find(animal.home()).phase()==BuildingRecord.Phase.MISSING) for (var egg : data.eggs()) if (egg.animal().equals(animal.id()))
                     data.product(new LivestockWorldData.Product(egg.id(), egg.animal(), home.id(), egg.large(), egg.quality(), egg.item(), egg.count(), null, egg.stackData()));

@@ -53,6 +53,7 @@ def compileNativeNpcChecks = tasks.register('compileNativeNpcChecks', JavaCompil
     source 'tools/art/NativeGusSupportChecks.java', 'src/main/java/com/stardew/craft/client/npcnative/NativeActivityStandingPose.java'
     source 'tools/art/NativeEvelynActivityChecks.java'
     source 'tools/art/NativeActorAnimationChecks.java', 'src/main/java/com/stardew/craft/client/npcnative/NativeActorAnimation.java'
+    source 'tools/art/NativeNpcTextureChecks.java'
     source 'tools/art/NpcModelOwnershipChecks.java', 'src/main/java/com/stardew/craft/npc/data/NpcModelOwnership.java'
     classpath = sourceSets.main.compileClasspath
     destinationDirectory = layout.buildDirectory.dir('classes/nativeNpcChecks')
@@ -69,6 +70,16 @@ def checkNativeNpcJointSkin = tasks.register('checkNativeNpcJointSkin', JavaExec
             layout.buildDirectory.dir('reports/native-npc-joints').get().asFile.absolutePath
     if (providers.gradleProperty('nativeNpcPreview').getOrElse('false').toBoolean()) args '--preview'
 }
+def checkNativeNpcTextures = tasks.register('checkNativeNpcTextures', JavaExec) {
+    group = 'verification'
+    description = 'Decodes all processed native NPC textures with the Minecraft image decoder.'
+    dependsOn compileNativeNpcChecks, tasks.named('processResources')
+    classpath = files(compileNativeNpcChecks) + configurations.runtimeClasspath
+    mainClass = 'NativeNpcTextureChecks'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    args layout.buildDirectory.dir('resources/main').get().asFile.absolutePath
+}
+tasks.named('check') { dependsOn checkNativeNpcTextures }
 tasks.named('check') { dependsOn checkNativeNpcJointSkin }
 def checkNativeActorAnimation = tasks.register('checkNativeActorAnimation', JavaExec) {
     group = 'verification'

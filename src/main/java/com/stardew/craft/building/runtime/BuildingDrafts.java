@@ -31,11 +31,20 @@ public final class BuildingDrafts extends SavedData {
     public void consume(ItemStack stack){var id=id(stack);if(id!=null){drafts.remove(id);setDirty();}}
     public void synchronize(ServerPlayer player){
         var rows=new net.minecraft.nbt.ListTag();var seen=new HashSet<UUID>();
-        for(int slot=0;slot<player.getInventory().getContainerSize();slot++){
-            var stack=player.getInventory().getItem(slot);
+        var held = new ArrayList<ItemStack>(player.getInventory().items);
+        // The offhand is outside PlayerInventory's regular item slots.  Movement
+        // documents can be held there too; omitting it leaves a stale client pin
+        // and lets repeated bowl clicks create another document.
+        held.add(player.getOffhandItem());
+        for(var stack : held){
             if(!(stack.getItem() instanceof BuildingBlueprintItem item) || id(stack)==null)continue;
             apply(stack);var anchor=BuildingBlueprintItem.pinned(stack,player.level());var identity=id(stack);
-            if(anchor==null || !seen.add(identity) || !PrefabDefinitions.available(item.family()))continue;
+            // A duplicated move document still refers to one building.  Keep
+            // one server preview row for that building so old duplicate items
+            // cannot turn into a stack of identical client projections.
+            UUID previewKey = BuildingBlueprintItem.isMove(stack)
+                    ? BuildingBlueprintItem.draft(stack).getUUID("MoveBuilding") : identity;
+            if(anchor==null || !seen.add(previewKey) || !PrefabDefinitions.available(item.family()))continue;
             var moving=BuildingBlueprintItem.isMove(stack)?BuildingBlueprintItem.moving(player.serverLevel(),stack):null;
             if(BuildingBlueprintItem.isMove(stack) && moving==null)continue;
             int tier=moving==null?1:moving.tier();

@@ -137,7 +137,9 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
         }
 
         if (!level.isClientSide) {
-            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            if (!level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3)) {
+                return false;
+            }
             if (!player.addItem(food)) {
                 player.drop(food, false);
             }
@@ -153,8 +155,11 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
         }
 
         if (!level.isClientSide) {
+            // A protected decoration must be consumed successfully before awarding its effects.
+            if (!level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3)) {
+                return false;
+            }
             food.finishUsingItem(level, player);
-            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
         }
         return true;
     }

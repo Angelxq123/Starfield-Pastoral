@@ -62,7 +62,7 @@ public final class EggFestivalService {
 
     private static final BlockPos FESTIVAL_MIN = new BlockPos(-46, 64, -36);
     private static final BlockPos FESTIVAL_MAX = new BlockPos(137, 84, 53);
-    private static final AABB FESTIVAL_BOUNDS = inclusiveBox(FESTIVAL_MIN, FESTIVAL_MAX);
+    private static final AABB FESTIVAL_BOUNDS = inclusiveBox(FESTIVAL_MIN, FESTIVAL_MAX).expandTowards(0.0D, -1.0D, 0.0D);
     private static final BlockPos ENTRY_POS = new BlockPos(-39, 64, -34);
     private static final double SAFE_BOUNDARY_MARGIN = 4.0D;
     private static final float SOUTH_YAW = 0.0F;
@@ -687,7 +687,7 @@ public final class EggFestivalService {
         if (awardPlayerWon) {
             for (ServerPlayer winner : winners) {
                 AWARD_WINNER_IDS.add(winner.getUUID());
-                grantWinnerPrizeTicket(winner);
+                grantWinnerPrize(winner);
             }
             awardWinnerText = winners.size() == 1
                 ? Component.translatable("event.egg_festival.award.winner.player",
@@ -699,12 +699,16 @@ public final class EggFestivalService {
         }
     }
 
-    private static void grantWinnerPrizeTicket(ServerPlayer winner) {
-        ItemStack ticket = new ItemStack(ModItems.PRIZE_TICKET.get());
-        ItemStack hudStack = ticket.copy();
-        if (!winner.getInventory().add(ticket)) {
-            winner.drop(ticket, false);
+    private static void grantWinnerPrize(ServerPlayer winner) {
+        var data = PlayerStardewDataAPI.getData(winner);
+        // SDV AwardFestivalPrize tracks each player's first victory, independently of the year.
+        ItemStack prize = new ItemStack(data.hasMailFlag("Egg Festival")
+                ? ModItems.PRIZE_TICKET.get() : ModItems.STRAW_HAT.get());
+        ItemStack hudStack = prize.copy();
+        if (!winner.getInventory().add(prize)) {
+            winner.drop(prize, false);
         }
+        data.addMailFlag("Egg Festival");
         ItemPickupHudPacket.sendTo(winner, hudStack, hudStack.getCount(), false);
         winner.inventoryMenu.broadcastChanges();
     }

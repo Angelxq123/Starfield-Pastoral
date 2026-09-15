@@ -1,0 +1,14 @@
+// Headless checks: ./gradlew -I compatibility/reading-zoom-tests.gradle classes test checkTranslations
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/reading-zoom')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/client/gui/common/ReadingZoomTest.class'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/reading-zoom')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/reading-zoom')
+            }
+        }
+    }
+}

@@ -23,6 +23,12 @@ public abstract class StardewGuiRenderMixin {
         var window = minecraft.getWindow();
         var layout = StardewGuiViewport.forScreen(screen, window);
         var previous = StardewGuiViewport.enter(layout);
+        var zoom = com.stardew.craft.client.gui.common.StardewReadingZoom.current(screen);
+        if (zoom != null) {
+            graphics.fill(0, 0, (int) Math.ceil(layout.projectedWidth()), (int) Math.ceil(layout.projectedHeight()), 0xB0000000);
+            graphics.enableScissor(0, 0, (int) Math.floor(zoom.viewWidth() / layout.windowScale()),
+                    (int) Math.floor(zoom.viewHeight() / layout.windowScale()));
+        }
         graphics.pose().pushPose();
         graphics.pose().translate(layout.x(), layout.y(), 0);
         graphics.pose().scale((float) layout.scale(), (float) layout.scale(), 1);
@@ -35,7 +41,9 @@ public abstract class StardewGuiRenderMixin {
             graphics.flush();
         } finally {
             graphics.pose().popPose();
+            if (zoom != null) graphics.disableScissor();
             StardewGuiViewport.restore(previous);
         }
+        com.stardew.craft.client.gui.common.StardewReadingZoom.drawScrollbars(screen, graphics);
     }
 }

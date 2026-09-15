@@ -62,6 +62,7 @@ public final class LivestockManagementScreen extends FarmFolioScreen {
     }
 
     private Component homeName(CompoundTag animal) {
+        if (animal.contains("HomeIssue")) return Component.translatable(animal.getString("HomeIssue"));
         return offer.getList("Homes", 10).stream()
                 .map(t -> (CompoundTag) t)
                 .filter(h -> h.getUUID("Id").equals(animal.getUUID("Home")))

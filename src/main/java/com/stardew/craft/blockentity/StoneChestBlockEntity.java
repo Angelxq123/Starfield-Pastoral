@@ -36,15 +36,17 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("null")
-public class StoneChestBlockEntity extends net.minecraft.world.level.block.entity.BlockEntity implements Container, MenuProvider, GeoBlockEntity {
+public class StoneChestBlockEntity extends net.minecraft.world.level.block.entity.BlockEntity implements Container, MenuProvider, GeoBlockEntity, com.stardew.craft.inventory.ChestStorage {
     private static final String TAG_ITEMS = "items";
     private static final String TAG_COLOR_SELECTION = "colorSelection";
-    private static final int SLOT_COUNT = 54;
+    private static final int SLOT_COUNT = com.stardew.craft.menu.ChestMenuLayout.NORMAL_CAPACITY;
+    // Old saves had 54 slots. Retain the last 18 for withdrawal, never accept new deposits.
+    private static final int LEGACY_SLOT_COUNT = 54;
 
     private static final RawAnimation OPEN_ANIM = RawAnimation.begin().thenPlayAndHold("OPEN");
     private static final RawAnimation CLOSE_ANIM = RawAnimation.begin().thenPlayAndHold("CLOSE");
 
-    private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> items = NonNullList.withSize(LEGACY_SLOT_COUNT, ItemStack.EMPTY);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private int openCount;
@@ -54,6 +56,8 @@ public class StoneChestBlockEntity extends net.minecraft.world.level.block.entit
     public StoneChestBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.STONE_CHEST.get(), pos, state);
     }
+
+    @Override public boolean isInUse() { return openCount > 0; }
 
     public void dropAllContents(Level level, BlockPos pos) {
         if (level.isClientSide) {
@@ -80,7 +84,15 @@ public class StoneChestBlockEntity extends net.minecraft.world.level.block.entit
 
     @Override
     public int getContainerSize() {
+        for (int slot = SLOT_COUNT; slot < items.size(); slot++) {
+            if (!items.get(slot).isEmpty()) return LEGACY_SLOT_COUNT;
+        }
         return SLOT_COUNT;
+    }
+
+    @Override
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        return slot >= 0 && slot < SLOT_COUNT;
     }
 
     @Override
@@ -145,6 +157,11 @@ public class StoneChestBlockEntity extends net.minecraft.world.level.block.entit
             return;
         }
 
+        if (slot >= SLOT_COUNT && !stack.isEmpty()) {
+            ItemStack previous = items.get(slot);
+            if (!ItemStack.isSameItemSameComponents(previous, stack) || stack.getCount() > previous.getCount()) return;
+        }
+
         if (stack.isEmpty()) {
             items.set(slot, ItemStack.EMPTY);
         } else {
@@ -192,6 +209,11 @@ public class StoneChestBlockEntity extends net.minecraft.world.level.block.entit
         if (openCount == 0 && level != null) {
             level.playSound(null, worldPosition, ModSounds.DOOR_CREAK_REVERSE.get(), SoundSource.BLOCKS, 0.7f, 1.0f);
         }
+        updateOpenState();
+    }
+
+    @Override public void onLoad() {
+        super.onLoad();
         updateOpenState();
     }
 

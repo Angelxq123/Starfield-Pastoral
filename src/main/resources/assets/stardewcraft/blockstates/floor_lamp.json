@@ -1,20 +1,58 @@
 {
   "variants": {
-    "part=main,facing=north,lit=true": { "model": "stardewcraft:decor/common/floor_lamp_5" },
-    "part=main,facing=east,lit=true": { "model": "stardewcraft:decor/common/floor_lamp_5", "y": 90 },
-    "part=main,facing=south,lit=true": { "model": "stardewcraft:decor/common/floor_lamp_5", "y": 180 },
-    "part=main,facing=west,lit=true": { "model": "stardewcraft:decor/common/floor_lamp_5", "y": 270 },
-    "part=main,facing=north,lit=false": { "model": "stardewcraft:decor/common/floor_lamp_5" },
-    "part=main,facing=east,lit=false": { "model": "stardewcraft:decor/common/floor_lamp_5", "y": 90 },
-    "part=main,facing=south,lit=false": { "model": "stardewcraft:decor/common/floor_lamp_5", "y": 180 },
-    "part=main,facing=west,lit=false": { "model": "stardewcraft:decor/common/floor_lamp_5", "y": 270 },
-    "part=extension,facing=north,lit=true": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=east,lit=true": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=south,lit=true": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=west,lit=true": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=north,lit=false": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=east,lit=false": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=south,lit=false": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" },
-    "part=extension,facing=west,lit=false": { "model": "stardewcraft:block/decor/extensions/furniture_extension_empty" }
+    "part=main,facing=north,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_5"
+    },
+    "part=main,facing=east,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_5",
+      "y": 90
+    },
+    "part=main,facing=south,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_5",
+      "y": 180
+    },
+    "part=main,facing=west,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_5",
+      "y": 270
+    },
+    "part=main,facing=north,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_5_off"
+    },
+    "part=main,facing=east,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_5_off",
+      "y": 90
+    },
+    "part=main,facing=south,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_5_off",
+      "y": 180
+    },
+    "part=main,facing=west,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_5_off",
+      "y": 270
+    },
+    "part=extension,facing=north,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=east,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=south,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=west,lit=true": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=north,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=east,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=south,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    },
+    "part=extension,facing=west,lit=false": {
+      "model": "stardewcraft:decor/common/floor_lamp_extension"
+    }
   }
 }

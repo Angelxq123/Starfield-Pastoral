@@ -55,7 +55,7 @@ public final class ShapedTerrainModels {
     }
     /** Called after the ordinary terrain wrappers, so a cube can receive the edge of a neighboring half block. */
     public static void wrapFull(Map<ModelResourceLocation,BakedModel> models){
-        for(Block block:List.of(ModBlocks.GRASS_BLOCK.get(),ModBlocks.DARK_GRASS_BLOCK.get(),ModBlocks.DIRT.get(),ModBlocks.CLIFF.get(),ModBlocks.FARMLAND.get(),
+        for(Block block:List.of(ModBlocks.GRASS_BLOCK.get(),ModBlocks.DARK_GRASS_BLOCK.get(),ModBlocks.DIRT.get(),ModBlocks.CLIFF.get(),ModBlocks.FARMLAND.get(),ModBlocks.SAND.get(),ModBlocks.SANDY_FARMLAND.get(),
                 ModBlocks.TOWN_PAVING.get(),ModBlocks.PLAZA_RED_BRICKS.get(),ModBlocks.ASPHALT_ROAD.get(),ModBlocks.PALE_PAVING.get()))
             for(BlockState state:block.getStateDefinition().getPossibleStates()){
                 var id=BlockModelShaper.stateToModelLocation(state);models.put(id,new Surface(models.get(id),state,false,true));

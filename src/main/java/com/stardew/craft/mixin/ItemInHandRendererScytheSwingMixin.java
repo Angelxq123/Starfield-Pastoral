@@ -9,7 +9,6 @@ import com.stardew.craft.client.ScytheSwingAnimationState;
 import com.stardew.craft.client.weapon.WeaponSkillAnimationClient;
 import com.stardew.craft.client.weapon.animation.WeaponSkillAnimation;
 import com.stardew.craft.client.weapon.animation.WeaponSkillAnimationRegistry;
-import com.stardew.craft.item.weapon.IStardewWeapon;
 import com.stardew.craft.item.tool.HoeItem;
 import com.stardew.craft.item.tool.ScytheItem;
 import com.stardew.craft.item.tool.FishingRodItem;
@@ -248,6 +247,14 @@ public class ItemInHandRendererScytheSwingMixin {
 			float partialTick = STARDEWCRAFT_PARTIAL_TICK.get();
 			float t = WeaponSkillAnimationClient.getProgress(partialTick);
 			if (t < 0.0f) {
+				var player = net.minecraft.client.Minecraft.getInstance().player;
+				var action = player == null ? null
+						: com.stardew.craft.client.weapon.LavaKatanaVisuals.action(player, partialTick);
+				if (action != null) {
+					com.stardew.craft.client.weapon.animation.LavaKatanaSlashAnimation.INSTANCE
+							.apply(poseStack, arm, action.progress());
+					return;
+				}
 				applyItemArmAttackTransform(poseStack, arm, swingProgress);
 				return;
 			}
@@ -825,4 +832,3 @@ public class ItemInHandRendererScytheSwingMixin {
 		return q;
 	}
 }
-

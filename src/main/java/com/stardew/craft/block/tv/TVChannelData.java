@@ -40,7 +40,7 @@ public final class TVChannelData {
 
         // --- Channel availability (matches TV.cs checkForAction) ---
         boolean tipsAvailable = dayOfWeek == 0 || dayOfWeek == 3;  // Mon/Thu
-        boolean cookingAvailable = dayOfWeek == 6 || (dayOfWeek == 2 && daysPlayed > 7); // Sun / Wed(rerun)
+        boolean cookingAvailable = isCookingAvailable(daysPlayed, dayOfWeek);
         boolean fishingAvailable = data.hasMailFlag("pamNewChannel");
         boolean cursedAvailable = false;  // original: Fall 26 + childrenTurnedToDoves + !cursed_doll
 
@@ -58,11 +58,7 @@ public final class TVChannelData {
         if (isRerun) {
             whichWeek = getRerunWeek(daysPlayed, data);
         }
-        String cookingRecipeId = getRecipeIdForWeek(whichWeek);
-        String watchedRecipeId = data.getQueenOfSauceRecipeIdForDay(daysPlayed);
-        if (!watchedRecipeId.isBlank()) {
-            cookingRecipeId = watchedRecipeId;
-        }
+        String cookingRecipeId = getCookingRecipeIdForDay(data, daysPlayed, dayOfWeek);
         boolean cookingAlreadyKnown = data.isRecipeUnlocked(cookingRecipeId)
                 || data.hasWatchedQueenOfSauceOnDay(daysPlayed);
 
@@ -78,7 +74,15 @@ public final class TVChannelData {
     }
 
     public static String getCookingRecipeIdForDay(ServerPlayer player, int daysPlayed, int dayOfWeek) {
-        PlayerStardewData data = PlayerStardewDataAPI.getData(player);
+        return getCookingRecipeIdForDay(PlayerStardewDataAPI.getData(player), daysPlayed, dayOfWeek);
+    }
+
+    public static boolean isCookingAvailable(int daysPlayed, int dayOfWeek) {
+        return dayOfWeek == 6 || (dayOfWeek == 2 && daysPlayed > 7); // Sun / Wed(rerun)
+    }
+
+    /** Read-only selection, shared by the TV unlock handler and the addon daily snapshot. */
+    public static String getCookingRecipeIdForDay(PlayerStardewData data, int daysPlayed, int dayOfWeek) {
         String watchedRecipeId = data.getQueenOfSauceRecipeIdForDay(daysPlayed);
         if (!watchedRecipeId.isBlank()) {
             return watchedRecipeId;

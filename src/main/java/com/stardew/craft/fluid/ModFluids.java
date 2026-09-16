@@ -8,9 +8,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.BiomeColors;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -124,37 +121,13 @@ public final class ModFluids {
             .explosionResistance(100.0F);
     }
 
+    // Stardew's ordinary spring water hue; texture alpha supplies transparency in Minecraft.
+    public static final int DEFAULT_POND_WATER_COLOR = 0x78C8FF;
+
     private static int resolveTint(BlockAndTintGetter getter, BlockPos pos) {
         Integer overrideColor = ClientFishPondWaterColorCache.get(getter, pos);
-        if (overrideColor != null) {
-            return overrideColor & 0xFFFFFF;
-        }
-        Minecraft minecraft = Minecraft.getInstance();
-        ClientLevel clientLevel = minecraft.level;
-        if (clientLevel != null) {
-            BlockPos fallbackPos = pos != null ? pos : resolveClientTargetPos(minecraft);
-            if (fallbackPos != null) {
-                Integer fallbackOverride = ClientFishPondWaterColorCache.get(clientLevel, fallbackPos);
-                if (fallbackOverride != null) {
-                    return fallbackOverride & 0xFFFFFF;
-                }
-                return BiomeColors.getAverageWaterColor(clientLevel, fallbackPos) & 0xFFFFFF;
-            }
-        }
-        if (getter != null && pos != null) {
-            return BiomeColors.getAverageWaterColor(getter, pos) & 0xFFFFFF;
-        }
-        return 0x3F76E4;
-    }
-
-    private static BlockPos resolveClientTargetPos(Minecraft minecraft) {
-        if (minecraft.hitResult instanceof BlockHitResult blockHitResult
-            && minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
-            return blockHitResult.getBlockPos();
-        }
-        if (minecraft.player != null) {
-            return minecraft.player.blockPosition();
-        }
-        return null;
+        // Vanilla water sprites already contain grayscale shading and alpha.
+        // Neutral source pixels still need a display tint when no species overrides it.
+        return overrideColor == null ? DEFAULT_POND_WATER_COLOR : overrideColor & 0xFFFFFF;
     }
 }

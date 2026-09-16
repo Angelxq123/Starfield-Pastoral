@@ -11,9 +11,19 @@ public final class TideMarkClientState {
 
     private static final Map<Integer, Long> MARKS = new ConcurrentHashMap<>();
 
+    private static net.minecraft.client.multiplayer.ClientLevel activeLevel;
     private TideMarkClientState() {}
+    private static void ensureLevel() {
+        var level = Minecraft.getInstance().level;
+        if (level != activeLevel) { MARKS.clear(); activeLevel = level; }
+    }
+    public static java.util.Set<Integer> markedEntityIds() { ensureLevel(); return java.util.Set.copyOf(MARKS.keySet()); }
+    public static float getRemainingRatio(int id, long tick) {
+        return Math.clamp((MARKS.getOrDefault(id, tick) - tick) / 100f, 0, 1);
+    }
 
     public static void apply(int entityId, int durationTicks) {
+        ensureLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             return;
@@ -28,6 +38,7 @@ public final class TideMarkClientState {
     }
 
     public static void onClientTick(ClientTickEvent.Post event) {
+        ensureLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             MARKS.clear();

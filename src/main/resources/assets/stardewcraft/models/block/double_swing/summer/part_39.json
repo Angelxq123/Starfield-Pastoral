@@ -1,0 +1,86 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/summer/swing_summer",
+    "particle": "stardewcraft:block/double_swing/summer/swing_seat_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -3,
+        -2,
+        -13
+      ],
+      "to": [
+        1,
+        0,
+        -3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            2.6875,
+            3.09375,
+            2.8125,
+            3.15625
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            3.0,
+            3.09375,
+            3.3125,
+            3.15625
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            2.84375,
+            3.09375,
+            2.96875,
+            3.15625
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            3.34375,
+            3.09375,
+            3.65625,
+            3.15625
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            3.6875,
+            3.09375,
+            3.8125,
+            3.40625
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            3.84375,
+            3.09375,
+            3.96875,
+            3.40625
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "z",
+        "angle": 45,
+        "origin": [
+          -3,
+          -1,
+          -8
+        ],
+        "rescale": false
+      }
+    }
+  ]
+}

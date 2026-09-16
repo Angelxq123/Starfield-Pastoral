@@ -1,0 +1,68 @@
+{
+  "textures": {
+    "wood": "stardewcraft:block/mine/mine_timber_support",
+    "particle": "stardewcraft:block/mine/particles/mine_mine_timber_support"
+  },
+  "elements": [
+    {
+      "name": "post",
+      "from": [
+        6,
+        0,
+        0
+      ],
+      "to": [
+        10,
+        16,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.0,
+            6.0,
+            2.0,
+            8.0
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            2.0,
+            6.0,
+            3.25,
+            8.0
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0.0,
+            6.0,
+            1.0,
+            8.0
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            6.0,
+            4.5,
+            8.0
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            11.0,
+            3.0,
+            12.0,
+            3.625
+          ],
+          "texture": "#wood"
+        }
+      }
+    }
+  ]
+}

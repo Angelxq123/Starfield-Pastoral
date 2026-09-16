@@ -157,6 +157,7 @@ public class PlayerStardewData {
     private final Map<String, Integer> fishCatchCounts = new HashMap<>();
     /** SDV {@code Stats.PreciseFishCaught}: monotonic counter incremented per individual catch (incl. duplicates). */
     private int preciseFishCaught = 0;
+    private int bobberStyle = 0;
 
     // ============ 出货统计（夜间结算） ============
     // 对齐原版 player.shippedBasic 与 stats.ItemsShipped 的基础数据结构。
@@ -174,6 +175,7 @@ public class PlayerStardewData {
     // ============ 排行榜统计 ============
     private int mineBlocksBrokenTotal;
     private int mineStonesBroken;
+    private int mysticStonesCrushed;
     private int mineOresBroken;
     private int mineGemOresBroken;
     private int mineMineralNodesBroken;
@@ -609,6 +611,7 @@ public class PlayerStardewData {
             }
         }
         data.preciseFishCaught = Math.max(0, tag.getInt("PreciseFishCaught"));
+        data.bobberStyle = com.stardew.craft.fishing.BobberStyles.normalize(tag.getInt("BobberStyle"));
 
         data.shippedBasic.clear();
         if (tag.contains("ShippedBasic")) {
@@ -655,6 +658,7 @@ public class PlayerStardewData {
 
         data.trashCansChecked = tag.contains("TrashCansChecked") ? tag.getInt("TrashCansChecked") : 0;
         data.mineBlocksBrokenTotal = tag.contains("MineBlocksBrokenTotal") ? Math.max(0, tag.getInt("MineBlocksBrokenTotal")) : 0;
+        data.mysticStonesCrushed = Math.max(0, tag.getInt("MysticStonesCrushed"));
         data.mineStonesBroken = tag.contains("MineStonesBroken") ? Math.max(0, tag.getInt("MineStonesBroken")) : 0;
         data.mineOresBroken = tag.contains("MineOresBroken") ? Math.max(0, tag.getInt("MineOresBroken")) : 0;
         data.mineGemOresBroken = tag.contains("MineGemOresBroken") ? Math.max(0, tag.getInt("MineGemOresBroken")) : 0;
@@ -1089,6 +1093,7 @@ public class PlayerStardewData {
         }
         tag.put("FishCatchCounts", fishCounts);
         tag.putInt("PreciseFishCaught", preciseFishCaught);
+        tag.putInt("BobberStyle", bobberStyle);
 
         ListTag shippedBasicTag = new ListTag();
         for (String itemId : shippedBasic) {
@@ -1124,6 +1129,7 @@ public class PlayerStardewData {
         tag.putInt("TrashCansChecked", trashCansChecked);
         tag.putInt("MineBlocksBrokenTotal", mineBlocksBrokenTotal);
         tag.putInt("MineStonesBroken", mineStonesBroken);
+        tag.putInt("MysticStonesCrushed", mysticStonesCrushed);
         tag.putInt("MineOresBroken", mineOresBroken);
         tag.putInt("MineGemOresBroken", mineGemOresBroken);
         tag.putInt("MineMineralNodesBroken", mineMineralNodesBroken);
@@ -2278,6 +2284,13 @@ public class PlayerStardewData {
     }
 
     /** SDV parity: {@code who.fishCaught.Length} — number of distinct fish species caught. */
+    public int getBobberStyle() { return bobberStyle; }
+
+    public void setBobberStyle(int selected) {
+        int next = com.stardew.craft.fishing.BobberStyles.normalize(selected);
+        if (bobberStyle != next) { bobberStyle = next; markDirty(); }
+    }
+
     public int getDistinctFishCaughtCount() {
         return fishCatchCounts.size();
     }
@@ -2470,6 +2483,13 @@ public class PlayerStardewData {
     public int getMineBlocksBrokenTotal() { return mineBlocksBrokenTotal; }
 
     public int getMineStonesBroken() { return mineStonesBroken; }
+
+    public int getMysticStonesCrushed() { return mysticStonesCrushed; }
+
+    public void recordMysticStoneCrushed() {
+        mysticStonesCrushed++;
+        markDirty();
+    }
 
     public int getMineOresBroken() { return mineOresBroken; }
 
@@ -2732,6 +2752,7 @@ public class PlayerStardewData {
 
     // ──── Mail Flags For Tomorrow（SDV addMailForTomorrow + noLetter:true parity）────
     /** 查询某 flag 是否已排队在明天生效（还没 flush 到 mailFlags）。 */
+    public void removeMailFlagForTomorrow(String flag) { if(mailFlagsForTomorrow.remove(flag)!=null)markDirty(); }
     public boolean hasMailFlagForTomorrow(String flag) { return mailFlagsForTomorrow.containsKey(flag); }
     /**
      * 次日才生效的标志位：flush 时直接进 mailFlags，不进 mailbox。

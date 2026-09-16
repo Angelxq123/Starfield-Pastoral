@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.StardewRenderMapping;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.menu.ElevatorMenu;
@@ -61,7 +63,7 @@ public class ElevatorScreen extends AbstractContainerScreen<ElevatorMenu> {
     }
 
     private float guiScale() {
-        return (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     /** SDV 像素 → MC GUI 像素 */
@@ -145,6 +147,12 @@ public class ElevatorScreen extends AbstractContainerScreen<ElevatorMenu> {
         frameY = px(sdvY - 64 + 8);
         frameW = px(sdvW + 21);
         frameH = px(sdvH + 64);
+
+        // Native container integrations (including JEI) need the actual occupied rectangle.
+        this.leftPos = frameX;
+        this.topPos = frameY;
+        this.imageWidth = frameW;
+        this.imageHeight = frameH;
 
         // 按钮 cell 大小（GUI 像素）— 用于点击检测
         cellGui = px(CELL);

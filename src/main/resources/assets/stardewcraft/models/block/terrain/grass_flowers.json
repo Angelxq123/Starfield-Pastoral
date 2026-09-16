@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:block/terrain/grass_block",
+  "textures": {
+    "up": "stardewcraft:block/terrain/spring/grass_flowers"
+  }
+}

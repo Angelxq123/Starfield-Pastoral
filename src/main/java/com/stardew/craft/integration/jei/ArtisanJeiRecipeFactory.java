@@ -55,6 +55,17 @@ public final class ArtisanJeiRecipeFactory {
                 if (inputItem == Items.AIR || claimedInputs.contains(inputItem)) {
                     continue;
                 }
+                ItemStack candidate = new ItemStack(inputItem);
+                if (!definition.matches(candidate)) {
+                    continue;
+                }
+                // Dynamic crop categories include crops the machine cannot accept
+                // (e.g. tea leaves). Apply the same admission rules as SeedMakerBlockEntity.
+                if (definition.outputMode() == ArtisanRecipeDataManager.OutputMode.SEEDMAKER
+                        && (candidate.is(com.stardew.craft.core.ModTags.Items.SEEDMAKER_BANNED)
+                        || SeedMakerOutputResolver.resolve(inputItem) == null)) {
+                    continue;
+                }
                 ArtisanJeiRecipe recipe = buildForItem(machine, definition, inputItem);
                 if (recipe != null) {
                     result.add(recipe);
@@ -111,7 +122,10 @@ public final class ArtisanJeiRecipeFactory {
 
         List<ArtisanJeiRecipe.Input> inputs = new ArrayList<>();
         inputs.add(new ArtisanJeiRecipe.Input(inputStacks, definition.consumeCount(), false));
-        if (FISH_SMOKER.equals(machine.id())) {
+        if (id("heavy_furnace").equals(machine.id())) {
+            int coal = com.stardew.craft.production.MachineProductionData.profile("heavy_furnace").coalPerBatch();
+            if (coal > 0) inputs.add(new ArtisanJeiRecipe.Input(List.of(new ItemStack(ModItems.COAL.get(), coal)), coal, true));
+        } else if (FISH_SMOKER.equals(machine.id())) {
             inputs.add(new ArtisanJeiRecipe.Input(List.of(new ItemStack(Items.COAL)), 1, true));
         } else {
             for (var auxiliary : StardewMachineTypeRegistry.auxiliaryInputs(machine.id())) {
@@ -140,7 +154,7 @@ public final class ArtisanJeiRecipeFactory {
         ResourceLocation inputId = BuiltInRegistries.ITEM.getKey(inputItem);
         ResourceLocation displayId = ResourceLocation.fromNamespaceAndPath(
                 definition.id().getNamespace(), definition.id().getPath() + "/" + inputId.getPath());
-        return new ArtisanJeiRecipe(displayId, machine, inputs, outputs, definition.minutes(),
+        return new ArtisanJeiRecipe(displayId, machine, inputs, outputs, com.stardew.craft.production.MachineProductionData.minutes(machine.id().toString(), definition.minutes()),
                 definition.keepInputQuality(), definition.outputQuality());
     }
 
@@ -181,7 +195,7 @@ public final class ArtisanJeiRecipeFactory {
                 }
             }
             return flavored.isEmpty() ? List.of() : List.of(
-                    new ArtisanJeiRecipe.Output(flavored, count, count, 1.0D));
+                    new ArtisanJeiRecipe.Output(flavored, count, definition.maxOutputCount(), 1.0D));
         }
 
         ItemStack baseOutput = itemStack(definition.outputId(), count);
@@ -201,7 +215,7 @@ public final class ArtisanJeiRecipeFactory {
             }
             outputs.add(baseOutput);
         }
-        return List.of(new ArtisanJeiRecipe.Output(outputs, count, count, 1.0D));
+        return List.of(new ArtisanJeiRecipe.Output(outputs, count, definition.maxOutputCount(), 1.0D));
     }
 
     private static List<ArtisanJeiRecipe.Output> smokedOutputs(
@@ -224,7 +238,7 @@ public final class ArtisanJeiRecipeFactory {
             outputs.add(output);
         }
         int count = Math.max(1, definition.outputCount());
-        return List.of(new ArtisanJeiRecipe.Output(outputs, count, count, 1.0D));
+        return List.of(new ArtisanJeiRecipe.Output(outputs, count, definition.maxOutputCount(), 1.0D));
     }
 
     private static List<ArtisanJeiRecipe.Output> seedMakerOutputs(
@@ -286,7 +300,7 @@ public final class ArtisanJeiRecipeFactory {
                     machine,
                     List.of(new ArtisanJeiRecipe.Input(List.of(roe), 1, false)),
                     List.of(new ArtisanJeiRecipe.Output(List.of(output), output.getCount(), output.getCount(), 1.0D)),
-                    definition.minutes(),
+                    com.stardew.craft.production.MachineProductionData.minutes(machine.id().toString(), definition.minutes()),
                     definition.keepInputQuality(),
                     definition.outputQuality()
             ));

@@ -1,0 +1,116 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "variant": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/0",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "variant": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/1",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/join_north"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "variant": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/0",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "variant": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/join_east"
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "variant": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/0",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "variant": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/join_south"
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "variant": "0"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/0",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "variant": "1"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "stardewcraft:block/mine_canopy/join_west"
+      }
+    }
+  ]
+}

@@ -59,17 +59,26 @@ public final class FishingCastHud {
 	private static int maxTexW;
 	private static int maxTexH;
 
+    public static void reset() {
+        stopSinWave(Minecraft.getInstance());wasUsing=false;postReleaseCountdownMs=0;maxPopMs=0;lastFrameMs=0;
+    }
+    @SubscribeEvent public static void chargeSoundTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        var mc=Minecraft.getInstance();if(mc.player==null||!mc.player.isUsingItem()||!(mc.player.getUseItem().getItem() instanceof com.stardew.craft.item.tool.FishingRodItem)){stopSinWave(mc);return;}
+        int used=mc.player.getUseItem().getUseDuration(mc.player)-mc.player.getUseItemRemainingTicks();
+        ensureSinWavePlaying(mc,.8f+.6f*FishingCastPower.getCastPower01FromUsedTicks(used));
+    }
 	@SubscribeEvent
 	public static void onRenderGui(RenderGuiEvent.Post event) {
 		Minecraft mc = Minecraft.getInstance();
 		// Never render the casting HUD behind the minigame.
-		if (mc.screen instanceof com.stardew.craft.client.fishing.FishingMinigameScreen
+		if (com.stardew.craft.client.fishing.FishingMinigameHud.active()
 				|| mc.screen instanceof StardewHudLayoutEditorScreen) {
 			stopSinWave(mc);
 			return;
 		}
 		Player player = mc.player;
 		if (player == null || mc.level == null) {
+            stopSinWave(mc);
 			return;
 		}
 		if (mc.options.hideGui || player.isSpectator()) {
@@ -91,14 +100,6 @@ public final class FishingCastHud {
 			progress = FishingCastPower.getCastPower01FromUsedTicks(usedTicks);
 			if (progress > 0.99f) {
 			}
-		}
-
-		// SV FishingRod: chargeSound loops while charging; pitch rises with power.
-		if (!usingRod) {
-			stopSinWave(mc);
-		} else {
-			float pitch = 0.8f + (Mth.clamp(progress, 0f, 1f) * 0.6f);
-			ensureSinWavePlaying(mc, pitch);
 		}
 
 		// release edge: per current spec, hide immediately on release/cancel.

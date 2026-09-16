@@ -71,14 +71,15 @@ final class SteelFalchionTraceExecutionState
 
     @SuppressWarnings("null")
     void start(ServerPlayer player, int durationTicks) {
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(player,"steel_falchion","steel_falchion_trace",8);
         Vec3 start = points.get(0);
         PacketDistributor.sendToPlayersInDimension(
                 player.serverLevel(),
                 new SteelFalchionLineCreatePayload(
                         lineId,
-                        (float) start.x,
-                        (float) start.y,
-                        (float) start.z,
+                        start.x,
+                        start.y,
+                        start.z,
                         SteelFalchionExecutionSupport.LINE_DURATION_TICKS,
                         SteelFalchionExecutionSupport.LINE_WIDTH
                 )
@@ -132,6 +133,11 @@ final class SteelFalchionTraceExecutionState
         return SkillTickResult.CONTINUE;
     }
 
+    void cancelVisual(ServerPlayer player){
+        ServerLevel original=player.server.getLevel(dimension);
+        if(original!=null)PacketDistributor.sendToPlayersInDimension(original,new com.stardew.craft.combat.network.CrescentFalchionEndPayload(lineId,player.getId(),"steel_falchion_trace"));
+    }
+
     void cancel(ServerPlayer player, boolean notifyClient) {
         if (settled) {
             return;
@@ -165,9 +171,9 @@ final class SteelFalchionTraceExecutionState
                     player.serverLevel(),
                     new SteelFalchionLinePointPayload(
                             lineId,
-                            (float) point.x,
-                            (float) point.y,
-                            (float) point.z
+                            point.x,
+                            point.y,
+                            point.z
                     )
             );
         }

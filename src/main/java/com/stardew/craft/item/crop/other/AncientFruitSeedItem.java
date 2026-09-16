@@ -38,14 +38,15 @@ public class AncientFruitSeedItem extends Item implements IStardewItem {
         @SuppressWarnings("null")
         BlockState clickedState = level.getBlockState(pos);
 
-        if (!isFarmland(clickedState)) {
+        if (clickedState.getBlock() instanceof com.stardew.craft.block.utility.GardenPotBlock
+                || !isFarmland(clickedState)) {
             return InteractionResult.PASS;
         }
 
         BlockPos abovePos = pos.above();
         @SuppressWarnings("null")
         BlockState aboveState = level.getBlockState(abovePos);
-        if (!aboveState.isAir()) {
+        if (!aboveState.isAir() || !level.getBlockState(abovePos.above()).isAir()) {
             return InteractionResult.PASS;
         }
 
@@ -83,4 +84,3 @@ public class AncientFruitSeedItem extends Item implements IStardewItem {
         return blockId.contains("farmland");
     }
 }
-

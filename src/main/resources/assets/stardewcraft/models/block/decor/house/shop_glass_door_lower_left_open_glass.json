@@ -1,0 +1,75 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "frame": "stardewcraft:block/decor/house/shop_glass_door_frame",
+    "glass": "stardewcraft:block/decor/house/shop_glass_door_glass",
+    "particle": "stardewcraft:block/decor/house/shop_glass_door_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        14,
+        15,
+        2
+      ],
+      "to": [
+        15,
+        16,
+        14
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            0.5,
+            4.0,
+            3.5,
+            4.25
+          ],
+          "texture": "#glass"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            4.0,
+            3.5,
+            4.25
+          ],
+          "texture": "#glass"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        2,
+        2
+      ],
+      "to": [
+        15,
+        12,
+        14
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            0.5,
+            5.0,
+            3.5,
+            7.5
+          ],
+          "texture": "#glass"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            5.0,
+            3.5,
+            7.5
+          ],
+          "texture": "#glass"
+        }
+      }
+    }
+  ]
+}

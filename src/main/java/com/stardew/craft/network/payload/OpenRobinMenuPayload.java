@@ -44,6 +44,7 @@ public record OpenRobinMenuPayload() implements CustomPacketPayload {
         List<Component> responses = List.of(
             Component.translatable("stardewcraft.robin.menu.build"),
             Component.translatable("stardewcraft.robin.menu.shop"),
+            Component.translatable("pet.stardewcraft.buy_bowl"),
             Component.translatable("stardewcraft.robin.menu.leave")
         );
 
@@ -52,8 +53,8 @@ public record OpenRobinMenuPayload() implements CustomPacketPayload {
         com.stardew.craft.client.gui.common.StardewQuestionDialogSpec spec = com.stardew.craft.client.gui.common.StardewQuestionDialogSpec.of(
             question,
             responses,
-            choiceIndex -> PacketDistributor.sendToServer(new RobinActionPayload(choiceIndex)),
-            2 // default = Leave
+            choiceIndex -> PacketDistributor.sendToServer(new RobinActionPayload(choiceIndex == 2 ? 3 : choiceIndex == 3 ? 2 : choiceIndex)),
+            3 // default = Leave
         );
 
         mc.setScreen(com.stardew.craft.client.gui.common.StardewConfirmDialogScreen.createQuestionDialog(spec));

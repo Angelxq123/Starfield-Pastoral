@@ -1,0 +1,88 @@
+{
+  "tile_size": 16,
+  "atlas_size": [
+    384,
+    752
+  ],
+  "transition_atlas_size": [
+    16,
+    752
+  ],
+  "columns": "phase * 6 + variant",
+  "rows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    19,
+    23,
+    27,
+    31,
+    38,
+    39,
+    46,
+    47,
+    55,
+    63,
+    76,
+    77,
+    78,
+    79,
+    95,
+    110,
+    111,
+    127,
+    137,
+    139,
+    141,
+    143,
+    155,
+    159,
+    175,
+    191,
+    205,
+    207,
+    223,
+    239,
+    255
+  ],
+  "placement_weights": [
+    50,
+    14,
+    12,
+    10,
+    9,
+    5
+  ],
+  "placement_weights_source": "authored material balance, not SDV probabilities",
+  "season_materials": {
+    "spring": "spring",
+    "summer": "spring",
+    "fall": "spring",
+    "winter": "spring"
+  },
+  "priority": [
+    "plaza_red_bricks",
+    "town_paving"
+  ],
+  "variant_names": [
+    "clay",
+    "warm",
+    "grey",
+    "dark",
+    "rose",
+    "worn"
+  ]
+}

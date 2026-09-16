@@ -1,7 +1,7 @@
 {
-    "parent":  "item/generated",
-    "textures":  {
-                     "layer0":  "stardewcraft:item/utility/wooden_chest",
-                     "particle":  "stardewcraft:item/utility/wooden_chest"
-                 }
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "stardewcraft:item/utility/wooden_chest",
+    "particle": "stardewcraft:block/wood/oak_planks"
+  }
 }

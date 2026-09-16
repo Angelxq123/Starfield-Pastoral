@@ -33,6 +33,8 @@ public class ChairBlock extends MapUtilityStaticBlock {
             return InteractionResult.PASS;
         }
 
+        if (com.stardew.craft.npc.runtime.NpcSupportTarget.occupied((net.minecraft.server.level.ServerLevel)level,mainPos))
+            return InteractionResult.CONSUME;
         SofaSeatEntity seat = SofaSeatEntity.getOrCreate((net.minecraft.server.level.ServerLevel) level, mainPos, seatYOffset);
         if (seat == null) {
             return InteractionResult.PASS;
@@ -53,7 +55,7 @@ public class ChairBlock extends MapUtilityStaticBlock {
         return InteractionResult.CONSUME;
     }
 
-    private BlockPos resolveMainPos(Level level, BlockPos pos, BlockState state) {
+    public BlockPos resolveMainPos(Level level, BlockPos pos, BlockState state) {
         if (state.getValue(PART) == Part.MAIN) {
             return pos;
         }

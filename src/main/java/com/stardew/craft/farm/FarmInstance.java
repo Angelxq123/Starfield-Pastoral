@@ -30,6 +30,8 @@ import java.util.UUID;
 public class FarmInstance {
 
     private final UUID ownerUUID;
+    /** Identity of the farm, independent of its owner and recyclable slot. */
+    private UUID instanceId = UUID.randomUUID();
     private String ownerName;
     private String farmName;
     private final int slotIndex;
@@ -141,6 +143,7 @@ public class FarmInstance {
     // ── Getters ──
 
     public UUID getOwnerUUID() { return ownerUUID; }
+    public UUID getInstanceId() { return instanceId; }
     public String getOwnerName() { return ownerName; }
     public String getFarmName() { return farmName; }
     public int getSlotIndex() { return slotIndex; }
@@ -269,6 +272,7 @@ public class FarmInstance {
 
     /** Copies state that belongs to the farm itself when ownership changes. */
     void copyTransferStateFrom(FarmInstance source) {
+        instanceId = source.instanceId;
         if (source.initialized) {
             markInitialized();
         }
@@ -447,6 +451,7 @@ public class FarmInstance {
 
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
+        tag.putUUID("InstanceId", instanceId);
         tag.putUUID("OwnerUUID", ownerUUID);
         tag.putString("OwnerName", ownerName);
         tag.putString("FarmName", farmName);
@@ -562,6 +567,10 @@ public class FarmInstance {
                 farmLayoutId, layoutSnapshot, layoutVersion,
                 new StardewFarmLayoutConfiguration(configurationValues),
                 attachmentValues);
+        // A stable initial ID also survives a crash before the first upgraded farm save.
+        instance.instanceId = tag.hasUUID("InstanceId") ? tag.getUUID("InstanceId")
+                : UUID.nameUUIDFromBytes(("stardewcraft:farm:" + uuid + ":" + slotIndex + ":"
+                        + tag.getLong("CreatedTimestamp")).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         instance.initialized = tag.getBoolean("Initialized");
         instance.createdTimestamp = tag.getLong("CreatedTimestamp");
         instance.lastOnlineDay = tag.getInt("LastOnlineDay");

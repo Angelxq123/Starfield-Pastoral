@@ -1,0 +1,201 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "frame": "stardewcraft:block/decor/house/shop_glass_door_frame",
+    "glass": "stardewcraft:block/decor/house/shop_glass_door_glass",
+    "particle": "stardewcraft:block/decor/house/shop_glass_door_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        3,
+        16,
+        2
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0.5,
+            0.0,
+            0.0,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9.0,
+            0.0,
+            9.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            8.0,
+            0.0,
+            7.5,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8.0,
+            0.0,
+            8.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            14.0,
+            9.0,
+            13.5,
+            9.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        14
+      ],
+      "to": [
+        3,
+        16,
+        16
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            4.0,
+            0.0,
+            3.5,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9.0,
+            0.0,
+            9.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            4.5,
+            0.0,
+            4.0,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8.0,
+            0.0,
+            8.75,
+            4.0
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            10.5,
+            9.0,
+            10.0,
+            9.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        14,
+        2
+      ],
+      "to": [
+        3,
+        16,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            3.5,
+            0.0,
+            0.5,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "south": {
+          "uv": [
+            9.0,
+            0.0,
+            9.75,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "west": {
+          "uv": [
+            7.5,
+            0.0,
+            4.5,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "north": {
+          "uv": [
+            8.0,
+            0.0,
+            8.75,
+            0.5
+          ],
+          "texture": "#frame"
+        },
+        "up": {
+          "uv": [
+            13.5,
+            9.0,
+            10.5,
+            9.75
+          ],
+          "texture": "#frame",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            13.5,
+            10.0,
+            10.5,
+            10.75
+          ],
+          "texture": "#frame",
+          "rotation": 270
+        }
+      }
+    }
+  ]
+}

@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 @SuppressWarnings("null")
-public class SiloManagerBlock extends Block {
+public class SiloManagerBlock extends BuildingManagerModelBlock {
     public static final String TAG_RELOCATE = CoopManagerBlock.TAG_RELOCATE;
     public static final String TAG_BUILDING_ID = CoopManagerBlock.TAG_BUILDING_ID;
     public static final String TAG_OWNER = CoopManagerBlock.TAG_OWNER;
@@ -44,7 +44,7 @@ public class SiloManagerBlock extends Block {
     public static final String TAG_ANIMAL_COUNT = CoopManagerBlock.TAG_ANIMAL_COUNT;
 
     public SiloManagerBlock(Properties properties) {
-        super(properties);
+        super(properties, "stardewcraft:block/silo_manager");
     }
 
     @Override

@@ -36,6 +36,7 @@ public record DwarfDaggerRushPayload(boolean active, int durationTicks) implemen
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(DwarfDaggerRushPayload payload) {
+        com.stardew.craft.client.weapon.DwarfWeaponVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;

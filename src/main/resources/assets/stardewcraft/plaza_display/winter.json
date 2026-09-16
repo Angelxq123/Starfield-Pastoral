@@ -1,0 +1,1066 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_000",
+      "scene_offset": [
+        8,
+        -4,
+        16
+      ],
+      "material": "bark"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_001",
+      "scene_offset": [
+        8,
+        18,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_002",
+      "scene_offset": [
+        8,
+        39,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_003",
+      "scene_offset": [
+        8,
+        -7,
+        12
+      ],
+      "material": "bark"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_004",
+      "scene_offset": [
+        8,
+        -7,
+        19
+      ],
+      "material": "bark"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_005",
+      "scene_offset": [
+        4,
+        -7,
+        16
+      ],
+      "material": "bark"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_006",
+      "scene_offset": [
+        11,
+        -7,
+        16
+      ],
+      "material": "bark"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_007",
+      "scene_offset": [
+        8,
+        21,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_008",
+      "scene_offset": [
+        8,
+        21,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_009",
+      "scene_offset": [
+        8,
+        21,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_010",
+      "scene_offset": [
+        8,
+        21,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_011",
+      "scene_offset": [
+        8,
+        17,
+        12
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_012",
+      "scene_offset": [
+        8,
+        17,
+        19
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_013",
+      "scene_offset": [
+        4,
+        17,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_014",
+      "scene_offset": [
+        11,
+        17,
+        16
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_015",
+      "scene_offset": [
+        8,
+        5,
+        9
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_016",
+      "scene_offset": [
+        8,
+        5,
+        23
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_017",
+      "scene_offset": [
+        8,
+        15,
+        10
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_018",
+      "scene_offset": [
+        8,
+        15,
+        21
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_019",
+      "scene_offset": [
+        8,
+        25,
+        12
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_020",
+      "scene_offset": [
+        8,
+        25,
+        20
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_021",
+      "scene_offset": [
+        8,
+        34,
+        13
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_022",
+      "scene_offset": [
+        8,
+        34,
+        18
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_023",
+      "scene_offset": [
+        8,
+        43,
+        15
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_024",
+      "scene_offset": [
+        8,
+        43,
+        17
+      ],
+      "material": "needles"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_025",
+      "scene_offset": [
+        -3,
+        0,
+        9
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_026",
+      "scene_offset": [
+        -3,
+        2,
+        9
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_027",
+      "scene_offset": [
+        4,
+        0,
+        4
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_028",
+      "scene_offset": [
+        4,
+        2,
+        4
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_029",
+      "scene_offset": [
+        17,
+        0,
+        8
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_030",
+      "scene_offset": [
+        17,
+        2,
+        8
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_031",
+      "scene_offset": [
+        20,
+        0,
+        20
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_032",
+      "scene_offset": [
+        20,
+        2,
+        20
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_033",
+      "scene_offset": [
+        13,
+        0,
+        28
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_034",
+      "scene_offset": [
+        13,
+        2,
+        28
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_035",
+      "scene_offset": [
+        -2,
+        0,
+        25
+      ],
+      "material": "cyan"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_036",
+      "scene_offset": [
+        -2,
+        2,
+        25
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_037",
+      "scene_offset": [
+        -1,
+        10,
+        11
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_038",
+      "scene_offset": [
+        -1,
+        12,
+        11
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_039",
+      "scene_offset": [
+        11,
+        10,
+        6
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_040",
+      "scene_offset": [
+        11,
+        12,
+        6
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_041",
+      "scene_offset": [
+        17,
+        10,
+        19
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_042",
+      "scene_offset": [
+        17,
+        12,
+        19
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_043",
+      "scene_offset": [
+        12,
+        10,
+        25
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_044",
+      "scene_offset": [
+        12,
+        12,
+        25
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_045",
+      "scene_offset": [
+        1,
+        10,
+        23
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_046",
+      "scene_offset": [
+        1,
+        12,
+        23
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_047",
+      "scene_offset": [
+        2,
+        20,
+        12
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_048",
+      "scene_offset": [
+        2,
+        22,
+        12
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_049",
+      "scene_offset": [
+        12,
+        20,
+        10
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_050",
+      "scene_offset": [
+        12,
+        22,
+        10
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_051",
+      "scene_offset": [
+        14,
+        20,
+        20
+      ],
+      "material": "cyan"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_052",
+      "scene_offset": [
+        14,
+        22,
+        20
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_053",
+      "scene_offset": [
+        3,
+        20,
+        22
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_054",
+      "scene_offset": [
+        3,
+        22,
+        22
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_055",
+      "scene_offset": [
+        4,
+        30,
+        13
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_056",
+      "scene_offset": [
+        4,
+        31,
+        13
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_057",
+      "scene_offset": [
+        12,
+        30,
+        19
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_058",
+      "scene_offset": [
+        12,
+        31,
+        19
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_059",
+      "scene_offset": [
+        8,
+        30,
+        21
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_060",
+      "scene_offset": [
+        8,
+        31,
+        21
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_061",
+      "scene_offset": [
+        8,
+        39,
+        13
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_062",
+      "scene_offset": [
+        8,
+        40,
+        13
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_063",
+      "scene_offset": [
+        8,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_064",
+      "scene_offset": [
+        8,
+        50,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_065",
+      "scene_offset": [
+        8,
+        49,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_066",
+      "scene_offset": [
+        8,
+        48,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_067",
+      "scene_offset": [
+        8,
+        47,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_068",
+      "scene_offset": [
+        8,
+        46,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_069",
+      "scene_offset": [
+        7,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_070",
+      "scene_offset": [
+        10,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_071",
+      "scene_offset": [
+        6,
+        44,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_072",
+      "scene_offset": [
+        10,
+        44,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_073",
+      "scene_offset": [
+        -3,
+        0,
+        9
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_074",
+      "scene_offset": [
+        4,
+        0,
+        4
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_075",
+      "scene_offset": [
+        17,
+        0,
+        8
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_076",
+      "scene_offset": [
+        20,
+        0,
+        20
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_077",
+      "scene_offset": [
+        13,
+        0,
+        28
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_078",
+      "scene_offset": [
+        -2,
+        0,
+        25
+      ],
+      "material": "cyan"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_079",
+      "scene_offset": [
+        -1,
+        10,
+        11
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_080",
+      "scene_offset": [
+        11,
+        10,
+        6
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_081",
+      "scene_offset": [
+        17,
+        10,
+        19
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_082",
+      "scene_offset": [
+        12,
+        10,
+        25
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_083",
+      "scene_offset": [
+        1,
+        10,
+        23
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_084",
+      "scene_offset": [
+        2,
+        20,
+        12
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_085",
+      "scene_offset": [
+        12,
+        20,
+        10
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_086",
+      "scene_offset": [
+        14,
+        20,
+        20
+      ],
+      "material": "cyan"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_087",
+      "scene_offset": [
+        3,
+        20,
+        22
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_088",
+      "scene_offset": [
+        4,
+        30,
+        13
+      ],
+      "material": "red"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_089",
+      "scene_offset": [
+        12,
+        30,
+        19
+      ],
+      "material": "blue"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_090",
+      "scene_offset": [
+        8,
+        30,
+        21
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_091",
+      "scene_offset": [
+        8,
+        39,
+        13
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_092",
+      "scene_offset": [
+        6,
+        44,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_093",
+      "scene_offset": [
+        6,
+        44,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_094",
+      "scene_offset": [
+        10,
+        44,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_095",
+      "scene_offset": [
+        10,
+        44,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_096",
+      "scene_offset": [
+        7,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_097",
+      "scene_offset": [
+        7,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_098",
+      "scene_offset": [
+        10,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_099",
+      "scene_offset": [
+        9,
+        45,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_100",
+      "scene_offset": [
+        8,
+        46,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_101",
+      "scene_offset": [
+        8,
+        46,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_102",
+      "scene_offset": [
+        6,
+        46,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_103",
+      "scene_offset": [
+        10,
+        46,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_104",
+      "scene_offset": [
+        8,
+        46,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_105",
+      "scene_offset": [
+        8,
+        47,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_106",
+      "scene_offset": [
+        6,
+        47,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_107",
+      "scene_offset": [
+        10,
+        47,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_108",
+      "scene_offset": [
+        8,
+        48,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_109",
+      "scene_offset": [
+        5,
+        48,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_110",
+      "scene_offset": [
+        11,
+        48,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_111",
+      "scene_offset": [
+        5,
+        48,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_112",
+      "scene_offset": [
+        11,
+        48,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_113",
+      "scene_offset": [
+        8,
+        49,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_114",
+      "scene_offset": [
+        7,
+        49,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_115",
+      "scene_offset": [
+        9,
+        49,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_116",
+      "scene_offset": [
+        8,
+        50,
+        15
+      ],
+      "material": "gold"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/winter/part_117",
+      "scene_offset": [
+        8,
+        50,
+        15
+      ],
+      "material": "gold"
+    }
+  ]
+}

@@ -9,20 +9,17 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 /**
- * 信箱气泡渲染 — 有邮件时在信箱上方显示气泡 + 纸张图标。
+ * 信箱气泡渲染 — 有邮件时在信箱上方显示星露谷原版气泡和信封。
+ * 信件由有信状态的方块模型以翻页书动画呈现。
  */
 @SuppressWarnings("null")
 public class MailboxBlockEntityRenderer implements BlockEntityRenderer<MailboxBlockEntity> {
-    private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/bubble.png");
+    private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/mailbox_bubble.png");
     private static final float PX = 1.0f / 32.0f;
-    private static final ItemStack PAPER_ICON = new ItemStack(Items.PAPER);
+    private static final float BUBBLE_RAISE = 6 * PX;
 
     public MailboxBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -32,7 +29,7 @@ public class MailboxBlockEntityRenderer implements BlockEntityRenderer<MailboxBl
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!be.hasMail() || be.getLevel() == null) return;
 
-        float bubbleY = BubbleYHelper.get(be.getBlockState(), be.getLevel(), be.getBlockPos());
+        float bubbleY = BubbleYHelper.get(be.getBlockState(), be.getLevel(), be.getBlockPos()) + BUBBLE_RAISE;
 
         poseStack.pushPose();
         poseStack.translate(0.5f, bubbleY, 0.5f);
@@ -51,27 +48,6 @@ public class MailboxBlockEntityRenderer implements BlockEntityRenderer<MailboxBl
         vc.addVertex(poseStack.last().pose(), x1, y0, 0.0f).setColor(255, 255, 255, 255).setUv(1.0f, 1.0f).setOverlay(packedOverlay).setLight(packedLight).setNormal(0, 0, 1);
         vc.addVertex(poseStack.last().pose(), x0, y0, 0.0f).setColor(255, 255, 255, 255).setUv(0.0f, 1.0f).setOverlay(packedOverlay).setLight(packedLight).setNormal(0, 0, 1);
 
-        // Paper icon inside
-        float innerW = 14 * PX;
-        float iconCenterX = x0 + (3 * PX) + innerW / 2.0f;
-        float iconCenterY = y1 - (3 * PX) - innerW / 2.0f;
-
-        poseStack.pushPose();
-        poseStack.translate(iconCenterX, iconCenterY, 0.001f);
-        float scale = innerW;
-        poseStack.scale(scale, scale, 0.001f);
-
-        Minecraft.getInstance().getItemRenderer().renderStatic(
-            PAPER_ICON,
-            ItemDisplayContext.GUI,
-            packedLight,
-            OverlayTexture.NO_OVERLAY,
-            poseStack,
-            buffer,
-            be.getLevel(),
-            0
-        );
-        poseStack.popPose();
         poseStack.popPose();
     }
 }

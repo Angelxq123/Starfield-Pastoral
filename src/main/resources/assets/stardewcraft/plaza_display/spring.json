@@ -1,0 +1,328 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_000",
+      "scene_offset": [
+        0,
+        0,
+        16
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_001",
+      "scene_offset": [
+        0,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_002",
+      "scene_offset": [
+        0,
+        0,
+        16
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_003",
+      "scene_offset": [
+        16,
+        0,
+        16
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_004",
+      "scene_offset": [
+        0,
+        0,
+        16
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_005",
+      "scene_offset": [
+        0,
+        16,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_006",
+      "scene_offset": [
+        0,
+        16,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_007",
+      "scene_offset": [
+        0,
+        16,
+        16
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_008",
+      "scene_offset": [
+        16,
+        16,
+        16
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_009",
+      "scene_offset": [
+        0,
+        16,
+        16
+      ],
+      "material": "soil"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_010",
+      "scene_offset": [
+        0,
+        16,
+        16
+      ],
+      "material": "green"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_011",
+      "scene_offset": [
+        0,
+        16,
+        16
+      ],
+      "material": "green"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_012",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_013",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_014",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_015",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_016",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_017",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_018",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_019",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_020",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_021",
+      "scene_offset": [
+        16,
+        0,
+        32
+      ],
+      "material": "soil"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_022",
+      "scene_offset": [
+        16,
+        16,
+        32
+      ],
+      "material": "green"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_023",
+      "scene_offset": [
+        16,
+        16,
+        32
+      ],
+      "material": "green"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_024",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_025",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_026",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_027",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_028",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_029",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_030",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_031",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_032",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "wood"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_033",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "soil"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_034",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "green"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/spring/part_035",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ],
+      "material": "green"
+    }
+  ]
+}

@@ -71,6 +71,18 @@ public final class DragonBreathJudgementSkillHandler
         String weaponId = context.weaponId().getPath();
         String skillId = context.skillData().getId();
         instance.registerCommittedEffect(() -> {
+            com.stardew.craft.event.MineBarrelBreakHandler.breakInArc(
+                    context.player(),
+                    TARGET_RANGE,
+                    MINIMUM_TARGET_DOT
+            );
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(),
+                    weaponId,
+                    skillId,
+                    ANIMATION_TICKS
+            );
+
             for (LivingEntity target : targets) {
                 attackTarget(context, target, criticalChanceBonus);
             }
@@ -81,12 +93,6 @@ public final class DragonBreathJudgementSkillHandler
                         refund
                 );
             }
-            WeaponSkillAnimationDispatcher.sendSkillAnim(
-                    context.player(),
-                    weaponId,
-                    skillId,
-                    ANIMATION_TICKS
-            );
             WeaponSkillAnimationLock.setLock(
                     context.player(),
                     context.nowTick(),

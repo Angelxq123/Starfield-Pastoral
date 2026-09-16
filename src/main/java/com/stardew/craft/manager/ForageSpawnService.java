@@ -338,16 +338,13 @@ public final class ForageSpawnService {
             // SDV uses the map's Back-layer "Spawnable" property, not only grass.
             // In this MC map, public valley spawnable ground may be grass or yellow/natural dirt.
             case NATURAL -> isNaturalForageSurface(surfaceState);
-            case SAND -> surfaceState.is(Blocks.SAND);
+            case SAND -> surfaceState.is(Blocks.SAND) || surfaceState.is(ModBlocks.SAND.get());
         };
     }
 
     private static boolean isNaturalForageSurface(BlockState state) {
         Block block = state.getBlock();
-        if (block == ModBlocks.ARTIFACT_SPOT_DIRT.get()) {
-            return false;
-        }
-        if (block == Blocks.GRASS_BLOCK || block == ModBlocks.YELLOW_DIRT.get()) {
+        if (block instanceof net.minecraft.world.level.block.GrassBlock || (block == ModBlocks.YELLOW_DIRT.get() || block == ModBlocks.DIRT.get())) {
             return true;
         }
         return state.is(BlockTags.DIRT);

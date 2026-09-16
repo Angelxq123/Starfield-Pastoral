@@ -1,0 +1,82 @@
+{
+  "intervalMin": 3.7,
+  "intervalMax": 7.0,
+  "durationMin": 0.95,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0.35,
+  "walkStride": 0.837788375,
+  "attentionRig": {
+    "hipHeight": 11,
+    "soleY": -0.35,
+    "toeDepth": 2.35,
+    "halfStance": 2.18,
+    "rightZ": 0.12,
+    "leftZ": -0.16,
+    "rightYaw": -4,
+    "leftYaw": 4,
+    "lift": 0.75,
+    "lean": 1.25,
+    "armSwing": 3.2
+  },
+  "gait": {
+    "id": "robin",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42000000000000004,
+    "groundOffset": 0.35,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      }
+    },
+    "bodyPitch": -2.5999999999999996,
+    "headPitch": 1.2845156,
+    "halfStance": 2.4299999999999997,
+    "stride": 13.404614,
+    "reachMargin": 0.035221,
+    "legLengthStride": 19.25,
+    "approvedBaseStride": 19.25,
+    "stance": 0.55,
+    "bob": 0.2752,
+    "sway": 0.46,
+    "rootYaw": 2.0,
+    "bodyYaw": 4.9,
+    "armSwing": 18.5,
+    "armPhase": 0.025,
+    "footLift": 0.30240000000000006,
+    "swingPeak": 0.46,
+    "elbowBase": 8,
+    "bodyRoll": 0.84,
+    "strideScale": 1.01,
+    "intent": "成年女性、木匠、外向；落脚干脆、对侧摆臂积极，重心转换利落。",
+    "bodyLag": 0.055,
+    "headLag": 0.09,
+    "headYawLag": 0.04,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.792866,
+    "levelWalk": true
+  }
+}

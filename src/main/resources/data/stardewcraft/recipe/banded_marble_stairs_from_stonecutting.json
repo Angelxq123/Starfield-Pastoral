@@ -1,5 +1,0 @@
-﻿{
-  "type": "minecraft:stonecutting",
-  "ingredient": { "item": "stardewcraft:banded_marble" },
-  "result": { "count": 1, "id": "stardewcraft:banded_marble_stairs" }
-}

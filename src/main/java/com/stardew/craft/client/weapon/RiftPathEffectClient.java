@@ -3,12 +3,10 @@ package com.stardew.craft.client.weapon;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -20,10 +18,6 @@ import java.util.List;
 
 public final class RiftPathEffectClient {
 
-    private static final ResourceLocation RIFT_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_e.png"
-    );
 
     private static final List<Rift> RIFTS = new ArrayList<>();
 
@@ -71,7 +65,7 @@ public final class RiftPathEffectClient {
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        RenderType riftType = RenderType.entityTranslucent(RIFT_TEXTURE);
+        RenderType riftType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer consumer = buffer.getBuffer(riftType);
 
         for (Rift rift : RIFTS) {
@@ -106,10 +100,7 @@ public final class RiftPathEffectClient {
             PoseStack.Pose last = poseStack.last();
             Matrix4f pose = last.pose();
             int a = Math.min(255, Math.max(0, (int) (alpha * 255)));
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, -halfLength, -halfWidth, 0, 1);
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, halfLength, -halfWidth, 1, 1);
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, halfLength, halfWidth, 1, 0);
-            vertex(consumer, pose, 0xF000F0, rOuter, gOuter, bOuter, a, -halfLength, halfWidth, 0, 0);
+            WeaponEffectShapes.crack(consumer, pose, halfLength, halfWidth, rOuter, gOuter, bOuter, a);
 
             poseStack.popPose();
 
@@ -121,10 +112,7 @@ public final class RiftPathEffectClient {
             PoseStack.Pose tilt = poseStack.last();
             Matrix4f tiltPose = tilt.pose();
             int upperAlpha = Math.max(0, (int) (a * 0.55f));
-            vertex(consumer, tiltPose, 0xF000F0, r, g, b, upperAlpha, -halfLength, -halfWidth, 0, 1);
-            vertex(consumer, tiltPose, 0xF000F0, r, g, b, upperAlpha, halfLength, -halfWidth, 1, 1);
-            vertex(consumer, tiltPose, 0xF000F0, r, g, b, upperAlpha, halfLength, halfWidth, 1, 0);
-            vertex(consumer, tiltPose, 0xF000F0, r, g, b, upperAlpha, -halfLength, halfWidth, 0, 0);
+            WeaponEffectShapes.crack(consumer, tiltPose, halfLength, halfWidth, r, g, b, upperAlpha);
 
             poseStack.popPose();
 
@@ -133,16 +121,7 @@ public final class RiftPathEffectClient {
         buffer.endBatch(riftType);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light, int r, int g, int b, int alpha,
-                               float x, float z, float u, float v) {
-        consumer.addVertex(pose, x, 0.0f, z)
-            .setColor(r, g, b, alpha)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
+
 
     private static final class Rift {
         private final Vec3 pos;

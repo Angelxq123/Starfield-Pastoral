@@ -5,7 +5,7 @@
     "particle": "stardewcraft:item/weapon/dagger/iridium_needle"
   },
   "display": {
-    "first_person_right_hand": {
+    "firstperson_righthand": {
       "rotation": [
         0,
         -90,
@@ -22,7 +22,7 @@
         0.68
       ]
     },
-    "first_person_left_hand": {
+    "firstperson_lefthand": {
       "rotation": [
         0,
         90,

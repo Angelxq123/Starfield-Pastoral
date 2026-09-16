@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/earth_iron_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/earth_iron_ore"
-                 }
-}

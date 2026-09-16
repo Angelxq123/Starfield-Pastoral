@@ -1,0 +1,15 @@
+{
+  "output": "stardewcraft:brick_floor",
+  "output_count": 5,
+  "ingredients": [
+    {
+      "item": "stardewcraft:clay",
+      "count": 2
+    },
+    {
+      "item": "stardewcraft:stone",
+      "count": 5
+    }
+  ],
+  "legacy_unlock_condition": "l 0"
+}

@@ -1,5 +1,1 @@
-{
-  "variants": {
-    "": { "model": "stardewcraft:block/forage/wild_plum" }
-  }
-}
+{"variants":{"":{"model":"stardewcraft:block/crop3d/forage_wild_plum/mature"}}}

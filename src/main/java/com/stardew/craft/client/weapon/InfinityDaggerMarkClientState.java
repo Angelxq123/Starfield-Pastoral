@@ -17,10 +17,22 @@ public final class InfinityDaggerMarkClientState {
 
     private static final Map<Integer, MarkData> MARKS = new ConcurrentHashMap<>();
 
+    private static net.minecraft.client.multiplayer.ClientLevel activeLevel;
+    public static java.util.Set<Integer> markedEntityIds() {
+        ensureLevel();
+        return java.util.Set.copyOf(MARKS.keySet());
+    }
+    private static void ensureLevel() {
+        var level = Minecraft.getInstance().level;
+        if (level == activeLevel) return;
+        activeLevel = level; MARKS.clear();
+    }
+
     private InfinityDaggerMarkClientState() {}
 
     @SuppressWarnings("null")
     public static void apply(int entityId, int durationTicks) {
+        ensureLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             return;
@@ -51,6 +63,7 @@ public final class InfinityDaggerMarkClientState {
 
     @SuppressWarnings("null")
     public static void onClientTick(ClientTickEvent.Post event) {
+        ensureLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             MARKS.clear();
@@ -66,8 +79,9 @@ public final class InfinityDaggerMarkClientState {
                 it.remove();
                 continue;
             }
+            if (!com.stardew.craft.Config.ENABLE_WEAPON_SPECIAL_EFFECTS.getAsBoolean() || mc.isPaused()) continue;
             Entity entity = level.getEntity(entry.getKey());
-            if (!(entity instanceof LivingEntity living)) {
+            if (!(entity instanceof LivingEntity living) || !living.isAlive() || mc.player == null || living.distanceToSqr(mc.player) > 32 * 32) {
                 continue;
             }
             if ((nowTick + entry.getKey()) % 3 != 0) {

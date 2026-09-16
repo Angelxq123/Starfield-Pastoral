@@ -1,21 +1,6 @@
 {
   "replace": false,
   "values": [
-    "stardewcraft:frost_gneiss",
-    "stardewcraft:dark_frost_gneiss",
-    "stardewcraft:frost_gneiss_slab",
-    "stardewcraft:frost_gneiss_stairs",
-    "stardewcraft:frost_gneiss_wall",
-    "stardewcraft:dark_frost_gneiss_slab",
-    "stardewcraft:dark_frost_gneiss_stairs",
-    "stardewcraft:dark_frost_gneiss_wall",
-
-    "stardewcraft:earth_iron_ore",
-    "stardewcraft:frost_iron_ore",
-    "stardewcraft:lava_iron_ore",
-
-    "stardewcraft:aquamarine_ore",
-    "stardewcraft:jade_ore",
     "stardewcraft:frozen_tear"
   ]
 }

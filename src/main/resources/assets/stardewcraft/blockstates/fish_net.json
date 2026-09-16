@@ -1,12 +1,28 @@
 {
   "variants": {
-    "part=main,facing=north": { "model": "stardewcraft:block/fish_net_anchor" },
-    "part=main,facing=east": { "model": "stardewcraft:block/fish_net_anchor", "y": 90 },
-    "part=main,facing=south": { "model": "stardewcraft:block/fish_net_anchor", "y": 180 },
-    "part=main,facing=west": { "model": "stardewcraft:block/fish_net_anchor", "y": 270 },
-    "part=extension,facing=north": { "model": "stardewcraft:block/decor/extensions/pillar_1_extension_empty" },
-    "part=extension,facing=east": { "model": "stardewcraft:block/decor/extensions/pillar_1_extension_empty" },
-    "part=extension,facing=south": { "model": "stardewcraft:block/decor/extensions/pillar_1_extension_empty" },
-    "part=extension,facing=west": { "model": "stardewcraft:block/decor/extensions/pillar_1_extension_empty" }
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/fish_net_anchor"
+    }
   }
 }

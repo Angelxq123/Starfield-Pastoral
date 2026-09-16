@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "top": "stardewcraft:block/town_paving_stairs/summer/tread",
+    "side": "stardewcraft:block/town_paving/summer/side",
+    "bottom": "stardewcraft:block/town_paving/summer/side",
+    "particle": "stardewcraft:block/town_paving/summer/side"
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        -8.31371,
+        2,
+        3
+      ],
+      "to": [
+        14.31371,
+        10,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.15625,
+            0.03125,
+            11.5098034375,
+            0.15625
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.546875,
+            0.03125,
+            11.9004284375,
+            0.15625
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          3,
+          2,
+          3
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      }
+    },
+    {
+      "from": [
+        -11,
+        2,
+        -11
+      ],
+      "to": [
+        11,
+        2,
+        11
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            14.78125,
+            0.03125,
+            15.125,
+            0.375
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        -6.1421399999999995,
+        10,
+        8
+      ],
+      "to": [
+        22.142139999999998,
+        20,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.3125,
+            0.90625,
+            3.754441875,
+            1.0625
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.796875,
+            0.90625,
+            4.238816875,
+            1.0625
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          8,
+          10,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      }
+    }
+  ]
+}

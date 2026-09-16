@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=north,part=main": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=north,part=extension": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=east,part=main": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=east,part=extension": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=south,part=main": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=south,part=extension": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=west,part=main": {
+      "model": "stardewcraft:block/large_fish_tank"
+    },
+    "facing=west,part=extension": {
+      "model": "stardewcraft:block/large_fish_tank"
+    }
+  }
+}

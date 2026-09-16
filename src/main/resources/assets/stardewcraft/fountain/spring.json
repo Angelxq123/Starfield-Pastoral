@@ -1,0 +1,1031 @@
+{
+  "parts": [
+    {
+      "model": "water_0",
+      "offset": [
+        16,
+        0,
+        16
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_1",
+      "offset": [
+        16,
+        0,
+        48
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_2",
+      "offset": [
+        16,
+        0,
+        64
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_3",
+      "offset": [
+        48,
+        0,
+        16
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_4",
+      "offset": [
+        64,
+        0,
+        16
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_5",
+      "offset": [
+        48,
+        0,
+        48
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_6",
+      "offset": [
+        48,
+        0,
+        64
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_7",
+      "offset": [
+        64,
+        0,
+        48
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_8",
+      "offset": [
+        64,
+        0,
+        64
+      ],
+      "kind": "water"
+    },
+    {
+      "model": "water_9",
+      "offset": [
+        48,
+        16,
+        32
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_10",
+      "offset": [
+        48,
+        32,
+        32
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_11",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 0,
+      "index": 0
+    },
+    {
+      "model": "water_12",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 0,
+      "index": 1
+    },
+    {
+      "model": "water_13",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 0,
+      "index": 2
+    },
+    {
+      "model": "water_14",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 0,
+      "index": 3
+    },
+    {
+      "model": "water_15",
+      "offset": [
+        40,
+        12.05,
+        40
+      ],
+      "kind": "ripple",
+      "side": 0,
+      "index": 0
+    },
+    {
+      "model": "water_16",
+      "offset": [
+        40,
+        12.06,
+        40
+      ],
+      "kind": "ripple",
+      "side": 0,
+      "index": 1
+    },
+    {
+      "model": "water_17",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 0,
+      "index": 0
+    },
+    {
+      "model": "water_18",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 0,
+      "index": 1
+    },
+    {
+      "model": "water_19",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 0,
+      "index": 2
+    },
+    {
+      "model": "water_20",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_21",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_22",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 2,
+      "index": 0
+    },
+    {
+      "model": "water_23",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 2,
+      "index": 1
+    },
+    {
+      "model": "water_24",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 2,
+      "index": 2
+    },
+    {
+      "model": "water_25",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 2,
+      "index": 3
+    },
+    {
+      "model": "water_26",
+      "offset": [
+        40,
+        12.05,
+        40
+      ],
+      "kind": "ripple",
+      "side": 2,
+      "index": 0
+    },
+    {
+      "model": "water_27",
+      "offset": [
+        40,
+        12.06,
+        40
+      ],
+      "kind": "ripple",
+      "side": 2,
+      "index": 1
+    },
+    {
+      "model": "water_28",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 2,
+      "index": 0
+    },
+    {
+      "model": "water_29",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 2,
+      "index": 1
+    },
+    {
+      "model": "water_30",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 2,
+      "index": 2
+    },
+    {
+      "model": "water_31",
+      "offset": [
+        32,
+        16,
+        16
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_32",
+      "offset": [
+        32,
+        32,
+        16
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_33",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 3,
+      "index": 0
+    },
+    {
+      "model": "water_34",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 3,
+      "index": 1
+    },
+    {
+      "model": "water_35",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 3,
+      "index": 2
+    },
+    {
+      "model": "water_36",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 3,
+      "index": 3
+    },
+    {
+      "model": "water_37",
+      "offset": [
+        40,
+        12.05,
+        40
+      ],
+      "kind": "ripple",
+      "side": 3,
+      "index": 0
+    },
+    {
+      "model": "water_38",
+      "offset": [
+        40,
+        12.06,
+        40
+      ],
+      "kind": "ripple",
+      "side": 3,
+      "index": 1
+    },
+    {
+      "model": "water_39",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 3,
+      "index": 0
+    },
+    {
+      "model": "water_40",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 3,
+      "index": 1
+    },
+    {
+      "model": "water_41",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 3,
+      "index": 2
+    },
+    {
+      "model": "water_42",
+      "offset": [
+        32,
+        16,
+        48
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_43",
+      "offset": [
+        32,
+        32,
+        48
+      ],
+      "kind": "jet"
+    },
+    {
+      "model": "water_44",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 1,
+      "index": 0
+    },
+    {
+      "model": "water_45",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 1,
+      "index": 1
+    },
+    {
+      "model": "water_46",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 1,
+      "index": 2
+    },
+    {
+      "model": "water_47",
+      "offset": [
+        40,
+        21,
+        40
+      ],
+      "kind": "drop",
+      "side": 1,
+      "index": 3
+    },
+    {
+      "model": "water_48",
+      "offset": [
+        40,
+        12.05,
+        40
+      ],
+      "kind": "ripple",
+      "side": 1,
+      "index": 0
+    },
+    {
+      "model": "water_49",
+      "offset": [
+        40,
+        12.06,
+        40
+      ],
+      "kind": "ripple",
+      "side": 1,
+      "index": 1
+    },
+    {
+      "model": "water_50",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 1,
+      "index": 0
+    },
+    {
+      "model": "water_51",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 1,
+      "index": 1
+    },
+    {
+      "model": "water_52",
+      "offset": [
+        40,
+        12.5,
+        40
+      ],
+      "kind": "splash",
+      "side": 1,
+      "index": 2
+    }
+  ],
+  "regions": [
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 0,
+      "v": 0,
+      "w": 32,
+      "h": 32,
+      "from": [
+        6,
+        12,
+        6
+      ],
+      "to": [
+        38,
+        12,
+        38
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 33,
+      "v": 0,
+      "w": 32,
+      "h": 32,
+      "from": [
+        6,
+        12,
+        38
+      ],
+      "to": [
+        38,
+        12,
+        70
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 66,
+      "v": 0,
+      "w": 32,
+      "h": 4,
+      "from": [
+        6,
+        12,
+        70
+      ],
+      "to": [
+        38,
+        12,
+        74
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 99,
+      "v": 0,
+      "w": 32,
+      "h": 32,
+      "from": [
+        38,
+        12,
+        6
+      ],
+      "to": [
+        70,
+        12,
+        38
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 132,
+      "v": 0,
+      "w": 4,
+      "h": 32,
+      "from": [
+        70,
+        12,
+        6
+      ],
+      "to": [
+        74,
+        12,
+        38
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 137,
+      "v": 0,
+      "w": 32,
+      "h": 32,
+      "from": [
+        38,
+        12,
+        38
+      ],
+      "to": [
+        70,
+        12,
+        70
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 170,
+      "v": 0,
+      "w": 32,
+      "h": 4,
+      "from": [
+        38,
+        12,
+        70
+      ],
+      "to": [
+        70,
+        12,
+        74
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 203,
+      "v": 0,
+      "w": 4,
+      "h": 32,
+      "from": [
+        70,
+        12,
+        38
+      ],
+      "to": [
+        74,
+        12,
+        70
+      ]
+    },
+    {
+      "material": "water",
+      "face": "up",
+      "tag": "water",
+      "u": 208,
+      "v": 0,
+      "w": 4,
+      "h": 4,
+      "from": [
+        70,
+        12,
+        70
+      ],
+      "to": [
+        74,
+        12,
+        74
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "north",
+      "tag": "east",
+      "u": 213,
+      "v": 0,
+      "w": 26,
+      "h": 32,
+      "from": [
+        44,
+        10,
+        40
+      ],
+      "to": [
+        70,
+        42,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "south",
+      "tag": "east",
+      "u": 0,
+      "v": 33,
+      "w": 26,
+      "h": 32,
+      "from": [
+        44,
+        10,
+        40
+      ],
+      "to": [
+        70,
+        42,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "north",
+      "tag": "east",
+      "u": 27,
+      "v": 33,
+      "w": 26,
+      "h": 4,
+      "from": [
+        44,
+        42,
+        40
+      ],
+      "to": [
+        70,
+        46,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "south",
+      "tag": "east",
+      "u": 54,
+      "v": 33,
+      "w": 26,
+      "h": 4,
+      "from": [
+        44,
+        42,
+        40
+      ],
+      "to": [
+        70,
+        46,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "north",
+      "tag": "west",
+      "u": 0,
+      "v": 66,
+      "w": 26,
+      "h": 32,
+      "from": [
+        10,
+        10,
+        40
+      ],
+      "to": [
+        36,
+        42,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "south",
+      "tag": "west",
+      "u": 27,
+      "v": 66,
+      "w": 26,
+      "h": 32,
+      "from": [
+        10,
+        10,
+        40
+      ],
+      "to": [
+        36,
+        42,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "north",
+      "tag": "west",
+      "u": 54,
+      "v": 66,
+      "w": 26,
+      "h": 4,
+      "from": [
+        10,
+        42,
+        40
+      ],
+      "to": [
+        36,
+        46,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "south",
+      "tag": "west",
+      "u": 81,
+      "v": 66,
+      "w": 26,
+      "h": 4,
+      "from": [
+        10,
+        42,
+        40
+      ],
+      "to": [
+        36,
+        46,
+        40
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "east",
+      "tag": "north",
+      "u": 4,
+      "v": 99,
+      "w": 26,
+      "h": 32,
+      "from": [
+        40,
+        10,
+        10
+      ],
+      "to": [
+        40,
+        42,
+        36
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "west",
+      "tag": "north",
+      "u": 31,
+      "v": 99,
+      "w": 26,
+      "h": 32,
+      "from": [
+        40,
+        10,
+        10
+      ],
+      "to": [
+        40,
+        42,
+        36
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "east",
+      "tag": "north",
+      "u": 58,
+      "v": 99,
+      "w": 26,
+      "h": 4,
+      "from": [
+        40,
+        42,
+        10
+      ],
+      "to": [
+        40,
+        46,
+        36
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "west",
+      "tag": "north",
+      "u": 85,
+      "v": 99,
+      "w": 26,
+      "h": 4,
+      "from": [
+        40,
+        42,
+        10
+      ],
+      "to": [
+        40,
+        46,
+        36
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "east",
+      "tag": "south",
+      "u": 8,
+      "v": 132,
+      "w": 26,
+      "h": 32,
+      "from": [
+        40,
+        10,
+        44
+      ],
+      "to": [
+        40,
+        42,
+        70
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "west",
+      "tag": "south",
+      "u": 35,
+      "v": 132,
+      "w": 26,
+      "h": 32,
+      "from": [
+        40,
+        10,
+        44
+      ],
+      "to": [
+        40,
+        42,
+        70
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "east",
+      "tag": "south",
+      "u": 62,
+      "v": 132,
+      "w": 26,
+      "h": 4,
+      "from": [
+        40,
+        42,
+        44
+      ],
+      "to": [
+        40,
+        46,
+        70
+      ]
+    },
+    {
+      "material": "jet",
+      "face": "west",
+      "tag": "south",
+      "u": 89,
+      "v": 132,
+      "w": 26,
+      "h": 4,
+      "from": [
+        40,
+        42,
+        44
+      ],
+      "to": [
+        40,
+        46,
+        70
+      ]
+    }
+  ],
+  "texture_size": 256
+}

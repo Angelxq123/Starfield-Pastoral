@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "0": "stardewcraft:block/decor/ice_cream_stand/summer/ice_cream_stand_summer",
+    "particle": "stardewcraft:block/decor/ice_cream_stand/summer/stand_fabric_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        8,
+        7,
+        2
+      ],
+      "to": [
+        9,
+        9,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            9.6875,
+            13.25,
+            9.75,
+            13.375
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            9.9375,
+            13.25,
+            10.6875,
+            13.375
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            9.8125,
+            13.25,
+            9.875,
+            13.375
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            10.75,
+            13.25,
+            11.5,
+            13.375
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            11.5625,
+            13.25,
+            11.625,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            11.6875,
+            13.25,
+            11.75,
+            14.0
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

@@ -16,6 +16,7 @@ public class WeaponSkillData {
     private final int damagePercent;
     private final List<String> effectKeys;
     private final int cooldown;
+    private final boolean passive;
     private final String iconChar; // 自定义字体中的技能图标字符
     
     private WeaponSkillData(Builder builder) {
@@ -25,6 +26,7 @@ public class WeaponSkillData {
         this.damagePercent = builder.damagePercent;
         this.effectKeys = List.copyOf(builder.effectKeys);
         this.cooldown = builder.cooldown;
+        this.passive = builder.passive;
         this.iconChar = builder.iconChar;
     }
     
@@ -35,6 +37,7 @@ public class WeaponSkillData {
     public int getDamagePercent() { return damagePercent; }
     public List<String> getEffectKeys() { return effectKeys; }
     public int getCooldown() { return cooldown; }
+    public boolean isPassive() { return passive; }
     public String getIconChar() { return iconChar; }
 
     /**
@@ -69,6 +72,7 @@ public class WeaponSkillData {
         private int damagePercent = 0;
         private List<String> effectKeys = new ArrayList<>();
         private int cooldown = 0;
+        private boolean passive;
         private String iconChar = null;
         
         public Builder(String id) {
@@ -100,6 +104,11 @@ public class WeaponSkillData {
             return this;
         }
         
+        public Builder passive() {
+            this.passive = true;
+            return this;
+        }
+
         public Builder icon(String iconChar) {
             this.iconChar = iconChar;
             return this;

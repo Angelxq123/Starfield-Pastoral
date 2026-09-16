@@ -77,6 +77,13 @@ public final class DesperatePlunderSkillHandler implements RuntimeWeaponSkillHan
                 HEALTH_COST,
                 MINIMUM_REMAINING_HEALTH
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             if (target != null) {
                 WeaponSkillDamage.apply(
@@ -99,12 +106,6 @@ public final class DesperatePlunderSkillHandler implements RuntimeWeaponSkillHan
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 ANIMATION_TICKS
         );
     }
@@ -137,7 +138,9 @@ public final class DesperatePlunderSkillHandler implements RuntimeWeaponSkillHan
     }
 
     private static void healAfterKill(SkillExecutionContext context) {
-        CombatHealing.heal(context.player(), KILL_HEALING);
+        float restored = CombatHealing.heal(context.player(), KILL_HEALING);
+        if (restored > 0) com.stardew.craft.combat.network.PirateSilverEffectPayload.send(context.player(),
+                com.stardew.craft.combat.network.PirateSilverEffectPayload.Phase.HEAL, context.player().position(), context.player().position(), 10);
         context.player().level().playSound(
                 null,
                 context.player().getX(),

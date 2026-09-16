@@ -155,13 +155,17 @@ public class CrystalariumBlockEntity extends TimedProductionBlockEntity implemen
     }
 
     private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack input) {
+        return createOutputFromRecipe(recipe, input, false);
+    }
+
+    private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack input, boolean simulate) {
         if (recipe.outputMode() == ArtisanRecipeDataManager.OutputMode.COPY_INPUT) {
             ItemStack output = input.copy();
             output.setCount(1);
             return output;
         }
         if (recipe.outputMode() == ArtisanRecipeDataManager.OutputMode.FIXED && recipe.outputId() != null) {
-            return new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+            return new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
         }
         return ItemStack.EMPTY;
     }
@@ -245,7 +249,7 @@ public class CrystalariumBlockEntity extends TimedProductionBlockEntity implemen
             return stack;
         }
         ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
-        ItemStack output = createOutputFromRecipe(recipe, stack);
+        ItemStack output = createOutputFromRecipe(recipe, stack, simulate);
         if (output.isEmpty()) {
             return stack;
         }

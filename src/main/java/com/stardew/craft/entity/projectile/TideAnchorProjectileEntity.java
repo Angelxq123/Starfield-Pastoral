@@ -8,17 +8,12 @@ import com.stardew.craft.combat.skill.runtime.WeaponSkillMovementArbiter;
 import com.stardew.craft.combat.skill.TideAnchorRootTracker;
 import com.stardew.craft.combat.equipment.EquipmentMobEffectHandler;
 import com.stardew.craft.combat.equipment.EquipmentNegativeStatusProtection;
-import com.stardew.craft.combat.network.WaterRingEffectPayload;
 import com.stardew.craft.entity.ModEntities;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -31,7 +26,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 
@@ -42,7 +36,6 @@ public class TideAnchorProjectileEntity extends ThrowableProjectile {
     public static final double MARK_TELEPORT_RADIUS = 24.0;
     public static final int MAX_LIFETIME_TICKS = 80;
     public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
-    public static final int WATER_RING_DURATION_TICKS = 20;
     public static final int ROOT_DURATION_TICKS = 100;
     public static final int ROOT_SLOW_AMPLIFIER = 4;
     public static final int ROOT_JUMP_AMPLIFIER = 128;
@@ -127,41 +120,11 @@ public class TideAnchorProjectileEntity extends ThrowableProjectile {
             return;
         }
         long nowTick = this.level().getGameTime();
-        ServerLevel serverLevel = this.level() instanceof ServerLevel ? (ServerLevel) this.level() : null;
 
-        // 水环特效（客户端表现）
-        if (serverLevel != null) {
-            PacketDistributor.sendToPlayersInDimension(serverLevel,
-                new WaterRingEffectPayload(
-                    (float) hitPos.x,
-                    (float) hitPos.y,
-                    (float) hitPos.z,
-                    (float) AOE_RADIUS,
-                    WATER_RING_DURATION_TICKS
-                ));
-        }
-
-        // 主要冲击音效与粒子
-        if (serverLevel != null) {
-            serverLevel.playSound(null, hitPos.x, hitPos.y, hitPos.z,
-                SoundEvents.TRIDENT_HIT, SoundSource.PLAYERS, 0.9f, 0.95f);
-            serverLevel.playSound(null, hitPos.x, hitPos.y, hitPos.z,
-                SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.PLAYERS, 0.8f, 1.1f);
-            serverLevel.playSound(null, hitPos.x, hitPos.y, hitPos.z,
-                SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 0.7f, 0.8f);
-
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                hitPos.x, hitPos.y + 0.25, hitPos.z,
-                26, 0.9, 0.25, 0.9, 0.04);
-            serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                hitPos.x, hitPos.y + 0.15, hitPos.z,
-                18, 0.7, 0.2, 0.7, 0.02);
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                hitPos.x, hitPos.y + 0.2, hitPos.z,
-                10, 0.6, 0.1, 0.6, 0.02);
-            serverLevel.sendParticles(ParticleTypes.CRIT,
-                hitPos.x, hitPos.y + 0.3, hitPos.z,
-                8, 0.5, 0.2, 0.5, 0.06);
+        if (player instanceof ServerPlayer owner) {
+            com.stardew.craft.combat.network.TidePhasePayload.send(owner,
+                    com.stardew.craft.combat.network.TidePhasePayload.Phase.ANCHOR,
+                    hitPos, hitPos, 12, false);
         }
 
         // AOE 伤害
@@ -243,18 +206,11 @@ public class TideAnchorProjectileEntity extends ThrowableProjectile {
                 );
             }
 
-            if (serverLevel != null) {
-                serverLevel.playSound(null, hitPos.x, hitPos.y, hitPos.z,
-                    SoundEvents.TRIDENT_RIPTIDE_1.value(), SoundSource.PLAYERS, 0.6f, 1.2f);
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    oldPos.x, oldPos.y + marked.getBbHeight() * 0.6, oldPos.z,
-                    12, 0.5, 0.25, 0.5, 0.03);
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    hitPos.x, hitPos.y + marked.getBbHeight() * 0.6, hitPos.z,
-                    14, 0.6, 0.25, 0.6, 0.03);
-                serverLevel.sendParticles(ParticleTypes.ENCHANT,
-                    hitPos.x, hitPos.y + marked.getBbHeight() * 0.6, hitPos.z,
-                    10, 0.4, 0.3, 0.4, 0.02);
+            if (player instanceof ServerPlayer owner) {
+                com.stardew.craft.combat.network.TidePhasePayload.send(owner,
+                        com.stardew.craft.combat.network.TidePhasePayload.Phase.TRANSFER,
+                        oldPos.add(0, marked.getBbHeight() * 0.5, 0),
+                        marked.getBoundingBox().getCenter(), 10, !protection.resisted());
             }
         }
     }

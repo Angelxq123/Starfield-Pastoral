@@ -6,8 +6,11 @@ import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.ProfessionType;
 import com.stardew.craft.player.SkillType;
 import com.stardew.craft.time.StardewTimeManager;
+import com.stardew.craft.block.shape.ModelVoxelShapeCache;
+import com.stardew.craft.block.utility.GardenPotBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
@@ -25,11 +28,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.AABB;
 
 import java.util.function.Supplier;
 
 /**
- * Generic forage block using cross model. Drops a specified item when broken.
+ * Forage block with a model-sized selection box for static 3D resources.
  * Used for world-generated forage items (wild_horseradish, daffodil, etc.).
  *
  * <p>SDV parity:
@@ -80,6 +85,24 @@ public class ForageBlock extends BushBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        String model = ModelVoxelShapeCache.variantModel(BuiltInRegistries.BLOCK.getKey(this).toString(), "");
+        if (model != null && model.startsWith("stardewcraft:block/crop3d/forage_")) {
+            AABB bounds = ModelVoxelShapeCache.requiredShape(model).bounds();
+            BlockPos below = pos.below();
+            BlockState support = level.getBlockState(below);
+            if (support.getBlock() instanceof GardenPotBlock) {
+                // Match GardenPotBlockEntityRenderer's whole-model scale and 11px soil plane.
+                double scale = 13.0 / 16;
+                bounds = new AABB((bounds.minX - .5) * scale + .5, bounds.minY * scale - 5.0 / 16,
+                        (bounds.minZ - .5) * scale + .5, (bounds.maxX - .5) * scale + .5,
+                        bounds.maxY * scale - 5.0 / 16, (bounds.maxZ - .5) * scale + .5);
+            } else if (support.getBlock() instanceof FarmBlock) {
+                VoxelShape floor = support.getCollisionShape(level, below);
+                if (!floor.isEmpty()) bounds = bounds.move(0, floor.max(Direction.Axis.Y) - 1, 0);
+            }
+            // GardenPlanterPlantShapeMixin applies the planter's offset once at BlockState level.
+            return Shapes.create(bounds);
+        }
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) {
             return net.minecraft.world.phys.shapes.Shapes.empty();
         }

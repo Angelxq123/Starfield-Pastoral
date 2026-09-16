@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.overnight;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.network.overnight.ClientOvernightHandler;
 import com.stardew.craft.sound.ModSounds;
@@ -156,9 +158,7 @@ public final class SaveGameMenuScreen extends Screen {
     }
 
     private int px(int stardewPixels) {
-        float guiScale = minecraft == null
-            ? 1.0f
-            : (float) minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         return Math.round(stardewPixels / guiScale);
     }
 }

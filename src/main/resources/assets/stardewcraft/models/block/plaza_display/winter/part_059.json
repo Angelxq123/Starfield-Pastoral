@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/winter/plaza_display_winter",
+    "particle": "stardewcraft:block/plaza_display/winter/plaza_winter_gold_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        7,
+        7
+      ],
+      "to": [
+        9,
+        9,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12.8125,
+            7.75,
+            12.9375,
+            7.875
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.3125,
+            7.75,
+            13.4375,
+            7.875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            13.0625,
+            7.75,
+            13.1875,
+            7.875
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.5625,
+            7.75,
+            13.6875,
+            7.875
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            13.8125,
+            7.75,
+            13.9375,
+            7.875
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            14.0625,
+            7.75,
+            14.1875,
+            7.875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

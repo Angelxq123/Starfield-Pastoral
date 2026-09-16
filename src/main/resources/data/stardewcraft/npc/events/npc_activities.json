@@ -1,0 +1,100 @@
+{
+  "event_id": "npc_activities",
+  "activities": {
+    "sam_guitar": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_guitar"
+      ],
+      "asset": "sam_guitar",
+      "clip_prefix": "animation.sam.guitar",
+      "enter_ticks": 16,
+      "exit_ticks": 16,
+      "support": ""
+    },
+    "sam_gameboy": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_gameboy"
+      ],
+      "asset": "sam_gameboy",
+      "clip_prefix": "animation.sam.gameboy",
+      "enter_ticks": 16,
+      "exit_ticks": 16,
+      "support": ""
+    },
+    "sam_skateboard": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_skateboard",
+        "sam_skateboarding"
+      ],
+      "asset": "sam_skateboard",
+      "clip_prefix": "animation.sam.skateboard",
+      "enter_ticks": 16,
+      "exit_ticks": 16,
+      "support": ""
+    },
+    "sam_sweep": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_sweep",
+        "sam_work"
+      ],
+      "asset": "sam_sweep",
+      "clip_prefix": "animation.sam.sweep",
+      "enter_ticks": 16,
+      "exit_ticks": 16,
+      "support": ""
+    },
+    "sam_sit": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_sit"
+      ],
+      "asset": "sam_sit",
+      "clip_prefix": "animation.sam.sit",
+      "enter_ticks": 32,
+      "exit_ticks": 32,
+      "support": "chair"
+    },
+    "sam_sleep": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_sleep"
+      ],
+      "asset": "sam_sleep",
+      "clip_prefix": "animation.sam.sleep",
+      "enter_ticks": 104,
+      "exit_ticks": 108,
+      "support": "bed",
+      "enter_clip": "animation.sam.sleep_enter_full",
+      "exit_clip": "animation.sam.sleep_exit_full"
+    },
+    "sam_pool": {
+      "actors": [
+        "sam"
+      ],
+      "aliases": [
+        "sam_pool"
+      ],
+      "asset": "sam_pool",
+      "clip_prefix": "animation.sam.pool",
+      "enter_ticks": 16,
+      "exit_ticks": 16,
+      "support": ""
+    }
+  }
+}

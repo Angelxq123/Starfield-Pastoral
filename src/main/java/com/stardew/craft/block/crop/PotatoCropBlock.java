@@ -2,7 +2,6 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -17,7 +16,7 @@ import java.util.function.Supplier;
  */
 public class PotatoCropBlock extends StardewCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{1, 1, 2, 2}; // SDV: 6 days
+    private static final int[] PHASE_DAYS = new int[]{1, 1, 1, 2, 1}; // Original growth phases, followed by the harvest sentinel.
     private static final int[] OUTLINE_HEIGHTS = new int[]{7, 8, 10, 15};
     private static final int[] OUTLINE_WIDTHS = new int[]{6, 6, 8, 8};
 
@@ -44,8 +43,7 @@ public class PotatoCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 0;
+        return seasonForGrowth() == 0;
     }
 
     @Override

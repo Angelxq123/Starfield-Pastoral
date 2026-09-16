@@ -1,0 +1,19 @@
+// Explicit audit only: observes production code in a separate JVM; not part of check/release.
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    def compileProbe = project.tasks.register('compileNpcSystemAuditProbe', JavaCompile) {
+        dependsOn project.tasks.named('classes')
+        source = project.files('tools/npc/NpcSystemAuditProbe.java')
+        classpath = project.sourceSets.main.output + project.sourceSets.main.compileClasspath
+        destinationDirectory = project.layout.buildDirectory.dir('classes/npcSystemAudit')
+        javaCompiler = project.javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(21) }
+    }
+    project.tasks.register('npcSystemAudit', JavaExec) {
+        dependsOn compileProbe
+        classpath = project.files(compileProbe) + project.sourceSets.main.runtimeClasspath
+        mainClass = 'com.stardew.craft.npc.runtime.NpcSystemAuditProbe'
+        javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+        args project.file('src/main/resources/data/stardewcraft/npc').absolutePath,
+                project.layout.buildDirectory.file('reports/npc-system-audit/observations.json').get().asFile.absolutePath
+    }
+}

@@ -1,33 +1,6 @@
 {
   "replace": false,
   "values": [
-    "stardewcraft:lava_basalt",
-    "stardewcraft:dark_lava_basalt",
-    "stardewcraft:lava_basalt_slab",
-    "stardewcraft:lava_basalt_stairs",
-    "stardewcraft:lava_basalt_wall",
-    "stardewcraft:dark_lava_basalt_slab",
-    "stardewcraft:dark_lava_basalt_stairs",
-    "stardewcraft:dark_lava_basalt_wall",
-
-    "stardewcraft:earth_gold_ore",
-    "stardewcraft:frost_gold_ore",
-    "stardewcraft:lava_gold_ore",
-
-    "stardewcraft:ruby_ore",
-    "stardewcraft:emerald_ore",
-    "stardewcraft:diamond_ore",
-    "stardewcraft:fire_quartz",
-
-    "stardewcraft:desert_bedrock",
-    "stardewcraft:dark_desert_bedrock",
-    "stardewcraft:desert_bedrock_slab",
-    "stardewcraft:desert_bedrock_stairs",
-    "stardewcraft:desert_bedrock_wall",
-    "stardewcraft:dark_desert_bedrock_slab",
-    "stardewcraft:dark_desert_bedrock_stairs",
-    "stardewcraft:dark_desert_bedrock_wall",
-    "stardewcraft:desert_gold_ore",
-    "stardewcraft:calico_egg_stone"
+    "stardewcraft:fire_quartz"
   ]
 }

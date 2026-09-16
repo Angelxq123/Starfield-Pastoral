@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.network.payload.DesertFestivalRaceSnapshot;
@@ -87,7 +89,7 @@ final class DesertFestivalRaceUi {
     }
 
     static int ui(int value) {
-        return Math.round(value / (float) Minecraft.getInstance().getWindow().getGuiScale());
+        return Math.round(value / (float) StardewGuiViewport.renderScale());
     }
 
     static void actionCard(GuiGraphics graphics, Font font, int mouseX, int mouseY, ButtonHitbox hitbox,
@@ -224,7 +226,7 @@ final class DesertFestivalRaceUi {
     }
 
     static float scale() {
-        return 4.0f / (float) Minecraft.getInstance().getWindow().getGuiScale();
+        return 4.0f / (float) StardewGuiViewport.renderScale();
     }
 
     record ButtonHitbox(int x, int y, int w, int h, String action, int racerIndex, int amount, String roomId) {

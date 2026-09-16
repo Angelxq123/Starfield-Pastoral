@@ -35,6 +35,12 @@ public class FarmBlockMixin {
     private static void turnToDirt(Entity entity, BlockState state, Level level, BlockPos pos, CallbackInfo ci) {
         if (level.dimension().location().equals(ModDimensions.STARDEW_VALLEY.location())) {
             ci.cancel();
+        } else if (state.getBlock() instanceof com.stardew.craft.block.terrain.TerrainFarmlandBlock) {
+            BlockState dirt = com.stardew.craft.block.terrain.TerrainSoils.substrate(state).defaultBlockState();
+            level.setBlockAndUpdate(pos, dirt);
+            level.gameEvent(net.minecraft.world.level.gameevent.GameEvent.BLOCK_CHANGE, pos,
+                    net.minecraft.world.level.gameevent.GameEvent.Context.of(entity, dirt));
+            ci.cancel();
         }
     }
 

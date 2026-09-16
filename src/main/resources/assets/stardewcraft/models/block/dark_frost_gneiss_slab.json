@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/slab",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/dark_frost_gneiss",
-                     "top":  "stardewcraft:block/mine/dark_frost_gneiss",
-                     "side":  "stardewcraft:block/mine/dark_frost_gneiss",
-                     "particle":  "stardewcraft:block/mine/dark_frost_gneiss"
-                 }
-}

@@ -53,10 +53,12 @@ public final class WinterStarFestivalService {
     private static final String FLAG_GIFT_GIVEN_PREFIX = "winterStarGiftGiven";
     private static final String FLAG_GIFT_RECEIVED_PREFIX = "winterStarGiftReceived";
     private static final int FESTIVAL_END_MINUTE = 22 * 60;
+    // Clear arrival space inside the shipped festival venue, independent of the approach direction.
+    private static final Vec3 SAFE_ENTRY_RETURN = new Vec3(6.5D, 65.0D, -6.5D);
     private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(
         new BlockPos(-57, 79, -57),
         new BlockPos(96, 63, 65)
-    );
+    ).expandTowards(0.0D, -1.0D, 0.0D);
     private static final AABB PIERRE_SHOP_ZONE = inclusiveBox(
         new BlockPos(-7, 67, 3),
         new BlockPos(-10, 63, 7)
@@ -249,10 +251,15 @@ public final class WinterStarFestivalService {
     }
 
     public static boolean tryPromptSecretGift(ServerPlayer player, StardewNpcEntity npc, String npcId) {
+        return tryPromptSecretGift(player, npc, npcId, () -> {});
+    }
+
+    public static boolean tryPromptSecretGift(ServerPlayer player, StardewNpcEntity npc, String npcId, Runnable onOpened) {
         if (player == null || npc == null || npcId == null || !isInteractionEnabled(player)) {
             return false;
         }
         if (tryDeliverPendingReturnGift(player)) {
+            onOpened.run();
             return true;
         }
         if (hasSecretGiftCompleted(player)
@@ -262,8 +269,11 @@ public final class WinterStarFestivalService {
         com.stardew.craft.npc.data.NpcCapabilityProfile profile =
             com.stardew.craft.npc.data.NpcDataRegistry.capabilities().get(npcId.toLowerCase(java.util.Locale.ROOT));
         boolean female = profile != null && profile.gender() == com.stardew.craft.npc.data.NpcCapabilityProfile.GENDER_FEMALE;
-        npc.facePlayerTemporarily(player, 60, () -> PacketDistributor.sendToPlayer(player,
-            new OpenWinterStarGiftPromptPayload(npcId, npc.getDisplayName().getString(), female)));
+        npc.facePlayerTemporarily(player, 60, () -> {
+            PacketDistributor.sendToPlayer(player,
+                new OpenWinterStarGiftPromptPayload(npcId, npc.getDisplayName().getString(), female));
+            onOpened.run();
+        });
         return true;
     }
 
@@ -464,6 +474,7 @@ public final class WinterStarFestivalService {
         player.getPersistentData().putBoolean(TAG_PARTICIPATING, true);
         syncFestivalMusic(player, FestivalMusicStatePayload.CHRISTMAS_THEME);
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, true);
+        LAST_INSIDE_ENTRY.put(player.getUUID(), SAFE_ENTRY_RETURN);
         moveToLastInsideEntry(player.serverLevel(), player);
     }
 
@@ -526,7 +537,7 @@ public final class WinterStarFestivalService {
         if (target == null || !ENTRY_EXIT_BOUNDS.contains(target)) {
             target = FestivalBoundaryReturn.pushInside(ENTRY_EXIT_BOUNDS, player.position());
         }
-        Vec3 fallback = FestivalBoundaryReturn.pushInside(ENTRY_EXIT_BOUNDS, player.position());
+        Vec3 fallback = SAFE_ENTRY_RETURN;
         Vec3 safeTarget = FestivalBoundaryReturn.findSafeInside(player, ENTRY_EXIT_BOUNDS, target, fallback);
         if (safeTarget != null) {
             target = safeTarget;

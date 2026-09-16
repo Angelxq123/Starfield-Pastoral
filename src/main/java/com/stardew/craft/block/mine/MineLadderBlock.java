@@ -16,10 +16,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -30,6 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -49,29 +52,63 @@ public class MineLadderBlock extends Block {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     /** 是否为竖井（骷髅矿 20% 概率）。竖井需确认对话，跳 3-15 层并造成伤害。 */
     public static final BooleanProperty SHAFT = BooleanProperty.create("shaft");
-    private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/ladder", Direction.NORTH);
+    public static final EnumProperty<Theme> THEME = EnumProperty.create("theme", Theme.class);
+
+    public enum Theme implements StringRepresentable {
+        EARTH("earth"), FROST("frost"), LAVA("lava"), DESERT("desert"),
+        EARTH_DARK("earth_dark"), FROST_DARK("frost_dark"), LAVA_DARK("lava_dark"), DESERT_DARK("desert_dark");
+
+        private final String id;
+        Theme(String id) { this.id = id; }
+        @Override public String getSerializedName() { return id; }
+    }
+    private static final VoxelShape[] SHAFT_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/mine/desert_shaft", Direction.NORTH);
+
+    private static final VoxelShape[] LADDER_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/mine/earth_ladder", Direction.NORTH);
 
     @SuppressWarnings("null")
     public MineLadderBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(SHAFT, false));
+                .setValue(SHAFT, false)
+                .setValue(THEME, Theme.EARTH));
     }
 
     @Override
     protected void createBlockStateDefinition(@SuppressWarnings("null") StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, SHAFT);
+        builder.add(FACING, SHAFT, THEME);
     }
 
     @SuppressWarnings("null")
     @Override
     public BlockState getStateForPlacement(@SuppressWarnings("null") BlockPlaceContext context) {
-        // 仅允许在矿井维度放置
-        if (!ModMiningDimensions.STARDEW_MINING.equals(context.getLevel().dimension())) {
+        // Creative authors can place themed entrances in the workshop; travel remains mine-only.
+        if (!ModMiningDimensions.STARDEW_MINING.equals(context.getLevel().dimension())
+                && (context.getPlayer() == null || !context.getPlayer().getAbilities().instabuild)) {
             return null;
         }
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        var properties = context.getItemInHand().getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                net.minecraft.world.item.component.BlockItemStateProperties.EMPTY);
+        Theme theme = properties.get(THEME);
+        if (theme == null) {
+            theme = Theme.EARTH;
+            for (MineBuildingTheme building : MineBuildingTheme.values()) {
+                if (building.rank(context.getLevel().getBlockState(context.getClickedPos().below())) >= 0) {
+                    theme = Theme.valueOf(building.id().toUpperCase(java.util.Locale.ROOT));
+                    break;
+                }
+            }
+        }
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite())
+                .setValue(THEME, theme).setValue(SHAFT, Boolean.TRUE.equals(properties.get(SHAFT)));
+    }
+
+    @Override public ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+        var stack = new ItemStack(this);
+        stack.set(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                net.minecraft.world.item.component.BlockItemStateProperties.EMPTY.with(THEME, state).with(SHAFT, state));
+        return stack;
     }
 
     @SuppressWarnings("null")
@@ -89,13 +126,13 @@ public class MineLadderBlock extends Block {
     @SuppressWarnings("null")
     @Override
     public VoxelShape getShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+        return (state.getValue(SHAFT) ? SHAFT_SHAPES : LADDER_SHAPES)[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
     }
 
     @SuppressWarnings("null")
     @Override
     public VoxelShape getCollisionShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+        return (state.getValue(SHAFT) ? SHAFT_SHAPES : LADDER_SHAPES)[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
     }
 
     /**
@@ -188,7 +225,7 @@ public class MineLadderBlock extends Block {
         StardewCraft.LOGGER.info("[MINE] Player {} descending from floor {} to floor {}", 
             serverPlayer.getName().getString(), currentFloor, nextFloor);
 
-        com.stardew.craft.mining.MineFloorGenerator.generateFloor(level, nextFloor);
+        com.stardew.craft.mining.OrdinaryMineRuntime.ensure(level, nextFloor);
 
         playerData.setCurrentFloor(nextFloor);
         MiningDataManager.savePlayerData(serverPlayer, playerData);
@@ -210,12 +247,11 @@ public class MineLadderBlock extends Block {
 
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
             serverPlayer, new MiningFloorSyncPacket(nextFloor));
-        com.stardew.craft.event.MiningBlockBreakHandler.syncLadderStateForPlayer(serverPlayer, nextFloor);
 
         final int floor = nextFloor;
         level.getServer().tell(new net.minecraft.server.TickTask(
             level.getServer().getTickCount() + 3,
-            () -> com.stardew.craft.mining.MineFloorGenerator.forceClientLightRefresh(level, floor)
+            () -> com.stardew.craft.mining.OrdinaryMineRuntime.refreshLights(level, floor)
         ));
 
         if (nextFloor <= 120 && nextFloor % 5 == 0 && nextFloor > previousMaxFloor) {
@@ -240,21 +276,15 @@ public class MineLadderBlock extends Block {
         MiningPlayerData playerData = MiningDataManager.getPlayerData(serverPlayer);
         int currentFloor = playerData.getCurrentFloor();
 
-        // SDV 原版：3-8 层，10% 翻倍
-        java.util.Random rng = new java.util.Random(
-                currentFloor * 31L + com.stardew.craft.time.StardewTimeManager.get().getIndependentDayTime());
-        int levelsDown = 3 + rng.nextInt(6); // 3~8
-        if (rng.nextDouble() < 0.1) {
-            levelsDown = levelsDown * 2 - 1; // 5~15
-        }
-
-        int targetFloor = currentFloor + levelsDown;
+        if(currentFloor<=120)return;
+        int levelsDown=com.stardew.craft.mining.SkullCavernRuntime.shaftLevels(currentFloor,level.getSeed(),com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay());
+        int targetFloor=currentFloor+levelsDown;
 
         StardewCraft.LOGGER.info("[MINE] Player {} jumping shaft from floor {} down {} levels to floor {}",
                 serverPlayer.getName().getString(), currentFloor, levelsDown, targetFloor);
 
         // 生成目标层
-        com.stardew.craft.mining.MineFloorGenerator.generateFloor(level, targetFloor);
+        com.stardew.craft.mining.OrdinaryMineRuntime.ensure(level, targetFloor);
 
         // 更新数据
         playerData.setCurrentFloor(targetFloor);
@@ -278,7 +308,6 @@ public class MineLadderBlock extends Block {
 
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
                 serverPlayer, new MiningFloorSyncPacket(targetFloor));
-        com.stardew.craft.event.MiningBlockBreakHandler.syncLadderStateForPlayer(serverPlayer, targetFloor);
 
         // SD 体力伤害：levelsDown × 3
         int damage = levelsDown * 3;
@@ -300,7 +329,7 @@ public class MineLadderBlock extends Block {
         final int floor = targetFloor;
         level.getServer().tell(new net.minecraft.server.TickTask(
             level.getServer().getTickCount() + 3,
-            () -> com.stardew.craft.mining.MineFloorGenerator.forceClientLightRefresh(level, floor)
+            () -> com.stardew.craft.mining.OrdinaryMineRuntime.refreshLights(level, floor)
         ));
     }
 
@@ -311,6 +340,8 @@ public class MineLadderBlock extends Block {
     @Override
     public void animateTick(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Level level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") RandomSource random) {
         super.animateTick(state, level, pos, random);
+        // The approved soil inset is an unlit physical opening.
+        if (!state.getValue(SHAFT)) return;
         
         double centerX = pos.getX() + 0.5;
         double centerY = pos.getY() + 0.5;

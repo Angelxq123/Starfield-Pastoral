@@ -142,7 +142,7 @@ public class HoeItem extends Item implements IStardewItem {
         if (!supportsCharging()) {
             Level level = context.getLevel();
             InteractionHand hand = context.getHand();
-            BlockPos pos = context.getClickedPos();
+            BlockPos pos = com.stardew.craft.manager.ArtifactSpotDigService.target(level, context.getClickedPos());
 
             if (!canTill(level, player, hand, pos)) {
                 return InteractionResult.PASS;
@@ -266,10 +266,8 @@ public class HoeItem extends Item implements IStardewItem {
                 }
                 // 远古斑点（含沙漠变体）：在小镇/沙漠等公共区域也允许锄取古物
                 BlockState stateHere = level.getBlockState(pos);
-                if (stateHere.is(com.stardew.craft.block.ModBlocks.ARTIFACT_SPOT_DIRT.get())
-                        || stateHere.is(com.stardew.craft.block.ModBlocks.DESERT_ARTIFACT_SPOT.get())
-                        || stateHere.is(com.stardew.craft.block.ModBlocks.BEACH_ARTIFACT_SPOT.get())) {
-                    return false;
+                if (com.stardew.craft.manager.ArtifactSpotDigService.isSpot(stateHere)) {
+                    return !com.stardew.craft.manager.ArtifactSpotDigService.allowed(sp, pos);
                 }
                 return !com.stardew.craft.event.FarmAreaProtectionEvents.canModifyAt(sp, pos);
             });
@@ -426,7 +424,10 @@ public class HoeItem extends Item implements IStardewItem {
 
     @SuppressWarnings("null")
     public List<BlockPos> getAffectedBlocks(Level level, BlockPos startPos, Player player, InteractionHand hand, int chargeLevel) {
+        if (level.getBlockState(startPos).getBlock() instanceof com.stardew.craft.block.nature.SurfaceArtifactSpotBlock)
+            startPos = startPos.below();
         List<BlockPos> list = collectAffectedBlockPattern(startPos, player, chargeLevel);
+        list.replaceAll(pos -> com.stardew.craft.manager.ArtifactSpotDigService.target(level, pos));
 
         // 只保留“看起来能锄”的格子：上方必须无碰撞体积（空气/作物等），且方块支持 HOE_TILL
         list.removeIf(pos -> !canTill(level, player, hand, pos));
@@ -435,7 +436,10 @@ public class HoeItem extends Item implements IStardewItem {
     }
 
     public List<BlockPos> getPreviewBlocks(Level level, BlockPos startPos, Player player, int chargeLevel) {
+        if (level.getBlockState(startPos).getBlock() instanceof com.stardew.craft.block.nature.SurfaceArtifactSpotBlock)
+            startPos = startPos.below();
         List<BlockPos> list = collectAffectedBlockPattern(startPos, player, chargeLevel);
+        list.replaceAll(pos -> com.stardew.craft.manager.ArtifactSpotDigService.target(level, pos));
         list.removeIf(pos -> !hasClearHoeSpace(level, pos));
         return list;
     }
@@ -489,6 +493,9 @@ public class HoeItem extends Item implements IStardewItem {
     // 由于 getAffectedBlocks 需要在客户端预览也可用，这里避免直接用 server-only API。
     @SuppressWarnings("null")
     private boolean canTill(Level level, Player player, InteractionHand hand, BlockPos pos) {
+        if (com.stardew.craft.manager.ArtifactSpotDigService.isSpot(level.getBlockState(pos)))
+            return !(player instanceof ServerPlayer serverPlayer)
+                    || com.stardew.craft.manager.ArtifactSpotDigService.allowed(serverPlayer, pos);
         if (!hasClearHoeSpace(level, pos)) {
             return false;
         }
@@ -518,6 +525,9 @@ public class HoeItem extends Item implements IStardewItem {
 
     @SuppressWarnings("null")
     private boolean tillTile(ServerLevel level, Player player, InteractionHand hand, BlockPos pos) {
+        if (com.stardew.craft.manager.ArtifactSpotDigService.isSpot(level.getBlockState(pos)))
+            return player instanceof ServerPlayer serverPlayer
+                    && com.stardew.craft.manager.ArtifactSpotDigService.dig(level, pos, serverPlayer, player.getItemInHand(hand));
         // 与 vanilla hoe 一致：必须有空间
         if (!level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()) {
             return false;
@@ -541,7 +551,7 @@ public class HoeItem extends Item implements IStardewItem {
         level.setBlock(pos, modified, 11);
 
         // 公共区域耕地才需要登记次日复原；远古斑点恢复基础地块时不登记。
-        if (modified.is(Blocks.FARMLAND)
+        if ((modified.getBlock() instanceof net.minecraft.world.level.block.FarmBlock)
                 && com.stardew.craft.core.FarmAreaResolver.isInStardewButNotFarm(level, pos)
                 && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, pos)) {
             com.stardew.craft.manager.CropGrowthManager.get(level).trackPublicTilledChunk(level, pos);
@@ -559,24 +569,7 @@ public class HoeItem extends Item implements IStardewItem {
      */
     @SuppressWarnings("null")
     private void rollBuriedDrops(ServerLevel level, BlockPos tilledPos, BlockState preTillState, ServerPlayer player, ItemStack tool) {
-        if (preTillState.is(com.stardew.craft.block.ModBlocks.ARTIFACT_SPOT_DIRT.get())
-                || preTillState.is(com.stardew.craft.block.ModBlocks.DESERT_ARTIFACT_SPOT.get())
-                || preTillState.is(com.stardew.craft.block.ModBlocks.BEACH_ARTIFACT_SPOT.get())) {
-            // 远古斑点：完整古物掉落表（SDV ContinueOnDrop 可产出多个物品）
-            List<ItemStack> drops = com.stardew.craft.manager.ArtifactDropService.rollAllDrops(level, tilledPos, player);
-            if (StardewEnchantments.has(tool, StardewEnchantments.GENEROUS)) {
-                drops = new ArrayList<>(drops);
-                drops.addAll(com.stardew.craft.manager.ArtifactDropService.rollAllDrops(level, tilledPos, player));
-            }
-            com.stardew.craft.book.BookAcquisitionService.recordArtifactSpotDugAndMaybeAddDefenseBook(
-                    player, drops, level.random);
-            for (ItemStack drop : drops) {
-                if (!drop.isEmpty()) {
-                    Block.popResource(level, tilledPos.above(), drop);
-                }
-            }
-            return;
-        }
+        if (com.stardew.craft.manager.ArtifactSpotDigService.isSpot(preTillState)) return;
         double archaeologistMul = StardewEnchantments.has(tool, StardewEnchantments.ARCHAEOLOGIST) ? 2.0 : 1.0;
         int generousCount = StardewEnchantments.has(tool, StardewEnchantments.GENEROUS) ? 2 : 1;
         if (shouldRollWinterBuriedForage(level, tilledPos)
@@ -613,7 +606,7 @@ public class HoeItem extends Item implements IStardewItem {
     }
 
     private static boolean isPublicYellowDirt(Level level, BlockPos pos, BlockState state) {
-        return state.is(com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get())
+        return (state.is(com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()) || state.is(com.stardew.craft.block.ModBlocks.DIRT.get()))
                 && com.stardew.craft.core.FarmAreaResolver.isInStardewButNotFarm(level, pos)
                 && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, pos);
     }

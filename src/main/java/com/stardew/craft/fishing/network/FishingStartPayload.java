@@ -56,6 +56,7 @@ public record FishingStartPayload(UUID sessionId, int difficulty, int motionType
 
 	@net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
 	private static void handleClient(FishingStartPayload payload) {
+		if (!com.stardew.craft.client.fishing.FishingInteractionState.accepts(payload.sessionId())) return;
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		var player = mc.player;
 		if (player == null) {
@@ -66,7 +67,7 @@ public record FishingStartPayload(UUID sessionId, int difficulty, int motionType
 				&& !(player.getOffhandItem().getItem() instanceof com.stardew.craft.item.tool.FishingRodItem)) {
 			return;
 		}
-		mc.setScreen(new com.stardew.craft.client.fishing.FishingMinigameScreen(
+		com.stardew.craft.client.fishing.FishingMinigameHud.open(new com.stardew.craft.client.fishing.FishingMinigameScreen(
 				payload.sessionId(),
 				payload.difficulty(),
 				payload.motionTypeId(),

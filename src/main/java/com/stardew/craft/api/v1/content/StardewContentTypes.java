@@ -10,7 +10,6 @@ public final class StardewContentTypes {
     public static final ResourceLocation WORLD_ANCHOR = id("world_anchor");
     public static final ResourceLocation PORTAL = id("portal");
     public static final ResourceLocation FORAGE_ZONE = id("forage_zone");
-    public static final ResourceLocation MINE_THEME = id("mine_theme");
     public static final ResourceLocation CROP_TYPE = id("crop_type");
     public static final ResourceLocation TREE_TYPE = id("tree_type");
     public static final ResourceLocation ANIMAL_TYPE = id("animal_type");
@@ -82,8 +81,6 @@ public final class StardewContentTypes {
             id("artifact_spot_drop_provider");
     public static final ResourceLocation MINE_MONSTER_PROFILE =
             id("mine_monster_profile");
-    public static final ResourceLocation MINE_MONSTER_SPAWN_TABLE =
-            id("mine_monster_spawn_table");
 
     private StardewContentTypes() {
     }

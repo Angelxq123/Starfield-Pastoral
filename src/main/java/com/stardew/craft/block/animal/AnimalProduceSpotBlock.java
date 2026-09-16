@@ -95,6 +95,20 @@ public class AnimalProduceSpotBlock extends BaseEntityBlock {
         if (!(be instanceof AnimalProduceSpotBlockEntity produceBe)) {
             return InteractionResult.PASS;
         }
+        if (level instanceof ServerLevel serverLevel) {
+            com.stardew.craft.animal.runtime.LivestockService.recover(serverLevel.getServer());
+            if (com.stardew.craft.animal.runtime.LegacyLivestockMigration.migrateProductSpot(serverLevel, produceBe)) {
+                com.stardew.craft.animal.runtime.LivestockService.project(serverLevel.getServer());
+                return InteractionResult.CONSUME;
+            }
+            // An unresolved archived entry must not be collected once here and once after import.
+            var migration = com.stardew.craft.animal.runtime.LegacyLivestockMigration.get(serverLevel.getServer());
+            if (produceBe.getProduceLedgerEntryId() > 0 && migration.containsSource("animalProduceLedger", "entryId", produceBe.getProduceLedgerEntryId())
+                    || migration.containsSource("animals", "animalId", produceBe.getAnimalId())) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable("livestock.stardewcraft.migration_pending"), true);
+                return InteractionResult.CONSUME;
+            }
+        }
 
         long ledgerEntryId =
                 produceBe.getProduceLedgerEntryId();
@@ -152,7 +166,8 @@ public class AnimalProduceSpotBlock extends BaseEntityBlock {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof AnimalProduceSpotBlockEntity produceSpot
-                    && produceSpot.getProduceLedgerEntryId() > 0L) {
+                    && produceSpot.getProduceLedgerEntryId() > 0L
+                    && !com.stardew.craft.animal.runtime.LegacyLivestockMigration.supersededProduct(serverLevel, produceSpot)) {
                 AnimalWorldData.get(serverLevel).releaseAnimalProduceProjection(
                         produceSpot.getProduceLedgerEntryId(),
                         serverLevel.dimension().location().toString(),
@@ -178,6 +193,7 @@ public class AnimalProduceSpotBlock extends BaseEntityBlock {
             if (!(be instanceof AnimalProduceSpotBlockEntity produceBe)) {
                 return;
             }
+            if (lvl instanceof ServerLevel server && com.stardew.craft.animal.runtime.LegacyLivestockMigration.migrateProductSpot(server, produceBe)) return;
             if (produceBe.getProduceStack().isEmpty()) {
                 lvl.removeBlock(p, false);
                 return;
@@ -186,6 +202,9 @@ public class AnimalProduceSpotBlock extends BaseEntityBlock {
             if (!(lvl instanceof ServerLevel serverLevel)) {
                 return;
             }
+            var migration = com.stardew.craft.animal.runtime.LegacyLivestockMigration.get(serverLevel.getServer());
+            if (migration.containsSource("animals", "animalId", produceBe.getAnimalId())
+                    || produceBe.getProduceLedgerEntryId() > 0 && migration.containsSource("animalProduceLedger", "entryId", produceBe.getProduceLedgerEntryId())) return;
 
             String buildingId = produceBe.getBuildingId();
             if (buildingId == null || buildingId.isBlank()) {

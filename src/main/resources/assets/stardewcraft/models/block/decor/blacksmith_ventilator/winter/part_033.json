@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "stardewcraft:block/decor/blacksmith_ventilator/winter/ventilator_winter",
+    "particle": "stardewcraft:block/decor/blacksmith_ventilator/winter/hardware_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        8,
+        7
+      ],
+      "to": [
+        13,
+        9,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            9.5,
+            4.0625,
+            10.125,
+            4.125
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            10.875,
+            4.0625,
+            11.0,
+            4.125
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            10.1875,
+            4.0625,
+            10.8125,
+            4.125
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            11.0625,
+            4.0625,
+            11.1875,
+            4.125
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            11.25,
+            4.0625,
+            11.875,
+            4.1875
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            11.9375,
+            4.0625,
+            12.5625,
+            4.1875
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

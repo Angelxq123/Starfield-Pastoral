@@ -1,0 +1,86 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/winter/swing_winter",
+    "particle": "stardewcraft:block/double_swing/winter/swing_seat_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -3,
+        -2,
+        -13
+      ],
+      "to": [
+        1,
+        0,
+        -3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            14.0,
+            3.09375,
+            14.125,
+            3.15625
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            14.3125,
+            3.09375,
+            14.625,
+            3.15625
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            14.15625,
+            3.09375,
+            14.28125,
+            3.15625
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            14.65625,
+            3.09375,
+            14.96875,
+            3.15625
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            15.0,
+            3.09375,
+            15.125,
+            3.40625
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            15.15625,
+            3.09375,
+            15.28125,
+            3.40625
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "z",
+        "angle": 45,
+        "origin": [
+          -3,
+          -1,
+          -8
+        ],
+        "rescale": false
+      }
+    }
+  ]
+}

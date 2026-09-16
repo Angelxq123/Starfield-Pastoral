@@ -1,0 +1,11 @@
+{
+  "output": "stardewcraft:crystal_floor",
+  "output_count": 5,
+  "ingredients": [
+    {
+      "item": "stardewcraft:refined_quartz",
+      "count": 1
+    }
+  ],
+  "legacy_unlock_condition": "l 0"
+}

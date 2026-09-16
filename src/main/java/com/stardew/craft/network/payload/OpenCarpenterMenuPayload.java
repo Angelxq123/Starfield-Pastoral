@@ -46,7 +46,7 @@ public record OpenCarpenterMenuPayload(
                 int previewCanvasSize = buf.readVarInt();
                 boolean magicalConstruction = buf.readBoolean();
                 return new CarpenterBlueprint(id, displayNameKey, descriptionKey, cost, materials,
-                        resultItemId, isUpgrade, previewCanvasSize, magicalConstruction);
+                        resultItemId, isUpgrade, previewCanvasSize, magicalConstruction, buf.readNbt());
             }
 
             @Override
@@ -60,6 +60,7 @@ public record OpenCarpenterMenuPayload(
                 buf.writeBoolean(bp.isUpgrade());
                 buf.writeVarInt(bp.previewCanvasSize());
                 buf.writeBoolean(bp.magicalConstruction());
+                buf.writeNbt(bp.presentation());
             }
         };
 

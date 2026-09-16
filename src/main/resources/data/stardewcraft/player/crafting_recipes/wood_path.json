@@ -1,0 +1,11 @@
+{
+  "output": "stardewcraft:wood_path",
+  "output_count": 1,
+  "ingredients": [
+    {
+      "item": "stardewcraft:wood_normal",
+      "count": 1
+    }
+  ],
+  "legacy_unlock_condition": "default"
+}

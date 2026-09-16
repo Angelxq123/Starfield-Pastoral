@@ -1,7 +1,7 @@
 package com.stardew.craft.event;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.animal.service.AnimalShopService;
+import com.stardew.craft.animal.runtime.LivestockShop;
 import com.stardew.craft.core.ModDimensions;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
@@ -39,7 +39,7 @@ public class AnimalShopInteractionEvents {
             return;
         }
 
-        AnimalShopService.openForPlayer(player);
+        LivestockShop.openForPlayer(player);
         event.setCanceled(true);
     }
 

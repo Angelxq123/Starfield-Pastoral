@@ -66,7 +66,7 @@ public enum FertilizerJadeProvider
             return;
         }
         CompoundTag serverData = accessor.getServerData();
-        boolean checked = serverData.getBoolean(DATA_CHECKED);
+        boolean checked = serverData != null && serverData.getBoolean(DATA_CHECKED);
         BlockPos soilPos = checked
                 ? NbtUtils.readBlockPos(serverData, DATA_SOIL_POS).orElse(null)
                 : resolveClientSoil(accessor);
@@ -84,6 +84,9 @@ public enum FertilizerJadeProvider
             ClientFertilizerCache.setFertilizer(accessor.getLevel(), soilPos, type);
         } else {
             type = ClientFertilizerCache.getFertilizer(accessor.getLevel(), soilPos);
+        }
+        if (type == null) {
+            return;
         }
 
         ItemStack stack = new ItemStack(itemFor(type));

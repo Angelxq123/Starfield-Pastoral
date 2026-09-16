@@ -2,7 +2,6 @@ package com.stardew.craft.minecart;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.core.ModDimensions;
-import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.entity.minecart.MinecartStationEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -10,9 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RailBlock;
-import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
 
@@ -25,7 +21,7 @@ import java.util.List;
  * <p>站点位置（实体坐标）：
  * <ul>
  *   <li>Town: (123, 64, 26) @ STARDEW_VALLEY</li>
- *   <li>Mines: (-7, 66, -12) @ STARDEW_MINING, 前置铺 (-16..-7, 66, -12) 的铁轨</li>
+ *   <li>Mines: 由批准的 earth_lobby 结构安放站点与轨道</li>
  *   <li>Bus: (-76, 64, -70) @ STARDEW_VALLEY</li>
  *   <li>Quarry: (187, 81, -141) @ STARDEW_VALLEY</li>
  * </ul>
@@ -36,13 +32,12 @@ public class MinecartStationManager extends SavedData {
     private static final String DATA_NAME = "stardew_minecart_stations";
 
     /** 改站点坐标或铁轨范围后 +1，老存档会清旧实体再重放。 */
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
 
     /** 模型默认是东西朝向；旋转 90 度后统一为南北朝向。 */
     private static final float STATION_Y_ROT = 90.0F;
 
     private static final BlockPos TOWN_STATION = new BlockPos(123, 64, 26);
-    private static final BlockPos MINES_STATION = new BlockPos(-7, 66, -12);
     private static final BlockPos BUS_STATION = new BlockPos(-76, 64, -70);
     private static final BlockPos QUARRY_STATION = new BlockPos(187, 81, -141);
 
@@ -61,29 +56,22 @@ public class MinecartStationManager extends SavedData {
         return overworld.getDataStorage().computeIfAbsent(factory(), DATA_NAME);
     }
 
-    /** 同时传入两个维度（星露谷 + 矿井）统一处理。 */
+    /** Surface stations only; the mine station is part of the authored lobby. */
     public void ensurePlaced(MinecraftServer server) {
         if (placedVersion >= CURRENT_VERSION) return;
 
         ServerLevel sdv = server.getLevel(ModDimensions.STARDEW_VALLEY);
-        ServerLevel mine = server.getLevel(ModMiningDimensions.STARDEW_MINING);
-        if (sdv == null || mine == null) return; // 两个维度都要加载完才能放
+        if (sdv == null) return;
 
         StardewCraft.LOGGER.info("[MINECART] Placing stations + rails (oldVersion={}, newVersion={})",
                 placedVersion, CURRENT_VERSION);
 
         // 清除旧实体（版本迁移时防残留）
         removeAllStationsIn(sdv);
-        removeAllStationsIn(mine);
 
-        // 仅首次初始化或手动 reset 时铺轨；版本迁移不覆盖玩家之后调整过的站点布局。
-        if (placedVersion == 0) {
-            placeRails(mine, -16, 66, -12, -7);
-        }
-
-        // 四个站点实体
+        // 地表三个站点实体
         spawnStation(sdv, TOWN_STATION, "town");
-        spawnStation(mine, MINES_STATION, "mines");
+        // Mine station and its approved rails are owned by the lobby structure.
         spawnStation(sdv, BUS_STATION, "bus");
         spawnStation(sdv, QUARRY_STATION, "quarry");
 
@@ -107,21 +95,6 @@ public class MinecartStationManager extends SavedData {
         for (MinecartStationEntity e : existing) {
             e.discard();
         }
-    }
-
-    /** 放一段东西向平铁轨（包含起止两端）。 */
-    private void placeRails(ServerLevel level, int x1, int y, int z, int x2) {
-        int lo = Math.min(x1, x2), hi = Math.max(x1, x2);
-        var state = Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, RailShape.EAST_WEST);
-        int placed = 0;
-        for (int x = lo; x <= hi; x++) {
-            BlockPos pos = new BlockPos(x, y, z);
-            level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-            level.setBlock(pos, state, 2);
-            placed++;
-        }
-        StardewCraft.LOGGER.info("[MINECART] Placed {} east-west rails along X=[{},{}] Y={} Z={}",
-                placed, lo, hi, y, z);
     }
 
     // ── NBT ──

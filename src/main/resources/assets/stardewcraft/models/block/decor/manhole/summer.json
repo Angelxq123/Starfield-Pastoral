@@ -1,0 +1,7 @@
+{
+  "parent": "stardewcraft:block/decor/manhole",
+  "textures": {
+    "metal": "stardewcraft:block/decor/manhole/summer/manhole_summer",
+    "particle": "stardewcraft:block/decor/manhole/summer/manhole_summer_particle"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.8431678125,
+  "attentionRig": {
+    "hipHeight": 12.0,
+    "soleY": 0.0,
+    "toeDepth": 2.5,
+    "halfStance": 2.16,
+    "rightZ": 0.12,
+    "leftZ": -0.2,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "cloth": {
+    "bone": "skirt",
+    "kind": "skirt",
+    "anchorY": 15.0,
+    "hemY": 6.88,
+    "margin": 0.65,
+    "clearancePart": "skirt_core",
+    "standingDepthMargin": 0.325,
+    "contactBlend": 1.0
+  },
+  "gait": {
+    "id": "penny",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42400000000000004,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      }
+    },
+    "bodyPitch": -1.8,
+    "headPitch": 1.15,
+    "halfStance": 2.16,
+    "stride": 13.490685,
+    "reachMargin": 0.05001,
+    "legLengthStride": 21.0,
+    "approvedBaseStride": 21.0,
+    "stance": 0.59,
+    "bob": 0.26239999999999997,
+    "sway": 0.42,
+    "rootYaw": 1.5,
+    "bodyYaw": 4.0,
+    "armSwing": 13.8,
+    "armPhase": 0.048,
+    "footLift": 0.2632,
+    "swingPeak": 0.52,
+    "elbowBase": 12,
+    "bodyRoll": 0.7,
+    "strideScale": 0.97,
+    "intent": "年轻女性、害羞；小而明确的摆臂，承重稍久，动作柔和，裙摆不劈腿。",
+    "bodyLag": 0.078,
+    "headLag": 0.113,
+    "headYawLag": 0.063,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.769318,
+    "levelWalk": true
+  }
+}

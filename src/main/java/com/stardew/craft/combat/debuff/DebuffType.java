@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
  */
 public enum DebuffType {
     // 减益效果
-    SLIMED("slimed", 4000, true),              // 史莱姆粘液 - 减速
+    SLIMED("slimed", 2500, true),              // 史莱姆粘液 - 减速
     JINXED("jinxed", 8000, true),              // 诅咒 - 降低防御
     WEAKNESS("weakness", 8000, true),            // 虚弱 - 降低攻击
     DARKNESS("darkness", 6000, true),            // 黑暗 - 降低命中

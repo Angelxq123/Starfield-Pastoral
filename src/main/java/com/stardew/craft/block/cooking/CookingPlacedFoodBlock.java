@@ -131,13 +131,15 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
     }
 
     private boolean pickup(Level level, BlockPos pos, Player player) {
-        ItemStack food = createFoodStack();
+        ItemStack food = createFoodStack(level, pos);
         if (food.isEmpty()) {
             return false;
         }
 
         if (!level.isClientSide) {
-            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            if (!level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3)) {
+                return false;
+            }
             if (!player.addItem(food)) {
                 player.drop(food, false);
             }
@@ -147,19 +149,28 @@ public class CookingPlacedFoodBlock extends HorizontalDirectionalBlock implement
     }
 
     private boolean eat(Level level, BlockPos pos, Player player) {
-        ItemStack food = createFoodStack();
+        ItemStack food = createFoodStack(level, pos);
         if (food.isEmpty() || !food.has(DataComponents.FOOD)) {
             return false;
         }
 
         if (!level.isClientSide) {
+            // A protected decoration must be consumed successfully before awarding its effects.
+            if (!level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3)) {
+                return false;
+            }
             food.finishUsingItem(level, player);
-            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
         }
         return true;
     }
 
-    private @Nonnull ItemStack createFoodStack() {
+    private @Nonnull ItemStack createFoodStack(Level level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof CookingPlacedFoodBlockEntity foodEntity) {
+            ItemStack stored = foodEntity.getStoredFood();
+            if (!stored.isEmpty()) {
+                return stored;
+            }
+        }
         Item item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, itemId));
         if (item == Items.AIR) {
             return ItemStack.EMPTY;

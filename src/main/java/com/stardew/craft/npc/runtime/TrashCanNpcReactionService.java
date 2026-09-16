@@ -69,7 +69,7 @@ public final class TrashCanNpcReactionService {
         int delta = "linus".equals(npcId) ? LINUS_FRIENDSHIP_DELTA : DEFAULT_FRIENDSHIP_DELTA;
         int points = changeFriendship(player, level, npcId, delta);
         broadcastEmote(npc, emoteIdFor(npcId));
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
             npcId,
             dialogueKeyFor(npcId),
             points

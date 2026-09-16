@@ -399,7 +399,7 @@ public final class DesertFestivalSpecialInteractionService {
     }
 
     private static void sendDialogue(ServerPlayer player, String npcId, String key) {
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(npcId, key, 0));
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(npcId, key, 0));
     }
 
     private static String questionKey(String id) {

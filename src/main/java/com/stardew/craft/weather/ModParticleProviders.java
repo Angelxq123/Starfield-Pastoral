@@ -20,6 +20,38 @@ public class ModParticleProviders {
     @SuppressWarnings("null")
     @SubscribeEvent
     public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(ModParticles.BOMB_FUSE.get(), sprites -> (type, level, x, y, z, phase, dy, dz) -> {
+            var particle = new com.stardew.craft.client.particle.BombEffectParticle(
+                level, x, y, z, sprites, 5, 53, 0, phase == 4 ? 0.1875f : 0.25f, true);
+            if (phase == 0) particle.setColor(1, 0.85f, 0.35f);
+            else if (phase == 2) particle.setColor(1, 0.55f, 0.2f);
+            return particle;
+        });
+        // A count-zero particle packet carries frame milliseconds, delay and size in its speed fields.
+        event.registerSpriteSet(ModParticles.BOMB_BURST.get(), sprites -> (type, level, x, y, z, frameMs, delayMs, size) ->
+            new com.stardew.craft.client.particle.BombEffectParticle(level, x, y, z, sprites, 8,
+                frameMs, delayMs, (float) size, true));
+        event.registerSpriteSet(ModParticles.BOMB_DUST.get(), sprites -> (type, level, x, y, z, frameMs, delayMs, size) ->
+            new com.stardew.craft.client.particle.BombEffectParticle(level, x, y, z, sprites, 8,
+                frameMs, delayMs, (float) size, false));
+        event.registerSpriteSet(ModParticles.BIG_SLIME_SPLASH.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> {
+            var particle=new com.stardew.craft.client.particle.MonsterSpellParticle(level,x,y,z,sprites,10,70);
+            particle.tint(type);return particle;
+        });
+        event.registerSpriteSet(ModParticles.BIG_SLIME_SPLASH_SLOW.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> {
+            var particle=new com.stardew.craft.client.particle.MonsterSpellParticle(level,x,y,z,sprites,10,100);
+            particle.tint(type);return particle;
+        });
+        event.registerSpriteSet(ModParticles.SERPENT_PUFF.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.SerpentPuffParticle(level,x,y,z,dx,dy,dz,sprites,70,type));
+        event.registerSpriteSet(ModParticles.SERPENT_PUFF_SLOW.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.SerpentPuffParticle(level,x,y,z,dx,dy,dz,sprites,100,type));
+        event.registerSpriteSet(ModParticles.REX_DISSOLVE.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.RexDissolveParticle(level,x,y,z,sprites));
+        event.registerSpriteSet(ModParticles.REX_BONE_FRAGMENT.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.RexFragmentParticle(level,x,y,z,dx,dy,dz,sprites,true));
+        event.registerSpriteSet(ModParticles.REX_BREATH_FRAGMENT.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.RexFragmentParticle(level,x,y,z,dx,dy,dz,sprites,false));
+        event.registerSpriteSet(ModParticles.MUMMY_DISSOLVE.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.MummyDissolveParticle(level,x,y,z,sprites));
+        event.registerSpriteSet(ModParticles.MONSTER_HEAL.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.MonsterSpellParticle(level,x,y,z,sprites,8,40));
+        event.registerSpriteSet(ModParticles.SHAMAN_CURSE_IMPACT.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.MonsterSpellParticle(level,x,y,z,sprites,2,100+level.random.nextInt(50)));
+        event.registerSpriteSet(ModParticles.SQUID_DEATH_SPARK.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.MonsterSpellParticle(level,x,y,z,sprites,6,30));
+        event.registerSpriteSet(ModParticles.SQUID_FIREBALL_IMPACT.get(), sprites -> (type, level, x, y, z, dx, dy, dz) -> new com.stardew.craft.client.particle.MonsterSpellParticle(level,x,y,z,sprites,6,30+level.random.nextInt(60)));
         // 注册橙色秋叶粒子
         event.registerSpriteSet(ModParticles.AUTUMN_LEAF_ORANGE.get(), 
             AutumnLeafParticle.OrangeProvider::new);

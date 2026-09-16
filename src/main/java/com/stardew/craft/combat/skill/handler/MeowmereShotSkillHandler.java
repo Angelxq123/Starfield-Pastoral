@@ -98,6 +98,12 @@ public final class MeowmereShotSkillHandler
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
         instance.registerCommittedEffect(() -> {
             if (!level.addFreshEntity(projectile)) {
                 throw new IllegalStateException(
@@ -106,13 +112,7 @@ public final class MeowmereShotSkillHandler
             }
         });
 
-        // Preserve the authored presentation-only notification.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
+
     }
 
     @Override

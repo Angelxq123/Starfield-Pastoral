@@ -133,7 +133,7 @@ public final class OfflineFarmCatchUpService {
 
         OfflineFarmCatchUpCursor<GlobalPos> cursor = new OfflineFarmCatchUpCursor<>(
                 farm.getLastOnlineDay(), targetDay,
-                plan.crops(), plan.trees(), plan.sprinklers(),
+                plan.crops().stream().sorted(java.util.Comparator.comparing(GlobalPos::pos, com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.ORDER)).toList(), plan.trees(), plan.sprinklers(),
                 operations(pending.level, registry, farm, cropMgr, treeMgr));
         jobsByOwner.put(pending.owner,
                 new ActiveJob(pending.level, farm, cursor, targetDay));
@@ -153,8 +153,15 @@ public final class OfflineFarmCatchUpService {
         return new OfflineFarmCatchUpCursor.Operations<>() {
             @Override
             public void growCrop(int absoluteDay, GlobalPos position) {
-                withItemLease(level, position, 0,
-                        () -> OfflineFarmCatchUp.growCropOneDay(level, cropMgr, position));
+                withItemLease(level, position, 0, () -> {
+                    int radius = com.stardew.craft.api.v1.internal.crop.StardewCropRuntimeRegistry.dailyNeighborhoodRadius(level.getBlockState(position.pos()));
+                    withItemLease(level, position, radius, () -> OfflineFarmCatchUp.growCropOneDay(level, cropMgr, position, absoluteDay));
+                });
+            }
+
+            @Override
+            public void growGiant(int absoluteDay, GlobalPos position) {
+                cropMgr.processGiantAnchor(level, position, absoluteDay, true);
             }
 
             @Override

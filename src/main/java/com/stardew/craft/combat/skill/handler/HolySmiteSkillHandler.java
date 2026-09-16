@@ -61,15 +61,7 @@ public final class HolySmiteSkillHandler implements RuntimeWeaponSkillHandler {
                 instance,
                 context.skillData().getCooldown() * 20
         );
-        instance.registerCommittedEffect(() -> WeaponSkillDamage.apply(
-                context.player(),
-                target,
-                createHitContext(context.skillData()),
-                context.weaponSnapshot(),
-                context.nowTick() + HIT_CONTEXT_LIFETIME_TICKS,
-                WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
-                WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
-        ));
+
 
         WeaponSkillAnimationLock.setLock(
                 context.player(),
@@ -82,6 +74,15 @@ public final class HolySmiteSkillHandler implements RuntimeWeaponSkillHandler {
                 skillId,
                 ANIMATION_TICKS
         );
+        instance.registerCommittedEffect(() -> WeaponSkillDamage.apply(
+                context.player(),
+                target,
+                createHitContext(context.skillData()),
+                context.weaponSnapshot(),
+                context.nowTick() + HIT_CONTEXT_LIFETIME_TICKS,
+                WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
+                WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
+        ));
     }
 
     static SkillContext createHitContext(WeaponSkillData skillData) {

@@ -1,0 +1,44 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "frame": "stardewcraft:block/decor/house/blue_glass_door_frame",
+    "glass": "stardewcraft:block/decor/house/blue_glass_door_glass",
+    "particle": "stardewcraft:block/decor/house/blue_glass_door_particle"
+  },
+  "elements": [
+    {
+      "name": "上窗玻璃",
+      "from": [
+        14,
+        3,
+        4
+      ],
+      "to": [
+        15,
+        11,
+        12
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            0,
+            0.0,
+            2,
+            2.0
+          ],
+          "texture": "#glass"
+        },
+        "east": {
+          "uv": [
+            0,
+            2.5,
+            2,
+            4.5
+          ],
+          "texture": "#glass"
+        }
+      }
+    }
+  ]
+}

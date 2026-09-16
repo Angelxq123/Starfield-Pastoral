@@ -1,6 +1,6 @@
 package com.stardew.craft.blockentity;
 
-import com.stardew.craft.item.ModItems;
+import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -16,9 +16,6 @@ import javax.annotation.Nullable;
 
 public class DeluxeWormBinBlockEntity extends TimedProductionBlockEntity implements BubbleItemCountProvider {
     private static final int EFFECTIVE_MINUTES_PER_DAY = 1260;
-    private static final int DAYS_UNTIL_READY = 1;
-    private static final int MIN_OUTPUT = 4;
-    private static final int MAX_OUTPUT = 5;
 
     private static final String TAG_PRODUCT = "product";
     private static final String TAG_READY_AT = "readyAtAbsMinute";
@@ -58,7 +55,7 @@ public class DeluxeWormBinBlockEntity extends TimedProductionBlockEntity impleme
 
     private void startCycle(Level level) {
         product = createOutput(level.random);
-        readyAtAbsMinute = getCurrentAbsMinute() + (long) DAYS_UNTIL_READY * (long) EFFECTIVE_MINUTES_PER_DAY;
+        readyAtAbsMinute = MachineProductionData.cycle("deluxe_worm_bin", "default").deadline(getCurrentAbsMinute(), "deluxe_worm_bin");
         ready = false;
         setChanged();
         syncToClient();
@@ -74,8 +71,7 @@ public class DeluxeWormBinBlockEntity extends TimedProductionBlockEntity impleme
 
     @SuppressWarnings("null")
     private static ItemStack createOutput(RandomSource random) {
-        int count = random.nextInt(MAX_OUTPUT - MIN_OUTPUT + 1) + MIN_OUTPUT;
-        return new ItemStack((net.minecraft.world.level.ItemLike) ModItems.DELUXE_BAIT.get(), count);
+        return MachineProductionData.cycle("deluxe_worm_bin", "default").createOutput(random);
     }
 
 

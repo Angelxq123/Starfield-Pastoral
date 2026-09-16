@@ -1,6 +1,1 @@
-{
-  "variants": {
-    "part=main": { "model": "stardewcraft:block/crop/giant/empty" },
-    "part=extension": { "model": "stardewcraft:block/crop/giant/empty" }
-  }
-}
+{"variants":{"part=main":{"model":"stardewcraft:block/crop3d/giant_powder_melon/mature"},"part=extension":{"model":"stardewcraft:block/crop3d/giant_powder_melon/mature"}}}

@@ -1,0 +1,70 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "0": "stardewcraft:block/decor/ice_cream_stand/winter/ice_cream_stand_winter",
+    "particle": "stardewcraft:block/decor/ice_cream_stand/winter/stand_brass_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        8,
+        7,
+        7
+      ],
+      "to": [
+        9,
+        9,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            14.5,
+            7.125,
+            14.5625,
+            7.25
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            14.625,
+            7.125,
+            14.6875,
+            7.25
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            12.375,
+            7.125,
+            12.5,
+            7.25
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            14.75,
+            7.125,
+            14.8125,
+            7.25
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            14.875,
+            7.125,
+            14.9375,
+            7.25
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

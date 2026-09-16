@@ -2,13 +2,9 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -18,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * 虞美人花作物
  */
-public class PoppyCropBlock extends StardewCropBlock {
+public class PoppyCropBlock extends BlueJazzCropBlock {
 
     private static final int[] PHASE_DAYS = new int[]{1, 2, 2, 2};
     private static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 2);
@@ -26,10 +22,7 @@ public class PoppyCropBlock extends StardewCropBlock {
 
     @SuppressWarnings("null")
 	public PoppyCropBlock() {
-        super(Properties.of()
-                .mapColor(MapColor.PLANT)
-                .pushReaction(PushReaction.DESTROY)
-                .sound(SoundType.CROP));
+        super();
     }
 
     @Override
@@ -47,8 +40,7 @@ public class PoppyCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 1;
+        return seasonForGrowth() == 1;
     }
 
     @Override
@@ -106,6 +98,7 @@ public class PoppyCropBlock extends StardewCropBlock {
     protected void addExtraProperties(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
         builder.add(COLOR);
         builder.add(PLACED_BY_PLAYER);
+        builder.add(HALF);
     }
 
     @Override

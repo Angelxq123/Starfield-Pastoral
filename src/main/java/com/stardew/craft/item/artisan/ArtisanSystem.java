@@ -13,5 +13,6 @@ public final class ArtisanSystem {
     @SubscribeEvent
     public static void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(new ArtisanRecipeDataManager.ReloadListener());
+        event.addListener(new com.stardew.craft.production.MachineProductionData.ReloadListener());
     }
 }

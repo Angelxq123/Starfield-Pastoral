@@ -5,16 +5,15 @@ import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.SpecificBaitItem;
 import com.stardew.craft.item.artisan.PreservesItem;
 import com.stardew.craft.client.hud.StardewTimeHud;
-import com.stardew.craft.client.render.FallenOakTreeRenderer;
 import com.stardew.craft.client.ModItemProperties;
 import com.stardew.craft.client.ModRenderLayers;
-import com.stardew.craft.client.render.FertilizerOverlayRenderer;
 import com.stardew.craft.client.render.TVScreenOverlayRenderer;
 import com.stardew.craft.client.renderer.SprinklerOverlayRenderer;
 import com.stardew.craft.client.DebugKeybindsTick;
 import com.stardew.craft.client.renderer.entity.SofaSeatEntityRenderer;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.entity.ModEntities;
+import com.stardew.craft.block.decor.BedDecorBlock;
 import com.stardew.craft.block.utility.CushionBlock;
 import com.stardew.craft.block.utility.OfficeChair2Block;
 import com.stardew.craft.block.utility.DyeableChairBlock;
@@ -62,14 +61,11 @@ public class StardewCraftClient {
     private static final int STARDEW_GRASS_FALL = 0xD8A53A;
     private static final int STARDEW_GRASS_WINTER = 0xC7DBEC;
     private static final int STARDEW_LEAF_WINTER = 0xEDF7FF;
-    private static final int STARDEW_YELLOW_DIRT_WINTER = 0xF8FCFF;
 
     public StardewCraftClient(IEventBus modEventBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class,
                 (minecraft, parent) -> new com.stardew.craft.client.gui.StardewSettingsScreen(parent));
         // Weapon shader registration — client only (moved from StardewCraft main class)
-        modEventBus.addListener(com.stardew.craft.client.weapon.WeaponShaderRegistry::onRegisterShadersSafe);
-    NeoForge.EVENT_BUS.register(FertilizerOverlayRenderer.class);
     NeoForge.EVENT_BUS.register(TVScreenOverlayRenderer.class);
     NeoForge.EVENT_BUS.register(SprinklerOverlayRenderer.class);
     if (!FMLLoader.isProduction()) {
@@ -90,6 +86,7 @@ public class StardewCraftClient {
                 ModBlocks.WILD_WEEDS.get(),
                 ModBlocks.PASTURE_GRASS.get(),
                 ModBlocks.BLUE_PASTURE_GRASS.get(),
+                ModBlocks.MAILBOX.get(),
                 ModBlocks.CHERRY_SAPLING.get(),
                 ModBlocks.APRICOT_SAPLING.get(),
                 ModBlocks.ORANGE_SAPLING.get(),
@@ -116,6 +113,7 @@ public class StardewCraftClient {
                 ModBlocks.FORAGE_BLACKBERRY.get(),
                 ModBlocks.FORAGE_WINTER_ROOT.get(),
                 ModBlocks.FORAGE_CRYSTAL_FRUIT.get(),
+                ModBlocks.FORAGE_SNOW_YAM.get(),
                 ModBlocks.FORAGE_CROCUS.get(),
                 ModBlocks.FORAGE_HOLLY.get(),
                 ModBlocks.FORAGE_CAVE_CARROT.get(),
@@ -139,26 +137,6 @@ public class StardewCraftClient {
                 ModBlocks.FORAGE_PEACH.get(),
                 ModBlocks.FORAGE_POMEGRANATE.get(),
                 ModBlocks.FORAGE_MANGO.get(),
-                ModBlocks.WILD_OAK_TRUNK0.get(),
-                ModBlocks.WILD_OAK_TRUNK1.get(),
-                ModBlocks.WILD_OAK_BRANCH1.get(),
-                ModBlocks.WILD_OAK_BRANCH2.get(),
-                ModBlocks.WILD_MAPLE_TRUNK0.get(),
-                ModBlocks.WILD_MAPLE_TRUNK1.get(),
-                ModBlocks.WILD_MAPLE_BRANCH1.get(),
-                ModBlocks.WILD_MAPLE_BRANCH2.get(),
-                ModBlocks.WILD_PINE_TRUNK0.get(),
-                ModBlocks.WILD_PINE_TRUNK1.get(),
-                ModBlocks.WILD_PINE_BRANCH1.get(),
-                ModBlocks.WILD_PINE_BRANCH2.get(),
-                ModBlocks.WILD_MAHOGANY_TRUNK0.get(),
-                ModBlocks.WILD_MAHOGANY_TRUNK1.get(),
-                ModBlocks.WILD_MAHOGANY_BRANCH1.get(),
-                ModBlocks.WILD_MAHOGANY_BRANCH2.get(),
-                ModBlocks.WILD_MYSTIC_TREE_TRUNK0.get(),
-                ModBlocks.WILD_MYSTIC_TREE_TRUNK1.get(),
-                ModBlocks.WILD_MYSTIC_TREE_BRANCH1.get(),
-                ModBlocks.WILD_MYSTIC_TREE_BRANCH2.get(),
                 ModBlocks.OAK_ROOT.get(),
                 ModBlocks.OAK_BRANCH.get(),
                 ModBlocks.MAPLE_ROOT.get(),
@@ -307,6 +285,8 @@ public class StardewCraftClient {
                 ModBlocks.LIGHT_5.get(),
                 ModBlocks.LIGHT_6.get(),
                 ModBlocks.LIGHT_7.get(),
+                ModBlocks.LIGHT_8.get(),
+                ModBlocks.LIGHT_9.get(),
                 ModBlocks.OAK_TABLE.get(),
                 ModBlocks.SPRUCE_TABLE.get(),
                 ModBlocks.BIRCH_TABLE.get(),
@@ -327,8 +307,8 @@ public class StardewCraftClient {
                 ModBlocks.FISH_SHOP_COUNTER.get(),
                 ModBlocks.SUPERMARKET_SHELF_1.get(),
                 ModBlocks.SUPERMARKET_SHELF_2.get(),
-                ModBlocks.JOJA_SUPERMARKET_CRATE.get(),
                 ModBlocks.SUPERMARKET_CART.get(),
+                ModBlocks.SHOPPING_BASKET.get(),
                 ModBlocks.SUPERMARKET_FREEZER.get(),
                 ModBlocks.HOSPITAL_COUNTER.get(),
                 ModBlocks.HOSPITAL_POSTER_1.get(),
@@ -400,11 +380,6 @@ public class StardewCraftClient {
             ));
 
             ModRenderLayers.registerCutoutMipped(List.of(
-                ModBlocks.WILD_OAK_LEAVES.get(),
-                ModBlocks.WILD_MAPLE_LEAVES.get(),
-                ModBlocks.WILD_PINE_LEAVES.get(),
-                ModBlocks.WILD_MAHOGANY_LEAVES.get(),
-                ModBlocks.WILD_MYSTIC_TREE_LEAVES.get(),
                 ModBlocks.OAK_LEAVES.get(),
                 ModBlocks.OAK_LEAVES_QUESTION.get(),
                 ModBlocks.MAPLE_LEAVES.get(),
@@ -472,10 +447,12 @@ public class StardewCraftClient {
     @SuppressWarnings("null")
     @SubscribeEvent
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(ModEntities.FALLEN_OAK_TREE.get(), FallenOakTreeRenderer::new);
         event.registerEntityRenderer(ModEntities.FALLEN_PREFAB_TREE.get(),
                 com.stardew.craft.client.render.FallenPrefabTreeRenderer::new);
+        event.registerEntityRenderer(ModEntities.BIRD_SPRING_RIDER_SEAT.get(), com.stardew.craft.client.renderer.entity.BirdSpringRiderSeatEntityRenderer::new);
+        event.registerEntityRenderer(ModEntities.DOUBLE_SWING_SEAT.get(), com.stardew.craft.client.renderer.entity.DoubleSwingSeatEntityRenderer::new);
         event.registerEntityRenderer(ModEntities.SOFA_SEAT.get(), SofaSeatEntityRenderer::new);
+        event.registerEntityRenderer(ModEntities.COAL_MINECART.get(), com.stardew.craft.client.render.CoalMinecartRenderer::new);
         event.registerEntityRenderer(ModEntities.MINECART_STATION.get(),
                 com.stardew.craft.client.render.MinecartStationRenderer::new);
     }
@@ -484,12 +461,16 @@ public class StardewCraftClient {
     @SubscribeEvent
     static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
         event.register((state, level, pos, tintIndex) -> {
-            if (tintIndex != 0) {
-                return 0xFFFFFFFF;
+            if (tintIndex != 1) return 0xFFFFFFFF;
+            if (level != null && pos != null
+                    && level.getBlockEntity(pos) instanceof com.stardew.craft.blockentity.CookingPlacedFoodBlockEntity food) {
+                var stack = food.getStoredFood();
+                if (stack.getItem() instanceof com.stardew.craft.item.artisan.FlavoredArtisanDrinkItem drink) {
+                    return 0xFF000000 | (drink.getColor(stack) & 0xFFFFFF);
+                }
             }
-            return resolveSeasonalGrassColor(level, pos);
-        }, Blocks.GRASS_BLOCK);
-
+            return state.is(ModBlocks.getPlacedCookingFoodBlock("juice").get()) ? 0xFF0A8F00 : 0xFF7329B5;
+        }, ModBlocks.getPlacedCookingFoodBlock("wine").get(), ModBlocks.getPlacedCookingFoodBlock("juice").get());
         event.register((state, level, pos, tintIndex) -> {
             if (tintIndex != 0) {
                 return 0xFFFFFFFF;
@@ -513,10 +494,6 @@ public class StardewCraftClient {
                 Blocks.MANGROVE_LEAVES,
                 Blocks.AZALEA_LEAVES,
                 Blocks.FLOWERING_AZALEA_LEAVES,
-                ModBlocks.WILD_OAK_LEAVES.get(),
-                ModBlocks.WILD_MAPLE_LEAVES.get(),
-                ModBlocks.WILD_PINE_LEAVES.get(),
-                ModBlocks.WILD_MAHOGANY_LEAVES.get(),
                 ModBlocks.OAK_LEAVES.get(),
                 ModBlocks.OAK_LEAVES_QUESTION.get(),
                 ModBlocks.MAPLE_LEAVES.get(),
@@ -526,15 +503,7 @@ public class StardewCraftClient {
                 ModBlocks.BERRY_BUSH.get());
 
         event.register((state, level, pos, tintIndex) -> 0xFFFFFFFF,
-                ModBlocks.WILD_MYSTIC_TREE_LEAVES.get(),
                 ModBlocks.MYSTIC_TREE_LEAVES.get());
-
-        event.register((state, level, pos, tintIndex) -> {
-            if (tintIndex != 0) {
-                return 0xFFFFFFFF;
-            }
-            return resolveYellowDirtColor();
-        }, ModBlocks.YELLOW_DIRT.get(), ModBlocks.ARTIFACT_SPOT_DIRT.get());
 
         event.register((state, level, pos, tintIndex) -> {
             if (tintIndex != 0 || state == null) {
@@ -563,6 +532,11 @@ public class StardewCraftClient {
             } else if (state.hasProperty(DyeableChairBlock.COLOR)) {
                 indexValue = state.getValue(DyeableChairBlock.COLOR);
                 tintMaterial = dyeableChairTintMaterial(state);
+            } else if (state.hasProperty(BedDecorBlock.DYED)
+                && state.hasProperty(BedDecorBlock.COLOR)
+                && state.getValue(BedDecorBlock.DYED)) {
+                indexValue = state.getValue(BedDecorBlock.COLOR);
+                tintMaterial = WoodenChestColorPalette.TintMaterial.BEDDING;
             } else if (state.hasProperty(OakTableBlock.CLOTH_STYLE)
                 && OakTableBlock.isDyeableClothStyle(state.getValue(OakTableBlock.CLOTH_STYLE))
                 && level != null
@@ -579,7 +553,7 @@ public class StardewCraftClient {
                 index = 0;
             }
             return 0xFF000000 | (WoodenChestColorPalette.tintRgbAt(index, tintMaterial) & 0xFFFFFF);
-        }, ModBlocks.SOFA.get(), ModBlocks.CUSHION.get(), ModBlocks.OFFICE_STOOL.get(), ModBlocks.OFFICE_STOOL_TOP_RENDER.get(), ModBlocks.OFFICE_CHAIR_2.get(), ModBlocks.OFFICE_CHAIR_2_TOP_RENDER.get(), ModBlocks.STOOL.get(), ModBlocks.IRON_STOOL.get(), ModBlocks.DINING_CHAIR_WOOD.get(), ModBlocks.DINING_CHAIR_IRON.get(), ModBlocks.OAK_TABLE.get(), ModBlocks.SPRUCE_TABLE.get(), ModBlocks.BIRCH_TABLE.get());
+        }, ModBlocks.SOFA.get(), ModBlocks.CUSHION.get(), ModBlocks.OFFICE_STOOL.get(), ModBlocks.OFFICE_STOOL_TOP_RENDER.get(), ModBlocks.OFFICE_CHAIR_2.get(), ModBlocks.OFFICE_CHAIR_2_TOP_RENDER.get(), ModBlocks.STOOL.get(), ModBlocks.IRON_STOOL.get(), ModBlocks.DINING_CHAIR_WOOD.get(), ModBlocks.DINING_CHAIR_IRON.get(), ModBlocks.OAK_TABLE.get(), ModBlocks.SPRUCE_TABLE.get(), ModBlocks.BIRCH_TABLE.get(), ModBlocks.BED_1.get(), ModBlocks.BED_2.get());
 
     }
 
@@ -636,7 +610,6 @@ public class StardewCraftClient {
     private static int getVanillaLeafColor(BlockState state, BlockAndTintGetter level, BlockPos pos) {
         if (state != null) {
             if (state.is(Blocks.SPRUCE_LEAVES)
-                    || state.is(ModBlocks.WILD_PINE_LEAVES.get())
                     || state.is(ModBlocks.PINE_LEAVES.get())) {
                 return FoliageColor.getEvergreenColor();
             }
@@ -656,15 +629,6 @@ public class StardewCraftClient {
 
     private static int getWinterLeafColor() {
         return STARDEW_LEAF_WINTER;
-    }
-
-    private static int resolveYellowDirtColor() {
-        if (!isRenderingStardewValley() || !StardewTimeHud.isTimeSynced()) {
-            return 0xFFFFFFFF;
-        }
-        return StardewTimeHud.getClientTimeCache().getCurrentSeason() == 3
-            ? STARDEW_YELLOW_DIRT_WINTER
-            : 0xFFFFFFFF;
     }
 
     @SubscribeEvent

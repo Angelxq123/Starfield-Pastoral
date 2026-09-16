@@ -101,6 +101,14 @@ public record CraftingMenuInventoryActionPayload(int action, int slotIndex, bool
         ItemStack slotStack = inv.items.get(slotIndex);
         ItemStack carried = player.containerMenu.getCarried();
 
+        if (rightClick && slotStack.getItem() instanceof com.stardew.craft.item.weapon.SlingshotItem
+                && com.stardew.craft.item.weapon.SlingshotItem.attach(slotStack, carried,
+                        replacement -> player.containerMenu.setCarried(replacement), player)) {
+            inv.setChanged();
+            syncInventory(player);
+            return;
+        }
+
         if (tryHandleFishingRodAttachment(player, inv, slotIndex, slotStack, carried, rightClick)) {
             syncInventory(player);
             return;

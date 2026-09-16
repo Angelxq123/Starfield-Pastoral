@@ -14,6 +14,17 @@ public final class ModBlockEntities {
 	public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
 			DeferredRegister.create(net.minecraft.core.registries.Registries.BLOCK_ENTITY_TYPE, StardewCraft.MODID);
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WoodSignBlockEntity>> WOOD_SIGN =
+            BLOCK_ENTITIES.register("wood_sign", () -> BlockEntityType.Builder.of(WoodSignBlockEntity::new,
+                    ModBlocks.WOOD_SIGN.get(), ModBlocks.WOOD_WALL_SIGN.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SkullLobbyLightBlockEntity>> SKULL_LOBBY_LIGHT =
+            BLOCK_ENTITIES.register("skull_lobby_light", () -> BlockEntityType.Builder.of(SkullLobbyLightBlockEntity::new,
+                    ModBlocks.SKULL_SHRINE_WALL.get(), ModBlocks.SKULL_SHRINE_ALTAR.get(), ModBlocks.SKULL_WALL_BRAZIER.get()).build(null));
+
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MineLampBlockEntity>> MINE_LAMP =
+            BLOCK_ENTITIES.register("mine_lamp", () -> BlockEntityType.Builder.of(MineLampBlockEntity::new, ModBlocks.MINE_LAMP.get()).build(null));
+
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TapperBlockEntity>> TAPPER =
 			BLOCK_ENTITIES.register("tapper", () -> BlockEntityType.Builder.of(TapperBlockEntity::new, ModBlocks.TAPPER.get()).build(null));
@@ -165,6 +176,51 @@ public final class ModBlockEntities {
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterLanternBlockEntity>> WATER_LANTERN =
 			BLOCK_ENTITIES.register("water_lantern", () -> BlockEntityType.Builder.of(WaterLanternBlockEntity::new, ModBlocks.WATER_LANTERN.get()).build(null));
 
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PlaygroundBlockEntity>> PLAYGROUND =
+            BLOCK_ENTITIES.register("playground", () -> BlockEntityType.Builder.of(PlaygroundBlockEntity::new,
+                    ModBlocks.PLAYGROUND_SLIDE.get(), ModBlocks.CLIMBING_FRAME.get(), ModBlocks.BIRD_SPRING_RIDER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BooksellerDecorBlockEntity>> BOOKSELLER_DECOR =
+            BLOCK_ENTITIES.register("bookseller_decor", () -> BlockEntityType.Builder.of(BooksellerDecorBlockEntity::new,
+                    ModBlocks.BOOKSELLER_STALL.get(), ModBlocks.BOOKSELLER_BALLOON.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SebastianComputerBlockEntity>> SEBASTIAN_COMPUTER =
+            BLOCK_ENTITIES.register("sebastian_computer", () -> BlockEntityType.Builder.of(SebastianComputerBlockEntity::new,
+                    ModBlocks.SEBASTIAN_COMPUTER.get()).build(null));
+
+    @SuppressWarnings("null")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BlacksmithVentilatorBlockEntity>> BLACKSMITH_VENTILATOR =
+            BLOCK_ENTITIES.register("blacksmith_ventilator", () -> BlockEntityType.Builder.of(BlacksmithVentilatorBlockEntity::new,
+                    ModBlocks.BLACKSMITH_VENTILATOR.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<JojaBillboardBlockEntity>> JOJA_BILLBOARD =
+            BLOCK_ENTITIES.register("joja_billboard", () -> BlockEntityType.Builder.of(JojaBillboardBlockEntity::new,
+                    ModBlocks.JOJA_BILLBOARD.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<IceCreamStandBlockEntity>> ICE_CREAM_STAND =
+            BLOCK_ENTITIES.register("ice_cream_stand", () -> BlockEntityType.Builder.of(IceCreamStandBlockEntity::new,
+                    ModBlocks.ICE_CREAM_STAND.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PlazaDisplayBlockEntity>> PLAZA_DISPLAY =
+            BLOCK_ENTITIES.register("plaza_display", () -> BlockEntityType.Builder.of(PlazaDisplayBlockEntity::new,
+                    ModBlocks.PLAZA_DISPLAY.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ParkedVehicleBlockEntity>> PARKED_VEHICLE =
+            BLOCK_ENTITIES.register("parked_vehicle", () -> BlockEntityType.Builder.of(ParkedVehicleBlockEntity::new,
+                    ModBlocks.BUS.get(), ModBlocks.MAYOR_PICKUP.get(), ModBlocks.JOJA_TRUCK.get()).build(null));
+
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DoubleSwingBlockEntity>> DOUBLE_SWING =
+            BLOCK_ENTITIES.register("double_swing", () -> BlockEntityType.Builder.of(DoubleSwingBlockEntity::new,
+                    ModBlocks.DOUBLE_SWING.get()).build(null));
+
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ParkFountainBlockEntity>> PARK_FOUNTAIN =
+			BLOCK_ENTITIES.register("park_fountain", () -> BlockEntityType.Builder.of(ParkFountainBlockEntity::new,
+					ModBlocks.PARK_FOUNTAIN.get()).build(null));
+
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FloatingPlantBlockEntity>> FLOATING_PLANT =
+			BLOCK_ENTITIES.register("floating_plant", () -> BlockEntityType.Builder.of(FloatingPlantBlockEntity::new,
+					ModBlocks.NATURAL_DECOR.get("floating_leaf").get(), ModBlocks.NATURAL_DECOR.get("water_lily").get()).build(null));
+
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MuseumExhibitStandBlockEntity>> MUSEUM_EXHIBIT_STAND =
 			BLOCK_ENTITIES.register("museum_exhibit_stand", () -> BlockEntityType.Builder.of(MuseumExhibitStandBlockEntity::new, ModBlocks.MUSEUM_EXHIBIT_STAND.get()).build(null));
@@ -196,6 +252,10 @@ public final class ModBlockEntities {
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StoneChestBlockEntity>> STONE_CHEST =
 			BLOCK_ENTITIES.register("stone_chest", () -> BlockEntityType.Builder.of(StoneChestBlockEntity::new, ModBlocks.STONE_CHEST.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageChestBlockEntity>> STORAGE_CHEST =
+            BLOCK_ENTITIES.register("storage_chest", () -> BlockEntityType.Builder.of(StorageChestBlockEntity::new,
+                    ModBlocks.BIG_CHEST.get(), ModBlocks.BIG_STONE_CHEST.get(), ModBlocks.JUNIMO_CHEST.get()).build(null));
 
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FridgeBlockEntity>> FRIDGE =
@@ -282,10 +342,6 @@ public final class ModBlockEntities {
 			BLOCK_ENTITIES.register("large_fireplace", () -> BlockEntityType.Builder.of(LargeFireplaceBlockEntity::new, ModBlocks.FIREPLACE_LARGE.get()).build(null));
 
 	@SuppressWarnings("null")
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShrineBlockEntity>> SHRINE =
-			BLOCK_ENTITIES.register("shrine", () -> BlockEntityType.Builder.of(ShrineBlockEntity::new, ModBlocks.SHRINE.get()).build(null));
-
-	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ScarecrowBlockEntity>> SCARECROW =
 			BLOCK_ENTITIES.register("scarecrow", () -> BlockEntityType.Builder.of(ScarecrowBlockEntity::new,
 					ModBlocks.SCARECROW_0.get(), ModBlocks.SCARECROW_1.get(), ModBlocks.SCARECROW_2.get(),
@@ -338,9 +394,22 @@ public final class ModBlockEntities {
 				ModBlocks.FISH_POND_BUCKET.get()).build(null));
 
 	@SuppressWarnings("null")
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PlacedFishBlockEntity>> PLACED_FISH =
+			BLOCK_ENTITIES.register("placed_fish", () -> BlockEntityType.Builder.of(PlacedFishBlockEntity::new,
+				ModBlocks.PLACED_FISH.get()).build(null));
+
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AquariumBlockEntity>> LARGE_FISH_TANK =
+			BLOCK_ENTITIES.register("large_fish_tank", () -> BlockEntityType.Builder.of(AquariumBlockEntity::new,
+				ModBlocks.LARGE_FISH_TANK.get()).build(null));
+
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FishMarketCrateBlockEntity>> FISH_MARKET_CRATE =
+			BLOCK_ENTITIES.register("fish_market_crate", () -> BlockEntityType.Builder.of(FishMarketCrateBlockEntity::new,
+				ModBlocks.FISH_MARKET_CRATE.get()).build(null));
+
+	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TableDisplayBlockEntity>> TABLE_DISPLAY =
 			BLOCK_ENTITIES.register("table_display", () -> BlockEntityType.Builder.of(TableDisplayBlockEntity::new,
-				ModBlocks.OAK_TABLE.get(), ModBlocks.SPRUCE_TABLE.get(), ModBlocks.BIRCH_TABLE.get(), ModBlocks.SPRUCE_COUNTER.get(), ModBlocks.OAK_ROUND_TABLE.get(), ModBlocks.KITCHEN_COUNTER.get(), ModBlocks.HOSPITAL_COUNTER.get()).build(null));
+				ModBlocks.OUTDOOR_TABLE.get(), ModBlocks.OAK_TABLE.get(), ModBlocks.SPRUCE_TABLE.get(), ModBlocks.BIRCH_TABLE.get(), ModBlocks.SPRUCE_COUNTER.get(), ModBlocks.OAK_ROUND_TABLE.get(), ModBlocks.KITCHEN_COUNTER.get(), ModBlocks.HOSPITAL_COUNTER.get()).build(null));
 
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CookingPlacedFoodBlockEntity>> PLACED_COOKING_FOOD =

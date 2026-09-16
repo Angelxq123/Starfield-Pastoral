@@ -109,6 +109,10 @@ public final class TrinketEffectHandler {
         recordFairyCombatDamage(player, stardewDamage);
     }
 
+    public static boolean blocksNegativeEffects(ServerPlayer player) {
+        return equippedType(player) == TrinketType.BASILISK_PAW;
+    }
+
     public static boolean cancelBasiliskDamage(ServerPlayer player, DamageSource source) {
         if (equippedType(player) != TrinketType.BASILISK_PAW) {
             return false;

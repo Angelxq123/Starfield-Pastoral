@@ -1,0 +1,7 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "stardewcraft:block/decor/common/floor_lamp_particle"
+  },
+  "elements": []
+}

@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.font.StardewFonts;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
@@ -95,7 +97,7 @@ public class JukeboxScreen extends Screen {
     protected void init() {
         super.init();
 
-        float guiScale = (float) minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         mapping = new StardewRenderMapping(width, height, guiScale);
         s4 = mapping.s4();
 
@@ -150,7 +152,7 @@ public class JukeboxScreen extends Screen {
 
     /** SDV pixel → GUI pixel. */
     private int px(int sdvPx) {
-        return Math.round(sdvPx / (float) minecraft.getWindow().getGuiScale());
+        return Math.round(sdvPx / (float) StardewGuiViewport.REFERENCE_SCALE);
     }
 
     // ─── Rendering ───
@@ -189,7 +191,7 @@ public class JukeboxScreen extends Screen {
 
         int centerX = menuX + menuW / 2;
         // SDV: y = menuY - 32 (above the menu)
-        int sdvTitleY = Math.round(menuY * (float) minecraft.getWindow().getGuiScale()) - 32;
+        int sdvTitleY = Math.round(menuY * (float) StardewGuiViewport.REFERENCE_SCALE) - 32;
         int titleY = px(sdvTitleY);
 
         int textX = centerX - textWidth / 2;

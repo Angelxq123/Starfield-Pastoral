@@ -1,0 +1,7 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/decor/minecart_power_unit",
+    "particle": "stardewcraft:block/decor/minecart_power_unit_particle"
+  },
+  "elements": []
+}

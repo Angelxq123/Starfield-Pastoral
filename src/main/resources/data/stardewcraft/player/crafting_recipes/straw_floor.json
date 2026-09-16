@@ -1,0 +1,15 @@
+{
+  "output": "stardewcraft:straw_floor",
+  "output_count": 1,
+  "ingredients": [
+    {
+      "item": "stardewcraft:wood_normal",
+      "count": 1
+    },
+    {
+      "item": "stardewcraft:fiber",
+      "count": 1
+    }
+  ],
+  "legacy_unlock_condition": "l 0"
+}

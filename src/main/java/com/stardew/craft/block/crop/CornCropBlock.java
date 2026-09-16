@@ -2,29 +2,22 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
 
 import java.util.function.Supplier;
 
 /**
  * 玉米作物
  */
-public class CornCropBlock extends StardewCropBlock {
+public class CornCropBlock extends TomatoCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{2, 4, 4, 4}; // SDV: 14 days
+    private static final int[] PHASE_DAYS = new int[]{2, 3, 3, 3, 3}; // SDV: 14 days
 
     @SuppressWarnings("null")
     public CornCropBlock() {
-        super(Properties.of()
-                .mapColor(MapColor.PLANT)
-                .pushReaction(PushReaction.DESTROY)
-                .sound(SoundType.CROP));
+        super();
     }
 
     @Override
@@ -42,8 +35,7 @@ public class CornCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 1 || timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 1 || seasonForGrowth() == 2;
     }
 
     @Override

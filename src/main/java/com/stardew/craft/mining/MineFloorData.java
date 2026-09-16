@@ -15,10 +15,48 @@ import net.minecraft.nbt.CompoundTag;
 public class MineFloorData {
     private int stonesLeft;
     private boolean ladderFound;
+    private boolean stoneLadderSpawned;
+    private final java.util.Set<java.util.UUID> generatedMonsters = new java.util.HashSet<>();
+    public boolean hasStoneLadderSpawned() { return stoneLadderSpawned; }
+    public void setStoneLadderSpawned(boolean value) { stoneLadderSpawned=value; }
+    public void addGeneratedMonster(java.util.UUID id) { if(generatedMonsters.add(id)) enemyCount++; }
+    public boolean removeGeneratedMonster(java.util.UUID id) {
+        if(!generatedMonsters.remove(id)) return false;
+        enemyCount = Math.max(0, enemyCount - 1);return true;
+    }
     private BlockPos ladderPos;
     private int enemyCount;
     private boolean isMonsterArea;
     private int generationVersion;
+    private java.util.UUID generationId = java.util.UUID.randomUUID();
+    public java.util.UUID generationId() { return generationId; }
+    private boolean treasureRoom;
+    private final java.util.Set<Integer> treasureKeys=new java.util.HashSet<>();
+    public java.util.Set<Integer> treasureKeys() {return java.util.Set.copyOf(treasureKeys);}
+    public void addTreasureKey(int key) {treasureKeys.add(key); }
+    public boolean isTreasureRoom() { return treasureRoom; }
+    public void setTreasureRoom(boolean value) { treasureRoom=value; }
+    private String layoutName="";
+    private java.util.BitSet architecture = new java.util.BitSet();
+    public void markArchitecture(int index) { architecture.set(index); }
+    public boolean isArchitecture(int index) { return index>=0 && architecture.get(index); }
+    public String getLayoutName() { return layoutName; }
+    public void setLayoutName(String name) { layoutName=name; }
+    private final java.util.Set<Long> generatedStones = new java.util.HashSet<>();
+
+    public void addGeneratedStone(BlockPos pos) { addGeneratedStone(pos, true); }
+    public void addGeneratedStone(BlockPos pos, boolean initialPopulation) {
+        if (generatedStones.add(pos.asLong()) && initialPopulation) stonesLeft++;
+    }
+    public int generatedStoneCount() { return generatedStones.size(); }
+    public boolean removeGeneratedStone(BlockPos pos) {
+        boolean removed = generatedStones.remove(pos.asLong());
+        if (removed) stonesLeft = Math.max(0, stonesLeft - 1);
+        return removed;
+    }
+    /** Source removeObjectsAndSpawned bypasses the mining counter and ladder roll. */
+    public void forgetGeneratedStone(BlockPos pos) { generatedStones.remove(pos.asLong()); }
+    public boolean isGeneratedStone(BlockPos pos) { return generatedStones.contains(pos.asLong()); }
     
     public MineFloorData() {
         this.stonesLeft = 0;
@@ -29,10 +67,6 @@ public class MineFloorData {
         this.generationVersion = 0;
     }
     
-    public MineFloorData(int initialStones) {
-        this();
-        this.stonesLeft = initialStones;
-    }
     
     // Getters
     public int getStonesLeft() {
@@ -86,23 +120,7 @@ public class MineFloorData {
         this.generationVersion = generationVersion;
     }
     
-    /**
-     * 减少一个石头计数
-     */
-    public void decrementStone() {
-        if (stonesLeft > 0) {
-            stonesLeft--;
-        }
-    }
     
-    /**
-     * 减少一个敌人计数
-     */
-    public void decrementEnemy() {
-        if (enemyCount > 0) {
-            enemyCount--;
-        }
-    }
     
     /**
      * 序列化到NBT
@@ -111,12 +129,20 @@ public class MineFloorData {
         CompoundTag tag = new CompoundTag();
         tag.putInt("stonesLeft", stonesLeft);
         tag.putBoolean("ladderFound", ladderFound);
+        tag.putBoolean("stoneLadderSpawned",stoneLadderSpawned);
+        var monsters=new CompoundTag();generatedMonsters.forEach(id->monsters.putBoolean(id.toString(),true));tag.put("generatedMonsters",monsters);
         if (ladderPos != null) {
             tag.putLong("ladderPos", ladderPos.asLong());
         }
         tag.putInt("enemyCount", enemyCount);
         tag.putBoolean("isMonsterArea", isMonsterArea);
         tag.putInt("generationVersion", generationVersion);
+        tag.putUUID("generationId", generationId);
+        tag.putBoolean("treasureRoom",treasureRoom);
+        tag.putIntArray("treasureKeys",treasureKeys.stream().mapToInt(Integer::intValue).toArray());
+        tag.putString("layoutName",layoutName);
+        tag.putLongArray("architecture",architecture.toLongArray());
+        tag.putLongArray("generatedStones", generatedStones.stream().mapToLong(Long::longValue).toArray());
         return tag;
     }
     
@@ -127,12 +153,20 @@ public class MineFloorData {
         MineFloorData data = new MineFloorData();
         data.stonesLeft = tag.getInt("stonesLeft");
         data.ladderFound = tag.getBoolean("ladderFound");
+        data.stoneLadderSpawned=tag.getBoolean("stoneLadderSpawned");
+        for(String id:tag.getCompound("generatedMonsters").getAllKeys()) data.generatedMonsters.add(java.util.UUID.fromString(id));
         if (tag.contains("ladderPos")) {
             data.ladderPos = BlockPos.of(tag.getLong("ladderPos"));
         }
         data.enemyCount = tag.getInt("enemyCount");
         data.isMonsterArea = tag.getBoolean("isMonsterArea");
         data.generationVersion = tag.getInt("generationVersion");
+        if (tag.hasUUID("generationId")) data.generationId = tag.getUUID("generationId");
+        data.treasureRoom=tag.getBoolean("treasureRoom");
+        for(int key:tag.getIntArray("treasureKeys"))data.treasureKeys.add(key);
+        data.layoutName=tag.getString("layoutName");
+        data.architecture=java.util.BitSet.valueOf(tag.getLongArray("architecture"));
+        for (long pos : tag.getLongArray("generatedStones")) data.generatedStones.add(pos);
         return data;
     }
 }

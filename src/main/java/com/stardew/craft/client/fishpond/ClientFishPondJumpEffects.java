@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class ClientFishPondJumpEffects {
+    private static ClientLevel activeLevel;
     private static final List<JumpingFishEffect> ACTIVE = new ArrayList<>();
     private static final float JUMP_TIME_SECONDS = 1.0F;
     private static final int JUMP_LIFETIME_TICKS = Mth.ceil(JUMP_TIME_SECONDS * 20.0F);
@@ -35,13 +36,14 @@ public final class ClientFishPondJumpEffects {
             return;
         }
 
+        if(activeLevel!=level){ACTIVE.clear();activeLevel=level;}
         ResourceLocation fishId = ResourceLocation.tryParse(payload.fishItemId());
         if (fishId == null || !BuiltInRegistries.ITEM.containsKey(fishId)) {
             return;
         }
 
         ItemStack fishStack = new ItemStack(BuiltInRegistries.ITEM.get(fishId));
-        if (fishStack.isEmpty()) {
+        if (fishStack.isEmpty() || !ClientFishPondFishRenderer.available(fishStack) || ClientFishPondFishRenderer.bottomDweller(fishStack)) {
             return;
         }
 
@@ -86,11 +88,13 @@ public final class ClientFishPondJumpEffects {
 
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
-        if (level == null) {
+        if (level == null || level!=activeLevel) {
             ACTIVE.clear();
+            activeLevel=level;
             return;
         }
 
+        if(minecraft.isPaused())return;
         Iterator<JumpingFishEffect> iterator = ACTIVE.iterator();
         while (iterator.hasNext()) {
             JumpingFishEffect effect = iterator.next();
@@ -151,12 +155,11 @@ public final class ClientFishPondJumpEffects {
                 event.getPoseStack(),
                 buffer,
                 level,
-                LightTexture.FULL_BRIGHT,
-                effect.baseYawDegrees,
-                effect.basePitchDegrees + flightPitch,
+                net.minecraft.client.renderer.LevelRenderer.getLightColor(level, net.minecraft.core.BlockPos.containing(renderPos)),
+                computeTravelYaw(effect.startPosition,effect.endPosition),
+                flightPitch,
                 (float) Math.toDegrees(effect.flipped ? -effect.angularVelocity * ageSeconds : effect.angularVelocity * ageSeconds),
-                effect.renderScale,
-                effect.flipped
+                effect.renderScale
             );
             event.getPoseStack().popPose();
         }

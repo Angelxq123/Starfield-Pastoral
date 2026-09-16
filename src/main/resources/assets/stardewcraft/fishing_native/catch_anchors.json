@@ -1,0 +1,641 @@
+{
+  "albacore": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "anchovy": {
+    "point": [
+      6.85,
+      6.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "angler": {
+    "point": [
+      5.85,
+      3.92,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "lower_jaw"
+  },
+  "blobfish": {
+    "point": [
+      7.85,
+      1.92,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "lower_lip"
+  },
+  "blue_discus": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "bream": {
+    "point": [
+      6.85,
+      6.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "bullhead": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "carp": {
+    "point": [
+      7.85,
+      6.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "catfish": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "chub": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "clam": {
+    "point": [
+      0.0,
+      6.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "upper_valve"
+  },
+  "cockle": {
+    "point": [
+      0.0,
+      7.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "upper_valve"
+  },
+  "crab": {
+    "point": [
+      0.0,
+      6.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "upper_shell"
+  },
+  "crayfish": {
+    "point": [
+      0.5,
+      6.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "carapace"
+  },
+  "crimsonfish": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "dorado": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "eel": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "flounder": {
+    "point": [
+      4.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "ghostfish": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "glacierfish": {
+    "point": [
+      5.85,
+      7.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "glacierfish_jr": {
+    "point": [
+      5.85,
+      7.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "goby": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "halibut": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "herring": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "ice_pip": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "largemouth_bass": {
+    "point": [
+      7.85,
+      6.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "lava_eel": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "legend": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "legend_ii": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "lingcod": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "lionfish": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "lobster": {
+    "point": [
+      0.5,
+      6.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "carapace"
+  },
+  "midnight_carp": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "midnight_squid": {
+    "point": [
+      0.0,
+      10.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "mantle"
+  },
+  "ms_angler": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "mussel": {
+    "point": [
+      -0.5,
+      5.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "wide_shell"
+  },
+  "mutant_carp": {
+    "point": [
+      -3.15,
+      4.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "lower_tail"
+  },
+  "octopus": {
+    "point": [
+      0.0,
+      11.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "mantle_crown"
+  },
+  "oyster": {
+    "point": [
+      -0.5,
+      6.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "upper_shell"
+  },
+  "perch": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "periwinkle": {
+    "point": [
+      4.85,
+      4.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "wide_shell"
+  },
+  "pike": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "snout"
+  },
+  "pufferfish": {
+    "point": [
+      4.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "radioactive_carp": {
+    "point": [
+      -3.15,
+      4.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "lower_tail"
+  },
+  "rainbow_trout": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "red_mullet": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "red_snapper": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "salmon": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "sandfish": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "sardine": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "scorpion_carp": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "sea_cucumber": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "front_tip"
+  },
+  "shad": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "shrimp": {
+    "point": [
+      4.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "slimejack": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "smallmouth_bass": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "snail": {
+    "point": [
+      -0.5,
+      9.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "shell_crown"
+  },
+  "son_of_crimsonfish": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "spook_fish": {
+    "point": [
+      5.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "squid": {
+    "point": [
+      0.0,
+      10.85,
+      0.0
+    ],
+    "axis": "y",
+    "surface": "mantle"
+  },
+  "stingray": {
+    "point": [
+      4.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "snout"
+  },
+  "stonefish": {
+    "point": [
+      4.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "block_body"
+  },
+  "sturgeon": {
+    "point": [
+      8.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "snout"
+  },
+  "sunfish": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "super_cucumber": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "front_tip"
+  },
+  "tiger_trout": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "tilapia": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "tuna": {
+    "point": [
+      7.85,
+      6.5,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "void_salmon": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "walleye": {
+    "point": [
+      7.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  },
+  "woodskip": {
+    "point": [
+      6.85,
+      6.0,
+      0.0
+    ],
+    "axis": "x",
+    "surface": "head"
+  }
+}

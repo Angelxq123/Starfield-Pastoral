@@ -1,31 +1,52 @@
 {
-	"variants": {
-		"part=main,facing=north": {
-			"model": "stardewcraft:decor/common/joja_supermarket_crate"
-		},
-		"part=extension,facing=north": {
-			"model": "stardewcraft:block/decor/extensions/joja_supermarket_crate_extension_empty"
-		},
-		"part=main,facing=east": {
-			"model": "stardewcraft:decor/common/joja_supermarket_crate",
-			"y": 90
-		},
-		"part=extension,facing=east": {
-			"model": "stardewcraft:block/decor/extensions/joja_supermarket_crate_extension_empty"
-		},
-		"part=main,facing=south": {
-			"model": "stardewcraft:decor/common/joja_supermarket_crate",
-			"y": 180
-		},
-		"part=extension,facing=south": {
-			"model": "stardewcraft:block/decor/extensions/joja_supermarket_crate_extension_empty"
-		},
-		"part=main,facing=west": {
-			"model": "stardewcraft:decor/common/joja_supermarket_crate",
-			"y": 270
-		},
-		"part=extension,facing=west": {
-			"model": "stardewcraft:block/decor/extensions/joja_supermarket_crate_extension_empty"
-		}
-	}
+  "variants": {
+    "facing=north,type=bottom": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate",
+      "y": 0
+    },
+    "facing=north,type=top": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_top",
+      "y": 0
+    },
+    "facing=north,type=double": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_double",
+      "y": 0
+    },
+    "facing=east,type=bottom": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate",
+      "y": 90
+    },
+    "facing=east,type=top": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_top",
+      "y": 90
+    },
+    "facing=east,type=double": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_double",
+      "y": 90
+    },
+    "facing=south,type=bottom": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate",
+      "y": 180
+    },
+    "facing=south,type=top": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_top",
+      "y": 180
+    },
+    "facing=south,type=double": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_double",
+      "y": 180
+    },
+    "facing=west,type=bottom": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate",
+      "y": 270
+    },
+    "facing=west,type=top": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_top",
+      "y": 270
+    },
+    "facing=west,type=double": {
+      "model": "stardewcraft:decor/common/joja_supermarket_crate_double",
+      "y": 270
+    }
+  }
 }

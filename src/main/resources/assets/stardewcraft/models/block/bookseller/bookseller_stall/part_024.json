@@ -1,0 +1,125 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_spring_repaint",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_wood_particle",
+    "2": "stardewcraft:block/decor/bookseller/bookseller_spring_accents",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_wood_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        -8,
+        4,
+        -2
+      ],
+      "to": [
+        8,
+        4,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            9.15625,
+            3.875,
+            9.65625,
+            4.4375
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            9.71875,
+            3.875,
+            10.21875,
+            4.4375
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          -8,
+          4,
+          -32
+        ],
+        "axis": "z",
+        "angle": -22.5,
+        "rescale": false
+      }
+    },
+    {
+      "from": [
+        -8,
+        1,
+        12
+      ],
+      "to": [
+        8,
+        4,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12.28125,
+            3.875,
+            12.78125,
+            3.96875
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            12.84375,
+            3.875,
+            12.9375,
+            3.96875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            13.0,
+            3.875,
+            13.5,
+            3.96875
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            13.5625,
+            3.875,
+            13.65625,
+            3.96875
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            13.71875,
+            3.875,
+            14.21875,
+            3.96875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          -8,
+          4,
+          -32
+        ],
+        "axis": "z",
+        "angle": -22.5,
+        "rescale": false
+      }
+    }
+  ]
+}

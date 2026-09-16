@@ -35,13 +35,17 @@ public final class OfflineFarmCatchUp {
     }
 
     static void growCropOneDay(
-            ServerLevel level, CropGrowthManager manager, GlobalPos position) {
+            ServerLevel level, CropGrowthManager manager, GlobalPos position, int absoluteDay) {
         BlockPos blockPos = position.pos();
         if (!level.isLoaded(blockPos)) {
             return;
         }
+        var growth = manager.getOrCreateState(level, blockPos);
+        if (growth.lastDailyDay >= absoluteDay) return;
         StardewCropRuntimeAdapter.DailyResult result =
-                StardewCropRuntimeRegistry.growOneDay(level, blockPos, true, true);
+                StardewCropRuntimeRegistry.growOneDay(level, blockPos, true, true, absoluteDay, seasonOfAbsDay(absoluteDay));
+        growth.lastDailyDay = absoluteDay;
+        growth.lastDailyWatered = true;
         manager.setDirty();
         if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) {
             manager.removeCrop(level, blockPos);

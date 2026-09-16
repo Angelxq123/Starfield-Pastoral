@@ -57,6 +57,27 @@ public final class StardewDeterministicRandom {
         return new StardewDeterministicRandom(xxHash32(data));
     }
 
+    /** Utility.CreateRandom double inputs, including signed remainder and source float-rounded values. */
+    public static StardewDeterministicRandom createFromDoubles(double a, double b, double c, double d, double e) {
+        byte[] data = new byte[20];
+        double[] parts = {a, b, c, d, e};
+        for (int i = 0; i < parts.length; i++) writeLittleEndian(data, i * 4, (int) (parts[i] % 2147483647.0));
+        return new StardewDeterministicRandom(xxHash32(data));
+    }
+
+    /** Adapter for shared loot code; every bounded/float draw consumes the source generator. */
+    public net.minecraft.util.RandomSource asMinecraftSource() {
+        var source=this;
+        return new net.minecraft.world.level.levelgen.LegacyRandomSource(0) {
+            @Override public double nextDouble() { return source.nextDouble(); }
+            @Override public float nextFloat() { return (float)source.nextDouble(); }
+            @Override public boolean nextBoolean() { return source.nextDouble()<0.5; }
+            @Override public int nextInt(int bound) { return source.nextInt(bound); }
+            @Override public int nextInt() { return source.nextInt(Integer.MAX_VALUE); }
+            @Override public long nextLong() { return ((long)nextInt()<<32)^Integer.toUnsignedLong(nextInt()); }
+        };
+    }
+
     public int nextInt(int maxExclusive) {
         if (maxExclusive <= 0) {
             throw new IllegalArgumentException("maxExclusive must be positive");

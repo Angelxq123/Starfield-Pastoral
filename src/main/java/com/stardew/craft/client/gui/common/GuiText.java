@@ -1,6 +1,7 @@
 package com.stardew.craft.client.gui.common;
 
 import net.minecraft.client.gui.Font;
+import com.stardew.craft.client.font.StardewFonts;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -32,10 +33,8 @@ public final class GuiText {
 
     public static void drawCenteredClamped(GuiGraphics graphics, Font font, Component text,
                                            int centerX, int y, int maxWidth, int color, boolean shadow) {
-        Component shown = ellipsize(font, text, maxWidth);
-        // Vanilla's boolean shadow is opaque black and becomes unreadable over
-        // pixel-art panels. This project deliberately renders UI text cleanly.
-        graphics.drawString(font, shown, centerX - font.width(shown) / 2, y, color, false);
+        drawCenteredFitted(graphics, font, text, centerX,
+                y + StardewFonts.lineHeight(font) / 2, maxWidth, color, shadow);
     }
 
     /**
@@ -54,9 +53,9 @@ public final class GuiText {
             boolean shadow
     ) {
         int textWidth = Math.max(1, font.width(text));
-        float scale = Math.min(
-                1.0F,
-                Math.max(1, maxWidth) / (float) textWidth);
+        int textHeight = StardewFonts.lineHeight(font);
+        float scale = GuiLayoutMath.fitTextScale(1.0F, textWidth, textHeight, maxWidth, textHeight);
+        if (scale <= 0) return;
         graphics.pose().pushPose();
         graphics.pose().translate(centerX, centerY, 0.0F);
         graphics.pose().scale(scale, scale, 1.0F);
@@ -64,7 +63,7 @@ public final class GuiText {
                 font,
                 text,
                 -textWidth / 2,
-                -font.lineHeight / 2,
+                -textHeight / 2,
                 color,
                 false);
         graphics.pose().popPose();
@@ -75,7 +74,7 @@ public final class GuiText {
         List<FormattedCharSequence> lines = limitedLines(font, text, maxWidth, maxLines);
         for (FormattedCharSequence line : lines) {
             graphics.drawString(font, line, x, y, color, false);
-            y += font.lineHeight + 2;
+            y += StardewFonts.lineHeight(font) + 2;
         }
         return y;
     }
@@ -85,7 +84,7 @@ public final class GuiText {
         List<FormattedCharSequence> lines = limitedLines(font, text, maxWidth, maxLines);
         for (FormattedCharSequence line : lines) {
             graphics.drawString(font, line, centerX - font.width(line) / 2, y, color, false);
-            y += font.lineHeight + 2;
+            y += StardewFonts.lineHeight(font) + 2;
         }
         return y;
     }

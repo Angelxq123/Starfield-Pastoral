@@ -129,6 +129,11 @@ public final class FarmDailyProcessHelper {
      * @return true 表示应该处理
      */
     public static boolean shouldProcessPosition(ServerLevel level, BlockPos pos) {
+        return shouldProcessPosition(level, pos, 8);
+    }
+
+    /** Crops use zero; larger daily objects retain their own neighborhood radius. */
+    public static boolean shouldProcessPosition(ServerLevel level, BlockPos pos, int radius) {
         // 不在农场实例区域 → 公共区域，始终处理
         if (!FarmInstanceAllocator.isInFarmInstanceRegion(pos)) return true;
 
@@ -176,6 +181,13 @@ public final class FarmDailyProcessHelper {
         TemporaryChunkLeaseTracker.Lease lease = requireLeaseScope(level).lease(
                 FarmChunkManager.chunkPositionsForPosition(
                         Objects.requireNonNull(pos, "pos"), radius));
+        return lease::close;
+    }
+
+    /** Shared ownership tracking for work outside the overnight settlement scope. */
+    public static Lease leaseTemporaryBounds(ServerLevel level, BlockPos min, BlockPos max) {
+        var lease = FarmChunkManager.get().acquireTemporaryChunks(level,
+                FarmChunkManager.chunkPositionsForBounds(min, max));
         return lease::close;
     }
 

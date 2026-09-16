@@ -22,8 +22,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
  */
 public final class SkillPresentationClient {
     private static final Map<String, Function<SkillPresentationContext, SkillPresentation>> FACTORIES = Map.of(
-            "crescent_slash", CrescentSlashPresentation::new,
-            "forest_blessing", ForestBlessingPresentation::new
+            "crescent_slash", CrescentSlashPresentation::new
     );
     private static final List<SkillPresentation> ACTIVE = new ArrayList<>();
     private static ClientLevel activeLevel;
@@ -68,42 +67,6 @@ public final class SkillPresentationClient {
                     && presentation.skillId().equals(payload.skillId())) {
                 presentation.onImpact(payload);
             }
-        }
-    }
-
-    public static void setForestBlessingState(
-            int casterEntityId,
-            boolean active,
-            int durationTicks,
-            boolean completedCycle
-    ) {
-        SkillPresentation presentation = ACTIVE.stream()
-                .filter(candidate -> candidate.casterEntityId() == casterEntityId
-                        && "forest_blessing".equals(candidate.skillId()))
-                .findFirst()
-                .orElse(null);
-        if (presentation == null && active) {
-            WeaponSkillAnimPayload action = WeaponSkillAnimationClient.getWorldAction(casterEntityId);
-            Minecraft minecraft = Minecraft.getInstance();
-            if (action != null && minecraft.level != null
-                    && "forest_blessing".equals(action.skillId())) {
-                presentation = new ForestBlessingPresentation(
-                        new SkillPresentationContext(
-                                action,
-                                minecraft.level,
-                                WeaponSkillAnimationClient
-                                        .getWorldActionPlaybackStartTick(casterEntityId)
-                        )
-                );
-                ACTIVE.add(presentation);
-            }
-        }
-        if (presentation != null) {
-            presentation.setPersistentState(
-                    active,
-                    durationTicks,
-                    completedCycle
-            );
         }
     }
 

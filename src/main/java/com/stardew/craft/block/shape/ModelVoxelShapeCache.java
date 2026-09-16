@@ -20,14 +20,20 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ModelVoxelShapeCache {
-    private static final long PACKED_VOXEL_MASK = 0x1FFFFFL;
-    private static final int PACKED_VOXEL_SIGN_BIT = 0x100000;
-    private static final int PACKED_VOXEL_RANGE = 0x200000;
     private static final Map<String, VoxelShape> SHAPE_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, GeoModelData> GEO_MODEL_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, GeoBounds> GEO_BOUNDS_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Map<String, VariantModelRef>> BLOCKSTATE_VARIANTS_CACHE = new ConcurrentHashMap<>();
     private static final ThreadLocal<Set<String>> SHAPES_LOADING = ThreadLocal.withInitial(HashSet::new);
+
+    private static final Map<String, Boolean> COLLISION_PROFILE_CACHE = new ConcurrentHashMap<>();
+
+    public static boolean hasCollisionProfile(String modelId) {
+        return COLLISION_PROFILE_CACHE.computeIfAbsent(modelId, id -> {
+            JsonObject model = isGeoShapeModelId(id) ? readGeo(resolveGeoPath(id)) : readModel(resolveModelPath(id));
+            return model != null && model.has("stardewcraft:collision");
+        });
+    }
 
     private ModelVoxelShapeCache() {
     }
@@ -38,6 +44,7 @@ public final class ModelVoxelShapeCache {
      */
     public static void clearAll() {
         SHAPE_CACHE.clear();
+        COLLISION_PROFILE_CACHE.clear();
         GEO_MODEL_CACHE.clear();
         GEO_BOUNDS_CACHE.clear();
         BLOCKSTATE_VARIANTS_CACHE.clear();
@@ -73,6 +80,21 @@ public final class ModelVoxelShapeCache {
     @SuppressWarnings("null")
     public static VoxelShape shape(String modelId) {
         return shapeFromModelId(modelId);
+    }
+
+    /** Solid authored blocks cannot use an empty optional-model result as their collision. */
+    public static VoxelShape requiredShape(String modelId) {
+        VoxelShape shape = shape(modelId);
+        if (shape.isEmpty()) {
+            // A prior optional lookup may have cached an absent development resource.
+            SHAPE_CACHE.remove(modelId, shape);
+            shape = shape(modelId);
+        }
+        if (shape.isEmpty()) {
+            SHAPE_CACHE.remove(modelId, shape);
+            throw new IllegalStateException("Required collision model has no geometry: " + modelId);
+        }
+        return shape;
     }
 
     public static String variantModel(String blockId, String variantKey) {
@@ -216,6 +238,16 @@ public final class ModelVoxelShapeCache {
 
     @SuppressWarnings("null")
     private static VoxelShape loadShapeFromModelId(String modelId) {
+        if (isGeoShapeModelId(modelId) && !isGeoAabbShapeModelId(modelId)) {
+            JsonObject geo = readGeo(resolveGeoPath(modelId));
+            JsonObject collision = geo == null ? null : geo.getAsJsonObject("stardewcraft:collision");
+            if (collision != null) {
+                String mode = collision.get("mode").getAsString();
+                if (mode.equals("custom")) return com.stardew.craft.model.ModelGeometry.shape(collision.getAsJsonArray("boxes"), false);
+                if (mode.equals("aabb")) return loadAabbShapeFromGeoModelId(modelId);
+                if (!mode.equals("voxel")) throw new IllegalArgumentException("Unknown collision mode " + mode + " in " + modelId);
+            }
+        }
         if (isGeoAabbShapeModelId(modelId)) {
             VoxelShape geoAabbShape = loadAabbShapeFromGeoModelId(modelId);
             if (!geoAabbShape.isEmpty()) {
@@ -234,6 +266,31 @@ public final class ModelVoxelShapeCache {
         JsonObject model = readModel(resolveModelPath(resolvedModelId));
         if (model == null) {
             return Shapes.empty();
+        }
+
+        JsonObject collision = model.getAsJsonObject("stardewcraft:collision");
+        if (collision != null) {
+            String mode = collision.get("mode").getAsString();
+            VoxelShape configured;
+            if (mode.equals("custom")) {
+                configured = com.stardew.craft.model.ModelGeometry.shape(collision.getAsJsonArray("boxes"), false);
+            } else if (mode.equals("voxel") || mode.equals("aabb")) {
+                if (collision.has("source")) {
+                    String source = collision.get("source").getAsString();
+                    configured = shapeFromModelId(source + (mode.equals("aabb") && source.endsWith(".geo.json") ? "#aabb" : ""));
+                } else {
+                    JsonArray geometry = model.has("parts") ? model.getAsJsonArray("parts") : model.getAsJsonArray("elements");
+                    configured = com.stardew.craft.model.ModelGeometry.shape(geometry, mode.equals("voxel"));
+                }
+                if (mode.equals("aabb") && !configured.isEmpty()) configured = Shapes.create(configured.bounds());
+            } else {
+                throw new IllegalArgumentException("Unknown collision mode " + mode + " in " + modelId);
+            }
+            return resolved.shiftDownOneBlock() ? configured.move(0, -1, 0) : configured;
+        }
+        if (model.has("parts")) {
+            VoxelShape configured = com.stardew.craft.model.ModelGeometry.shape(model.getAsJsonArray("parts"), true);
+            return resolved.shiftDownOneBlock() ? configured.move(0, -1, 0) : configured;
         }
 
         String parent = model.has("parent") ? model.get("parent").getAsString() : null;
@@ -400,7 +457,7 @@ public final class ModelVoxelShapeCache {
         double maxX = Double.NEGATIVE_INFINITY;
         double maxY = Double.NEGATIVE_INFINITY;
         double maxZ = Double.NEGATIVE_INFINITY;
-        Set<Long> occupiedVoxels = new HashSet<>();
+        JsonArray transformedCubes = new JsonArray();
 
         for (JsonObject bone : bones.values()) {
             String boneName = bone.get("name").getAsString();
@@ -442,8 +499,6 @@ public final class ModelVoxelShapeCache {
                 double[] cubeRotation = geckoRotation(
                         jsonArrayToVec3(cube.getAsJsonArray("rotation"), 0.0, 0.0, 0.0));
                 double[][] cubeTransform = multiplyMatrices(boneWorld, pivotRotationMatrix(cubePivot, cubeRotation));
-                double[][] inverseCubeTransform = buildVoxelShape
-                        ? invertAffineMatrix(cubeTransform) : null;
 
                 double[][] corners = new double[][] {
                     {oX, oY, oZ}, {oX, oY, tZ}, {oX, tY, oZ}, {oX, tY, tZ},
@@ -476,31 +531,24 @@ public final class ModelVoxelShapeCache {
                 maxZ = Math.max(maxZ, cubeMaxZ);
 
                 if (buildVoxelShape) {
-                    int minVX = (int) Math.floor(cubeMinX + 1.0E-6);
-                    int minVY = (int) Math.floor(cubeMinY + 1.0E-6);
-                    int minVZ = (int) Math.floor(cubeMinZ + 1.0E-6);
-                    int maxVX = (int) Math.ceil(cubeMaxX - 1.0E-6) - 1;
-                    int maxVY = (int) Math.ceil(cubeMaxY - 1.0E-6) - 1;
-                    int maxVZ = (int) Math.ceil(cubeMaxZ - 1.0E-6) - 1;
-
-                    for (int vx = minVX; vx <= maxVX; vx++) {
-                        for (int vy = minVY; vy <= maxVY; vy++) {
-                            for (int vz = minVZ; vz <= maxVZ; vz++) {
-                                double[] localCenter = transformPoint(inverseCubeTransform,
-                                        vx + 0.5, vy + 0.5, vz + 0.5);
-                                if (localCenter[0] >= oX - 1.0E-6 && localCenter[0] <= tX + 1.0E-6
-                                    && localCenter[1] >= oY - 1.0E-6 && localCenter[1] <= tY + 1.0E-6
-                                    && localCenter[2] >= oZ - 1.0E-6 && localCenter[2] <= tZ + 1.0E-6) {
-                                    occupiedVoxels.add(packVoxel(vx, vy, vz));
-                                }
-                            }
-                        }
+                    JsonObject normalized = new JsonObject();
+                    JsonArray from = new JsonArray();
+                    for (double v : new double[]{oX, oY, oZ}) from.add(v);
+                    JsonArray to = new JsonArray();
+                    for (double v : new double[]{tX, tY, tZ}) to.add(v);
+                    JsonArray transform = new JsonArray();
+                    for (int column = 0; column < 4; column++) {
+                        for (int row = 0; row < 4; row++) transform.add(cubeTransform[row][column]);
                     }
+                    normalized.add("from", from);
+                    normalized.add("to", to);
+                    normalized.add("transform", transform);
+                    transformedCubes.add(normalized);
                 }
             }
         }
 
-        if (!hasCube || (buildVoxelShape && occupiedVoxels.isEmpty())) {
+        if (!hasCube) {
             return GeoModelData.empty();
         }
 
@@ -519,64 +567,8 @@ public final class ModelVoxelShapeCache {
             return new GeoModelData(Shapes.empty(), bounds);
         }
 
-        VoxelShape shape = Shapes.empty();
-        for (long packed : occupiedVoxels) {
-            int vx = unpackVoxelX(packed);
-            int vy = unpackVoxelY(packed);
-            int vz = unpackVoxelZ(packed);
-            // GeoBlockRenderer translates the model origin to the block center.
-            shape = Shapes.or(shape, Block.box(
-                    vx + 8, vy, vz + 8,
-                    vx + 9, vy + 1, vz + 9));
-        }
-        return new GeoModelData(shape.optimize(), bounds);
-    }
-
-    private static long packVoxel(int x, int y, int z) {
-        long ux = x & PACKED_VOXEL_MASK;
-        long uy = y & PACKED_VOXEL_MASK;
-        long uz = z & PACKED_VOXEL_MASK;
-        return (ux << 42) | (uy << 21) | uz;
-    }
-
-    private static int unpackVoxelX(long packed) {
-        return unpackSignedVoxel((packed >>> 42) & PACKED_VOXEL_MASK);
-    }
-
-    private static int unpackVoxelY(long packed) {
-        return unpackSignedVoxel((packed >>> 21) & PACKED_VOXEL_MASK);
-    }
-
-    private static int unpackVoxelZ(long packed) {
-        return unpackSignedVoxel(packed & PACKED_VOXEL_MASK);
-    }
-
-    private static int unpackSignedVoxel(long packedCoordinate) {
-        int value = (int) packedCoordinate;
-        return (value & PACKED_VOXEL_SIGN_BIT) == 0 ? value : value - PACKED_VOXEL_RANGE;
-    }
-
-    private static double[][] invertAffineMatrix(double[][] m) {
-        double r00 = m[0][0], r01 = m[0][1], r02 = m[0][2];
-        double r10 = m[1][0], r11 = m[1][1], r12 = m[1][2];
-        double r20 = m[2][0], r21 = m[2][1], r22 = m[2][2];
-        double tx = m[0][3], ty = m[1][3], tz = m[2][3];
-
-        double[][] inv = identityMatrix();
-        inv[0][0] = r00;
-        inv[0][1] = r10;
-        inv[0][2] = r20;
-        inv[1][0] = r01;
-        inv[1][1] = r11;
-        inv[1][2] = r21;
-        inv[2][0] = r02;
-        inv[2][1] = r12;
-        inv[2][2] = r22;
-
-        inv[0][3] = -(inv[0][0] * tx + inv[0][1] * ty + inv[0][2] * tz);
-        inv[1][3] = -(inv[1][0] * tx + inv[1][1] * ty + inv[1][2] * tz);
-        inv[2][3] = -(inv[2][0] * tx + inv[2][1] * ty + inv[2][2] * tz);
-        return inv;
+        VoxelShape shape = com.stardew.craft.model.ModelGeometry.shape(transformedCubes, true).move(0.5, 0, 0.5);
+        return new GeoModelData(shape, bounds);
     }
 
     private static double[][] resolveBoneWorldTransform(String boneName,
@@ -739,6 +731,7 @@ public final class ModelVoxelShapeCache {
     }
 
     private static boolean modelHasUsableShape(JsonObject model) {
+        if (model.has("stardewcraft:collision") || model.has("parts")) return true;
         JsonArray elements = model.getAsJsonArray("elements");
         if (elements != null && !elements.isEmpty()) {
             return true;
@@ -911,26 +904,12 @@ public final class ModelVoxelShapeCache {
 
     @SuppressWarnings("null")
     private static JsonObject readModel(String classpathPath) {
-        try (InputStream input = ModelVoxelShapeCache.class.getClassLoader().getResourceAsStream(classpathPath)) {
-            if (input == null) {
-                return null;
-            }
-            return JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
-        } catch (Exception ignored) {
-            return null;
-        }
+        return ModelResourceReader.read(classpathPath, path -> ModelVoxelShapeCache.class.getClassLoader().getResourceAsStream(path));
     }
 
     @SuppressWarnings("null")
     private static JsonObject readGeo(String classpathPath) {
-        try (InputStream input = ModelVoxelShapeCache.class.getClassLoader().getResourceAsStream(classpathPath)) {
-            if (input == null) {
-                return null;
-            }
-            return JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
-        } catch (Exception ignored) {
-            return null;
-        }
+        return readModel(classpathPath);
     }
 
     private static Map<String, VariantModelRef> loadBlockstateVariants(String blockId) {

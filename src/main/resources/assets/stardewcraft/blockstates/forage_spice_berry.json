@@ -1,5 +1,1 @@
-{
-  "variants": {
-    "": { "model": "stardewcraft:block/forage/spice_berry" }
-  }
-}
+{"variants":{"":{"model":"stardewcraft:block/crop3d/forage_spice_berry/mature"}}}

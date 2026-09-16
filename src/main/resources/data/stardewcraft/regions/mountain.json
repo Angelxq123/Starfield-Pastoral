@@ -3,14 +3,45 @@
   "location": "stardewcraft:mountain",
   "include": [
     {
-      "min": [-123, 69, -104],
-      "max": [-43, 79, -65]
+      "min": [
+        -123,
+        69,
+        -104
+      ],
+      "max": [
+        -43,
+        79,
+        -65
+      ]
     },
     {
-      "min": [11, 81, -151],
-      "max": [121, 93, -80]
+      "min": [
+        11,
+        81,
+        -151
+      ],
+      "max": [
+        121,
+        93,
+        -80
+      ]
+    },
+    {
+      "min": [
+        155,
+        80,
+        -140
+      ],
+      "max": [
+        194,
+        81,
+        -101
+      ]
     }
   ],
-  "tags": ["stardewcraft:outdoor", "stardewcraft:mountain"],
+  "tags": [
+    "stardewcraft:outdoor",
+    "stardewcraft:mountain"
+  ],
   "priority": -100
 }

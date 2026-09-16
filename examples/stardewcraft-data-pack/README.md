@@ -145,8 +145,6 @@ data/example_stardew_addon/festivals/conditional_active_enabled.json
 data/example_stardew_addon/festivals/conditional_active_disabled.json
 data/example_stardew_addon/world_loot/apple_artifact.json
 data/example_stardew_addon/forage_zones/apple_grove.json
-data/example_stardew_addon/mine_themes/apple_floor.json
-data/example_stardew_addon/mine_monster_spawns/orchard_floor.json
 data/example_stardew_addon/npc/taste_patches/abigail_apples.json
 data/example_stardew_addon/locations/apple_shed.json
 data/example_stardew_addon/interior_portals/apple_shed_exit.json

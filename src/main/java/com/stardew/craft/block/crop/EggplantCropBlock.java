@@ -3,7 +3,6 @@ package com.stardew.craft.block.crop;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,7 +30,7 @@ import java.util.function.Supplier;
  */
 public class EggplantCropBlock extends StardewCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{1, 1, 1, 2}; // SDV: 5 days
+    private static final int[] PHASE_DAYS = new int[]{1, 1, 1, 1, 1}; // SDV: 5 days, five growth phases
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
 
     @SuppressWarnings("null")
@@ -58,8 +57,7 @@ public class EggplantCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 2;
     }
 
     @Override
@@ -91,6 +89,11 @@ public class EggplantCropBlock extends StardewCropBlock {
     }
 
     @Override
+    protected double getExtraHarvestChance() {
+        return 0.002;
+    }
+
+    @Override
     public String getCropDisplayNameKey() {
         return "item.stardewcraft.eggplant";
     }
@@ -102,6 +105,8 @@ public class EggplantCropBlock extends StardewCropBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape modeled = CropModelShapes.shape(state, level, pos);
+        if (modeled != null) return modeled;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }

@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/slab_top",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/lava_basalt",
-                     "top":  "stardewcraft:block/mine/lava_basalt",
-                     "side":  "stardewcraft:block/mine/lava_basalt",
-                     "particle":  "stardewcraft:block/mine/lava_basalt"
-                 }
-}

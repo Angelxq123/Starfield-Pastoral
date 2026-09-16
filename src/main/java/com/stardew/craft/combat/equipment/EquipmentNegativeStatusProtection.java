@@ -56,6 +56,23 @@ public final class EquipmentNegativeStatusProtection {
         );
     }
 
+    /** Source millisecond effects halve before the single conversion to Minecraft ticks. */
+    public static Decision decideMilliseconds(LivingEntity target, int durationMs) {
+        if (durationMs <= 0) return new Decision(true, 0, false);
+        boolean resisted = false, sturdy = false;
+        if (target instanceof ServerPlayer player) {
+            var equipment = EquipmentResolver.getMergedStats(player);
+            resisted = ImmunitySystem.tryResistEffect(equipment.getImmunity());
+            sturdy = equipment.hasSturdy();
+        }
+        return millisecondsDecision(durationMs, resisted, sturdy);
+    }
+    public static Decision millisecondsDecision(int durationMs, boolean resisted, boolean sturdy) {
+        if (durationMs <= 0 || resisted) return new Decision(true, 0, false);
+        long adjusted = sturdy ? Math.max(1, durationMs / 2) : durationMs;
+        return new Decision(false, (int) ((adjusted + 49) / 50), sturdy);
+    }
+
     public record Decision(
             boolean resisted,
             int durationTicks,

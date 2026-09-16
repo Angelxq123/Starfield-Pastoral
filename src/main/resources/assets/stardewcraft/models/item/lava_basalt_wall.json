@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/lava_basalt_wall_inventory",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/lava_basalt"
-                 }
-}

@@ -1,6 +1,6 @@
 {
-    "parent":  "stardewcraft:decor/common/light_6",
-    "textures":  {
-                     "particle":  "stardewcraft:block/decor/common/light_6"
-                 }
+  "parent": "stardewcraft:decor/common/light_6",
+  "textures": {
+    "particle": "stardewcraft:block/decor/common/light_6_particle"
+  }
 }

@@ -1,6 +1,6 @@
 package com.stardew.craft.shop;
 
-import com.stardew.craft.animal.service.AnimalShopService;
+import com.stardew.craft.animal.runtime.LivestockShop;
 import com.stardew.craft.entity.npc.StardewNpcEntity;
 import com.stardew.craft.network.payload.OpenShopScreenPayload;
 import com.stardew.craft.network.payload.OpenMarnieMenuPayload;
@@ -20,6 +20,7 @@ import java.util.List;
  */
 @SuppressWarnings("null")
 public final class MarnieService {
+    private static final java.util.Map<ServerPlayer, Long> OPEN_MENUS = new java.util.WeakHashMap<>();
 
     // Counter area: player must be inside this AABB to trigger shop.
     // Coordinates from user: (-90,36,22) to (-85,34,25)
@@ -53,6 +54,7 @@ public final class MarnieService {
     }
 
     public static void openMenu(ServerPlayer player) {
+        OPEN_MENUS.put(player, player.serverLevel().getServer().getTickCount() + 6000L);
         PacketDistributor.sendToPlayer(player, new OpenMarnieMenuPayload());
     }
 
@@ -61,9 +63,12 @@ public final class MarnieService {
      * Called from MarnieMenuChoicePayload.
      */
     public static void handleChoice(ServerPlayer player, int choice) {
+        Long expires = OPEN_MENUS.remove(player);
+        if (expires == null || expires < player.serverLevel().getServer().getTickCount()) return;
         switch (choice) {
             case 0 -> openSupplies(player);
             case 1 -> openAnimalPurchase(player);
+            case 3 -> com.stardew.craft.pet.PetManagement.openShop(player);
             // 2 = Leave, do nothing
         }
     }
@@ -84,6 +89,6 @@ public final class MarnieService {
     }
 
     private static void openAnimalPurchase(ServerPlayer player) {
-        AnimalShopService.openForPlayer(player);
+        LivestockShop.openForPlayer(player);
     }
 }

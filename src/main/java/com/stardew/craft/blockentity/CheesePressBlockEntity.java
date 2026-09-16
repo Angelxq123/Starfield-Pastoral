@@ -128,7 +128,11 @@ public class CheesePressBlockEntity extends TimedProductionBlockEntity {
 
 	@SuppressWarnings("null")
 	private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack input) {
-		ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+	    return createOutputFromRecipe(recipe, input, false);
+	}
+
+	private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack input, boolean simulate) {
+		ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
 		if (recipe.keepInputQuality()) {
 			QualityHelper.setQuality(output, QualityHelper.getQuality(input));
 		} else if (recipe.outputQuality() >= 0) {
@@ -169,7 +173,7 @@ public class CheesePressBlockEntity extends TimedProductionBlockEntity {
 			return stack;
 		}
 		ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
-		ItemStack output = createOutputFromRecipe(recipe, stack);
+		ItemStack output = createOutputFromRecipe(recipe, stack, simulate);
 		if (output.isEmpty()) {
 			return stack;
 		}

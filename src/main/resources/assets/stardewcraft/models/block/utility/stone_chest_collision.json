@@ -1,0 +1,19 @@
+{
+  "textures": {
+    "particle": "minecraft:block/stone"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        16.5,
+        15
+      ]
+    }
+  ]
+}

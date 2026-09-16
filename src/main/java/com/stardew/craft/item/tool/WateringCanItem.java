@@ -121,7 +121,7 @@ public class WateringCanItem extends Item implements IStardewItem {
             }
 
             // 其他情况：开始蓄力洒水
-            if (getWater(stack) <= 0 && !player.isCreative()) {
+            if (getWater(stack) <= 0 && !player.isCreative() && !isBottomless(stack)) {
                 if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
                     com.stardew.craft.network.payload.HudHintPayload.send(
                             serverPlayer, "stardewcraft.message.tool.empty");
@@ -193,7 +193,7 @@ public class WateringCanItem extends Item implements IStardewItem {
 
         // 2) 没水不能洒水
 
-        if (getWater(stack) <= 0 && !player.isCreative()) {
+        if (getWater(stack) <= 0 && !player.isCreative() && !isBottomless(stack)) {
             if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
                 com.stardew.craft.network.payload.HudHintPayload.send(
                         serverPlayer, "stardewcraft.message.tool.empty");
@@ -243,6 +243,11 @@ public class WateringCanItem extends Item implements IStardewItem {
                             && com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(sl, pos)) {
                         return !com.stardew.craft.event.FarmAreaProtectionEvents.canModifyGreenhouseAt(sp, sl, pos);
                     }
+                    var bowlPos = com.stardew.craft.pet.PetBowlBlock.wateringTarget(level, pos);
+                    if (bowlPos != null) {
+                        var record = com.stardew.craft.pet.PetBowlBuildings.ensure(sp.serverLevel(), bowlPos);
+                        return record == null || !com.stardew.craft.building.runtime.BuildingService.canManage(sp, record);
+                    }
                     return !com.stardew.craft.event.FarmAreaProtectionEvents.canModifyAt(sp, pos);
                 });
                 if (targetPositions.isEmpty() && before > 0) {
@@ -281,7 +286,7 @@ public class WateringCanItem extends Item implements IStardewItem {
                     if (level.isClientSide) {
                         for (int i = 0; i < 5; ++i) {
                             @Nonnull ParticleOptions splash = ParticleTypes.SPLASH;
-                            level.addParticle(splash, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0, 0, 0);
+                            level.addParticle(splash, pos.getX() + 0.5, pos.getY() + (level.getBlockState(pos).getBlock() instanceof com.stardew.craft.pet.PetBowlBlock ? .26 : 1), pos.getZ() + 0.5, 0, 0, 0);
                         }
                     }
                 }
@@ -295,8 +300,8 @@ public class WateringCanItem extends Item implements IStardewItem {
                 }
                 
                 // 播放浇水音效
-                @Nonnull SoundEvent splashSound = SoundEvents.GENERIC_SPLASH;
-                level.playSound(null, player.blockPosition(), splashSound, SoundSource.PLAYERS, 0.5f, 1.5f);
+                @Nonnull SoundEvent splashSound = com.stardew.craft.sound.ModSounds.WATERING_CAN.get();
+                if (!level.isClientSide) level.playSound(null, hitPos, splashSound, SoundSource.PLAYERS, 0.7f, 1.0f);
 
                 // 洒水后增加一个很短的冷却，期间不得再次洒水
                 player.getCooldowns().addCooldown(this, WATERING_COOLDOWN_TICKS);
@@ -391,7 +396,7 @@ public class WateringCanItem extends Item implements IStardewItem {
             return false;
         }
         for (BlockPos pos : positions) {
-            if (level.getBlockState(pos).getBlock() instanceof FarmBlock) {
+            if (level.getBlockState(pos).getBlock() instanceof FarmBlock || com.stardew.craft.pet.PetBowlBlock.wateringTarget(level, pos) != null) {
                 return true;
             }
         }
@@ -422,6 +427,7 @@ public class WateringCanItem extends Item implements IStardewItem {
     @SuppressWarnings("null")
     private boolean waterTile(@Nonnull Level level, @Nonnull BlockPos pos) {
         BlockState state = level.getBlockState(pos);
+        if (com.stardew.craft.pet.PetBowlBlock.water(level, pos)) return true;
         
         // 1. 耕地
         if (state.getBlock() instanceof FarmBlock) {
@@ -508,6 +514,9 @@ public class WateringCanItem extends Item implements IStardewItem {
             list.add(startPos);
         }
         
+        list.replaceAll(pos -> resolveWateringTarget(level, pos));
+        list = new ArrayList<>(new java.util.LinkedHashSet<>(list));
+
         // 过滤被阻挡的方块
         // 规则：如果耕地上方有方块且有碰撞体积（如石头、栅栏），则不能浇水
         // 排除：作物（stardew crop）和空气没有碰撞体积，可以浇水
@@ -528,7 +537,9 @@ public class WateringCanItem extends Item implements IStardewItem {
     }
 
     private static BlockPos resolveWateringTarget(Level level, BlockPos pos) {
-        if (level.getBlockState(pos).getBlock() instanceof FarmBlock) {
+        var bowl = com.stardew.craft.pet.PetBowlBlock.wateringTarget(level, pos);
+        if (bowl != null) return bowl;
+        if (level.getBlockState(pos).getBlock() instanceof FarmBlock || com.stardew.craft.pet.PetBowlBlock.wateringTarget(level, pos) != null) {
             return pos;
         }
 

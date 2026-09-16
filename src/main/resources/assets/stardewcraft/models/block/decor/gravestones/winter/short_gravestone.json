@@ -1,0 +1,261 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "surface": "stardewcraft:block/decor/gravestones/winter/gravestones_spring",
+    "particle": "stardewcraft:block/decor/gravestones/winter/gravestone_particle",
+    "snow": "stardewcraft:block/decor/gravestones/winter/gravestone_snow"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        5
+      ],
+      "to": [
+        12,
+        8,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            7.0,
+            4.5,
+            9.0,
+            6.5
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            11.5,
+            4.5,
+            13.0,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            9.25,
+            4.5,
+            11.25,
+            6.5
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            13.25,
+            4.5,
+            14.75,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            2.25,
+            6.75,
+            4.25,
+            8.25
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        8,
+        5
+      ],
+      "to": [
+        11,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            4.5,
+            6.75,
+            6.0,
+            7.0
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            6.25,
+            6.75,
+            7.75,
+            7.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        9,
+        5
+      ],
+      "to": [
+        11,
+        10,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#snow",
+          "uv": [
+            3.5,
+            1.25,
+            5.0,
+            1.5
+          ]
+        },
+        "east": {
+          "texture": "#snow",
+          "uv": [
+            7.0,
+            1.25,
+            8.5,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#snow",
+          "uv": [
+            5.25,
+            1.25,
+            6.75,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#snow",
+          "uv": [
+            8.75,
+            1.25,
+            10.25,
+            1.5
+          ]
+        },
+        "up": {
+          "texture": "#snow",
+          "uv": [
+            10.5,
+            1.25,
+            12.0,
+            2.75
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        8,
+        5
+      ],
+      "to": [
+        5,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#snow",
+          "uv": [
+            14.0,
+            1.25,
+            14.25,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#snow",
+          "uv": [
+            14.5,
+            1.25,
+            14.75,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#snow",
+          "uv": [
+            1.75,
+            3.0,
+            3.25,
+            3.25
+          ]
+        },
+        "up": {
+          "texture": "#snow",
+          "uv": [
+            3.5,
+            3.0,
+            3.75,
+            4.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        8,
+        5
+      ],
+      "to": [
+        12,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#snow",
+          "uv": [
+            4.5,
+            3.0,
+            4.75,
+            3.25
+          ]
+        },
+        "east": {
+          "texture": "#snow",
+          "uv": [
+            5.5,
+            3.0,
+            7.0,
+            3.25
+          ]
+        },
+        "south": {
+          "texture": "#snow",
+          "uv": [
+            5.0,
+            3.0,
+            5.25,
+            3.25
+          ]
+        },
+        "up": {
+          "texture": "#snow",
+          "uv": [
+            9.0,
+            3.0,
+            9.25,
+            4.5
+          ]
+        }
+      }
+    }
+  ]
+}

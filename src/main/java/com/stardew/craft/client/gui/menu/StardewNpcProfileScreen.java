@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.menu;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.NpcDisplayNames;
@@ -80,6 +82,7 @@ public final class StardewNpcProfileScreen extends Screen {
     private int closeX;
     private int closeY;
     private ItemStack hoveredItem = ItemStack.EMPTY;
+    private com.stardew.craft.cutscene.runtime.EventActorEntity previewActor;
 
     public StardewNpcProfileScreen(Screen parent, NpcFriendshipClientCache.Entry subject,
                                    List<NpcFriendshipClientCache.Entry> allEntries) {
@@ -91,7 +94,7 @@ public final class StardewNpcProfileScreen extends Screen {
 
     @Override
     protected void init() {
-        mapping = new StardewRenderMapping(width, height, (float) minecraft.getWindow().getGuiScale());
+        mapping = new StardewRenderMapping(width, height, (float) StardewGuiViewport.REFERENCE_SCALE);
         panelW = mapping.ui(1280);
         panelH = mapping.ui(720);
         panelX = mapping.centerX(panelW);
@@ -134,12 +137,16 @@ public final class StardewNpcProfileScreen extends Screen {
         graphics.blit(DAY_BG, sceneX, sceneY, sceneW, sceneH, 0, 0, 128, 192, 128, 192);
 
         String npcId = normalize(entry.npcId());
-        ResourceLocation sprite = ResourceLocation.fromNamespaceAndPath(
-                StardewCraft.MODID, "textures/entity/npc/" + npcId + ".png");
-        int spriteW = mapping.ui(64);
-        int spriteH = mapping.ui(128);
-        graphics.blit(sprite, sceneX + (sceneW - spriteW) / 2, sceneY + mapping.ui(48),
-                spriteW, spriteH, 0, 0, 16, 32, 64, 128);
+        if (minecraft != null && minecraft.level != null) {
+            if (previewActor == null || previewActor.level() != minecraft.level || !previewActor.getNpcId().equals(npcId)) {
+                previewActor = new com.stardew.craft.cutscene.runtime.EventActorEntity(
+                        com.stardew.craft.entity.ModEntities.EVENT_ACTOR.get(), minecraft.level);
+                previewActor.setNpcId(npcId);
+            }
+            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
+                    graphics, sceneX, sceneY, sceneX + sceneW, sceneY + sceneH,
+                    mapping.ui(64), .0625F, sceneX + sceneW / 2F, sceneY + sceneH / 2F, previewActor);
+        }
 
         String name = NpcDisplayNames.translated(entry.npcId());
         drawCentered(graphics, Component.literal(name), leftX + leftW / 2, panelY + mapping.ui(288), 0xFF7B3F21);

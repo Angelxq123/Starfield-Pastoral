@@ -1,9 +1,5 @@
 package com.stardew.craft.combat.skill.handler;
 
-import com.stardew.craft.combat.VfxColors;
-import com.stardew.craft.combat.network.AccretionDiskPayload;
-import com.stardew.craft.combat.network.BlackHolePostPayload;
-import com.stardew.craft.combat.network.SingularityCorePayload;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
 import com.stardew.craft.combat.skill.WeaponSkillDamage;
@@ -13,18 +9,14 @@ import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import com.stardew.craft.combat.skill.runtime.WeaponSkillMovementArbiter;
 import java.util.List;
 import java.util.Objects;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /** One Eternal Collapse field, its pull loop, and scheduled strikes. */
 final class EternalCollapseExecutionState
@@ -34,6 +26,7 @@ final class EternalCollapseExecutionState
     static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
 
     private final Vec3 center;
+    private final long startTick;
     private final long endTick;
     private long nextStrikeTick;
     private int remainingStrikes;
@@ -66,6 +59,7 @@ final class EternalCollapseExecutionState
             );
         }
         this.center = Objects.requireNonNull(center, "center");
+        this.startTick = nowTick;
         this.endTick = nowTick + durationTicks;
         this.nextStrikeTick = nowTick
                 + strikeInterval(durationTicks, strikes);
@@ -80,40 +74,8 @@ final class EternalCollapseExecutionState
     }
 
     void startPresentation(ServerPlayer player, int durationTicks) {
-        ServerLevel level = player.serverLevel();
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new AccretionDiskPayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
-                        (float) radius,
-                        durationTicks,
-                        VfxColors.INFINITY_GOLD
-                )
-        );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new SingularityCorePayload(
-                        (float) center.x,
-                        (float) center.y + 0.05F,
-                        (float) center.z,
-                        1.4F,
-                        durationTicks,
-                        VfxColors.INFINITY_GOLD
-                )
-        );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new BlackHolePostPayload(
-                        (float) center.x,
-                        (float) center.y + 0.5F,
-                        (float) center.z,
-                        0.35F,
-                        0.9F,
-                        durationTicks
-                )
-        );
+        com.stardew.craft.combat.network.InfinityPhasePayload.send(player, startTick,
+                com.stardew.craft.combat.network.InfinityPhasePayload.Phase.COLLAPSE, center, center, durationTicks, true);
     }
 
     SkillTickResult advance(SkillExecutionContext context) {
@@ -144,7 +106,8 @@ final class EternalCollapseExecutionState
                 strike(
                         context,
                         strikeMultiplier,
-                        critBonus
+                        critBonus,
+                        false
                 );
                 remainingStrikes -= 1;
                 if (remainingStrikes > 0) {
@@ -159,7 +122,7 @@ final class EternalCollapseExecutionState
             if (context.nowTick() >= endTick) {
                 try {
                     if (finalStrike) {
-                        strike(context, finalMultiplier, critBonus);
+                        strike(context, finalMultiplier, critBonus, true);
                     }
                 } finally {
                     settled = true;
@@ -170,6 +133,11 @@ final class EternalCollapseExecutionState
         } finally {
             advancing = false;
         }
+    }
+
+    void endPresentation(ServerPlayer player) {
+        com.stardew.craft.combat.network.InfinityPhasePayload.send(player, startTick,
+                com.stardew.craft.combat.network.InfinityPhasePayload.Phase.END_COLLAPSE, center, center, 0, true);
     }
 
     void cancel() {
@@ -271,7 +239,8 @@ final class EternalCollapseExecutionState
     private void strike(
             SkillExecutionContext executionContext,
             float damageMultiplier,
-            float criticalChanceBonus
+            float criticalChanceBonus,
+            boolean finisher
     ) {
         ServerPlayer player = executionContext.player();
         ServerLevel level = player.serverLevel();
@@ -282,6 +251,10 @@ final class EternalCollapseExecutionState
         );
         WeaponDamageSnapshot weaponSnapshot =
                 executionContext.weaponSnapshot();
+
+        com.stardew.craft.combat.network.InfinityPhasePayload.send(player, startTick,
+                finisher ? com.stardew.craft.combat.network.InfinityPhasePayload.Phase.FINISH
+                        : com.stardew.craft.combat.network.InfinityPhasePayload.Phase.PULSE, center, center, finisher ? 10 : 6, true);
 
         for (LivingEntity target : targets) {
             SkillContext context = createStrikeContext(
@@ -302,40 +275,6 @@ final class EternalCollapseExecutionState
             );
         }
 
-        level.playSound(
-                null,
-                new BlockPos(
-                        (int) center.x,
-                        (int) center.y,
-                        (int) center.z
-                ),
-                SoundEvents.WITHER_SPAWN,
-                SoundSource.PLAYERS,
-                0.5F,
-                1.3F
-        );
-        level.sendParticles(
-                ParticleTypes.PORTAL,
-                center.x,
-                center.y + 0.8D,
-                center.z,
-                16,
-                radius * 0.35D,
-                0.5D,
-                radius * 0.35D,
-                0.02D
-        );
-        level.sendParticles(
-                ParticleTypes.SMOKE,
-                center.x,
-                center.y + 0.5D,
-                center.z,
-                10,
-                radius * 0.35D,
-                0.3D,
-                radius * 0.35D,
-                0.02D
-        );
     }
 
     private static AABB effectBounds(Vec3 center, double radius) {

@@ -26,6 +26,12 @@ public final class MapInteractionEvents {
     ) {
         if (event.isCanceled()
                 || event.getHand() != InteractionHand.MAIN_HAND
+                // Readable map actions are the empty-hand interaction.  Let a
+                // held offhand item reach a display counter's placement handler;
+                // otherwise the info action consumes the click and the item can
+                // never be removed with the main hand.
+                || !event.getEntity().getMainHandItem().isEmpty()
+                || !event.getEntity().getOffhandItem().isEmpty()
                 || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }

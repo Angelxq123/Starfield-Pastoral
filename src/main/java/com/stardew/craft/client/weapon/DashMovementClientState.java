@@ -3,11 +3,7 @@ package com.stardew.craft.client.weapon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
@@ -92,38 +88,21 @@ public final class DashMovementClientState {
         int windupTicks = Math.max(1, Math.min(2, totalTicks - 1));
         if (!startFxPlayed) {
             startFxPlayed = true;
-            player.playSound(SoundEvents.ENCHANTMENT_TABLE_USE, 0.35f, 1.25f);
+            if (!IronWindVisuals.ownsWindDash(player) && !PirateSilverVisuals.ownsDash(player)) player.playSound(SoundEvents.ENCHANTMENT_TABLE_USE, 0.35f, 1.25f);
         }
-        if (elapsed == windupTicks) {
+        if (elapsed == windupTicks && !IronWindVisuals.ownsWindDash(player) && !PirateSilverVisuals.ownsDash(player)) {
             player.playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 0.7f, 1.35f);
             player.playSound(SoundEvents.TRIDENT_THROW.value(), 0.5f, 1.2f);
         }
 
         Vec3 current = player.position();
-        double progress = Math.min(1.0, elapsed / (double) totalTicks);
-        double accelFactor = elapsed < windupTicks ? 0.25 : Math.min(1.6, 0.8 + progress * 1.2);
-        Vec3 toEnd = endPos.subtract(current);
-        Vec3 step = toEnd.scale(1.0 / Math.max(1, remaining));
-        Vec3 scaledStep = step.scale(accelFactor);
-        Vec3 desiredPos = current.add(scaledStep);
-        if (remaining <= 1 || scaledStep.lengthSqr() > toEnd.lengthSqr()) {
-            desiredPos = endPos;
-        }
-        desiredPos = new Vec3(desiredPos.x, player.getY(), desiredPos.z);
-        Vec3 safe = findSafePosition(player, adjustForCollision(player, desiredPos));
-        if (safe == null) {
-            clear();
-            return;
-        }
-        Vec3 desiredVel = safe.subtract(current);
-        Vec3 currentVel = player.getDeltaMovement();
-        Vec3 nextVel = currentVel.add(desiredVel.subtract(currentVel).scale(0.7));
-        player.setDeltaMovement(nextVel.x, currentVel.y, nextVel.z);
+        double speed = endPos.subtract(startPos).horizontalDistance() / totalTicks;
+        Vec3 velocity = com.stardew.craft.combat.skill.DashMotionRules.horizontalVelocity(current,endPos,speed);
+        player.setDeltaMovement(velocity.x,player.getDeltaMovement().y,velocity.z);
         player.hasImpulse = true;
-        player.move(MoverType.SELF, player.getDeltaMovement());
-        player.fallDistance = 0.0F;
+        // Set next-tick velocity only. Calling move here would integrate a second time per tick.
 
-        if (elapsed >= windupTicks) {
+        if (elapsed >= windupTicks && !IronWindVisuals.ownsWindDash(player) && !PirateSilverVisuals.ownsDash(player)) {
             spawnDashTrail(player, current, endPos);
         }
     }
@@ -141,44 +120,6 @@ public final class DashMovementClientState {
         if (player.level().getRandom().nextFloat() < 0.35f) {
             player.level().addParticle(ParticleTypes.CRIT, x, y + 0.1, z, 0.0, 0.0, 0.0);
         }
-    }
-
-    @SuppressWarnings("null")
-    private static Vec3 adjustForCollision(Player player, Vec3 desired) {
-        Vec3 start = player.position();
-        Vec3 look = desired.subtract(start);
-        if (look.lengthSqr() < 1.0E-6) {
-            return desired;
-        }
-        Vec3 dir = new Vec3(look.x, 0.0, look.z).normalize();
-        HitResult hit = player.level().clip(new ClipContext(
-            start.add(0, player.getBbHeight() * 0.5, 0),
-            desired.add(0, player.getBbHeight() * 0.5, 0),
-            ClipContext.Block.COLLIDER,
-            ClipContext.Fluid.NONE,
-            player
-        ));
-
-        if (hit.getType() != HitResult.Type.MISS) {
-            Vec3 hitPos = hit.getLocation();
-            return hitPos.subtract(dir.scale(0.4));
-        }
-        return desired;
-    }
-
-    @SuppressWarnings("null")
-    private static Vec3 findSafePosition(Player player, Vec3 desired) {
-        if (desired == null) return null;
-        AABB box = player.getBoundingBox().move(desired.x - player.getX(), desired.y - player.getY(), desired.z - player.getZ());
-        if (player.level().noCollision(player, box)) {
-            return desired;
-        }
-        Vec3 raised = desired.add(0, 0.25, 0);
-        AABB boxUp = player.getBoundingBox().move(raised.x - player.getX(), raised.y - player.getY(), raised.z - player.getZ());
-        if (player.level().noCollision(player, boxUp)) {
-            return raised;
-        }
-        return null;
     }
 
     public static void clearIfNoPlayer() {

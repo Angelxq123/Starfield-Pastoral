@@ -46,7 +46,7 @@ public final class MasteryInteractionHandler {
         // 山洞门 → 5×Lv10 校验
         if (MasterySite.isDoorPos(pos)) {
             if (!canEnterCave(player)) {
-                PacketDistributor.sendToPlayer(player,
+                com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
                     new OpenNpcDialogueScreenPayload("", caveMessageKey(maxedSkillCount(player)), 0));
                 event.setCanceled(true);
                 event.setCancellationResult(InteractionResult.FAIL);

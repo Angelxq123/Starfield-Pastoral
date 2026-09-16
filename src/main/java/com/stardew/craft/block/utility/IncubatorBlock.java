@@ -49,8 +49,8 @@ public class IncubatorBlock extends Block implements EntityBlock {
     public static final BooleanProperty WORKING = BooleanProperty.create("working");
     public static final EnumProperty<Part> PART = EnumProperty.create("part", Part.class);
 
-    private static final VoxelShape[] MAIN_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/incubator", Direction.SOUTH);
-    private static final VoxelShape[] EXT_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/incubator_extension", Direction.SOUTH);
+    private static final VoxelShape[] MAIN_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/incubator", Direction.NORTH);
+    private static final VoxelShape[] EXT_SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/incubator_extension", Direction.NORTH);
 
     public enum Part implements StringRepresentable {
         MAIN("main"),
@@ -201,6 +201,7 @@ public class IncubatorBlock extends Block implements EntityBlock {
         }
 
         if (incubator.isReady()) {
+            if (player instanceof net.minecraft.server.level.ServerPlayer actor) incubator.open(actor);
             return ItemInteractionResult.CONSUME;
         }
 
@@ -234,6 +235,7 @@ public class IncubatorBlock extends Block implements EntityBlock {
             return InteractionResult.PASS;
         }
 
+        if (player instanceof net.minecraft.server.level.ServerPlayer actor) incubator.open(actor);
         return InteractionResult.CONSUME;
     }
 

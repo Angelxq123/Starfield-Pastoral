@@ -1,6 +1,3 @@
 {
-    "parent":  "stardewcraft:block/utility/incubator",
-    "textures":  {
-                     "particle":  "stardewcraft:block/utility/incubator"
-                 }
+  "parent": "stardewcraft:block/utility/incubator_item"
 }

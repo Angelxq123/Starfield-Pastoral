@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "full=false,season=0": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_spring_empty"
+    },
+    "full=false,season=1": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_summer_empty"
+    },
+    "full=false,season=2": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_fall_empty"
+    },
+    "full=false,season=3": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_winter_empty"
+    },
+    "full=true,season=0": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_spring_full"
+    },
+    "full=true,season=1": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_summer_full"
+    },
+    "full=true,season=2": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_fall_full"
+    },
+    "full=true,season=3": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_winter_full"
+    }
+  }
+}

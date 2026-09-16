@@ -1,0 +1,47 @@
+{
+  "parent": "stardewcraft:item/mine_step_stone_earth",
+  "overrides": [
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 0.14285714285714285
+      },
+      "model": "stardewcraft:item/mine_step_stone_frost"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 0.2857142857142857
+      },
+      "model": "stardewcraft:item/mine_step_stone_lava"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 0.42857142857142855
+      },
+      "model": "stardewcraft:item/mine_step_stone_desert"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 0.5714285714285714
+      },
+      "model": "stardewcraft:item/mine_step_stone_earth_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 0.7142857142857143
+      },
+      "model": "stardewcraft:item/mine_step_stone_frost_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 0.8571428571428571
+      },
+      "model": "stardewcraft:item/mine_step_stone_lava_dark"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_step_stone_theme": 1.0
+      },
+      "model": "stardewcraft:item/mine_step_stone_desert_dark"
+    }
+  ]
+}

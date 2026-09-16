@@ -1,0 +1,116 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "surface": "stardewcraft:block/outdoor_table/winter/outdoor_table",
+    "particle": "stardewcraft:block/outdoor_table/winter/outdoor_table_particle",
+    "snow": "stardewcraft:block/outdoor_table/winter/snow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            7.75,
+            2.125,
+            8.75,
+            3.125
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        0,
+        13
+      ],
+      "to": [
+        16,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            13.6875,
+            5.3125,
+            13.875,
+            6.1875
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            13.9375,
+            5.3125,
+            14.125,
+            6.1875
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            14.1875,
+            5.3125,
+            14.375,
+            6.1875
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            14.4375,
+            5.3125,
+            14.625,
+            6.1875
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            14.9375,
+            5.3125,
+            15.125,
+            5.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        16,
+        0
+      ],
+      "to": [
+        16,
+        17,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#snow",
+          "uv": [
+            3.1875,
+            12.75,
+            4.1875,
+            14.75
+          ]
+        }
+      }
+    }
+  ]
+}

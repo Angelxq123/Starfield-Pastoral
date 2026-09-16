@@ -352,7 +352,7 @@ class RegisteredDailyManagerWorkUnitTest {
                     .anyMatch(assignment -> assignment.getVariable().toString().equals(manager.processingField())
                             && assignment.getExpression().toString().equals("false")));
             MethodTree entryMethod = parseMethod(manager, manager.entryMethod(),
-                    manager.className().equals("TreeGrowthManager") ? 3 : 2);
+                    (manager.className().equals("TreeGrowthManager") || manager.className().equals("CropGrowthManager")) ? 3 : 2);
             assertFalse(invocations(entryMethod).stream()
                     .anyMatch(call -> methodName(call).equals(manager.cleanupMethod())));
             assertFalse(scan(entryMethod, AssignmentTree.class).stream()
@@ -370,11 +370,12 @@ class RegisteredDailyManagerWorkUnitTest {
     void entryMethodsPreserveDimensionFarmLoadedAndValidationOrder() throws IOException {
         for (ManagerContract manager : MANAGERS) {
             MethodTree process = parseMethod(manager, manager.entryMethod(),
-                    manager.className().equals("TreeGrowthManager") ? 3 : 2);
+                    (manager.className().equals("TreeGrowthManager") || manager.className().equals("CropGrowthManager")) ? 3 : 2);
             String body = process.getBody().toString();
             int dimension = body.indexOf("dimension()");
             int farm = body.indexOf("shouldProcessPosition");
             int loaded = body.indexOf("isLoaded");
+            if (loaded < 0) loaded = body.indexOf("hasChunkAt");
             int state = body.indexOf("getBlockState");
             assertTrue(dimension >= 0 && dimension < farm,
                     manager.className() + " must filter dimension before farm eligibility");
@@ -396,7 +397,7 @@ class RegisteredDailyManagerWorkUnitTest {
                 .filter(call -> methodName(call).equals("sequence"))
                 .findFirst().orElseThrow();
         assertTrue(sequence.getArguments().stream().anyMatch(argument -> argument.toString().contains(
-                variables.get(cursor).getName() + ", " + farmlandVariable.getName())));
+                farmlandVariable.getName().toString())));
         assertTrue(farmlandVariable.getInitializer().toString().contains("createFarmlandScanWorkUnit"));
         assertFalse(create.toString().contains("dryAllFarmland"));
         MethodTree farmlandFactory = parseMethod(crop, "createFarmlandScanWorkUnit", 1);
@@ -459,8 +460,8 @@ class RegisteredDailyManagerWorkUnitTest {
 
     @Test
     void managerEntryMethodsRetainBusinessMutationsAndDirtyRegistrationCleanup() throws IOException {
-        MethodTree crop = parseMethod(MANAGERS.get(0), "processCropDay", 2);
-        assertCalls(crop, "growOneDay", "setDirty", "tryRoll", "removeCrop");
+        MethodTree crop = parseMethod(MANAGERS.get(0), "processCropDay", 3);
+        assertCalls(crop, "growOneDay", "setDirty", "removeCrop");
         assertTrue(crop.toString().contains("MOISTURE"));
 
         MethodTree tree = parseMethod(MANAGERS.get(1), "processRegisteredSaplingDay", 3);

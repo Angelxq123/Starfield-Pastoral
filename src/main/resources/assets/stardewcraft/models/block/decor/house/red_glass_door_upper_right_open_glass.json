@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "0": "stardewcraft:block/decor/house/red_glass_door",
+    "particle": "stardewcraft:block/decor/house/red_glass_door_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        6,
+        5
+      ],
+      "to": [
+        2,
+        12,
+        11
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            11.75,
+            10.125,
+            10.25,
+            10.875
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            14.0,
+            10.125,
+            12.5,
+            10.875
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

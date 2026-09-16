@@ -31,20 +31,6 @@
           "point": "abigail_seedshop_indoor_target"
         }
       ],
-      "saloon": [
-        {
-          "mode": "walk",
-          "point": "saloon_outdoor_door"
-        },
-        {
-          "mode": "warp",
-          "point": "saloon_indoor_entry"
-        },
-        {
-          "mode": "walk",
-          "point": "abigail_saloon_indoor_stay"
-        }
-      ],
       "archaeologyhouse": [
         {
           "mode": "walk",

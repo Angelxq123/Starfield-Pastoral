@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/decor/joja_billboard/winter/joja_billboard_winter",
+    "particle": "stardewcraft:block/decor/joja_billboard/winter/joja_billboard_concrete_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.9375,
+            10.125,
+            1.9375,
+            10.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            3.0625,
+            10.125,
+            3.8125,
+            10.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2.0,
+            10.125,
+            3.0,
+            10.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3.875,
+            10.125,
+            4.625,
+            10.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4.6875,
+            10.125,
+            5.6875,
+            10.875
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            5.75,
+            10.125,
+            6.75,
+            10.875
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

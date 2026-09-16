@@ -36,6 +36,7 @@ public record SilverSaberFoldbackPayload(boolean active, int durationTicks) impl
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(SilverSaberFoldbackPayload payload) {
+        com.stardew.craft.client.weapon.PirateSilverVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;

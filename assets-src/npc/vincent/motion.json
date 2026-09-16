@@ -1,0 +1,83 @@
+{
+  "intent": "儿童男孩，原版 Outgoing/Positive；较主动的前移、轻快抬脚、松弛弯肘，避免成人缩小版和持续蹦跳。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.7054965,
+  "attentionRig": {
+    "hipHeight": 9,
+    "soleY": 0,
+    "toeDepth": 1.5,
+    "halfStance": 1.68,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.65,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "vincent",
+    "revision": "character-articulated-3",
+    "rootMean": 0.38,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -1.6,
+          9.0,
+          0.0
+        ],
+        "knee": 4.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -1.5
+      },
+      "left": {
+        "hip": [
+          1.6,
+          9.0,
+          0.0
+        ],
+        "knee": 4.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -1.5
+      }
+    },
+    "bodyPitch": -2,
+    "headPitch": 0.6,
+    "halfStance": 1.68,
+    "intent": "儿童男孩，原版 Outgoing/Positive；较主动的前移、轻快抬脚、松弛弯肘，避免成人缩小版和持续蹦跳。",
+    "stance": 0.53,
+    "strideRatio": 1.73,
+    "bob": 0.24960000000000002,
+    "sway": 0.46,
+    "rootYaw": 2.6,
+    "bodyYaw": 5.8,
+    "bodyRoll": 1.15,
+    "bodyNod": 0.95,
+    "headYaw": 2.5,
+    "headRoll": 0.65,
+    "armSwing": 20,
+    "armOpening": 6,
+    "elbowBase": 12,
+    "elbowSwing": 9,
+    "footLift": 0.322,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "breathSeconds": 7.4,
+    "idleScale": 0.95,
+    "stride": 11.287944,
+    "reachMargin": 0.038366,
+    "legLengthStride": 15.57,
+    "previewSpeed": 0.833727,
+    "levelWalk": true
+  }
+}

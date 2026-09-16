@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/fall/swing_fall",
+    "particle": "stardewcraft:block/double_swing/fall/swing_metal_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        -9,
+        -10
+      ],
+      "to": [
+        7,
+        -6,
+        -6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            7.25,
+            2.0625,
+            7.4375,
+            2.15625
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            7.6875,
+            2.0625,
+            7.8125,
+            2.15625
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            7.46875,
+            2.0625,
+            7.65625,
+            2.15625
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            7.84375,
+            2.0625,
+            7.96875,
+            2.15625
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            8.0,
+            2.0625,
+            8.1875,
+            2.1875
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            8.21875,
+            2.0625,
+            8.40625,
+            2.1875
+          ]
+        }
+      }
+    }
+  ]
+}

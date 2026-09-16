@@ -1,0 +1,7 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "stardewcraft:block/plaza_display/summer/plaza_summer_ceramic_particle"
+  },
+  "elements": []
+}

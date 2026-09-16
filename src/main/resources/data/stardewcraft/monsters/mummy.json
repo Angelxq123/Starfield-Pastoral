@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "source_name": "Mummy",
+  "family": "mummy",
+  "health": 260,
+  "damage": 30,
+  "resilience": 0,
+  "miss_chance": 0,
+  "experience": 20,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:solar_essence",
+      "chance": 0.99
+    },
+    {
+      "item": "stardewcraft:cloth",
+      "chance": 0.2
+    },
+    {
+      "item": "stardewcraft:cloth",
+      "chance": 0.05
+    },
+    {
+      "item": "stardewcraft:solar_essence",
+      "chance": 0.15
+    },
+    {
+      "item": "stardewcraft:miner_s_treat",
+      "chance": 0.04
+    },
+    {
+      "item": "stardewcraft:curiosity_lure",
+      "chance": 0.01
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    },
+    {
+      "item": "stardewcraft:prismatic_shard",
+      "chance": 0.001
+    }
+  ]
+}

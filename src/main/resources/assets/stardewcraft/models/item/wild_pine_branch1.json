@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/wild_tree/pine/branch1",
-    "textures":  {
-                     "particle":  "stardewcraft:block/wild_tree/pine/branch1"
-                 }
-}

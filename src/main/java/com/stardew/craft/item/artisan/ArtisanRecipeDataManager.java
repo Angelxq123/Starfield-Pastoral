@@ -130,7 +130,8 @@ public final class ArtisanRecipeDataManager {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(
                     machineId.getNamespace(), "network/" + machineId.getPath() + "/" + index);
             return new Recipe(id, machineId, inputId, inputTag, inputMode, outputId, outputCount, minutes,
-                    consumeCount, keepInputQuality, outputQuality, preserveType, seedMakerRule, outputMode);
+                    consumeCount, keepInputQuality, outputQuality, preserveType, seedMakerRule, outputMode,
+                    obj.has("maxOutputCount") ? obj.get("maxOutputCount").getAsInt() : outputCount);
         } catch (Exception e) {
             return null;
         }
@@ -173,7 +174,23 @@ public final class ArtisanRecipeDataManager {
                          int outputQuality,
                          @Nullable PreserveType preserveType,
                          @Nullable SeedMakerRule seedMakerRule,
-                         OutputMode outputMode) {
+                         OutputMode outputMode,
+                         int maxOutputCount) {
+        public Recipe {
+            if (outputCount < 1 || maxOutputCount < outputCount || maxOutputCount > 999)
+                throw new IllegalArgumentException("Invalid artisan output count range");
+        }
+        public Recipe(ResourceLocation id, ResourceLocation machine, ResourceLocation inputId,
+                      TagKey<Item> inputTag, InputMode inputMode, ResourceLocation outputId, int outputCount,
+                      int minutes, int consumeCount, boolean keepInputQuality, int outputQuality,
+                      PreserveType preserveType, SeedMakerRule seedMakerRule, OutputMode outputMode) {
+            this(id, machine, inputId, inputTag, inputMode, outputId, outputCount, minutes, consumeCount,
+                keepInputQuality, outputQuality, preserveType, seedMakerRule, outputMode, outputCount);
+        }
+        public int rollOutputCount(net.minecraft.util.RandomSource random) {
+            return outputCount == maxOutputCount ? outputCount : outputCount + random.nextInt(maxOutputCount - outputCount + 1);
+        }
+
         @SuppressWarnings("null")
         public boolean matches(ItemStack stack) {
             if (stack.isEmpty()) {
@@ -333,6 +350,11 @@ public final class ArtisanRecipeDataManager {
                         continue;
                     }
                     int outputCount = readInt(recipeObj, "outputCount", 1);
+                    int maxOutputCount = readInt(recipeObj, "maxOutputCount", outputCount);
+                    if (maxOutputCount < outputCount || maxOutputCount > 999 || outputCount < 1) {
+                        diagnostics.add(DefinitionDiagnostic.error(resourceId, definitionId, "Invalid output count range"));
+                        continue;
+                    }
                     int minutes = readInt(recipeObj, "minutes", 0);
                     int consumeCount = readInt(recipeObj, "consume", 1);
                     QualityRule qualityRule = readQualityRule(recipeObj);
@@ -349,7 +371,7 @@ public final class ArtisanRecipeDataManager {
                     consumeCount = Math.max(1, consumeCount);
                     Recipe recipe = new Recipe(definitionId, machineId, inputId, inputTag, inputMode,
                             outputId, outputCount, minutes, consumeCount, qualityRule.keepInputQuality(),
-                            qualityRule.outputQuality(), preserveType, seedMakerRule, outputMode);
+                            qualityRule.outputQuality(), preserveType, seedMakerRule, outputMode, maxOutputCount);
                     if (definitions.putIfAbsent(definitionId, recipe) != null) {
                         diagnostics.add(DefinitionDiagnostic.error(
                                 resourceId, definitionId, "Duplicate machine recipe definition ID"));
@@ -396,6 +418,7 @@ public final class ArtisanRecipeDataManager {
             ro.addProperty("inputMode", r.inputMode().name());
             ro.addProperty("outputId", outputId != null ? outputId.toString() : null);
             ro.addProperty("outputCount", r.outputCount());
+            ro.addProperty("maxOutputCount", r.maxOutputCount());
             ro.addProperty("minutes", r.minutes());
             ro.addProperty("consumeCount", r.consumeCount());
             ro.addProperty("keepInputQuality", r.keepInputQuality());

@@ -25,6 +25,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             "npc_dialogue_events",
             "npc_dialogue_topics",
             "weather_npc_reset",
+            "farm_buildings",
             "crops",
             "trees",
             "fruit_trees",
@@ -263,6 +264,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "npc_dialogue_events" -> createDialogueEventsDaily();
                 case "npc_dialogue_topics" -> atomic(name, () -> dialogueTopicsDaily(context));
                 case "weather_npc_reset" -> createWeatherAndNpcWorkUnit(context);
+                case "farm_buildings" -> atomic(name, () -> com.stardew.craft.building.runtime.BuildingRuntimeEvents.onNewDay(level()));
                 case "crops", "trees", "fruit_trees", "tea_bushes", "wild_tree_seeds", "farm_debris",
                         "sprinklers", "pasture_grass", "animals", "fish_ponds",
                         "public_forage", "forest_farm_forage", "artifact_spots",
@@ -395,9 +397,9 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                         .createDailyWorkUnit(level(), context);
                 case "pasture_grass" -> com.stardew.craft.manager.PastureGrassGrowthManager.get(level())
                         .createDailyWorkUnit(level(), context, frozenFarms);
-                case "animals" -> com.stardew.craft.manager.AnimalGrowthManager.get(level())
+                case "animals" -> com.stardew.craft.animal.runtime.LivestockService
                         .createDailyWorkUnit(level(), context);
-                case "fish_ponds" -> com.stardew.craft.fishpond.service.FishPondDailyUpdateService
+                case "fish_ponds" -> com.stardew.craft.fishpond.service.FishPondHusbandry
                         .createDailyWorkUnit(level(), context);
                 case "public_forage" -> com.stardew.craft.manager.ForageSpawnService
                         .createDailyWorkUnit(level(), context);

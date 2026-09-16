@@ -34,7 +34,7 @@ import java.util.List;
  * 放置 schematic → 设置生物群系 → 放置图腾柱 → 温室 → 概率化碎片 → 出口实体。
  * <p>
  * 碎片生成规则（概率制，per-block）：
- *   黄土方块 (YELLOW_DIRT) 上: 树木 / 石头 / 杂草 / 牧草 / 树苗
+ *   自有泥土 (DIRT) 上: 树木 / 石头 / 杂草 / 牧草 / 树苗
  *   草方块 (GRASS_BLOCK) 上: 树木 / 牧草 / 杂草（无石头、无树苗）
  *   森林农场额外: 桃花心木树（草方块上，极低概率）
  */
@@ -235,8 +235,7 @@ public class FarmInstanceInitializer {
         boolean isForest = farm.getFarmLayoutId().equals(
                 StardewFarmLayoutRegistry.builtinId(FarmType.FOREST));
 
-        Block yellowDirt = ModBlocks.YELLOW_DIRT.get();
-        Block grassBlock = Blocks.GRASS_BLOCK;
+        Block terrainDirt = ModBlocks.DIRT.get();
         int season = StardewTimeManager.get().getCurrentSeason();
 
         List<BlockPos> treeTrunks = new ArrayList<>();
@@ -254,7 +253,7 @@ public class FarmInstanceInitializer {
                     BlockState groundState = level.getBlockState(groundPos);
                     if (groundState.isAir()) continue;
                     Block ground = groundState.getBlock();
-                    if (ground == yellowDirt || ground == grassBlock) {
+                    if (ground == terrainDirt || ground instanceof net.minecraft.world.level.block.GrassBlock) {
                         BlockPos above = groundPos.above();
                         if (level.getBlockState(above).isAir() && level.canSeeSky(above)) {
                             placePos = above;
@@ -265,7 +264,7 @@ public class FarmInstanceInitializer {
                 }
                 if (placePos == null) continue;
 
-                boolean onGrass = (surfaceBlock == grassBlock);
+                boolean onGrass = (surfaceBlock instanceof net.minecraft.world.level.block.GrassBlock);
                 int roll = random.nextInt(1000);
                 int cumulative = 0;
 
@@ -302,7 +301,7 @@ public class FarmInstanceInitializer {
                 if (!onGrass) {
                     cumulative += STONE_PROB;
                     if (roll < cumulative) {
-                        Block[] stoneBlocks = {ModBlocks.EARTH_SHALE.get(), ModBlocks.MOSSY_SANDSTONE.get()};
+                        Block[] stoneBlocks = {ModBlocks.MINE_STONE_343.get(), ModBlocks.MINE_STONE_450.get()};
                         level.setBlock(placePos, stoneBlocks[random.nextInt(stoneBlocks.length)].defaultBlockState(), 3);
                         stones++;
                         continue;
@@ -471,25 +470,11 @@ public class FarmInstanceInitializer {
         if (farm == null || !farm.isInitialized()) return false;
         StardewFarmLayout layout = farm.getFarmLayout();
         if (layout == null) return false;
-        com.stardew.craft.interior.PlayerInteriorAllocator alloc =
-                com.stardew.craft.interior.PlayerInteriorAllocator.get(level);
-        if (alloc.isCavePlaced(farm.getOwnerUUID())) return false;
-
-        StardewCraft.LOGGER.info("[FARM_INIT] Backfilling farm cave for owner={} ({})",
-                farm.getOwnerUUID(), farm.getOwnerName());
-        placeFarmCaveSystem(level, farm, layout);
-
-        // 若 owner 已选择过 MUSHROOMS（老存档 choice 可能已在 Step 1 存下），补放蘑菇盆
-        if (farm.getCaveChoice() == FarmCaveChoice.MUSHROOMS) {
-            BlockPos caveOrigin = alloc.getCaveOrigin(farm.getOwnerUUID());
-            net.minecraft.world.level.block.Block box = com.stardew.craft.block.ModBlocks.MUSHROOM_BOX.get();
-            for (BlockPos off : com.stardew.craft.manager.FarmCaveDailyService.MUSHROOM_BOX_OFFSETS) {
-                BlockPos p = caveOrigin.offset(off);
-                if (level.getBlockState(p).isAir()) {
-                    level.setBlock(p, box.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
-                }
-            }
-        }
+        // Repair the door independently of old cavePlaced flags, without clearing farm contents.
+        var portal=layout.cavePortalWall();
+        if(portal!=null)com.stardew.craft.interior.InteriorSubspaceManager.spawnFarmCaveOutdoorPortalArea(
+                level,farm.getOrigin().offset(portal.min()),farm.getOrigin().offset(portal.max()));
+        com.stardew.craft.interior.FarmCaveRuntime.request(level,farm);
         return true;
     }
 

@@ -48,6 +48,13 @@ public final class LightCounterParryHandler {
 
         level.playSound(null, player.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1.0f, 1.0f);
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                player,
+                weaponId,
+                "light_counter_counter",
+                LightCounterSkillHandler.COUNTER_ANIM_TICKS
+        );
+
         Entity src = event.getSource().getEntity();
         if (src instanceof LivingEntity attacker && attacker.isAlive()) {
             SkillContext context = SkillContext.builder()
@@ -77,12 +84,7 @@ public final class LightCounterParryHandler {
             }
         }
 
-        WeaponSkillAnimationDispatcher.sendCounterAnim(
-                player,
-                weaponId,
-                "light_counter_counter",
-                LightCounterSkillHandler.COUNTER_ANIM_TICKS
-        );
+
     }
 
 }

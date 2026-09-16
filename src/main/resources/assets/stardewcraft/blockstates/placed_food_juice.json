@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "stardewcraft:block/artisan/juice"
+    },
+    "facing=east": {
+      "model": "stardewcraft:block/artisan/juice",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "stardewcraft:block/artisan/juice",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "stardewcraft:block/artisan/juice",
+      "y": 270
+    }
+  }
+}

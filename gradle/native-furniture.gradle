@@ -1,0 +1,12 @@
+// Placed Generic furniture is generated from maintained authoring sources, like native NPCs.
+def compileNativeFurnitureModels = tasks.register('compileNativeFurnitureModels', Exec) {
+    group = 'build'
+    description = 'Compile Sebastian computer Generic geometry, animation and item resources'
+    inputs.file('assets-src/furniture/sebastian_computer/sebastian_computer.bbmodel')
+    inputs.files('tools/art/compile_sebastian_computer.py', 'tools/art/compile_native_npc.py', 'tools/art/npc_texture_atlas.py', 'tools/art/npc_joint_skin.py')
+    outputs.dir(layout.buildDirectory.dir('generated/native-furniture'))
+    commandLine providers.gradleProperty('pythonExecutable').getOrElse(
+            System.getProperty('os.name').toLowerCase().contains('windows') ? 'python' : 'python3'), '-X', 'utf8', file('tools/art/compile_sebastian_computer.py').absolutePath,
+            layout.buildDirectory.dir('generated/native-furniture').get().asFile.absolutePath
+}
+sourceSets.main.resources.srcDir(compileNativeFurnitureModels)

@@ -70,6 +70,13 @@ public final class ShadowDaggerExecuteSkillHandler implements RuntimeWeaponSkill
         );
         instance.initializeExecutionState(new State(target.getUUID(), execute));
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             WeaponSkillDamage.apply(
                     context.player(),
@@ -82,12 +89,6 @@ public final class ShadowDaggerExecuteSkillHandler implements RuntimeWeaponSkill
             );
         });
 
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

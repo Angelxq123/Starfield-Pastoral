@@ -327,6 +327,14 @@ public final class CombatRescueCutsceneCoordinator {
             return false;
         }
 
+        // Chunk loading alone can expose an empty/obsolete lobby in a saved world.
+        // Use the same versioned authored architecture path as normal mine entry.
+        if (MINE_EVENT_ID.equals(eventId)) {
+            com.stardew.craft.mining.OrdinaryMineRuntime.ensure(targetLevel, 0);
+        } else if (HOSPITAL_EVENT_ID.equals(eventId)) {
+            com.stardew.craft.interior.InteriorSubspaceManager.ensureLoaded(targetLevel, "combat_rescue_hospital");
+        }
+
         long token = nextToken();
         PendingRescue pending = new PendingRescue(
                 token,

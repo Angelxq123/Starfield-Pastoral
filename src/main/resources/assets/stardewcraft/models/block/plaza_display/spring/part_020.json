@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/spring/plaza_display_spring",
+    "particle": "stardewcraft:block/plaza_display/spring/plaza_wood_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        13,
+        14,
+        4
+      ],
+      "to": [
+        15,
+        16,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.625,
+            5.3125,
+            10.75,
+            5.4375
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            11.125,
+            5.3125,
+            11.75,
+            5.4375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            10.875,
+            5.3125,
+            11.0,
+            5.4375
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.875,
+            5.3125,
+            12.5,
+            5.4375
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12.625,
+            5.3125,
+            12.75,
+            5.9375
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            12.875,
+            5.3125,
+            13.0,
+            5.9375
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

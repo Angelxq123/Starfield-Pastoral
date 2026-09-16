@@ -1,0 +1,21 @@
+// Run the installed CTM version from the crash report through the actual Mixin transformer.
+// ./gradlew -I compatibility/ctm-model-tests.gradle test --tests '*CtmModelInitializationTest'
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            repositories.maven { url = 'https://cursemaven.com'; content { includeGroup 'curse.maven' } }
+            dependencies.add('testImplementation', 'curse.maven:ctm-267602:5587515')
+            sourceSets.test.java.setSrcDirs([file('compatibility/ctm-model')])
+            sourceSets.test.resources.setSrcDirs([file('compatibility/ctm-model/fixtures')])
+            // The windowless JUnit launch target is SERVER; select this one client hook before CTM loads.
+            tasks.named('prepareNeoForgeTestFiles') {
+                programArguments.addAll('--mixin', 'stardewcraft.ctm-test.mixins.json')
+            }
+            tasks.named('test') {
+                include 'com/stardew/craft/compat/ctm/**'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/ctm-model')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/ctm-model')
+            }
+        }
+    }
+}

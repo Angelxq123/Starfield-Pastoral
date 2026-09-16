@@ -133,7 +133,9 @@ public final class FairFestivalService {
     private static final int GRANGE_CATEGORY_MINERAL_ARTIFACT = -12;
     private static final int GRANGE_CATEGORY_MINECRAFT_GEAR = -201;
 
-    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-49, 82, -51), new BlockPos(90, 51, 50));
+    // Clear arrival space inside the shipped festival venue, independent of the approach direction.
+    private static final Vec3 SAFE_ENTRY_RETURN = new Vec3(0.5D, 64.0D, -4.5D);
+    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-49, 82, -51), new BlockPos(90, 51, 50)).expandTowards(0.0D, -1.0D, 0.0D);
     private static final BlockPos SLINGSHOT_GAME_POS = new BlockPos(-4, 65, 7);
     private static final BlockPos FISHING_GAME_POS = new BlockPos(-4, 65, 16);
     private static final BlockPos STAR_TOKEN_SHOP_POS = new BlockPos(-10, 65, -11);
@@ -1458,11 +1460,7 @@ public final class FairFestivalService {
         player.getPersistentData().putBoolean(TAG_TOKEN_HUD_SYNCED, true);
         syncGrangeDisplay(player, true);
         player.getPersistentData().putBoolean(TAG_GRANGE_SYNCED, true);
-        Vec3 target = LAST_INSIDE_ENTRY.get(player.getUUID());
-        if (!isInsideEntryBounds(target)) {
-            target = pushInsideEntry(player.position());
-        }
-        target = safeInsideEntryTarget(player, target);
+        Vec3 target = safeInsideEntryTarget(player, SAFE_ENTRY_RETURN);
         if (target == null) {
             return;
         }
@@ -1550,7 +1548,7 @@ public final class FairFestivalService {
     }
 
     private static Vec3 safeInsideEntryTarget(ServerPlayer player, Vec3 preferred) {
-        return FestivalBoundaryReturn.findSafeInside(player, ENTRY_EXIT_BOUNDS, preferred, pushInsideEntry(player.position()));
+        return FestivalBoundaryReturn.findSafeInside(player, ENTRY_EXIT_BOUNDS, preferred, SAFE_ENTRY_RETURN);
     }
 
     private static boolean isInsideEntryBounds(Vec3 position) {

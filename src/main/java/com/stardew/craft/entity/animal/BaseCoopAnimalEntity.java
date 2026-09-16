@@ -184,8 +184,23 @@ public abstract class BaseCoopAnimalEntity extends Animal implements GeoEntity {
 
 	@Override
 	public @Nonnull InteractionResult mobInteract(@Nonnull Player player, @Nonnull InteractionHand hand) {
+        if(livestockBrain!=null){
+            if(hand!=InteractionHand.MAIN_HAND)return InteractionResult.PASS;
+            if(player instanceof ServerPlayer actor){
+                if(player.isShiftKeyDown())com.stardew.craft.animal.runtime.LivestockManagement.open(actor,getUUID().toString());
+                else if(!com.stardew.craft.animal.runtime.LivestockProducts.interact(actor,this))com.stardew.craft.animal.runtime.LivestockService.pet(actor,this);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+
 		if (isFairTemporaryDecorAnimal()) {
 			return InteractionResult.sidedSuccess(this.level().isClientSide);
+		}
+
+		if (hand == InteractionHand.MAIN_HAND && player instanceof ServerPlayer actor
+				&& managedAnimalId > 0L
+				&& com.stardew.craft.animal.runtime.LegacyLivestockMigration.openLegacy(actor, this)) {
+			return InteractionResult.SUCCESS;
 		}
 		if (hand != InteractionHand.MAIN_HAND) {
 			return super.mobInteract(player, hand);
@@ -404,6 +419,14 @@ public abstract class BaseCoopAnimalEntity extends Animal implements GeoEntity {
 		return cache;
 	}
 
+	private com.stardew.craft.animal.runtime.LivestockBrain livestockBrain;
+	public void bindLivestockProjection(){
+		if(livestockBrain!=null)return;
+		managedAnimalId=0;goalSelector.removeAllGoals(goal->true);targetSelector.removeAllGoals(goal->true);
+		livestockBrain=new com.stardew.craft.animal.runtime.LivestockBrain(this);
+	}
+	@Override public boolean shouldBeSaved(){return livestockBrain==null&&super.shouldBeSaved();}
+
 	public long getManagedAnimalId() {
 		return managedAnimalId;
 	}
@@ -437,6 +460,7 @@ public abstract class BaseCoopAnimalEntity extends Animal implements GeoEntity {
 	@Override
 	public void aiStep() {
 		super.aiStep();
+		if(livestockBrain!=null){livestockBrain.tick();return;}
 		if (!this.level().isClientSide && this.isNoAi() && !isFairTemporaryDecorAnimal()) {
 			this.setNoAi(false);
 		}

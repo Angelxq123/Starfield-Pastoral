@@ -381,7 +381,7 @@ public class StardewNpcDialogueScreen extends Screen implements StardewCollectiv
     }
 
     private void recomputeLayout() {
-        float guiScale = this.minecraft == null ? 1.0f : (float) this.minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         this.mapping = new StardewRenderMapping(this.width, this.height, guiScale);
         this.boxW = mapping.ui(1200);
         this.boxH = mapping.ui(384);
@@ -716,13 +716,13 @@ public class StardewNpcDialogueScreen extends Screen implements StardewCollectiv
         com.stardew.craft.api.v1.npc.StardewNpcDisplay display =
                 com.stardew.craft.api.v1.npc.StardewNpcDisplays.resolve(id);
         ResourceLocation genericFallback = ResourceLocation.fromNamespaceAndPath(
-                StardewCraft.MODID, "textures/entity/npc/lewis.png");
+                StardewCraft.MODID, "textures/portraits/lewis.png");
         String legacyPath =
                 com.stardew.craft.client.ClientDisplayFallbacks.stablePath(
                         id, "lewis");
         ResourceLocation legacyFallback = ResourceLocation.fromNamespaceAndPath(
                 StardewCraft.MODID,
-                "textures/entity/npc/" + legacyPath + ".png");
+                "textures/portraits/" + legacyPath + ".png");
         ResourceLocation availableFallback =
                 com.stardew.craft.client.ClientDisplayFallbacks
                         .availableResource(
@@ -806,7 +806,7 @@ public class StardewNpcDialogueScreen extends Screen implements StardewCollectiv
     }
 
     private float guiScale() {
-        return this.minecraft == null ? 1.0F : (float) this.minecraft.getWindow().getGuiScale();
+        return (float) StardewGuiViewport.REFERENCE_SCALE;
     }
 
     private void drawScaledCenteredText(GuiGraphics graphics, String text, int centerX, int y, int color) {

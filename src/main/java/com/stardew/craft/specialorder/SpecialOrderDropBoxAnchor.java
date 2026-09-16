@@ -11,7 +11,7 @@ public enum SpecialOrderDropBoxAnchor {
     WILLY_BARREL("WillyBarrel", "stardewcraft.special_orders.dropbox.willy_barrel", box(73, 60, 151)),
     PAM_KITCHEN("PamKitchen", "stardewcraft.special_orders.dropbox.pam_kitchen", box(72, 35, 1)),
     PIERRE_BOX("PierreBox", "stardewcraft.special_orders.dropbox.pierre_box", box(37, 36, -9, 38, 36, -9)),
-    ROBIN_WOOD("RobinWood", "stardewcraft.special_orders.dropbox.robin_wood", box(25, 51, -12)),
+    ROBIN_WOOD("RobinWood", "stardewcraft.special_orders.dropbox.robin_wood", box(25, 51, -123)),
     GUS_FRIDGE("GusFridge", "stardewcraft.special_orders.dropbox.gus_fridge", box(31, 36, 8, 31, 37, 8)),
     RAILROAD_DUMPSTER("Dumpster", "stardewcraft.special_orders.dropbox.railroad_dumpster", box(27, 86, -209, 28, 86, -208)),
     EVELYN_KITCHEN("EvelynKitchen", "stardewcraft.special_orders.dropbox.evelyn_kitchen", box(41, 22, -4, 41, 23, -4)),

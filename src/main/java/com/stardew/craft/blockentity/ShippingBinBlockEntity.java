@@ -69,7 +69,7 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     private int pendingShipSoundTicks;
     private int bufferAbsoluteDay = -1;
     @Nullable
-    private UUID lastInteractorId;
+    private UUID bufferOwnerId;
 
     public ShippingBinBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SHIPPING_BIN.get(), pos, state);
@@ -140,18 +140,23 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
 
     public void swallowItemEntity(net.minecraft.world.entity.item.ItemEntity entity) {
         if (level == null || level.isClientSide) return;
-        Player nearest = level.getNearestPlayer(entity, 8.0D);
-        if (nearest instanceof ServerPlayer serverPlayer) {
-            lastInteractorId = serverPlayer.getUUID();
-        }
-        ItemStack incoming = entity.getItem().copy();
-        pushToBufferSlot(incoming);
+        if (!canShip(entity.getItem())) return;
+        // ItemEntity persists the actual thrower's UUID, even after they disconnect.
+        CompoundTag entityTag = entity.saveWithoutId(new CompoundTag());
+        UUID depositor = entityTag.hasUUID("Thrower") ? entityTag.getUUID("Thrower") : null;
+        if (depositor == null || PlayerDataManager.get().getData(depositor) == null) return;
+        flushExpiredBufferIfNeeded();
+        pushToBufferSlot(entity.getItem().copy(), depositor);
         entity.discard();
         level.playSound(null, worldPosition, ModSounds.BACKPACK_IN.get(), SoundSource.BLOCKS, 0.6f, 1.0f);
         pendingShipSoundTicks = 5;
     }
 
     public void pushToBufferSlot(ItemStack newStack) {
+        pushToBufferSlot(newStack, null);
+    }
+
+    private void pushToBufferSlot(ItemStack newStack, @Nullable UUID depositor) {
         if (level == null || level.isClientSide) return;
         ItemStack oldStack = items.get(0);
         if (!oldStack.isEmpty()) {
@@ -160,7 +165,8 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
                 Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY() + 1, worldPosition.getZ(), oldStack);
             }
         }
-        items.set(0, newStack);
+        items.set(0, newStack.copy());
+        bufferOwnerId = newStack.isEmpty() ? null : depositor;
         bufferAbsoluteDay = newStack.isEmpty() ? -1 : currentAbsoluteDay();
         setChanged();
         syncToClient();
@@ -181,6 +187,7 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         if (recordShippingForOwner(remaining, Math.max(currentAbsoluteDay(), availableDayForCurrentBuffer()))) {
             items.set(0, ItemStack.EMPTY);
             bufferAbsoluteDay = -1;
+            bufferOwnerId = null;
             setChanged();
             syncToClient();
         }
@@ -196,16 +203,14 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     }
 
     public boolean depositFromPlayer(Player player, ItemStack stack) {
-        if (level == null || level.isClientSide || stack.isEmpty()) {
+        if (level == null || level.isClientSide || !(player instanceof ServerPlayer) || !canShip(stack)) {
             return false;
         }
 
         flushExpiredBufferIfNeeded();
         ItemStack incoming = stack.copy();
-        if (player instanceof ServerPlayer serverPlayer) {
-            lastInteractorId = serverPlayer.getUUID();
-        }
-        pushToBufferSlot(incoming);
+        // Commit the previous batch to its depositor before assigning the new batch.
+        pushToBufferSlot(incoming, player.getUUID());
         level.playSound(null, worldPosition, ModSounds.BACKPACK_IN.get(), SoundSource.BLOCKS, 0.6f, 1.0f);
         pendingShipSoundTicks = 5;
         return true;
@@ -285,6 +290,7 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         if (removed >= stack.getCount()) {
             items.set(0, ItemStack.EMPTY);
             bufferAbsoluteDay = -1;
+            bufferOwnerId = null;
         } else {
             stack.shrink(removed);
         }
@@ -302,6 +308,7 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         ItemStack out = items.get(0);
         items.set(0, ItemStack.EMPTY);
         bufferAbsoluteDay = -1;
+        bufferOwnerId = null;
         setChanged();
         syncToClient();
         return out;
@@ -318,8 +325,15 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
             sanitized.setCount(Math.min(sanitized.getCount(), sanitized.getMaxStackSize()));
         }
 
+        ItemStack previous = items.get(0);
+        boolean sameBatch = !sanitized.isEmpty() && ItemStack.isSameItemSameComponents(previous, sanitized)
+                && sanitized.getCount() <= previous.getCount();
         items.set(0, sanitized);
-        bufferAbsoluteDay = sanitized.isEmpty() ? -1 : currentAbsoluteDay();
+        if (!sameBatch) {
+            // An insertion without a depositing player must not inherit an older batch's owner.
+            bufferOwnerId = null;
+            bufferAbsoluteDay = sanitized.isEmpty() ? -1 : currentAbsoluteDay();
+        }
         setChanged();
         syncToClient();
     }
@@ -346,11 +360,8 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         }
 
         if (recordShippingForOwner(remaining, Math.max(today, bufferAbsoluteDay + 1))) {
-            items.set(0, ItemStack.EMPTY);
-            bufferAbsoluteDay = -1;
-            setChanged();
-            syncToClient();
             settleAvailableShippingForOnlineOwner();
+            clearContent();
         }
     }
 
@@ -360,11 +371,10 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         }
 
         ServerPlayer payer = resolvePayoutPlayer();
-        UUID payerId = payer != null ? payer.getUUID() : lastInteractorId;
+        UUID payerId = payer != null ? payer.getUUID() : bufferOwnerId;
         if (payerId == null) {
             return false;
         }
-        lastInteractorId = payerId;
 
         SellQuote quote;
         if (payer != null) {
@@ -383,10 +393,10 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     }
 
     private void settleAvailableShippingForOnlineOwner() {
-        if (!(level instanceof ServerLevel serverLevel) || lastInteractorId == null) {
+        if (!(level instanceof ServerLevel serverLevel) || bufferOwnerId == null) {
             return;
         }
-        ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(lastInteractorId);
+        ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(bufferOwnerId);
         if (player == null) {
             return;
         }
@@ -409,14 +419,19 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         if (!(level instanceof ServerLevel serverLevel)) {
             return null;
         }
-        if (lastInteractorId != null) {
-            ServerPlayer owner = serverLevel.getServer().getPlayerList().getPlayer(lastInteractorId);
+        if (bufferOwnerId != null) {
+            ServerPlayer owner = serverLevel.getServer().getPlayerList().getPlayer(bufferOwnerId);
             if (owner != null) {
                 return owner;
             }
         }
-        Player nearest = serverLevel.getNearestPlayer(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D, worldPosition.getZ() + 0.5D, 8.0D, false);
-        return nearest instanceof ServerPlayer serverPlayer ? serverPlayer : null;
+        return null;
+    }
+
+    @Override
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        // Automation has no depositing player; the menu supplies its actor explicitly.
+        return false;
     }
 
     @Override
@@ -427,6 +442,8 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     @Override
     public void clearContent() {
         items.set(0, ItemStack.EMPTY);
+        bufferAbsoluteDay = -1;
+        bufferOwnerId = null;
         setChanged();
         syncToClient();
     }
@@ -437,9 +454,6 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
             return;
         }
         openCount++;
-        if (player instanceof ServerPlayer serverPlayer) {
-            lastInteractorId = serverPlayer.getUUID();
-        }
         refreshOpenState();
     }
 
@@ -479,8 +493,8 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         if (bufferAbsoluteDay >= 0) {
             tag.putInt(TAG_BUFFER_DAY, bufferAbsoluteDay);
         }
-        if (lastInteractorId != null) {
-            tag.putUUID("lastInteractorId", lastInteractorId);
+        if (bufferOwnerId != null) {
+            tag.putUUID("bufferOwnerId", bufferOwnerId);
         }
     }
 
@@ -501,11 +515,13 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         }
         bufferAbsoluteDay = tag.contains(TAG_BUFFER_DAY, Tag.TAG_INT) ? tag.getInt(TAG_BUFFER_DAY) : -1;
 
-        if (tag.hasUUID("lastInteractorId")) {
-            lastInteractorId = tag.getUUID("lastInteractorId");
+        if (tag.hasUUID("bufferOwnerId")) {
+            bufferOwnerId = tag.getUUID("bufferOwnerId");
         } else {
-            lastInteractorId = null;
+            // Old saves recorded only the last interactor; preserve that best-known UUID.
+            bufferOwnerId = tag.hasUUID("lastInteractorId") ? tag.getUUID("lastInteractorId") : null;
         }
+        if (items.get(0).isEmpty()) bufferOwnerId = null;
     }
 
     @Nullable

@@ -36,13 +36,11 @@ public record IridiumNeedleFrenzyPayload(boolean active, int durationTicks) impl
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(IridiumNeedleFrenzyPayload payload) {
+        com.stardew.craft.client.weapon.NeedleBurglarVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;
             com.stardew.craft.client.weapon.IridiumNeedleFrenzyClientState.start(nowTick, payload.durationTicks());
-            if (mc.player != null) {
-                com.stardew.craft.client.weapon.SkillEffectsClient.playSkillEffects("iridium_needle_frenzy", mc.player);
-            }
         } else {
             com.stardew.craft.client.weapon.IridiumNeedleFrenzyClientState.clear();
         }

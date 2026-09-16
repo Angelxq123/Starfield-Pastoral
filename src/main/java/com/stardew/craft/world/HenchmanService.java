@@ -135,7 +135,7 @@ public final class HenchmanService {
         // Facing state is shared by the one server entity, so never store a player's
         // dialogue callback on it: simultaneous multiplayer interactions must all answer.
         henchman.facePlayerTemporarily(player, 60, null);
-        PacketDistributor.sendToPlayer(player,
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
                 new OpenNpcDialogueScreenPayload(NPC_ID, "stardewcraft.npc.henchman." + line, 0));
     }
 

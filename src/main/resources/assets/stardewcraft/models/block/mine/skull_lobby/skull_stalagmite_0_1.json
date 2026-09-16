@@ -1,0 +1,147 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "body": "stardewcraft:block/mine/skull_lobby/skull_stalagmite",
+    "particle": "stardewcraft:block/mine/skull_lobby/skull_stalagmite_particle"
+  },
+  "elements": [
+    {
+      "name": "上段收尖",
+      "from": [
+        6,
+        -2,
+        6
+      ],
+      "to": [
+        10,
+        4,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.5,
+            1.5,
+            7.0,
+            2.25
+          ],
+          "texture": "#body"
+        },
+        "east": {
+          "uv": [
+            7.75,
+            1.5,
+            8.25,
+            2.25
+          ],
+          "texture": "#body"
+        },
+        "south": {
+          "uv": [
+            7.125,
+            1.5,
+            7.625,
+            2.25
+          ],
+          "texture": "#body"
+        },
+        "west": {
+          "uv": [
+            8.375,
+            1.5,
+            8.875,
+            2.25
+          ],
+          "texture": "#body"
+        },
+        "up": {
+          "uv": [
+            9.0,
+            1.5,
+            9.5,
+            2.0
+          ],
+          "texture": "#body"
+        },
+        "down": {
+          "uv": [
+            9.625,
+            1.5,
+            10.125,
+            2.0
+          ],
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "name": "滴水尖",
+      "from": [
+        7,
+        4,
+        7
+      ],
+      "to": [
+        9,
+        8,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.25,
+            1.5,
+            10.5,
+            2.0
+          ],
+          "texture": "#body"
+        },
+        "east": {
+          "uv": [
+            11.0,
+            1.5,
+            11.25,
+            2.0
+          ],
+          "texture": "#body"
+        },
+        "south": {
+          "uv": [
+            10.625,
+            1.5,
+            10.875,
+            2.0
+          ],
+          "texture": "#body"
+        },
+        "west": {
+          "uv": [
+            11.375,
+            1.5,
+            11.625,
+            2.0
+          ],
+          "texture": "#body"
+        },
+        "up": {
+          "uv": [
+            11.75,
+            1.5,
+            12.0,
+            1.75
+          ],
+          "texture": "#body"
+        },
+        "down": {
+          "uv": [
+            12.125,
+            1.5,
+            12.375,
+            1.75
+          ],
+          "texture": "#body"
+        }
+      }
+    }
+  ]
+}

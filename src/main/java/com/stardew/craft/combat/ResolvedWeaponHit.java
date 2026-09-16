@@ -2,7 +2,6 @@ package com.stardew.craft.combat;
 
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
-import com.stardew.craft.event.MineMonsterSpawnHandler;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.world.damagesource.DamageSource;
@@ -103,9 +102,11 @@ public record ResolvedWeaponHit(
     }
 
     public boolean killedByAttacker() {
+        if (target instanceof com.stardew.craft.monster.StardewMonsterEntity monster && monster.initialized()
+                && monster.monsterState().life() != com.stardew.craft.monster.MonsterState.Life.DEAD) return false;
         return isKillTransition(
                 frame.targetAliveBeforeApplication(),
-                MineMonsterSpawnHandler.isCollapsedMummy(target),
+                false,
                 target.isAlive(),
                 target.getHealth()
         );

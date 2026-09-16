@@ -1,0 +1,1955 @@
+{
+  "schema_version": 1,
+  "source": "Stardew Valley MineShaft.createLitterObject / checkStoneForItems",
+  "note": "Weights are conditional before replacement branches, not final global spawn rates. Never substitute a missing ID. This shipped manifest is checked against the runtime mapping and is not currently a reloadable spawn table. Contexts document the original selection rules; none of these entries automatically enables generation. Quarry/dangerous generation remains deferred.",
+  "entries": [
+    {
+      "source_id": "32",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_32",
+      "item": "stardewcraft:mine_stone_32",
+      "model": "stardewcraft:block/mine/nodes/stone_32",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 32,
+        "rect": [
+          128,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth",
+          "condition": "normal difficulty; mineLevel % 40 < 30; ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 1,
+          "base_weight": "9/22"
+        },
+        {
+          "area": "lava",
+          "condition": "normal difficulty and !isDarkArea(); ordinary-litter branch before replacements",
+          "health": 4,
+          "base_weight": "0.15"
+        },
+        {
+          "area": "skull_cavern",
+          "condition": "ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 5,
+          "base_weight": "1/4"
+        },
+        {
+          "area": "quarry_mine",
+          "source_floor": 77377,
+          "condition": "brownSpot and tile.X <= 50; before copper replacement",
+          "health": 5,
+          "base_weight": "1/2"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ]
+    },
+    {
+      "source_id": "38",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_38",
+      "item": "stardewcraft:mine_stone_38",
+      "model": "stardewcraft:block/mine/nodes/stone_38",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 38,
+        "rect": [
+          224,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth",
+          "condition": "normal difficulty; mineLevel % 40 < 30; ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 1,
+          "base_weight": "7/22"
+        },
+        {
+          "area": "lava",
+          "condition": "normal difficulty and !isDarkArea(); ordinary-litter branch before replacements",
+          "health": 4,
+          "base_weight": "0.15"
+        },
+        {
+          "area": "skull_cavern",
+          "condition": "ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 5,
+          "base_weight": "1/4"
+        },
+        {
+          "area": "quarry_mine",
+          "source_floor": 77377,
+          "condition": "brownSpot and tile.X <= 50; before copper replacement",
+          "health": 5,
+          "base_weight": "1/2"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ]
+    },
+    {
+      "source_id": "40",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_40",
+      "item": "stardewcraft:mine_stone_40",
+      "model": "stardewcraft:block/mine/nodes/stone_40",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 40,
+        "rect": [
+          256,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 1.2,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth",
+          "condition": "normal difficulty; mineLevel % 40 < 30; ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 1,
+          "base_weight": "2/11"
+        },
+        {
+          "area": "skull_cavern",
+          "condition": "ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 5,
+          "base_weight": "1/4"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ]
+    },
+    {
+      "source_id": "42",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_42",
+      "item": "stardewcraft:mine_stone_42",
+      "model": "stardewcraft:block/mine/nodes/stone_42",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 42,
+        "rect": [
+          288,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 1.2,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth",
+          "condition": "normal difficulty; mineLevel % 40 < 30; ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 1,
+          "base_weight": "1/11"
+        },
+        {
+          "area": "skull_cavern",
+          "condition": "ordinary-litter branch before ore/gem/rich-stone replacements",
+          "health": 5,
+          "base_weight": "1/4"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ]
+    },
+    {
+      "source_id": "668",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_668",
+      "item": "stardewcraft:mine_stone_668",
+      "model": "stardewcraft:block/mine/nodes/stone_668",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 668,
+        "rect": [
+          320,
+          432,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth/lava/skull_cavern",
+          "condition": "createLitterObject: getMineArea() != 40; final 10% rich-stone replacement, followed by equal choice 668/670; uncoloured version",
+          "health": 2,
+          "base_weight": "0.05 conditional on reaching replacement"
+        },
+        {
+          "area": "earth/lava/skull_cavern",
+          "condition": "getAppropriateOre: normal difficulty and getMineArea() != 40; 25% rich-stone replacement, followed by equal choice 668/670",
+          "health": 2,
+          "base_weight": "0.125 conditional on reaching replacement"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances",
+        "quarry_mine generation"
+      ],
+      "drop_rule": "rich_stone_668"
+    },
+    {
+      "source_id": "670",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_670",
+      "item": "stardewcraft:mine_stone_670",
+      "model": "stardewcraft:block/mine/nodes/stone_670",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 670,
+        "rect": [
+          352,
+          432,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth/lava/skull_cavern",
+          "condition": "createLitterObject: getMineArea() != 40; final 10% rich-stone replacement, followed by equal choice 668/670; uncoloured version",
+          "health": 2,
+          "base_weight": "0.05 conditional on reaching replacement"
+        },
+        {
+          "area": "earth/lava/skull_cavern",
+          "condition": "getAppropriateOre: normal difficulty and getMineArea() != 40; 25% rich-stone replacement, followed by equal choice 668/670",
+          "health": 2,
+          "base_weight": "0.125 conditional on reaching replacement"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances",
+        "quarry_mine generation"
+      ],
+      "drop_rule": "rich_stone_668"
+    },
+    {
+      "source_id": "751",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_751",
+      "item": "stardewcraft:mine_stone_751",
+      "model": "stardewcraft:block/mine/nodes/stone_751",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 751,
+        "rect": [
+          112,
+          496,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth",
+          "condition": "normal difficulty createLitterObject: mineLevel != 1 and mineLevel % 5 != 0, early copper check 0.029",
+          "health": 3
+        },
+        {
+          "area": "mine_ore_clumps",
+          "condition": "getAppropriateOre initial copper, before depth-specific and rich-stone replacements",
+          "health": 3
+        },
+        {
+          "area": "skull_cavern",
+          "condition": "createLitterObject: copper fallback after iridium/gold/iron choices in ore branch",
+          "health": 2
+        },
+        {
+          "area": "volcano",
+          "condition": "VolcanoDungeon copper node; generator deferred",
+          "health": 8
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances",
+        "volcano/quarry generation"
+      ],
+      "drop_rule": "copper"
+    },
+    {
+      "source_id": "8",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_8",
+      "item": "stardewcraft:mine_stone_8",
+      "model": "stardewcraft:block/mine/nodes/stone_8",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 8,
+        "rect": [
+          128,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine_gem_branch",
+          "condition": "getRandomGemRichStoneForThisLevel: item 66 maps to source 8; gemStoneChance branch; source progression filters must be preserved",
+          "health": 5
+        },
+        {
+          "area": "quarry",
+          "condition": "Mountain daily gem branch maps item 66 to source 8; generator deferred",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances",
+        "volcano/quarry generation"
+      ],
+      "drop_rule": "amethyst"
+    },
+    {
+      "source_id": "10",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_10",
+      "item": "stardewcraft:mine_stone_10",
+      "model": "stardewcraft:block/mine/nodes/stone_10",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 10,
+        "rect": [
+          160,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine_gem_branch",
+          "condition": "getRandomGemRichStoneForThisLevel: item 68 maps to node 10; keep progression filters",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ],
+      "drop_rule": "topaz"
+    },
+    {
+      "source_id": "44",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_44",
+      "item": "stardewcraft:mine_stone_44",
+      "model": "stardewcraft:block/mine/nodes/stone_44",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 44,
+        "rect": [
+          320,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth",
+          "condition": "createLitterObject purple-stone replacement preserves stoneHealth, before mystic/rich replacement",
+          "health": 1
+        },
+        {
+          "area": "frost",
+          "condition": "createLitterObject purple-stone replacement preserves stoneHealth, before mystic/rich replacement",
+          "health": 3
+        },
+        {
+          "area": "lava",
+          "condition": "createLitterObject purple-stone replacement preserves stoneHealth, before mystic/rich replacement",
+          "health": 4
+        },
+        {
+          "area": "skull_cavern",
+          "condition": "createLitterObject purple-stone replacement preserves stoneHealth, before mystic/rich replacement",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ],
+      "drop_rule": "random_gem"
+    },
+    {
+      "source_id": "34",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_34",
+      "item": "stardewcraft:mine_stone_34",
+      "model": "stardewcraft:block/mine/nodes/stone_34",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 34,
+        "rect": [
+          160,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth_dark",
+          "condition": "normal difficulty, mineLevel % 40 >= 30, choose 34/36 before replacements",
+          "health": 1,
+          "base_weight": "1/2"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ]
+    },
+    {
+      "source_id": "36",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_36",
+      "item": "stardewcraft:mine_stone_36",
+      "model": "stardewcraft:block/mine/nodes/stone_36",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 36,
+        "rect": [
+          192,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "earth_dark",
+          "condition": "normal difficulty, mineLevel % 40 >= 30, choose 34/36 before replacements",
+          "health": 1,
+          "base_weight": "1/2"
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous/tinted appearances"
+      ]
+    },
+    {
+      "source_id": "48",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_48",
+      "item": "stardewcraft:mine_stone_48",
+      "model": "stardewcraft:block/mine/nodes/stone_48",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 48,
+        "rect": [
+          0,
+          32,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "frost and frost_dark",
+          "condition": "getMineArea()==40; normal difficulty, or additional difficulty with mineLevel % 40 >=30; Next(47,54) then round odd index up, before gem/purple/mystic replacements",
+          "health": 3,
+          "base_weight": "2/7"
+        }
+      ],
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "50",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_50",
+      "item": "stardewcraft:mine_stone_50",
+      "model": "stardewcraft:block/mine/nodes/stone_50",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 50,
+        "rect": [
+          32,
+          32,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "frost and frost_dark",
+          "condition": "getMineArea()==40; normal difficulty, or additional difficulty with mineLevel % 40 >=30; Next(47,54) then round odd index up, before gem/purple/mystic replacements",
+          "health": 3,
+          "base_weight": "2/7"
+        }
+      ],
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "52",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_52",
+      "item": "stardewcraft:mine_stone_52",
+      "model": "stardewcraft:block/mine/nodes/stone_52",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 52,
+        "rect": [
+          64,
+          32,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "frost and frost_dark",
+          "condition": "getMineArea()==40; normal difficulty, or additional difficulty with mineLevel % 40 >=30; Next(47,54) then round odd index up, before gem/purple/mystic replacements",
+          "health": 3,
+          "base_weight": "2/7"
+        }
+      ],
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "54",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_54",
+      "item": "stardewcraft:mine_stone_54",
+      "model": "stardewcraft:block/mine/nodes/stone_54",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 54,
+        "rect": [
+          96,
+          32,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "frost and frost_dark",
+          "condition": "getMineArea()==40; ordinary appearance branch, Next(47,54) then round odd index up, before later node replacements",
+          "health": 3,
+          "base_weight": "1/7"
+        }
+      ],
+      "deferred_contexts": [],
+      "ore_modifier": 0.8
+    },
+    {
+      "source_id": "290",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_290",
+      "item": "stardewcraft:mine_stone_290",
+      "model": "stardewcraft:block/mine/nodes/stone_290",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 290,
+        "rect": [
+          32,
+          192,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "frost",
+          "condition": "ordinary scatter iron replacement or getAppropriateOre",
+          "health": 4
+        },
+        {
+          "area": "skull cavern",
+          "condition": "iron fallback in ore replacement",
+          "health": 4
+        },
+        {
+          "area": "quarry mine",
+          "condition": "non-brownSpot 1% iron replacement",
+          "health": 3
+        },
+        {
+          "area": "volcano",
+          "condition": "VolcanoDungeon node 290",
+          "health": 8
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.updateQuarry iron ore branch",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous green-tinted iron appearance HP6"
+      ],
+      "drop_branch": "GameLocation.breakStone 290: iron1..3 plus addedOres and separate luck/mining bonuses; XP12"
+    },
+    {
+      "source_id": "6",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_6",
+      "item": "stardewcraft:mine_stone_6",
+      "model": "stardewcraft:block/mine/nodes/stone_6",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 6,
+        "rect": [
+          96,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine gem selection",
+          "condition": "getRandomGemRichStoneForThisLevel maps jade item70 to node6; before reaching bottom eligible from level40; after reaching bottom lower levels may choose it too",
+          "health": 5
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.updateQuarry seven-gem branch",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [],
+      "drop_branch": "GameLocation.breakStone 6: jade1, mastery x2, geologist independent extra; XP40 or20 when geologist extra triggers"
+    },
+    {
+      "source_id": "14",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_14",
+      "item": "stardewcraft:mine_stone_14",
+      "model": "stardewcraft:block/mine/nodes/stone_14",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 14,
+        "rect": [
+          224,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine gem selection",
+          "condition": "getRandomGemRichStoneForThisLevel maps item62 to node14; until reaching bottom eligible from40, afterward lower floors may choose it",
+          "health": 5
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.updateQuarry random seven-gem branch",
+          "health": 5
+        }
+      ],
+      "drop_branch": "aquamarine1; mastery x2, geologist independent extra; XP40 or20",
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "2",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_2",
+      "item": "stardewcraft:mine_stone_2",
+      "model": "stardewcraft:block/mine/nodes/stone_2",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 2,
+        "rect": [
+          32,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine and skull cavern",
+          "condition": "mineLevel>50 rare diamond override before purple/mystic replacements; 0.00025+floor/120000+0.0005*(averageDailyLuck+averageMining*0.005)/2",
+          "health": 10
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.updateQuarry random seven-gem branch",
+          "health": 5
+        }
+      ],
+      "drop_branch": "diamond1; mastery x2, geologist independent extra; XP150 or100",
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "56",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_56",
+      "item": "stardewcraft:mine_stone_56",
+      "model": "stardewcraft:block/mine/nodes/stone_56",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 56,
+        "rect": [
+          128,
+          32,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "ordinary lava",
+          "condition": "getMineArea()==80; difficulty<=0; initial litter appearance before gold/gem/rich/mystic replacements; first30%32/38, remaining70% then30% Next(55,58) rounded odd up",
+          "health": 4,
+          "base_weight": "0.14"
+        },
+        {
+          "area": "ordinary lava_dark",
+          "condition": "as above, without initial32/38 branch",
+          "health": 4,
+          "base_weight": "0.20"
+        }
+      ],
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "58",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_58",
+      "item": "stardewcraft:mine_stone_58",
+      "model": "stardewcraft:block/mine/nodes/stone_58",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 58,
+        "rect": [
+          160,
+          32,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "ore_modifier": 0.8,
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "ordinary lava",
+          "condition": "getMineArea()==80; difficulty<=0; initial litter appearance before gold/gem/rich/mystic replacements; first30%32/38, remaining70% then30% Next(55,58) rounded odd up",
+          "health": 4,
+          "base_weight": "0.07"
+        },
+        {
+          "area": "ordinary lava_dark",
+          "condition": "as above, without initial32/38 branch",
+          "health": 4,
+          "base_weight": "0.10"
+        }
+      ],
+      "deferred_contexts": []
+    },
+    {
+      "source_id": "760",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_760",
+      "item": "stardewcraft:mine_stone_760",
+      "model": "stardewcraft:block/mine/nodes/stone_760",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 760,
+        "rect": [
+          256,
+          496,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "ordinary lava",
+          "condition": "initial litter appearance: first30%32/38, remaining70% then70% choose760/762 equally; before ore/gem/rich/mystic replacements",
+          "health": 4,
+          "base_weight": "0.245"
+        },
+        {
+          "area": "ordinary lava_dark",
+          "condition": "same but without initial32/38 branch",
+          "health": 4,
+          "base_weight": "0.35"
+        }
+      ],
+      "deferred_contexts": [],
+      "ore_modifier": 0.8
+    },
+    {
+      "source_id": "762",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_762",
+      "item": "stardewcraft:mine_stone_762",
+      "model": "stardewcraft:block/mine/nodes/stone_762",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 762,
+        "rect": [
+          288,
+          496,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "ordinary lava",
+          "condition": "initial litter appearance: first30%32/38, remaining70% then70% choose760/762 equally; before ore/gem/rich/mystic replacements",
+          "health": 4,
+          "base_weight": "0.245"
+        },
+        {
+          "area": "ordinary lava_dark",
+          "condition": "same but without initial32/38 branch",
+          "health": 4,
+          "base_weight": "0.35"
+        }
+      ],
+      "deferred_contexts": [],
+      "ore_modifier": 0.8
+    },
+    {
+      "source_id": "764",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_764",
+      "item": "stardewcraft:mine_stone_764",
+      "model": "stardewcraft:block/mine/nodes/stone_764",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 764,
+        "rect": [
+          320,
+          496,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "ordinary lava",
+          "condition": "non-multiple-of-five floor2.9% gold replacement or getAppropriateOre",
+          "health": 8
+        },
+        {
+          "area": "dangerous lava",
+          "condition": "mineLevel!=1 and non-multiple-of-five floor2.9% gold replacement",
+          "health": 7
+        },
+        {
+          "area": "dangerous lava ore clumps",
+          "condition": "getAppropriateOre area80 retains8HP even with difficulty>0",
+          "health": 8
+        },
+        {
+          "area": "skull cavern",
+          "condition": "gold ore replacement or getAppropriateOre; later calico/iridium/rich replacements may apply",
+          "health": 8
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.updateQuarry gold branch",
+          "health": 8
+        }
+      ],
+      "deferred_contexts": [],
+      "drop_branch": "GameLocation.breakStone764: gold1..3 + addedOres + separate luck/mining level chances; XP18; no ordinary-stone fallthrough",
+      "appearance_notes": "760 and764 intentionally share the original host rock shape;764 adds three gold outcrops. VolcanoDungeon converts764 to a separate VolcanoGoldNode appearance, not this model."
+    },
+    {
+      "source_id": "4",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_4",
+      "item": "stardewcraft:mine_stone_4",
+      "model": "stardewcraft:block/mine/nodes/stone_4",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 4,
+        "rect": [
+          64,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine gem branch",
+          "condition": "HP5 early return; ruby and emerald restricted to level80+ until the player has reached the mine bottom; after that eligible on earlier floors",
+          "health": 5
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "random seven-gem branch",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [],
+      "drop_branch": "GameLocation.breakStone4: ruby64 one; mastery doubles; geologist50%extra; XP80 normally,50 if extra; ignores addedOres"
+    },
+    {
+      "source_id": "12",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_12",
+      "item": "stardewcraft:mine_stone_12",
+      "model": "stardewcraft:block/mine/nodes/stone_12",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 12,
+        "rect": [
+          192,
+          0,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "mine gem branch",
+          "condition": "HP5 early return; ruby and emerald restricted to level80+ until the player has reached the mine bottom; after that eligible on earlier floors",
+          "health": 5
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "random seven-gem branch",
+          "health": 5
+        }
+      ],
+      "deferred_contexts": [],
+      "drop_branch": "GameLocation.breakStone12: emerald60 one; mastery doubles; geologist50%extra; XP80 normally,50 if extra; ignores addedOres"
+    },
+    {
+      "source_id": "46",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_46",
+      "item": "stardewcraft:mine_stone_46",
+      "model": "stardewcraft:block/mine/nodes/stone_46",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 46,
+        "rect": [
+          352,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "contexts": [
+        {
+          "area": "ordinary lava level>100",
+          "condition": "mystic replacement changes appearance only; inherits stoneHealth4, or10 if preceding diamond replacement occurred",
+          "health": 4,
+          "possible_health": [
+            4,
+            10
+          ]
+        },
+        {
+          "area": "skull cavern",
+          "condition": "mystic replacement inherits5, or10 from preceding diamond replacement",
+          "health": 5,
+          "possible_health": [
+            5,
+            10
+          ]
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.quarryDayUpdate mystic branch",
+          "health": 12
+        },
+        {
+          "area": "volcano",
+          "condition": "level>2 rare46 replacement; createStone has no46 health case, retains default1",
+          "health": 1
+        }
+      ],
+      "deferred_contexts": [
+        "dangerous mine tinted appearance inherits5 or preceding diamond10; tint not represented by this normal model"
+      ],
+      "drop_branch": "GameLocation.breakStone46: iridium1..3 plus gold1..4,25%prismatic shard; XP150; ignores addedOres/mining luck bonuses; increments MysticStonesCrushed"
+    },
+    {
+      "source_id": "765",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_765",
+      "item": "stardewcraft:mine_stone_765",
+      "model": "stardewcraft:block/mine/nodes/stone_765",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 765,
+        "rect": [
+          336,
+          496,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "skull cavern",
+          "condition": "ore replacement depth-based chance or getAppropriateOre2% replacement",
+          "health": 16
+        },
+        {
+          "area": "outdoor quarry",
+          "condition": "Mountain.quarryDayUpdate iridium branch",
+          "health": 16
+        },
+        {
+          "area": "volcano",
+          "condition": "VolcanoDungeon iridium branch",
+          "health": 16
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone765: iridium1..3 + addedOres + separate luck/mining bonuses; independent3.5%prismatic shard; XP50"
+    },
+    {
+      "source_id": "CalicoEggStone_0",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_calico_egg_stone_0",
+      "item": "stardewcraft:mine_stone_calico_egg_stone_0",
+      "model": "stardewcraft:block/mine/nodes/stone_calico_egg_stone_0",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 10,
+        "rect": [
+          32,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "skull cavern during DesertFestival",
+          "condition": "getAppropriateOre festival replacement25%+rating*0.05, or litter ore replacement13%+rating*0.005; chooses one of three appearances equally; ore-clump recursion preserves matching calico types",
+          "health": 8
+        }
+      ],
+      "drop_branch": "GameLocation.breakStoneCalicoEggStone_*: calico egg1..3 + separate luck/mining bonuses; XP50; ignores addedOres/mastery/geologist; explicit node reward also works outside festival"
+    },
+    {
+      "source_id": "CalicoEggStone_1",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_calico_egg_stone_1",
+      "item": "stardewcraft:mine_stone_calico_egg_stone_1",
+      "model": "stardewcraft:block/mine/nodes/stone_calico_egg_stone_1",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 11,
+        "rect": [
+          48,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "skull cavern during DesertFestival",
+          "condition": "getAppropriateOre festival replacement25%+rating*0.05, or litter ore replacement13%+rating*0.005; chooses one of three appearances equally; ore-clump recursion preserves matching calico types",
+          "health": 8
+        }
+      ],
+      "drop_branch": "GameLocation.breakStoneCalicoEggStone_*: calico egg1..3 + separate luck/mining bonuses; XP50; ignores addedOres/mastery/geologist; explicit node reward also works outside festival"
+    },
+    {
+      "source_id": "CalicoEggStone_2",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_calico_egg_stone_2",
+      "item": "stardewcraft:mine_stone_calico_egg_stone_2",
+      "model": "stardewcraft:block/mine/nodes/stone_calico_egg_stone_2",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 12,
+        "rect": [
+          64,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "skull cavern during DesertFestival",
+          "condition": "getAppropriateOre festival replacement25%+rating*0.05, or litter ore replacement13%+rating*0.005; chooses one of three appearances equally; ore-clump recursion preserves matching calico types",
+          "health": 8
+        }
+      ],
+      "drop_branch": "GameLocation.breakStoneCalicoEggStone_*: calico egg1..3 + separate luck/mining bonuses; XP50; ignores addedOres/mastery/geologist; explicit node reward also works outside festival"
+    },
+    {
+      "source_id": "75",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_75",
+      "item": "stardewcraft:mine_stone_75",
+      "model": "stardewcraft:block/mine/nodes/stone_75",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 75,
+        "rect": [
+          48,
+          48,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "farm quarry (Hill-top/Four Corners or map mountain ore region)",
+          "condition": "Farm.doDailyMountainFarmUpdate: geode branch10%; 75 fallback, 76 mining>=5 and coin flip after magma branch; later copper/iron/gold/iridium replacements may override, not final spawn probability",
+          "health": 3
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone75: exactly1 geode535; XP8; ignores mastery/addedOres/excavator/geologist/blessings; no ordinary-stone fallback"
+    },
+    {
+      "source_id": "76",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_76",
+      "item": "stardewcraft:mine_stone_76",
+      "model": "stardewcraft:block/mine/nodes/stone_76",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 76,
+        "rect": [
+          64,
+          48,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "farm quarry (Hill-top/Four Corners or map mountain ore region)",
+          "condition": "Farm.doDailyMountainFarmUpdate: geode branch10%; 75 fallback, 76 mining>=5 and coin flip after magma branch; later copper/iron/gold/iridium replacements may override, not final spawn probability",
+          "health": 5
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone76: exactly1 frozen geode536; XP16; ignores mastery/addedOres/excavator/geologist/blessings; no ordinary-stone fallback"
+    },
+    {
+      "source_id": "77",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_77",
+      "item": "stardewcraft:mine_stone_77",
+      "model": "stardewcraft:block/mine/nodes/stone_77",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 77,
+        "rect": [
+          80,
+          48,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "farm quarry",
+          "condition": "Farm.doDailyMountainFarmUpdate geode candidate10%, mining>=8 and33% magma selection, later ore replacements still apply",
+          "health": 7
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone77: exactly1 magma geode537, XP32, no bonus geode quantity"
+    },
+    {
+      "source_id": "95",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_95",
+      "item": "stardewcraft:mine_stone_95",
+      "model": "stardewcraft:block/mine/nodes/stone_95",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 95,
+        "rect": [
+          368,
+          48,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "dangerous mines/skull cavern",
+          "condition": "createLitterObject early return: difficulty>0 and mineLevel%5!=0 and probability difficulty*.001+mineLevel/100000+teamAverageDailyLuck/13+teamAverageLuck*.00015",
+          "health": 25
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone95: radioactive ore1..2+addedOres+luck/100 bonus+mining/200 bonus; XP18"
+    },
+    {
+      "source_id": "343",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_343",
+      "item": "stardewcraft:mine_stone_343",
+      "model": "stardewcraft:block/mine/nodes/stone_343",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 343,
+        "rect": [
+          112,
+          224,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "surface debris and map path spawn",
+          "condition": "GameLocation.spawnWeedsAndStones/loadObjects chooses343/450; Object default unchanged",
+          "health": 1
+        },
+        {
+          "area": "manual placement in a generated mine",
+          "condition": "OnStoneDestroyed dispatches MineShaft ordinary-stone branch",
+          "health": 1
+        }
+      ],
+      "drop_branch": "outside generated mines: dated343/450 extras plus outdoor guaranteed stone+XP1 and two coal rolls; indoors only dated extras; in generated mines ordinary stone drop branch"
+    },
+    {
+      "source_id": "450",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_450",
+      "item": "stardewcraft:mine_stone_450",
+      "model": "stardewcraft:block/mine/nodes/stone_450",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 450,
+        "rect": [
+          288,
+          288,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "surface debris and map paths",
+          "condition": "GameLocation.spawnWeedsAndStones/loadObjects chooses343/450; Object default",
+          "health": 1
+        }
+      ],
+      "drop_branch": "same dated/outdoor343/450 branch outside generated mines; MineShaft ordinary branch in generated mine"
+    },
+    {
+      "source_id": "25",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_25",
+      "item": "stardewcraft:mine_stone_25",
+      "model": "stardewcraft:block/mine/nodes/stone_25",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 25,
+        "rect": [
+          16,
+          16,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "IslandWest",
+          "condition": "spawnObjects mussel region57,78,43,8 count<10",
+          "health": 8
+        }
+      ],
+      "drop_branch": "2..4 mussels, XP5; IslandWest pre-branch2.5% snake vertebrae; IslandLocation10% walnut with world-shared lifetime5 MusselStone quota",
+      "location_contract": "Register source location ledgerId/alias IslandWest, or stardewcraft:ginger_island tag for other IslandLocation areas. No island map or population generator is added in this batch."
+    },
+    {
+      "source_id": "816",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_816",
+      "item": "stardewcraft:mine_stone_816",
+      "model": "stardewcraft:block/mine/nodes/stone_816",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 816,
+        "rect": [
+          0,
+          544,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "IslandNorth dig site",
+          "condition": "IslandNorth.digSiteUpdate: first forced bone then30% branch, choose816/817, health4",
+          "health": 4
+        }
+      ],
+      "drop_branch": "mutually exclusive10% fossilized leg823, else1.5% ribs824, else10% random579..589; always1..2 bone fragments+addedOres+luck/100+mining/100; XP6"
+    },
+    {
+      "source_id": "817",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_817",
+      "item": "stardewcraft:mine_stone_817",
+      "model": "stardewcraft:block/mine/nodes/stone_817",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 817,
+        "rect": [
+          16,
+          544,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "IslandNorth dig site",
+          "condition": "digSiteUpdate: first forced bone then30% branch, choose816/817",
+          "health": 4
+        }
+      ],
+      "drop_branch": "same816: mutually exclusive10% leg823, else1.5% ribs824, else10% artifact579..589; always bone fragments1..2+addedOres+luck/100+mining/100; XP6"
+    },
+    {
+      "source_id": "818",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_818",
+      "item": "stardewcraft:mine_stone_818",
+      "model": "stardewcraft:block/mine/nodes/stone_818",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 818,
+        "rect": [
+          32,
+          544,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "IslandNorth dig site",
+          "condition": "digSiteUpdate conditional20% clay branch after bone/artifact/tree branches,2..4 nodes around one of8 fixed clay positions",
+          "health": 4
+        }
+      ],
+      "drop_branch": "clay330:1..2+addedOres+luck/100+mining/100; XP6"
+    },
+    {
+      "source_id": "819",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_819",
+      "item": "stardewcraft:mine_stone_819",
+      "model": "stardewcraft:block/mine/nodes/stone_819",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 819,
+        "rect": [
+          48,
+          544,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "chooseStoneTypeIndexOnly late0.0005 override, later gem/mystic overrides may replace it; createStone assigns8HP",
+          "health": 8
+        }
+      ],
+      "drop_branch": "exactly1 omni geode749, XP64; no mining/mastery/geologist quantity multiplication"
+    },
+    {
+      "source_id": "843",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_843",
+      "item": "stardewcraft:mine_stone_843",
+      "model": "stardewcraft:block/mine/nodes/stone_843",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 843,
+        "rect": [
+          48,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "chooseStoneTypeIndexOnly cinder chance .008*(1+level/7)*.8*(1+teamLuck*.035+teamDailyLuck/2)+.15 per adjacent843/844, later rare overrides apply; tryToAddOreClumps also places843/844",
+          "health": 12
+        }
+      ],
+      "drop_branch": "cinder shard848:1..2+addedOres+luck/100+mining/200; XP12",
+      "location_contract": "VolcanoDungeon ledgerId/alias or stardewcraft:volcano_dungeon logical-location tag, inherited by child areas: credited player all stones3%walnut with independent lifetime5 VolcanoMining quota;845..847 additionally0.5%mummified bat827 via global RNG. No volcano generator/map is installed here."
+    },
+    {
+      "source_id": "844",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_844",
+      "item": "stardewcraft:mine_stone_844",
+      "model": "stardewcraft:block/mine/nodes/stone_844",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 844,
+        "rect": [
+          64,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "chooseStoneTypeIndexOnly cinder chance .008*(1+level/7)*.8*(1+teamLuck*.035+teamDailyLuck/2)+.15 per adjacent843/844, later rare overrides apply; tryToAddOreClumps also places843/844",
+          "health": 12
+        }
+      ],
+      "drop_branch": "cinder shard848:1..2+addedOres+luck/100+mining/200; XP12",
+      "location_contract": "VolcanoDungeon ledgerId/alias or stardewcraft:volcano_dungeon logical-location tag, inherited by child areas: credited player all stones3%walnut with independent lifetime5 VolcanoMining quota;845..847 additionally0.5%mummified bat827 via global RNG. No volcano generator/map is installed here."
+    },
+    {
+      "source_id": "845",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_845",
+      "item": "stardewcraft:mine_stone_845",
+      "model": "stardewcraft:block/mine/nodes/stone_845",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 845,
+        "rect": [
+          80,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "chooseStoneTypeIndexOnly starts random845..847 then applies rich/ore/rare replacements; createStone assigns6HP",
+          "health": 6
+        }
+      ],
+      "drop_branch": "stone1..2+addedOres+luck/100+mining/100,XP3; independent8%coal1+addedOres replaces XP with4",
+      "location_contract": "VolcanoDungeon ledgerId/alias or stardewcraft:volcano_dungeon logical-location tag, inherited by child areas: credited player all stones3%walnut with independent lifetime5 VolcanoMining quota;845..847 additionally0.5%mummified bat827 via global RNG. No volcano generator/map is installed here."
+    },
+    {
+      "source_id": "846",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_846",
+      "item": "stardewcraft:mine_stone_846",
+      "model": "stardewcraft:block/mine/nodes/stone_846",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 846,
+        "rect": [
+          96,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "chooseStoneTypeIndexOnly starts random845..847 then applies replacements; createStone assigns6HP",
+          "health": 6
+        },
+        {
+          "area": "dangerous earth mines",
+          "condition": "MineShaft.createLitterObject area0 difficulty>0 sets5HP,33% choose846; dark areas replace appearance, ore return may override",
+          "health": 5
+        }
+      ],
+      "drop_branch": "same845 rich-stone branch: stone1..2+addedOres+luck/100+mining/100,XP3;8%coal1+addedOres replaces XP with4"
+    },
+    {
+      "source_id": "847",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_847",
+      "item": "stardewcraft:mine_stone_847",
+      "model": "stardewcraft:block/mine/nodes/stone_847",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 847,
+        "rect": [
+          112,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "chooseStoneTypeIndexOnly starts random845..847 then applies replacements; createStone assigns6HP",
+          "health": 6
+        }
+      ],
+      "drop_branch": "same845 rich-stone branch: stone1..2+addedOres+luck/100+mining/100,XP3;8%coal1+addedOres replaces XP with4"
+    },
+    {
+      "source_id": "849",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_849",
+      "item": "stardewcraft:mine_stone_849",
+      "model": "stardewcraft:block/mine/nodes/stone_849",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 849,
+        "rect": [
+          144,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "dangerous earth mines",
+          "condition": "getAppropriateOre area0/10 difficulty>0 and createLitterObject early-earth ore return",
+          "health": 6
+        },
+        {
+          "area": "VolcanoDungeon",
+          "condition": "conditional copper chance .018*(1+level/7)*.8 plus.25 per adjacent849; later rare overrides apply; createStone leaves default1, not751HP8",
+          "health": 1
+        }
+      ],
+      "drop_branch": "same751 copper:1..3+addedOres+luck/100+mining/100,XP5",
+      "placement_rule": "default6; declaring VolcanoDungeon logical identity/tag selects1; explicit stone_health remains available for source generator"
+    },
+    {
+      "source_id": "850",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_850",
+      "item": "stardewcraft:mine_stone_850",
+      "model": "stardewcraft:block/mine/nodes/stone_850",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 850,
+        "rect": [
+          160,
+          560,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "conditional .015*(1+level/7)*.8 +.25/adjacent850; createStone leaves default1; late819/44/46 overrides still apply",
+          "health": 1
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone:1..3+addedOres+luck/100+mining/100; iron ore,XP12"
+    },
+    {
+      "source_id": "VolcanoGoldNode",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_volcano_gold_node",
+      "item": "stardewcraft:mine_stone_volcano_gold_node",
+      "model": "stardewcraft:block/mine/nodes/stone_volcano_gold_node",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 60,
+        "rect": [
+          64,
+          112,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "conditional .01*(1+level/7)*.8 +.2/adjacentVolcanoGoldNode; createStone replaces764 with this ID and8HP; late819/44/46 overrides still apply",
+          "health": 8
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone:1..3+addedOres+luck/100+mining/100; gold ore,XP18"
+    },
+    {
+      "source_id": "VolcanoCoalNode0",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_volcano_coal_node0",
+      "item": "stardewcraft:mine_stone_volcano_coal_node0",
+      "model": "stardewcraft:block/mine/nodes/stone_volcano_coal_node0",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 136,
+        "rect": [
+          0,
+          272,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "conditional .012*(1+level/7)*.8 +.2/adjacentVolcanoCoalNode; choose1095382 then createStone selects0/1 with NextBool;10HP; late819/44/46 overrides still apply",
+          "health": 10
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone:1..3+addedOres+luck/100+mining/100; mod coal,XP10; no Prospector duplication in this explicit node branch"
+    },
+    {
+      "source_id": "VolcanoCoalNode1",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_volcano_coal_node1",
+      "item": "stardewcraft:mine_stone_volcano_coal_node1",
+      "model": "stardewcraft:block/mine/nodes/stone_volcano_coal_node1",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 137,
+        "rect": [
+          16,
+          272,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "VolcanoDungeon",
+          "condition": "conditional .012*(1+level/7)*.8 +.2/adjacentVolcanoCoalNode; choose1095382 then createStone selects0/1 with NextBool; late819/44/46 overrides apply",
+          "health": 10
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone:mod coal1..3+addedOres+luck/100+mining/100;XP10; explicit branch does not apply Prospector coal doubling"
+    },
+    {
+      "source_id": "BasicCoalNode0",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_basic_coal_node0",
+      "item": "stardewcraft:mine_stone_basic_coal_node0",
+      "model": "stardewcraft:block/mine/nodes/stone_basic_coal_node0",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 146,
+        "rect": [
+          32,
+          288,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "quarry mine area77377",
+          "condition": "createLitterObject tile.X>50 and .09+AverageDailyLuck/2 conditional chance; choose BasicCoalNode0/1",
+          "health": 5
+        },
+        {
+          "area": "Mountain outdoor quarry",
+          "condition": "generate a stone at valid quarry tile; after ore branch fails, conditional10% coal and choose0/1",
+          "health": 5
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone:mod coal1..3+addedOres+luck/100+mining/100;XP10; explicit branch does not apply Prospector coal doubling"
+    },
+    {
+      "source_id": "BasicCoalNode1",
+      "source_kind": "breakable_stone",
+      "block": "stardewcraft:mine_stone_basic_coal_node1",
+      "item": "stardewcraft:mine_stone_basic_coal_node1",
+      "model": "stardewcraft:block/mine/nodes/stone_basic_coal_node1",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 147,
+        "rect": [
+          48,
+          288,
+          16,
+          16
+        ]
+      },
+      "minimum_pickaxe_tier": 0,
+      "health_property": "stone_health",
+      "collision": "aabb",
+      "implemented": true,
+      "deferred_contexts": [],
+      "contexts": [
+        {
+          "area": "quarry mine area77377",
+          "condition": "createLitterObject tile.X>50 and .09+AverageDailyLuck/2 conditional chance; choose BasicCoalNode0/1",
+          "health": 5
+        },
+        {
+          "area": "Mountain outdoor quarry",
+          "condition": "generate a stone at valid quarry tile; after ore branch fails, conditional10% coal and choose0/1",
+          "health": 5
+        }
+      ],
+      "drop_branch": "GameLocation.breakStone:mod coal1..3+addedOres+luck/100+mining/100;XP10; explicit branch does not apply Prospector coal doubling"
+    }
+  ]
+}

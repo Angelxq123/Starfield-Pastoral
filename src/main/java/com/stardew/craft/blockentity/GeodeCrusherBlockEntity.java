@@ -21,7 +21,6 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("null")
 public class GeodeCrusherBlockEntity extends TimedProductionBlockEntity implements UtilityMachineInfo {
-    private static final int MINUTES_UNTIL_READY = 60;
     private static final int STEAM_DELAY_TICKS = 4;
 
     private static final String TAG_INPUT = "input";
@@ -94,7 +93,7 @@ public class GeodeCrusherBlockEntity extends TimedProductionBlockEntity implemen
         }
 
         var plan = prepareProduction(
-                stack, output, MINUTES_UNTIL_READY,
+                stack, output, com.stardew.craft.production.MachineProductionData.cycle("geode_crusher", "default").duration(),
                 player, false);
         if (plan.isEmpty()) {
             return false;
@@ -151,7 +150,7 @@ public class GeodeCrusherBlockEntity extends TimedProductionBlockEntity implemen
             return AutomationStackHelper.remainderAfterInsert(stack, 1);
         }
         var plan = prepareProduction(
-                stack, output, MINUTES_UNTIL_READY,
+                stack, output, com.stardew.craft.production.MachineProductionData.cycle("geode_crusher", "default").duration(),
                 null, true);
         if (plan.isEmpty()) {
             return stack;

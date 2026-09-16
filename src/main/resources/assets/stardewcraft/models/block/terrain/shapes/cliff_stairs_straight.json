@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "side": "stardewcraft:block/cliff/spring/plain",
+    "top": "stardewcraft:block/cliff/spring/plain",
+    "bottom": "stardewcraft:block/cliff/spring/plain",
+    "particle": "stardewcraft:block/cliff/spring/plain"
+  }
+}

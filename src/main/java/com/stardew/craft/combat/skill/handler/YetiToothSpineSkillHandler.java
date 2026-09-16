@@ -86,17 +86,16 @@ public final class YetiToothSpineSkillHandler implements RuntimeWeaponSkillHandl
                         context.player().level().dimension()
                 );
         instance.initializeExecutionState(executionState);
-        instance.registerCommittedEffect(() ->
-                executionState.spawnSpines(context)
-        );
-
-        // Preserve the authored server notification order.
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,
                 skillId,
                 ANIMATION_TICKS
         );
+        instance.registerCommittedEffect(() ->
+                executionState.spawnSpines(context)
+        );
+
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

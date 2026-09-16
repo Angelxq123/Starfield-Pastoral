@@ -47,6 +47,9 @@ public class DyeableChairBlock extends MapUtilityStaticBlock {
             return InteractionResult.PASS;
         }
 
+        if (com.stardew.craft.npc.runtime.SamSupportTarget.occupied((net.minecraft.server.level.ServerLevel)level,mainPos))
+            return InteractionResult.CONSUME;
+
         SofaSeatEntity seat = SofaSeatEntity.getOrCreate((net.minecraft.server.level.ServerLevel) level, mainPos, seatYOffset);
         if (seat == null) {
             return InteractionResult.PASS;

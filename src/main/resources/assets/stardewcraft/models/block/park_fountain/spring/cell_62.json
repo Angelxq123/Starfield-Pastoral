@@ -1,0 +1,267 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/spring/surface",
+    "particle": "stardewcraft:block/park_fountain/spring/particle"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        -7,
+        4
+      ],
+      "to": [
+        12,
+        7,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.375,
+            7.65625,
+            2.625,
+            8.09375
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            2.9375,
+            7.65625,
+            3.1875,
+            8.09375
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            2.65625,
+            7.65625,
+            2.90625,
+            8.09375
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            3.21875,
+            7.65625,
+            3.46875,
+            8.09375
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            3.5,
+            7.65625,
+            3.75,
+            7.90625
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            3.78125,
+            7.65625,
+            4.03125,
+            7.90625
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        2,
+        6,
+        2
+      ],
+      "to": [
+        14,
+        9,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.0625,
+            7.65625,
+            4.4375,
+            7.75
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            4.875,
+            7.65625,
+            5.25,
+            7.75
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            4.46875,
+            7.65625,
+            4.84375,
+            7.75
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            5.28125,
+            7.65625,
+            5.65625,
+            7.75
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            6.09375,
+            7.65625,
+            6.46875,
+            8.03125
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        2,
+        9,
+        2
+      ],
+      "to": [
+        14,
+        15,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.5,
+            7.65625,
+            6.875,
+            7.84375
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            7.3125,
+            7.65625,
+            7.6875,
+            7.84375
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            6.90625,
+            7.65625,
+            7.28125,
+            7.84375
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            7.71875,
+            7.65625,
+            8.09375,
+            7.84375
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            8.125,
+            7.65625,
+            8.5,
+            8.03125
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        1,
+        15,
+        1
+      ],
+      "to": [
+        15,
+        17,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.9375,
+            7.65625,
+            9.375,
+            7.71875
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            9.875,
+            7.65625,
+            10.3125,
+            7.71875
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            9.40625,
+            7.65625,
+            9.84375,
+            7.71875
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            10.34375,
+            7.65625,
+            10.78125,
+            7.71875
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            10.8125,
+            7.65625,
+            11.25,
+            8.09375
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            11.28125,
+            7.65625,
+            11.71875,
+            8.09375
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

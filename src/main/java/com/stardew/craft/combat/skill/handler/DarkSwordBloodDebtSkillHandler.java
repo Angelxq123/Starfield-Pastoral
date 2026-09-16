@@ -1,7 +1,6 @@
 package com.stardew.craft.combat.skill.handler;
 
 import com.stardew.craft.combat.CombatHealing;
-import com.stardew.craft.combat.network.DarkSwordBloodDebtPayload;
 import com.stardew.craft.combat.skill.DarkSwordEffects;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Server-authoritative lifecycle for Dark Sword's original Blood Debt.
@@ -82,15 +80,17 @@ public final class DarkSwordBloodDebtSkillHandler implements RuntimeWeaponSkillH
         if (target != null) {
             instance.setTargetEntityIds(List.of(target.getId()));
         }
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             DarkSwordEffects.playBloodDebtCast(context.player());
-            PacketDistributor.sendToPlayer(
-                    context.player(),
-                    new DarkSwordBloodDebtPayload(
-                            true,
-                            ACTIVE_DURATION_TICKS
-                    )
-            );
+            instance.requireExecutionState(DarkSwordBloodDebtExecutionState.class)
+                    .startPresentation(context.player(),instance.startGameTick());
             if (target != null) {
                 WeaponSkillDamage.apply(
                         context.player(),
@@ -104,12 +104,6 @@ public final class DarkSwordBloodDebtSkillHandler implements RuntimeWeaponSkillH
             }
         });
 
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
@@ -173,12 +167,7 @@ public final class DarkSwordBloodDebtSkillHandler implements RuntimeWeaponSkillH
                     context.skillData().getCooldown() * 20
             );
         }
-        if (reason != SkillInstance.EndReason.CASTER_UNAVAILABLE) {
-            PacketDistributor.sendToPlayer(
-                    context.player(),
-                    new DarkSwordBloodDebtPayload(false, 0)
-            );
-        }
+
     }
 
     static boolean shouldCommitCooldown(

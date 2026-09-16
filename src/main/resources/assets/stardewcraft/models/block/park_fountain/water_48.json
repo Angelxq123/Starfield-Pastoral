@@ -1,0 +1,42 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/water_spring",
+    "particle": "stardewcraft:block/park_fountain/fountain_water_particle"
+  },
+  "render_type": "minecraft:translucent",
+  "elements": [
+    {
+      "from": [
+        -8,
+        0.0,
+        -8
+      ],
+      "to": [
+        8,
+        0.0,
+        8
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            10.25,
+            8.25,
+            11.25,
+            9.25
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            11.3125,
+            8.25,
+            12.3125,
+            9.25
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

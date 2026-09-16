@@ -1,9 +1,11 @@
 import tempfile
+import subprocess
 import unittest
 from pathlib import Path
 
 from verify_api_maturity_review import (
     Evidence,
+    collect_evidence,
     rationale_for,
     render_review,
     verify_review,
@@ -11,6 +13,20 @@ from verify_api_maturity_review import (
 
 
 class VerifyApiMaturityReviewTest(unittest.TestCase):
+    def test_ignored_notes_and_incident_reports_do_not_establish_documentation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", directory], check=True)
+            (root / "docs").mkdir()
+            (root / "docs/ci-release-postmortems.md").write_text("ExampleType")
+            (root / "docs/local.md").write_text("ExampleType")
+            (root / ".gitignore").write_text("docs/local.md\n")
+            subprocess.run(["git", "add", "."], cwd=root, check=True)
+            self.assertFalse(collect_evidence(root, ["example.ExampleType"])["example.ExampleType"].doc)
+            (root / "docs/api.md").write_text("ExampleType")
+            subprocess.run(["git", "add", "docs/api.md"], cwd=root, check=True)
+            self.assertTrue(collect_evidence(root, ["example.ExampleType"])["example.ExampleType"].doc)
+
     def test_rationale_reports_first_missing_evidence(self):
         self.assertEqual(
             "core_runtime_reference_missing",

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "stardewcraft:block/mine/mine_frost_dark_soil_crumbs",
+    "side": "stardewcraft:block/mine/mine_frost_dark_soil_side",
+    "bottom": "stardewcraft:block/mine/mine_frost_dark_soil_side",
+    "particle": "stardewcraft:block/mine/mine_frost_dark_soil"
+  }
+}

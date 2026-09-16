@@ -1,0 +1,1279 @@
+{
+  "version": 1,
+  "pets": {
+    "cat0": {
+      "species": "cat",
+      "variant": 0,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "bc3c0823913abef79c6cb70288ce0b3dff0cef26e4f444e294e12151aa092663",
+      "textureSha256": "deb6fcc6a7bcf276dc6ffe8cdeb886d5ee6e7c07ac4b49ece9c29f72c8e59c49",
+      "clips": {
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.2,
+          "loop": false
+        },
+        "sit_rest": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_content": {
+          "length": 0.2,
+          "loop": false
+        },
+        "lick_enter": {
+          "length": 0.9,
+          "loop": false
+        },
+        "lick_loop": {
+          "length": 0.45,
+          "loop": true
+        },
+        "lick_exit": {
+          "length": 0.36,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "pounce_prepare": {
+          "length": 2,
+          "loop": false
+        },
+        "pounce": {
+          "length": 0.8,
+          "loop": false
+        },
+        "land": {
+          "length": 0.3,
+          "loop": false
+        },
+        "lie_down": {
+          "length": 0.8,
+          "loop": false
+        },
+        "lie_idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "lie_up": {
+          "length": 0.65,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 1.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 1.65,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.48,
+          "loop": false
+        },
+        "adoption_lick": {
+          "length": 2.64,
+          "loop": false
+        }
+      }
+    },
+    "cat1": {
+      "species": "cat",
+      "variant": 1,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "094729a57d121abc5f35e88aa9c491cd990c9f261605928119c6bfc4f7eab405",
+      "textureSha256": "b37a101e90649cbf6de3f62180478be7dfe17cf781aecd2f0bac1ba62aea1c58",
+      "clips": {
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.2,
+          "loop": false
+        },
+        "sit_rest": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_content": {
+          "length": 0.2,
+          "loop": false
+        },
+        "lick_enter": {
+          "length": 0.9,
+          "loop": false
+        },
+        "lick_loop": {
+          "length": 0.45,
+          "loop": true
+        },
+        "lick_exit": {
+          "length": 0.36,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "pounce_prepare": {
+          "length": 2,
+          "loop": false
+        },
+        "pounce": {
+          "length": 0.8,
+          "loop": false
+        },
+        "land": {
+          "length": 0.3,
+          "loop": false
+        },
+        "lie_down": {
+          "length": 0.8,
+          "loop": false
+        },
+        "lie_idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "lie_up": {
+          "length": 0.65,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 1.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 1.65,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.48,
+          "loop": false
+        },
+        "adoption_lick": {
+          "length": 2.64,
+          "loop": false
+        }
+      }
+    },
+    "cat2": {
+      "species": "cat",
+      "variant": 2,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "87fd665e1c88d7af0c761b44c297c82f939dca1c6bcf15bed3adcd02954598d9",
+      "textureSha256": "10560e2d4dc79e0d2435438fd366379192d40e906e146f1f0c1173a8cf56dc80",
+      "clips": {
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.2,
+          "loop": false
+        },
+        "sit_rest": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_content": {
+          "length": 0.2,
+          "loop": false
+        },
+        "lick_enter": {
+          "length": 0.9,
+          "loop": false
+        },
+        "lick_loop": {
+          "length": 0.45,
+          "loop": true
+        },
+        "lick_exit": {
+          "length": 0.36,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "pounce_prepare": {
+          "length": 2,
+          "loop": false
+        },
+        "pounce": {
+          "length": 0.8,
+          "loop": false
+        },
+        "land": {
+          "length": 0.3,
+          "loop": false
+        },
+        "lie_down": {
+          "length": 0.8,
+          "loop": false
+        },
+        "lie_idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "lie_up": {
+          "length": 0.65,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 1.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 1.65,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.48,
+          "loop": false
+        },
+        "adoption_lick": {
+          "length": 2.64,
+          "loop": false
+        }
+      }
+    },
+    "cat3": {
+      "species": "cat",
+      "variant": 3,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "7cfcf9a036fa2bbec4b3ac56a82e5f67f0cc70df5b67548690d98d1bfc5173cd",
+      "textureSha256": "37e035e5cbe86ddfd9e1a3622d93ab7ee5c5a06a2ca6eb2aa7f36b731943a6b7",
+      "clips": {
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.2,
+          "loop": false
+        },
+        "sit_rest": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_content": {
+          "length": 0.2,
+          "loop": false
+        },
+        "lick_enter": {
+          "length": 0.9,
+          "loop": false
+        },
+        "lick_loop": {
+          "length": 0.45,
+          "loop": true
+        },
+        "lick_exit": {
+          "length": 0.36,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "pounce_prepare": {
+          "length": 2,
+          "loop": false
+        },
+        "pounce": {
+          "length": 0.8,
+          "loop": false
+        },
+        "land": {
+          "length": 0.3,
+          "loop": false
+        },
+        "lie_down": {
+          "length": 0.8,
+          "loop": false
+        },
+        "lie_idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "lie_up": {
+          "length": 0.65,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 1.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 1.65,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.48,
+          "loop": false
+        },
+        "adoption_lick": {
+          "length": 2.64,
+          "loop": false
+        }
+      }
+    },
+    "cat4": {
+      "species": "cat",
+      "variant": 4,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "89df8b4c24cb235037b5092e36034f889fcb85a4e681f3f2d404271e6a48b463",
+      "textureSha256": "6bed08c648fc2b8388b00b087156142fc1ca9a8c3fb8a53ee99a307670055ba4",
+      "clips": {
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.2,
+          "loop": false
+        },
+        "sit_rest": {
+          "length": 2.8,
+          "loop": true
+        },
+        "sit_content": {
+          "length": 0.2,
+          "loop": false
+        },
+        "lick_enter": {
+          "length": 0.9,
+          "loop": false
+        },
+        "lick_loop": {
+          "length": 0.45,
+          "loop": true
+        },
+        "lick_exit": {
+          "length": 0.36,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "pounce_prepare": {
+          "length": 2,
+          "loop": false
+        },
+        "pounce": {
+          "length": 0.8,
+          "loop": false
+        },
+        "land": {
+          "length": 0.3,
+          "loop": false
+        },
+        "lie_down": {
+          "length": 0.8,
+          "loop": false
+        },
+        "lie_idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "lie_up": {
+          "length": 0.65,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 1.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 1.65,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.48,
+          "loop": false
+        },
+        "adoption_lick": {
+          "length": 2.64,
+          "loop": false
+        }
+      }
+    },
+    "dog0": {
+      "species": "dog",
+      "variant": 0,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "fae4cce01879c85f2a5250818067c44cd89efd474c2e55f0015283a33d728f82",
+      "textureSha256": "149949aa2dc0f5ecebee27a238492519dd2b75f67bb61a700834fcfd9f4b1932",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "sprint": {
+          "length": 0.4,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_rest": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.5,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sit_side_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_side_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_wait": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_bark": {
+          "length": 0.501,
+          "loop": false
+        },
+        "sit_side_wag": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_side_wag_fast": {
+          "length": 0.24,
+          "loop": true
+        },
+        "sit_side_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "stand_side_up": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 0.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.8,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "adoption_bark_hold": {
+          "length": 0.5,
+          "loop": false
+        },
+        "adoption_wag": {
+          "length": 0.8,
+          "loop": true
+        },
+        "summit_sprint": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    },
+    "dog1": {
+      "species": "dog",
+      "variant": 1,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "64b09b5bcbce9fb0052f4994a0df7dbb97706e24d1a5a8305c6f5e691999b8c7",
+      "textureSha256": "7b116e18331e62dbeb6837e7e3c9fe5b862cc5c3a0eb164afd4123bbc3028b83",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "sprint": {
+          "length": 0.4,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_rest": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.5,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sit_side_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_side_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_wait": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_bark": {
+          "length": 0.501,
+          "loop": false
+        },
+        "sit_side_wag": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_side_wag_fast": {
+          "length": 0.24,
+          "loop": true
+        },
+        "sit_side_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "stand_side_up": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 0.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.8,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "adoption_bark_hold": {
+          "length": 0.5,
+          "loop": false
+        },
+        "adoption_wag": {
+          "length": 0.8,
+          "loop": true
+        },
+        "summit_sprint": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    },
+    "dog2": {
+      "species": "dog",
+      "variant": 2,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "5bdb90d2f55868c8af6636c10cf9d16f7439524ff9ed219f4916794e13a730dc",
+      "textureSha256": "3d41b7c87d392ee0c472059cbe962158a3ed1cce73029785d79d027b93ee77e3",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "sprint": {
+          "length": 0.4,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_rest": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.5,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sit_side_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_side_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_wait": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_bark": {
+          "length": 0.501,
+          "loop": false
+        },
+        "sit_side_wag": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_side_wag_fast": {
+          "length": 0.24,
+          "loop": true
+        },
+        "sit_side_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "stand_side_up": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 0.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.8,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "adoption_bark_hold": {
+          "length": 0.5,
+          "loop": false
+        },
+        "adoption_wag": {
+          "length": 0.8,
+          "loop": true
+        },
+        "summit_sprint": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    },
+    "dog3": {
+      "species": "dog",
+      "variant": 3,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "f8d82a94f10e4ef11c360842711e68e7aa59efa5699838650ed9e6aa667a6191",
+      "textureSha256": "6b8f22d8fc1392461d3aeb5ffc901959ece97c0b7a7abd4d7534763bd039f8cb",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "sprint": {
+          "length": 0.4,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_rest": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.5,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sit_side_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_side_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_wait": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_bark": {
+          "length": 0.501,
+          "loop": false
+        },
+        "sit_side_wag": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_side_wag_fast": {
+          "length": 0.24,
+          "loop": true
+        },
+        "sit_side_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "stand_side_up": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 0.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.8,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "adoption_bark_hold": {
+          "length": 0.5,
+          "loop": false
+        },
+        "adoption_wag": {
+          "length": 0.8,
+          "loop": true
+        },
+        "summit_sprint": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    },
+    "dog4": {
+      "species": "dog",
+      "variant": 4,
+      "canChooseAtStart": true,
+      "price": 40000,
+      "modelSha256": "e5012b8ee0daa2fa7b4f5c59b2bd38a8f236f5f9b086680d104aed42c13767c7",
+      "textureSha256": "dfcda664a79885edb0b52402c2751dc007c6ddbb01c138e3275a7e2076236238",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "sprint": {
+          "length": 0.4,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.24,
+          "loop": false
+        },
+        "sit_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_rest": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_blink": {
+          "length": 0.5,
+          "loop": false
+        },
+        "stand_up": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sit_side_down": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sit_side_idle": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_wait": {
+          "length": 2.4,
+          "loop": true
+        },
+        "sit_side_bark": {
+          "length": 0.501,
+          "loop": false
+        },
+        "sit_side_wag": {
+          "length": 0.4,
+          "loop": true
+        },
+        "sit_side_wag_fast": {
+          "length": 0.24,
+          "loop": true
+        },
+        "sit_side_pant": {
+          "length": 0.4,
+          "loop": true
+        },
+        "stand_side_up": {
+          "length": 0.4,
+          "loop": false
+        },
+        "sleep_enter": {
+          "length": 0.8,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.8,
+          "loop": false
+        },
+        "adoption_sit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "adoption_bark_hold": {
+          "length": 0.5,
+          "loop": false
+        },
+        "adoption_wag": {
+          "length": 0.8,
+          "loop": true
+        },
+        "summit_sprint": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    },
+    "turtle0": {
+      "species": "turtle",
+      "variant": 0,
+      "canChooseAtStart": false,
+      "price": 60000,
+      "modelSha256": "7021ce384d2290971adab13dc87cd004a54fb5b50acbc8fa6415df13b9d81291",
+      "textureSha256": "42388bd502044f7e1b66bc6f4507dad28b9b5e1069a799dfc9d8b9e59f1594d4",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.22,
+          "loop": false
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "retract": {
+          "length": 0.4,
+          "loop": false
+        },
+        "withdrawn": {
+          "length": 0.1,
+          "loop": false
+        },
+        "emerge": {
+          "length": 0.4,
+          "loop": false
+        },
+        "flop": {
+          "length": 0.8,
+          "loop": true
+        },
+        "side_bounce": {
+          "length": 1,
+          "loop": true
+        },
+        "sleep_enter": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "summit_walk": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    },
+    "turtle1": {
+      "species": "turtle",
+      "variant": 1,
+      "canChooseAtStart": false,
+      "price": 500000,
+      "modelSha256": "1ce27fe1679b1042caf5612d9a9718a606882829637ff0b88ed3adbff225e9cf",
+      "textureSha256": "c5f89ba8a349f90a717415c727ae834171e737d16b7f35ecf0187ce26f86bc20",
+      "clips": {
+        "idle": {
+          "length": 3.2,
+          "loop": true
+        },
+        "blink": {
+          "length": 0.22,
+          "loop": false
+        },
+        "walk": {
+          "length": 0.7,
+          "loop": true
+        },
+        "retract": {
+          "length": 0.4,
+          "loop": false
+        },
+        "withdrawn": {
+          "length": 0.1,
+          "loop": false
+        },
+        "emerge": {
+          "length": 0.4,
+          "loop": false
+        },
+        "flop": {
+          "length": 0.8,
+          "loop": true
+        },
+        "side_bounce": {
+          "length": 1,
+          "loop": true
+        },
+        "sleep_enter": {
+          "length": 0.6,
+          "loop": false
+        },
+        "sleep": {
+          "length": 2,
+          "loop": true
+        },
+        "sleep_exit": {
+          "length": 0.6,
+          "loop": false
+        },
+        "summit_walk": {
+          "length": 0.36,
+          "loop": true
+        }
+      }
+    }
+  },
+  "bowls": {
+    "pet_bowl_hay_fall_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_fall_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_fall_particle"
+    },
+    "pet_bowl_hay_fall_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_fall_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_fall_particle"
+    },
+    "pet_bowl_hay_spring_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_spring_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_spring_particle"
+    },
+    "pet_bowl_hay_spring_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_spring_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_spring_particle"
+    },
+    "pet_bowl_hay_summer_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_summer_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_summer_particle"
+    },
+    "pet_bowl_hay_summer_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_summer_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_summer_particle"
+    },
+    "pet_bowl_hay_winter_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_winter_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_winter_particle"
+    },
+    "pet_bowl_hay_winter_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_hay_winter_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_hay_winter_particle"
+    },
+    "pet_bowl_stone_fall_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_fall_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_fall_particle"
+    },
+    "pet_bowl_stone_fall_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_fall_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_fall_particle"
+    },
+    "pet_bowl_stone_spring_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_spring_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_spring_particle"
+    },
+    "pet_bowl_stone_spring_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_spring_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_spring_particle"
+    },
+    "pet_bowl_stone_summer_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_summer_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_summer_particle"
+    },
+    "pet_bowl_stone_summer_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_summer_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_summer_particle"
+    },
+    "pet_bowl_stone_winter_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_winter_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_winter_particle"
+    },
+    "pet_bowl_stone_winter_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_stone_winter_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_stone_winter_particle"
+    },
+    "pet_bowl_wood_fall_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_fall_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_fall_particle"
+    },
+    "pet_bowl_wood_fall_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_fall_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_fall_particle"
+    },
+    "pet_bowl_wood_spring_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_spring_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_spring_particle"
+    },
+    "pet_bowl_wood_spring_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_spring_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_spring_particle"
+    },
+    "pet_bowl_wood_summer_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_summer_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_summer_particle"
+    },
+    "pet_bowl_wood_summer_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_summer_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_summer_particle"
+    },
+    "pet_bowl_wood_winter_empty": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_winter_empty",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_winter_particle"
+    },
+    "pet_bowl_wood_winter_full": {
+      "model": "stardewcraft:block/pet/pet_bowl_wood_winter_full",
+      "particle": "stardewcraft:block/pet/pet_bowl_wood_winter_particle"
+    }
+  }
+}

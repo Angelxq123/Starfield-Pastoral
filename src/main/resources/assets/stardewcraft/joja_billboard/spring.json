@@ -1,0 +1,229 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_00",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_01",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_02",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_03",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_04",
+      "scene_offset": [
+        32,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_05",
+      "scene_offset": [
+        32,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_06",
+      "scene_offset": [
+        32,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_07",
+      "scene_offset": [
+        32,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_08",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_09",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_10",
+      "scene_offset": [
+        0,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_11",
+      "scene_offset": [
+        48,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_12",
+      "scene_offset": [
+        16,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_13",
+      "scene_offset": [
+        16,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_14",
+      "scene_offset": [
+        48,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_15",
+      "scene_offset": [
+        48,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_16",
+      "scene_offset": [
+        0,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_17",
+      "scene_offset": [
+        48,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_18",
+      "scene_offset": [
+        32,
+        32,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_19",
+      "scene_offset": [
+        32,
+        64,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_20",
+      "scene_offset": [
+        0,
+        16,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_21",
+      "scene_offset": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_22",
+      "scene_offset": [
+        48,
+        16,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_23",
+      "scene_offset": [
+        48,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_24",
+      "scene_offset": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_25",
+      "scene_offset": [
+        16,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_26",
+      "scene_offset": [
+        32,
+        0,
+        0
+      ]
+    },
+    {
+      "model": "stardewcraft:block/joja_billboard/spring/part_27",
+      "scene_offset": [
+        48,
+        0,
+        0
+      ]
+    }
+  ],
+  "model_units_per_block": 16
+}

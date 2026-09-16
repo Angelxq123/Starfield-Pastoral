@@ -12,15 +12,25 @@ final class WeaponAppliedHitCoordinator {
     private WeaponAppliedHitCoordinator() {
     }
 
+    private static void afterMortality(ResolvedWeaponHit hit, Runnable action) {
+        if (hit.target() instanceof com.stardew.craft.monster.StardewMonsterEntity monster) monster.afterMortality(action);
+        else action.run();
+    }
+
     static void apply(ResolvedWeaponHit hit) {
         if (!hit.dealtPositiveDamage()) {
             return;
         }
 
+        BuiltinSkillAppliedHitRules.applyHeavyHammer(hit);
+        com.stardew.craft.combat.skill.handler.WoodWeaponSkillHandler.appliedHit(hit);
+        com.stardew.craft.combat.skill.handler.IronClubSkillHandler.appliedHit(hit);
+        com.stardew.craft.combat.skill.handler.SlammerDwarfSkillHandler.appliedHit(hit);
+        com.stardew.craft.combat.skill.handler.DragonRapierSkillHandler.appliedHit(hit);
         BuiltinSkillAppliedHitRules.applyHolySmite(hit);
         BuiltinSkillAppliedHitRules.applyTetanusStrike(hit);
         BuiltinSkillAppliedHitRules.applyBoneFracture(hit);
-        BuiltinSkillAppliedHitRules.recordDesperatePlunderOutcome(hit);
+        afterMortality(hit, () -> BuiltinSkillAppliedHitRules.recordDesperatePlunderOutcome(hit));
         BuiltinSkillAppliedHitRules.applyTideReel(hit);
         BuiltinSkillAppliedHitRules.applyDragontoothShivStab(hit);
         BuiltinSkillAppliedHitRules.applyGalaxyDaggerStarleap(hit);
@@ -51,18 +61,19 @@ final class WeaponAppliedHitCoordinator {
         BuiltinSkillAppliedHitRules.fireElfLeaf(hit);
         BuiltinWeaponPassiveAppliedHitRules.addAppliedWeaponResources(hit);
         CommonWeaponAppliedHitRules.applyKnockback(hit);
-        BuiltinSkillAppliedHitRules.applyBurglarShank(hit);
-        CommonWeaponAppliedHitRules.applyVampiricEnchantment(hit);
+        CommonWeaponAppliedHitRules.applyNativeHitTiming(hit);
+        afterMortality(hit, () -> BuiltinSkillAppliedHitRules.applyBurglarShank(hit));
+        afterMortality(hit, () -> CommonWeaponAppliedHitRules.applyVampiricEnchantment(hit));
         CommonWeaponAppliedHitRules.notifyTrinkets(hit);
-        CommonWeaponAppliedHitRules.applyKillRewards(hit);
+        afterMortality(hit, () -> CommonWeaponAppliedHitRules.applyKillRewards(hit));
         LegacyWeaponHitPresentation.emitDamageNumber(hit);
         LegacyWeaponHitPresentation.emitGeneralSkillImpact(hit);
+        LavaKatanaHitPresentation.emit(hit);
+        MeleeHitPresentation.emit(hit);
         BuiltinSkillAppliedHitRules.applyInsectEyeStance(hit);
         BuiltinSkillAppliedHitRules.emitInsectDash(hit);
         BuiltinSkillAppliedHitRules.applyYetiMark(hit);
         BuiltinSkillAppliedHitRules.applyLavaBrand(hit);
-        BuiltinWeaponPassiveAppliedHitRules
-                .emitObsidianResonancePresentation(hit);
         BuiltinWeaponPassiveAppliedHitRules
                 .emitCrystalDaggerBurstPresentation(hit);
         BuiltinWeaponPassiveAppliedHitRules.consumeObsidianResonance(hit);

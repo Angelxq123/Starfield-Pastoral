@@ -41,16 +41,13 @@ public final class GardenPotBlockEntityRenderer
             MultiBufferSource buffer,
             int packedOverlay
     ) {
-        super.renderBlockModel(be, state, level, poseStack, buffer, packedOverlay);
-
         FertilizerType fertilizer = ClientFertilizerCache.getFertilizer(level, be.getBlockPos());
-        if (fertilizer != null) {
-            FertilizerOverlayRenderer.renderGardenPotOverlay(
-                    poseStack,
-                    buffer,
-                    fertilizer,
-                    LevelRenderer.getLightColor(level, be.getBlockPos().above()));
-        }
+        var renderer = Minecraft.getInstance().getBlockRenderer();
+        var model = com.stardew.craft.client.model.terrain.FertilizedSoilModels.gardenPot(
+                renderer.getBlockModel(state), state, fertilizer);
+        renderer.getModelRenderer().tesselateBlock(level, model, state, be.getBlockPos(), poseStack,
+                buffer.getBuffer(net.minecraft.client.renderer.ItemBlockRenderTypes.getRenderType(state, false)),
+                true, net.minecraft.util.RandomSource.create(0), 0L, packedOverlay);
 
         BlockState crop = level.getBlockState(be.getBlockPos().above());
         if (!GardenPotBlock.isSupportedPlant(crop)) {

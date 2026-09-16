@@ -9,8 +9,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @SuppressWarnings("null")
 public class BookshelfGeoDecorBlock extends IntegratedAabbDecorBlock implements EntityBlock {
@@ -18,17 +16,6 @@ public class BookshelfGeoDecorBlock extends IntegratedAabbDecorBlock implements 
                                   double minX, double minY, double minZ,
                                   double maxX, double maxY, double maxZ) {
         super(properties, modelId, minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    @Override
-    protected Set<CellOffset> localOccupiedOffsets() {
-        Set<CellOffset> cells = new LinkedHashSet<>();
-        for (int x = -1; x <= 0; x++) {
-            for (int y = 0; y < 3; y++) {
-                cells.add(new CellOffset(x, y, 0));
-            }
-        }
-        return cells;
     }
 
     @Override

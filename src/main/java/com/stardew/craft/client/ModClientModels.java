@@ -15,6 +15,14 @@ public final class ModClientModels {
     private ModClientModels() {}
 
     @SubscribeEvent
+    public static void onRegisterGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
+        event.register(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "crop_geometry"),
+            com.stardew.craft.client.model.CropModelGeometry.LOADER);
+        event.register(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "geometry"),
+            com.stardew.craft.client.model.ImportedModelGeometry.LOADER);
+    }
+
+    @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         @SuppressWarnings("null")
         ModelResourceLocation model = new ModelResourceLocation(
@@ -22,6 +30,13 @@ public final class ModClientModels {
             "standalone"
         );
         event.register(model);
+
+        registerStandalone(event, "block/utility/incubator_egg");
+        registerStandalone(event, "block/utility/incubator_straw_front");
+        registerStandalone(event, "block/utility/incubator_straw_back");
+
+        registerStandalone(event, "entity/minecart/empty");
+        registerStandalone(event, "entity/minecart/loaded");
 
         // 炸弹实体 3D 模型
         registerStandalone(event, "entity/bomb/cherry_bomb");

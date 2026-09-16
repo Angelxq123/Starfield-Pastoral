@@ -16,9 +16,6 @@ public final class WeaponSkillAnimationClient {
     private static int durationTicks = 0;
     private static String weaponId;
     private static String skillId;
-    private static Vec3 dragonBreathOrigin;
-    private static Vec3 dragonBreathDir;
-    private static long dragonBreathTick = -9999;
     private static Vec3 windSpireOrigin;
     private static long windSpireTick = -9999;
     private static final Map<Integer, WorldAction> WORLD_ACTIONS = new HashMap<>();
@@ -53,6 +50,17 @@ public final class WeaponSkillAnimationClient {
             WORLD_ACTIONS.clear();
             actionLevel = mc.level;
         }
+        // An optional frenzy opening must not replace an already executing needle stroke.
+        if (MeleeWeaponVisuals.NEEDLE_FRENZY.equals(payload.skillId())
+                && getWorldActionProgress(payload.casterEntityId(), 0) >= 0) {
+            var current = getWorldAction(payload.casterEntityId());
+            if (current != null && "iridium_needle".equals(payload.weaponId())
+                    && payload.weaponId().equals(current.weaponId())
+                    && NeedleBurglarVisuals.keepsCurrentStrike(current.skillId(), payload.skillId())) {
+                NeedleBurglarVisuals.start(payload);
+                return;
+            }
+        }
         long playbackStartTick = mc.level.getGameTime();
         WORLD_ACTIONS.put(
                 payload.casterEntityId(),
@@ -71,7 +79,17 @@ public final class WeaponSkillAnimationClient {
             );
         }
 
-        boolean migrated = SkillPresentationClient.start(payload, playbackStartTick);
+        boolean migrated;
+        if ("lava_katana".equals(payload.weaponId()) && LavaKatanaVisuals.BRAND.equals(payload.skillId())) {
+            LavaKatanaVisuals.startBrand(payload);
+            migrated = true;
+        } else if ("lava_katana".equals(payload.weaponId()) && LavaKatanaVisuals.REVERB.equals(payload.skillId())) {
+            migrated = true; // Sustained ignition is driven by its authoritative state payload.
+        } else if (MeleeWeaponVisuals.startSkill(payload)) {
+            migrated = true;
+        } else {
+            migrated = SkillPresentationClient.start(payload, playbackStartTick);
+        }
         if (!migrated && caster != null) {
             SkillEffectsClient.playSkillEffects(payload.skillId(), caster);
         }
@@ -101,24 +119,6 @@ public final class WeaponSkillAnimationClient {
         WeaponSkillAnimationClient.weaponId = weaponId;
         WeaponSkillAnimationClient.skillId = skillId;
 
-        if ("dragon_breath_thrust".equals(skillId) && mc.level != null) {
-            var player = mc.player;
-            if (player == null) {
-                return;
-            }
-            long now = mc.level.getGameTime();
-            if (now - dragonBreathTick > 2) {
-                dragonBreathOrigin = player.position();
-                Vec3 look = player.getLookAngle();
-                dragonBreathDir = new Vec3(look.x, 0.0, look.z);
-                if (dragonBreathDir.lengthSqr() < 1.0E-4) {
-                    dragonBreathDir = look;
-                }
-                dragonBreathDir = dragonBreathDir.normalize();
-                dragonBreathTick = now;
-            }
-        }
-
         if ("wind_spire_thrust".equals(skillId) && mc.level != null) {
             var player = mc.player;
             if (player == null) {
@@ -130,18 +130,6 @@ public final class WeaponSkillAnimationClient {
                 windSpireTick = now;
             }
         }
-    }
-
-    public static Vec3 getDragonBreathOrigin() {
-        return dragonBreathOrigin;
-    }
-
-    public static Vec3 getDragonBreathDir() {
-        return dragonBreathDir;
-    }
-
-    public static long getDragonBreathTick() {
-        return dragonBreathTick;
     }
 
     public static Vec3 getWindSpireOrigin() {
@@ -172,6 +160,13 @@ public final class WeaponSkillAnimationClient {
 
     public static boolean isActive() {
         return startTick >= 0 && durationTicks > 0;
+    }
+
+    public static void stopMatching(int actor,String expectedSkill) {
+        var action=WORLD_ACTIONS.get(actor);
+        if(action!=null&&expectedSkill.equals(action.payload.skillId()))WORLD_ACTIONS.remove(actor);
+        var player=Minecraft.getInstance().player;
+        if(player!=null&&player.getId()==actor&&expectedSkill.equals(skillId))stop();
     }
 
     public static void stop() {

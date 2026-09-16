@@ -34,7 +34,10 @@ public final class TrinketDropService {
     }
 
     public static void trySpawnContainerDrop(ServerLevel level, BlockPos pos, double chanceModifier) {
-        ServerPlayer player = nearestEligiblePlayer(level, Vec3.atCenterOf(pos));
+        trySpawnContainerDrop(level, pos, chanceModifier, nearestEligiblePlayer(level, Vec3.atCenterOf(pos)));
+    }
+
+    public static void trySpawnContainerDrop(ServerLevel level, BlockPos pos, double chanceModifier, ServerPlayer player) {
         if (player == null || !rollSpawn(player, level.getRandom(), chanceForMonster(null, player, chanceModifier))) {
             return;
         }

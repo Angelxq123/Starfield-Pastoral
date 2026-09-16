@@ -1,0 +1,87 @@
+{
+  "intent": "成年男性渔夫；宽松、踏实、略前倾，步态舒展，手臂与肩有较慢的跟随；不凭空添加跛行或疼痛。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.721225125,
+  "attentionRig": {
+    "hipHeight": 11,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 2.4,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 32,
+    "pitch": 9
+  },
+  "gait": {
+    "id": "willy",
+    "revision": "character-articulated-3",
+    "rootMean": 0.4,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -2.3,
+    "headPitch": 1.1,
+    "halfStance": 2.4,
+    "intent": "成年男性渔夫；宽松、踏实、略前倾，步态舒展，手臂与肩有较慢的跟随；不凭空添加跛行或疼痛。",
+    "stance": 0.6,
+    "strideRatio": 1.6,
+    "bob": 0.2432,
+    "sway": 0.59,
+    "rootYaw": 2.2,
+    "bodyYaw": 4.6,
+    "bodyRoll": 1.1,
+    "bodyNod": 0.8,
+    "headYaw": 2.0,
+    "headRoll": 0.65,
+    "armSwing": 14,
+    "armOpening": 6.2,
+    "elbowBase": 11,
+    "elbowSwing": 5,
+    "footLift": 0.25200000000000006,
+    "heelPitch": 4.199999999999999,
+    "toePitch": 8.399999999999999,
+    "breathSeconds": 9.6,
+    "idleScale": 1.0,
+    "stride": 11.539602,
+    "reachMargin": 0.036667,
+    "legLengthStride": 17.6,
+    "previewSpeed": 0.784938,
+    "levelWalk": true
+  }
+}

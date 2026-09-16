@@ -94,8 +94,8 @@ public final class FishcatchThrustSkillHandler implements RuntimeWeaponSkillHand
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,
-                skillId,
-                ANIMATION_TICKS
+                "fishcatch_ready",
+                6
         );
         WeaponSkillAnimationLock.setLock(
                 context.player(),

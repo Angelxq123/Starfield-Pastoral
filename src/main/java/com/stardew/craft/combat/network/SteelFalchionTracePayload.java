@@ -36,6 +36,7 @@ public record SteelFalchionTracePayload(boolean active, int durationTicks) imple
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(SteelFalchionTracePayload payload) {
+        com.stardew.craft.client.weapon.SteelFalchionLineEffectClient.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;

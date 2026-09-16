@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:block/utility/garden_pot_watered",
+  "textures": {
+    "2": "stardewcraft:block/terrain/fertilized/pot/basic_fertilizer_wet"
+  }
+}

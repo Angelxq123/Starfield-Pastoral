@@ -36,7 +36,7 @@
       "ContinueOnDrop": false,
       "MinStack": -1,
       "MaxStack": -1,
-      "ApplyGenerousEnchantment": false,
+      "ApplyGenerousEnchantment": true,
       "OneDebrisPerDrop": true
     },
     {
@@ -49,7 +49,7 @@
       "ContinueOnDrop": false,
       "MinStack": -1,
       "MaxStack": -1,
-      "ApplyGenerousEnchantment": false,
+      "ApplyGenerousEnchantment": true,
       "OneDebrisPerDrop": true
     },
     {
@@ -62,7 +62,7 @@
       "ContinueOnDrop": true,
       "MinStack": 2,
       "MaxStack": 5,
-      "ApplyGenerousEnchantment": true,
+      "ApplyGenerousEnchantment": false,
       "OneDebrisPerDrop": false
     },
     {
@@ -120,7 +120,11 @@
     {
       "Id": "(O)688|(O)689|(O)690",
       "ItemId": null,
-      "RandomItemId": ["(O)688", "(O)689", "(O)690"],
+      "RandomItemId": [
+        "(O)688",
+        "(O)689",
+        "(O)690"
+      ],
       "Chance": 0.1,
       "Condition": "DAYS_PLAYED 28",
       "Precedence": 100,
@@ -141,7 +145,7 @@
       "MinStack": 1,
       "MaxStack": 3,
       "ApplyGenerousEnchantment": true,
-      "OneDebrisPerDrop": false
+      "OneDebrisPerDrop": true
     }
   ],
   "Town": [
@@ -628,6 +632,34 @@
       "MaxStack": 3,
       "ApplyGenerousEnchantment": true,
       "OneDebrisPerDrop": true
+    }
+  ],
+  "Woods": [
+    {
+      "Chance": 0.25,
+      "ApplyGenerousEnchantment": true,
+      "OneDebrisPerDrop": true,
+      "Precedence": 0,
+      "ContinueOnDrop": false,
+      "Condition": null,
+      "Id": "(O)390",
+      "ItemId": "(O)390",
+      "RandomItemId": null,
+      "MaxItems": null,
+      "MinStack": 1,
+      "MaxStack": 3,
+      "Quality": -1,
+      "ObjectInternalName": null,
+      "ObjectDisplayName": null,
+      "ObjectColor": null,
+      "ToolUpgradeLevel": -1,
+      "IsRecipe": false,
+      "StackModifiers": null,
+      "StackModifierMode": "Stack",
+      "QualityModifiers": null,
+      "QualityModifierMode": "Stack",
+      "ModData": null,
+      "PerItemCondition": null
     }
   ]
 }

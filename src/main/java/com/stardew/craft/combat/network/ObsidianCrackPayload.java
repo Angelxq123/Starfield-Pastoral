@@ -2,46 +2,28 @@ package com.stardew.craft.combat.network;
 
 import com.stardew.craft.StardewCraft;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
 
-public record ObsidianCrackPayload(float x, float y, float z, float yaw, float length, int durationTicks)
-        implements CustomPacketPayload {
-
-    @SuppressWarnings("null")
-    public static final Type<ObsidianCrackPayload> TYPE = new Type<>(
-        ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "obsidian_crack")
-    );
-
-    @SuppressWarnings("null")
-    public static final StreamCodec<ByteBuf, ObsidianCrackPayload> STREAM_CODEC = StreamCodec.composite(
-        ByteBufCodecs.FLOAT,
-        ObsidianCrackPayload::x,
-        ByteBufCodecs.FLOAT,
-        ObsidianCrackPayload::y,
-        ByteBufCodecs.FLOAT,
-        ObsidianCrackPayload::z,
-        ByteBufCodecs.FLOAT,
-        ObsidianCrackPayload::yaw,
-        ByteBufCodecs.FLOAT,
-        ObsidianCrackPayload::length,
-        ByteBufCodecs.VAR_INT,
-        ObsidianCrackPayload::durationTicks,
-        ObsidianCrackPayload::new
-    );
-
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
-    public static void handle(ObsidianCrackPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> com.stardew.craft.client.weapon.ObsidianCrackEffectClient.add(
-            payload.x(), payload.y(), payload.z(), payload.yaw(), payload.length(), payload.durationTicks()
-        ));
+/** Phase packets share an exact release identity, including cancellation in the original dimension. */
+public record ObsidianCrackPayload(int casterId, long castTick, int phase, double x, double y, double z,
+        float yaw, float length, int durationTicks) implements CustomPacketPayload {
+    public static final int START = 0, PULSE = 1, END = 2;
+    public static final Type<ObsidianCrackPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "obsidian_crack"));
+    public static final StreamCodec<ByteBuf, ObsidianCrackPayload> STREAM_CODEC = new StreamCodec<>() {
+        @Override public ObsidianCrackPayload decode(ByteBuf b) {
+            return new ObsidianCrackPayload(b.readInt(), b.readLong(), b.readUnsignedByte(), b.readDouble(), b.readDouble(), b.readDouble(), b.readFloat(), b.readFloat(), b.readInt());
+        }
+        @Override public void encode(ByteBuf b, ObsidianCrackPayload p) {
+            b.writeInt(p.casterId()).writeLong(p.castTick()).writeByte(p.phase()).writeDouble(p.x()).writeDouble(p.y()).writeDouble(p.z());
+            b.writeFloat(p.yaw()).writeFloat(p.length());
+            b.writeInt(p.durationTicks());
+        }
+    };
+    @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    public static void handle(ObsidianCrackPayload p, IPayloadContext context) {
+        context.enqueueWork(() -> com.stardew.craft.client.weapon.ObsidianCrackEffectClient.add(p));
     }
 }

@@ -1,6 +1,3 @@
 {
-    "parent":  "stardewcraft:block/coop_manager",
-    "textures":  {
-                     "particle":  "stardewcraft:block/building/coop_manager"
-                 }
+  "parent": "stardewcraft:block/coop_manager"
 }

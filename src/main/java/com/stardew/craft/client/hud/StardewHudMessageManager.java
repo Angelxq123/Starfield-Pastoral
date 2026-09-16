@@ -170,6 +170,7 @@ public final class StardewHudMessageManager {
 		return key.contains(".command.")
 			|| key.contains(".debug.")
 			|| key.startsWith("stardewcraft.join_announcement.")
+			|| key.equals("stardewcraft.emote.chat")
 			|| key.contains(".actionbar.")
 			|| key.endsWith(".actionbar")
 			|| key.endsWith(".score")

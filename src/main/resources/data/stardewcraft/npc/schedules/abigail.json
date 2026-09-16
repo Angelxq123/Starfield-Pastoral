@@ -82,10 +82,9 @@
   },
 
   "friday": {
-    "_note": "Friday: visits saloon in the evening",
+    "_note": "Friday: saloon visit temporarily disabled pending map point review; stays home until bedtime",
     "600":  "seedshop @abigail_seedshop_indoor_target 2",
     "900":  "seedshop @abigail_seedshop_indoor_target 2",
-    "1500": "saloon @abigail_saloon_indoor_stay 2 abigail_sit_down",
     "2100": "seedshop @abigail_seedshop_sleep 0 abigail_sleep"
   },
 

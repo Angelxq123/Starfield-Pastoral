@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stardewcraft:mine_step_stone",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "stardewcraft:mine_step_stone",
+              "properties": [
+                "theme"
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

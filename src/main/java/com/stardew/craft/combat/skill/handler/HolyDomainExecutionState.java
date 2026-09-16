@@ -82,9 +82,9 @@ final class HolyDomainExecutionState
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 executionContext.player(),
                 new HolyBladeRingPayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
+                        center.x,
+                        center.y,
+                        center.z,
                         maxRadius,
                         HolyDomainSkillHandler.RING_DURATION_TICKS
                 )
@@ -116,7 +116,6 @@ final class HolyDomainExecutionState
                     WeaponSkillDamage.HitCooldownPolicy
                             .BYPASS_FOR_AUTHORED_SEQUENCE
             );
-            HolyBladeEffects.playDomainPulse(level, target);
         }
 
         HolyBladeEffects.playHeal(

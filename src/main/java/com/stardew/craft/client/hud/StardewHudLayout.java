@@ -31,12 +31,17 @@ public final class StardewHudLayout {
                                     int baseWidth, int baseHeight) {
         Config.HudElementSettings settings = settings(element);
         int configuredPercent = Mth.clamp(settings.scalePercent().get(), MIN_SCALE_PERCENT, MAX_SCALE_PERCENT);
+        float scale = configuredPercent / 100.0F * visualScaleFactor(element);
+        if (com.stardew.craft.client.font.StardewFonts.readingScale() != 1.0F) {
+            scale = com.stardew.craft.client.gui.common.ReadingTextLayout.fitHudScale(
+                    scale, baseWidth, baseHeight, screenWidth, screenHeight);
+        }
         return calculateAtScale(
                 screenWidth,
                 screenHeight,
                 baseWidth,
                 baseHeight,
-                configuredPercent / 100.0F * visualScaleFactor(element),
+                scale,
                 settings.horizontalAnchor().get(),
                 settings.verticalAnchor().get(),
                 settings.offsetX().get(),
@@ -47,13 +52,14 @@ public final class StardewHudLayout {
     /** SDV HUD sprites are authored for pixelZoom=4; convert that framebuffer scale into MC GUI units. */
     public static float visualScaleFactor(Config.HudElement element) {
         if (element != Config.HudElement.MAIN) {
-            return 1.0F;
+            return com.stardew.craft.client.font.StardewFonts.readingScale();
         }
         Minecraft minecraft = Minecraft.getInstance();
         double guiScale = minecraft == null || minecraft.getWindow() == null
                 ? 1.0D
                 : minecraft.getWindow().getGuiScale();
-        return 4.0F / (float) Math.max(1.0D, guiScale);
+        return 4.0F / (float) Math.max(1.0D, guiScale)
+                * com.stardew.craft.client.font.StardewFonts.readingScale();
     }
 
     static Placement calculate(int screenWidth, int screenHeight, int scalePercent,

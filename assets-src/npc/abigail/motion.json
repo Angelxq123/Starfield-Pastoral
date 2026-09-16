@@ -1,0 +1,82 @@
+{
+  "intervalMin": 3.5,
+  "intervalMax": 6.8,
+  "durationMin": 0.92,
+  "durationMax": 1.13,
+  "doubleChance": 0.09,
+  "groundOffset": 0.35,
+  "walkStride": 0.8463355,
+  "attentionRig": {
+    "hipHeight": 11,
+    "soleY": -0.35,
+    "toeDepth": 2.35,
+    "halfStance": 2.15,
+    "rightZ": 0.18,
+    "leftZ": -0.22,
+    "rightYaw": -4,
+    "leftYaw": 5,
+    "lift": 0.8,
+    "lean": 1.4,
+    "armSwing": 3.5
+  },
+  "gait": {
+    "id": "abigail",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42400000000000004,
+    "groundOffset": 0.35,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      }
+    },
+    "bodyPitch": -2.1,
+    "headPitch": 0.6873585,
+    "halfStance": 2.4299999999999997,
+    "stride": 13.541368,
+    "reachMargin": 0.044614,
+    "legLengthStride": 19.25,
+    "approvedBaseStride": 19.25,
+    "stance": 0.54,
+    "bob": 0.2816,
+    "sway": 0.48,
+    "rootYaw": 2.4,
+    "bodyYaw": 5.8,
+    "armSwing": 19.0,
+    "armPhase": 0.015,
+    "footLift": 0.3304,
+    "swingPeak": 0.44,
+    "elbowBase": 10,
+    "bodyRoll": 1.05,
+    "strideScale": 1.0,
+    "intent": "年轻女性，外向、冒险兴趣；轻快回收脚步，肩臂主动，避免持续弹跳。",
+    "bodyLag": 0.045,
+    "headLag": 0.08,
+    "headYawLag": 0.03,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.808965,
+    "levelWalk": true
+  }
+}

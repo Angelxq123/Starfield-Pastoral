@@ -82,7 +82,8 @@ public record FarmListSyncPayload(
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player == null) return;
         if ("farm_join".equals(payload.entryTag)) {
-            mc.setScreen(new com.stardew.craft.client.gui.FarmJoinSelectScreen(payload.farms));
+            mc.setScreen(new com.stardew.craft.client.gui.FarmJoinSelectScreen(payload.farms,
+                    mc.screen instanceof com.stardew.craft.client.gui.FarmSelectionScreen ? mc.screen : null));
         } else {
             mc.setScreen(new com.stardew.craft.client.gui.FarmEntryScreen(payload.farms, payload.entryTag));
         }

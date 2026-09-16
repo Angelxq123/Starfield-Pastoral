@@ -34,6 +34,7 @@ public record StoneChestColorSelectPayload(int colorSelection) implements Custom
             if (!(serverPlayer.containerMenu instanceof StoneChestMenu menu)) {
                 return;
             }
+            if (!menu.stillValid(serverPlayer)) return;
             menu.setColorSelectionFromClient(WoodenChestColorPalette.clampIndex(payload.colorSelection));
         });
     }

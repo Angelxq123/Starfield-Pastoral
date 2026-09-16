@@ -1,17 +1,4 @@
 {
   "replace": false,
-  "values": [
-    "stardewcraft:earth_shale",
-    "stardewcraft:frost_gneiss",
-    "stardewcraft:lava_basalt",
-    "stardewcraft:dark_earth_shale",
-    "stardewcraft:dark_frost_gneiss",
-    "stardewcraft:dark_lava_basalt",
-    "stardewcraft:banded_marble",
-    "stardewcraft:limestone",
-    "stardewcraft:mossy_sandstone",
-    "stardewcraft:cracked_slate",
-    "stardewcraft:scoria",
-    "stardewcraft:salt_rock"
-  ]
+  "values": []
 }

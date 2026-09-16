@@ -3,7 +3,6 @@ package com.stardew.craft.client.gui;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.deco.PaintbrushSelectionManager;
 import com.stardew.craft.network.payload.ApplyDecorationStylePayload;
-import com.stardew.craft.network.payload.SetWallpaperSegmentPayload;
 import com.stardew.craft.network.payload.OpenDecorationScreenPayload;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -112,13 +111,6 @@ public class DecorationSelectionScreen extends Screen {
                 int segResult = checkSegmentButtonClick(mouseX, mouseY);
                 if (segResult != Integer.MIN_VALUE) {
                     selectedSegment = segResult;
-                    PaintbrushSelectionManager mgr = PaintbrushSelectionManager.get();
-                    if (mgr.hasCompleteSelection() && mgr.getFirstPos() != null && mgr.getSecondPos() != null) {
-                        PacketDistributor.sendToServer(SetWallpaperSegmentPayload.region(
-                            payload.targetPos(), selectedSegment, mgr.getFirstPos(), mgr.getSecondPos()));
-                    } else {
-                        PacketDistributor.sendToServer(new SetWallpaperSegmentPayload(payload.targetPos(), selectedSegment));
-                    }
                     return true;
                 }
             }
@@ -161,11 +153,12 @@ public class DecorationSelectionScreen extends Screen {
         PaintbrushSelectionManager mgr = PaintbrushSelectionManager.get();
         if (mgr.hasCompleteSelection() && mgr.getFirstPos() != null && mgr.getSecondPos() != null) {
             return ApplyDecorationStylePayload.region(
-                payload.decorationType(), payload.targetPos(), styleId,
+                payload.decorationType(), payload.targetPos(), styleId, isWallpaper ? selectedSegment : -1,
                 mgr.getFirstPos(), mgr.getSecondPos()
             );
         }
-        return new ApplyDecorationStylePayload(payload.decorationType(), payload.targetPos(), styleId);
+        return new ApplyDecorationStylePayload(payload.decorationType(), payload.targetPos(), styleId,
+            isWallpaper ? selectedSegment : -1);
     }
 
     private int getPanelX() {

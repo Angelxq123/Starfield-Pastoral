@@ -1,0 +1,221 @@
+{
+  "textures": {
+    "particle": "stardewcraft:block/park_fountain/fountain_stone_particle",
+    "surface": "stardewcraft:block/park_fountain/fountain_spring"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        0
+      ],
+      "to": [
+        15,
+        3,
+        32
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            2.0625,
+            0.0,
+            2.5,
+            1.0
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            2.53125,
+            0.0,
+            2.96875,
+            1.0
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        1,
+        0,
+        0
+      ],
+      "to": [
+        15,
+        4,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.34375,
+            1.03125,
+            2.78125,
+            1.15625
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            3.28125,
+            1.03125,
+            3.53125,
+            1.15625
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            2.8125,
+            1.03125,
+            3.25,
+            1.15625
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            3.84375,
+            1.03125,
+            4.28125,
+            1.28125
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            4.3125,
+            1.03125,
+            4.75,
+            1.28125
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        2,
+        4,
+        1
+      ],
+      "to": [
+        14,
+        14,
+        7
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.65625,
+            3.09375,
+            12.03125,
+            3.40625
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            12.46875,
+            3.09375,
+            12.65625,
+            3.40625
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            12.0625,
+            3.09375,
+            12.4375,
+            3.40625
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            12.90625,
+            3.09375,
+            13.28125,
+            3.28125
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            13.3125,
+            3.09375,
+            13.6875,
+            3.28125
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        1,
+        14,
+        0
+      ],
+      "to": [
+        15,
+        18,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.0625,
+            4.875,
+            2.5,
+            5.0
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            3.0,
+            4.875,
+            3.1875,
+            5.0
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            2.53125,
+            4.875,
+            2.96875,
+            5.0
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            3.4375,
+            4.875,
+            3.875,
+            5.0625
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            3.90625,
+            4.875,
+            4.34375,
+            5.0625
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

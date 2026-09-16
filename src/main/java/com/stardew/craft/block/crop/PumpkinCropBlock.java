@@ -3,7 +3,6 @@ package com.stardew.craft.block.crop;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,7 +30,7 @@ import java.util.function.Supplier;
  */
 public class PumpkinCropBlock extends StardewCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{1, 3, 4, 5}; // SDV: 13 days
+    private static final int[] PHASE_DAYS = new int[]{1, 2, 3, 4, 3}; // SDV: 13 days, five growth phases
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
 
     @SuppressWarnings("null")
@@ -58,8 +57,7 @@ public class PumpkinCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 2;
     }
 
     @Override
@@ -102,6 +100,8 @@ public class PumpkinCropBlock extends StardewCropBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape modeled = CropModelShapes.shape(state, level, pos);
+        if (modeled != null) return modeled;
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) return net.minecraft.world.phys.shapes.Shapes.empty();
         return getHalfShape(state);
     }
@@ -160,7 +160,7 @@ public class PumpkinCropBlock extends StardewCropBlock {
         if (level instanceof ServerLevel) {
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
-            if (aboveState.isAir() || !(aboveState.getBlock() == this && aboveState.getValue(HALF) == DoubleBlockHalf.UPPER)) {
+            if (aboveState.isAir()) {
                 level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER), 3);
             }
         }
@@ -189,17 +189,22 @@ public class PumpkinCropBlock extends StardewCropBlock {
 
     @SuppressWarnings("null")
     @Override
+    protected void syncMultiBlockPartnerFromRoot(Level level, BlockPos pos, BlockState state) {
+        BlockPos root = resolveMultiBlockRootPos(level, pos, state);
+        BlockState above = level.getBlockState(root.above());
+        if (!above.isAir() && above.getBlock() != this) return;
+        super.syncMultiBlockPartnerFromRoot(level, pos, state);
+    }
+
+    @SuppressWarnings("null")
+    @Override
     public void growCropOneDay(ServerLevel level, BlockPos pos, BlockState state, boolean watered, com.stardew.craft.manager.CropGrowthManager.CropGrowthState growthState) {
         if (state.getValue(HALF) == DoubleBlockHalf.UPPER) return;
+        BlockState aboveBeforeGrowth = level.getBlockState(pos.above());
+        if (!aboveBeforeGrowth.isAir() && aboveBeforeGrowth.getBlock() != this) return;
         super.growCropOneDay(level, pos, state, watered, growthState);
         BlockState lower = level.getBlockState(pos);
         if (lower.getBlock() != this) return;
-        BlockPos above = pos.above();
-        BlockState upper = level.getBlockState(above);
-        if (upper.getBlock() != this || upper.getValue(HALF) != DoubleBlockHalf.UPPER) {
-            level.setBlock(above, lower.setValue(HALF, DoubleBlockHalf.UPPER), 3);
-        } else if (upper.getValue(AGE) != lower.getValue(AGE)) {
-            level.setBlock(above, upper.setValue(AGE, lower.getValue(AGE)), 3);
-        }
+        syncMultiBlockPartnerFromRoot(level, pos, lower);
     }
 }

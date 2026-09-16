@@ -67,6 +67,7 @@ public final class RobinService {
         switch (choice) {
             case 0 -> openCarpenterMenu(player);
             case 1 -> openCarpenterShop(player);
+            case 3 -> com.stardew.craft.pet.PetManagement.openBowls(player);
             // 2 = Leave, do nothing
         }
     }

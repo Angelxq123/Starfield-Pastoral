@@ -1,6 +1,6 @@
 package com.stardew.craft.combat.skill;
 
-import com.stardew.craft.combat.network.FireRingEffectPayload;
+import com.stardew.craft.combat.network.TemperedRingPayload;
 import com.stardew.craft.combat.skill.runtime.SkillInstance;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -28,7 +28,11 @@ public final class TemperedFireRingTracker {
     public static final float MINIMUM_RADIUS = 0.25F;
     public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
 
+    private static long nextVisualId;
+
     private static final class RingState {
+        private final ServerLevel visualLevel;
+        private final TemperedRingPayload visual;
         private final Vec3 center;
         private final float maxRadius;
         private final int durationTicks;
@@ -40,6 +44,7 @@ public final class TemperedFireRingTracker {
         private final Set<UUID> hitTargets = new HashSet<>();
 
         private RingState(
+                ServerLevel visualLevel,
                 Vec3 center,
                 float maxRadius,
                 int durationTicks,
@@ -48,6 +53,8 @@ public final class TemperedFireRingTracker {
                 ResourceKey<Level> dimension,
                 WeaponDamageSnapshot weaponSnapshot
         ) {
+            this.visualLevel = visualLevel;
+            this.visual = new TemperedRingPayload(++nextVisualId,true,center.x,center.y,center.z,maxRadius,durationTicks);
             this.center = center;
             this.maxRadius = maxRadius;
             this.durationTicks = durationTicks;
@@ -205,8 +212,8 @@ public final class TemperedFireRingTracker {
                 weaponSnapshot != null
                         ? weaponSnapshot
                         : castState.weaponSnapshot;
-        ACTIVE.computeIfAbsent(player.getUUID(), k -> new ArrayList<>())
-            .add(new RingState(
+        RingState ring = new RingState(
+                    player.serverLevel(),
                     center,
                     maxRadius,
                     durationTicks,
@@ -214,11 +221,12 @@ public final class TemperedFireRingTracker {
                     DAMAGE_MULTIPLIER,
                     player.level().dimension(),
                     resolvedWeaponSnapshot
-            ));
+            );
+        ACTIVE.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(ring);
 
         if (player.level() instanceof ServerLevel serverLevel) {
             PacketDistributor.sendToPlayersInDimension(serverLevel,
-                new FireRingEffectPayload((float) center.x, (float) center.y, (float) center.z, maxRadius, durationTicks));
+                ring.visual);
         }
     }
 
@@ -239,6 +247,7 @@ public final class TemperedFireRingTracker {
                     ring.dimension,
                     player.level().dimension()
             )) {
+                PacketDistributor.sendToPlayersInDimension(ring.visualLevel,ring.visual.ended());
                 iterator.remove();
                 continue;
             }
@@ -399,7 +408,9 @@ public final class TemperedFireRingTracker {
 
     /** Clean up state when a player logs out to prevent memory leaks. */
     public static void removePlayer(UUID playerId) {
-        ACTIVE.remove(playerId);
+        List<RingState> rings = ACTIVE.remove(playerId);
+        if (rings != null) for (RingState ring : rings)
+            PacketDistributor.sendToPlayersInDimension(ring.visualLevel,ring.visual.ended());
         BILLET_CASTS.remove(playerId);
     }
 }

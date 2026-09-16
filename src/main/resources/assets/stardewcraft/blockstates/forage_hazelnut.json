@@ -1,5 +1,1 @@
-{
-  "variants": {
-    "": { "model": "stardewcraft:block/forage/hazelnut" }
-  }
-}
+{"variants":{"":{"model":"stardewcraft:block/crop3d/forage_hazelnut/mature"}}}

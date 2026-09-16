@@ -1631,10 +1631,10 @@
     },
     {
       "id": "mine_ladder",
-      "bigCraftable": true,
+      "bigCraftable": false,
       "unlockCondition": "s Mining 2",
       "output": {
-        "item": "stardewcraft:mine_ladder",
+        "item": "stardewcraft:staircase",
         "count": 1
       },
       "ingredients": [
@@ -2096,7 +2096,7 @@
       "ingredients": [
         {
           "tag": "stardewcraft:crafting_stones",
-          "displayItem": "stardewcraft:limestone",
+          "displayItem": "stardewcraft:mine_earth_wall",
           "displayName": "stardewcraft.ingredient.any_stone",
           "count": 1
         }

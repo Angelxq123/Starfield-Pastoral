@@ -51,8 +51,8 @@ class DailySettlementChunkLeaseTest {
     private static final Path PROJECT = Path.of(System.getProperty("stardewcraft.projectDir", "."));
     private static final Path MANAGERS = PROJECT.resolve("src/main/java/com/stardew/craft/manager");
     private static final List<ManagerMethod> LEASED_MUTATIONS = List.of(
-            new ManagerMethod("CropGrowthManager", "processCropDay", 2, "lease",
-                    List.of("isLoaded", "getBlockState", "removeCrop", "growOneDay", "tryRoll")),
+            new ManagerMethod("CropGrowthManager", "processCropDay", 3, "lease",
+                    List.of("hasChunkAt", "getBlockState", "removeCrop", "growOneDay")),
             new ManagerMethod("SprinklerManager", "processSprinklerDay", 2, "lease",
                     List.of("isLoaded", "getBlockState", "removeSprinkler", "waterNow")),
             new ManagerMethod("TreeGrowthManager", "processRegisteredSaplingDay", 3, "lease",
@@ -61,7 +61,7 @@ class DailySettlementChunkLeaseTest {
                     List.of("isLoaded", "getBlockState", "removeSapling", "processSaplingDay",
                             "removeMatureTree", "processMatureTreeDay")),
             new ManagerMethod("WildTreeSeedManager", "processTreeDay", 4, "lease",
-                    List.of("isLoaded", "getBlockState", "tryMigrateGeneratedTreeMarker", "isFullTree",
+                    List.of("isLoaded", "getBlockState", "isFullTree",
                             "tryPlaceSapling", "addSapling")),
             new ManagerMethod("AnimalGrowthManager", "processAnimalDay", -1, "lease",
                     List.of("resolveBuildingUtilities")),
@@ -86,7 +86,7 @@ class DailySettlementChunkLeaseTest {
         assertTrue(createBody.contains("globalPositionLeaseOrder(1)"));
         assertTrue(createBody.contains("closeDailyLease"));
 
-        MethodTree process = crop.method("processCropDay", 2);
+        MethodTree process = crop.method("processCropDay", 3);
         MethodInvocationTree leaseCall = resourceInvocation(leaseTry(process, "lease"));
         assertEquals(List.of("pos"),
                 leaseCall.getArguments().stream().map(Object::toString).toList());

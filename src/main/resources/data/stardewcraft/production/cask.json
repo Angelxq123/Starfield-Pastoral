@@ -1,0 +1,11 @@
+{
+  "time_multiplier": 1.0,
+  "aging_rates": {
+    "stardewcraft:cheese": 4,
+    "stardewcraft:goat_cheese": 4,
+    "stardewcraft:mead": 2,
+    "stardewcraft:beer": 2,
+    "stardewcraft:pale_ale": 1.66,
+    "stardewcraft:wine": 1
+  }
+}

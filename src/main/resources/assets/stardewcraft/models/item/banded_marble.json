@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/banded_marble",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/banded_marble"
-                 }
-}

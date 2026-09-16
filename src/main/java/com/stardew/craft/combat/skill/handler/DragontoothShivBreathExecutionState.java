@@ -32,10 +32,17 @@ final class DragontoothShivBreathExecutionState
     }
 
     void start(ServerPlayer player, int durationTicks) {
-        PacketDistributor.sendToPlayer(
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 player,
-                new DragontoothShivBreathPayload(true, durationTicks)
+                new DragontoothShivBreathPayload(player.getId(), true, durationTicks, player.level().getGameTime())
         );
+    }
+
+    void syncTo(ServerPlayer caster, ServerPlayer viewer) {
+        long now = caster.level().getGameTime();
+        if (!isActive(now, caster.level().dimension(), caster.isAlive()) || endTick <= now) return;
+        PacketDistributor.sendToPlayer(viewer,
+                new DragontoothShivBreathPayload(caster.getId(), true, (int) (endTick - now), now));
     }
 
     boolean isActive(
@@ -73,9 +80,9 @@ final class DragontoothShivBreathExecutionState
             return;
         }
         settled = true;
-        PacketDistributor.sendToPlayer(
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 player,
-                new DragontoothShivBreathPayload(false, 0)
+                new DragontoothShivBreathPayload(player.getId(), false, 0, player.level().getGameTime())
         );
     }
 

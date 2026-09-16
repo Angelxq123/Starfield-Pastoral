@@ -10,11 +10,8 @@ import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -28,6 +25,7 @@ final class LavaKatanaReverbExecutionState
     static final float FINISHER_HEAT_SCALAR = 0.05F;
 
     private final ResourceKey<Level> dimension;
+    private final long startTick;
     private final long endTick;
     private boolean settled;
     private boolean advancing;
@@ -43,8 +41,11 @@ final class LavaKatanaReverbExecutionState
             );
         }
         this.dimension = Objects.requireNonNull(dimension, "dimension");
+        this.startTick = nowTick;
         this.endTick = nowTick + durationTicks;
     }
+
+    long startTick() { return startTick; }
 
     boolean isActive(
         long nowTick,
@@ -150,7 +151,6 @@ final class LavaKatanaReverbExecutionState
                 WeaponSkillDamage.HitCooldownPolicy
                         .BYPASS_FOR_AUTHORED_SEQUENCE
             );
-            playFinisherImpact(level, target);
             LavaKatanaMarkTracker.clearMark(target);
         }
     }
@@ -187,62 +187,4 @@ final class LavaKatanaReverbExecutionState
             .build();
     }
 
-    @SuppressWarnings("null")
-    private static void playFinisherImpact(
-        ServerLevel level,
-        LivingEntity target
-    ) {
-        double x = target.getX();
-        double y = target.getY() + target.getBbHeight() * 0.6D;
-        double z = target.getZ();
-        level.sendParticles(
-            ParticleTypes.EXPLOSION_EMITTER,
-            x, y, z,
-            1, 0.0D, 0.0D, 0.0D, 0.0D
-        );
-        level.sendParticles(
-            ParticleTypes.LAVA,
-            x, y, z,
-            28, 0.55D, 0.3D, 0.55D, 0.08D
-        );
-        level.sendParticles(
-            ParticleTypes.FLAME,
-            x, y, z,
-            30, 0.6D, 0.32D, 0.6D, 0.08D
-        );
-        level.sendParticles(
-            ParticleTypes.CRIT,
-            x, y, z,
-            18, 0.45D, 0.25D, 0.45D, 0.12D
-        );
-        level.sendParticles(
-            ParticleTypes.SMOKE,
-            x, y, z,
-            16, 0.5D, 0.25D, 0.5D, 0.02D
-        );
-        level.playSound(
-            null,
-            target.blockPosition(),
-            SoundEvents.GENERIC_EXPLODE.value(),
-            SoundSource.PLAYERS,
-            1.2F,
-            0.8F
-        );
-        level.playSound(
-            null,
-            target.blockPosition(),
-            SoundEvents.BLAZE_SHOOT,
-            SoundSource.PLAYERS,
-            1.0F,
-            0.9F
-        );
-        level.playSound(
-            null,
-            target.blockPosition(),
-            SoundEvents.FIRECHARGE_USE,
-            SoundSource.PLAYERS,
-            0.9F,
-            0.7F
-        );
-    }
 }

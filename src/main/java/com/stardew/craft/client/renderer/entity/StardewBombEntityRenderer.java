@@ -16,16 +16,9 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Mth;
 
-/**
- * 炸弹实体渲染器 — 渲染 Blockbench 3D 模型 + SDV 引信效果。
- *
- * <p>SDV 视觉效果复刻：</p>
- * <ul>
- *   <li>颤抖：shakeIntensity 从 0.5 开始，每 tick 增加 0.002（加速颤抖）</li>
- *   <li>闪烁：最后 12 tick 每 2 tick 切换白色覆盖</li>
- * </ul>
- */
+/** Native bomb models with a small, frame-rate-independent fuse tremor and 100 ms flicker. */
 @SuppressWarnings("null")
 public class StardewBombEntityRenderer extends EntityRenderer<StardewBombEntity> {
 
@@ -39,13 +32,6 @@ public class StardewBombEntityRenderer extends EntityRenderer<StardewBombEntity>
     @SuppressWarnings("deprecation")
     private static final ResourceLocation BLOCK_ATLAS =
         TextureAtlas.LOCATION_BLOCKS;
-
-    /** SDV shakeIntensity 起始值（SDV 像素 → MC 方块单位：0.5/64≈0.008，放大以适应 3D） */
-    private static final float BASE_SHAKE = 0.015f;
-    /** SDV shakeIntensityChange per tick（SDV 每帧 0.002 px，转换为 MC 单位） */
-    private static final float SHAKE_ACCEL = 0.001f;
-    /** SDV 引信总 ticks */
-    private static final int TOTAL_FUSE = 48;
 
     public StardewBombEntityRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -65,19 +51,13 @@ public class StardewBombEntityRenderer extends EntityRenderer<StardewBombEntity>
 
         poseStack.pushPose();
 
-        // SDV 颤抖效果：shakeIntensity = 0.5f + elapsed * 0.002f
-        int elapsed = TOTAL_FUSE - fuse;
-        float shakeIntensity = BASE_SHAKE + elapsed * SHAKE_ACCEL;
-        RandomSource rand = entity.getRandom();
-        float shakeX = (rand.nextFloat() * 2.0f - 1.0f) * shakeIntensity;
-        float shakeZ = (rand.nextFloat() * 2.0f - 1.0f) * shakeIntensity;
-        poseStack.translate(shakeX, 0, shakeZ);
-
-        // 模型居中
+        float elapsed = Mth.clamp(type.getFuseTicks() - fuse + partialTick, 0, type.getFuseTicks());
+        var shake = entity.getVisualShake(partialTick);
+        poseStack.translate(shake.x, 0, shake.z);
         poseStack.translate(-0.5, 0.0, -0.5);
 
-        // SDV 引信闪烁：最后 12 tick 每 2 tick 切换白色闪烁
-        boolean flash = fuse <= 12 && fuse > 0 && (fuse / 2) % 2 == 0;
+        // TemporaryAnimatedSprite toggles flicker on every 100 ms fuse frame.
+        boolean flash = fuse > 0 && ((int) elapsed / 2) % 2 == 1;
 
         ModelResourceLocation modelLoc = getModelLocation(type);
         BakedModel model = Minecraft.getInstance().getModelManager().getModel(modelLoc);
@@ -85,10 +65,7 @@ public class StardewBombEntityRenderer extends EntityRenderer<StardewBombEntity>
         if (model != null) {
             // baked model 的 UV 指向 block atlas，必须用 Sheets.cutoutBlockSheet()
             VertexConsumer vc = buffer.getBuffer(Sheets.cutoutBlockSheet());
-            int overlay = flash
-                ? OverlayTexture.pack(OverlayTexture.u(1.0f), 10) // 白色覆盖
-                : OverlayTexture.NO_OVERLAY;
-            renderBakedModel(poseStack, vc, model, packedLight, overlay);
+            renderBakedModel(poseStack, vc, model, packedLight, flash);
         }
 
         poseStack.popPose();
@@ -97,19 +74,23 @@ public class StardewBombEntityRenderer extends EntityRenderer<StardewBombEntity>
     }
 
     private void renderBakedModel(PoseStack poseStack, VertexConsumer consumer,
-                                  BakedModel model, int packedLight, int overlay) {
+                                  BakedModel model, int packedLight, boolean flash) {
+        // Source fuse flicker multiplies the shell by LightBlue * 0.85; it is not a white TNT overlay.
+        float red = flash ? 173 / 255.0f * 0.85f : 1;
+        float green = flash ? 216 / 255.0f * 0.85f : 1;
+        float blue = flash ? 230 / 255.0f * 0.85f : 1;
         RandomSource renderRand = RandomSource.create();
         java.util.List<net.minecraft.client.renderer.block.model.BakedQuad> quads = model.getQuads(null, null, renderRand,
             net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
         PoseStack.Pose pose = poseStack.last();
         for (net.minecraft.client.renderer.block.model.BakedQuad quad : quads) {
-            consumer.putBulkData(pose, quad, 1.0f, 1.0f, 1.0f, 1.0f, packedLight, overlay);
+            consumer.putBulkData(pose, quad, red, green, blue, 1.0f, packedLight, OverlayTexture.NO_OVERLAY);
         }
         for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
             java.util.List<net.minecraft.client.renderer.block.model.BakedQuad> dirQuads = model.getQuads(null, dir, renderRand,
                 net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
             for (net.minecraft.client.renderer.block.model.BakedQuad quad : dirQuads) {
-                consumer.putBulkData(pose, quad, 1.0f, 1.0f, 1.0f, 1.0f, packedLight, overlay);
+                consumer.putBulkData(pose, quad, red, green, blue, 1.0f, packedLight, OverlayTexture.NO_OVERLAY);
             }
         }
     }

@@ -55,6 +55,12 @@ public final class YetiToothMarkSkillHandler implements RuntimeWeaponSkillHandle
                 instance,
                 context.skillData().getCooldown() * 20
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
         instance.registerCommittedEffect(() -> WeaponSkillDamage.apply(
                 context.player(),
                 target,
@@ -65,12 +71,6 @@ public final class YetiToothMarkSkillHandler implements RuntimeWeaponSkillHandle
                 WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
         ));
 
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

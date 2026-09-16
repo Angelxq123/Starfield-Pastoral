@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "cell=0,facing=north,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank",
+      "y": 0
+    },
+    "cell=0,facing=north,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 0
+    },
+    "cell=1,facing=north,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 0
+    },
+    "cell=1,facing=north,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 0
+    },
+    "cell=2,facing=north,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 0
+    },
+    "cell=2,facing=north,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 0
+    },
+    "cell=0,facing=east,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank",
+      "y": 90
+    },
+    "cell=0,facing=east,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 90
+    },
+    "cell=1,facing=east,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 90
+    },
+    "cell=1,facing=east,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 90
+    },
+    "cell=2,facing=east,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 90
+    },
+    "cell=2,facing=east,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 90
+    },
+    "cell=0,facing=south,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank",
+      "y": 180
+    },
+    "cell=0,facing=south,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 180
+    },
+    "cell=1,facing=south,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 180
+    },
+    "cell=1,facing=south,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 180
+    },
+    "cell=2,facing=south,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 180
+    },
+    "cell=2,facing=south,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 180
+    },
+    "cell=0,facing=west,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank",
+      "y": 270
+    },
+    "cell=0,facing=west,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 270
+    },
+    "cell=1,facing=west,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 270
+    },
+    "cell=1,facing=west,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 270
+    },
+    "cell=2,facing=west,part=main": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 270
+    },
+    "cell=2,facing=west,part=extension": {
+      "model": "stardewcraft:block/decor/blacksmith_tools/old_plank_empty",
+      "y": 270
+    }
+  }
+}

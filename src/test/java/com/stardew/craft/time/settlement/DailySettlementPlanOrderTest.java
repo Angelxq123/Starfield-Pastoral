@@ -45,6 +45,7 @@ class DailySettlementPlanOrderTest {
                 item(DailySettlementPhase.WORLD_BATCHES, "npc_dialogue_events"),
                 item(DailySettlementPhase.WORLD_BATCHES, "npc_dialogue_topics"),
                 item(DailySettlementPhase.WORLD_BATCHES, "weather_npc_reset"),
+                item(DailySettlementPhase.WORLD_BATCHES, "farm_buildings"),
                 item(DailySettlementPhase.WORLD_BATCHES, "crops"),
                 item(DailySettlementPhase.WORLD_BATCHES, "trees"),
                 item(DailySettlementPhase.WORLD_BATCHES, "fruit_trees"),
@@ -98,8 +99,8 @@ class DailySettlementPlanOrderTest {
         assertEquals(1, names.stream().filter("player_daily_settlement"::equals).count());
         assertEquals(0, names.subList(names.indexOf("date_publication") + 1, names.size()).size());
         assertEquals(3, names.indexOf("player_daily_settlement"));
-        assertEquals(27, names.indexOf("player_daily_cleanup"));
-        assertEquals(29, names.indexOf("farm_cursor"));
+        assertEquals(28, names.indexOf("player_daily_cleanup"));
+        assertEquals(30, names.indexOf("farm_cursor"));
         assertEquals(0, names.indexOf("shipping_bin_flush"));
     }
 

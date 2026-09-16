@@ -5,6 +5,7 @@ import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.decor.MapDecorStaticBlock;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.core.ModMiningDimensions;
+import com.stardew.craft.item.ModItems;
 import com.stardew.craft.network.payload.OpenSleepConfirmScreenPayload;
 import com.stardew.craft.network.payload.SleepFadeRestorePayload;
 import com.stardew.craft.time.StardewTimeManager;
@@ -119,6 +120,9 @@ public final class SleepInteractionHandler {
         }
         var state = player.level().getBlockState(event.getPos());
         if (!isSleepAnchorState(state)) {
+            return;
+        }
+        if (player.isShiftKeyDown() && event.getItemStack().is(ModItems.PAINTBRUSH.get())) {
             return;
         }
 

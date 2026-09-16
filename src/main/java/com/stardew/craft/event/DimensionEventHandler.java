@@ -130,6 +130,14 @@ public class DimensionEventHandler {
      * (e.g. from logout handler when sleep votes are satisfied).
      */
     public static void triggerAdvance(ServerLevel stardewLevel, int sleepMinute, String reason) {
+        if (dayAdvancing || passOutAdvanceScheduled) return;
+        var server = stardewLevel.getServer();
+        var pending = collectAllPendingPassOutPlayers(server);
+        if (!pending.isEmpty()) {
+            schedulePassOutAdvance(stardewLevel, sleepMinute, reason, pending);
+            return;
+        }
+        SleepVoteTracker.clearVotes();
         advanceToNextMorning(stardewLevel, sleepMinute, reason);
     }
 
@@ -138,9 +146,13 @@ public class DimensionEventHandler {
         if (dayAdvancing) {
             return;
         }
+        var server = sourceLevel.getServer();
+        var passOutPlayers = collectAllPendingPassOutPlayers(server);
         dayAdvancing = true;
         try {
-            var server = sourceLevel.getServer();
+            // Farmer.performPassoutWarp -> ContinuePassOut -> PassOutNewDay:
+            // return home BEFORE consuming recovery, saving positions or opening menus.
+            teleportPlayersToFarmSpawn(server, passOutPlayers);
             StardewTimeManager timeManager = StardewTimeManager.get();
 
             // 日结算逻辑（作物生长、天气、玩家恢复等）
@@ -148,26 +160,32 @@ public class DimensionEventHandler {
                 timeManager.advanceDayWithSleepTime(sleepMinute);
             } catch (Exception e) {
                 StardewCraft.LOGGER.error("Error during advanceDayWithSleepTime (day still advanced to prevent freeze)", e);
-                // A collapse start is a client input lock. If settlement
-                // construction fails, explicitly terminate that presentation
-                // instead of leaving affected clients black forever.
-                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                    if (com.stardew.craft.player.PassOutService
-                            .hasPendingPassOutResult(player.getUUID())) {
-                        PacketDistributor.sendToPlayer(
-                                player,
-                                new com.stardew.craft.network.overnight
-                                        .OvernightCollapseCancelPayload());
-                    }
-                }
+                cancelPassOutPresentation(server, passOutPlayers);
             }
             StardewCraft.LOGGER.debug(
                     "Stardew daily settlement started by {} (sleepMinute={})",
                     reason, sleepMinute);
+        } catch (Exception failure) {
+            StardewCraft.LOGGER.error("[OVERNIGHT] Morning transition failed: {}", reason, failure);
+            cancelPassOutPresentation(server, passOutPlayers);
         } finally {
             dayAdvancing = false;
         }
     }
+
+    private static void cancelPassOutPresentation(net.minecraft.server.MinecraftServer server,
+            java.util.Set<java.util.UUID> passOutPlayers) {
+        // Recovery may already have been consumed while constructing/saving the payload.
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (passOutPlayers.contains(player.getUUID())
+                    || com.stardew.craft.player.PassOutService.hasPendingPassOutResult(player.getUUID())) {
+                com.stardew.craft.time.StardewTimePauseService.endOvernightSettlement(player);
+                PacketDistributor.sendToPlayer(player,
+                        new com.stardew.craft.network.overnight.OvernightCollapseCancelPayload());
+            }
+        }
+    }
+
 
     @SuppressWarnings("null")
     public static boolean requestSleepAdvance(ServerPlayer player, int sleepMinute) {
@@ -286,7 +304,6 @@ public class DimensionEventHandler {
             }
             SleepVoteTracker.clearVotes();
             advanceToNextMorning(stardewLevel, effectiveSleepMinute, "sleep_confirm");
-            teleportPlayersToFarmSpawn(player.server, pendingPassOutPlayers);
         }
         return true;
     }
@@ -322,11 +339,12 @@ public class DimensionEventHandler {
                     .OvernightCollapseTimeline.COLLAPSE_TICKS;
         }
         passOutAdvanceScheduled = true;
+        StardewCraft.LOGGER.info("[OVERNIGHT] Scheduled {}: collapsePlayers={}, delayTicks={}",
+                reason, pendingPassOutPlayers.size(), delay);
         com.stardew.craft.time.ServerRealTickTaskScheduler.schedule(server, delay, () -> {
             try {
                 SleepVoteTracker.clearVotes();
                 advanceToNextMorning(stardewLevel, sleepMinute, reason);
-                teleportPlayersToFarmSpawn(server, pendingPassOutPlayers);
             } finally {
                 passOutAdvanceScheduled = false;
             }
@@ -344,6 +362,12 @@ public class DimensionEventHandler {
             }
         }
         return result;
+    }
+
+    private static java.util.Set<java.util.UUID> collectAllPendingPassOutPlayers(
+            net.minecraft.server.MinecraftServer server) {
+        return collectPendingPassOutPlayers(server, server.getPlayerList().getPlayers().stream()
+                .map(ServerPlayer::getUUID).collect(java.util.stream.Collectors.toSet()));
     }
 
     private static void teleportPlayersToFarmSpawn(
@@ -551,27 +575,30 @@ public class DimensionEventHandler {
             com.stardew.craft.mining.MiningPlayerData playerData =
                 com.stardew.craft.mining.MiningDataManager.getPlayerData(player);
 
-            int currentFloor = playerData.getCurrentFloor();
+            boolean explicitDestination = com.stardew.craft.interior.CrossDimensionTeleporter.consumeSkipAutoTeleport(player.getUUID());
+            int currentFloor = explicitDestination ? playerData.getCurrentFloor() : 0;
+            playerData.setCurrentFloor(currentFloor);
+            com.stardew.craft.mining.MiningDataManager.savePlayerData(player, playerData);
 
-            // 确保大厅已生成（固定中心 0,64,0）
+            // 确保已审核的矿井大厅已生成
             com.stardew.craft.mining.MineEntranceBootstrap.ensureGenerated(level);
 
             // 确保当前楼层已生成
             if (currentFloor > 0) {
-                com.stardew.craft.mining.MineFloorGenerator.generateFloor(level, currentFloor);
+                com.stardew.craft.mining.OrdinaryMineRuntime.ensure(level, currentFloor);
             }
 
             // 如果是 CrossDimensionTeleporter 主动传送（如矿车进入矿井），不覆盖目标位置
-            if (!com.stardew.craft.interior.CrossDimensionTeleporter.consumeSkipAutoTeleport(player.getUUID())) {
+            if (!explicitDestination) {
                 // 传送到当前层数的出生点
                 com.stardew.craft.mining.MiningCoordinates.teleportPlayerToFloor(player, level, currentFloor);
             }
             
+            com.stardew.craft.mining.MineRewardClaimManager.get(level).sync(player);
             // 同步层数到客户端（显示UI）
             com.stardew.craft.network.MiningFloorSyncPacket packet = 
                 new com.stardew.craft.network.MiningFloorSyncPacket(currentFloor);
             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, packet);
-            com.stardew.craft.event.MiningBlockBreakHandler.syncLadderStateForPlayer(player, currentFloor);
 
             // 首次进入矿井赠送矿洞图腾
             if (!playerData.hasReceivedMineTotem()) {
@@ -591,7 +618,7 @@ public class DimensionEventHandler {
             final int floor = currentFloor;
             level.getServer().tell(new net.minecraft.server.TickTask(
                 level.getServer().getTickCount() + 3,
-                () -> com.stardew.craft.mining.MineFloorGenerator.forceClientLightRefresh(level, floor)
+                () -> com.stardew.craft.mining.OrdinaryMineRuntime.refreshLights(level, floor)
             ));
         }
 
@@ -650,10 +677,6 @@ public class DimensionEventHandler {
         if (simulationPaused || settlementActive) {
             return;
         }
-        if (server.getTickCount() % 5 == 0) {
-            com.stardew.craft.manager.AnimalGrowthManager.get(serverLevel)
-                    .continueCatchUp(serverLevel);
-        }
 
         // 检查是否有玩家在星露谷相关维度
         var allPlayers = server.getPlayerList().getPlayers();
@@ -679,15 +702,6 @@ public class DimensionEventHandler {
         // 更新TimeManager的时间（用于UI显示和其他系统）
         timeManager.setCurrentTimeFromMC(stardewMinutes);
 
-        int tenMinuteSlot = stardewMinutes / 10;
-        int timeOfDayHHMM = stardewMinutesToTimeOfDay(stardewMinutes);
-        int dayKey = timeManager.getCurrentYear() * 1000 + timeManager.getCurrentSeason() * 100 + timeManager.getCurrentDay();
-        if (!dayAdvancing && (dayKey != lastAnimalTenMinuteDayKey || tenMinuteSlot != lastAnimalTenMinuteSlot)) {
-            lastAnimalTenMinuteDayKey = dayKey;
-            lastAnimalTenMinuteSlot = tenMinuteSlot;
-            com.stardew.craft.manager.AnimalGrowthManager.get(serverLevel).updatePerTenMinutes(serverLevel, timeOfDayHHMM);
-        }
-        
         // ── 午夜 0:00（对标 SDV case 2400）── 时钟抖动 + 困倦表情 + "It's getting late..." 消息
         if (dayTime >= MIDNIGHT_TIME && !dayAdvancing && !midnightWarned) {
             midnightWarned = true;
@@ -746,7 +760,7 @@ public class DimensionEventHandler {
                         com.stardew.craft.player.PassOutService.on2AMPassOut(sp);
                     }
             }
-            // 2. 原版先完整播放 animation 293，再推进次日并回床。
+            // 2. 原版先完整播放 animation 293，回床后再推进次日。
             java.util.Set<java.util.UUID> transitionPlayers = new java.util.HashSet<>(votedPlayers);
             for (ServerPlayer sp : stardewPlayers) {
                 if (com.stardew.craft.player.PassOutService.hasPendingPassOutResult(sp.getUUID())) {

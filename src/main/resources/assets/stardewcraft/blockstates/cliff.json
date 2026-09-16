@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "stardewcraft:block/cliff/spring/plain"
+    },
+    "variant=1": {
+      "model": "stardewcraft:block/cliff/spring/broad"
+    },
+    "variant=2": {
+      "model": "stardewcraft:block/cliff/spring/split"
+    },
+    "variant=3": {
+      "model": "stardewcraft:block/cliff/spring/plain_moss"
+    },
+    "variant=4": {
+      "model": "stardewcraft:block/cliff/spring/broad_moss"
+    },
+    "variant=5": {
+      "model": "stardewcraft:block/cliff/spring/split_moss"
+    }
+  }
+}

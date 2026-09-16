@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "stardewcraft:block/terrain/fall/grass_blades",
+    "side": "stardewcraft:block/terrain/fall/grass_side",
+    "bottom": "stardewcraft:block/terrain/fall/earth_base"
+  }
+}

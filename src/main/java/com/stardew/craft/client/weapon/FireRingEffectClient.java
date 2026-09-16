@@ -2,11 +2,9 @@ package com.stardew.craft.client.weapon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.stardew.craft.StardewCraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -18,10 +16,6 @@ import java.util.List;
 
 public final class FireRingEffectClient {
 
-    private static final ResourceLocation RING_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/fire_ring.png"
-    );
 
     private static final int EXTRA_FADE_TICKS = 6;
 
@@ -67,7 +61,7 @@ public final class FireRingEffectClient {
         Vec3 camPos = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-        RenderType ringType = RenderType.entityTranslucent(RING_TEXTURE);
+        RenderType ringType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer consumer = buffer.getBuffer(ringType);
 
         for (Ring ring : RINGS) {
@@ -95,10 +89,7 @@ public final class FireRingEffectClient {
             Matrix4f pose = last.pose();
 
             float size = 0.5f;
-            vertex(consumer, pose, 0xF000F0, alpha, -size, -size, 0, 1);
-            vertex(consumer, pose, 0xF000F0, alpha, size, -size, 1, 1);
-            vertex(consumer, pose, 0xF000F0, alpha, size, size, 1, 0);
-            vertex(consumer, pose, 0xF000F0, alpha, -size, size, 0, 0);
+            WeaponEffectShapes.ring(consumer, pose, size, 255, 131, 46, alpha);
 
             poseStack.popPose();
         }
@@ -106,16 +97,7 @@ public final class FireRingEffectClient {
         buffer.endBatch(ringType);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light, int alpha,
-                               float x, float y, float u, float v) {
-        consumer.addVertex(pose, x, 0.0f, y)
-            .setColor(255, 255, 255, alpha)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
+
 
     private static final class Ring {
         private final Vec3 pos;

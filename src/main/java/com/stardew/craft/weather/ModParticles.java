@@ -16,6 +16,33 @@ public class ModParticles {
     public static final DeferredRegister<ParticleType<?>> PARTICLES = 
         DeferredRegister.create(Registries.PARTICLE_TYPE, StardewCraft.MODID);
 
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BOMB_FUSE =
+        PARTICLES.register("bomb_fuse", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BOMB_BURST =
+        PARTICLES.register("bomb_burst", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BOMB_DUST =
+        PARTICLES.register("bomb_dust", () -> new SimpleParticleType(false));
+
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> BIG_SLIME_SPLASH = PARTICLES.register("big_slime_splash", ModParticles::colorParticle);
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> BIG_SLIME_SPLASH_SLOW = PARTICLES.register("big_slime_splash_slow", ModParticles::colorParticle);
+    private static ParticleType<net.minecraft.core.particles.ColorParticleOption> colorParticle(){
+        return new ParticleType<>(false){
+            @Override public com.mojang.serialization.MapCodec<net.minecraft.core.particles.ColorParticleOption> codec(){return net.minecraft.core.particles.ColorParticleOption.codec(this);}
+            @Override public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf,net.minecraft.core.particles.ColorParticleOption> streamCodec(){return net.minecraft.core.particles.ColorParticleOption.streamCodec(this);}
+        };
+    }
+
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> SERPENT_PUFF = PARTICLES.register("serpent_puff", ModParticles::colorParticle);
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> SERPENT_PUFF_SLOW = PARTICLES.register("serpent_puff_slow", ModParticles::colorParticle);
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> REX_DISSOLVE = PARTICLES.register("rex_dissolve", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> REX_BONE_FRAGMENT = PARTICLES.register("rex_bone_fragment", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> REX_BREATH_FRAGMENT = PARTICLES.register("rex_breath_fragment", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MUMMY_DISSOLVE = PARTICLES.register("mummy_dissolve", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MONSTER_HEAL = PARTICLES.register("monster_heal", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SHAMAN_CURSE_IMPACT = PARTICLES.register("shaman_curse_impact", () -> new SimpleParticleType(false));
+
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SQUID_DEATH_SPARK = PARTICLES.register("squid_death_spark", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SQUID_FIREBALL_IMPACT = PARTICLES.register("squid_fireball_impact", () -> new SimpleParticleType(false));
     // 橙色秋叶粒子
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> AUTUMN_LEAF_ORANGE = 
         PARTICLES.register("autumn_leaf_orange", () -> new SimpleParticleType(false));

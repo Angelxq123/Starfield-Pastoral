@@ -1,5 +1,0 @@
-﻿{
-  "type": "minecraft:stonecutting",
-  "ingredient": { "item": "stardewcraft:mossy_sandstone" },
-  "result": { "count": 1, "id": "stardewcraft:mossy_sandstone_wall" }
-}

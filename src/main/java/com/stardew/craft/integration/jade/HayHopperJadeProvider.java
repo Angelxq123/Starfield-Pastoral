@@ -1,7 +1,6 @@
 package com.stardew.craft.integration.jade;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.animal.data.AnimalWorldData;
 import com.stardew.craft.block.utility.HayHopperBlock;
 import com.stardew.craft.blockentity.HayHopperBlockEntity;
 import net.minecraft.ChatFormatting;
@@ -46,16 +45,15 @@ public enum HayHopperJadeProvider implements IBlockComponentProvider, IServerDat
             return;
         }
 
-        UUID owner = hopper.resolveStorageOwner(accessor.getPlayer());
+        UUID owner = hopper.storageFarm();
         if (owner == null) {
             tag.putInt(NBT_HAY, 0);
             tag.putInt(NBT_CAPACITY, 0);
             return;
         }
 
-        AnimalWorldData worldData = AnimalWorldData.get(serverLevel);
-        tag.putInt(NBT_HAY, worldData.getHayAmount(owner));
-        tag.putInt(NBT_CAPACITY, worldData.getHayCapacity(owner));
+        tag.putInt(NBT_HAY, com.stardew.craft.animal.runtime.FarmFeed.amount(serverLevel.getServer(), owner));
+        tag.putInt(NBT_CAPACITY, com.stardew.craft.animal.runtime.FarmFeed.capacity(serverLevel.getServer(), owner));
     }
 
     @SuppressWarnings("null")

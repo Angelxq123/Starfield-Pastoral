@@ -3,6 +3,9 @@ package com.stardew.craft.client.gui;
 import com.stardew.craft.block.utility.WoodenChestColorPalette;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
+import com.stardew.craft.client.gui.common.ChestColorWheel;
+import com.stardew.craft.client.gui.common.ChestModelPreview;
+import com.stardew.craft.client.gui.common.ChestMenuBackground;
 import com.stardew.craft.menu.StoneChestMenu;
 import com.stardew.craft.network.payload.InventoryOrganizePayload;
 import com.stardew.craft.network.payload.StoneChestColorSelectPayload;
@@ -10,6 +13,9 @@ import com.stardew.craft.sound.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.renderer.Rect2i;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -17,24 +23,25 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 @SuppressWarnings("null")
 public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
-    private static final ResourceLocation CHEST_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
-    private static final int ROWS = 6;
 
     private static final ResourceLocation COLOR_WHEEL = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/color_wheel.png");
-    private static final int SWATCH_WIDTH = 8;
-    private static final int SWATCH_HEIGHT = 14;
-    private static final int GRID_COLS = 21;
     private static final int BUTTON_SIZE = 18;
 
     private int colorButtonX;
     private int colorButtonY;
     private int organizeButtonX;
     private int organizeButtonY;
-    private boolean paletteOpen;
+    private final com.stardew.craft.client.gui.common.ChestExtraActions extraActions = new com.stardew.craft.client.gui.common.ChestExtraActions(menu);
+    private final ChestModelPreview modelPreview = new ChestModelPreview();
+    private final ChestColorWheel wheel = new ChestColorWheel(ChestColorWheel.chestOptions(),
+            color -> PacketDistributor.sendToServer(new StoneChestColorSelectPayload(color)),
+            (graphics, x, y, color) -> modelPreview.draw(graphics, x, y, color, false, true));
 
     public StoneChestScreen(StoneChestMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageHeight = 114 + ROWS * 18;
+        this.imageWidth = menu.layout().imageWidth();
+        this.imageHeight = menu.layout().imageHeight();
+        this.inventoryLabelX = menu.layout().playerX();
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
@@ -45,15 +52,22 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
         this.colorButtonY = this.topPos + 16;
         this.organizeButtonX = this.colorButtonX;
         this.organizeButtonY = this.colorButtonY + 30;
+        layoutExtraActions();
+        wheel.layout(this.width, this.height, this.leftPos, this.leftPos + this.imageWidth, colorButtonY);
+    }
+
+    private void layoutExtraActions() {
+        extraActions.layout(organizeButtonX, organizeButtonY, true, true);
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
+        layoutExtraActions();
+        extraActions.render(graphics, mouseX, mouseY);
 
-        graphics.blit(CHEST_TEXTURE, x, y, 0, 0, this.imageWidth, ROWS * 18 + 17);
-        graphics.blit(CHEST_TEXTURE, x, y + ROWS * 18 + 17, 0, 126, this.imageWidth, 96);
+        ChestMenuBackground.draw(graphics, x, y, menu.layout());
 
         boolean hovered = isHoveringColorButton(mouseX, mouseY);
         if (hovered) {
@@ -81,66 +95,86 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (menu.layout().recoverySlots() > 0) {
+            graphics.drawString(this.font, GuiText.ellipsize(this.font,
+                    Component.translatable("stardewcraft.chest.recover_old_items"), this.imageWidth - 16),
+                    8, 72, 0x404040, false);
+        }
         graphics.drawString(this.font, GuiText.ellipsize(this.font, this.title, this.imageWidth - this.titleLabelX - 8),
             this.titleLabelX, this.titleLabelY, 0x404040, false);
-        graphics.drawString(this.font, GuiText.ellipsize(this.font, this.playerInventoryTitle, this.imageWidth - this.inventoryLabelX - 8),
+        graphics.drawString(this.font, GuiText.ellipsize(this.font, this.playerInventoryTitle, 162),
             this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
+        boolean selecting = wheel.active();
+        super.render(graphics, selecting ? -10000 : mouseX, selecting ? -10000 : mouseY, partialTick);
 
-        if (this.paletteOpen) {
-            renderPalette(graphics, mouseX, mouseY);
+        if (wheel.active()) {
+            wheel.render(graphics, mouseX, mouseY);
+            return;
         }
 
         this.renderTooltip(graphics, mouseX, mouseY);
+        extraActions.tooltip(graphics, mouseX, mouseY);
 
-        if (isHoveringColorButton(mouseX, mouseY) && !this.paletteOpen) {
+        if (isHoveringColorButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.stone_chest.color_picker"), mouseX, mouseY);
         }
-        if (isHoveringOrganizeButton(mouseX, mouseY) && !this.paletteOpen) {
+        if (isHoveringOrganizeButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.game_menu.inventory.organize"), mouseX, mouseY);
         }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (wheel.click(mouseX, mouseY, button, isHoveringColorButton(mouseX, mouseY))) return true;
         if (isHoveringColorButton(mouseX, mouseY)) {
-            if (button == 1) {
-                this.menu.setClientPreviewColorSelection(-1);
-                PacketDistributor.sendToServer(new StoneChestColorSelectPayload(-1));
-                return true;
-            }
-            if (button == 0) {
-                this.paletteOpen = !this.paletteOpen;
-                return true;
-            }
+            wheel.claimButton(button);
+            if (!menu.getCarried().isEmpty()) return true;
+            if (button == 0) wheel.open(menu.getColorSelection());
+            else if (button == 1) PacketDistributor.sendToServer(new StoneChestColorSelectPayload(-1));
+            return true;
         }
-
         if (button == 0 && isHoveringOrganizeButton(mouseX, mouseY)) {
             PacketDistributor.sendToServer(new InventoryOrganizePayload(InventoryOrganizePayload.TARGET_OPEN_CONTAINER));
             playOrganizeSound();
             return true;
         }
-
-        if (this.paletteOpen) {
-            int hit = getPaletteIndexAt(mouseX, mouseY);
-            if (hit >= -1 && isInsidePalette(mouseX, mouseY)) {
-                if (hit != -1) {
-                    this.menu.setClientPreviewColorSelection(hit);
-                    PacketDistributor.sendToServer(new StoneChestColorSelectPayload(hit));
-                }
-                return true;
-            }
-
-            if (!isInsidePalette(mouseX, mouseY) && !isHoveringColorButton(mouseX, mouseY)) {
-                this.paletteOpen = false;
-            }
-        }
-
+        layoutExtraActions();
+        if (extraActions.click(mouseX, mouseY, button)) return true;
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double x, double y, int button) {
+        return wheel.release(button) || super.mouseReleased(x, y, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        return wheel.dragging(button) || super.mouseDragged(x, y, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        return wheel.scroll(vertical) || super.mouseScrolled(x, y, horizontal, vertical);
+    }
+
+    @Override
+    public boolean keyPressed(int key, int scan, int modifiers) {
+        return wheel.key(key) || super.keyPressed(key, scan, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int key, int scan, int modifiers) {
+        return wheel.keyReleased(key) || super.keyReleased(key, scan, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char character, int modifiers) {
+        return wheel.active() || super.charTyped(character, modifiers);
     }
 
     private boolean isHoveringColorButton(double mouseX, double mouseY) {
@@ -159,65 +193,15 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
         }
     }
 
-    private void renderPalette(GuiGraphics graphics, int mouseX, int mouseY) {
-        int panelX = getPaletteX();
-        int panelY = getPaletteY();
-        int panelW = GRID_COLS * SWATCH_WIDTH;
-        int panelH = SWATCH_HEIGHT;
-
-        graphics.fill(panelX - 2, panelY - 2, panelX + panelW + 2, panelY + panelH + 2, 0xD0101010);
-        graphics.fill(panelX - 1, panelY - 1, panelX + panelW + 1, panelY + panelH + 1, 0x40FFFFFF);
-
-        int selected = this.menu.getColorSelection();
-        for (int i = 0; i < WoodenChestColorPalette.size(); i++) {
-            int x = panelX + i * SWATCH_WIDTH;
-            int y = panelY;
-            boolean hovered = mouseX >= x && mouseX < x + SWATCH_WIDTH && mouseY >= y && mouseY < y + SWATCH_HEIGHT;
-            int rgb = WoodenChestColorPalette.rgbAt(i) | 0xFF000000;
-
-            graphics.fill(x, y, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, rgb);
-
-            if (i == selected) {
-                graphics.fill(x, y, x + SWATCH_WIDTH, y + 2, 0xFFFFFFFF);
-                graphics.fill(x, y + SWATCH_HEIGHT - 2, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, 0xFFFFFFFF);
-                graphics.fill(x, y, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, 0x40FFFFFF);
-            } else if (hovered) {
-                graphics.fill(x, y, x + SWATCH_WIDTH, y + SWATCH_HEIGHT, 0x50FFFFFF);
-            }
-        }
-
-        int hovered = getPaletteIndexAt(mouseX, mouseY);
-        if (hovered >= 0) {
-            graphics.renderTooltip(this.font, Component.translatable("stardewcraft.stone_chest.color_tooltip", hovered + 1), mouseX, mouseY);
-        }
+    /** Includes both side actions and the palette only while it is visible. */
+    public List<Rect2i> jeiGuiExtraAreas() {
+        layoutExtraActions();
+        List<Rect2i> areas = new ArrayList<>(3);
+        areas.add(new Rect2i(colorButtonX - 1, colorButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 6));
+        areas.add(new Rect2i(organizeButtonX - 1, organizeButtonY - 1, BUTTON_SIZE + 2, BUTTON_SIZE + 2));
+        if (wheel.active()) areas.add(wheel.bounds());
+        areas.addAll(extraActions.bounds());
+        return List.copyOf(areas);
     }
 
-    private int getPaletteIndexAt(double mouseX, double mouseY) {
-        int panelX = getPaletteX();
-        int panelY = getPaletteY();
-        for (int i = 0; i < WoodenChestColorPalette.size(); i++) {
-            int x = panelX + i * SWATCH_WIDTH;
-            int y = panelY;
-            if (mouseX >= x && mouseX < x + SWATCH_WIDTH && mouseY >= y && mouseY < y + SWATCH_HEIGHT) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private boolean isInsidePalette(double mouseX, double mouseY) {
-        int panelX = getPaletteX();
-        int panelY = getPaletteY();
-        int panelW = GRID_COLS * SWATCH_WIDTH;
-        int panelH = SWATCH_HEIGHT;
-        return mouseX >= panelX - 2 && mouseX < panelX + panelW + 2 && mouseY >= panelY - 2 && mouseY < panelY + panelH + 2;
-    }
-
-    private int getPaletteX() {
-        return this.leftPos + (this.imageWidth - (GRID_COLS * SWATCH_WIDTH)) / 2;
-    }
-
-    private int getPaletteY() {
-        return this.topPos - SWATCH_HEIGHT - 6;
-    }
 }

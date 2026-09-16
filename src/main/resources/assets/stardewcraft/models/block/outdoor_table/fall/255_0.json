@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "surface": "stardewcraft:block/outdoor_table/fall/outdoor_table",
+    "particle": "stardewcraft:block/outdoor_table/fall/outdoor_table_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            4.25,
+            10.625,
+            5.25,
+            11.625
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            5.3125,
+            0.0,
+            6.3125,
+            1.0
+          ]
+        }
+      }
+    }
+  ]
+}

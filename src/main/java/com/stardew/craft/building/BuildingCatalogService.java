@@ -46,6 +46,10 @@ public final class BuildingCatalogService {
                 revision,
                 Set.copyOf(ids),
                 player.serverLevel().getGameTime() + SESSION_TICKS));
+        if (!ids.isEmpty()) {
+            for (var family : ids) if (com.stardew.craft.building.runtime.PrefabDefinitions.available(family))
+                com.stardew.craft.building.runtime.BuildingPreviewService.sendTemplate(player, family, 1);
+        }
         PacketDistributor.sendToPlayer(player,
                 new OpenCarpenterMenuPayload(
                         builder.toString(),
@@ -53,6 +57,11 @@ public final class BuildingCatalogService {
                         clientBlueprints,
                         revision));
         return true;
+    }
+
+    public static java.util.Optional<ResourceLocation> authorizedBuilder(ServerPlayer player,ResourceLocation blueprint,long revision){
+        var session=SESSIONS.get(player.getUUID());
+        return session!=null&&authorizes(player,session.builder(),blueprint,revision)?java.util.Optional.of(session.builder()):java.util.Optional.empty();
     }
 
     public static boolean authorizes(

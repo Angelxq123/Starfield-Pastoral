@@ -1,0 +1,8098 @@
+{
+  "id": "stardewcraft:mine_layouts/desert_reward_200",
+  "revision": 1,
+  "status": "authored_architecture_awaiting_review",
+  "source": "Maps/Mines/10.tmx",
+  "source_sha256": "d20c8e9eabe58f1bd700be0aaac26edad107802d415eede618882922540c7288",
+  "source_size": [
+    20,
+    16
+  ],
+  "size": [
+    24,
+    13,
+    20
+  ],
+  "tile_scale": 1,
+  "tile_origin": [
+    2,
+    3,
+    2
+  ],
+  "spawn_relative": [
+    8.5,
+    3.125,
+    8.5
+  ],
+  "entry_tile": [
+    6,
+    6
+  ],
+  "facing": "south",
+  "ground_open_count": 94,
+  "source_ground_open_count": 113,
+  "reachable_count": 94,
+  "static_object_candidate_count": 25,
+  "cells": [
+    {
+      "tile": [
+        0,
+        0
+      ],
+      "block": [
+        2,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        0
+      ],
+      "block": [
+        3,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        0
+      ],
+      "block": [
+        4,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        0
+      ],
+      "block": [
+        5,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        0
+      ],
+      "block": [
+        6,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        5,
+        0
+      ],
+      "block": [
+        7,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        6,
+        0
+      ],
+      "block": [
+        8,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        7,
+        0
+      ],
+      "block": [
+        9,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        8,
+        0
+      ],
+      "block": [
+        10,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        9,
+        0
+      ],
+      "block": [
+        11,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        0
+      ],
+      "block": [
+        12,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        11,
+        0
+      ],
+      "block": [
+        13,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        12,
+        0
+      ],
+      "block": [
+        14,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        13,
+        0
+      ],
+      "block": [
+        15,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        14,
+        0
+      ],
+      "block": [
+        16,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        15,
+        0
+      ],
+      "block": [
+        17,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        16,
+        0
+      ],
+      "block": [
+        18,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        0
+      ],
+      "block": [
+        19,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        0
+      ],
+      "block": [
+        20,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        0
+      ],
+      "block": [
+        21,
+        3,
+        2
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        1
+      ],
+      "block": [
+        2,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        1
+      ],
+      "block": [
+        3,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        1
+      ],
+      "block": [
+        4,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        1
+      ],
+      "block": [
+        5,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        1
+      ],
+      "block": [
+        6,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        5,
+        1
+      ],
+      "block": [
+        7,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        6,
+        1
+      ],
+      "block": [
+        8,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        7,
+        1
+      ],
+      "block": [
+        9,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        8,
+        1
+      ],
+      "block": [
+        10,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        9,
+        1
+      ],
+      "block": [
+        11,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        1
+      ],
+      "block": [
+        12,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        11,
+        1
+      ],
+      "block": [
+        13,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        12,
+        1
+      ],
+      "block": [
+        14,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        13,
+        1
+      ],
+      "block": [
+        15,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        14,
+        1
+      ],
+      "block": [
+        16,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        15,
+        1
+      ],
+      "block": [
+        17,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        16,
+        1
+      ],
+      "block": [
+        18,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        1
+      ],
+      "block": [
+        19,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        1
+      ],
+      "block": [
+        20,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        1
+      ],
+      "block": [
+        21,
+        3,
+        3
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        2
+      ],
+      "block": [
+        2,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        2
+      ],
+      "block": [
+        3,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        2
+      ],
+      "block": [
+        4,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        2
+      ],
+      "block": [
+        5,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 69,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        2
+      ],
+      "block": [
+        6,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 70,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        2
+      ],
+      "block": [
+        7,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 75,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        2
+      ],
+      "block": [
+        8,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 67,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        2
+      ],
+      "block": [
+        9,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 73,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        2
+      ],
+      "block": [
+        10,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 4,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        2
+      ],
+      "block": [
+        11,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 5,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        2
+      ],
+      "block": [
+        12,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 6,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        2
+      ],
+      "block": [
+        13,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 73,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        2
+      ],
+      "block": [
+        14,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 74,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        2
+      ],
+      "block": [
+        15,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 75,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        2
+      ],
+      "block": [
+        16,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 76,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        2
+      ],
+      "block": [
+        17,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 93,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        2
+      ],
+      "block": [
+        18,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 94,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        2
+      ],
+      "block": [
+        19,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        2
+      ],
+      "block": [
+        20,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        2
+      ],
+      "block": [
+        21,
+        3,
+        4
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        3
+      ],
+      "block": [
+        2,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        3
+      ],
+      "block": [
+        3,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        3
+      ],
+      "block": [
+        4,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 68,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        3
+      ],
+      "block": [
+        5,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 85,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        3
+      ],
+      "block": [
+        6,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 86,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        3
+      ],
+      "block": [
+        7,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 91,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        3
+      ],
+      "block": [
+        8,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 83,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        3
+      ],
+      "block": [
+        9,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 89,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        3
+      ],
+      "block": [
+        10,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 20,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        3
+      ],
+      "block": [
+        11,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 21,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        3
+      ],
+      "block": [
+        12,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 22,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        3
+      ],
+      "block": [
+        13,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 89,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        3
+      ],
+      "block": [
+        14,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 80,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        3
+      ],
+      "block": [
+        15,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 91,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        3
+      ],
+      "block": [
+        16,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 92,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        3
+      ],
+      "block": [
+        17,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 109,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        3
+      ],
+      "block": [
+        18,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 110,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        3
+      ],
+      "block": [
+        19,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 111,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        3
+      ],
+      "block": [
+        20,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        3
+      ],
+      "block": [
+        21,
+        3,
+        5
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        4
+      ],
+      "block": [
+        2,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        4
+      ],
+      "block": [
+        3,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        4
+      ],
+      "block": [
+        4,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 84,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        4
+      ],
+      "block": [
+        5,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 101,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        4
+      ],
+      "block": [
+        6,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 97,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        4
+      ],
+      "block": [
+        7,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 107,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        4
+      ],
+      "block": [
+        8,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 99,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        4
+      ],
+      "block": [
+        9,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 105,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        4
+      ],
+      "block": [
+        10,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 36,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        4
+      ],
+      "block": [
+        11,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 37,
+        "Front": 49
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        4
+      ],
+      "block": [
+        12,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 38,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        4
+      ],
+      "block": [
+        13,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 105,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        4
+      ],
+      "block": [
+        14,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 96,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        4
+      ],
+      "block": [
+        15,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 107,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        4
+      ],
+      "block": [
+        16,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 108,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        4
+      ],
+      "block": [
+        17,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 113,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        4
+      ],
+      "block": [
+        18,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 126,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        4
+      ],
+      "block": [
+        19,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": 127,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        4
+      ],
+      "block": [
+        20,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        4
+      ],
+      "block": [
+        21,
+        3,
+        6
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        5
+      ],
+      "block": [
+        2,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        5
+      ],
+      "block": [
+        3,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        5
+      ],
+      "block": [
+        4,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 201,
+        "Buildings": 100,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        5
+      ],
+      "block": [
+        5,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 188,
+        "Buildings": 117,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        5
+      ],
+      "block": [
+        6,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 118,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        5
+      ],
+      "block": [
+        7,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 123,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        5
+      ],
+      "block": [
+        8,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 115,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        5
+      ],
+      "block": [
+        9,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 121,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        5
+      ],
+      "block": [
+        10,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 52,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        5
+      ],
+      "block": [
+        11,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 53,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        5
+      ],
+      "block": [
+        12,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 54,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        5
+      ],
+      "block": [
+        13,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 121,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        5
+      ],
+      "block": [
+        14,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 112,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        5
+      ],
+      "block": [
+        15,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 123,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        5
+      ],
+      "block": [
+        16,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 124,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        5
+      ],
+      "block": [
+        17,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 141,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        5
+      ],
+      "block": [
+        18,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 187,
+        "Buildings": 142,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        5
+      ],
+      "block": [
+        19,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": 202,
+        "Buildings": 143,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        5
+      ],
+      "block": [
+        20,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        5
+      ],
+      "block": [
+        21,
+        3,
+        7
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        6
+      ],
+      "block": [
+        2,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        6
+      ],
+      "block": [
+        3,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        6
+      ],
+      "block": [
+        4,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 217,
+        "Buildings": 116,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        6
+      ],
+      "block": [
+        5,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 133,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        6
+      ],
+      "block": [
+        6,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 186,
+        "Buildings": 134,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        6
+      ],
+      "block": [
+        7,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        6
+      ],
+      "block": [
+        8,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 204,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        6
+      ],
+      "block": [
+        9,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        6
+      ],
+      "block": [
+        10,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        6
+      ],
+      "block": [
+        11,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        6
+      ],
+      "block": [
+        12,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        6
+      ],
+      "block": [
+        13,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        6
+      ],
+      "block": [
+        14,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        6
+      ],
+      "block": [
+        15,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        6
+      ],
+      "block": [
+        16,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 185,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        6
+      ],
+      "block": [
+        17,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 157,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        6
+      ],
+      "block": [
+        18,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 158,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        6
+      ],
+      "block": [
+        19,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 159,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        6
+      ],
+      "block": [
+        20,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        6
+      ],
+      "block": [
+        21,
+        3,
+        8
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        7
+      ],
+      "block": [
+        2,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        7
+      ],
+      "block": [
+        3,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        7
+      ],
+      "block": [
+        4,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 233,
+        "Buildings": 132,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        7
+      ],
+      "block": [
+        5,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        7
+      ],
+      "block": [
+        6,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 235,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        7
+      ],
+      "block": [
+        7,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 1,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        7
+      ],
+      "block": [
+        8,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        7
+      ],
+      "block": [
+        9,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 3,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        7
+      ],
+      "block": [
+        10,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 1,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        7
+      ],
+      "block": [
+        11,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 2,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        7
+      ],
+      "block": [
+        12,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 169,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        7
+      ],
+      "block": [
+        13,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 1,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        7
+      ],
+      "block": [
+        14,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        7
+      ],
+      "block": [
+        15,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 1,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        7
+      ],
+      "block": [
+        16,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 233,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        7
+      ],
+      "block": [
+        17,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        7
+      ],
+      "block": [
+        18,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 185,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        7
+      ],
+      "block": [
+        19,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 175,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        7
+      ],
+      "block": [
+        20,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        7
+      ],
+      "block": [
+        21,
+        3,
+        9
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        8
+      ],
+      "block": [
+        2,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        8
+      ],
+      "block": [
+        3,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        8
+      ],
+      "block": [
+        4,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 148,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        8
+      ],
+      "block": [
+        5,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        8
+      ],
+      "block": [
+        6,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 153,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        8
+      ],
+      "block": [
+        7,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 17,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        8
+      ],
+      "block": [
+        8,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        8
+      ],
+      "block": [
+        9,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        8
+      ],
+      "block": [
+        10,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        8
+      ],
+      "block": [
+        11,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        8
+      ],
+      "block": [
+        12,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        8
+      ],
+      "block": [
+        13,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        8
+      ],
+      "block": [
+        14,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 19,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        8
+      ],
+      "block": [
+        15,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        8
+      ],
+      "block": [
+        16,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 140,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        8
+      ],
+      "block": [
+        17,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 3,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        8
+      ],
+      "block": [
+        18,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 217,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        8
+      ],
+      "block": [
+        19,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 191,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        8
+      ],
+      "block": [
+        20,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        8
+      ],
+      "block": [
+        21,
+        3,
+        10
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        9
+      ],
+      "block": [
+        2,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        9
+      ],
+      "block": [
+        3,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        9
+      ],
+      "block": [
+        4,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 164,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        3,
+        9
+      ],
+      "block": [
+        5,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        4,
+        9
+      ],
+      "block": [
+        6,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        9
+      ],
+      "block": [
+        7,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        9
+      ],
+      "block": [
+        8,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 34,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        9
+      ],
+      "block": [
+        9,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        9
+      ],
+      "block": [
+        10,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        9
+      ],
+      "block": [
+        11,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        9
+      ],
+      "block": [
+        12,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        9
+      ],
+      "block": [
+        13,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        9
+      ],
+      "block": [
+        14,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        9
+      ],
+      "block": [
+        15,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 2,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        9
+      ],
+      "block": [
+        16,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 3,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        9
+      ],
+      "block": [
+        17,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        9
+      ],
+      "block": [
+        18,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 217,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        9
+      ],
+      "block": [
+        19,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 207,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        9
+      ],
+      "block": [
+        20,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        9
+      ],
+      "block": [
+        21,
+        3,
+        11
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        10
+      ],
+      "block": [
+        2,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        10
+      ],
+      "block": [
+        3,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        10
+      ],
+      "block": [
+        4,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 196,
+        "Front": 213
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        10
+      ],
+      "block": [
+        5,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 216
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        10
+      ],
+      "block": [
+        6,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 169,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        10
+      ],
+      "block": [
+        7,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        10
+      ],
+      "block": [
+        8,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        10
+      ],
+      "block": [
+        9,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 17,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        10
+      ],
+      "block": [
+        10,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        10
+      ],
+      "block": [
+        11,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 17,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        10
+      ],
+      "block": [
+        12,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        10
+      ],
+      "block": [
+        13,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        10
+      ],
+      "block": [
+        14,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        10
+      ],
+      "block": [
+        15,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 18,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        10
+      ],
+      "block": [
+        16,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 19,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        10
+      ],
+      "block": [
+        17,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        10
+      ],
+      "block": [
+        18,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 217,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        17,
+        10
+      ],
+      "block": [
+        19,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 223,
+        "Front": -1
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        18,
+        10
+      ],
+      "block": [
+        20,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        10
+      ],
+      "block": [
+        21,
+        3,
+        12
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        11
+      ],
+      "block": [
+        2,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        11
+      ],
+      "block": [
+        3,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        11
+      ],
+      "block": [
+        4,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        11
+      ],
+      "block": [
+        5,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 232,
+        "Front": 232
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        11
+      ],
+      "block": [
+        6,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        5,
+        11
+      ],
+      "block": [
+        7,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 154,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        6,
+        11
+      ],
+      "block": [
+        8,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        7,
+        11
+      ],
+      "block": [
+        9,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        11
+      ],
+      "block": [
+        10,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 34,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        11
+      ],
+      "block": [
+        11,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        10,
+        11
+      ],
+      "block": [
+        12,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 34,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        11,
+        11
+      ],
+      "block": [
+        13,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        11
+      ],
+      "block": [
+        14,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        11
+      ],
+      "block": [
+        15,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 1,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        14,
+        11
+      ],
+      "block": [
+        16,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 35,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": false
+    },
+    {
+      "tile": [
+        15,
+        11
+      ],
+      "block": [
+        17,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 169,
+        "Buildings": 173,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        16,
+        11
+      ],
+      "block": [
+        18,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 217,
+        "Buildings": -1,
+        "Front": 205
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        11
+      ],
+      "block": [
+        19,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 206,
+        "Front": 206
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        11
+      ],
+      "block": [
+        20,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        11
+      ],
+      "block": [
+        21,
+        3,
+        13
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        12
+      ],
+      "block": [
+        2,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        12
+      ],
+      "block": [
+        3,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        12
+      ],
+      "block": [
+        4,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        12
+      ],
+      "block": [
+        5,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 213,
+        "Front": 213
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        12
+      ],
+      "block": [
+        6,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 215
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        5,
+        12
+      ],
+      "block": [
+        7,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 214
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        6,
+        12
+      ],
+      "block": [
+        8,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 197
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        7,
+        12
+      ],
+      "block": [
+        9,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 140,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        8,
+        12
+      ],
+      "block": [
+        10,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 154,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        9,
+        12
+      ],
+      "block": [
+        11,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 33,
+        "Buildings": -1,
+        "Front": 230
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        12
+      ],
+      "block": [
+        12,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 231
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        11,
+        12
+      ],
+      "block": [
+        13,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 139,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        12,
+        12
+      ],
+      "block": [
+        14,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 201,
+        "Buildings": -1,
+        "Front": -1
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": true,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": false
+    },
+    {
+      "tile": [
+        13,
+        12
+      ],
+      "block": [
+        15,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 202,
+        "Buildings": -1,
+        "Front": 205
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        14,
+        12
+      ],
+      "block": [
+        16,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 203,
+        "Buildings": -1,
+        "Front": 214
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        15,
+        12
+      ],
+      "block": [
+        17,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 215
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        16,
+        12
+      ],
+      "block": [
+        18,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 233,
+        "Buildings": 77,
+        "Front": 221
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        12
+      ],
+      "block": [
+        19,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        12
+      ],
+      "block": [
+        20,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        12
+      ],
+      "block": [
+        21,
+        3,
+        14
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        13
+      ],
+      "block": [
+        2,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        13
+      ],
+      "block": [
+        3,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        13
+      ],
+      "block": [
+        4,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        13
+      ],
+      "block": [
+        5,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        13
+      ],
+      "block": [
+        6,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        5,
+        13
+      ],
+      "block": [
+        7,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        6,
+        13
+      ],
+      "block": [
+        8,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 213
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        7,
+        13
+      ],
+      "block": [
+        9,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 214
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        8,
+        13
+      ],
+      "block": [
+        10,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 215
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        9,
+        13
+      ],
+      "block": [
+        11,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 221
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        13
+      ],
+      "block": [
+        12,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 213
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        11,
+        13
+      ],
+      "block": [
+        13,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 214
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        12,
+        13
+      ],
+      "block": [
+        14,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 217,
+        "Buildings": -1,
+        "Front": 215
+      },
+      "source_ground_open": true,
+      "ground_open": true,
+      "reachable": true,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        13,
+        13
+      ],
+      "block": [
+        15,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 218,
+        "Buildings": 77,
+        "Front": 221
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        14,
+        13
+      ],
+      "block": [
+        16,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 219,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        15,
+        13
+      ],
+      "block": [
+        17,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        16,
+        13
+      ],
+      "block": [
+        18,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        13
+      ],
+      "block": [
+        19,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        13
+      ],
+      "block": [
+        20,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        13
+      ],
+      "block": [
+        21,
+        3,
+        15
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        14
+      ],
+      "block": [
+        2,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        14
+      ],
+      "block": [
+        3,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        14
+      ],
+      "block": [
+        4,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        14
+      ],
+      "block": [
+        5,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        14
+      ],
+      "block": [
+        6,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        5,
+        14
+      ],
+      "block": [
+        7,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        6,
+        14
+      ],
+      "block": [
+        8,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        7,
+        14
+      ],
+      "block": [
+        9,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        8,
+        14
+      ],
+      "block": [
+        10,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        9,
+        14
+      ],
+      "block": [
+        11,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        14
+      ],
+      "block": [
+        12,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        11,
+        14
+      ],
+      "block": [
+        13,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        12,
+        14
+      ],
+      "block": [
+        14,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 233,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        13,
+        14
+      ],
+      "block": [
+        15,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 234,
+        "Buildings": 77,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        14,
+        14
+      ],
+      "block": [
+        16,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 235,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        15,
+        14
+      ],
+      "block": [
+        17,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        16,
+        14
+      ],
+      "block": [
+        18,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        14
+      ],
+      "block": [
+        19,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": 138,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": true,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": "Stone",
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        14
+      ],
+      "block": [
+        20,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        14
+      ],
+      "block": [
+        21,
+        3,
+        16
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        0,
+        15
+      ],
+      "block": [
+        2,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        1,
+        15
+      ],
+      "block": [
+        3,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        2,
+        15
+      ],
+      "block": [
+        4,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        3,
+        15
+      ],
+      "block": [
+        5,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        4,
+        15
+      ],
+      "block": [
+        6,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        5,
+        15
+      ],
+      "block": [
+        7,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        6,
+        15
+      ],
+      "block": [
+        8,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        7,
+        15
+      ],
+      "block": [
+        9,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        8,
+        15
+      ],
+      "block": [
+        10,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        9,
+        15
+      ],
+      "block": [
+        11,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        10,
+        15
+      ],
+      "block": [
+        12,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        11,
+        15
+      ],
+      "block": [
+        13,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        12,
+        15
+      ],
+      "block": [
+        14,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        13,
+        15
+      ],
+      "block": [
+        15,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        14,
+        15
+      ],
+      "block": [
+        16,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        15,
+        15
+      ],
+      "block": [
+        17,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        16,
+        15
+      ],
+      "block": [
+        18,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        17,
+        15
+      ],
+      "block": [
+        19,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        18,
+        15
+      ],
+      "block": [
+        20,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    },
+    {
+      "tile": [
+        19,
+        15
+      ],
+      "block": [
+        21,
+        3,
+        17
+      ],
+      "source_tiles": {
+        "Back": -1,
+        "Buildings": -1,
+        "Front": 77
+      },
+      "source_ground_open": false,
+      "ground_open": false,
+      "reachable": false,
+      "static_object_candidate": false,
+      "diggable": false,
+      "back_type": null,
+      "foreground": true
+    }
+  ],
+  "floor_variants": [
+    {
+      "tile": [
+        3,
+        8
+      ],
+      "variant": 1
+    },
+    {
+      "tile": [
+        4,
+        10
+      ],
+      "variant": 2
+    },
+    {
+      "tile": [
+        8,
+        12
+      ],
+      "variant": 1
+    },
+    {
+      "tile": [
+        14,
+        6
+      ],
+      "variant": 2
+    },
+    {
+      "tile": [
+        16,
+        9
+      ],
+      "variant": 1
+    }
+  ],
+  "runtime_population_implemented": false,
+  "loose_soil_tiles": [],
+  "lights": [
+    {
+      "tile": [
+        3,
+        8
+      ],
+      "relative": [
+        5,
+        5,
+        10
+      ],
+      "facing": "east",
+      "lit": true,
+      "theme": "desert",
+      "height": 2,
+      "block": "stardewcraft:mine_lamp"
+    },
+    {
+      "tile": [
+        7,
+        13
+      ],
+      "relative": [
+        9,
+        5,
+        15
+      ],
+      "facing": "north",
+      "lit": true,
+      "theme": "desert",
+      "height": 2,
+      "block": "stardewcraft:mine_lamp"
+    },
+    {
+      "tile": [
+        14,
+        6
+      ],
+      "relative": [
+        16,
+        5,
+        8
+      ],
+      "facing": "south",
+      "lit": true,
+      "theme": "desert",
+      "height": 2,
+      "block": "stardewcraft:mine_lamp"
+    },
+    {
+      "tile": [
+        16,
+        9
+      ],
+      "relative": [
+        18,
+        5,
+        11
+      ],
+      "facing": "west",
+      "lit": true,
+      "theme": "desert",
+      "height": 2,
+      "block": "stardewcraft:mine_lamp"
+    }
+  ],
+  "supports": [],
+  "wood_floor": [],
+  "masonry_floor": [
+    {
+      "tile": [
+        5,
+        7
+      ],
+      "relative": [
+        7,
+        3,
+        9
+      ],
+      "variant": "0",
+      "connections": "38",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        5,
+        8
+      ],
+      "relative": [
+        7,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "55",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        5,
+        9
+      ],
+      "relative": [
+        7,
+        3,
+        11
+      ],
+      "variant": "1",
+      "connections": "19",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        6,
+        7
+      ],
+      "relative": [
+        8,
+        3,
+        9
+      ],
+      "variant": "0",
+      "connections": "76",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        6,
+        8
+      ],
+      "relative": [
+        8,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "239",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        6,
+        9
+      ],
+      "relative": [
+        8,
+        3,
+        11
+      ],
+      "variant": "0",
+      "connections": "155",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        7,
+        8
+      ],
+      "relative": [
+        9,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "76",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        7,
+        9
+      ],
+      "relative": [
+        9,
+        3,
+        11
+      ],
+      "variant": "0",
+      "connections": "141",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        7,
+        10
+      ],
+      "relative": [
+        9,
+        3,
+        12
+      ],
+      "variant": "0",
+      "connections": "3",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        8,
+        7
+      ],
+      "relative": [
+        10,
+        3,
+        9
+      ],
+      "variant": "0",
+      "connections": "2",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        8,
+        10
+      ],
+      "relative": [
+        10,
+        3,
+        12
+      ],
+      "variant": "0",
+      "connections": "12",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        8,
+        11
+      ],
+      "relative": [
+        10,
+        3,
+        13
+      ],
+      "variant": "0",
+      "connections": "3",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        9,
+        7
+      ],
+      "relative": [
+        11,
+        3,
+        9
+      ],
+      "variant": "0",
+      "connections": "12",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        9,
+        8
+      ],
+      "relative": [
+        11,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "3",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        9,
+        11
+      ],
+      "relative": [
+        11,
+        3,
+        13
+      ],
+      "variant": "0",
+      "connections": "8",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        10,
+        8
+      ],
+      "relative": [
+        12,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "10",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        10,
+        10
+      ],
+      "relative": [
+        12,
+        3,
+        12
+      ],
+      "variant": "0",
+      "connections": "2",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        11,
+        8
+      ],
+      "relative": [
+        13,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "46",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        11,
+        9
+      ],
+      "relative": [
+        13,
+        3,
+        11
+      ],
+      "variant": "0",
+      "connections": "55",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        11,
+        10
+      ],
+      "relative": [
+        13,
+        3,
+        12
+      ],
+      "variant": "0",
+      "connections": "63",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        11,
+        11
+      ],
+      "relative": [
+        13,
+        3,
+        13
+      ],
+      "variant": "0",
+      "connections": "19",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        12,
+        7
+      ],
+      "relative": [
+        14,
+        3,
+        9
+      ],
+      "variant": "1",
+      "connections": "4",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        12,
+        8
+      ],
+      "relative": [
+        14,
+        3,
+        10
+      ],
+      "variant": "0",
+      "connections": "77",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        12,
+        9
+      ],
+      "relative": [
+        14,
+        3,
+        11
+      ],
+      "variant": "0",
+      "connections": "239",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        12,
+        10
+      ],
+      "relative": [
+        14,
+        3,
+        12
+      ],
+      "variant": "0",
+      "connections": "255",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        12,
+        11
+      ],
+      "relative": [
+        14,
+        3,
+        13
+      ],
+      "variant": "0",
+      "connections": "155",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        13,
+        9
+      ],
+      "relative": [
+        15,
+        3,
+        11
+      ],
+      "variant": "0",
+      "connections": "110",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        13,
+        10
+      ],
+      "relative": [
+        15,
+        3,
+        12
+      ],
+      "variant": "0",
+      "connections": "223",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        13,
+        11
+      ],
+      "relative": [
+        15,
+        3,
+        13
+      ],
+      "variant": "0",
+      "connections": "137",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        14,
+        9
+      ],
+      "relative": [
+        16,
+        3,
+        11
+      ],
+      "variant": "0",
+      "connections": "76",
+      "theme": "desert"
+    },
+    {
+      "tile": [
+        14,
+        10
+      ],
+      "relative": [
+        16,
+        3,
+        12
+      ],
+      "variant": "1",
+      "connections": "137",
+      "theme": "desert"
+    }
+  ],
+  "source_masonry_count": 51,
+  "elevators": [],
+  "step_stones": [
+    {
+      "tile": [
+        6,
+        6
+      ],
+      "relative": [
+        8,
+        3,
+        8
+      ],
+      "connections": 0,
+      "theme": "desert"
+    }
+  ],
+  "downward_entries": [
+    {
+      "tile": [
+        15,
+        11
+      ],
+      "relative": [
+        17,
+        2,
+        13
+      ],
+      "block": "stardewcraft:mine_ladder",
+      "facing": "north",
+      "shaft": false,
+      "theme": "desert"
+    }
+  ],
+  "known_limits": [
+    "Forced chest arrangement only. The 100-floor Qi story event and runtime rewards remain handled by progression, not this architecture template."
+  ],
+  "exit_ladder": {
+    "block": "stardewcraft:mine_exit",
+    "base_relative": [
+      8,
+      3,
+      7
+    ],
+    "height": 4,
+    "facing": "south",
+    "unbreakable_survival": true,
+    "theme": "desert"
+  },
+  "ceiling_foliage": [],
+  "building_theme": "desert",
+  "source_layout_number": 10,
+  "source_texture": "mine_desert",
+  "base_current_template_sha256": "829c7e3b6b1bfc602971cd4b9061199b450bd2338c4819729c5ccbc1d33d7a25",
+  "occluded_ground_filled": [],
+  "lamp_assets": "approved_eight_theme_mine_lamps",
+  "entrance_theme_assets": "complete_eight_themes",
+  "desert_flakes_installed": "2026-09-08",
+  "desert_flakes_skipped": [],
+  "desert_wall_flakes": [
+    {
+      "relative": [
+        10,
+        4,
+        8
+      ],
+      "facing": "south",
+      "variant": 1,
+      "block": "stardewcraft:mine_desert_wall_flakes"
+    },
+    {
+      "relative": [
+        10,
+        5,
+        8
+      ],
+      "facing": "south",
+      "variant": 2,
+      "block": "stardewcraft:mine_desert_wall_flakes"
+    },
+    {
+      "relative": [
+        11,
+        4,
+        8
+      ],
+      "facing": "south",
+      "variant": 2,
+      "block": "stardewcraft:mine_desert_wall_flakes"
+    },
+    {
+      "relative": [
+        11,
+        5,
+        8
+      ],
+      "facing": "south",
+      "variant": 0,
+      "block": "stardewcraft:mine_desert_wall_flakes"
+    },
+    {
+      "relative": [
+        12,
+        4,
+        8
+      ],
+      "facing": "south",
+      "variant": 0,
+      "block": "stardewcraft:mine_desert_wall_flakes"
+    },
+    {
+      "relative": [
+        12,
+        5,
+        8
+      ],
+      "facing": "south",
+      "variant": 1,
+      "block": "stardewcraft:mine_desert_wall_flakes"
+    }
+  ],
+  "reward_chests": [
+    {
+      "tile": [
+        8,
+        9
+      ],
+      "relative": [
+        10,
+        3,
+        11
+      ],
+      "special": true,
+      "role": "forced_skull_reward"
+    },
+    {
+      "tile": [
+        10,
+        9
+      ],
+      "relative": [
+        12,
+        3,
+        11
+      ],
+      "special": true,
+      "role": "forced_skull_reward"
+    }
+  ],
+  "rails": [],
+  "desert_wall_reliefs": [],
+  "skull_finishing": "2026-09-08",
+  "source_wall_ornaments": [],
+  "current_template_source": "current saved workshop, player edits retained; only documented skull finishing patches applied",
+  "skull_cavern_depth": 200,
+  "shared_architecture": "stardewcraft:mine_layouts/desert_10",
+  "qi_event_variant": false
+}

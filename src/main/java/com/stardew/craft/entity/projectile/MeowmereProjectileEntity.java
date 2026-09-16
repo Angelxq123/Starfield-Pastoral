@@ -38,8 +38,8 @@ public class MeowmereProjectileEntity extends ThrowableProjectile {
     public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
     public static final double GRAVITY_FACTOR = 0.03;
     public static final double BOUNCE_VELOCITY_RETENTION = 0.85;
-    public static final int TRAIL_MAX_AGE = 5;
-    public static final int TRAIL_MAX_POINTS = 5;
+    public static final int TRAIL_MAX_AGE = 6;
+    public static final int TRAIL_MAX_POINTS = 8;
     private float damage = 10.0f;
     private int pierceCount = 0; // 穿透次数
     private String skillId = null;
@@ -47,9 +47,6 @@ public class MeowmereProjectileEntity extends ThrowableProjectile {
     private float damageMultiplier = 1.0F;
     private WeaponDamageSnapshot releaseWeaponSnapshot;
     private static final float TRAIL_MIN_SPEED = 0.001f;
-    private static final int TRAIL_UPDATE_FREQUENCY = 1;
-    private static final double TRAIL_MOTION_SHIFT = 0.0;
-    private static final Vec3 TRAIL_POSITION_OFFSET = new Vec3(0.0, 0.0, 0.0);
     private final Deque<TrailPoint> trailPoints = new ArrayDeque<>();
 
     public MeowmereProjectileEntity(EntityType<? extends ThrowableProjectile> type, Level level) {
@@ -151,41 +148,16 @@ public class MeowmereProjectileEntity extends ThrowableProjectile {
 
     @SuppressWarnings("null")
     private void recordTrailPoint() {
-        if (this.tickCount % TRAIL_UPDATE_FREQUENCY != 0) {
-            return;
-        }
-
-        Vec3 pos = this.tickCount > 1 ? this.getPosition(1.0f) : this.position();
-        Vec3 motion = this.getDeltaMovement();
-        if (motion.lengthSqr() < (double) (TRAIL_MIN_SPEED * TRAIL_MIN_SPEED)) {
-            return;
-        }
-        if (motion.lengthSqr() > 1.0E-6) {
-            pos = pos.add(motion.normalize().scale(-TRAIL_MOTION_SHIFT));
-        }
-        pos = pos.add(TRAIL_POSITION_OFFSET);
-        addTrailPoint(pos);
-    }
-
-    @SuppressWarnings("null")
-    private void addTrailPoint(Vec3 pos) {
+        // Age even while stationary so a stopped projectile cannot keep a frozen ribbon.
+        for (TrailPoint point : trailPoints) point.age += 1;
+        while (!trailPoints.isEmpty() && trailPoints.peekFirst().age > TRAIL_MAX_AGE) trailPoints.removeFirst();
+        if (getDeltaMovement().lengthSqr() < TRAIL_MIN_SPEED * TRAIL_MIN_SPEED) return;
+        Vec3 pos = position();
         TrailPoint last = trailPoints.peekLast();
-        float tex = last == null ? 0.0f : last.texcoord + (float) last.position.distanceTo(pos);
-        trailPoints.addLast(new TrailPoint(pos, 0.0f, tex));
-        trimTrail();
-    }
-
-    @SuppressWarnings("null")
-    private void trimTrail() {
-        for (TrailPoint p : trailPoints) {
-            p.age += 1.0f;
-        }
-        while (!trailPoints.isEmpty() && trailPoints.peekFirst().age > TRAIL_MAX_AGE) {
-            trailPoints.removeFirst();
-        }
-        while (trailPoints.size() > TRAIL_MAX_POINTS) {
-            trailPoints.removeFirst();
-        }
+        if (last != null && last.position.distanceToSqr(pos) > 16) { trailPoints.clear(); last = null; }
+        float tex = last == null ? 0 : last.texcoord + (float) last.position.distanceTo(pos);
+        trailPoints.addLast(new TrailPoint(pos, 0, tex));
+        while (trailPoints.size() > TRAIL_MAX_POINTS) trailPoints.removeFirst();
     }
 
     public Deque<TrailPoint> getTrailPoints() {
@@ -254,11 +226,6 @@ public class MeowmereProjectileEntity extends ThrowableProjectile {
             }
         }
 
-        // 命中音效
-        if (!this.level().isClientSide) {
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.MEOW.get(), SoundSource.PLAYERS, 0.6f, 1.0f + (this.random.nextFloat() - 0.5f) * 0.2f);
-        }
-
         // 穿透逻辑
         if (!discardsAfterEntityHit(pierceCount)) {
             if (pierceCount > 0) {
@@ -283,7 +250,7 @@ public class MeowmereProjectileEntity extends ThrowableProjectile {
         this.entityData.set(BOUNCES, bounces + 1);
 
         // 播放反弹音效
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.MEOW.get(), SoundSource.NEUTRAL, 0.5f, 1.0f + (this.random.nextFloat() - 0.5f) * 0.2f);
+        if (!this.level().isClientSide) this.level().playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.MEOW.get(), SoundSource.NEUTRAL, 0.5f, 1.0f + (this.random.nextFloat() - 0.5f) * 0.2f);
 
         // 计算反弹向量
         Vec3 velocity = this.getDeltaMovement();

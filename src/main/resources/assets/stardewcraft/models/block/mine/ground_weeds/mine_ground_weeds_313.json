@@ -1,0 +1,489 @@
+{
+  "credit": "Made with Blockbench",
+  "ambientocclusion": false,
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_313",
+    "particle": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_313_particle"
+  },
+  "elements": [
+    {
+      "name": "叶片_1_rounded",
+      "from": [
+        5,
+        0.75,
+        0
+      ],
+      "to": [
+        10,
+        0.75,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 22.5,
+        "axis": "x",
+        "origin": [
+          7.5,
+          0.75,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            1.25,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1.5,
+            0,
+            2.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_2_broad",
+      "from": [
+        5,
+        0.9,
+        8
+      ],
+      "to": [
+        11,
+        0.9,
+        15
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -22.5,
+        "axis": "x",
+        "origin": [
+          8,
+          0.9,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            3,
+            0,
+            4.5,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4.75,
+            0,
+            6.25,
+            1.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_3_curled",
+      "from": [
+        8,
+        0.65,
+        5
+      ],
+      "to": [
+        16,
+        0.65,
+        10
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 22.5,
+        "axis": "z",
+        "origin": [
+          8,
+          0.65,
+          7.5
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            6.5,
+            0,
+            8.5,
+            1.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            8.75,
+            0,
+            10.75,
+            1.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_4_rounded",
+      "from": [
+        0,
+        1.1,
+        5.5
+      ],
+      "to": [
+        8,
+        1.1,
+        10.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          8,
+          1.1,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            11,
+            0,
+            13,
+            1.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            13.25,
+            0,
+            15.25,
+            1.25
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_5_small",
+      "from": [
+        6.5,
+        1.4,
+        3
+      ],
+      "to": [
+        9.5,
+        1.4,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          1.4,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            2.25,
+            0.75,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1,
+            2.25,
+            1.75,
+            3.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_6_narrow",
+      "from": [
+        6,
+        1.25,
+        1
+      ],
+      "to": [
+        10,
+        1.25,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -45,
+        "axis": "y",
+        "origin": [
+          8,
+          1.25,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            2,
+            2.25,
+            3,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.25,
+            2.25,
+            4.25,
+            4
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_7_small",
+      "from": [
+        6.5,
+        1.6,
+        8
+      ],
+      "to": [
+        9.5,
+        1.6,
+        13
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          1.6,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            4.5,
+            2.25,
+            5.25,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            5.5,
+            2.25,
+            6.25,
+            3.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_8_crown",
+      "from": [
+        5.5,
+        1.5,
+        8
+      ],
+      "to": [
+        10.5,
+        1.5,
+        14
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -45,
+        "axis": "y",
+        "origin": [
+          8,
+          1.5,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            6.5,
+            2.25,
+            7.75,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            8,
+            2.25,
+            9.25,
+            3.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_9_small",
+      "from": [
+        7,
+        1.05,
+        3.5
+      ],
+      "to": [
+        10,
+        1.05,
+        8.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "x",
+        "origin": [
+          8.5,
+          1.05,
+          8.5
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            9.5,
+            2.25,
+            10.25,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10.5,
+            2.25,
+            11.25,
+            3.5
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "根部叶柄_1",
+      "from": [
+        6.5,
+        0,
+        8
+      ],
+      "to": [
+        9.5,
+        2,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            11.5,
+            2.25,
+            12.25,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            2.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "根部叶柄_-1",
+      "from": [
+        6.5,
+        0,
+        8
+      ],
+      "to": [
+        9.5,
+        2,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -45,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            2.25,
+            14.25,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14.5,
+            2.25,
+            15.25,
+            2.75
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout"
+}

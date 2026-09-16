@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "stardewcraft:item/park_fountain",
+    "particle": "stardewcraft:block/park_fountain/fountain_stone_particle"
+  }
+}

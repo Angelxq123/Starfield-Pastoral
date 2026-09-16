@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_farmland",
+  "textures": {
+    "dirt": "minecraft:block/dirt",
+    "top": "stardewcraft:block/terrain/fertilized/vanilla/deluxe_fertilizer_dry"
+  }
+}

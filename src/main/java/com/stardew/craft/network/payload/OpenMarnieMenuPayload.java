@@ -45,11 +45,12 @@ public record OpenMarnieMenuPayload() implements CustomPacketPayload {
                 List.of(
                     Component.translatable("stardewcraft.npc.marnie.menu.supplies"),
                     Component.translatable("stardewcraft.npc.marnie.menu.purchase"),
+                    Component.translatable("pet.stardewcraft.adopt"),
                     Component.translatable("stardewcraft.npc.marnie.menu.leave")
                 ),
                 index -> {
-                    if (index < 2) { // 0=Supplies, 1=Purchase; 2=Leave does nothing
-                        PacketDistributor.sendToServer(new MarnieMenuChoicePayload(index));
+                    if (index < 3) {
+                        PacketDistributor.sendToServer(new MarnieMenuChoicePayload(index == 2 ? 3 : index));
                     }
                 },
                 -1

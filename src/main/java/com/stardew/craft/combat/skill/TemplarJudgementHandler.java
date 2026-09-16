@@ -111,29 +111,6 @@ public final class TemplarJudgementHandler {
                 || appliedDamage <= 0.0F) {
             return;
         }
-        serverLevel.sendParticles(
-                net.minecraft.core.particles.ParticleTypes.END_ROD,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.6,
-                target.getZ(),
-                6, 0.4, 0.2, 0.4, 0.01
-        );
-        serverLevel.sendParticles(
-                net.minecraft.core.particles.ParticleTypes.CRIT,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.6,
-                target.getZ(),
-                4, 0.3, 0.15, 0.3, 0.04
-        );
-        serverLevel.playSound(
-                null,
-                target.blockPosition(),
-                net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
-                net.minecraft.sounds.SoundSource.PLAYERS,
-                0.4F,
-                1.6F
-        );
-
         int damage = Math.max(1, Math.round(appliedDamage));
         PacketDistributor.sendToPlayersInDimension(
                 serverLevel,
@@ -148,7 +125,7 @@ public final class TemplarJudgementHandler {
         );
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 target,
-                new TemplarJudgementImpactPayload(target.getId())
+                new TemplarJudgementImpactPayload(target.getId(), false)
         );
     }
 }

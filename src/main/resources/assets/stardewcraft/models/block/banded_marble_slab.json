@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/slab",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/banded_marble",
-                     "top":  "stardewcraft:block/mine/banded_marble",
-                     "side":  "stardewcraft:block/mine/banded_marble",
-                     "particle":  "stardewcraft:block/mine/banded_marble"
-                 }
-}

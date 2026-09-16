@@ -8,15 +8,11 @@ import com.stardew.craft.combat.skill.runtime.SkillInstance;
 import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import java.util.Objects;
 import java.util.UUID;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 /** One Quench initial hit and its optional delayed blast. */
 final class TemperedQuenchExecutionState
@@ -42,6 +38,8 @@ final class TemperedQuenchExecutionState
     private final ResourceKey<Level> dimension;
     private PendingBlast pendingBlast;
     private boolean cancelled;
+    private net.minecraft.server.level.ServerLevel visualLevel;
+    private com.stardew.craft.combat.network.BloodForgeEffectPayload heat;
 
     TemperedQuenchExecutionState(ResourceKey<Level> dimension) {
         this.dimension = Objects.requireNonNull(dimension, "dimension");
@@ -96,13 +94,29 @@ final class TemperedQuenchExecutionState
             case COMPLETE -> SkillTickResult.COMPLETE;
             case CANCEL -> SkillTickResult.CANCEL;
             case FIRE_AND_CONTINUE -> {
+                clearHeat();
                 fire(context, plan.blast());
                 yield SkillTickResult.CONTINUE;
             }
         };
     }
 
+    void showHeat(net.minecraft.server.level.ServerPlayer player,LivingEntity target,long tick,int duration) {
+        clearHeat(); visualLevel=player.serverLevel();
+        heat=new com.stardew.craft.combat.network.BloodForgeEffectPayload(player.getId(),target.getId(),tick,
+                com.stardew.craft.combat.network.BloodForgeEffectPayload.HEAT_START,duration,target.getX(),target.getY(),target.getZ());
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(visualLevel,heat);
+    }
+    private void clearHeat() {
+        if(heat==null||visualLevel==null) return;
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(visualLevel,
+                new com.stardew.craft.combat.network.BloodForgeEffectPayload(heat.casterId(),heat.targetId(),heat.castTick(),
+                        com.stardew.craft.combat.network.BloodForgeEffectPayload.HEAT_END,0,heat.x(),heat.y(),heat.z()));
+        heat=null; visualLevel=null;
+    }
+
     void cancel() {
+        clearHeat();
         cancelled = true;
         pendingBlast = null;
     }
@@ -135,7 +149,6 @@ final class TemperedQuenchExecutionState
         }
         explode(
                 context,
-                level,
                 target,
                 blast.weaponSnapshot()
         );
@@ -144,29 +157,9 @@ final class TemperedQuenchExecutionState
     @SuppressWarnings("null")
     private static void explode(
             SkillExecutionContext context,
-            ServerLevel level,
             LivingEntity target,
             WeaponDamageSnapshot weaponSnapshot
     ) {
-        Vec3 center = target.position();
-
-        level.playSound(null, center.x, center.y, center.z,
-                SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.9f, 0.9f);
-        level.playSound(null, center.x, center.y, center.z,
-                SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8f, 1.1f);
-        level.playSound(null, center.x, center.y, center.z,
-                SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 0.7f, 0.9f);
-
-        level.sendParticles(ParticleTypes.FLAME,
-                center.x, center.y + 0.2, center.z,
-                18, 0.8, 0.2, 0.8, 0.02);
-        level.sendParticles(ParticleTypes.LAVA,
-                center.x, center.y + 0.15, center.z,
-                8, 0.5, 0.15, 0.5, 0.01);
-        level.sendParticles(ParticleTypes.SMOKE,
-                center.x, center.y + 0.1, center.z,
-                10, 0.7, 0.1, 0.7, 0.02);
-
         WeaponSkillDamage.apply(
                 context.player(),
                 target,

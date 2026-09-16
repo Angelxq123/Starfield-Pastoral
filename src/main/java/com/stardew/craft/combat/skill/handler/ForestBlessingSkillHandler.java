@@ -16,7 +16,6 @@ import com.stardew.craft.combat.skill.runtime.SkillValidation;
 import com.stardew.craft.combat.skill.runtime.WeaponSkillRuntime;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Behavior-preserving extraction of the original Forest Blessing implementation.
@@ -50,7 +49,6 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
     @Override
     public void begin(SkillExecutionContext context, SkillInstance instance) {
         String weaponId = context.weaponId().getPath();
-        String skillId = context.skillData().getId();
 
         instance.initializeExecutionState(
                 new State(
@@ -66,10 +64,8 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
         WeaponSkillAnimationDispatcher.sendSkillAnim(
                 context.player(),
                 weaponId,
-                skillId,
-                ANIMATION_TICKS,
-                ACTIVE_TICK_OFFSET + DURATION_TICKS,
-                ACTIVE_TICK_OFFSET
+                "forest_blessing_prepare",
+                ANIMATION_TICKS
         );
     }
 
@@ -89,7 +85,7 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
         }
         while (context.nowTick() >= state.nextHealTick
                 && state.nextHealTick <= state.endTick) {
-            heal(context, state.healAmount);
+            heal(context, state);
             state.nextHealTick += HEAL_INTERVAL_TICKS;
         }
         return context.nowTick() >= state.endTick
@@ -113,17 +109,9 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
                     state.cooldownTicks
             );
         }
-        if (state != null && state.activated
-                && reason != SkillInstance.EndReason.CASTER_UNAVAILABLE) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-                    context.player(),
-                    new ForestBlessingPayload(
-                            context.player().getId(),
-                            false,
-                            0,
-                            reason == SkillInstance.EndReason.COMPLETED
-                    )
-            );
+        if (state != null && reason != SkillInstance.EndReason.CASTER_UNAVAILABLE) {
+            ForestBlessingPayload.send(context.player(), state.activationTick - ACTIVE_TICK_OFFSET,
+                    ForestBlessingPayload.Phase.END, 0, false);
         }
     }
 
@@ -137,6 +125,7 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
         state.nextHealTick = context.nowTick() + HEAL_INTERVAL_TICKS;
         state.healAmount = HEAL_WITHOUT_TARGET;
 
+        WeaponSkillAnimationDispatcher.sendSkillAnim(context.player(), "forest_sword", "forest_blessing", 8);
         LivingEntity target = SkillTargeting.findTargetEntity(context.player(), TARGET_RANGE);
         if (target != null) {
             instance.setTargetEntityIds(java.util.List.of(target.getId()));
@@ -154,22 +143,9 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
                     WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
                     WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
             );
-            WeaponSkillAnimationDispatcher.sendImpact(
-                    context.player(),
-                    context.skillData().getId(),
-                    java.util.List.of(target.getId()),
-                    instance.seed()
-            );
         }
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-                context.player(),
-                new ForestBlessingPayload(
-                        context.player().getId(),
-                        true,
-                        DURATION_TICKS,
-                        false
-                )
-        );
+        ForestBlessingPayload.send(context.player(), state.activationTick - ACTIVE_TICK_OFFSET,
+                ForestBlessingPayload.Phase.START, DURATION_TICKS, state.healAmount == HEAL_WITH_TARGET);
     }
 
     /** Upgrades this exact cast's blessing only after positive applied damage. */
@@ -192,8 +168,11 @@ public final class ForestBlessingSkillHandler implements RuntimeWeaponSkillHandl
         return activated || reason == SkillInstance.EndReason.COMPLETED;
     }
 
-    private static void heal(SkillExecutionContext context, int amount) {
-        CombatHealing.heal(context.player(), amount);
+    private static void heal(SkillExecutionContext context, State state) {
+        if (CombatHealing.heal(context.player(), state.healAmount) > 0) {
+            ForestBlessingPayload.send(context.player(), state.activationTick - ACTIVE_TICK_OFFSET,
+                    ForestBlessingPayload.Phase.HEAL, 8, state.healAmount == HEAL_WITH_TARGET);
+        }
     }
 
     private static final class State implements SkillInstance.ExecutionState {

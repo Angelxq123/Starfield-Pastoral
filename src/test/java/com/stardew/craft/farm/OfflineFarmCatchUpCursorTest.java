@@ -22,8 +22,8 @@ class OfflineFarmCatchUpCursorTest {
         }
 
         assertEquals(List.of(
-                "crop:5:a", "crop:5:b", "tree:5:t", "commit:5",
-                "crop:6:a", "crop:6:b", "tree:6:t", "sprinkler:6:s", "commit:6"),
+                "crop:5:a", "crop:5:b", "giant:5:a", "giant:5:b", "tree:5:t", "commit:5",
+                "crop:6:a", "crop:6:b", "giant:6:a", "giant:6:b", "tree:6:t", "sprinkler:6:s", "commit:6"),
                 events);
         assertFalse(cursor.runNext());
     }
@@ -55,6 +55,7 @@ class OfflineFarmCatchUpCursorTest {
         assertTrue(cursor.runNext());
         assertTrue(cursor.runNext());
 
+        assertTrue(cursor.runNext());
         assertEquals(2, attempts[0]);
         assertEquals(List.of("crop:9:a", "commit:9"), events);
         assertTrue(cursor.isComplete());
@@ -74,6 +75,7 @@ class OfflineFarmCatchUpCursorTest {
         assertTrue(cursor.canSkipFailedItem());
         cursor.skipFailedItem();
         cursor.skipFailedItem();
+        cursor.skipFailedItem();
         assertFalse(cursor.canSkipFailedItem());
         assertThrows(IllegalStateException.class, cursor::skipFailedItem);
     }
@@ -85,6 +87,10 @@ class OfflineFarmCatchUpCursorTest {
                 new OfflineFarmCatchUpCursor.Operations<>() {
                     @Override public void growCrop(int day, String crop) {
                         events.add("crop:" + day + ":" + crop);
+                    }
+
+                    @Override public void growGiant(int day, String crop) {
+                        events.add("giant:" + day + ":" + crop);
                     }
 
                     @Override public void growTree(int day, String tree) {

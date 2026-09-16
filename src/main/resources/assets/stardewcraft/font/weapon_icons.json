@@ -5,525 +5,810 @@
       "file": "stardewcraft:gui/weapon_skill/icon_damage.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE001"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_speed.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE002"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_defense.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE003"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_weight.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE004"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_crit_chance.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE005"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_crit_power.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE006"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_cooldown.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE007"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_skill.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE008"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_immunity.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE009"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_magnetic.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE00A"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/icon_luck.png",
       "ascent": 7,
       "height": 9,
-      "chars": ["\uE00B"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/meowmere_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE108"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/meowmere_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE109"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/rusty_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE100"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/steel_smallsword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE101"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/wooden_blade_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE102"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/pirates_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE103"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/silver_saber_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE104"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/cutlass_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE105"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/forest_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE106"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/iron_edge_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE107"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/bone_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE10A"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/claymore_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE10B"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/tide_mark.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE10C"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/tide_anchor.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE10D"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/templars_blade_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE10E"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/templars_blade_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE10F"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/insect_head_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE110"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/insect_head_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE111"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/obsidian_edge_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE112"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/obsidian_edge_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE113"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/ossified_blade_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE114"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/ossified_blade_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE115"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/holy_blade_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE116"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/holy_blade_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE117"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/tempered_broadsword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE118"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/tempered_broadsword_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE119"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/yeti_tooth_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE11A"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/yeti_tooth_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE11B"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/steel_falchion_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE11C"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/steel_falchion_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE11D"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dark_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE11E"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dark_sword_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE11F"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/lava_katana_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE120"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/lava_katana_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE121"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dragontooth_cutlass_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE122"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dragontooth_cutlass_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE123"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dwarf_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE124"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dwarf_sword_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE125"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/galaxy_sword_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE126"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/galaxy_sword_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE127"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/infinity_blade_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE128"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/infinity_blade_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE129"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/carving_knife_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE12A"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/iron_dirk_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE12B"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/wind_spire_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE12C"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/elf_blade_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE12D"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/burglars_shank_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE12E"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/crystal_dagger_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE12F"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/shadow_dagger_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE130"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/broken_trident_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE131"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/broken_trident_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE132"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/wicked_kris_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE133"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/wicked_kris_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE134"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dwarf_dagger_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE135"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dwarf_dagger_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE136"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dragontooth_shiv_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE137"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/dragontooth_shiv_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE138"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/iridium_needle_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE139"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/iridium_needle_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE13A"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/galaxy_dagger_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE13B"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/galaxy_dagger_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE13C"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/infinity_dagger_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE13D"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/infinity_dagger_2.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE13E"]
+      "chars": [
+        ""
+      ]
     },
     {
       "type": "bitmap",
       "file": "stardewcraft:gui/weapon_skill/femur_1.png",
       "ascent": 12,
       "height": 16,
-      "chars": ["\uE13F"]
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/galaxy_hammer_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/galaxy_hammer_2.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/infinity_gavel_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/infinity_gavel_2.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/wood_club_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/wood_mallet_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/lead_rod_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/kudgel_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/the_slammer_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/the_slammer_2.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/dwarf_hammer_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/dwarf_hammer_2.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/dragontooth_club_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/dragontooth_club_2.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardewcraft:gui/weapon_skill/rapier_1.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        ""
+      ]
     }
   ]
 }

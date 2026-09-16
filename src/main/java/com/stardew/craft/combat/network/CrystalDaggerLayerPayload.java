@@ -47,6 +47,7 @@ public record CrystalDaggerLayerPayload(int stacks, int durationTicks, boolean p
         }
         var level = Objects.requireNonNull(mc.level, "level");
         var player = Objects.requireNonNull(mc.player, "player");
+        com.stardew.craft.client.weapon.CrystalVenomVisuals.ensureLevel();
         long nowTick = level.getGameTime();
         if (payload.stacks() > 0) {
             com.stardew.craft.client.weapon.CrystalDaggerLayerClientState.start(nowTick, payload.durationTicks(), payload.stacks());
@@ -55,9 +56,9 @@ public record CrystalDaggerLayerPayload(int stacks, int durationTicks, boolean p
         }
         if (payload.playChime() && payload.stacks() > 0) {
             float pitch = 1.0f + 0.2f * Math.max(0, payload.stacks() - 1);
-            var sound = SoundEvents.EXPERIENCE_ORB_PICKUP;
+            var sound = SoundEvents.AMETHYST_BLOCK_CHIME;
             if (sound != null) {
-                player.playSound(sound, 1.0f, pitch);
+                player.playSound(sound, 0.35f, pitch);
             }
         }
     }

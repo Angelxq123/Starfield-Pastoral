@@ -27,6 +27,24 @@ public class MineRewardClaimManager extends SavedData {
 
     private final Map<UUID, Set<Integer>> claimedFloorsByPlayer = new HashMap<>();
 
+    private final Map<UUID, Set<Integer>> openedFloorsByPlayer = new HashMap<>();
+
+    private int nextTemporaryKey=-1;
+    public int allocateTemporaryKey() { int key=nextTemporaryKey--;setDirty();return key; }
+
+    public void forgetTemporaryKeys(Set<Integer> keys) {
+        if(keys.isEmpty())return;
+        claimedFloorsByPlayer.values().forEach(floors->floors.removeAll(keys));
+        openedFloorsByPlayer.values().forEach(floors->floors.removeAll(keys));
+        setDirty();
+    }
+    public boolean hasOpened(UUID id, int floor) { return openedFloorsByPlayer.getOrDefault(id, Set.of()).contains(floor) || hasClaimed(id, floor); }
+    public void markOpened(UUID id, int floor) { openedFloorsByPlayer.computeIfAbsent(id, k -> new HashSet<>()).add(floor); setDirty(); }
+    public void sync(net.minecraft.server.level.ServerPlayer player) {
+        String floors = java.util.stream.Stream.concat(openedFloorsByPlayer.getOrDefault(player.getUUID(),Set.of()).stream(),claimedFloorsByPlayer.getOrDefault(player.getUUID(),Set.of()).stream()).distinct().sorted().map(Object::toString).collect(java.util.stream.Collectors.joining(","));
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,new com.stardew.craft.network.MineRewardStatePacket(floors));
+    }
+
     public MineRewardClaimManager() {
         super();
     }
@@ -43,6 +61,7 @@ public class MineRewardClaimManager extends SavedData {
 
     public void clearPlayer(UUID playerId) {
         claimedFloorsByPlayer.remove(playerId);
+        openedFloorsByPlayer.remove(playerId);
         setDirty();
     }
 
@@ -58,6 +77,7 @@ public class MineRewardClaimManager extends SavedData {
 
     public static MineRewardClaimManager load(CompoundTag tag, HolderLookup.Provider provider) {
         MineRewardClaimManager manager = new MineRewardClaimManager();
+        manager.nextTemporaryKey=tag.contains("nextTemporaryKey")?Math.min(-1,tag.getInt("nextTemporaryKey")):-1;
         if (tag.contains("claims", Tag.TAG_LIST)) {
             ListTag playersList = tag.getList("claims", Tag.TAG_COMPOUND);
             for (int i = 0; i < playersList.size(); i++) {
@@ -71,11 +91,17 @@ public class MineRewardClaimManager extends SavedData {
                 manager.claimedFloorsByPlayer.put(uuid, floors);
             }
         }
+        CompoundTag opened=tag.getCompound("opened");
+        for(String id:opened.getAllKeys()) {
+            Set<Integer> floors=new HashSet<>(); for(int f:opened.getIntArray(id)) floors.add(f);
+            manager.openedFloorsByPlayer.put(UUID.fromString(id),floors);
+        }
         return manager;
     }
 
     @Override
     public @NotNull CompoundTag save(@SuppressWarnings("null") @NotNull CompoundTag tag, @SuppressWarnings("null") @NotNull HolderLookup.Provider provider) {
+        tag.putInt("nextTemporaryKey",nextTemporaryKey);
         ListTag playersList = new ListTag();
         for (Map.Entry<UUID, Set<Integer>> entry : claimedFloorsByPlayer.entrySet()) {
             CompoundTag playerTag = new CompoundTag();
@@ -88,6 +114,9 @@ public class MineRewardClaimManager extends SavedData {
             playersList.add(playerTag);
         }
         tag.put("claims", playersList);
+        CompoundTag opened=new CompoundTag();
+        openedFloorsByPlayer.forEach((id,floors)->opened.putIntArray(id.toString(),floors.stream().mapToInt(Integer::intValue).toArray()));
+        tag.put("opened",opened);
         return tag;
     }
 }

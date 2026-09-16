@@ -129,6 +129,7 @@ public final class LightCounterSkillHandler implements RuntimeWeaponSkillHandler
             SkillInstance instance,
             SkillInstance.EndReason reason
     ) {
+        com.stardew.craft.combat.network.GuardSpineStatePayload.send(context.player(), com.stardew.craft.combat.network.GuardSpineStatePayload.GUARD_END, 0);
         instance.executionState(LightCounterExecutionState.class)
                 .ifPresent(LightCounterExecutionState::cancel);
     }

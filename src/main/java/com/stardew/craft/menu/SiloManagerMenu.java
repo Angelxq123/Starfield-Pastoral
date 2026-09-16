@@ -27,6 +27,8 @@ public class SiloManagerMenu extends AbstractContainerMenu {
     private int hayAmount;
     private int hayCapacity;
     private int canBuild;
+    private int canManage;
+    private long lastRefreshTick;
 
     public SiloManagerMenu(int containerId, Inventory playerInventory) {
         this(containerId, playerInventory, BlockPos.ZERO);
@@ -41,6 +43,7 @@ public class SiloManagerMenu extends AbstractContainerMenu {
         this.addDataSlot(sync(() -> hayAmount, v -> hayAmount = v));
         this.addDataSlot(sync(() -> hayCapacity, v -> hayCapacity = v));
         this.addDataSlot(sync(() -> canBuild, v -> canBuild = v));
+        this.addDataSlot(sync(() -> canManage, v -> canManage = v));
 
         refreshState();
     }
@@ -56,6 +59,7 @@ public class SiloManagerMenu extends AbstractContainerMenu {
         if (!(player instanceof ServerPlayer serverPlayer) || !(serverPlayer.level() instanceof ServerLevel level)) {
             return;
         }
+        lastRefreshTick = level.getGameTime();
 
         AnimalWorldData data = AnimalWorldData.get(level);
         data.reconcileFarmOwnership(level);
@@ -71,10 +75,13 @@ public class SiloManagerMenu extends AbstractContainerMenu {
             hayAmount = data.getHayAmount(hayOwner);
             hayCapacity = data.getHayCapacity(hayOwner);
             canBuild = 0;
+            canManage = com.stardew.craft.farm.FarmInstanceRegistry.get()
+                    .canOperateBuilding(serverPlayer.getUUID(), existing.get().ownerPlayerUuid()) ? 1 : 0;
         } else {
             isFormed = 0;
             hayAmount = 0;
             hayCapacity = 0;
+            canManage = 0;
             // 检查是否可以建造
             var validation = com.stardew.craft.animal.service.SiloManagerValidationService.validate(level, managerPos);
             canBuild = validation.success()
@@ -114,6 +121,14 @@ public class SiloManagerMenu extends AbstractContainerMenu {
     }
 
     @Override
+    public void broadcastChanges() {
+        if (player instanceof ServerPlayer && player.level().getGameTime() - lastRefreshTick >= 20) {
+            refreshState();
+        }
+        super.broadcastChanges();
+    }
+
+    @Override
     public ItemStack quickMoveStack(Player player, int index) {
         return ItemStack.EMPTY;
     }
@@ -139,4 +154,5 @@ public class SiloManagerMenu extends AbstractContainerMenu {
     public int getHayAmount() { return hayAmount; }
     public int getHayCapacity() { return hayCapacity; }
     public boolean canBuild() { return canBuild == 1; }
+    public boolean canManage() { return canManage == 1; }
 }

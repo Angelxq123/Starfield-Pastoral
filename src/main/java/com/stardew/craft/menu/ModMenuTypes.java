@@ -21,11 +21,9 @@ public class ModMenuTypes {
         MENU_TYPES.register("stardew_game_menu",
             () -> new MenuType<>(StardewGameMenu::new, FeatureFlags.DEFAULT_FLAGS));
     
-    // 矿井出口菜单（简单的无额外数据Menu）
-    @SuppressWarnings("null")
-    public static final DeferredHolder<MenuType<?>, MenuType<MineExitMenu>> MINE_EXIT = 
-        MENU_TYPES.register("mine_exit", 
-            () -> new MenuType<>(MineExitMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<AquariumMenu>> AQUARIUM =
+        MENU_TYPES.register("aquarium", () -> new MenuType<>(AquariumMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     // 矿井电梯菜单
     @SuppressWarnings("null")
@@ -81,6 +79,27 @@ public class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> WOODEN_CHEST =
         MENU_TYPES.register("wooden_chest",
             () -> new MenuType<>(WoodenChestMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> BIG_CHEST =
+        MENU_TYPES.register("big_chest", () -> new MenuType<>((id, inv) ->
+                WoodenChestMenu.variantClient(id, inv, com.stardew.craft.block.utility.ChestVariant.BIG_WOOD), FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> BIG_STONE_CHEST =
+        MENU_TYPES.register("big_stone_chest", () -> new MenuType<>((id, inv) ->
+                WoodenChestMenu.variantClient(id, inv, com.stardew.craft.block.utility.ChestVariant.BIG_STONE), FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> JUNIMO_CHEST =
+        MENU_TYPES.register("junimo_chest", () -> new MenuType<>((id, inv) ->
+                WoodenChestMenu.variantClient(id, inv, com.stardew.craft.block.utility.ChestVariant.JUNIMO), FeatureFlags.DEFAULT_FLAGS));
+
+    // The old wooden menu is also used by 27-slot mine and festival rewards.
+    public static final DeferredHolder<MenuType<?>, MenuType<WoodenChestMenu>> WOODEN_STORAGE =
+        MENU_TYPES.register("wooden_storage",
+            () -> new MenuType<>(WoodenChestMenu::storageClient, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<StoneChestMenu>> STONE_CHEST_RECOVERY =
+        MENU_TYPES.register("stone_chest_recovery",
+            () -> new MenuType<>(StoneChestMenu::recoveryClient, FeatureFlags.DEFAULT_FLAGS));
 
     @SuppressWarnings("null")
     public static final DeferredHolder<MenuType<?>, MenuType<StoneChestMenu>> STONE_CHEST =

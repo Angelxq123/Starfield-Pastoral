@@ -1,0 +1,87 @@
+{
+  "intent": "儿童、野外生活；轻巧而谨慎，比 Vincent 收敛、比 Jas 主动；羽披肩随肩臂，非成人缩小版。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.633496,
+  "attentionRig": {
+    "hipHeight": 9,
+    "soleY": 0,
+    "toeDepth": 2.5,
+    "halfStance": 1.83,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 28,
+    "pitch": 10
+  },
+  "gait": {
+    "id": "leo",
+    "revision": "character-articulated-3",
+    "rootMean": 0.36000000000000004,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -1.7,
+          9.0,
+          0.0
+        ],
+        "knee": 4.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -2.5
+      },
+      "left": {
+        "hip": [
+          1.7,
+          9.0,
+          0.0
+        ],
+        "knee": 4.5,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 1.5,
+        "toe": -2.5
+      }
+    },
+    "bodyPitch": -1.5,
+    "headPitch": 0.5,
+    "halfStance": 1.83,
+    "intent": "儿童、野外生活；轻巧而谨慎，比 Vincent 收敛、比 Jas 主动；羽披肩随肩臂，非成人缩小版。",
+    "stance": 0.56,
+    "strideRatio": 1.65,
+    "bob": 0.22399999999999998,
+    "sway": 0.41,
+    "rootYaw": 2.1,
+    "bodyYaw": 4.9,
+    "bodyRoll": 0.85,
+    "bodyNod": 0.7,
+    "headYaw": 2.0,
+    "headRoll": 0.45,
+    "armSwing": 17,
+    "armOpening": 6.5,
+    "elbowBase": 10,
+    "elbowSwing": 7,
+    "footLift": 0.266,
+    "heelPitch": 4.199999999999999,
+    "toePitch": 7.699999999999999,
+    "breathSeconds": 7.8,
+    "idleScale": 0.92,
+    "stride": 10.135936,
+    "reachMargin": 0.045358,
+    "legLengthStride": 14.85,
+    "previewSpeed": 0.784938,
+    "levelWalk": true
+  }
+}

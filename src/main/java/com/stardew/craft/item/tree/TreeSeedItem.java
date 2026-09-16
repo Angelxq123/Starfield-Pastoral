@@ -64,6 +64,6 @@ public class TreeSeedItem extends SimpleStardewItem {
 		if (state.getBlock() instanceof FarmBlock) {
 			return false;
 		}
-		return state.is(BlockTags.DIRT) || state.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK);
+		return state.is(BlockTags.DIRT) || state.getBlock() instanceof net.minecraft.world.level.block.GrassBlock;
 	}
 }

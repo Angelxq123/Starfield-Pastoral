@@ -60,6 +60,7 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        com.stardew.craft.npc.data.NpcDataRegistry.clearClientEvents();
         com.stardew.craft.cutscene.CutsceneSystem.ClientEvents.resetClientState();
         com.stardew.craft.communitycenter.cutscene.ScreenFade.clear();
         com.stardew.craft.client.AnimalOverviewClientCache.reset();
@@ -529,7 +530,6 @@ public class ModClientEvents {
         com.stardew.craft.client.weapon.RiftPathEffectClient.onClientTick(event);
         com.stardew.craft.client.weapon.StarfallMeteorEffectClient.onClientTick(event);
         com.stardew.craft.client.weapon.BlackHolePostEffectClient.onClientTick(event);
-        com.stardew.craft.client.weapon.StarfallShockwavePostEffectClient.onClientTick(event);
         com.stardew.craft.client.weapon.TemplarVowClientState.clearIfNoPlayer();
         com.stardew.craft.client.weapon.InsectEyeStanceClientState.clearIfNoPlayer();
         com.stardew.craft.client.weapon.ObsidianResonanceClientState.clearIfNoPlayer();
@@ -615,16 +615,17 @@ public class ModClientEvents {
             return;
         }
 
-        if (hasPublicMinor || hasLegacyMinor) {
+        boolean blueprintOwnsMinorKey = (stack.getItem() instanceof com.stardew.craft.building.runtime.BuildingBlueprintItem
+                || mc.player.getOffhandItem().getItem() instanceof com.stardew.craft.building.runtime.BuildingBlueprintItem)
+                && ModKeyMappings.SKILL_MINOR.getKey().equals(ModKeyMappings.BUILDING_ROTATE.getKey());
+        if (blueprintOwnsMinorKey) while (ModKeyMappings.SKILL_MINOR.consumeClick()) {}
+        if ((hasPublicMinor || hasLegacyMinor) && !blueprintOwnsMinorKey) {
             while (ModKeyMappings.SKILL_MINOR.consumeClick()) {
-                if (com.stardew.craft.client.weapon.ConsumedInteractionClientState.wasConsumedThisTick()) {
+                if (com.stardew.craft.client.weapon.ConsumedInteractionClientState.wasConsumedThisTick()
+                        && ModKeyMappings.SKILL_MINOR.getKey().equals(mc.options.keyUse.getKey())) {
                     continue;
                 }
-                if (weaponItem != null && data != null && "femur_slam".equals(data.getSkill1().getId())
-                    && !com.stardew.craft.client.weapon.WeaponSkillCooldownsClient.isOnCooldown(weaponItem.getWeaponId(), data.getSkill1().getId())
-                    && !mc.player.isUsingItem()) {
-                    mc.player.startUsingItem(InteractionHand.MAIN_HAND);
-                }
+                com.stardew.craft.client.weapon.FemurSlamInput.predictCharge(stack);
                 PacketDistributor.sendToServer(new WeaponSkillUsePayload(false));
             }
         }
@@ -673,7 +674,6 @@ public class ModClientEvents {
         com.stardew.craft.client.weapon.RiftPathEffectClient.onRenderLevel(event);
         com.stardew.craft.client.weapon.StarfallMeteorEffectClient.onRenderLevel(event);
         com.stardew.craft.client.weapon.BlackHolePostEffectClient.onRenderLevel(event);
-        com.stardew.craft.client.weapon.StarfallShockwavePostEffectClient.onRenderLevel(event);
         // com.stardew.craft.client.weapon.EvolvedAuraEffectClient.onRenderLevel(event); // 禁用：金色光环效果
         com.stardew.craft.client.render.PortalHintRenderer.onRenderLevel(event);
         com.stardew.craft.client.render.SpecialOrderDropBoxHintRenderer.onRenderLevel(event);
@@ -910,6 +910,10 @@ public class ModClientEvents {
     }
 
     private static DurationRingInfo getSkillDurationRing(Player player, String skillId) {
+        if ("infinity_gavel_endless_pounding".equals(skillId)) {
+            float ratio = com.stardew.craft.client.weapon.HeavyHammerVisuals.remainingRatio(player.getId());
+            if (ratio > 0) return new DurationRingInfo(ratio, 0xCCFFD577);
+        }
         if ("silver_foldback".equals(skillId)) {
             if (com.stardew.craft.client.weapon.SilverSaberFoldbackClientState.isActive(player)) {
                 int remaining = com.stardew.craft.client.weapon.SilverSaberFoldbackClientState.getRemainingTicks(player);
@@ -1085,6 +1089,22 @@ public class ModClientEvents {
     private record DurationRingInfo(float ratio, int argb) {}
 
     private static ResourceLocation getSkillIconTexture(String skillId) {
+        if ("dragontooth_club_jaw".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/dragontooth_club_1.png");
+        if ("dragontooth_club_breath".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/dragontooth_club_2.png");
+        if ("rapier_riposte".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/rapier_1.png");
+        if ("slammer_upheaval".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/the_slammer_1.png");
+        if ("slammer_rampage".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/the_slammer_2.png");
+        if ("dwarf_hammer_rebound".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/dwarf_hammer_1.png");
+        if ("dwarf_hammer_faultline".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/dwarf_hammer_2.png");
+        if ("lead_rod_press".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/lead_rod_1.png");
+        if ("kudgel_sweep".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/kudgel_1.png");
+        if ("wood_club_whirl".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/wood_club_1.png");
+        if ("wood_mallet_leap".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/wood_mallet_1.png");
+        if ("galaxy_hammer_starshock_sweep".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/galaxy_hammer_1.png");
+        if ("galaxy_hammer_starfall_quake".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/galaxy_hammer_2.png");
+        if ("infinity_gavel_singularity_press".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/infinity_gavel_1.png");
+        if ("infinity_gavel_endless_pounding".equals(skillId)) return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/infinity_gavel_2.png");
+
         if ("tetanus_strike".equals(skillId)) {
             return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/weapon_skill/rusty_sword_1.png");
         }

@@ -38,7 +38,7 @@
     "800": "joshhouse @evelyn_schedule_01 0 square_3_1_0",
     "1040": "joshhouse @evelyn_schedule_02 3",
     "1210": "joshhouse @evelyn_schedule_03 2",
-    "1300": "joshhouse @evelyn_schedule_02 3 evelyn_sit_left",
+    "1300": "joshhouse @evelyn_home_seat 3 evelyn_sit_left",
     "1630": "beach @evelyn_schedule_13 2 dialogue:stardewcraft.npc.schedule.evelyn.winter_17.000",
     "2340": "joshhouse @evelyn_schedule_06 1 evelyn_sleep"
   },
@@ -47,7 +47,7 @@
     "800": "joshhouse @evelyn_schedule_01 0 square_3_1_0",
     "1040": "joshhouse @evelyn_schedule_02 3",
     "1210": "joshhouse @evelyn_schedule_03 2",
-    "1300": "joshhouse @evelyn_schedule_02 3 evelyn_sit_left",
+    "1300": "joshhouse @evelyn_home_seat 3 evelyn_sit_left",
     "1630": "joshhouse @evelyn_schedule_04 0 square_3_1_0",
     "1900": "joshhouse @evelyn_schedule_05 0",
     "2130": "joshhouse @evelyn_schedule_06 1 evelyn_sleep"

@@ -1,5 +1,0 @@
-﻿{
-  "type": "minecraft:stonecutting",
-  "ingredient": { "item": "stardewcraft:salt_rock" },
-  "result": { "count": 1, "id": "stardewcraft:salt_rock_wall" }
-}

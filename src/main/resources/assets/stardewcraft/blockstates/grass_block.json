@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "snowy=false,variant=0": {
+      "model": "stardewcraft:block/terrain/grass_block"
+    },
+    "snowy=true,variant=0": {
+      "model": "stardewcraft:block/terrain/grass_block_snow"
+    },
+    "snowy=false,variant=1": {
+      "model": "stardewcraft:block/terrain/grass_blades"
+    },
+    "snowy=true,variant=1": {
+      "model": "stardewcraft:block/terrain/grass_blades_snow"
+    },
+    "snowy=false,variant=2": {
+      "model": "stardewcraft:block/terrain/grass_flowers"
+    },
+    "snowy=true,variant=2": {
+      "model": "stardewcraft:block/terrain/grass_flowers_snow"
+    }
+  }
+}

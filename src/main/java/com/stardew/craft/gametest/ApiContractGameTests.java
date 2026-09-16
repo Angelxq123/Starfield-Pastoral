@@ -163,7 +163,7 @@ import com.stardew.craft.farm.FarmType;
 import com.stardew.craft.fishing.data.FishingDataManager;
 import com.stardew.craft.fishing.data.SpawnFishRule;
 import com.stardew.craft.fishpond.model.FishPondRecord;
-import com.stardew.craft.fishpond.service.FishPondInteractionService;
+import com.stardew.craft.fishpond.service.FishPondHusbandry;
 import com.stardew.craft.festival.FestivalMapOverlayPhase;
 import com.stardew.craft.festival.FestivalSessionPhase;
 import com.stardew.craft.festival.FestivalSessionState;
@@ -180,7 +180,6 @@ import com.stardew.craft.shop.ShopCostService;
 import com.stardew.craft.shop.ShopRegistry;
 import com.stardew.craft.shop.ShopStockTracker;
 import com.stardew.craft.shop.ShopItemEntry;
-import com.stardew.craft.shop.ShopStockTracker;
 import com.stardew.craft.item.artisan.SeedMakerOutputResolver;
 import com.stardew.craft.item.artisan.SmokedOutputResolver;
 import com.stardew.craft.integration.jei.MachineJeiRegistry;
@@ -529,6 +528,7 @@ public final class ApiContractGameTests {
         StardewFishPondEventRegistry.announceDaily(
                 new StardewFishPondDailyContext(
                         helper.getLevel(), 10, pond));
+        // A real configured species at its first population gate requests a diamond.
         FishPondRecord mutablePond = new FishPondRecord(
                 pond.id(),
                 "",
@@ -543,15 +543,15 @@ public final class ApiContractGameTests {
                 pond.managerPosition().getX() + 2,
                 pond.managerPosition().getY(),
                 pond.managerPosition().getZ() + 2,
-                "minecraft:cod",
-                3,
-                3,
+                "stardewcraft:sturgeon",
+                1,
+                1,
                 "",
                 0,
                 "minecraft:diamond",
                 1,
                 false,
-                3,
+                1,
                 0,
                 -1,
                 0,
@@ -564,9 +564,9 @@ public final class ApiContractGameTests {
                 pond.managerPosition().getZ() + 0.5D,
                 new ItemStack(Items.DIAMOND));
         helper.assertValueEqual(
-                FishPondInteractionService.absorbItemEntity(
+                FishPondHusbandry.absorbItemEntity(
                         helper.getLevel(), mutablePond, delivered),
-                FishPondInteractionService.ItemAbsorbResult
+                FishPondHusbandry.ItemAbsorbResult
                         .NEED_ITEM_ACCEPTED,
                 "fish pond request completion was not accepted");
         helper.assertTrue(
@@ -3738,7 +3738,6 @@ public final class ApiContractGameTests {
                         StardewContentTypes.ARTIFACT_SPOT_POOL,
                         StardewContentTypes.MINE_MONSTER_PROFILE,
                         StardewContentTypes.FORAGE_ZONE,
-                        StardewContentTypes.MINE_THEME,
                         StardewContentTypes.BLOCK,
                         StardewContentTypes.CROP_TYPE,
                         StardewContentTypes.TREE_TYPE,

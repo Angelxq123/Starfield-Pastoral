@@ -15,6 +15,12 @@ public final class VanillaCategoryItemRegistrar {
     private record Entry(String id, String typeKey, int price, int edibility, boolean supportsQuality) {}
 
     private static final List<Entry> ENTRIES = List.of(
+        new Entry("green_slime_egg", "stardewcraft.type.resource", 1000, -300, false),
+        new Entry("tiger_slime_egg", "stardewcraft.type.resource", 8000, -300, false),
+        new Entry("golden_coconut", "stardewcraft.type.resource", 0, -300, false),
+        new Entry("cactus_seeds", "stardewcraft.type.seed", 0, -300, false),
+        new Entry("taro_tuber", "stardewcraft.type.seed", 20, -300, false),
+        new Entry("pineapple_seeds", "stardewcraft.type.seed", 240, -300, false),
         new Entry("lumber", "stardewcraft.type.resource", 2, 10, false),
         new Entry("wild_horseradish", "stardewcraft.type.forage", 50, 5, true),
         new Entry("daffodil", "stardewcraft.type.forage", 30, 0, true),
@@ -58,6 +64,7 @@ public final class VanillaCategoryItemRegistrar {
         new Entry("pineapple", "stardewcraft.type.cooking_ingredient", 300, 55, true),
         new Entry("mango", "stardewcraft.type.fruit", 130, 40, true),
         new Entry("qi_fruit", "stardewcraft.type.crop", 1, 1, true),
+        new Entry("qi_bean", "stardewcraft.type.seed", 1, -300, false),
         new Entry("salmonberry", "stardewcraft.type.forage", 75, 10, true),
         new Entry("dragon_tooth", "stardewcraft.type.resource", 500, -300, false)
     );
@@ -70,7 +77,15 @@ public final class VanillaCategoryItemRegistrar {
         Map<String, DeferredItem<Item>> out = new LinkedHashMap<>();
         for (Entry entry : ENTRIES) {
             DeferredItem<Item> reg = items.register(entry.id(),
-                    () -> new StardewQualityItem(entry.typeKey(), entry.price(), entry.edibility(), entry.supportsQuality(),
+                    () -> entry.id().equals("taro_tuber")
+                            ? new com.stardew.craft.item.crop.summer.TaroTuberItem(new Item.Properties().stacksTo(999))
+                            : entry.id().equals("pineapple_seeds")
+                            ? new com.stardew.craft.item.crop.summer.PineappleSeedItem(new Item.Properties().stacksTo(999))
+                            : entry.id().equals("cactus_seeds")
+                            ? new com.stardew.craft.item.crop.CactusSeedItem(new Item.Properties().stacksTo(999))
+                            : entry.id().equals("qi_bean")
+                            ? new com.stardew.craft.item.crop.QiBeanItem(new Item.Properties().stacksTo(999))
+                            : new StardewQualityItem(entry.typeKey(), entry.price(), entry.edibility(), entry.supportsQuality(),
                             new Item.Properties().stacksTo(999)));
             out.put(entry.id(), reg);
         }

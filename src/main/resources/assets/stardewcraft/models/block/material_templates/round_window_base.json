@@ -1,0 +1,28 @@
+{
+  "parent": "stardewcraft:block/material_templates/oak_template_base",
+  "textures": {
+    "glass": "stardewcraft:block/material_templates/round_window_glass"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        5
+      ],
+      "to": [
+        16,
+        16,
+        6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glass"
+        },
+        "south": {
+          "texture": "#glass"
+        }
+      }
+    }
+  ]
+}

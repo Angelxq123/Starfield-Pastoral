@@ -42,11 +42,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>概率级联（按顺序判定，首个命中即放置并跳出）：
  *     <ol>
  *       <li>6% → 树苗（随机 oak / maple 的 SAPLING1）</li>
- *       <li>2% → 矿物节点：内 10% 神秘石替代(FIRE_QUARTZ)，90% 宝石原矿（7 种均分）</li>
- *       <li>4% → 远古斑点（SDV 内有 15% 种子斑点子分支，因我们无对应方块，全部归为远古斑点）</li>
- *       <li>15% → 大矿脉：0.1% 铱 / 10% 金 / 33% 铁 / 其余 铜（用对应 earth_*_ore 替代大节点）</li>
- *       <li>10% → 煤矿（earth_coal_ore 替代 BasicCoalNode）</li>
- *       <li>兜底 → 普通石头（6 种 STARDEW_STONES 等概率）</li>
+ *       <li>2% → 矿物节点：内 10% 神秘石，90% 宝石原矿（7 种均分）</li>
+ *       <li>4% → 远古斑点（SDV 内有 15% 种子斑点子分支，使用独立地表标记）</li>
+ *       <li>15% → 大矿脉：0.1% 铱 / 10% 金 / 33% 铁 / 其余 铜（使用对应地表矿石节点）</li>
+ *       <li>10% → 煤矿（BasicCoalNode0）</li>
+ *       <li>兜底 → 普通石头（343 / 450 两种地表石）</li>
  *     </ol>
  *   </li>
  * </ul>
@@ -118,13 +118,18 @@ public final class QuarrySpawnService {
             AtomicInteger placed) {
         RandomSource random = DailySettlementRandom.forId(
                 worldSeed, absoluteDay, "quarry_spawn", attempt);
-        if (trySpawnOne(level, random)) {
-            placed.incrementAndGet();
+        int x = AREA_MIN_X + random.nextInt(AREA_MAX_X - AREA_MIN_X + 1);
+        int z = AREA_MIN_Z + random.nextInt(AREA_MAX_Z - AREA_MIN_Z + 1);
+        var pos = new BlockPos(x, FLOOR_MIN_Y, z);
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(level, pos, pos)) {
+            if (trySpawnAt(level, random, x, z)) placed.incrementAndGet();
         }
     }
 
-    /** 初始全图铺设密度 — 每个砂土格按此概率触发一次放置尝试（与原版 hand-painted 采石场密度近似）。 */
-    private static final double INITIAL_FILL_CHANCE = 0.20;
+    public static int dailyAttempts(int year) { return Math.min(16, 5 + year * 2); }
+
+    /** Mountain constructor runs quarryDayUpdate ten times, not a percentage fill of the whole map. */
+    public static int initialAttempts(int year) { return 10 * dailyAttempts(year); }
 
     /** 重置初始化标记，下次进入时会重新铺石头。用于 pregen region 覆盖后。 */
     public static void resetInitialSpawn(ServerLevel level) {
@@ -143,11 +148,11 @@ public final class QuarrySpawnService {
         if (data.isInitialized()) return;
 
         if (initialSpawnJob == null) {
-            initialSpawnJob = new InitialSpawnJob(level);
+            initialSpawnJob = new InitialSpawnJob(level, year);
             StardewCraft.LOGGER.info(
-                    "[QUARRY] Scheduled gradual initial dense spawn (year={}, fillChance={})",
+                    "[QUARRY] Scheduled gradual initial dense spawn (year={}, attempts={})",
                     year,
-                    INITIAL_FILL_CHANCE);
+                    initialAttempts(year));
         }
     }
 
@@ -186,20 +191,11 @@ public final class QuarrySpawnService {
         }
 
         int processed = 0;
-        while (processed < INITIAL_COLUMNS_PER_TICK && job.cursor.hasColumn()) {
-            InitialRegionWorkCursor.Column column = job.cursor.currentColumn();
-            if (job.random.nextDouble() <= INITIAL_FILL_CHANCE) {
-                job.attempts++;
-                if (trySpawnAt(job.level, job.random, column.x(), column.z())) {
-                    job.placed++;
-                }
-            }
-            job.cursor.advanceColumn();
-            processed++;
+        while (processed++ < 8 && job.attempts < job.targetAttempts) {
+            job.attempts++;
+            if (trySpawnOne(job.level, job.random)) job.placed++;
         }
-        if (job.cursor.hasColumn()) {
-            return;
-        }
+        if (job.attempts < job.targetAttempts) return;
 
         if (job.placed > 0) {
             QuarryInitData data = job.level.getDataStorage().computeIfAbsent(
@@ -234,7 +230,10 @@ public final class QuarrySpawnService {
         private int attempts;
         private int placed;
 
-        private InitialSpawnJob(ServerLevel level) {
+        private final int targetAttempts;
+
+        private InitialSpawnJob(ServerLevel level, int year) {
+            this.targetAttempts = initialAttempts(year);
             this.level = level;
             this.random = level.getRandom();
         }
@@ -257,6 +256,9 @@ public final class QuarrySpawnService {
         Block toPlace = pickBlock(level, r);
         if (toPlace == null) return false;
 
+        if (toPlace instanceof com.stardew.craft.block.nature.SurfaceArtifactSpotBlock marker)
+            return ArtifactSpotSpawnService.place(level, above, marker.isSeedSpot());
+
         // 其他方块（石头/矿石/树苗等）放在 coarse dirt 顶面上方。
         if (!isReplaceableAbove(level, above)) return false;
         level.setBlock(above, toPlace.defaultBlockState(), Block.UPDATE_ALL);
@@ -277,7 +279,7 @@ public final class QuarrySpawnService {
     /** 严格只在裸露采石场土面生成。 */
     private static boolean isQuarryFloor(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        return state.is(Blocks.COARSE_DIRT) || state.is(ModBlocks.YELLOW_DIRT.get());
+        return state.is(Blocks.COARSE_DIRT) || (state.is(ModBlocks.YELLOW_DIRT.get()) || state.is(ModBlocks.DIRT.get()));
     }
 
     private static boolean isReplaceableAbove(ServerLevel level, BlockPos pos) {

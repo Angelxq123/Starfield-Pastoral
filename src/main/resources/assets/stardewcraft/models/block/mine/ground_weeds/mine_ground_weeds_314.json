@@ -1,0 +1,360 @@
+{
+  "credit": "Made with Blockbench",
+  "ambientocclusion": false,
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_314",
+    "particle": "stardewcraft:block/mine/ground_weeds/mine_ground_weeds_314_particle"
+  },
+  "elements": [
+    {
+      "name": "叶片_1_fork",
+      "from": [
+        4.5,
+        0.75,
+        0
+      ],
+      "to": [
+        11.5,
+        0.75,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          0.75,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            1.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            3.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_2_fork",
+      "from": [
+        4.5,
+        1.1,
+        8
+      ],
+      "to": [
+        11.5,
+        1.1,
+        16
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          1.1,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            4,
+            0,
+            5.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            7.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_3_broad",
+      "from": [
+        5,
+        1.35,
+        1
+      ],
+      "to": [
+        11,
+        1.35,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -45,
+        "axis": "y",
+        "origin": [
+          8,
+          1.35,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            9.5,
+            1.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            9.75,
+            0,
+            11.25,
+            1.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_4_rounded",
+      "from": [
+        5.5,
+        0.9,
+        8
+      ],
+      "to": [
+        10.5,
+        0.9,
+        16
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -45,
+        "axis": "y",
+        "origin": [
+          8,
+          0.9,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            11.5,
+            0,
+            12.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            13,
+            0,
+            14.25,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_5_small",
+      "from": [
+        3,
+        0.8,
+        6.5
+      ],
+      "to": [
+        8,
+        0.8,
+        9.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -22.5,
+        "axis": "z",
+        "origin": [
+          8,
+          0.8,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            14.5,
+            0,
+            15.75,
+            0.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            2.25,
+            1.25,
+            3
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "叶片_6_small",
+      "from": [
+        8,
+        0.65,
+        6.5
+      ],
+      "to": [
+        13,
+        0.65,
+        9.5
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "z",
+        "origin": [
+          8,
+          0.65,
+          8
+        ]
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            1.5,
+            2.25,
+            2.75,
+            3
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3,
+            2.25,
+            4.25,
+            3
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "根部叶柄_1",
+      "from": [
+        6.5,
+        0,
+        8
+      ],
+      "to": [
+        9.5,
+        2,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            4.5,
+            2.25,
+            5.25,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.5,
+            2.25,
+            6.25,
+            2.75
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "根部叶柄_-1",
+      "from": [
+        6.5,
+        0,
+        8
+      ],
+      "to": [
+        9.5,
+        2,
+        8
+      ],
+      "shade": false,
+      "rotation": {
+        "angle": -45,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            6.5,
+            2.25,
+            7.25,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            7.5,
+            2.25,
+            8.25,
+            2.75
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout"
+}

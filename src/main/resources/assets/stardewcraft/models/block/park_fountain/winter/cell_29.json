@@ -1,0 +1,88 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/winter/surface",
+    "particle": "stardewcraft:block/park_fountain/winter/particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -7.31371,
+        -1.96875,
+        7.31371
+      ],
+      "to": [
+        16.68629,
+        2.03125,
+        15.31371
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.4375,
+            5.90625,
+            9.1875,
+            6.03125
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            10.0,
+            5.90625,
+            10.25,
+            6.03125
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            9.21875,
+            5.90625,
+            9.96875,
+            6.03125
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            10.28125,
+            5.90625,
+            10.53125,
+            6.03125
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            10.5625,
+            5.90625,
+            11.3125,
+            6.15625
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            11.34375,
+            5.90625,
+            12.09375,
+            6.15625
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "axis": "y",
+        "angle": -45,
+        "origin": [
+          4.68629,
+          -1.96875,
+          11.31371
+        ],
+        "rescale": false
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

@@ -6,14 +6,12 @@ import com.stardew.craft.entity.effect.IceSpineEffectEntity;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 /** Exact entity ownership for one Yeti Tooth Spine execution. */
@@ -40,24 +38,14 @@ final class YetiToothSpineExecutionState
                 index++) {
             float angle = angleForIndex(baseYaw, index);
             Vec3 initialDirection = directionForAngle(angle);
-            Vec3 start = center.add(
-                    initialDirection.scale(
-                            YetiToothSpineSkillHandler.SPAWN_RADIUS
-                    )
-            );
-            BlockPos surfacePosition = level.getHeightmapPos(
-                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    BlockPos.containing(
-                            start.x,
-                            player.getY(),
-                            start.z
-                    )
-            );
-            Vec3 groundStart = new Vec3(
-                    start.x,
-                    surfacePosition.getY() + 0.05D,
-                    start.z
-            );
+            Vec3 groundStart = center;
+            for (int step = 1; step <= 5 && groundStart != null; step++) {
+                Vec3 next = center.add(initialDirection.scale(
+                        YetiToothSpineSkillHandler.SPAWN_RADIUS * step / 5));
+                groundStart = com.stardew.craft.combat.skill.IceSpineGrounding.step(
+                        level, player, groundStart, next);
+            }
+            if (groundStart == null) continue;
             Vec3 direction = new Vec3(
                     groundStart.x - center.x,
                     0.0D,

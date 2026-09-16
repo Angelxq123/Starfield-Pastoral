@@ -63,8 +63,6 @@ import com.stardew.craft.fishpond.service.FishPondQualifiedItemService;
 import com.stardew.craft.mail.MailRegistry;
 import com.stardew.craft.mastery.MasteryRewardRegistry;
 import com.stardew.craft.mining.MineChestRewardData;
-import com.stardew.craft.mining.MineMonsterSpawnTableData;
-import com.stardew.craft.mining.MineThemeData;
 import com.stardew.craft.museum.LostBookRegistry;
 import com.stardew.craft.museum.MuseumRewardRegistry;
 import com.stardew.craft.npc.data.NpcDataRegistry;
@@ -369,9 +367,6 @@ public final class StardewContentRegistry {
                 "forage_zones", output, issues,
                 StardewContentRegistry::addForageZones);
         addBuiltinDomain(
-                "mine_themes", output, issues,
-                StardewContentRegistry::addMineThemes);
-        addBuiltinDomain(
                 "crop_types", output, issues,
                 StardewContentRegistry::addCropTypes);
         addBuiltinDomain(
@@ -476,9 +471,6 @@ public final class StardewContentRegistry {
         addBuiltinDomain(
                 "mine_monster_profiles", output, issues,
                 StardewContentRegistry::addMineMonsterProfiles);
-        addBuiltinDomain(
-                "mine_monster_spawn_tables", output, issues,
-                StardewContentRegistry::addMineMonsterSpawnTables);
         addBuiltinDomain(
                 "monster_slayer_goals", output, issues,
                 StardewContentRegistry::addMonsterSlayerGoals);
@@ -595,58 +587,7 @@ public final class StardewContentRegistry {
         }
     }
 
-    private static void addMineThemes(
-            Map<StardewContentKey, StardewContentDefinition> output
-    ) {
-        for (var entry : MineThemeData.snapshot()
-                .definitions().entrySet()) {
-            StardewContentKey owner = key(
-                    StardewContentTypes.MINE_THEME, entry.getKey());
-            ArrayList<StardewContentReference> references =
-                    new ArrayList<>();
-            var theme = entry.getValue();
-            addRegisteredBlockReference(
-                    output, references,
-                    StardewContentReferenceRoles.TERRAIN_BLOCK,
-                    theme.mainStone());
-            addRegisteredBlockReference(
-                    output, references,
-                    StardewContentReferenceRoles.TERRAIN_BLOCK,
-                    theme.darkStone());
-            theme.decorA().forEach(block ->
-                    addRegisteredBlockReference(
-                            output, references,
-                            StardewContentReferenceRoles.TERRAIN_BLOCK,
-                            block));
-            theme.decorB().forEach(block ->
-                    addRegisteredBlockReference(
-                            output, references,
-                            StardewContentReferenceRoles.TERRAIN_BLOCK,
-                            block));
-            theme.decorativeStones().forEach(block ->
-                    addRegisteredBlockReference(
-                            output, references,
-                            StardewContentReferenceRoles.TERRAIN_BLOCK,
-                            block));
-            theme.vanillaAccents().forEach(block ->
-                    addRegisteredBlockReference(
-                            output, references,
-                            StardewContentReferenceRoles.TERRAIN_BLOCK,
-                            block));
-            theme.caveDecorations().forEach(block ->
-                    addRegisteredBlockReference(
-                            output, references,
-                            StardewContentReferenceRoles.TERRAIN_BLOCK,
-                            block));
-            theme.ores().values().forEach(block ->
-                    addRegisteredBlockReference(
-                            output, references,
-                            StardewContentReferenceRoles.TERRAIN_BLOCK,
-                            block));
-            putBuiltin(output, new StardewContentDefinition(
-                    owner, entry.getKey(), references));
-        }
-    }
+
 
     private static void addCropTypes(
             Map<StardewContentKey, StardewContentDefinition> output
@@ -2487,40 +2428,7 @@ public final class StardewContentRegistry {
         }
     }
 
-    private static void addMineMonsterSpawnTables(
-            Map<StardewContentKey, StardewContentDefinition> output
-    ) {
-        for (var entry : MineMonsterSpawnTableData.snapshot()
-                .definitions().entrySet()) {
-            StardewContentKey owner = key(
-                    StardewContentTypes.MINE_MONSTER_SPAWN_TABLE,
-                    entry.getKey());
-            ArrayList<StardewContentReference> references =
-                    new ArrayList<>();
-            entry.getValue().themes().forEach(theme ->
-                    references.add(StardewContentReference.required(
-                            StardewContentReferenceRoles.MINE_THEME,
-                            key(StardewContentTypes.MINE_THEME, theme))));
-            entry.getValue().mechanics().forEach(mechanic ->
-                    MineThemeData.snapshot().definitions().entrySet()
-                            .stream()
-                            .filter(theme -> theme.getValue().mechanicId()
-                                    .equals(mechanic))
-                            .forEach(theme -> references.add(
-                                    StardewContentReference.required(
-                                            StardewContentReferenceRoles
-                                                    .MINE_THEME,
-                                            key(StardewContentTypes.MINE_THEME,
-                                                    theme.getKey())))));
-            entry.getValue().entries().forEach(spawn ->
-                    references.add(StardewContentReference.required(
-                            StardewContentReferenceRoles.MONSTER_PROFILE,
-                            key(StardewContentTypes.MINE_MONSTER_PROFILE,
-                                    spawn.profile()))));
-            putBuiltin(output, new StardewContentDefinition(
-                    owner, entry.getKey(), references));
-        }
-    }
+
 
     private static void addMonsterProfileReferences(
             StardewContentKey owner,

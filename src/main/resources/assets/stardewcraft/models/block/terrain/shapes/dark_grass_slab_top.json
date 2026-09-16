@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "side": "stardewcraft:block/terrain/dark_grass_side",
+    "top": "stardewcraft:block/terrain/dark_grass_side",
+    "bottom": "stardewcraft:block/terrain/dark_grass_side",
+    "particle": "stardewcraft:block/terrain/dark_grass_side"
+  }
+}

@@ -59,6 +59,7 @@ public final class Config {
         public final ModConfigSpec.BooleanValue SHOW_MONSTER_HP_BAR;
         public final ModConfigSpec.BooleanValue ENABLE_STARDEW_FONTS;
         public final ModConfigSpec.BooleanValue USE_CHINESE_SMOOTH_FONT;
+        public final ModConfigSpec.IntValue READING_TEXT_SCALE_PERCENT;
         public final ModConfigSpec.BooleanValue LEGACY_COMMON_IMPORTED;
         public final ModConfigSpec.IntValue HUD_SCALE_PERCENT;
         public final ModConfigSpec.EnumValue<HudHorizontalAnchor> HUD_HORIZONTAL_ANCHOR;
@@ -93,6 +94,11 @@ public final class Config {
                     .comment("Use Stardew Valley's optional rounded Chinese font.",
                             "A resource reload or game restart is required after changing this value.")
                     .define("useChineseSmoothFont", false);
+
+            READING_TEXT_SCALE_PERCENT = builder
+                    .comment("Reading size of all StardewCraft screens and HUD elements. Text and its container scale together; oversized pages remain scrollable. Applies to every language without a resource reload.")
+                    .translation("config.stardewcraft.client.reading_text_scale")
+                    .defineInRange("readingTextScalePercent", 100, 75, 200);
 
             builder.push("migration");
             LEGACY_COMMON_IMPORTED = builder
@@ -152,6 +158,9 @@ public final class Config {
 
     /** Settings owned by the logical server and stored with each world. */
     public static final class Server {
+        public final ModConfigSpec.IntValue GROUND_STONE_TICKS_PER_SWING;
+        public final ModConfigSpec.IntValue GROUND_STONE_MIN_TICKS;
+        public final ModConfigSpec.DoubleValue GROUND_STONE_ENERGY_PER_SWING;
         public final ModConfigSpec.DoubleValue TIME_SPEED_MULTIPLIER;
         public final ModConfigSpec.BooleanValue ENABLE_FISHING_MINIGAME;
         public final ModConfigSpec.BooleanValue ENABLE_UPDATE_CHECKS;
@@ -163,6 +172,17 @@ public final class Config {
         public final ModConfigSpec.BooleanValue LEGACY_COMMON_IMPORTED;
 
         private Server(ModConfigSpec.Builder builder) {
+            builder.push("groundStoneMining");
+            GROUND_STONE_TICKS_PER_SWING = builder.comment("Continuous mining ticks per required source swing. See docs/mine-node-mining.md.")
+                    .translation("config.stardewcraft.server.ground_stone_ticks")
+                    .defineInRange("ticksPerSwing", 12, 1, 1200);
+            GROUND_STONE_MIN_TICKS = builder.comment("Minimum continuous breaking duration, including upgraded pickaxes.")
+                    .translation("config.stardewcraft.server.ground_stone_min_ticks")
+                    .defineInRange("minimumTicks", 6, 1, 1200);
+            GROUND_STONE_ENERGY_PER_SWING = builder.comment("Energy per required source swing at mining level zero. Subtract 0.1 per mining level; pay once on completion.")
+                    .translation("config.stardewcraft.server.ground_stone_energy")
+                    .defineInRange("energyPerSwing", 2.0D, 0.0D, 100.0D);
+            builder.pop();
             builder.push("gameplay");
             TIME_SPEED_MULTIPLIER = builder
                     .comment("Stardew Valley clock speed multiplier.",

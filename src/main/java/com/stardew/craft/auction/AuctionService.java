@@ -79,7 +79,6 @@ public final class AuctionService {
             today,
             StardewTimeManager.get().getCurrentTime(),
             occupiedDayMask(today)));
-        play(player, ModSounds.BOOK_READ.get(), 0.65f, 1.05f);
     }
 
     /** Bit i (0-based) set means day offset (i+1) is unavailable — taken by a live auction or clashing with an active festival. */
@@ -109,16 +108,16 @@ public final class AuctionService {
 
     public static void openJoinList(ServerPlayer player) {
         List<OpenAuctionJoinListPayload.AuctionSummary> summaries = AuctionWorldData.get().auctions().values().stream()
-            .filter(auction -> auction.status() == Status.SCHEDULED || auction.status() == Status.PREVIEW || auction.status() == Status.WAITING)
+            .filter(auction -> auction.status() == Status.SCHEDULED)
             .filter(auction -> auction.scheduledDay() >= StardewTimeManager.get().getAbsoluteDay())
             .filter(auction -> !auction.creatorId().equals(player.getUUID()))
+            .filter(auction -> auction.lots().stream().noneMatch(lot -> lot.sellerId().equals(player.getUUID())))
             .sorted(Comparator.comparingInt(AuctionRecord::scheduledDay).thenComparingInt(AuctionRecord::startMinute))
             .map(auction -> new OpenAuctionJoinListPayload.AuctionSummary(
                 auction.id(), auction.name(), PlayerDisplayName.get(player.server, auction.creatorId()),
                 auction.scheduledDay(), auction.startMinute(), auction.lots().size()))
             .toList();
         PacketDistributor.sendToPlayer(player, new OpenAuctionJoinListPayload(summaries));
-        play(player, ModSounds.BOOK_READ.get(), 0.65f, 1.05f);
     }
 
     public static void createAuctionFromSlot(ServerPlayer player, int slot, int dayOffset, int startMinute, int startingPrice,
@@ -225,7 +224,6 @@ public final class AuctionService {
                 formatDayTime(auction.scheduledDay(), auction.startMinute()).getString()),
             "stardewcraft.auction.cancel.accept",
             "stardewcraft.auction.cancel.reject"));
-        play(player, ModSounds.BOOK_READ.get(), 0.58f, 1.0f);
     }
 
     public static void handleCancelConfirm(ServerPlayer player, UUID auctionId, boolean accepted) {
@@ -311,7 +309,6 @@ public final class AuctionService {
                 List.of(auction.name(), String.valueOf(auction.lots().size())),
                 "stardewcraft.auction.start.accept",
                 "stardewcraft.auction.start.reject"));
-            play(player, ModSounds.BOOK_READ.get(), 0.58f, 1.0f);
             return true;
         }
         if (auction.status() == Status.IN_PROGRESS) {

@@ -301,7 +301,7 @@ public final class SquidFestService {
     }
 
     private static void sendDialogue(ServerPlayer player, String key) {
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(WILLY_NPC_ID, key, 0));
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(WILLY_NPC_ID, key, 0));
     }
 
     private record RewardKey(int day, int tier) {

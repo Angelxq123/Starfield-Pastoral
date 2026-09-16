@@ -1,0 +1,14 @@
+// Explicit, headless monster checks. Avoid the ignored src/test tree and its obsolete local fixtures.
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/monster-system')])
+            sourceSets.test.resources.setSrcDirs([file('compatibility/monster-system/fixtures')])
+            // Shared development outputs may contain classes from another focused
+            // harness. Do not discover those stale, unrelated test classes here.
+            tasks.named('test') {
+                include 'com/stardew/craft/monster/**', 'com/stardew/craft/combat/JinxDefenseTest.class'
+            }
+        }
+    }
+}

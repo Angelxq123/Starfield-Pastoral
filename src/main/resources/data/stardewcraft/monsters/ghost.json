@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "source_name": "Ghost",
+  "family": "ghost",
+  "health": 96,
+  "damage": 10,
+  "resilience": 3,
+  "miss_chance": 0.0,
+  "experience": 15,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:solar_essence",
+      "chance": 0.95
+    },
+    {
+      "item": "stardewcraft:solar_essence",
+      "chance": 0.1
+    },
+    {
+      "item": "stardewcraft:ghostfish",
+      "chance": 0.08
+    },
+    {
+      "item": "stardewcraft:refined_quartz",
+      "chance": 0.08
+    },
+    {
+      "item": "-6",
+      "chance": 0.2
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_ii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

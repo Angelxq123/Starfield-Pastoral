@@ -65,6 +65,10 @@ final class BuiltinSkillAppliedHitRules {
     private BuiltinSkillAppliedHitRules() {
     }
 
+    static void applyHeavyHammer(ResolvedWeaponHit hit) {
+        com.stardew.craft.combat.skill.handler.HeavyHammerSkillHandler.appliedHit(hit);
+    }
+
     static void applyBurglarShank(ResolvedWeaponHit hit) {
         if (!"burglar_shank".equals(hit.skillId())
                 || !hit.dealtPositiveDamage()
@@ -173,16 +177,9 @@ final class BuiltinSkillAppliedHitRules {
         }
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(
                 hit.target(),
-                new TemplarJudgementImpactPayload(hit.target().getId())
+                new TemplarJudgementImpactPayload(hit.target().getId(), true)
         );
-        level.playSound(
-                null,
-                hit.target().blockPosition(),
-                SoundEvents.PLAYER_ATTACK_CRIT,
-                SoundSource.PLAYERS,
-                0.6F,
-                0.9F
-        );
+
     }
 
     static void applyTideReel(ResolvedWeaponHit hit) {
@@ -306,10 +303,10 @@ final class BuiltinSkillAppliedHitRules {
                 || !(hit.attacker() instanceof ServerPlayer player)) {
             return;
         }
-        PacketDistributor.sendToPlayer(
-                player,
-                new CarvingKnifeThrustStrikePayload()
-        );
+        // The new carving presentation carries target and caster identity to observers.
+        if (!"carving_knife".equals(hit.weaponIdentity().logicId())) {
+            PacketDistributor.sendToPlayer(player, new CarvingKnifeThrustStrikePayload());
+        }
         if (baseStrike && hit.damageOutcome().isCrit()) {
             CarvingThrustSkillHandler.recordCriticalHit(
                     player,
@@ -537,7 +534,6 @@ final class BuiltinSkillAppliedHitRules {
                 || !(hit.target().level() instanceof ServerLevel level)) {
             return;
         }
-        HolyBladeEffects.playSmiteHit(level, hit.target());
         HolyBladeEffects.playHeal(player, HolySmiteSkillHandler.HEAL_AMOUNT);
         HolyBladeDodgeTracker.start(
                 player,
@@ -589,7 +585,7 @@ final class BuiltinSkillAppliedHitRules {
                     hit.gameTick(),
                     actualHeal
             );
-            DarkSwordEffects.playLifeSteal(player);
+            DarkSwordEffects.playLifeSteal(player, hit.target());
         }
     }
 
@@ -628,7 +624,6 @@ final class BuiltinSkillAppliedHitRules {
                 true,
                 true
         ));
-        LegacyWeaponHitPresentation.emitInsectEyeImpact(hit.target());
     }
 
     static void emitInsectDash(ResolvedWeaponHit hit) {
@@ -640,7 +635,6 @@ final class BuiltinSkillAppliedHitRules {
                         hit.target()
                 );
             }
-            LegacyWeaponHitPresentation.emitInsectDashImpact(hit.target());
         }
     }
 

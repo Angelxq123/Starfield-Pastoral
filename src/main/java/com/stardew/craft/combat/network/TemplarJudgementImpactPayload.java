@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-public record TemplarJudgementImpactPayload(int entityId) implements CustomPacketPayload {
+public record TemplarJudgementImpactPayload(int entityId, boolean settlement) implements CustomPacketPayload {
 
     @SuppressWarnings("null")
     public static final Type<TemplarJudgementImpactPayload> TYPE = new Type<>(
@@ -20,6 +20,8 @@ public record TemplarJudgementImpactPayload(int entityId) implements CustomPacke
     public static final StreamCodec<ByteBuf, TemplarJudgementImpactPayload> STREAM_CODEC = StreamCodec.composite(
         ByteBufCodecs.VAR_INT,
         TemplarJudgementImpactPayload::entityId,
+        ByteBufCodecs.BOOL,
+        TemplarJudgementImpactPayload::settlement,
         TemplarJudgementImpactPayload::new
     );
 
@@ -29,6 +31,6 @@ public record TemplarJudgementImpactPayload(int entityId) implements CustomPacke
     }
 
     public static void handle(TemplarJudgementImpactPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> com.stardew.craft.client.weapon.TemplarJudgementImpactClient.playImpact(payload.entityId()));
+        context.enqueueWork(() -> com.stardew.craft.client.weapon.TemplarJudgementImpactClient.playImpact(payload.entityId(), payload.settlement()));
     }
 }

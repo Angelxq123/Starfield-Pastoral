@@ -2,7 +2,6 @@ package com.stardew.craft.npc;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.core.ModDimensions;
-import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.cutscene.runtime.EventActorEntity;
 import com.stardew.craft.cutscene.runtime.EventPlayerActorEntity;
 import com.stardew.craft.entity.npc.BooksellerEntity;
@@ -33,8 +32,6 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @EventBusSubscriber(modid = StardewCraft.MODID)
 @SuppressWarnings("null")
 public final class NpcSystem {
-    /** Tracks whether the last tick had players in the dimension. */
-    private static boolean previouslyHadPlayers = false;
 
     private NpcSystem() {
     }
@@ -48,75 +45,20 @@ public final class NpcSystem {
     public static void onServerTick(ServerTickEvent.Post event) {
         long startedAt = ServerPerformanceRecorder.startTiming();
         try {
-            tickServer(event);
+            NpcRuntimeManager.tickServer(event.getServer());
         } finally {
             ServerPerformanceRecorder.finishTiming(PerformanceTiming.NPC_TICK, startedAt);
         }
     }
 
-    private static void tickServer(ServerTickEvent.Post event) {
-        NpcRuntimeManager.tickServer(event.getServer());
-        ServerLevel level = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
-        if (level == null) {
-            return;
+    @SubscribeEvent
+    public static void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+        for (ServerLevel level : event.getServer().getAllLevels()) {
+            for (Entity entity : level.getAllEntities())
+                if (entity instanceof StardewNpcEntity npc) com.stardew.craft.npc.runtime.NpcActorPersistence.capture(npc);
+            NpcChunkForceManager.releaseAllForcedChunks(level);
         }
-        NpcSpawnManager.prepareServerContext(level);
-
-        boolean anyPlayerInStardew = false;
-        boolean anyPlayerInMining = false;
-        for (var player : event.getServer().getPlayerList().getPlayers()) {
-            if (ModDimensions.STARDEW_VALLEY.equals(player.level().dimension())) {
-                anyPlayerInStardew = true;
-            }
-            if (ModMiningDimensions.STARDEW_MINING.equals(player.level().dimension())) {
-                anyPlayerInStardew = true;
-                anyPlayerInMining = true;
-            }
-        }
-
-        if (!anyPlayerInStardew) {
-            if (previouslyHadPlayers) {
-                // Player just left — release all forced chunks and snap NPCs to schedule targets.
-                NpcSpawnManager.onAllPlayersLeft(level);
-                NpcChunkForceManager.releaseAllForcedChunks(level);
-                // Also release mining dimension forced chunks
-                ServerLevel mineLevel = event.getServer().getLevel(ModMiningDimensions.STARDEW_MINING);
-                if (mineLevel != null) {
-                    NpcChunkForceManager.releaseAllForcedChunks(mineLevel);
-                }
-                NpcScheduleRuntimeService.invalidateCache();
-                previouslyHadPlayers = false;
-            }
-            // No player in dimension — skip all NPC ticking.
-            return;
-        }
-
-        if (!previouslyHadPlayers) {
-            // Player just entered — invalidate caches & snap NPCs into position.
-            NpcScheduleRuntimeService.invalidateCache();
-            NpcSpawnManager.onPlayerEntered(level);
-            previouslyHadPlayers = true;
-        }
-
-        // Existence and schedule target resolution are lifecycle maintenance, not
-        // passage-of-time simulation. They must continue while dialogue/cutscenes
-        // pause Stardew time, otherwise a newly entered area can remain NPC-free.
-        NpcScheduleRuntimeService.tick(level);
-        com.stardew.craft.festival.ActiveFestivalHandlers.tickNpcActors(level);
-        NpcSpawnManager.tick(level);
-
-        // Tick mining-dimension NPCs (e.g. Dwarf) when any player is in the mine
-        if (anyPlayerInMining) {
-            ServerLevel mineLevel = event.getServer().getLevel(ModMiningDimensions.STARDEW_MINING);
-            if (mineLevel != null) {
-                NpcSpawnManager.tickMiningDimension(mineLevel);
-            }
-        }
-
-        if (com.stardew.craft.time.StardewTimePauseService.isPaused(event.getServer())) {
-            return;
-        }
-        NpcCentralMovementService.tick(level);
+        com.stardew.craft.npc.runtime.NpcExecutionCoordinator.clear(event.getServer());
     }
 
     @SubscribeEvent
@@ -137,7 +79,7 @@ public final class NpcSystem {
         }
         com.stardew.craft.npc.runtime.NpcInteractionService.onServerStopped();
         NpcScheduleRuntimeService.invalidateCache();
-        previouslyHadPlayers = false;
+        NpcScheduleRuntimeService.clearExecutionState();
     }
 
     /**
@@ -145,11 +87,7 @@ public final class NpcSystem {
      */
     public static void forceTickNow(ServerLevel level) {
         if (!ModDimensions.STARDEW_VALLEY.equals(level.dimension())) return;
-        if (!previouslyHadPlayers) {
-            NpcScheduleRuntimeService.invalidateCache();
-            NpcSpawnManager.onPlayerEntered(level);
-            previouslyHadPlayers = true;
-        }
+        NpcRuntimeManager.ensureActiveWorld(level);
         boolean recovered = NpcSpawnManager.forceNpcToCurrentSchedule(level, "wizard");
         if (!recovered) {
             // A malformed/missing schedule must not make the overworld tower portal

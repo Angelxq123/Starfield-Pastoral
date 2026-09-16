@@ -1,197 +1,57 @@
 package com.stardew.craft.blockentity;
 
-import com.stardew.craft.animal.data.AnimalWorldData;
+import com.stardew.craft.animal.runtime.*;
+import com.stardew.craft.building.runtime.*;
 import com.stardew.craft.block.utility.HayHopperBlock;
 import com.stardew.craft.item.ModItems;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.state.BlockState;
-
-import javax.annotation.Nullable;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
+/** A physical feed dispenser. Farm ownership comes from the current claim, never a saved player UUID. */
 public class HayHopperBlockEntity extends net.minecraft.world.level.block.entity.BlockEntity {
-    private static final String TAG_OWNER = "ownerPlayerUuid";
-    private static final Set<String> FEED_BUILDING_FAMILIES = Set.of("coop", "barn");
-
-    @Nullable
-    private UUID ownerPlayerId;
-
-    public HayHopperBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.HAY_HOPPER.get(), pos, state);
+    public HayHopperBlockEntity(BlockPos pos, BlockState state) { super(ModBlockEntities.HAY_HOPPER.get(), pos, state); }
+    public static void serverTick(Level level, BlockPos pos, BlockState state, HayHopperBlockEntity hopper) {
+        if (level instanceof ServerLevel server && (level.getGameTime() + pos.asLong()) % 20 == 0) hopper.syncFullState(server);
     }
-
-    public static void serverTick(Level level, BlockPos pos, BlockState state, HayHopperBlockEntity blockEntity) {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        if ((serverLevel.getGameTime() + pos.asLong()) % 20L != 0L) {
-            return;
-        }
-        blockEntity.syncFullState(serverLevel);
+    public UUID storageFarm() {
+        if (!(level instanceof ServerLevel server)) return null;
+        var home = FarmFeed.home(server, worldPosition);
+        if (home != null && PrefabDefinitions.supported(home.family())) return home.farmId();
+        var farm = FarmFeed.farm(server, worldPosition); return farm == null ? null : farm.getInstanceId();
     }
-
-    public void setOwnerIfAbsent(UUID owner) {
-        if (ownerPlayerId != null) {
-            return;
-        }
-        ownerPlayerId = owner;
-        setChanged();
-    }
-
-    @Nullable
-    public UUID getOwnerPlayerId() {
-        return ownerPlayerId;
-    }
-
-    @SuppressWarnings("null")
     public int extractHayToPlayer(Player player) {
-        Level currentLevel = level;
-        if (!(currentLevel instanceof ServerLevel serverLevel)) {
-            return 0;
+        if (!(level instanceof ServerLevel server) || !(player instanceof ServerPlayer actor)) return 0;
+        var home = FarmFeed.home(server, worldPosition);
+        if (home == null || !PrefabDefinitions.supported(home.family()) || !BuildingService.canManage(actor, home)) return 0;
+        int alreadyHay = 0;
+        for (var pos : BlockPos.betweenClosed(LivestockHomes.bounds(home).min(), LivestockHomes.bounds(home).maxInclusive()))
+            if (LivestockService.hasHay(server, pos, false)) alreadyHay++;
+        int requested = Math.max(0, Math.min(Math.max(1, LivestockWorldData.get(server.getServer()).occupancy(home.id())), home.tier() * 4 - alreadyHay));
+        requested = Math.min(requested, FarmFeed.amount(server.getServer(), home.farmId()));
+        if (requested == 0) return 0;
+        int space = 0; int max = new ItemStack(ModItems.HAY.get()).getMaxStackSize();
+        for (int i = 0; i < 36; i++) {
+            var stack = player.getInventory().getItem(i);
+            if (stack.isEmpty()) space += max;
+            else if (stack.is(ModItems.HAY.get())) space += Math.max(0, stack.getMaxStackSize() - stack.getCount());
         }
-
-        AnimalWorldData worldData = AnimalWorldData.get(serverLevel);
-        UUID owner = resolveStorageOwner(player, worldData, serverLevel);
-        if (owner == null) {
-            return 0;
-        }
-
-        int requested = getRequestedHayAmount(owner, worldData);
-        int removed = worldData.takeHay(owner, requested);
-        if (removed <= 0) {
-            syncFullState(serverLevel);
-            return 0;
-        }
-
-        ItemStack stack = new ItemStack((ItemLike) ModItems.HAY.get(), removed);
-        if (!player.addItem(stack)) {
-            player.drop(stack, false);
-        }
-
-        syncFullState(serverLevel);
-        return removed;
+        if (space < requested) return 0;
+        int removed = FarmFeed.take(server.getServer(), home.farmId(), requested);
+        player.getInventory().add(new ItemStack(ModItems.HAY.get(), removed));
+        syncFullState(server); return removed;
     }
-
-    @Nullable
-    public UUID resolveStorageOwner(@Nullable Player player) {
-        Level currentLevel = level;
-        if (!(currentLevel instanceof ServerLevel serverLevel)) {
-            return ownerPlayerId != null ? ownerPlayerId : player == null ? null : player.getUUID();
+    private void syncFullState(ServerLevel server) {
+        var farm = storageFarm(); boolean full = farm != null && FarmFeed.amount(server.getServer(), farm) > 0;
+        for (var pos : java.util.List.of(worldPosition, worldPosition.above())) {
+            var state = server.getBlockState(pos);
+            if (state.getBlock() instanceof HayHopperBlock && state.getValue(HayHopperBlock.FULL) != full)
+                server.setBlock(pos, state.setValue(HayHopperBlock.FULL, full), 3);
         }
-        return resolveStorageOwner(player, AnimalWorldData.get(serverLevel), serverLevel);
-    }
-
-    @Nullable
-    private UUID resolveStorageOwner(@Nullable Player player, AnimalWorldData worldData, ServerLevel serverLevel) {
-        Optional<com.stardew.craft.animal.model.AnimalBuildingRecord> building = worldData.findBuildingAtAnyOwner(
-            serverLevel.dimension().location().toString(),
-            worldPosition,
-            FEED_BUILDING_FAMILIES
-        );
-        if (building.isPresent()) {
-            return rememberResolvedOwner(building.get().ownerPlayerUuid());
-        }
-
-        UUID farmOwner = com.stardew.craft.core.FarmAreaResolver.getOwnerAt(worldPosition);
-        if (farmOwner != null) {
-            rememberResolvedOwner(farmOwner);
-            return farmOwner;
-        }
-
-        if (ownerPlayerId != null) {
-            return ownerPlayerId;
-        }
-        if (player == null) {
-            return null;
-        }
-        setOwnerIfAbsent(player.getUUID());
-        return ownerPlayerId;
-    }
-
-    @Nullable
-    private UUID rememberResolvedOwner(String ownerUuid) {
-        try {
-            UUID resolved = UUID.fromString(ownerUuid);
-            rememberResolvedOwner(resolved);
-            return resolved;
-        } catch (IllegalArgumentException ex) {
-            return ownerPlayerId;
-        }
-    }
-
-    private void rememberResolvedOwner(UUID resolved) {
-        if (!resolved.equals(ownerPlayerId)) {
-            ownerPlayerId = resolved;
-            setChanged();
-        }
-    }
-
-    private int getRequestedHayAmount(UUID owner, AnimalWorldData worldData) {
-        int requested = 1;
-        if (!worldData.hasAnySilo(owner)) {
-            return requested;
-        }
-        Level currentLevel = level;
-        if (!(currentLevel instanceof ServerLevel serverLevel)) {
-            return requested;
-        }
-        Optional<com.stardew.craft.animal.model.AnimalBuildingRecord> building = worldData.findBuildingAtAnyOwner(
-            serverLevel.dimension().location().toString(),
-            worldPosition,
-            FEED_BUILDING_FAMILIES
-        );
-        if (building.isEmpty()) {
-            return requested;
-        }
-        int animalCount = building.get().memberAnimalIds().size();
-        return Math.max(1, animalCount);
-    }
-
-    @SuppressWarnings("null")
-    private void syncFullState(ServerLevel level) {
-        BlockState state = getBlockState();
-        if (!(state.getBlock() instanceof HayHopperBlock)) {
-            return;
-        }
-        AnimalWorldData data = AnimalWorldData.get(level);
-        UUID owner = resolveStorageOwner(null, data, level);
-        boolean shouldBeFull = owner != null && data.getHayAmount(owner) > 0;
-        boolean current = state.getValue(HayHopperBlock.FULL);
-        if (current != shouldBeFull) {
-            level.setBlock(worldPosition, state.setValue(HayHopperBlock.FULL, shouldBeFull), 3);
-        }
-
-        BlockPos extensionPos = worldPosition.above();
-        BlockState extensionState = level.getBlockState(extensionPos);
-        if (extensionState.getBlock() instanceof HayHopperBlock && extensionState.getValue(HayHopperBlock.PART) == HayHopperBlock.Part.EXTENSION) {
-            boolean extCurrent = extensionState.getValue(HayHopperBlock.FULL);
-            if (extCurrent != shouldBeFull) {
-                level.setBlock(extensionPos, extensionState.setValue(HayHopperBlock.FULL, shouldBeFull), 3);
-            }
-        }
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    protected void saveAdditional(@SuppressWarnings("null") CompoundTag tag, @SuppressWarnings("null") net.minecraft.core.HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (ownerPlayerId != null) {
-            tag.putUUID(TAG_OWNER, ownerPlayerId);
-        }
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    protected void loadAdditional(@SuppressWarnings("null") CompoundTag tag, @SuppressWarnings("null") net.minecraft.core.HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        ownerPlayerId = tag.hasUUID(TAG_OWNER) ? tag.getUUID(TAG_OWNER) : null;
     }
 }

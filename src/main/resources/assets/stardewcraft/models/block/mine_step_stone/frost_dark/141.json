@@ -1,0 +1,216 @@
+{
+  "texture_size": [
+    16,
+    32
+  ],
+  "textures": {
+    "stone": "stardewcraft:block/mine_step_stone/frost_dark/141",
+    "particle": "stardewcraft:block/mine/particles/step_frost_dark"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        15,
+        2,
+        14
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0.0,
+            15,
+            7.0
+          ],
+          "texture": "#stone"
+        },
+        "down": {
+          "uv": [
+            0,
+            0.0,
+            15,
+            7.0
+          ],
+          "texture": "#stone"
+        },
+        "north": {
+          "uv": [
+            0,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "south": {
+          "uv": [
+            0,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "west": {
+          "uv": [
+            0,
+            8.0,
+            14,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "east": {
+          "uv": [
+            0,
+            8.0,
+            14,
+            9.0
+          ],
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        0,
+        14
+      ],
+      "to": [
+        15,
+        2,
+        15
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            1,
+            7.0,
+            15,
+            7.5
+          ],
+          "texture": "#stone"
+        },
+        "down": {
+          "uv": [
+            1,
+            7.0,
+            15,
+            7.5
+          ],
+          "texture": "#stone"
+        },
+        "north": {
+          "uv": [
+            1,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "south": {
+          "uv": [
+            1,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "west": {
+          "uv": [
+            14,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "east": {
+          "uv": [
+            14,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        0,
+        15
+      ],
+      "to": [
+        15,
+        2,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            2,
+            7.5,
+            15,
+            8.0
+          ],
+          "texture": "#stone"
+        },
+        "down": {
+          "uv": [
+            2,
+            7.5,
+            15,
+            8.0
+          ],
+          "texture": "#stone"
+        },
+        "north": {
+          "uv": [
+            2,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "south": {
+          "uv": [
+            2,
+            8.0,
+            15,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "west": {
+          "uv": [
+            15,
+            8.0,
+            16,
+            9.0
+          ],
+          "texture": "#stone"
+        },
+        "east": {
+          "uv": [
+            15,
+            8.0,
+            16,
+            9.0
+          ],
+          "texture": "#stone"
+        }
+      }
+    }
+  ]
+}

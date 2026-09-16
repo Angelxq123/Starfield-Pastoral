@@ -44,6 +44,15 @@ public class RingEffectHandler {
             return;
         }
         LivingEntity killed = event.getEntity();
+        if (killed instanceof com.stardew.craft.monster.StardewMonsterEntity) return;
+        applyKillEffects(player, killed);
+    }
+
+    public static void onNativeMonsterKilled(ServerPlayer player, com.stardew.craft.monster.StardewMonsterEntity monster) {
+        if (monster.claimSettlement(com.stardew.craft.monster.MonsterState.Settlement.RINGS)) applyKillEffects(player, monster);
+    }
+
+    private static void applyKillEffects(ServerPlayer player, LivingEntity killed) {
         if (!CombatTargetRules.isCombatMonster(killed)) {
             return;
         }

@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "stardewcraft:block/mine/nodes/stone_450",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "stardewcraft:block/mine/nodes/stone_450",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "stardewcraft:block/mine/nodes/stone_450",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "stardewcraft:block/mine/nodes/stone_450",
+      "y": 270
+    }
+  }
+}

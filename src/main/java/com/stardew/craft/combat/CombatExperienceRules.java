@@ -9,6 +9,9 @@ final class CombatExperienceRules {
     }
 
     static int experienceForKill(LivingEntity target) {
+        if (target instanceof com.stardew.craft.monster.StardewMonsterEntity monster && monster.initialized()) {
+            return monster.monsterState().stats().getExperience();
+        }
         var tags = target.getTags();
         if (tags.contains("sd_mob_slime")) {
             if (tags.contains("sd_tier_5")) return 20;

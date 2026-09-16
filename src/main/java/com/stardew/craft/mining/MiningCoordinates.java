@@ -50,15 +50,28 @@ public class MiningCoordinates {
         int z = (floor == 0) ? -8 : floor * FLOOR_SPACING + 14;
         double z_pos = z + 0.5;
 
+        float yaw = 180.0f;
+        if (OrdinaryMineRuntime.handles(floor)) {
+            OrdinaryMineRuntime.ensure(level, floor);
+            var layout = OrdinaryMineLayout.load(level, floor);
+            var spawn = layout.spawn(floor);
+            x=spawn.x; y=spawn.y; z_pos=spawn.z; yaw=floor<=0?180:0;
+        }
+
         // 传送前给予短暂无敌帧（防止 fall damage / 撞击伤害）。不要使用 setInvulnerable(true)，
         // 该状态会写入玩家实体，若延迟恢复任务被跳过会导致存档永久无敌。
         player.invulnerableTime = Math.max(player.invulnerableTime, 20);
 
-        ModTeleport.to(player, level, x, y, z_pos, 180.0f, 0.0f);
+        // Publish the intended floor before ChangedDimension handles the teleport.
+        var miningData=MiningDataManager.getPlayerData(player);
+        miningData.setCurrentFloor(floor);MiningDataManager.savePlayerData(player,miningData);
+        ModTeleport.to(player, level, x, y, z_pos, yaw, 0.0f);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,new com.stardew.craft.network.MiningFloorSyncPacket(floor));
 
         // 清除速度，防止残留 momentum 造成摔落伤害
         player.setDeltaMovement(0, 0, 0);
         player.fallDistance = 0;
+        MineRewardClaimManager.get(level).sync(player);
         player.hurtMarked = true; // 同步到客户端
 
         player.invulnerableTime = Math.max(player.invulnerableTime, 20);

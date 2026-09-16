@@ -1,0 +1,86 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.877937625,
+  "attentionRig": {
+    "hipHeight": 12.0,
+    "soleY": 0.0,
+    "toeDepth": 2.7,
+    "halfStance": 2.17,
+    "rightZ": 0.16,
+    "leftZ": -0.18,
+    "rightYaw": -4,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 16,
+    "pitch": 7
+  },
+  "gait": {
+    "id": "maru",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42000000000000004,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.3,
+        "toe": -2.7
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.3,
+        "toe": -2.7
+      }
+    },
+    "bodyPitch": -1.6,
+    "headPitch": 1.15,
+    "halfStance": 2.17,
+    "stride": 14.047002,
+    "reachMargin": 0.040885,
+    "legLengthStride": 21.0,
+    "approvedBaseStride": 21.0,
+    "stance": 0.55,
+    "bob": 0.2752,
+    "sway": 0.48,
+    "rootYaw": 2.05,
+    "bodyYaw": 5.0,
+    "armSwing": 17.8,
+    "armPhase": 0.025,
+    "footLift": 0.30240000000000006,
+    "swingPeak": 0.46,
+    "elbowBase": 9,
+    "bodyRoll": 0.88,
+    "strideScale": 1.01,
+    "intent": "年轻女性、外向；轻快务实，摆臂清楚，落脚与鞋底形状协调。",
+    "bodyLag": 0.055,
+    "headLag": 0.09,
+    "headYawLag": 0.04,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.761624,
+    "levelWalk": true
+  }
+}

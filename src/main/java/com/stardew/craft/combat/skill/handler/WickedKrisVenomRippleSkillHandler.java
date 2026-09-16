@@ -21,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
  * Server-authoritative extraction of Wicked Kris's original Venom Ripple.
  */
 public final class WickedKrisVenomRippleSkillHandler implements RuntimeWeaponSkillHandler {
+    public static final int ANIMATION_TICKS = 6;
     public static final double TARGET_RADIUS = 4.0;
     public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
     public static final int POISON_DURATION_TICKS = 100;
@@ -64,6 +65,9 @@ public final class WickedKrisVenomRippleSkillHandler implements RuntimeWeaponSki
         );
         instance.initializeExecutionState(new State());
 
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),weaponId,skillId,ANIMATION_TICKS);
+
         instance.registerCommittedEffect(() -> {
             for (LivingEntity target : targets) {
                 WeaponSkillDamage.apply(
@@ -79,8 +83,6 @@ public final class WickedKrisVenomRippleSkillHandler implements RuntimeWeaponSki
             }
         });
 
-        // The legacy server branch intentionally sent no action/animation packet.
-        // Its client-only visual call remains outside this server action contract.
     }
 
     /** Grants this cast's speed reward once after its first positive hit. */

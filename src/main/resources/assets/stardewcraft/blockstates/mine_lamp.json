@@ -1,0 +1,244 @@
+{
+  "variants": {
+    "facing=north,lit=true,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth"
+    },
+    "facing=north,lit=false,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth_off"
+    },
+    "facing=east,lit=true,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=earth": {
+      "model": "stardewcraft:block/mine/lantern/earth_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost"
+    },
+    "facing=north,lit=false,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost_off"
+    },
+    "facing=east,lit=true,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=frost": {
+      "model": "stardewcraft:block/mine/lantern/frost_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava"
+    },
+    "facing=north,lit=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava_off"
+    },
+    "facing=east,lit=true,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=lava": {
+      "model": "stardewcraft:block/mine/lantern/lava_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert"
+    },
+    "facing=north,lit=false,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert_off"
+    },
+    "facing=east,lit=true,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=desert": {
+      "model": "stardewcraft:block/mine/lantern/desert_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark"
+    },
+    "facing=north,lit=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark_off"
+    },
+    "facing=east,lit=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/lantern/earth_dark_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark"
+    },
+    "facing=north,lit=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark_off"
+    },
+    "facing=east,lit=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/lantern/frost_dark_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark"
+    },
+    "facing=north,lit=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark_off"
+    },
+    "facing=east,lit=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/lantern/lava_dark_off",
+      "y": 270
+    },
+    "facing=north,lit=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark"
+    },
+    "facing=north,lit=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark_off"
+    },
+    "facing=east,lit=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark",
+      "y": 90
+    },
+    "facing=east,lit=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark_off",
+      "y": 90
+    },
+    "facing=south,lit=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark",
+      "y": 180
+    },
+    "facing=south,lit=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark_off",
+      "y": 180
+    },
+    "facing=west,lit=true,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark",
+      "y": 270
+    },
+    "facing=west,lit=false,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/lantern/desert_dark_off",
+      "y": 270
+    }
+  }
+}

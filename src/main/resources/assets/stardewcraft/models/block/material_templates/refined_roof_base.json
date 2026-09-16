@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "stardewcraft:block/material_templates/refined_roof",
+    "particle": "stardewcraft:block/material_templates/refined_roof_particle"
+  }
+}

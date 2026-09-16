@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=north,part=main": {
+      "model": "stardewcraft:block/mine/nodes/stone_756",
+      "y": 0
+    },
+    "facing=north,part=extension": {
+      "model": "stardewcraft:block/mine/nodes/clump_756_extension",
+      "y": 0
+    },
+    "facing=east,part=main": {
+      "model": "stardewcraft:block/mine/nodes/stone_756",
+      "y": 90
+    },
+    "facing=east,part=extension": {
+      "model": "stardewcraft:block/mine/nodes/clump_756_extension",
+      "y": 90
+    },
+    "facing=south,part=main": {
+      "model": "stardewcraft:block/mine/nodes/stone_756",
+      "y": 180
+    },
+    "facing=south,part=extension": {
+      "model": "stardewcraft:block/mine/nodes/clump_756_extension",
+      "y": 180
+    },
+    "facing=west,part=main": {
+      "model": "stardewcraft:block/mine/nodes/stone_756",
+      "y": 270
+    },
+    "facing=west,part=extension": {
+      "model": "stardewcraft:block/mine/nodes/clump_756_extension",
+      "y": 270
+    }
+  }
+}

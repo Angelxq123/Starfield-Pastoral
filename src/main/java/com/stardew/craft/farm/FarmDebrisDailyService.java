@@ -175,8 +175,8 @@ public final class FarmDebrisDailyService {
                 }
                 placed = switch (random.nextInt(4)) {
                     case 0, 1 -> fallenLogState(random);
-                    case 2 -> ModBlocks.EARTH_SHALE.get().defaultBlockState();
-                    default -> ModBlocks.MOSSY_SANDSTONE.get().defaultBlockState();
+                    case 2 -> ModBlocks.MINE_STONE_343.get().defaultBlockState();
+                    default -> ModBlocks.MINE_STONE_450.get().defaultBlockState();
                 };
             }
             if (StardewCropRuntime.inspect(level, target) != null
@@ -407,7 +407,7 @@ public final class FarmDebrisDailyService {
         BlockPos max = farm.getFarmBoundsMax();
         BlockPos top = findTopBlock(level, x, z, min.getY(), max.getY());
         if (top == null || !isDiggableFarmGround(level.getBlockState(top).getBlock())
-                || level.getBlockState(top).is(Blocks.FARMLAND)) {
+                || (level.getBlockState(top).is(Blocks.FARMLAND) || com.stardew.craft.block.terrain.TerrainSoils.farmland(level.getBlockState(top)))) {
             return null;
         }
         BlockPos place = top.above();
@@ -452,9 +452,9 @@ public final class FarmDebrisDailyService {
     }
 
     private static boolean isDiggableFarmGround(Block block) {
-        return block == ModBlocks.YELLOW_DIRT.get()
-                || block == Blocks.GRASS_BLOCK
-                || block == Blocks.FARMLAND;
+        return block == ModBlocks.DIRT.get() || block == ModBlocks.YELLOW_DIRT.get()
+                || block instanceof net.minecraft.world.level.block.GrassBlock
+                || block == Blocks.FARMLAND || block instanceof com.stardew.craft.block.terrain.TerrainFarmlandBlock;
     }
 
     private static boolean canDebrisReplace(
@@ -472,8 +472,8 @@ public final class FarmDebrisDailyService {
     /** Spreading debris destroys HoeDirt in SDV, exposing the farm's dirt tile. */
     private static void clearTilledGroundBelow(ServerLevel level, BlockPos place) {
         BlockPos ground = place.below();
-        if (level.getBlockState(ground).is(Blocks.FARMLAND)) {
-            level.setBlock(ground, ModBlocks.YELLOW_DIRT.get().defaultBlockState(), 3);
+        if (level.getBlockState(ground).is(Blocks.FARMLAND) || com.stardew.craft.block.terrain.TerrainSoils.farmland(level.getBlockState(ground))) {
+            level.setBlock(ground, com.stardew.craft.block.terrain.TerrainSoils.restored(level.getBlockState(ground)).defaultBlockState(), 3);
         }
     }
 
@@ -486,13 +486,13 @@ public final class FarmDebrisDailyService {
     private static BlockState randomDebrisState(RandomSource random) {
         return switch (random.nextInt(4)) {
             case 0, 1 -> fallenLogState(random);
-            case 2 -> ModBlocks.EARTH_SHALE.get().defaultBlockState();
-            default -> ModBlocks.MOSSY_SANDSTONE.get().defaultBlockState();
+            case 2 -> ModBlocks.MINE_STONE_343.get().defaultBlockState();
+            default -> ModBlocks.MINE_STONE_450.get().defaultBlockState();
         };
     }
 
     private static boolean isFarmStone(Block block) {
-        return block == ModBlocks.EARTH_SHALE.get() || block == ModBlocks.MOSSY_SANDSTONE.get();
+        return block == ModBlocks.MINE_STONE_343.get() || block == ModBlocks.MINE_STONE_450.get();
     }
 
     private static boolean isFarmLog(BlockState state) {

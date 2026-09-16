@@ -89,6 +89,7 @@ Data packs and NeoForge add-ons can use the 0.5 API to extend supported farm lay
 Common local validation commands:
 
 ```shell
+python3 -m pip install -r requirements-build.txt
 ./gradlew classes
 ./gradlew build
 ```
@@ -111,7 +112,7 @@ The mod blocks entry to the Stardew Valley dimension when these files are missin
 
 ## Credits and license
 
-Russian localization includes work by Annelo and contributors to [annel0/Starfield-Pastoral](https://github.com/annel0/Starfield-Pastoral). Existing official localization text takes priority.
+Russian localization includes translation work created entirely by **Annelo ([annel0](https://github.com/annel0))** in [annel0/Starfield-Pastoral](https://github.com/annel0/Starfield-Pastoral). Thank you for making the project accessible to Russian-speaking players! Annelo has granted permanent, royalty-free permission to use, modify, and continue developing that work in the official project; see the [permission statement](docs/permissions/russian-localization-annel0.md).
 
 Starfield Pastoral uses a [custom non-commercial fan project license](https://github.com/ChangQingElysium/Starfield-Pastoral/blob/main/LICENSE.md). Original project code and content belong to the project team and contributors. Third-party and game-derived materials remain the property of their respective rightsholders. The project license does not cover those materials.
 

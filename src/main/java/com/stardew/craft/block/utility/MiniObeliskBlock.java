@@ -22,8 +22,13 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -35,11 +40,29 @@ import java.util.Comparator;
 import java.util.List;
 
 public class MiniObeliskBlock extends Block {
-    private static final VoxelShape SHAPE =
-            ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/bone_mill", Direction.SOUTH)[0];
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes(
+            "stardewcraft:block/utility/mini_obelisk", Direction.NORTH);
 
     public MiniObeliskBlock(Properties properties) {
         super(properties);
+        // Missing facing in old saves resolves to the former fixed model orientation.
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    @Override
+    public BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
     }
 
     @Override
@@ -54,7 +77,7 @@ public class MiniObeliskBlock extends Block {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
     }
 
     @Override
@@ -65,12 +88,13 @@ public class MiniObeliskBlock extends Block {
     @Override
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState placed = defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
         if (context.getLevel().isClientSide) {
-            return defaultBlockState();
+            return placed;
         }
         Player player = context.getPlayer();
         if (player == null) {
-            return defaultBlockState();
+            return placed;
         }
         if (!FarmAreaResolver.isInPlayerFarm(player.getUUID(), context.getClickedPos())) {
             if (player instanceof ServerPlayer serverPlayer) {
@@ -87,7 +111,7 @@ public class MiniObeliskBlock extends Block {
                 return null;
             }
         }
-        return defaultBlockState();
+        return placed;
     }
 
     @Override

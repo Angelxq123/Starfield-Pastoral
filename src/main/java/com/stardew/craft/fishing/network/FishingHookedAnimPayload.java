@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Server -> client: the player reacted to the bite. Play the "Hooked!" animation before opening the minigame.
  */
-public record FishingHookedAnimPayload(int durationTicks) implements CustomPacketPayload {
+public record FishingHookedAnimPayload(java.util.UUID sessionId, int durationTicks) implements CustomPacketPayload {
 	@SuppressWarnings("null")
 	public static final Type<FishingHookedAnimPayload> TYPE = new Type<>(
 			ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "fishing_hooked_anim")
@@ -20,6 +20,7 @@ public record FishingHookedAnimPayload(int durationTicks) implements CustomPacke
 
 	@SuppressWarnings("null")
 	public static final StreamCodec<ByteBuf, FishingHookedAnimPayload> STREAM_CODEC = StreamCodec.composite(
+			net.minecraft.core.UUIDUtil.STREAM_CODEC, FishingHookedAnimPayload::sessionId,
 			ByteBufCodecs.VAR_INT, FishingHookedAnimPayload::durationTicks,
 			FishingHookedAnimPayload::new
 	);
@@ -35,6 +36,7 @@ public record FishingHookedAnimPayload(int durationTicks) implements CustomPacke
 
 	@net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
 	private static void handleClient(FishingHookedAnimPayload payload) {
+		if (!com.stardew.craft.client.fishing.FishingInteractionState.accepts(payload.sessionId())) return;
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		if (mc == null || mc.player == null) {
 			return;

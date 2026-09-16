@@ -33,6 +33,10 @@ public class IceSpineEffectEntity extends Entity {
 
     private static final double DEFAULT_MAX_DISTANCE = 6.0;
     private static final double SPEED = 0.5;
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> GROUND_WAVE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(IceSpineEffectEntity.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    public boolean isGroundWave() { return entityData.get(GROUND_WAVE); }
 
     private UUID ownerId;
     private float damageMultiplier = 1.8f;
@@ -77,6 +81,7 @@ public class IceSpineEffectEntity extends Entity {
         if (skillId != null) {
             this.skillId = skillId;
         }
+        entityData.set(GROUND_WAVE, "yeti_tooth_spine".equals(this.skillId));
         this.releaseWeaponSnapshot = releaseWeaponSnapshot;
         this.setPos(start.x, start.y, start.z);
         Vec3 vel = direction.normalize().scale(SPEED);
@@ -93,6 +98,7 @@ public class IceSpineEffectEntity extends Entity {
 
     @Override
     protected void defineSynchedData(@SuppressWarnings("null") net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        builder.define(GROUND_WAVE, false);
     }
 
     @Override
@@ -121,11 +127,16 @@ public class IceSpineEffectEntity extends Entity {
 
         @SuppressWarnings("null")
         Vec3 delta = this.getDeltaMovement();
-        this.setPos(this.getX() + delta.x, this.getY() + delta.y, this.getZ() + delta.z);
+        Vec3 next = this.position().add(delta);
+        if (isGroundWave()) {
+            next = com.stardew.craft.combat.skill.IceSpineGrounding.step(level(), this, position(), next);
+            if (next == null) { discard(); return; }
+        }
+        this.setPos(next.x, next.y, next.z);
 
         @SuppressWarnings("null")
         Vec3 pos = this.position();
-        if (pos.distanceTo(startPos) >= maxDistance) {
+        if ((isGroundWave() ? pos.subtract(startPos).horizontalDistance() : pos.distanceTo(startPos)) >= maxDistance) {
             this.discard();
             return;
         }
@@ -222,6 +233,7 @@ public class IceSpineEffectEntity extends Entity {
         if (tag.contains("SkillId")) {
             this.skillId = tag.getString("SkillId");
         }
+        entityData.set(GROUND_WAVE, "yeti_tooth_spine".equals(this.skillId));
         if (tag.contains("DirectFreezeTicks")) {
             this.directFreezeTicks = tag.getInt("DirectFreezeTicks");
         }

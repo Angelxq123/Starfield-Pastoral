@@ -23,6 +23,13 @@ import net.minecraft.world.item.ItemStack;
  */
 public class CrabPotItem extends Item implements IStardewItem {
 
+    @Override
+    public net.minecraft.world.InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
+        return context.getPlayer() != null && context.getPlayer().isShiftKeyDown()
+                ? com.stardew.craft.item.cooking.PlacedFoodPlacement.place(context) : super.useOn(context);
+    }
+
+
     /** 按品质存储的售价 [普通, 银星, 金星, 铱星] */
     protected final int[] priceByQuality;
     

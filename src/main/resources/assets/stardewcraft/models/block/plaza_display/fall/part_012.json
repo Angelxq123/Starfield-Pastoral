@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/plaza_display/fall/plaza_display_fall",
+    "particle": "stardewcraft:block/plaza_display/fall/plaza_fall_hay_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        2,
+        -1
+      ],
+      "to": [
+        11,
+        15,
+        17
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.125,
+            4.125,
+            5.5,
+            4.9375
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            6.125,
+            4.125,
+            7.25,
+            4.9375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.625,
+            4.125,
+            6.0,
+            4.9375
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            7.375,
+            4.125,
+            8.5,
+            4.9375
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8.625,
+            4.125,
+            9.0,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            9.125,
+            4.125,
+            9.5,
+            5.25
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

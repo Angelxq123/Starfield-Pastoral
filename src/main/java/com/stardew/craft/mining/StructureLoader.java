@@ -210,12 +210,14 @@ public final class StructureLoader {
 
             int paletteMax = Math.max(1, schematic.getInt("PaletteMax"));
             BlockState[] paletteStates = new BlockState[Math.max(paletteMax, paletteTag.size()) + 1];
+            boolean[] variedTerrain = new boolean[paletteStates.length];
             for (String stateString : paletteTag.getAllKeys()) {
                 int paletteId = paletteTag.getInt(stateString);
                 if (paletteId < 0 || paletteId >= paletteStates.length) {
                     continue;
                 }
                 paletteStates[paletteId] = parseBlockState(stateString);
+                variedTerrain[paletteId] = !stateString.contains("variant=");
             }
 
             int expected = width * height * length;
@@ -226,7 +228,7 @@ public final class StructureLoader {
             }
 
             ensureChunksLoaded(level, origin, width, length);
-            placeSchematicBlocks(level, origin, width, height, length, paletteStates, blockIndices, false);
+            placeSchematicBlocks(level, origin, width, height, length, paletteStates, blockIndices, variedTerrain, false);
 
             applySchematicBlockEntities(level, origin, root, schematic, width, height, length);
 
@@ -412,6 +414,7 @@ public final class StructureLoader {
                                              int length,
                                              BlockState[] paletteStates,
                                              int[] blockIndices,
+                                             boolean[] variedTerrain,
                                              boolean rotateClockwise90) {
         for (int pass = 0; pass < 2; pass++) {
             boolean placeFullBlocks = pass == 0;
@@ -438,6 +441,8 @@ public final class StructureLoader {
                         } else {
                             target = origin.offset(x, y, z);
                         }
+                        if (variedTerrain[paletteIndex]) state = com.stardew.craft.block.terrain.TerrainWorldUpgrade
+                                .varied(state, level.getSeed(), target);
                         level.setBlock(target, state, SCHEMATIC_BULK_FLAGS);
                     }
                 }
@@ -664,10 +669,12 @@ public final class StructureLoader {
 
             int paletteMax = Math.max(1, schematic.getInt("PaletteMax"));
             BlockState[] paletteStates = new BlockState[Math.max(paletteMax, paletteTag.size()) + 1];
+            boolean[] variedTerrain = new boolean[paletteStates.length];
             for (String stateString : paletteTag.getAllKeys()) {
                 int paletteId = paletteTag.getInt(stateString);
                 if (paletteId >= 0 && paletteId < paletteStates.length) {
                     paletteStates[paletteId] = parseBlockState(stateString);
+                    variedTerrain[paletteId] = !stateString.contains("variant=");
                 }
             }
 
@@ -681,7 +688,7 @@ public final class StructureLoader {
             // 旋转后占地：宽=length, 深=width
             ensureChunksLoaded(level, origin, length, width);
 
-            placeSchematicBlocks(level, origin, width, height, length, paletteStates, blockIndices, true);
+            placeSchematicBlocks(level, origin, width, height, length, paletteStates, blockIndices, variedTerrain, true);
 
             applySchematicBlockEntitiesCW90(level, origin, root, schematic, width, height, length);
 

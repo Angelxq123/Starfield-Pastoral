@@ -60,7 +60,7 @@ public final class GuntherService {
         if (!donationActive && !hasDonatable) {
             // No donatable items and not in donation mode: show normal dialogue
             // SDV parity: "You don't have anything to donate right now."
-            PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+            com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
                 "gunther",
                 "stardewcraft.npc.gunther.dialogue.nothing_to_donate",
                 0
@@ -92,7 +92,7 @@ public final class GuntherService {
         data.ensureManagedStandLayout(player.serverLevel(), playerId);
         syncDonations(data, player);
         // SDV parity: Gunther tells the player to come back when done
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
             "gunther",
             "stardewcraft.npc.gunther.donation_started",
             0
@@ -107,7 +107,7 @@ public final class GuntherService {
         syncDonations(data, player);
 
         if (!result.success()) {
-            PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+            com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
                 "gunther",
                 "stardewcraft.npc.gunther.donation_ended",
                 0
@@ -117,7 +117,7 @@ public final class GuntherService {
 
         boolean grantedRewards = grantUnclaimedMuseumRewards(player, data);
         if (!grantedRewards) {
-            PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+            com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
                 "gunther",
                 "stardewcraft.npc.gunther.donation_ended",
                 0
@@ -156,7 +156,7 @@ public final class GuntherService {
             data.claimReward(playerId, reward.id());
         }
 
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
             "gunther",
             queuedRustyKeyEvent ? "stardewcraft.npc.gunther.rusty_key_pending" : "stardewcraft.npc.gunther.reward_granted",
             0

@@ -4,7 +4,7 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.fishpond.data.FishPondWorldData;
 import com.stardew.craft.fishpond.model.FishPondRecord;
 import com.stardew.craft.fishpond.service.FishPondColorSyncService;
-import com.stardew.craft.fishpond.service.FishPondInteractionService;
+import com.stardew.craft.fishpond.service.FishPondHusbandry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,7 +58,7 @@ public final class FishPondGameplayEvents {
             if (!dimensionId.equals(pond.dimensionId())) {
                 continue;
             }
-            if (pond.waterCells().isEmpty()) {
+            if (com.stardew.craft.building.runtime.FishPondPrefabs.at(level,pond.managerPos())==null || pond.waterCells().isEmpty()) {
                 continue;
             }
             if (!isPondChunkLoaded(level, pond)) {
@@ -87,7 +87,7 @@ public final class FishPondGameplayEvents {
             if (!isInsidePondWater(pond, itemEntity)) {
                 continue;
             }
-            if (FishPondInteractionService.absorbItemEntity(level, pond, itemEntity).changedState()) {
+            if (FishPondHusbandry.absorbItemEntity(level, pond, itemEntity).changedState()) {
                 changed = true;
             }
         }
@@ -95,11 +95,6 @@ public final class FishPondGameplayEvents {
     }
 
     private static boolean isInsidePondWater(FishPondRecord pond, ItemEntity itemEntity) {
-        BlockPos blockPos = itemEntity.blockPosition();
-        if (isNearRecordedWater(pond, blockPos)) {
-            return true;
-        }
-
         AABB sampleBox = itemEntity.getBoundingBox().inflate(0.02D);
         int minX = Mth.floor(sampleBox.minX);
         int minY = Mth.floor(sampleBox.minY);
@@ -115,16 +110,6 @@ public final class FishPondGameplayEvents {
                         return true;
                     }
                 }
-            }
-        }
-        return false;
-    }
-
-    private static boolean isNearRecordedWater(FishPondRecord pond, BlockPos origin) {
-        for (int dy = 1; dy >= -2; dy--) {
-            BlockPos candidate = origin.offset(0, dy, 0);
-            if (pond.containsWater(candidate)) {
-                return true;
             }
         }
         return false;
@@ -146,7 +131,7 @@ public final class FishPondGameplayEvents {
         if (gameTime < nextJump) {
             return;
         }
-        com.stardew.craft.fishpond.service.FishPondDailyUpdateService.broadcastAmbientFishJump(level, pond);
+        com.stardew.craft.fishpond.service.FishPondHusbandry.broadcastAmbientFishJump(level, pond);
         long nextDelay = Mth.floor(200.0F + level.getRandom().nextFloat() * 200.0F);
         NEXT_AMBIENT_JUMP_TICKS.put(pond.pondId(), gameTime + nextDelay);
     }
@@ -159,6 +144,7 @@ public final class FishPondGameplayEvents {
         @SubscribeEvent
         public static void onClientDisconnect(PlayerEvent.PlayerLoggedOutEvent event) {
             com.stardew.craft.client.fishpond.ClientFishPondWaterColorCache.clearAll();
+            com.stardew.craft.client.fishpond.ClientFishPondSwimVisuals.clear();
         }
     }
 }

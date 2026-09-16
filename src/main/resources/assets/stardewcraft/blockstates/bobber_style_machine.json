@@ -1,0 +1,32 @@
+{
+  "variants": {
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/decor/bobber_style_machine",
+      "y": 0
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/decor/extensions/bobber_style_machine_empty"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/decor/bobber_style_machine",
+      "y": 90
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/decor/extensions/bobber_style_machine_empty"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/decor/bobber_style_machine",
+      "y": 180
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/decor/extensions/bobber_style_machine_empty"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/decor/bobber_style_machine",
+      "y": 270
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/decor/extensions/bobber_style_machine_empty"
+    }
+  }
+}

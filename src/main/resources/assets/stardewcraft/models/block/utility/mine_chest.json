@@ -1,8 +1,6 @@
 {
-  "ambientocclusion": false,
-  "parent": "block/cube_all",
+  "parent": "stardewcraft:block/mine/reward_chest/closed",
   "textures": {
-    "all": "stardewcraft:block/utility/wooden_chest_default",
-    "particle": "stardewcraft:block/utility/wooden_chest_default"
+    "particle": "stardewcraft:block/mine/reward_chest/particle"
   }
 }

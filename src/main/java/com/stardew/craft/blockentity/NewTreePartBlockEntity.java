@@ -4,15 +4,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.UUID;
 
 public class NewTreePartBlockEntity extends BlockEntity {
-	private static final int TREE_MARKER_SCAN_RADIUS = 8;
-	private static final int TREE_MARKER_SCAN_HEIGHT = 50;
 	private static final String TAG_TREE_ID = "StardewGeneratedTreeId";
 	private static final String TAG_TREE_SPECIES = "StardewGeneratedTreeSpecies";
 	private static final String TAG_TREE_ROOT = "StardewGeneratedTreeRoot";
@@ -62,30 +59,6 @@ public class NewTreePartBlockEntity extends BlockEntity {
 		this.generatedTreeSpecies = null;
 		this.generatedTreeRoot = null;
 		setChanged();
-	}
-
-	public void invalidateGeneratedTreeMarker() {
-		if (!hasGeneratedTreeMarker()) {
-			return;
-		}
-		Level currentLevel = level;
-		UUID treeId = generatedTreeId;
-		BlockPos root = generatedTreeRoot;
-		clearGeneratedTreeMarker();
-		if (currentLevel == null || treeId == null || root == null) {
-			return;
-		}
-		for (int dx = -TREE_MARKER_SCAN_RADIUS; dx <= TREE_MARKER_SCAN_RADIUS; dx++) {
-			for (int dy = 0; dy <= TREE_MARKER_SCAN_HEIGHT; dy++) {
-				for (int dz = -TREE_MARKER_SCAN_RADIUS; dz <= TREE_MARKER_SCAN_RADIUS; dz++) {
-					BlockPos pos = root.offset(dx, dy, dz);
-					if (currentLevel.getBlockEntity(pos) instanceof NewTreePartBlockEntity treePart
-							&& treeId.equals(treePart.generatedTreeId)) {
-						treePart.clearGeneratedTreeMarker();
-					}
-				}
-			}
-		}
 	}
 
 	@Override

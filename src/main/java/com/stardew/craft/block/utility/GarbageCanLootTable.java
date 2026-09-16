@@ -93,9 +93,9 @@ public final class GarbageCanLootTable {
             case "Blacksmith" -> {
                 if (rng.nextDouble() >= specialChance) yield null;
                 Item[] ores = {
-                        ModItems.EARTH_COPPER_ORE.get(),
-                        ModItems.EARTH_IRON_ORE.get(),
-                        ModItems.EARTH_GOLD_ORE.get()
+                        ModItems.COPPER_ORE.get(),
+                        ModItems.IRON_ORE.get(),
+                        ModItems.GOLD_ORE.get()
                 };
                 yield result(ores[rng.nextInt(ores.length)], 1 + rng.nextInt(4));
             }

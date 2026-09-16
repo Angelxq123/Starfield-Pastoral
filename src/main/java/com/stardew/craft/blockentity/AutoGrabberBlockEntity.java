@@ -56,7 +56,12 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
         }
     }
 
+    private void recoverLivestock() {
+        if (level instanceof ServerLevel server) com.stardew.craft.animal.runtime.LivestockService.recover(server.getServer());
+    }
+    public void refreshVisualState() { syncToClient(); }
     private ItemStack extractUpTo(int amount, boolean simulate) {
+        recoverLivestock();
         if (amount <= 0) {
             return ItemStack.EMPTY;
         }
@@ -83,6 +88,7 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
     }
 
     private ItemStack insertIntoStorage(ItemStack stack, boolean simulate) {
+        recoverLivestock();
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
@@ -189,6 +195,7 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
 
     @Override
     public ItemStack getItem(int slot) {
+        recoverLivestock();
         if (slot < 0 || slot >= items.size()) {
             return ItemStack.EMPTY;
         }
@@ -197,6 +204,7 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
+        recoverLivestock();
         if (slot < 0 || slot >= items.size() || amount <= 0) {
             return ItemStack.EMPTY;
         }
@@ -219,6 +227,7 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
+        recoverLivestock();
         if (slot < 0 || slot >= items.size()) {
             return ItemStack.EMPTY;
         }
@@ -231,6 +240,7 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
 
     @Override
     public void setItem(int slot, ItemStack stack) {
+        recoverLivestock();
         if (slot < 0 || slot >= items.size()) {
             return;
         }
@@ -257,6 +267,7 @@ public class AutoGrabberBlockEntity extends BlockEntity implements UtilityAutoma
 
     @Override
     public void clearContent() {
+        recoverLivestock();
         for (int i = 0; i < items.size(); i++) {
             items.set(i, ItemStack.EMPTY);
         }

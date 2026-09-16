@@ -1,0 +1,292 @@
+{
+  "frost_jelly": {
+    "source_name": "Frost Jelly",
+    "health": 106,
+    "damage": 7,
+    "resilience": 0,
+    "miss_chance": 0.0,
+    "experience": 6,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 2
+  },
+  "bug": {
+    "source_name": "Bug",
+    "health": 1,
+    "damage": 8,
+    "resilience": 0,
+    "miss_chance": 0.0,
+    "experience": 1,
+    "source_jitter": 0.0,
+    "source_notice": -1,
+    "source_speed": 2
+  },
+  "fly": {
+    "source_name": "Fly",
+    "health": 22,
+    "damage": 6,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 10,
+    "source_jitter": 0.005,
+    "source_notice": 13,
+    "source_speed": 2
+  },
+  "rock_golem": {
+    "source_name": "Stone Golem",
+    "health": 45,
+    "damage": 5,
+    "resilience": 5,
+    "miss_chance": 0.0,
+    "experience": 5,
+    "source_jitter": 0.01,
+    "source_notice": 3,
+    "source_speed": 2
+  },
+  "iridium_bat": {
+    "source_name": "Iridium Bat",
+    "health": 300,
+    "damage": 30,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 22,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 3
+  },
+  "carbon_ghost": {
+    "source_name": "Carbon Ghost",
+    "health": 190,
+    "damage": 25,
+    "resilience": 3,
+    "miss_chance": 0.0,
+    "experience": 20,
+    "source_jitter": 0.01,
+    "source_notice": 12,
+    "source_speed": 4
+  },
+  "sludge": {
+    "source_name": "Sludge",
+    "health": 205,
+    "damage": 16,
+    "resilience": 0,
+    "miss_chance": 0.0,
+    "experience": 10,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 2
+  },
+  "rock_crab": {
+    "source_name": "Rock Crab",
+    "health": 30,
+    "damage": 5,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 4,
+    "source_jitter": 0.0,
+    "source_notice": 1,
+    "source_speed": 2
+  },
+  "frost_bat": {
+    "source_name": "Frost Bat",
+    "health": 36,
+    "damage": 7,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 7,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 3
+  },
+  "duggy": {
+    "source_name": "Duggy",
+    "health": 40,
+    "damage": 6,
+    "resilience": 0,
+    "miss_chance": 0.0,
+    "experience": 10,
+    "source_jitter": 0.01,
+    "source_notice": 1,
+    "source_speed": 2
+  },
+  "skeleton": {
+    "source_name": "Skeleton",
+    "health": 140,
+    "damage": 10,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 8,
+    "source_jitter": 0.01,
+    "source_notice": 8,
+    "source_speed": 2
+  },
+  "green_slime": {
+    "source_name": "Green Slime",
+    "health": 24,
+    "damage": 5,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 3,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 2
+  },
+  "grub": {
+    "source_name": "Grub",
+    "health": 20,
+    "damage": 4,
+    "resilience": 0,
+    "miss_chance": 0.0,
+    "experience": 2,
+    "source_jitter": 0.005,
+    "source_notice": 3,
+    "source_speed": 1
+  },
+  "ghost": {
+    "source_name": "Ghost",
+    "health": 96,
+    "damage": 10,
+    "resilience": 3,
+    "miss_chance": 0.0,
+    "experience": 15,
+    "source_jitter": 0.01,
+    "source_notice": 12,
+    "source_speed": 4
+  },
+  "dust_sprite": {
+    "source_name": "Dust Spirit",
+    "health": 40,
+    "damage": 6,
+    "resilience": 2,
+    "miss_chance": 0.0,
+    "experience": 2,
+    "source_jitter": 0.0,
+    "source_notice": 4,
+    "source_speed": 3
+  },
+  "bat": {
+    "source_name": "Bat",
+    "health": 24,
+    "damage": 6,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 3,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 3
+  },
+  "metal_head": {
+    "source_name": "Metal Head",
+    "health": 40,
+    "damage": 15,
+    "resilience": 8,
+    "miss_chance": 0.0,
+    "experience": 6,
+    "source_jitter": 0.01,
+    "source_notice": 8,
+    "source_speed": 2
+  },
+  "lava_bat": {
+    "source_name": "Lava Bat",
+    "health": 80,
+    "damage": 15,
+    "resilience": 1,
+    "miss_chance": 0.0,
+    "experience": 15,
+    "source_jitter": 0.01,
+    "source_notice": 4,
+    "source_speed": 3
+  },
+  "shadow_brute": {
+    "source_name": "Shadow Brute",
+    "health": 160,
+    "damage": 18,
+    "resilience": 2,
+    "miss_chance": 0,
+    "experience": 15,
+    "source_jitter": 0.01,
+    "source_notice": 8,
+    "source_speed": 3
+  },
+  "shadow_shaman": {
+    "source_name": "Shadow Shaman",
+    "health": 80,
+    "damage": 17,
+    "resilience": 2,
+    "miss_chance": 0,
+    "experience": 15,
+    "source_jitter": 0.01,
+    "source_notice": 8,
+    "source_speed": 3
+  },
+  "squid_kid": {
+    "source_name": "Squid Kid",
+    "health": 1,
+    "damage": 18,
+    "resilience": 2,
+    "miss_chance": 0,
+    "experience": 15,
+    "source_jitter": 0,
+    "source_notice": 6,
+    "source_speed": 3
+  },
+  "lava_crab": {
+    "source_name": "Lava Crab",
+    "health": 120,
+    "damage": 15,
+    "resilience": 3,
+    "miss_chance": 0,
+    "experience": 12
+  },
+  "iridium_crab": {
+    "source_name": "Iridium Crab",
+    "health": 240,
+    "damage": 15,
+    "resilience": 3,
+    "miss_chance": 0,
+    "experience": 20
+  },
+  "armored_bug": {
+    "source_name": "Bug",
+    "health": 1,
+    "damage": 8,
+    "resilience": 0,
+    "miss_chance": 0.0,
+    "experience": 1,
+    "source_jitter": 0.0,
+    "source_notice": -1,
+    "source_speed": 2
+  },
+  "big_slime": {
+    "source_name": "Big Slime",
+    "health": 60,
+    "damage": 5,
+    "resilience": 0,
+    "miss_chance": 0,
+    "experience": 7
+  },
+  "mummy": {
+    "source_name": "Mummy",
+    "health": 260,
+    "damage": 30,
+    "resilience": 0,
+    "miss_chance": 0,
+    "experience": 20
+  },
+  "serpent": {
+    "source_name": "Serpent",
+    "health": 150,
+    "damage": 23,
+    "resilience": 0,
+    "miss_chance": 0,
+    "experience": 20
+  },
+  "pepper_rex": {
+    "source_name": "Pepper Rex",
+    "health": 300,
+    "damage": 15,
+    "resilience": 5,
+    "miss_chance": 0,
+    "experience": 7
+  }
+}

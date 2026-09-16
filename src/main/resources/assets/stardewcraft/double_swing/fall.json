@@ -1,0 +1,536 @@
+{
+  "season": "fall",
+  "frozen": false,
+  "parts": [
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_0",
+      "offset": [
+        16,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "横梁a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_1",
+      "offset": [
+        48,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "横梁ba"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_2",
+      "offset": [
+        64,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "横梁bb"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_3",
+      "offset": [
+        0,
+        16,
+        32
+      ],
+      "rig": "frame",
+      "name": "左支柱a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_4",
+      "offset": [
+        0,
+        48,
+        32
+      ],
+      "rig": "frame",
+      "name": "左支柱ba"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_5",
+      "offset": [
+        0,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "左支柱bb"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_6",
+      "offset": [
+        0,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "左锚固底板"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_7",
+      "offset": [
+        0,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "左下套筒"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_8",
+      "offset": [
+        0,
+        0,
+        16
+      ],
+      "rig": "frame",
+      "name": "左地脚螺栓(2, 19)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_9",
+      "offset": [
+        16,
+        0,
+        16
+      ],
+      "rig": "frame",
+      "name": "左地脚螺栓(8, 19)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_10",
+      "offset": [
+        0,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "左地脚螺栓(2, 27)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_11",
+      "offset": [
+        16,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "左地脚螺栓(8, 27)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_12",
+      "offset": [
+        0,
+        80,
+        16
+      ],
+      "rig": "frame",
+      "name": "左前连接板"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_13",
+      "offset": [
+        0,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "左后连接板"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_14",
+      "offset": [
+        16,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "左梁下承托"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_15",
+      "offset": [
+        80,
+        16,
+        32
+      ],
+      "rig": "frame",
+      "name": "右支柱a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_16",
+      "offset": [
+        80,
+        48,
+        32
+      ],
+      "rig": "frame",
+      "name": "右支柱ba"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_17",
+      "offset": [
+        80,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "右支柱bb"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_18",
+      "offset": [
+        80,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "右锚固底板"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_19",
+      "offset": [
+        80,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "右下套筒"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_20",
+      "offset": [
+        64,
+        0,
+        16
+      ],
+      "rig": "frame",
+      "name": "右地脚螺栓(70, 19)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_21",
+      "offset": [
+        80,
+        0,
+        16
+      ],
+      "rig": "frame",
+      "name": "右地脚螺栓(76, 19)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_22",
+      "offset": [
+        64,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "右地脚螺栓(70, 27)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_23",
+      "offset": [
+        80,
+        0,
+        32
+      ],
+      "rig": "frame",
+      "name": "右地脚螺栓(76, 27)"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_24",
+      "offset": [
+        80,
+        80,
+        16
+      ],
+      "rig": "frame",
+      "name": "右前连接板"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_25",
+      "offset": [
+        80,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "右后连接板"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_26",
+      "offset": [
+        64,
+        80,
+        32
+      ],
+      "rig": "frame",
+      "name": "右梁下承托"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_27",
+      "offset": [
+        16,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat0左固定吊耳"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_28",
+      "offset": [
+        16,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat0左转轴"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_29",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0左吊索a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_30",
+      "offset": [
+        16,
+        64,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0左吊索b"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_31",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0左座端扣"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_32",
+      "offset": [
+        32,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat0右固定吊耳"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_33",
+      "offset": [
+        32,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat0右转轴"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_34",
+      "offset": [
+        32,
+        32,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0右吊索a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_35",
+      "offset": [
+        32,
+        64,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0右吊索b"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_36",
+      "offset": [
+        32,
+        16,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0右座端扣"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_37",
+      "offset": [
+        32,
+        16,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0中央座带"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_38",
+      "offset": [
+        16,
+        16,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0左弯座带"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_39",
+      "offset": [
+        32,
+        16,
+        32
+      ],
+      "rig": "seat0",
+      "name": "seat0右弯座带"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_40",
+      "offset": [
+        48,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat1左固定吊耳"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_41",
+      "offset": [
+        48,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat1左转轴"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_42",
+      "offset": [
+        48,
+        32,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1左吊索a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_43",
+      "offset": [
+        48,
+        64,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1左吊索b"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_44",
+      "offset": [
+        48,
+        16,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1左座端扣"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_45",
+      "offset": [
+        64,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat1右固定吊耳"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_46",
+      "offset": [
+        64,
+        64,
+        32
+      ],
+      "rig": "frame",
+      "name": "seat1右转轴"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_47",
+      "offset": [
+        64,
+        32,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1右吊索a"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_48",
+      "offset": [
+        64,
+        64,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1右吊索b"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_49",
+      "offset": [
+        64,
+        16,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1右座端扣"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_50",
+      "offset": [
+        64,
+        16,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1中央座带"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_51",
+      "offset": [
+        48,
+        16,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1左弯座带"
+    },
+    {
+      "model": "stardewcraft:block/double_swing/fall/part_52",
+      "offset": [
+        64,
+        16,
+        32
+      ],
+      "rig": "seat1",
+      "name": "seat1右弯座带"
+    }
+  ]
+}

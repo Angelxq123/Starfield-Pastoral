@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/summer/swing_summer",
+    "particle": "stardewcraft:block/double_swing/summer/swing_metal_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -2,
+        6,
+        -10
+      ],
+      "to": [
+        2,
+        10,
+        -6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            11.75,
+            2.0625,
+            11.875,
+            2.1875
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            12.0625,
+            2.0625,
+            12.1875,
+            2.1875
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            11.90625,
+            2.0625,
+            12.03125,
+            2.1875
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            12.21875,
+            2.0625,
+            12.34375,
+            2.1875
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            12.375,
+            2.0625,
+            12.5,
+            2.1875
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            12.53125,
+            2.0625,
+            12.65625,
+            2.1875
+          ]
+        }
+      }
+    }
+  ]
+}

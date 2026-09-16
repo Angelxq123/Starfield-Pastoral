@@ -2,30 +2,22 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
+import com.stardew.craft.manager.CropGrowthManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Supplier;
 
 /**
  * 洋蓟作物
  */
-public class ArtichokeCropBlock extends StardewCropBlock {
+public class ArtichokeCropBlock extends TomatoCropBlock {
 
-    private static final int[] PHASE_DAYS = new int[]{2, 2, 2, 2}; // SDV: 8 days
-
-    @SuppressWarnings("null")
-    public ArtichokeCropBlock() {
-        super(Properties.of()
-                .mapColor(MapColor.PLANT)
-                .pushReaction(PushReaction.DESTROY)
-                .sound(SoundType.CROP));
-    }
+    private static final int[] PHASE_DAYS = new int[]{2, 2, 1, 2, 1}; // Original growth phases, followed by the harvest sentinel.
 
     @Override
     protected Supplier<Item> getSeedsItem() {
@@ -42,13 +34,39 @@ public class ArtichokeCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 2;
+        return seasonForGrowth() == 2;
     }
 
     @Override
     protected int[] getPhaseDays() {
         return PHASE_DAYS;
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean moving) {
+        if (state.getValue(HALF) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) {
+            BlockState above = level.getBlockState(pos.above());
+            if (!above.isAir() && above.getBlock() != this) return;
+        }
+        super.onPlace(state, level, pos, oldState, moving);
+    }
+
+    @Override
+    protected void syncMultiBlockPartnerFromRoot(Level level, BlockPos pos, BlockState state) {
+        BlockPos root = resolveMultiBlockRootPos(level, pos, state);
+        BlockState above = level.getBlockState(root.above());
+        // Old saves used a single block: never replace a block above an existing crop.
+        if (!above.isAir() && above.getBlock() != this) return;
+        super.syncMultiBlockPartnerFromRoot(level, pos, state);
+    }
+
+    @Override
+    public void growCropOneDay(ServerLevel level, BlockPos pos, BlockState state,
+            boolean watered, CropGrowthManager.CropGrowthState growth) {
+        BlockPos root = resolveMultiBlockRootPos(level, pos, state);
+        BlockState above = level.getBlockState(root.above());
+        if (!above.isAir() && above.getBlock() != this) return;
+        super.growCropOneDay(level, pos, state, watered, growth);
     }
 
     @Override

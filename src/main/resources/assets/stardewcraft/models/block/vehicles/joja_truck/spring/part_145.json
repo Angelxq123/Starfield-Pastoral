@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/block","render_type":"minecraft:solid","textures":{"0":"stardewcraft:block/vehicles/joja_truck/spring/joja_truck","particle":"stardewcraft:block/vehicles/joja_truck/spring/joja_truck_steel_particle"},"elements":[{"from":[0,2,15],"to":[0,9,16],"faces":{"east":{"uv":[14.8125,12.25,14.84375,12.46875],"texture":"#0"}}}]}

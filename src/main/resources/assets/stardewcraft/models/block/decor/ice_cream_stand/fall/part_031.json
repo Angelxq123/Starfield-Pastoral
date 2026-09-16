@@ -1,0 +1,70 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "0": "stardewcraft:block/decor/ice_cream_stand/fall/ice_cream_stand_fall",
+    "particle": "stardewcraft:block/decor/ice_cream_stand/fall/stand_wood_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        1,
+        6
+      ],
+      "to": [
+        9,
+        15,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            11.3125,
+            3.125,
+            11.4375,
+            4.0
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            10.3125,
+            3.125,
+            10.5625,
+            4.0
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            11.5,
+            3.125,
+            11.625,
+            4.0
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            10.625,
+            3.125,
+            10.875,
+            4.0
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            6.875,
+            5.9375,
+            7.0,
+            6.1875
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

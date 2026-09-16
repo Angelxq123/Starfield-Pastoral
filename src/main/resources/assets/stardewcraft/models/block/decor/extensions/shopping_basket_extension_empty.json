@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block",
+  "textures": {
+    "particle": "stardewcraft:block/decor/common/shopping_basket_particle"
+  },
+  "elements": []
+}

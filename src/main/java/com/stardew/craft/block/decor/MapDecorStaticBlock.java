@@ -1,6 +1,11 @@
 package com.stardew.craft.block.decor;
 
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
@@ -25,7 +30,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +54,7 @@ public class MapDecorStaticBlock extends Block {
         }
     }
 
-    private static boolean dropsSuppressed() {
+    protected static boolean dropsSuppressed() {
         return DROP_SUPPRESSION_DEPTH.get() > 0;
     }
 
@@ -73,17 +77,13 @@ public class MapDecorStaticBlock extends Block {
     public static final EnumProperty<Part> PART = EnumProperty.create("part", Part.class);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    private static final Map<String, VoxelShape> SHAPE_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, VoxelShape> BOX_SHAPE_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, VoxelShape> ORIENTED_SHAPE_CACHE = new ConcurrentHashMap<>();
-    // Tolerance of 1 pixel (1/16 block) so sub-pixel model overflows
-    // don't claim extra extension cells.
-    private static final double EPS = 1.0 / 16.0;
+    // Only absorb floating-point noise; every actual collision cell must be reserved.
+    private static final double EPS = 1.0E-7;
 
     private final String modelId;
     private final boolean boxCollision;
-    /** Pre-set per-facing box shapes; null means compute from model. */
-    private final Map<Direction, VoxelShape[]> presetBoxShapes;
+    /** Optional custom shape in model pixels; null means load the model profile. */
+    private final VoxelShape presetShape;
     private volatile Set<CellOffset> localOccupiedOffsets;
     private final Map<Direction, Set<CellOffset>> occupiedOffsetsByFacing = new ConcurrentHashMap<>();
 
@@ -92,25 +92,25 @@ public class MapDecorStaticBlock extends Block {
     }
 
     public MapDecorStaticBlock(Properties properties, String modelId, boolean boxCollision) {
-        super(properties);
+        super(properties.dynamicShape());
         this.modelId = modelId;
         this.boxCollision = boxCollision;
-        this.presetBoxShapes = null;
+        this.presetShape = null;
         registerDefaultState(stateDefinition.any().setValue(PART, Part.MAIN).setValue(FACING, Direction.NORTH));
     }
 
     /**
      * Constructor with a pre-set bounding box (in pixels, model-space, NORTH facing).
      * The box covers minX..maxX, minY..maxY, minZ..maxZ in pixel coordinates (0-16 = 1 block).
-     * Automatically sliced into per-cell box shapes for all 4 facings.
+     * Every occupied cell returns this entire shape, translated into local coordinates.
      */
     public MapDecorStaticBlock(Properties properties, String modelId,
                                double minX, double minY, double minZ,
                                double maxX, double maxY, double maxZ) {
-        super(properties);
+        super(properties.dynamicShape());
         this.modelId = modelId;
         this.boxCollision = true;
-        this.presetBoxShapes = buildPresetBoxShapes(minX, minY, minZ, maxX, maxY, maxZ);
+        this.presetShape = Block.box(minX, minY, minZ, maxX, maxY, maxZ);
         registerDefaultState(stateDefinition.any().setValue(PART, Part.MAIN).setValue(FACING, Direction.NORTH));
     }
 
@@ -137,24 +137,12 @@ public class MapDecorStaticBlock extends Block {
 
     @Override
     public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        if (presetBoxShapes != null) {
-            return resolvePresetShape(state, level, pos);
-        }
-        if (boxCollision) {
-            return resolvePartBoxShape(state, level, pos, state.getValue(PART));
-        }
         return resolvePartShape(state, level, pos, state.getValue(PART));
     }
 
     @Override
     public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        if (presetBoxShapes != null) {
-            return resolvePresetShape(state, level, pos);
-        }
-        if (boxCollision) {
-            return resolvePartBoxShape(state, level, pos, state.getValue(PART));
-        }
-        return resolvePartShape(state, level, pos, state.getValue(PART));
+        return getShape(state, level, pos, context);
     }
 
     @Override
@@ -172,53 +160,6 @@ public class MapDecorStaticBlock extends Block {
         return 1.0F;
     }
 
-    /**
-     * Looks up the pre-computed box shape for the given cell (facing + offset).
-     */
-    private VoxelShape resolvePresetShape(BlockState state, BlockGetter level, BlockPos pos) {
-        Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
-        Part part = state.getValue(PART);
-        CellOffset offset;
-        if (part == Part.MAIN) {
-            offset = CellOffset.ZERO;
-        } else {
-            offset = findOffsetForExtension(level, pos, state);
-            if (offset == null) {
-                return Shapes.empty();
-            }
-            // offset is in world-space; convert back to model-space (NORTH) for lookup
-            offset = offset.unrotateY(facing);
-        }
-        VoxelShape[] shapes = presetBoxShapes.get(facing);
-        if (shapes == null) return Shapes.empty();
-        int idx = cellIndex(offset);
-        if (idx < 0 || idx >= shapes.length) return Shapes.empty();
-        return shapes[idx];
-    }
-
-    /**
-     * Returns a cached box-simplified collision shape (AABB bounds of the full shape).
-     */
-    private VoxelShape resolvePartBoxShape(BlockState state, BlockGetter level, BlockPos pos, Part part) {
-        Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
-        CellOffset offset;
-        if (part == Part.MAIN) {
-            offset = CellOffset.ZERO;
-        } else {
-            offset = findOffsetForExtension(level, pos, state);
-            if (offset == null) {
-                return Shapes.empty();
-            }
-        }
-        String key = modelId + "#box#" + facing.getSerializedName() + "#" + offset.dx + "," + offset.dy + "," + offset.dz;
-        return BOX_SHAPE_CACHE.computeIfAbsent(key, unused -> {
-            VoxelShape shape = shapeForPart(facing, offset);
-            if (shape.isEmpty()) return Shapes.empty();
-            var bounds = shape.bounds();
-            return Shapes.box(bounds.minX, bounds.minY, bounds.minZ, bounds.maxX, bounds.maxY, bounds.maxZ);
-        });
-    }
-
     private VoxelShape resolvePartShape(BlockState state, BlockGetter level, BlockPos pos, Part part) {
         Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
         if (part == Part.MAIN) {
@@ -232,62 +173,21 @@ public class MapDecorStaticBlock extends Block {
     }
 
     private VoxelShape shapeForPart(Direction facing, CellOffset offsetFromMain) {
-        String key = modelId + "#" + facing.getSerializedName() + "#part#" + offsetFromMain.dx + "," + offsetFromMain.dy + "," + offsetFromMain.dz;
-        return SHAPE_CACHE.computeIfAbsent(
-            key,
-            unused -> shiftShape(orientedShape(facing), -offsetFromMain.dx, -offsetFromMain.dy, -offsetFromMain.dz)
-        );
+        return orientedShape(facing).move(-offsetFromMain.dx, -offsetFromMain.dy, -offsetFromMain.dz);
     }
+
+    private final Map<Direction, VoxelShape> wholeShapes = new ConcurrentHashMap<>();
 
     private VoxelShape orientedShape(Direction facing) {
-        String key = modelId + "#" + facing.getSerializedName();
-        return ORIENTED_SHAPE_CACHE.computeIfAbsent(key, unused -> {
-            VoxelShape compactShape = compactDecorShape(facing);
-            if (compactShape != null) {
-                return compactShape;
-            }
-            if (modelId.contains("bonsai")) {
-                if (modelId.contains("wall")) {
-                    return Block.box(0, 0, 0, 16, 16, 16);
-                }
-                // 盆栽 (bonsai_6_x) 也就是在 common 里的盆栽系列，碰撞箱只需1格高(1*1*1)
-                if (modelId.contains("bonsai_6_")) {
-                    return Block.box(0, 0, 0, 16, 16, 16);
-                }
-                // 原版盆景系列 (长1宽1高2)
-                return Block.box(0, 0, 0, 16, 32, 16); 
-            }
-            return rotateShapeY(ModelVoxelShapeCache.shapeFromModelId(modelId), facing);
-        });
+        return wholeShapes.computeIfAbsent(facing, unused -> rotateShapeForFacing(canonicalShape(), facing));
     }
 
-    @Nullable
-    private VoxelShape compactDecorShape(Direction facing) {
-        VoxelShape shape = null;
-        if (modelId.contains("bonsai_5_wall")) {
-            shape = Block.box(4.0D, 3.0D, 12.0D, 12.0D, 14.0D, 16.0D);
-        } else if (modelId.contains("bonsai_6_") || modelId.endsWith("/bonsai_6")) {
-            shape = Block.box(4.0D, 0.0D, 4.0D, 12.0D, 8.0D, 12.0D);
-        } else if (modelId.endsWith("/empty_terracotta_pot")) {
-            shape = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 8.0D, 13.0D);
-        } else if (modelId.endsWith("/long_potted_plant")) {
-            shape = Block.box(-6.0D, 0.0D, 4.0D, 22.0D, 8.0D, 12.0D);
-        } else if (modelId.contains("luau_soup_pot_proxy")) {
-            shape = Block.box(-25.66D, 0.0D, -5.26D, 41.66D, 20.1D, 21.26D);
-        } else if (modelId.contains("luau_totem_proxy")) {
-            shape = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 40.0D, 16.0D);
-        } else if (modelId.contains("winter_star_tree_proxy")) {
-            shape = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 52.0D, 16.0D);
-        } else if (modelId.endsWith("/fair_grave_stone")) {
-            shape = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
-        } else if (modelId.contains("uncertainty_statue_proxy")) {
-            shape = Block.box(-13.0D, 0.0D, 3.0D, 29.0D, 22.0D, 15.0D);
-        }
-        return shape == null ? null : rotateShapeForFacing(shape, facing);
-    }
-
-    private static VoxelShape rotateShapeY(VoxelShape shape, Direction facing) {
-        return rotateShapeForFacing(shape, facing);
+    /** One shape defines collision, outline and occupied cells for every renderer. */
+    protected VoxelShape canonicalShape() {
+        if (ModelVoxelShapeCache.hasCollisionProfile(modelId)) return ModelVoxelShapeCache.shapeFromModelId(modelId);
+        if (presetShape != null) return presetShape;
+        VoxelShape shape = ModelVoxelShapeCache.shapeFromModelId(modelId);
+        return boxCollision && !shape.isEmpty() ? Shapes.create(shape.bounds()) : shape;
     }
 
     protected static VoxelShape rotateShapeForFacing(VoxelShape shape, Direction facing) {
@@ -313,20 +213,6 @@ public class MapDecorStaticBlock extends Block {
         };
     }
 
-    private static VoxelShape shiftShape(VoxelShape shape, int dx, int dy, int dz) {
-        if (shape.isEmpty()) {
-            return Shapes.empty();
-        }
-        final VoxelShape[] out = new VoxelShape[] { Shapes.empty() };
-        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-            out[0] = Shapes.or(
-                out[0],
-                Shapes.box(minX + dx, minY + dy, minZ + dz, maxX + dx, maxY + dy, maxZ + dz)
-            );
-        });
-        return out[0].optimize();
-    }
-
     protected Set<CellOffset> localOccupiedOffsets() {
         Set<CellOffset> cached = localOccupiedOffsets;
         if (cached != null) {
@@ -336,28 +222,8 @@ public class MapDecorStaticBlock extends Block {
             if (localOccupiedOffsets != null) {
                 return localOccupiedOffsets;
             }
-            if (presetCellOffsets != null) {
-                localOccupiedOffsets = new LinkedHashSet<>(presetCellOffsets);
-                return localOccupiedOffsets;
-            }
             Set<CellOffset> discovered = new LinkedHashSet<>();
-            // For bonsai blocks, use the same canonical shape as orientedShape() so that
-            // overflowing decorative geometry in the model does not cause EXTENSION blocks
-            // to be spuriously placed in neighbouring cells (which would block block-placement
-            // next to the bonsai and leave orphaned extensions after removal).
-            VoxelShape shape;
-            VoxelShape compactShape = compactDecorShape(Direction.NORTH);
-            if (compactShape != null) {
-                shape = compactShape;
-            } else if (modelId.contains("bonsai")) {
-                if (modelId.contains("wall") || modelId.contains("bonsai_6_")) {
-                    shape = Block.box(0, 0, 0, 16, 16, 16); // 1×1×1
-                } else {
-                    shape = Block.box(0, 0, 0, 16, 32, 16); // 1×2×1 tall bonsai
-                }
-            } else {
-                shape = ModelVoxelShapeCache.shapeFromModelId(modelId);
-            }
+            VoxelShape shape = canonicalShape();
             shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
                 int minCX = minOccupiedCell(minX);
                 int minCY = minOccupiedCell(minY);
@@ -488,7 +354,7 @@ public class MapDecorStaticBlock extends Block {
                 continue;
             }
             BlockPos extensionPos = pos.offset(offset.dx, offset.dy, offset.dz);
-            if (!level.getWorldBorder().isWithinBounds(extensionPos)) {
+            if (level.isOutsideBuildHeight(extensionPos) || !level.getWorldBorder().isWithinBounds(extensionPos)) {
                 return false;
             }
             if (!level.getBlockState(extensionPos).canBeReplaced(context)) {
@@ -520,14 +386,68 @@ public class MapDecorStaticBlock extends Block {
         if (level.isClientSide || !hasExtensions() || state.getValue(PART) != Part.MAIN) {
             return;
         }
-        Direction facing = state.getValue(FACING);
-        for (CellOffset offset : occupiedOffsets(facing)) {
-            if (offset.isZero()) {
-                continue;
-            }
-            BlockPos extensionPos = pos.offset(offset.dx, offset.dy, offset.dz);
-            level.setBlock(extensionPos, state.setValue(PART, Part.EXTENSION), 3);
+        placeExtensions(level, pos, state);
+    }
+
+    /** Safe for structure installers as well as BlockItem placement. No partial footprint on failure. */
+    public boolean placeExtensions(Level level, BlockPos pos, BlockState state) {
+        var cells = occupiedOffsets(state.getValue(FACING));
+        Map<BlockPos, BlockState> previous = new java.util.LinkedHashMap<>();
+        for (CellOffset offset : cells) {
+            if (offset.isZero()) continue;
+            BlockPos target = pos.offset(offset.dx, offset.dy, offset.dz);
+            BlockState existing = level.getBlockState(target);
+            if (level.isOutsideBuildHeight(target) || !level.getWorldBorder().isWithinBounds(target)
+                    || (!existing.canBeReplaced() && !(existing.is(this)
+                        && existing.getValue(PART) == Part.EXTENSION
+                        && pos.equals(findMainPos(level, target, existing))))) return false;
+            previous.put(target, existing);
         }
+        for (BlockPos target : previous.keySet()) {
+            BlockState extension = extensionState(state, target.subtract(pos));
+            if (!level.getBlockState(target).equals(extension) && !level.setBlock(target, extension, 2 | 16)) {
+                runWithDropsSuppressed(() -> previous.forEach((cell, before) -> level.setBlock(cell, before, 2 | 16)));
+                return false;
+            }
+        }
+        for (BlockPos target : previous.keySet()) level.updateNeighborsAt(target, this);
+        return true;
+    }
+
+    /** Per-cell state, e.g. a light source at the lamp head, with shared placement/cleanup. */
+    protected BlockState extensionState(BlockState mainState, BlockPos offset) {
+        return mainState.setValue(PART, Part.EXTENSION);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level,
+                                               @Nonnull BlockPos pos, @Nonnull Player player,
+                                               @Nonnull BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) {
+            BlockPos mainPos = findMainPos(level, pos, state);
+            if (mainPos == null) {
+                return InteractionResult.PASS;
+            }
+            BlockHitResult mainHit = new BlockHitResult(hit.getLocation(), hit.getDirection(), mainPos, hit.isInside());
+            return useWithoutItem(level.getBlockState(mainPos), level, mainPos, player, mainHit);
+        }
+        return super.useWithoutItem(state, level, pos, player, hit);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(@Nonnull ItemStack stack, @Nonnull BlockState state,
+                                              @Nonnull Level level, @Nonnull BlockPos pos,
+                                              @Nonnull Player player, @Nonnull InteractionHand hand,
+                                              @Nonnull BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) {
+            BlockPos mainPos = findMainPos(level, pos, state);
+            if (mainPos == null) {
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            }
+            BlockHitResult mainHit = new BlockHitResult(hit.getLocation(), hit.getDirection(), mainPos, hit.isInside());
+            return useItemOn(stack, level.getBlockState(mainPos), level, mainPos, player, hand, mainHit);
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
     }
 
     @Override
@@ -578,7 +498,7 @@ public class MapDecorStaticBlock extends Block {
                 // （水流已被 canBeReplaced 拦截，但保留此逻辑以防万一）
                 if (!dropsSuppressed() && !level.isClientSide && state.getValue(PART) == Part.EXTENSION
                         && level.getBlockState(mainPos).is(this)) {
-                    popResource(level, mainPos, new ItemStack(this));
+                    popResource(level, mainPos, extensionRemovalDrop(level, mainPos));
                 }
                 Direction facing = mainFacingForCleanup(level, mainPos, state);
                 for (CellOffset offset : occupiedOffsets(facing)) {
@@ -605,7 +525,7 @@ public class MapDecorStaticBlock extends Block {
             BlockPos mainPos = findMainPos(level, pos, state);
             if (mainPos != null) {
                 if (!player.isCreative()) {
-                    popResource(level, mainPos, new ItemStack(this));
+                    popResource(level, mainPos, extensionRemovalDrop(level, mainPos));
                 }
                 // 关键：先清掉 MAIN，让 MAIN 的 onRemove 级联删除所有 EXTENSION。
                 // 此时各 EXTENSION 的 onRemove 调用 findMainPos 会返回 null，从而不会触发安全网 popResource，
@@ -627,6 +547,9 @@ public class MapDecorStaticBlock extends Block {
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
+
+    /** Stateful furniture may own its single packed drop in MAIN.onRemove instead. */
+    protected ItemStack extensionRemovalDrop(Level level, BlockPos mainPos) { return new ItemStack(this); }
 
     private Direction mainFacingForCleanup(BlockGetter level, BlockPos mainPos, BlockState fallbackState) {
         BlockState mainState = level.getBlockState(mainPos);
@@ -666,74 +589,4 @@ public class MapDecorStaticBlock extends Block {
                         double maxX, double maxY, double maxZ) {
     }
 
-    // ── Preset box shape utilities ──
-
-    /**
-     * Pre-compute per-cell box shapes for all 4 horizontal facings.
-     * Input coordinates are in pixel space (0-16 = 1 block), NORTH facing.
-     */
-    private Map<Direction, VoxelShape[]> buildPresetBoxShapes(
-            double pMinX, double pMinY, double pMinZ,
-            double pMaxX, double pMaxY, double pMaxZ) {
-
-        // Determine which cells this bounding box covers (in NORTH orientation)
-        int cellMinX = (int) Math.floor(pMinX / 16.0);
-        int cellMinY = (int) Math.floor(pMinY / 16.0);
-        int cellMinZ = (int) Math.floor(pMinZ / 16.0);
-        int cellMaxX = (int) Math.floor((pMaxX - 0.001) / 16.0);
-        int cellMaxY = (int) Math.floor((pMaxY - 0.001) / 16.0);
-        int cellMaxZ = (int) Math.floor((pMaxZ - 0.001) / 16.0);
-
-        // Collect all cell offsets (for NORTH, main at 0,0,0)
-        List<CellOffset> offsets = new ArrayList<>();
-        for (int y = cellMinY; y <= cellMaxY; y++) {
-            for (int z = cellMinZ; z <= cellMaxZ; z++) {
-                for (int x = cellMinX; x <= cellMaxX; x++) {
-                    offsets.add(new CellOffset(x, y, z));
-                }
-            }
-        }
-
-        Map<Direction, VoxelShape[]> result = new ConcurrentHashMap<>();
-        for (Direction facing : new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST}) {
-            VoxelShape[] shapes = new VoxelShape[offsets.size()];
-            for (int i = 0; i < offsets.size(); i++) {
-                CellOffset off = offsets.get(i);
-                // Clip the bounding box to this cell (in pixel space), then normalize to 0-1
-                double cMinX = Math.max(pMinX - off.dx * 16.0, 0) / 16.0;
-                double cMinY = Math.max(pMinY - off.dy * 16.0, 0) / 16.0;
-                double cMinZ = Math.max(pMinZ - off.dz * 16.0, 0) / 16.0;
-                double cMaxX = Math.min(pMaxX - off.dx * 16.0, 16.0) / 16.0;
-                double cMaxY = Math.min(pMaxY - off.dy * 16.0, 16.0) / 16.0;
-                double cMaxZ = Math.min(pMaxZ - off.dz * 16.0, 16.0) / 16.0;
-
-                if (cMaxX <= cMinX || cMaxY <= cMinY || cMaxZ <= cMinZ) {
-                    shapes[i] = Shapes.empty();
-                    continue;
-                }
-
-                // Rotate the local box for this facing
-                Aabb rotated = rotateAabbY(cMinX, cMinY, cMinZ, cMaxX, cMaxY, cMaxZ, facing);
-                shapes[i] = Shapes.box(rotated.minX, rotated.minY, rotated.minZ,
-                                       rotated.maxX, rotated.maxY, rotated.maxZ);
-            }
-            result.put(facing, shapes);
-        }
-        // Store offsets list for cellIndex lookup
-        this.presetCellOffsets = offsets;
-        return result;
-    }
-
-    private List<CellOffset> presetCellOffsets;
-
-    private int cellIndex(CellOffset offset) {
-        if (presetCellOffsets == null) return -1;
-        for (int i = 0; i < presetCellOffsets.size(); i++) {
-            CellOffset c = presetCellOffsets.get(i);
-            if (c.dx == offset.dx && c.dy == offset.dy && c.dz == offset.dz) {
-                return i;
-            }
-        }
-        return -1;
-    }
 }

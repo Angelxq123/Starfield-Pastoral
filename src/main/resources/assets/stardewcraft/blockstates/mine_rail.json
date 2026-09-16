@@ -1,0 +1,60 @@
+{
+  "variants": {
+    "shape=north_south,end_north=false,end_south=false": {
+      "model": "stardewcraft:block/mine_rail/straight",
+      "y": 0
+    },
+    "shape=north_south,end_north=false,end_south=true": {
+      "model": "stardewcraft:block/mine_rail/end",
+      "y": 0
+    },
+    "shape=north_south,end_north=true,end_south=false": {
+      "model": "stardewcraft:block/mine_rail/end",
+      "y": 180
+    },
+    "shape=north_south,end_north=true,end_south=true": {
+      "model": "stardewcraft:block/mine_rail/isolated",
+      "y": 0
+    },
+    "shape=east_west,end_north=false,end_south=false": {
+      "model": "stardewcraft:block/mine_rail/straight",
+      "y": 90
+    },
+    "shape=east_west,end_north=false,end_south=true": {
+      "model": "stardewcraft:block/mine_rail/end",
+      "y": 90
+    },
+    "shape=east_west,end_north=true,end_south=false": {
+      "model": "stardewcraft:block/mine_rail/end",
+      "y": 270
+    },
+    "shape=east_west,end_north=true,end_south=true": {
+      "model": "stardewcraft:block/mine_rail/isolated",
+      "y": 90
+    },
+    "shape=ascending_east": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=ascending_west": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=ascending_north": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=ascending_south": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=north_east": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=north_west": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=south_east": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    },
+    "shape=south_west": {
+      "model": "stardewcraft:block/mine_rail/straight"
+    }
+  }
+}

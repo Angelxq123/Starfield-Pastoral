@@ -47,7 +47,7 @@ public class HotPepperSeedItem extends Item implements IStardewItem {
 
         @Nonnull BlockPos abovePos = pos.above();
         @Nonnull BlockState aboveState = level.getBlockState(abovePos);
-        if (!aboveState.isAir()) {
+        if (!aboveState.isAir() || !level.getBlockState(abovePos.above()).isAir()) {
             return InteractionResult.PASS;
         }
 

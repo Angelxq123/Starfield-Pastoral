@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class FishPondQualifiedItemService {
-    private static final String OBJECTS_RESOURCE_PATH = "/data/stardewcraft/npc/vanilla/data/Objects.json";
+    private static final String OBJECTS_RESOURCE_PATH = "/data/stardewcraft/npc/vanilla/data/objects.json";
     private static final Map<String, ObjectInfo> OBJECT_INFOS = loadObjectInfos();
     private static final Map<String, String> ITEM_ID_OVERRIDES = createItemIdOverrides();
     private static final Map<String, Set<String>> ITEM_CONTEXT_TAGS = loadItemContextTags();

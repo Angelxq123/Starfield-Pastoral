@@ -2,13 +2,9 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -18,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * 夏季亮片作物
  */
-public class SummerSpangleCropBlock extends StardewCropBlock {
+public class SummerSpangleCropBlock extends TomatoCropBlock {
 
     private static final int[] PHASE_DAYS = new int[]{1, 2, 3, 2};
     private static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 5);
@@ -26,10 +22,7 @@ public class SummerSpangleCropBlock extends StardewCropBlock {
 
     @SuppressWarnings("null")
     public SummerSpangleCropBlock() {
-        super(Properties.of()
-                .mapColor(MapColor.PLANT)
-                .pushReaction(PushReaction.DESTROY)
-                .sound(SoundType.CROP));
+        super();
     }
 
     @Override
@@ -47,8 +40,7 @@ public class SummerSpangleCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 1;
+        return seasonForGrowth() == 1;
     }
 
     @Override
@@ -104,6 +96,7 @@ public class SummerSpangleCropBlock extends StardewCropBlock {
 
     @Override
     protected void addExtraProperties(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        super.addExtraProperties(builder);
         builder.add(COLOR);
         builder.add(PLACED_BY_PLAYER);
     }

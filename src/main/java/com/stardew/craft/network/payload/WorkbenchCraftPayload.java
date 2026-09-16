@@ -65,6 +65,13 @@ public record WorkbenchCraftPayload(
                 return;
             }
 
+            if (wbType == WorkbenchType.TEMPLATE) {
+                int crafted = com.stardew.craft.workbench.TemplateWorkbenchCrafting.craft(player, targetRl, payload.count());
+                Item material = BuiltInRegistries.ITEM.get(ResourceLocation.parse(entry.inputItemId(wbType)));
+                sendResult(player, crafted > 0, countItem(player, material), 0, crafted);
+                return;
+            }
+
             // Count available materials
             ResourceLocation inputRl = ResourceLocation.parse(wbType.getInputItemId());
             Item inputItem = BuiltInRegistries.ITEM.get(inputRl);

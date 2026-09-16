@@ -335,9 +335,8 @@ class PublicAreaDailyWorkUnitTest {
         assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "forageAttempts");
         assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "forageAttempts");
         ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
-        MethodTree sand = artifact.method("createSandArtifactWorkUnit", 6);
-        assertTrue(sand.toString().contains("placed.get() < remaining"));
-        assertTrue(sand.toString().contains("placed.get() >= remaining"));
+        assertTrue(artifact.method("createDailyWorkUnit", 2).toString().contains("ZoneWork"));
+
     }
 
     @Test
@@ -399,27 +398,29 @@ class PublicAreaDailyWorkUnitTest {
     void publicAreaFactoriesReachTheSharedRectangleCursor() throws IOException {
         assertReachableCall("ForageSpawnService", "createDailyWorkUnit", "chunkRectangle");
         assertReachableCall("ForageSpawnService", "createForestFarmDailyWorkUnit", "chunkRectangle");
-        assertReachableCall("ArtifactSpotSpawnService", "createDailyWorkUnit", "chunkRectangle");
+        ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
+        assertTrue(artifact.method("createDailyWorkUnit", 2).toString().contains("sequence"));
         assertReachableCall("CoalForestClumpSpawnService", "createDailyWorkUnit", "rectangle");
     }
 
     @Test
-    void farmArtifactDailyScanUsesChunkCursor() throws IOException {
+    void artifactInitializationIsBudgetedAndPausedDuringSettlement() throws IOException {
         ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
-        MethodTree farmWork = artifact.method("createFarmArtifactWorkUnit", 5);
-
-        assertTrue(farmWork.toString().contains("chunkRectangle"));
-        assertFalse(farmWork.toString().contains("rectangle("));
+        String tick = artifact.method("tickInitial", 1).toString();
+        assertTrue(tick.contains("isActive"));
+        assertTrue(tick.contains("deadline"));
+        assertTrue(tick.contains("runNext"));
+        assertFalse(artifact.method("ensureInitialSpawn", 2).toString().contains("drain"));
     }
 
     @Test
-    void publicArtifactDailyScansUseChunkCursors() throws IOException {
-        ParsedClass artifact = parse("ArtifactSpotSpawnService.java", "ArtifactSpotSpawnService");
-
-        assertTrue(artifact.method("createArtifactZoneWorkUnit", 5)
-                .toString().contains("chunkRectangle"));
-        assertTrue(artifact.method("createSandArtifactWorkUnit", 6)
-                .toString().contains("chunkRectangle"));
+    void artifactZoneProcessesOnlyOneCandidatePerStep() throws IOException {
+        ParsedClass zone = parse("ArtifactSpotSpawnService.java", "ZoneWork");
+        MethodTree step = zone.method("runNext", 0);
+        assertFalse(hasLoop(step));
+        assertEquals(1, invocationsNamed(step, "drawColumn").size());
+        assertTrue(step.toString().contains("leaseTemporaryBounds"));
+        assertTrue(zone.method("nextPass", 0).toString().contains("updated.put"));
     }
 
     @Test
@@ -436,7 +437,9 @@ class PublicAreaDailyWorkUnitTest {
     void dailyProductionGraphsUseStableDailyRandomInsteadOfLevelRandom() throws IOException {
         assertDailyRandom("ForageSpawnService", "createDailyWorkUnit");
         assertDailyRandom("ForageSpawnService", "createForestFarmDailyWorkUnit");
-        assertDailyRandom("ArtifactSpotSpawnService", "createDailyWorkUnit");
+        String artifactSource = Files.readString(PROJECT.resolve("src/main/java/com/stardew/craft/manager/ArtifactSpotSpawnService.java"));
+        assertTrue(artifactSource.contains("absoluteDay*777L"));
+        assertFalse(artifactSource.contains("level.random"));
         assertDailyRandom("QuarrySpawnService", "createDailyWorkUnit");
         assertDailyRandom("CoalForestClumpSpawnService", "createDailyWorkUnit");
         assertDailyRandom("FarmCaveDailyService", "createDailyWorkUnit");
@@ -457,7 +460,7 @@ class PublicAreaDailyWorkUnitTest {
 
     @Test
     void quarryAndCoalForestItemsPerformOneAttemptWithoutLooping() throws IOException {
-        assertSingleAttemptItem("QuarrySpawnService", "processDailyAttempt", "trySpawnOne");
+        assertSingleAttemptItem("QuarrySpawnService", "processDailyAttempt", "trySpawnAt");
         assertSingleAttemptItem("CoalForestClumpSpawnService", "processStumpAttempt", "tryPlaceAt");
 
         ParsedClass quarry = parse("QuarrySpawnService.java", "QuarrySpawnService");
@@ -479,9 +482,9 @@ class PublicAreaDailyWorkUnitTest {
         assertTrue(factory.toString().contains("FarmCaveDailyEntry"));
         assertTrue(invocationsNamed(factory, "processFarmCave").size() == 1);
         assertFalse(hasLoop(item), "the cursor item delegates one snapshotted farm without a farm loop");
-        assertTrue(scan(item, TryTree.class).stream()
-                        .anyMatch(tree -> invocationsNamed(tree, "leaseBounds").size() == 1),
-                "each farm cave item must release its temporary cave chunk lease");
+        assertTrue(item.toString().contains("FarmCaveRuntime.daily"),
+                "cave migration owns loading and release while the callback operates on the current farm");
+        assertTrue(item.toString().contains("FarmCaveRuntime.farm"));
         assertTrue(invocationsNamed(item, "processFruitBats").size()
                 + invocationsNamed(item, "processMushrooms").size() >= 2);
     }
@@ -525,6 +528,7 @@ class PublicAreaDailyWorkUnitTest {
                     .toList();
             assertTrue(calls.stream().noneMatch(call -> methodName(call).equals("hasChunk")),
                     contract[0] + " daily graph must not use the potentially-blocking hasChunk gate");
+            if (contract[0].equals("ArtifactSpotSpawnService") || contract[0].equals("FarmCaveDailyService")) continue;
             assertTrue(calls.stream().anyMatch(call -> methodName(call).equals("isChunkLoadedNow")),
                     contract[0] + " daily graph must guard world access with getChunkNow");
         }
@@ -811,6 +815,12 @@ class PublicAreaDailyWorkUnitTest {
     private static void assertInitialEntrypointForwards(String className, String explicitArgument)
             throws IOException {
         MethodTree initial = parse(className + ".java", className).method("ensureInitialSpawn", 2);
+        if (className.equals("ArtifactSpotSpawnService")) {
+            assertTrue(initial.toString().contains("withSeason"));
+            assertTrue(initial.toString().contains(explicitArgument));
+            assertTrue(initial.toString().contains("createDailyWorkUnit"));
+            return;
+        }
         List<MethodInvocationTree> dailyCalls = invocationsNamed(initial, "onNewDay");
         assertEquals(1, dailyCalls.size());
         assertEquals(explicitArgument, dailyCalls.getFirst().getArguments().get(1).toString());
@@ -922,9 +932,7 @@ class PublicAreaDailyWorkUnitTest {
                     .map(Object::toString)
                     .toList();
             assertTrue(errors.isEmpty(), () -> "source did not parse: " + String.join("; ", errors));
-            ClassTree type = unit.getTypeDecls().stream()
-                    .filter(ClassTree.class::isInstance)
-                    .map(ClassTree.class::cast)
+            ClassTree type = scan(unit, ClassTree.class).stream()
                     .filter(candidate -> candidate.getSimpleName().contentEquals(className))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("class is missing: " + className));

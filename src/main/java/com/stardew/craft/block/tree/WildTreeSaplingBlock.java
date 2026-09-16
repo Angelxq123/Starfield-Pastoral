@@ -66,7 +66,7 @@ public class WildTreeSaplingBlock extends Block {
 	private static boolean isValidGround(BlockState ground) {
 		Block b = ground.getBlock();
 		if (b instanceof FarmBlock) return true;
-		if (b == com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()) return true;
+		if ((b == com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get() || b == com.stardew.craft.block.ModBlocks.DIRT.get())) return true;
 		return ground.is(BlockTags.DIRT);
 	}
 

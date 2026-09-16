@@ -1,16 +1,1 @@
-{
-  "variants": {
-    "variant=0": {
-      "model": "stardewcraft:block/crops/dead/dead_crop_0"
-    },
-    "variant=1": {
-      "model": "stardewcraft:block/crops/dead/dead_crop_1"
-    },
-    "variant=2": {
-      "model": "stardewcraft:block/crops/dead/dead_crop_2"
-    },
-    "variant=3": {
-      "model": "stardewcraft:block/crops/dead/dead_crop_3"
-    }
-  }
-}
+{"variants":{"variant=0":{"model":"stardewcraft:block/crop3d/dead_crop_variants/dead_0_drooping"},"variant=1":{"model":"stardewcraft:block/crop3d/dead_crop_variants/dead_1_short"},"variant=2":{"model":"stardewcraft:block/crop3d/dead_crop_variants/dead_2_curled"},"variant=3":{"model":"stardewcraft:block/crop3d/dead_crop_variants/dead_3_bent"}}}

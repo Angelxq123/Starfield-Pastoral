@@ -1,0 +1,201 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "stardewcraft:item/weapon/sword/rapier",
+    "particle": "stardewcraft:item/weapon/sword/rapier"
+  },
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        25
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.68,
+        0.68,
+        0.68
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -25
+      ],
+      "translation": [
+        -1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.68,
+        0.68,
+        0.68
+      ]
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 700001
+      },
+      "model": "stardewcraft:item/forge_appearance/bone_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700002
+      },
+      "model": "stardewcraft:item/forge_appearance/claymore"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700003
+      },
+      "model": "stardewcraft:item/forge_appearance/cutlass"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700004
+      },
+      "model": "stardewcraft:item/forge_appearance/dark_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700005
+      },
+      "model": "stardewcraft:item/forge_appearance/dragontooth_cutlass"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700006
+      },
+      "model": "stardewcraft:item/forge_appearance/dwarf_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700007
+      },
+      "model": "stardewcraft:item/forge_appearance/forest_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700008
+      },
+      "model": "stardewcraft:item/forge_appearance/galaxy_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700009
+      },
+      "model": "stardewcraft:item/forge_appearance/holy_blade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700010
+      },
+      "model": "stardewcraft:item/forge_appearance/infinity_blade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700011
+      },
+      "model": "stardewcraft:item/forge_appearance/insect_head"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700012
+      },
+      "model": "stardewcraft:item/forge_appearance/iron_edge"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700013
+      },
+      "model": "stardewcraft:item/forge_appearance/lava_katana"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700014
+      },
+      "model": "stardewcraft:item/forge_appearance/meowmere"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700015
+      },
+      "model": "stardewcraft:item/forge_appearance/neptunes_glaive"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700016
+      },
+      "model": "stardewcraft:item/forge_appearance/obsidian_edge"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700017
+      },
+      "model": "stardewcraft:item/forge_appearance/ossified_blade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700018
+      },
+      "model": "stardewcraft:item/forge_appearance/pirate_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700019
+      },
+      "model": "stardewcraft:item/forge_appearance/rusty_sword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700020
+      },
+      "model": "stardewcraft:item/forge_appearance/silver_saber"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700021
+      },
+      "model": "stardewcraft:item/forge_appearance/steel_falchion"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700022
+      },
+      "model": "stardewcraft:item/forge_appearance/steel_smallsword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700023
+      },
+      "model": "stardewcraft:item/forge_appearance/tempered_broadsword"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700024
+      },
+      "model": "stardewcraft:item/forge_appearance/templars_blade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700025
+      },
+      "model": "stardewcraft:item/forge_appearance/wooden_blade"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 700026
+      },
+      "model": "stardewcraft:item/forge_appearance/yeti_tooth"
+    }
+  ]
+}

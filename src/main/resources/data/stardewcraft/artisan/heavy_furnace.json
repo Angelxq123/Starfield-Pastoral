@@ -1,0 +1,69 @@
+{
+  "machine": "stardewcraft:heavy_furnace",
+  "recipes": [
+    {
+      "input": "stardewcraft:copper_ore",
+      "consume": 25,
+      "output": "stardewcraft:copper_bar",
+      "outputCount": 5,
+      "maxOutputCount": 6,
+      "minutes": 30
+    },
+    {
+      "input": "stardewcraft:iron_ore",
+      "consume": 25,
+      "output": "stardewcraft:iron_bar",
+      "outputCount": 5,
+      "maxOutputCount": 6,
+      "minutes": 120
+    },
+    {
+      "input": "stardewcraft:gold_ore",
+      "consume": 25,
+      "output": "stardewcraft:gold_bar",
+      "outputCount": 5,
+      "maxOutputCount": 6,
+      "minutes": 300
+    },
+    {
+      "input": "stardewcraft:iridium_ore",
+      "consume": 25,
+      "output": "stardewcraft:iridium_bar",
+      "outputCount": 5,
+      "maxOutputCount": 6,
+      "minutes": 480
+    },
+    {
+      "input": "stardewcraft:radioactive_ore",
+      "consume": 25,
+      "output": "stardewcraft:radioactive_bar",
+      "outputCount": 5,
+      "maxOutputCount": 6,
+      "minutes": 560
+    },
+    {
+      "input": "stardewcraft:quartz",
+      "consume": 5,
+      "output": "stardewcraft:refined_quartz",
+      "outputCount": 5,
+      "maxOutputCount": 6,
+      "minutes": 90
+    },
+    {
+      "input": "stardewcraft:fire_quartz",
+      "consume": 5,
+      "output": "stardewcraft:refined_quartz",
+      "outputCount": 15,
+      "maxOutputCount": 20,
+      "minutes": 90
+    },
+    {
+      "input": "stardewcraft:bouquet",
+      "consume": 1,
+      "output": "stardewcraft:wilted_bouquet",
+      "outputCount": 1,
+      "maxOutputCount": 1,
+      "minutes": 10
+    }
+  ]
+}

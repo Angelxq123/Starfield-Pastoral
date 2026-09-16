@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "source_name": "Dust Spirit",
+  "family": "dust_sprite",
+  "health": 40,
+  "damage": 6,
+  "resilience": 2,
+  "miss_chance": 0,
+  "experience": 2,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:coal",
+      "chance": 0.5
+    },
+    {
+      "item": "stardewcraft:coffee_bean",
+      "chance": 0.01
+    },
+    {
+      "item": "stardewcraft:gold_bar",
+      "chance": 0.001
+    },
+    {
+      "item": "stardewcraft:frozen_tear",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:crystal_fruit",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_ii",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

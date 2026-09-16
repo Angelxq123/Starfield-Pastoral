@@ -47,7 +47,9 @@ public class TableDisplayBlockEntityRenderer implements BlockEntityRenderer<Tabl
 
         float y = 16.02f / 16.0f;
         BlockState state = be.getBlockState();
-        if (state.getBlock() instanceof OakTableBlock tableBlock) {
+        if (state.getBlock() instanceof com.stardew.craft.block.utility.OutdoorTableBlock) {
+            y = (com.stardew.craft.client.model.terrain.TerrainSeasonTextures.currentTextureSet() == 3 ? 17.02f : 16.02f) / 16.0f;
+        } else if (state.getBlock() instanceof OakTableBlock tableBlock) {
             y = tableBlock.getDisplayItemY(state);
         } else if (state.getBlock() instanceof SpruceCounterBlock) {
             y = 16.02f / 16.0f;
@@ -55,6 +57,18 @@ public class TableDisplayBlockEntityRenderer implements BlockEntityRenderer<Tabl
             y = 16.02f / 16.0f;
         } else if (state.getBlock() instanceof KitchenCounterBlock) {
             y = 16.02f / 16.0f;
+        }
+
+        if (display.getItem() instanceof com.stardew.craft.item.artisan.PlaceableArtisanDrinkItem drink) {
+            var bottleState = com.stardew.craft.block.ModBlocks.getPlacedCookingFoodBlock(drink.getPlacedBlockId()).get().defaultBlockState();
+            var bottleModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(bottleState);
+            poseStack.pushPose();
+            poseStack.translate(0.5F, y + 0.5F, 0.5F);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yawDegrees));
+            Minecraft.getInstance().getItemRenderer().render(display, ItemDisplayContext.NONE, false,
+                    poseStack, buffer, packedLight, packedOverlay, bottleModel);
+            poseStack.popPose();
+            return;
         }
 
         poseStack.pushPose();

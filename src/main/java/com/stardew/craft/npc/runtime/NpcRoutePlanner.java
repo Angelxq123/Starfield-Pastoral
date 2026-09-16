@@ -32,6 +32,9 @@ final class NpcRoutePlanner {
 
     // ── Hot-path caches ──
     private static final Map<String, String> CANONICAL_NPC_ID_CACHE = new HashMap<>();
+    private static long dataRevision=-1;
+    private static long profileRevision=-1;
+    private static JsonObject routeProfiles;
     private static boolean portalTargetsInitialized = false;
 
     private NpcRoutePlanner() {
@@ -43,6 +46,8 @@ final class NpcRoutePlanner {
         HARD_ENDPOINT_WARNED.clear();
         CANONICAL_NPC_ID_CACHE.clear();
         portalTargetsInitialized = false;
+        profileRevision=-1;
+        routeProfiles=null;
         NpcLocationGraph.reload();
     }
 
@@ -53,9 +58,23 @@ final class NpcRoutePlanner {
     }
 
     static NpcRouteContext resolveRoute(ServerLevel level, String npcId, NpcRuntimeState state, BlockPos npcPos) {
+        if (dataRevision!=NpcDataRegistry.revision()) { resetState(); dataRevision=NpcDataRegistry.revision(); }
         String canonicalNpcId = canonicalNpcId(npcId);
         if (state == null) {
             return NpcRouteContext.invalid("", "missing_runtime_state", "", "");
+        }
+        if (state.activeScheduleKey().isBlank()) return NpcRouteContext.invalid("", "no_schedule", "", "");
+        // A profile supplies the route, never permission to replace an explicit destination.
+        var target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, null);
+        if (!state.namedPointId().isBlank() && target == null) {
+            return NpcRouteContext.waitingForCoordinates(state.locationName(),"target_unavailable",state.namedPointId(),"");
+        }
+        // Already at the destination: arrival must not depend on a building's
+        // entrance route. This also covers resident actors in unmapped interiors.
+        if (!state.namedPointId().isBlank() && npcPos != null && target != null && target.position() != null
+                && npcPos.equals(BlockPos.containing(target.position()))) {
+            return NpcRouteContext.ready(canonicalLocation(state.locationName()),
+                    List.of(NpcRouteStep.walk("schedule_anchor", target.position())));
         }
         if (shouldPreferRemoteOutdoorGraphRoute(state, npcPos)) {
             NpcRouteContext graphRoute = resolveGraphRoute(level, canonicalNpcId, state, npcPos);
@@ -63,7 +82,7 @@ final class NpcRoutePlanner {
                 return graphRoute;
             }
         }
-        NpcRouteContext profileRoute = resolveProfileRoute(canonicalNpcId, state);
+        NpcRouteContext profileRoute = resolveProfileRoute(level, canonicalNpcId, state);
         if (profileRoute != null) {
             return profileRoute;
         }
@@ -93,12 +112,24 @@ final class NpcRoutePlanner {
             .orElse("");
     }
 
+    static Vec3 indoorExitForLocation(ServerLevel level,String location) {
+        var anchor=anchorForLocation(location);
+        return anchor==null || anchor.indoorExitPoint().isBlank()?null:pointFromConfig(level,anchor.indoorExitPoint(),null);
+    }
+
     static Vec3 indoorExitForLocation(String canonicalLocation) {
         NpcLocationAnchor anchor = anchorForLocation(canonicalLocation);
         if (anchor == null || anchor.indoorExitPoint().isBlank()) {
             return null;
         }
         return pointFromConfigStrict(anchor.indoorExitPoint(), null, canonicalLocation);
+    }
+
+    static Vec3 outdoorExitForLocation(ServerLevel level,String location) {
+        var anchor=anchorForLocation(location);
+        if(anchor==null) return null;
+        if(!anchor.outdoorDoorPoint().isBlank() && pointFromConfig(level,anchor.outdoorDoorPoint(),null)==null) return null;
+        return outdoorExitForLocation(location);
     }
 
     static Vec3 outdoorExitForLocation(String canonicalLocation) {
@@ -118,12 +149,22 @@ final class NpcRoutePlanner {
         return null;
     }
 
+    static Vec3 outdoorDoorForLocation(ServerLevel level,String location) {
+        var anchor=anchorForLocation(location);
+        return anchor==null || anchor.outdoorDoorPoint().isBlank()?null:pointFromConfig(level,anchor.outdoorDoorPoint(),null);
+    }
+
     static Vec3 outdoorDoorForLocation(String canonicalLocation) {
         NpcLocationAnchor anchor = anchorForLocation(canonicalLocation);
         if (anchor == null || anchor.outdoorDoorPoint().isBlank()) {
             return null;
         }
         return pointFromConfigStrict(anchor.outdoorDoorPoint(), null, canonicalLocation);
+    }
+
+    static Vec3 indoorEntryForLocation(ServerLevel level,String location) {
+        var anchor=anchorForLocation(location);
+        return anchor==null || anchor.indoorEntryPoint().isBlank()?null:pointFromConfig(level,anchor.indoorEntryPoint(),null);
     }
 
     static Vec3 indoorEntryForLocation(String canonicalLocation) {
@@ -188,26 +229,22 @@ final class NpcRoutePlanner {
     }
 
     static Vec3 pointFromConfig(String pointId, Vec3 defaultPoint) {
-        var registered = StardewMapSlots.resolveWorldAnchor(pointId);
-        if (registered.isPresent()) {
-            return registered.get().position();
-        }
-        JsonObject root = routePointsRoot();
-        if (root != null && root.has("points") && root.get("points").isJsonObject()) {
-            JsonObject points = root.getAsJsonObject("points");
-            JsonElement element = points.get(pointId);
-            if (element != null && element.isJsonObject()) {
-                JsonObject obj = element.getAsJsonObject();
-                if (defaultPoint == null && (!obj.has("x") || !obj.has("y") || !obj.has("z"))) {
-                    return null;
-                }
-                return routePointPosition(obj, defaultPoint);
-            }
-            if (MISSING_CONFIG_POINT_LOGGED.add(pointId)) {
-            }
-        }
+        return pointFromConfig(null,pointId,defaultPoint);
+    }
 
-        return defaultPoint;
+    static Vec3 pointFromConfig(ServerLevel level,String pointId,Vec3 defaultPoint) {
+        var registered=StardewMapSlots.resolveWorldAnchor(pointId);
+        if(registered.isPresent()) {
+            var anchor=registered.get();
+            if(level!=null && !anchor.dimension().equals(level.dimension().location())) return null;
+            return NpcTargetSurface.resolve(level,anchor.position(),anchor.useGroundHeight(),anchor.indoor());
+        }
+        var point=com.stardew.craft.npc.data.NpcRoutePoints.get(pointId);
+        if(point==null || !point.has("x") || !point.has("y") || !point.has("z")) return defaultPoint;
+        if(level!=null && point.has("dimension") && !point.get("dimension").getAsString().equals(level.dimension().location().toString())) return null;
+        return NpcTargetSurface.resolve(level,routePointPosition(point,defaultPoint),
+                point.has("use_ground_height") && point.get("use_ground_height").getAsBoolean(),
+                point.has("indoor") && point.get("indoor").getAsBoolean());
     }
 
     static Vec3 routePointPosition(JsonObject obj, Vec3 defaultPoint) {
@@ -306,12 +343,18 @@ final class NpcRoutePlanner {
 
     // ---- private helpers ----
 
-    private static NpcRouteContext resolveProfileRoute(String canonicalNpcId, NpcRuntimeState state) {
+    private static NpcRouteContext resolveProfileRoute(ServerLevel level, String canonicalNpcId, NpcRuntimeState state) {
         if (canonicalNpcId == null || canonicalNpcId.isBlank() || state == null) {
             return null;
         }
 
-        JsonObject root = NpcDataRegistry.events().get("npc_route_profiles");
+        // Registry getters return defensive copies. Take one private copy per revision,
+        // not the entire profile catalog for every actor on every movement tick.
+        if(profileRevision!=NpcDataRegistry.revision()) {
+            routeProfiles=NpcDataRegistry.events().get("npc_route_profiles");
+            profileRevision=NpcDataRegistry.revision();
+        }
+        JsonObject root = routeProfiles;
         if (root == null || !root.has("profiles") || !root.get("profiles").isJsonObject()) {
             return null;
         }
@@ -351,7 +394,7 @@ final class NpcRoutePlanner {
                 mode = stepObj.get("mode").getAsString().trim().toLowerCase(Locale.ROOT);
             }
 
-            Vec3 point = pointFromConfigStrict(pointId, state, canonicalLocation);
+            Vec3 point = pointFromConfig(level,pointId,null);
             if (point == null) {
                 return NpcRouteContext.waitingForCoordinates(canonicalLocation, "missing_route_point", pointId, "");
             }
@@ -373,7 +416,8 @@ final class NpcRoutePlanner {
         // schedule targets such as town hangout vs football, or indoor sleep vs gaming points.
         String namedPointId = state.namedPointId();
         if (namedPointId != null && !namedPointId.isBlank()) {
-            Vec3 scheduleNamedTarget = pointFromConfigStrict(namedPointId, state, canonicalLocation);
+            var resolvedTarget=NpcScheduleRuntimeService.resolveWorldTarget(level,state,null);
+            Vec3 scheduleNamedTarget=resolvedTarget==null?null:resolvedTarget.position();
             if (scheduleNamedTarget != null) {
                 // If the named point is outdoor but the profile route contains a WARP step,
                 // abandon the profile route entirely — the NPC would warp indoor and then
@@ -447,7 +491,7 @@ final class NpcRoutePlanner {
         if (anchor.outdoorDoorPoint().isBlank()) {
             return NpcRouteContext.waitingForCoordinates(canonicalLocation, "missing_outdoor_entry_walk_target", "", canonicalLocation);
         }
-        Vec3 outdoorDoor = resolveOutdoorDoorForLocation(canonicalLocation);
+        Vec3 outdoorDoor = outdoorDoorForLocation(level,canonicalLocation);
         if (outdoorDoor == null) {
             return NpcRouteContext.waitingForCoordinates(canonicalLocation, "missing_outdoor_entry_walk_target", anchor.outdoorDoorPoint(), canonicalLocation);
         }
@@ -456,7 +500,7 @@ final class NpcRoutePlanner {
         if (anchor.indoorEntryPoint().isBlank()) {
             return NpcRouteContext.waitingForCoordinates(canonicalLocation, "missing_indoor_entry_landing", "", canonicalLocation);
         }
-        Vec3 indoorEntry = pointFromConfigStrict(anchor.indoorEntryPoint(), null, canonicalLocation);
+        Vec3 indoorEntry = pointFromConfig(level,anchor.indoorEntryPoint(),null);
         if (indoorEntry == null) {
             return NpcRouteContext.waitingForCoordinates(canonicalLocation, "missing_indoor_entry_landing", anchor.indoorEntryPoint(), canonicalLocation);
         }
@@ -482,6 +526,14 @@ final class NpcRoutePlanner {
             return null;
         }
 
+        // A schedule's location label can name the building while its explicit point
+        // is outside (e.g. Shane outside Marnie's ranch). Do not route back inside it.
+        var destinationAnchor = anchorForLocation(destinationLocation);
+        if (!target.indoorTarget() && destinationAnchor != null && destinationAnchor.indoor()) {
+            destinationLocation = NpcLocationGraph.outdoorNeighborFor(destinationLocation);
+            if (destinationLocation.isBlank()) return null;
+        }
+
         String currentInteriorLocation = fixedInteriorLocationAt(npcPos);
         String sourceLocation = currentInteriorLocation.isBlank()
             ? outdoorSourceLocation(npcPos)
@@ -497,9 +549,9 @@ final class NpcRoutePlanner {
         if (graphRoute == null || graphRoute.edges().isEmpty()) {
             return null;
         }
-        List<NpcRouteStep> graphSteps = NpcLocationGraph.toRouteSteps(graphRoute, target.position());
+        List<NpcRouteStep> graphSteps = NpcLocationGraph.toRouteSteps(level,graphRoute, target.position());
         if (graphSteps.isEmpty()) {
-            return null;
+            return NpcRouteContext.waitingForCoordinates(destinationLocation,"incomplete_location_connection","",sourceLocation+"->"+destinationLocation);
         }
         return NpcRouteContext.ready(destinationLocation, graphSteps);
     }
@@ -534,20 +586,12 @@ final class NpcRoutePlanner {
         if (registered.isPresent()) {
             return registered.get().position();
         }
-        JsonObject root = routePointsRoot();
-        if (root == null || !root.has("points") || !root.get("points").isJsonObject()) {
-            emitHardEndpointWarning("missing_points_root", pointId, canonicalLocation, state);
-            return null;
-        }
-
-        JsonObject points = root.getAsJsonObject("points");
-        JsonElement element = points.get(pointId);
-        if (element == null || !element.isJsonObject()) {
+        JsonObject obj = com.stardew.craft.npc.data.NpcRoutePoints.get(pointId);
+        if (obj == null) {
             emitHardEndpointWarning("missing_point_id", pointId, canonicalLocation, state);
             return null;
         }
 
-        JsonObject obj = element.getAsJsonObject();
         if (!obj.has("x") || !obj.has("y") || !obj.has("z")) {
             emitHardEndpointWarning("point_missing_xyz", pointId, canonicalLocation, state);
             return null;
@@ -605,20 +649,8 @@ final class NpcRoutePlanner {
             }
         }
 
-        JsonObject root = routePointsRoot();
-        if (root == null || !root.has("points") || !root.get("points").isJsonObject()) {
-            return false;
-        }
-        JsonElement element = root.getAsJsonObject("points").get(pointId);
-        if (element == null || !element.isJsonObject()) {
-            return false;
-        }
-        JsonObject obj = element.getAsJsonObject();
-        return obj.has("indoor") && obj.get("indoor").getAsBoolean();
-    }
-
-    private static JsonObject routePointsRoot() {
-        return NpcDataRegistry.events().get("npc_route_points");
+        JsonObject obj=com.stardew.craft.npc.data.NpcRoutePoints.get(pointId);
+        return obj!=null && obj.has("indoor") && obj.get("indoor").getAsBoolean();
     }
 
     private static void emitHardEndpointWarning(String reason, String pointId, String canonicalLocation, NpcRuntimeState state) {

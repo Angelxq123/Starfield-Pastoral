@@ -1,7 +1,9 @@
 package com.stardew.craft.event;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.block.crop.RiceCropBlock;
 import com.stardew.craft.core.ModDimensions;
+import com.stardew.craft.manager.CropGrowthManager;
 import com.stardew.craft.weather.WeatherManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -48,6 +50,8 @@ public class FarmlandMoistureHandler {
             return;
         }
         tickCounter = 0;
+
+        maintainRicePaddies(level);
         
         // 获取当前天气
         String weather = WeatherManager.getCurrentWeather(level);
@@ -61,6 +65,23 @@ public class FarmlandMoistureHandler {
         // 遍历所有玩家，湿润其周围的耕地
         for (ServerPlayer player : level.players()) {
             moistenFarmlandAroundPlayer(level, player);
+        }
+    }
+
+    /** Keep loaded rice paddies visibly and mechanically watered between day transitions. */
+    private static void maintainRicePaddies(ServerLevel level) {
+        for (net.minecraft.core.GlobalPos tracked : CropGrowthManager.get(level).getAllCropPositions()) {
+            if (tracked.dimension() != level.dimension() || !level.isLoaded(tracked.pos())) {
+                continue;
+            }
+            BlockPos cropPos = tracked.pos();
+            BlockState crop = level.getBlockState(cropPos);
+            if (crop.getBlock() instanceof RiceCropBlock
+                    && (!crop.hasProperty(RiceCropBlock.HALF)
+                    || crop.getValue(RiceCropBlock.HALF)
+                    == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER)) {
+                RiceCropBlock.keepPaddySoilWatered(level, cropPos);
+            }
         }
     }
     

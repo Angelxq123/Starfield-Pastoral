@@ -226,8 +226,7 @@ public final class MutantBugLairService {
 
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player openingPlayer) {
-                return new WoodenChestMenu(containerId, inventory, container, ignored -> {
-                }, CHEST_BROWN_COLOR);
+                return new WoodenChestMenu(containerId, inventory, container, null, CHEST_BROWN_COLOR, true);
             }
         });
     }
@@ -292,7 +291,6 @@ public final class MutantBugLairService {
                     level, monsterId, Vec3.atBottomCenterOf(pos), 0.0F, 1,
                     mob -> {
                         mob.addTag(LAIR_MOB_TAG);
-                        MineMonsterSpawnHandler.applyMutantBugLairProfile(mob, monsterId);
                     });
             return;
         }

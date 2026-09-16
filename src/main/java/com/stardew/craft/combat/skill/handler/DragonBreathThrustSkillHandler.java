@@ -129,19 +129,13 @@ public final class DragonBreathThrustSkillHandler
                     end,
                     DASH_DURATION_TICKS
             );
+            // Start the cosmetic clock before confirmed hit packets; movement and damage remain immediate.
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(), weaponId, skillId, ANIMATION_TICKS);
             for (LivingEntity target : targets) {
                 attackTarget(context, target);
             }
         });
-
-        // Preserve the original order: movement and hits precede presentation.
-        // This thrust never imposed a server-side attack lock.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
     }
 
     @Override

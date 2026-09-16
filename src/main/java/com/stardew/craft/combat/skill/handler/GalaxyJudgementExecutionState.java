@@ -1,9 +1,5 @@
 package com.stardew.craft.combat.skill.handler;
 
-import com.stardew.craft.combat.VfxColors;
-import com.stardew.craft.combat.network.ShockwaveRingPayload;
-import com.stardew.craft.combat.network.StarfallMeteorPayload;
-import com.stardew.craft.combat.network.StarfallShockwavePostPayload;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
 import com.stardew.craft.combat.skill.WeaponSkillDamage;
@@ -12,17 +8,13 @@ import com.stardew.craft.combat.skill.runtime.SkillInstance;
 import com.stardew.craft.combat.skill.runtime.SkillTickResult;
 import java.util.List;
 import java.util.Objects;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /** One Galaxy Judgement cast and its three authored delayed starfalls. */
 final class GalaxyJudgementExecutionState
@@ -128,6 +120,8 @@ final class GalaxyJudgementExecutionState
                 )
         );
 
+        com.stardew.craft.combat.network.GalaxyPhasePayload.send(player, false, center, center);
+
         int hits = hitsPerTarget();
         for (LivingEntity target : targets) {
             for (int index = 0; index < hits; index++) {
@@ -150,90 +144,6 @@ final class GalaxyJudgementExecutionState
             }
         }
 
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.AMETHYST_BLOCK_CHIME,
-                SoundSource.PLAYERS,
-                0.8F,
-                1.2F
-        );
-        level.playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.ENDERMAN_TELEPORT,
-                SoundSource.PLAYERS,
-                0.5F,
-                1.4F
-        );
-
-        level.sendParticles(
-                ParticleTypes.END_ROD,
-                center.x,
-                center.y + 1.2D,
-                center.z,
-                18,
-                radius * 0.35D,
-                0.6D,
-                radius * 0.35D,
-                0.02D
-        );
-        level.sendParticles(
-                ParticleTypes.ENCHANT,
-                center.x,
-                center.y + 0.8D,
-                center.z,
-                12,
-                radius * 0.35D,
-                0.4D,
-                radius * 0.35D,
-                0.02D
-        );
-        level.sendParticles(
-                ParticleTypes.CRIT,
-                center.x,
-                center.y + 0.4D,
-                center.z,
-                16,
-                radius * 0.45D,
-                0.35D,
-                radius * 0.45D,
-                0.08D
-        );
-
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new ShockwaveRingPayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
-                        (float) radius,
-                        8,
-                        VfxColors.GALAXY_PURPLE
-                )
-        );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new StarfallMeteorPayload(
-                        (float) center.x,
-                        (float) center.y,
-                        (float) center.z,
-                        6.0F,
-                        14,
-                        VfxColors.GALAXY_PURPLE
-                )
-        );
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new StarfallShockwavePostPayload(
-                        (float) center.x,
-                        (float) center.y + 0.2F,
-                        (float) center.z,
-                        0.28F,
-                        0.9F,
-                        8
-                )
-        );
     }
 
     static long nextStrikeTick(long actualNowTick) {

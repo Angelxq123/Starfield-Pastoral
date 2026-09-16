@@ -2,7 +2,6 @@ package com.stardew.craft.combat.skill.handler;
 
 import com.stardew.craft.combat.equipment.EquipmentMobEffectHandler;
 import com.stardew.craft.combat.equipment.EquipmentNegativeStatusProtection;
-import com.stardew.craft.combat.network.WaterRingEffectPayload;
 import com.stardew.craft.combat.skill.BrokenTridentCatchTracker;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher;
@@ -22,16 +21,11 @@ import com.stardew.craft.player.PlayerStardewDataAPI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Server-authoritative extraction of Broken Trident's original Tide Reel.
@@ -49,8 +43,6 @@ public final class TideReelSkillHandler implements RuntimeWeaponSkillHandler {
     public static final double NORMAL_PULL_LIFT = 0.08;
     public static final double FISH_CATCH_PULL_LIFT = 0.12;
     public static final double MINIMUM_PULL_DISTANCE_SQUARED = 0.01;
-    public static final float WATER_RING_RADIUS = 4.6F;
-    public static final int WATER_RING_DURATION_TICKS = 24;
     public static final int ANIMATION_TICKS = 12;
 
     @Override
@@ -129,6 +121,12 @@ public final class TideReelSkillHandler implements RuntimeWeaponSkillHandler {
                 new State(target.getUUID(), fishCatchActive)
         );
         instance.registerCommittedEffect(() -> {
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(),
+                    weaponId,
+                    skillId,
+                    ANIMATION_TICKS
+            );
             WeaponSkillDamage.apply(
                     context.player(),
                     target,
@@ -138,16 +136,9 @@ public final class TideReelSkillHandler implements RuntimeWeaponSkillHandler {
                     WeaponSkillDamage.AttackGatePolicy.RESPECT_AT_IMPACT,
                     WeaponSkillDamage.HitCooldownPolicy.RESPECT_VANILLA
             );
-            sendLegacyImpactEffects(context.player().serverLevel(), target);
             WeaponSkillAnimationLock.setLock(
                     context.player(),
                     context.nowTick(),
-                    ANIMATION_TICKS
-            );
-            WeaponSkillAnimationDispatcher.sendSkillAnim(
-                    context.player(),
-                    weaponId,
-                    skillId,
                     ANIMATION_TICKS
             );
         });
@@ -239,6 +230,9 @@ public final class TideReelSkillHandler implements RuntimeWeaponSkillHandler {
                 pull.z
         ));
         target.hurtMarked = true;
+        com.stardew.craft.combat.network.TidePhasePayload.send(player,
+                com.stardew.craft.combat.network.TidePhasePayload.Phase.REEL,
+                target.getBoundingBox().getCenter(), player.position().add(0, 0.9, 0), 8, fishCatchActive);
     }
 
     private static final class State implements SkillInstance.ExecutionState {
@@ -289,90 +283,4 @@ public final class TideReelSkillHandler implements RuntimeWeaponSkillHandler {
         }
     }
 
-    private static void sendLegacyImpactEffects(
-            ServerLevel level,
-            LivingEntity target
-    ) {
-        PacketDistributor.sendToPlayersInDimension(
-                level,
-                new WaterRingEffectPayload(
-                        (float) target.getX(),
-                        (float) target.getY(),
-                        (float) target.getZ(),
-                        WATER_RING_RADIUS,
-                        WATER_RING_DURATION_TICKS
-                )
-        );
-        level.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.TRIDENT_HIT,
-                SoundSource.PLAYERS,
-                0.95F,
-                1.05F
-        );
-        level.playSound(
-                null,
-                target.blockPosition(),
-                SoundEvents.FISHING_BOBBER_SPLASH,
-                SoundSource.PLAYERS,
-                0.85F,
-                1.15F
-        );
-        level.sendParticles(
-                ParticleTypes.SPLASH,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.6,
-                target.getZ(),
-                28,
-                0.9,
-                0.3,
-                0.9,
-                0.05
-        );
-        level.sendParticles(
-                ParticleTypes.BUBBLE,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.5,
-                target.getZ(),
-                20,
-                0.75,
-                0.25,
-                0.75,
-                0.03
-        );
-        level.sendParticles(
-                ParticleTypes.CLOUD,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.55,
-                target.getZ(),
-                12,
-                0.7,
-                0.15,
-                0.7,
-                0.02
-        );
-        level.sendParticles(
-                ParticleTypes.ENCHANT,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.65,
-                target.getZ(),
-                14,
-                0.6,
-                0.3,
-                0.6,
-                0.06
-        );
-        level.sendParticles(
-                ParticleTypes.CRIT,
-                target.getX(),
-                target.getY() + target.getBbHeight() * 0.6,
-                target.getZ(),
-                10,
-                0.45,
-                0.25,
-                0.45,
-                0.07
-        );
-    }
 }

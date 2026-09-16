@@ -1,45 +1,41 @@
 package com.stardew.craft.client.weapon;
 
+import com.stardew.craft.combat.network.TemplarMarkPayload;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public final class TemplarMarkClientState {
-
-    private static final Map<Integer, Long> MARKS = new ConcurrentHashMap<>();
-
+    record Key(int caster, long cast, int target) {}
+    private static final Map<Key, TemplarMarkPayload> MARKS = new HashMap<>();
+    private static ClientLevel activeLevel;
     private TemplarMarkClientState() {}
-
-    public static void apply(int entityId, int durationTicks) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return;
-        }
-        long nowTick = mc.level.getGameTime();
-        MARKS.put(entityId, nowTick + durationTicks);
+    static Key key(TemplarMarkPayload p) { return new Key(p.casterId(), p.castTick(), p.entityId()); }
+    public static void apply(TemplarMarkPayload p) {
+        var mc = Minecraft.getInstance(); ensureLevel(mc.level);
+        if (mc.level == null) return;
+        if (p.durationTicks() <= 0) { MARKS.remove(key(p)); return; }
+        if (mc.level.getGameTime() >= p.castTick() + p.durationTicks()) return;
+        if (MARKS.size() >= 256) MARKS.remove(MARKS.keySet().iterator().next());
+        MARKS.put(key(p), p);
     }
-
-    public static boolean isMarked(int entityId, long nowTick) {
-        Long end = MARKS.get(entityId);
-        return end != null && nowTick < end;
+    public static boolean isMarked(int entityId, long now) { return progress(entityId, now) >= 0; }
+    public static float progress(int entityId, double now) {
+        ensureLevel(Minecraft.getInstance().level);
+        float latest = -1;
+        for (var p : MARKS.values()) if (p.entityId() == entityId && now >= p.castTick() && now < p.castTick() + p.durationTicks())
+            latest = Math.max(latest, (float) ((now - p.castTick()) / p.durationTicks()));
+        return latest;
     }
-
     public static void onClientTick(ClientTickEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            MARKS.clear();
-            return;
-        }
-        long nowTick = mc.level.getGameTime();
-        Iterator<Map.Entry<Integer, Long>> it = MARKS.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Integer, Long> entry = it.next();
-            if (nowTick >= entry.getValue()) {
-                it.remove();
-            }
-        }
+        var mc = Minecraft.getInstance(); ensureLevel(mc.level);
+        if (mc.level == null || mc.isPaused()) return;
+        MARKS.entrySet().removeIf(e -> mc.level.getGameTime() >= e.getValue().castTick() + e.getValue().durationTicks());
+    }
+    private static void ensureLevel(ClientLevel level) {
+        if (activeLevel == level) return;
+        activeLevel = level; MARKS.clear();
     }
 }

@@ -93,7 +93,7 @@ public enum CoopAnimalVariant {
 			"geo/entity/animal/pig.geo.json",
 			"animations/entity/animal/pig.animation.json",
 			"textures/entity/animal/pig.png",
-			"geo/entity/animal/baby_pig.json",
+			"geo/entity/animal/baby_pig.geo.json",
 			"animations/entity/animal/baby_pig.animation.json",
 			"textures/entity/animal/baby_pig.png"
 	);

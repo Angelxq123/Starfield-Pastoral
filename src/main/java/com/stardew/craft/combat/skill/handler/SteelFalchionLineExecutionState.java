@@ -67,9 +67,9 @@ final class SteelFalchionLineExecutionState
                 player.serverLevel(),
                 new SteelFalchionLineCreatePayload(
                         lineId,
-                        (float) start.x,
-                        (float) start.y,
-                        (float) start.z,
+                        start.x,
+                        start.y,
+                        start.z,
                         SteelFalchionExecutionSupport.LINE_DURATION_TICKS,
                         SteelFalchionExecutionSupport.LINE_WIDTH
                 )
@@ -78,9 +78,9 @@ final class SteelFalchionLineExecutionState
                 player.serverLevel(),
                 new SteelFalchionLinePointPayload(
                         lineId,
-                        (float) end.x,
-                        (float) end.y,
-                        (float) end.z
+                        end.x,
+                        end.y,
+                        end.z
                 )
         );
         player.serverLevel().playSound(
@@ -110,6 +110,11 @@ final class SteelFalchionLineExecutionState
         }
         handleTriggers(context.player(), context.nowTick());
         return SkillTickResult.CONTINUE;
+    }
+
+    void cancelVisual(ServerPlayer player){
+        ServerLevel original=player.server.getLevel(dimension);
+        if(original!=null)PacketDistributor.sendToPlayersInDimension(original,new com.stardew.craft.combat.network.CrescentFalchionEndPayload(lineId,player.getId(),"steel_falchion_line"));
     }
 
     void cancel() {

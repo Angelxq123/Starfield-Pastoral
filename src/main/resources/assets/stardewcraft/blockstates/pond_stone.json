@@ -1,0 +1,196 @@
+{
+  "variants": {
+    "variant=0,north=false,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_00"
+    },
+    "variant=0,north=true,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_01"
+    },
+    "variant=0,north=false,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_02"
+    },
+    "variant=0,north=true,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_03"
+    },
+    "variant=0,north=false,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_04"
+    },
+    "variant=0,north=true,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_05"
+    },
+    "variant=0,north=false,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_06"
+    },
+    "variant=0,north=true,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_07"
+    },
+    "variant=0,north=false,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_08"
+    },
+    "variant=0,north=true,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_09"
+    },
+    "variant=0,north=false,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_10"
+    },
+    "variant=0,north=true,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_11"
+    },
+    "variant=0,north=false,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_12"
+    },
+    "variant=0,north=true,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_13"
+    },
+    "variant=0,north=false,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_14"
+    },
+    "variant=0,north=true,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_a_15"
+    },
+    "variant=1,north=false,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_00"
+    },
+    "variant=1,north=true,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_01"
+    },
+    "variant=1,north=false,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_02"
+    },
+    "variant=1,north=true,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_03"
+    },
+    "variant=1,north=false,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_04"
+    },
+    "variant=1,north=true,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_05"
+    },
+    "variant=1,north=false,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_06"
+    },
+    "variant=1,north=true,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_07"
+    },
+    "variant=1,north=false,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_08"
+    },
+    "variant=1,north=true,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_09"
+    },
+    "variant=1,north=false,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_10"
+    },
+    "variant=1,north=true,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_11"
+    },
+    "variant=1,north=false,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_12"
+    },
+    "variant=1,north=true,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_13"
+    },
+    "variant=1,north=false,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_14"
+    },
+    "variant=1,north=true,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_b_15"
+    },
+    "variant=2,north=false,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_00"
+    },
+    "variant=2,north=true,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_01"
+    },
+    "variant=2,north=false,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_02"
+    },
+    "variant=2,north=true,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_03"
+    },
+    "variant=2,north=false,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_04"
+    },
+    "variant=2,north=true,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_05"
+    },
+    "variant=2,north=false,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_06"
+    },
+    "variant=2,north=true,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_07"
+    },
+    "variant=2,north=false,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_08"
+    },
+    "variant=2,north=true,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_09"
+    },
+    "variant=2,north=false,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_10"
+    },
+    "variant=2,north=true,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_11"
+    },
+    "variant=2,north=false,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_12"
+    },
+    "variant=2,north=true,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_13"
+    },
+    "variant=2,north=false,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_14"
+    },
+    "variant=2,north=true,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_c_15"
+    },
+    "variant=3,north=false,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_00"
+    },
+    "variant=3,north=true,east=false,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_01"
+    },
+    "variant=3,north=false,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_02"
+    },
+    "variant=3,north=true,east=true,south=false,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_03"
+    },
+    "variant=3,north=false,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_04"
+    },
+    "variant=3,north=true,east=false,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_05"
+    },
+    "variant=3,north=false,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_06"
+    },
+    "variant=3,north=true,east=true,south=true,west=false": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_07"
+    },
+    "variant=3,north=false,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_08"
+    },
+    "variant=3,north=true,east=false,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_09"
+    },
+    "variant=3,north=false,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_10"
+    },
+    "variant=3,north=true,east=true,south=false,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_11"
+    },
+    "variant=3,north=false,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_12"
+    },
+    "variant=3,north=true,east=false,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_13"
+    },
+    "variant=3,north=false,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_14"
+    },
+    "variant=3,north=true,east=true,south=true,west=true": {
+      "model": "stardewcraft:block/pond_stone/pond_stone_d_15"
+    }
+  }
+}

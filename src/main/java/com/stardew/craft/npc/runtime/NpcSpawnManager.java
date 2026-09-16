@@ -46,11 +46,8 @@ public final class NpcSpawnManager {
         return MINING_DIM_NPC_IDS.contains(npcId);
     }
 
-    /** Dwarf spawn: mine floor, near the shop area. */
-    private static final double DWARF_SPAWN_X = 22.0;
-    private static final double DWARF_SPAWN_Y = 66.0;
-    private static final double DWARF_SPAWN_Z = -16.0;
-    private static final float  DWARF_SPAWN_YAW = 180.0F;
+    /** SDV Characters/Dwarf: Mine tile (43,6), facing down (Minecraft south). */
+    private static final float DWARF_SPAWN_YAW = 0.0F;
 
     private static final String KROBUS_NPC_ID = "krobus";
     private static final double KROBUS_FIXED_X = 30.5D;
@@ -183,28 +180,31 @@ public final class NpcSpawnManager {
         SUPPRESSED_SPAWN_IDS.remove(canonicalId);
     }
 
-    /**
-     * Called when the last player leaves the Stardew Valley dimension.
-     * Teleports every tracked NPC to their current schedule target so that
-     * when the player returns they are at the correct position.
-     */
+    /** These entities have no chunk NBT to reload; a confirmed unload is not a missing-UUID guess. */
+    public static void onNpcChunkUnloaded(ServerLevel level, StardewNpcEntity npc) {
+        String id=canonicalNpcId(npc.getNpcId());
+        if (!npc.getUUID().equals(TRACKED_NPC_UUIDS.get(id))) return;
+        NpcActorPersistence.capture(npc);
+        TRACKED_NPC_UUIDS.remove(id,npc.getUUID());
+        TRACKED_MISS_COUNTS.remove(id);
+        LAST_SPAWN_GAME_TIME.remove(id);
+        ENTITY_SCAN_CACHES.remove(level);
+        NpcCentralMovementService.resetMovementPlan(id);
+        NpcExecutionCoordinator.cancel(npc);
+        // Mining residents have their own per-tick recovery loop. A mining-only
+        // request in the valley force set would keep its 20-tick sweep running every tick.
+        if (!SUPPRESSED_SPAWN_IDS.contains(id) && !MINING_DIM_NPC_IDS.contains(id)) FORCE_SPAWN_IDS.add(id);
+    }
+
+    /** Leaving the simulation saves actual positions; it does not finish unseen routes by teleporting. */
     public static void onAllPlayersLeft(ServerLevel level) {
-        for (Map.Entry<String, UUID> entry : new LinkedHashMap<>(TRACKED_NPC_UUIDS).entrySet()) {
-            String npcId = entry.getKey();
-            // Mining-dimension NPCs don't live in the main level; skip to avoid
-            // getTrackedNpc evicting their tracked UUID.
-            if (MINING_DIM_NPC_IDS.contains(npcId)) continue;
-            // 根因修复：没有 schedule 的 NPC 不应被"关服回位"代码挪动。
-            if (NpcDataRegistry.schedules().get(npcId) == null) continue;
-            StardewNpcEntity npc = getTrackedNpc(level, npcId);
-            if (npc == null) continue;
-            NpcRuntimeState state = NpcRuntimeDataManager.get(level).states().get(npcId);
-            Vec3 sharedSpawn = Vec3.atCenterOf(level.getSharedSpawnPos());
-            NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, sharedSpawn);
-            if (target != null && target.position() != null) {
-                npc.setPos(target.position().x, target.position().y, target.position().z);
-                npc.setDeltaMovement(Vec3.ZERO);
-            }
+        for (String id : new java.util.ArrayList<>(TRACKED_NPC_UUIDS.keySet())) {
+            if (MINING_DIM_NPC_IDS.contains(id)) continue;
+            var npc=getTrackedNpc(level,id);
+            if (npc==null) continue;
+            NpcActorPersistence.capture(npc);
+            npc.prepareForNpcRelocation();
+            NpcCentralMovementService.resetMovementPlan(id);
         }
     }
 
@@ -257,6 +257,12 @@ public final class NpcSpawnManager {
                 continue;
             }
             NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, sharedSpawn);
+            if(target==null && state.activeScheduleKey().isBlank()) {
+                var defaults=NpcDataRegistry.events().get("default_spawns");
+                var pos=defaults==null?null:resolveSpawnPos(defaults.getAsJsonObject("spawns"),npcId,npcId);
+                Vec3 home=resolveConfiguredHome(level,pos);
+                if(home!=null) target=new NpcScheduleRuntimeService.TargetPoint(home,false,false);
+            }
             if (target == null || target.position() == null) {
                 candidates.add(new DailyNpcResetCandidate(npcId, state, null, null));
                 continue;
@@ -493,11 +499,18 @@ public final class NpcSpawnManager {
             double y = -13.0D;
             double z = 119.0D;
             float yaw = 0.0F;
+            boolean homeAvailable = pos != null;
             if (pos != null) {
                 x = pos.has("x") ? pos.get("x").getAsDouble() : x;
                 y = pos.has("y") ? pos.get("y").getAsDouble() : y;
                 z = pos.has("z") ? pos.get("z").getAsDouble() : z;
                 yaw = pos.has("yaw") ? pos.get("yaw").getAsFloat() : yaw;
+                if (pos.has("point")) {
+                    Vec3 home = resolveConfiguredHome(level,pos);
+                    // An explicitly referenced home must not silently fall back to stale XYZ.
+                    homeAvailable = home != null;
+                    if (home != null) { x=home.x; y=home.y; z=home.z; }
+                }
             }
 
             if (isKrobus(npcId)) {
@@ -513,7 +526,7 @@ public final class NpcSpawnManager {
                     x = runtimeScheduleSpawn.x;
                     y = runtimeScheduleSpawn.y;
                     z = runtimeScheduleSpawn.z;
-                } else if (pos == null) {
+                } else if (!homeAvailable) {
                     continue;
                 }
             }
@@ -558,8 +571,22 @@ public final class NpcSpawnManager {
             // hasTrackedNpc so that serialised-but-unloaded entities become visible
             // to UUID / getEntitiesOfClass lookups, preventing false misses that
             // would otherwise trigger duplicate spawns.
-            NpcChunkForceManager.ensureRouteTargetChunkForced(level, npcId,
-                new Vec3(spawnX, spawnY, spawnZ));
+            var liveNpc = getTrackedNpc(level,npcId);
+            if (liveNpc != null && isRetiredSpawnPosition(pos,liveNpc.position())
+                    && liveNpc.position().distanceToSqr(new Vec3(spawnX,spawnY,spawnZ))>4
+                    && NpcExecutionCoordinator.autonomous(liveNpc)
+                    && !NpcInteractionService.isDialogueMovementLocked(npcId)
+                    && !liveNpc.isNativeActivityMovementLocked()
+                    && !com.stardew.craft.festival.FestivalNpcController.controlsNpc(npcId)) {
+                liveNpc.prepareForNpcRelocation();
+                NpcChunkForceManager.ensureRouteTargetChunkForced(level,npcId,new Vec3(spawnX,spawnY,spawnZ));
+                liveNpc.moveTo(spawnX,spawnY,spawnZ,yaw,0);
+                liveNpc.setOnGround(true);
+                rememberRelocatedPosition(level,liveNpc);
+                NpcCentralMovementService.resetMovementPlan(npcId);
+                StardewCraft.LOGGER.info("[NPC_SPAWN] Migrated retired map position for {}",npcId);
+            }
+            if (liveNpc == null) NpcChunkForceManager.ensureRouteTargetChunkForced(level,npcId,new Vec3(spawnX,spawnY,spawnZ));
 
             if (hasTrackedNpc(level, npcId)) {
                 FORCE_SPAWN_IDS.remove(npcId);
@@ -681,6 +708,17 @@ public final class NpcSpawnManager {
             return;
         }
 
+        tickMiningResidents(mineLevel);
+    }
+
+    // Separate the dimension dispatch from residency so the same logic can be tested in a fixture world.
+    static void tickMiningResidents(ServerLevel mineLevel) {
+        com.stardew.craft.mining.OrdinaryMineRuntime.ensure(mineLevel, 0);
+        var layout = com.stardew.craft.mining.OrdinaryMineLayout.load(mineLevel, 0);
+        var tile = layout.metadata.getAsJsonArray("dwarf_spawn_reserved");
+        var block = layout.position(0, tile.get(0).getAsInt(), tile.get(1).getAsInt());
+        Vec3 home = Vec3.atLowerCornerOf(block).add(0.5, 0, 0.5);
+
         for (String npcId : MINING_DIM_NPC_IDS) {
             NpcCapabilityProfile profile = NpcDataRegistry.capabilities().get(npcId);
             if (profile == null || !profile.implemented()) {
@@ -689,10 +727,10 @@ public final class NpcSpawnManager {
 
             // Force-load the spawn chunk so the entity can be found
             NpcChunkForceManager.ensureRouteTargetChunkForced(mineLevel, npcId,
-                new Vec3(DWARF_SPAWN_X, DWARF_SPAWN_Y, DWARF_SPAWN_Z));
+                home);
 
             if (hasTrackedNpc(mineLevel, npcId)) {
-                // Already alive — only log occasionally
+                enforceMiningHome(mineLevel, getTrackedNpc(mineLevel, npcId), home);
                 continue;
             }
 
@@ -708,6 +746,7 @@ public final class NpcSpawnManager {
             if (existing != null) {
                 TRACKED_NPC_UUIDS.put(npcId, existing.getUUID());
                 TRACKED_MISS_COUNTS.put(npcId, 0);
+                enforceMiningHome(mineLevel, existing, home);
                 continue;
             }
 
@@ -728,7 +767,7 @@ public final class NpcSpawnManager {
             if (npc == null) continue;
 
             npc.setNpcId(npcId);
-            npc.moveTo(DWARF_SPAWN_X, DWARF_SPAWN_Y, DWARF_SPAWN_Z, DWARF_SPAWN_YAW, 0.0F);
+            npc.moveTo(home.x, home.y, home.z, DWARF_SPAWN_YAW, 0.0F);
             npc.setCustomNameVisible(false);
             NpcCentralMovementService.snapToSurface(mineLevel, npc);
             boolean added = mineLevel.addFreshEntity(npc);
@@ -742,6 +781,26 @@ public final class NpcSpawnManager {
             } else {
             }
         }
+    }
+
+    private static void enforceMiningHome(ServerLevel level, StardewNpcEntity npc, Vec3 home) {
+        if (npc == null || !npc.isAlive() || npc.isRemoved()
+                || !NpcExecutionCoordinator.autonomous(npc)
+                || npc.isFacingOverrideActive() || npc.isNativeActivityMovementLocked()) return;
+        // Correct already-saved residents too, preserving UUID and all NPC state.
+        // Tolerate thin floor coverings; do not teleport the resident every tick.
+        if (Math.hypot(npc.getX() - home.x, npc.getZ() - home.z) <= .05
+                && Math.abs(npc.getY() - home.y) <= .25) return;
+        npc.getNavigation().stop();
+        npc.moveTo(home.x, home.y, home.z, DWARF_SPAWN_YAW, 0);
+        NpcCentralMovementService.snapToSurface(level, npc);
+        npc.getMoveControl().setWantedPosition(npc.getX(), npc.getY(), npc.getZ(), 0);
+        npc.setYRot(DWARF_SPAWN_YAW);
+        npc.setYHeadRot(DWARF_SPAWN_YAW);
+        npc.setYBodyRot(DWARF_SPAWN_YAW);
+        npc.setDeltaMovement(Vec3.ZERO);
+        npc.fallDistance = 0;
+        npc.hasImpulse = false;
     }
 
     private static Map<String, StardewNpcEntity> collectAndDeduplicateLoaded(ServerLevel level, Set<String> implementedIds) {
@@ -1093,6 +1152,13 @@ public final class NpcSpawnManager {
         if (state == null) {
             return null;
         }
+        var actual=state.actualPosition();
+        var defaults=NpcDataRegistry.events().get("default_spawns");
+        var spawn=defaults==null?null:resolveSpawnPos(defaults.getAsJsonObject("spawns"),npcId,npcId);
+        if (actual!=null && !isRetiredSpawnPosition(spawn,new Vec3(actual.x(),actual.y(),actual.z()))
+                && actual.day()==com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay()
+                && actual.dimension().equals(level.dimension().location().toString()))
+            return new Vec3(actual.x(),actual.y(),actual.z());
         Vec3 sharedSpawn = Vec3.atCenterOf(level.getSharedSpawnPos());
         NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveWorldTarget(level, state, sharedSpawn);
         if (target == null || target.position() == null) {
@@ -1108,17 +1174,42 @@ public final class NpcSpawnManager {
     }
 
     private static void moveNpcToScheduleTarget(ServerLevel level, StardewNpcEntity npc, Vec3 target, NpcRuntimeState state) {
-        npc.getNavigation().stop();
+        npc.prepareForNpcRelocation();
         npc.moveTo(target.x, target.y, target.z, yawFromSdvFacing(state.facing()), 0.0F);
         NpcCentralMovementService.snapToSurface(level, npc);
         npc.setDeltaMovement(Vec3.ZERO);
         npc.hasImpulse = false;
         applyScheduleFacing(npc, state);
         npc.setWalking(false);
+        rememberRelocatedPosition(level,npc);
+    }
+
+    private static Vec3 resolveConfiguredHome(ServerLevel level, JsonObject spawn) {
+        if (spawn==null) return null;
+        if (spawn.has("point")) return NpcRoutePlanner.pointFromConfig(level,spawn.get("point").getAsString(),null);
+        if (!spawn.has("x") || !spawn.has("y") || !spawn.has("z")) return null;
+        return new Vec3(spawn.get("x").getAsDouble(),spawn.get("y").getAsDouble(),spawn.get("z").getAsDouble());
+    }
+
+    private static boolean isRetiredSpawnPosition(JsonObject spawn, Vec3 position) {
+        if (spawn==null || !spawn.has("retired_positions")) return false;
+        for (var entry:spawn.getAsJsonArray("retired_positions")) {
+            var old=entry.getAsJsonObject();
+            Vec3 origin=new Vec3(old.get("x").getAsDouble(),old.get("y").getAsDouble(),old.get("z").getAsDouble());
+            if (position.distanceToSqr(origin)<=4) return true;
+        }
+        return false;
+    }
+
+    private static void rememberRelocatedPosition(ServerLevel level, StardewNpcEntity npc) {
+        var data=NpcRuntimeDataManager.get(level);
+        if(data.getOrCreate(npc.getNpcId()).rememberPosition(new NpcRuntimeState.ActualPosition(
+                level.dimension().location().toString(),npc.getX(),npc.getY(),npc.getZ(),npc.getYRot(),
+                com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay()))) data.setDirty();
     }
 
     private static void applyScheduleFacing(StardewNpcEntity npc, NpcRuntimeState state) {
-        if (npc == null || state == null || npc.isFacingOverrideActive() || npc.isIdleLookActive()) {
+        if (npc == null || state == null || (npc.isFacingOverrideActive() || npc.isNativeActivityMovementLocked()) || npc.isIdleLookActive()) {
             return;
         }
         float yaw = yawFromSdvFacing(state.facing());
@@ -1131,10 +1222,11 @@ public final class NpcSpawnManager {
         if (level == null || npc == null || npc.isRemoved() || !npc.isAlive()) {
             return;
         }
+        if(!NpcExecutionCoordinator.autonomous(npc) || npc.isFacingOverrideActive() || npc.isNativeActivityMovementLocked()) return;
         NpcScheduleRuntimeService.TargetPoint target = NpcScheduleRuntimeService.resolveDesertFestivalMarlonTarget();
         Vec3 pos = target.position();
         float yaw = yawFromSdvFacing(NpcScheduleRuntimeService.desertFestivalMarlonFacing());
-        npc.getNavigation().stop();
+        npc.prepareForNpcRelocation();
         npc.moveTo(pos.x, pos.y, pos.z, yaw, 0.0F);
         npc.setYRot(yaw);
         npc.setYHeadRot(yaw);
@@ -1149,9 +1241,10 @@ public final class NpcSpawnManager {
         if (level == null || npc == null || npc.isRemoved() || !npc.isAlive()) {
             return;
         }
+        if(!NpcExecutionCoordinator.autonomous(npc) || npc.isFacingOverrideActive() || npc.isNativeActivityMovementLocked()) return;
         Vec3 pos = com.stardew.craft.festival.trout.TroutDerbyService.willyPosition();
         float yaw = yawFromSdvFacing(com.stardew.craft.festival.trout.TroutDerbyService.WILLY_FACING);
-        npc.getNavigation().stop();
+        npc.prepareForNpcRelocation();
         npc.moveTo(pos.x, pos.y, pos.z, yaw, 0.0F);
         npc.setYRot(yaw);
         npc.setYHeadRot(yaw);
@@ -1166,9 +1259,10 @@ public final class NpcSpawnManager {
         if (level == null || npc == null || npc.isRemoved() || !npc.isAlive()) {
             return;
         }
+        if(!NpcExecutionCoordinator.autonomous(npc) || npc.isFacingOverrideActive() || npc.isNativeActivityMovementLocked()) return;
         Vec3 pos = com.stardew.craft.festival.squid.SquidFestService.willyPosition();
         float yaw = yawFromSdvFacing(com.stardew.craft.festival.squid.SquidFestService.WILLY_FACING);
-        npc.getNavigation().stop();
+        npc.prepareForNpcRelocation();
         npc.moveTo(pos.x, pos.y, pos.z, yaw, 0.0F);
         npc.setYRot(yaw);
         npc.setYHeadRot(yaw);
@@ -1205,6 +1299,7 @@ public final class NpcSpawnManager {
         if (npc == null || npc.isRemoved() || !npc.isAlive()) {
             return;
         }
+        if(!NpcExecutionCoordinator.autonomous(npc) || npc.isFacingOverrideActive() || npc.isNativeActivityMovementLocked()) return;
 
         npc.getNavigation().stop();
         double dx = npc.getX() - KROBUS_FIXED_X;

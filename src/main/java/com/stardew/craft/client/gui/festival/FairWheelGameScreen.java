@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui.festival;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.math.Axis;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
@@ -89,14 +93,14 @@ public class FairWheelGameScreen extends Screen implements com.stardew.craft.cli
     @Override
     protected void init() {
         lastUpdateMs = System.currentTimeMillis();
-        guiScale = (float) Minecraft.getInstance().getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         s4 = 4.0F / guiScale;
         computeLayout();
         wagerInput = new EditBox(com.stardew.craft.client.font.StardewFonts.small(),
             numberBox.x() + ui(16),
-            numberBox.y() + (numberBox.height() - font.lineHeight) / 2,
+            numberBox.y() + (numberBox.height() - StardewFonts.lineHeight(font)) / 2,
             Math.max(12, numberBox.width() - ui(32)),
-            font.lineHeight,
+            StardewFonts.lineHeight(font),
             Component.translatable("stardewcraft.fair.wheel.wager"));
         wagerInput.setBordered(false);
         wagerInput.setTextShadow(false);
@@ -327,7 +331,7 @@ public class FairWheelGameScreen extends Screen implements com.stardew.craft.cli
         int lineY = y;
         for (net.minecraft.util.FormattedCharSequence line : lines) {
             graphics.drawString(font, line, x, lineY, color, false);
-            lineY += font.lineHeight + ui(12);
+            lineY += StardewFonts.lineHeight(font) + ui(12);
         }
     }
 
@@ -335,7 +339,7 @@ public class FairWheelGameScreen extends Screen implements com.stardew.craft.cli
         CommonGuiTextures.drawTextureBoxNoShadow(graphics, rect.x(), rect.y(), rect.width(), rect.height(), s4);
         int color = rect.contains(mouseX, mouseY) ? 0xFF8B4F1B : 0xFF3F2A13;
         graphics.drawString(font, text, rect.x() + rect.width() / 2 - font.width(text) / 2,
-            rect.y() + (rect.height() - font.lineHeight) / 2, color, false);
+            rect.y() + (rect.height() - StardewFonts.lineHeight(font)) / 2, color, false);
     }
 
     @Override

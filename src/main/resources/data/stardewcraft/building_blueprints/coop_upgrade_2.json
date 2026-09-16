@@ -1,0 +1,19 @@
+{
+  "builder": "stardewcraft:robin",
+  "order": 11,
+  "display_name": "building.stardewcraft.coop_2",
+  "description": "building.stardewcraft.upgrade_offer",
+  "money": 10000,
+  "materials": [
+    {
+      "item": "stardewcraft:wood_normal",
+      "count": 400
+    },
+    {
+      "item": "stardewcraft:stone",
+      "count": 150
+    }
+  ],
+  "result_item": "stardewcraft:coop_upgrade_2_permit",
+  "upgrade": true
+}

@@ -237,7 +237,9 @@ public final class FishPondDataService {
         return List.copyOf(result);
     }
 
-    public Optional<NeededItemData> resolveNeededItem(FishPondRecord pond) {
+    public Optional<NeededItemData> resolveNeededItem(FishPondRecord pond) { return resolveNeededItem(pond, 0, 0); }
+
+    public Optional<NeededItemData> resolveNeededItem(FishPondRecord pond, long worldSeed, int day) {
         if (pond.currentPopulation() < pond.maxPopulation()) {
             return Optional.empty();
         }
@@ -255,7 +257,7 @@ public final class FishPondDataService {
             return Optional.empty();
         }
 
-        RandomSource random = RandomSource.create(mixNeedSeed(pond));
+        RandomSource random = RandomSource.create(mixNeedSeed(pond) ^ worldSeed ^ (long)day * 1000003);
         String[] split = gates.get(random.nextInt(gates.size())).trim().split("\\s+");
         if (split.length == 0 || split[0].isBlank()) {
             return Optional.empty();
@@ -292,19 +294,13 @@ public final class FishPondDataService {
                 contextTags.add("fish_legendary");
             }
         });
+        if (contextTags.contains("fish_pond_ignore")) return Optional.empty();
+        PondData selected=null;
         for (PondData entry : entries) {
-            if (!entry.requiredTags().isEmpty() && contextTags.containsAll(entry.requiredTags())) {
-                return Optional.of(entry);
-            }
+            if(selected!=null && selected.precedence()<=entry.precedence())continue;
+            if(entry.requiredTags().stream().allMatch(tag->tag.startsWith("!")?!contextTags.contains(tag.substring(1)):contextTags.contains(tag)))selected=entry;
         }
-        if (LEGENDARY_ITEM_QIDS.containsKey(itemId.getPath())) {
-            for (PondData entry : entries) {
-                if (entry.requiredTags().contains("fish_legendary")) {
-                    return Optional.of(entry);
-                }
-            }
-        }
-        return Optional.empty();
+        return Optional.ofNullable(selected);
     }
 
     private int resolveCurrentMaxPopulation(PondData data, int lastUnlockedPopulationGate) {
@@ -432,6 +428,7 @@ public final class FishPondDataService {
                     loaded.add(new PondData(
                         getString(object, "Id"),
                         requiredTags,
+                        getInt(object,"Precedence",0),
                         getInt(object, "MaxPopulation", -1),
                         getInt(object, "SpawnTime", -1),
                         getDouble(object, "BaseMinProduceChance", 0.0D),
@@ -533,7 +530,7 @@ public final class FishPondDataService {
                 gate.getValue().getAsJsonArray().forEach(choice -> choices.add(choice.getAsString()));
                 gates.put(Integer.parseInt(gate.getKey()), choices);
             }
-            loaded.add(new PondData(getString(object, "Id"), requiredTags,
+            loaded.add(new PondData(getString(object, "Id"), requiredTags, getInt(object,"Precedence",0),
                     getInt(object, "MaxPopulation", -1), getInt(object, "SpawnTime", -1),
                     getDouble(object, "BaseMinProduceChance", 0.0D),
                     getDouble(object, "BaseMaxProduceChance", 0.0D), waterColors, producedItems, gates));
@@ -558,7 +555,7 @@ public final class FishPondDataService {
             }
             gates.put(gate, List.copyOf(expanded));
         });
-        return new PondData(id.toString(), Set.of("item_id:" + definition.fish()),
+        return new PondData(id.toString(), Set.of("item_id:" + definition.fish()), Integer.MIN_VALUE,
                 definition.maxPopulation(), definition.spawnTime(),
                 definition.baseMinProduceChance(), definition.baseMaxProduceChance(),
                 List.of(), produced, Map.copyOf(gates));
@@ -630,6 +627,7 @@ public final class FishPondDataService {
 
     public record PondData(String id,
                            Set<String> requiredTags,
+                           int precedence,
                            int maxPopulation,
                            int spawnTime,
                            double baseMinProduceChance,

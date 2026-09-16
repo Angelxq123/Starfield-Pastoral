@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stardewcraft:sun_wall_ornament",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "stardewcraft:sun_wall_ornament",
+              "properties": {
+                "part": "main"
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

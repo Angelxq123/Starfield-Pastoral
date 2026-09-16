@@ -1,7 +1,7 @@
 package com.stardew.craft.blockentity;
 
 import com.stardew.craft.block.utility.FlooringBlock;
-import com.stardew.craft.block.utility.WallpaperBlock;
+import com.stardew.craft.block.utility.LegacyWallpaperBlock;
 import com.stardew.craft.deco.DecorationStyleRegistry;
 import com.stardew.craft.deco.DecorationType;
 import net.minecraft.core.BlockPos;
@@ -91,6 +91,9 @@ public class DecorBlockEntity extends net.minecraft.world.level.block.entity.Blo
     @Override
     public void onLoad() {
         super.onLoad();
+        if (getBlockState().is(com.stardew.craft.block.ModBlocks.WALLPAPER_BLOCK.get())) {
+            return;
+        }
         syncVisualState();
     }
 
@@ -117,14 +120,16 @@ public class DecorBlockEntity extends net.minecraft.world.level.block.entity.Blo
         DecorationType type = resolveType(current);
         int visual = DecorationStyleRegistry.getVisualIndex(type, styleId);
         BlockState updated = current;
-        if (type == DecorationType.WALLPAPER && current.hasProperty(WallpaperBlock.STYLE)) {
-            if (current.getValue(WallpaperBlock.STYLE) != visual) {
-                updated = current.setValue(WallpaperBlock.STYLE, visual);
+        if (type == DecorationType.WALLPAPER && current.hasProperty(LegacyWallpaperBlock.STYLE)) {
+            if (current.getValue(LegacyWallpaperBlock.STYLE) != visual) {
+                updated = current.setValue(LegacyWallpaperBlock.STYLE, visual);
             }
-            if (updated.hasProperty(WallpaperBlock.SEGMENT)) {
-                int segment = segmentOverride >= 0 ? segmentOverride : resolveWallpaperSegment();
-                if (updated.getValue(WallpaperBlock.SEGMENT) != segment) {
-                    updated = updated.setValue(WallpaperBlock.SEGMENT, segment);
+            if (updated.hasProperty(LegacyWallpaperBlock.SEGMENT)) {
+                int segment = segmentOverride >= 0
+                    ? segmentOverride
+                    : current.getValue(LegacyWallpaperBlock.SEGMENT);
+                if (updated.getValue(LegacyWallpaperBlock.SEGMENT) != segment) {
+                    updated = updated.setValue(LegacyWallpaperBlock.SEGMENT, segment);
                 }
             }
         } else if (type == DecorationType.FLOORING && current.hasProperty(FlooringBlock.STYLE)) {
@@ -148,8 +153,8 @@ public class DecorBlockEntity extends net.minecraft.world.level.block.entity.Blo
     private String resolveStyleIdFromBlockState(BlockState state) {
         DecorationType type = resolveType(state);
         int visual = 0;
-        if (type == DecorationType.WALLPAPER && state.hasProperty(WallpaperBlock.STYLE)) {
-            visual = state.getValue(WallpaperBlock.STYLE);
+        if (type == DecorationType.WALLPAPER && state.hasProperty(LegacyWallpaperBlock.STYLE)) {
+            visual = state.getValue(LegacyWallpaperBlock.STYLE);
         } else if (type == DecorationType.FLOORING && state.hasProperty(FlooringBlock.STYLE)) {
             visual = state.getValue(FlooringBlock.STYLE);
         }
@@ -162,20 +167,4 @@ public class DecorBlockEntity extends net.minecraft.world.level.block.entity.Blo
         return DecorationStyleRegistry.getDefaultStyleId(type);
     }
 
-    private int resolveWallpaperSegment() {
-        if (level == null) {
-            return 0;
-        }
-        int bottomY = getBlockPos().getY();
-        BlockPos.MutableBlockPos cursor = getBlockPos().mutable();
-        while (true) {
-            cursor.set(getBlockPos().getX(), bottomY - 1, getBlockPos().getZ());
-            if (!level.getBlockState(cursor).is(com.stardew.craft.block.ModBlocks.WALLPAPER_BLOCK.get())) {
-                break;
-            }
-            bottomY--;
-        }
-        int offset = getBlockPos().getY() - bottomY;
-        return Math.floorMod(offset, 3);
-    }
 }

@@ -3,7 +3,7 @@ package com.stardew.craft.block.utility;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.blockentity.FishPondBucketBlockEntity;
-import com.stardew.craft.fishpond.service.FishPondInteractionService;
+import com.stardew.craft.fishpond.service.FishPondHusbandry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,10 +24,28 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 @SuppressWarnings("null")
 public class FishPondBucketBlock extends Block implements EntityBlock {
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty GOLDEN =
+            net.minecraft.world.level.block.state.properties.BooleanProperty.create("golden");
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty READY =
+            net.minecraft.world.level.block.state.properties.BooleanProperty.create("ready");
     private static final VoxelShape SHAPE = ModelVoxelShapeCache.shape("stardewcraft:block/fish_pond_bucket");
 
     public FishPondBucketBlock(Properties properties) {
         super(properties);
+        registerDefaultState(stateDefinition.any().setValue(GOLDEN, false).setValue(READY, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(GOLDEN, READY);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state,
+                            net.minecraft.world.entity.LivingEntity placer, ItemStack stack) {
+        // Placement always starts as an ordinary empty bucket, even for an old variant stack.
+        BlockState initial = state.setValue(GOLDEN, false).setValue(READY, false);
+        if (state != initial) level.setBlock(pos, initial, 3);
     }
 
     @Override
@@ -67,7 +85,7 @@ public class FishPondBucketBlock extends Block implements EntityBlock {
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer && level instanceof ServerLevel serverLevel) {
-            FishPondInteractionService.collectOutputAtBucket(serverLevel, pos, serverPlayer);
+            FishPondHusbandry.collectOutputAtBucket(serverLevel, pos, serverPlayer);
         }
         return InteractionResult.CONSUME;
     }

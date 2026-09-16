@@ -58,6 +58,10 @@ public final class SecretNoteStoryTriggerService {
         PlayerDataManager.get().savePlayerData(player.getUUID(), data);
         PlayerDataEventHandler.syncPlayerData(player, data);
 
+        var layout=com.stardew.craft.mining.OrdinaryMineLayout.load(player.serverLevel(),internalFloor);
+        if(player.serverLevel().getBlockEntity(layout.position(internalFloor,9,9)) instanceof com.stardew.craft.blockentity.MineChestBlockEntity chest)
+            chest.consumeStoryReward(player);
+
         ItemStack reward = new ItemStack(ModItems.IRIDIUM_MILK.get());
         ItemStack animationStack = reward.copy();
         if (!player.getInventory().add(reward)) {

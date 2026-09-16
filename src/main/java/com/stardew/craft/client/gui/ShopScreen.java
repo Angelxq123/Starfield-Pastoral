@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.stardew.craft.StardewCraft;
@@ -232,8 +234,7 @@ public class ShopScreen extends Screen {
     protected void init() {
         super.init();
         openedAtMs = System.currentTimeMillis();
-        Minecraft mc = Minecraft.getInstance();
-        guiScale = (float) mc.getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         float s4 = s4();
 
         panelWGui = ui(WIN_W);
@@ -349,7 +350,7 @@ public class ShopScreen extends Screen {
                 ? "stardewcraft.lewis.lost_and_found.empty"
                 : "stardewcraft.shop.nothing_for_sale");
             GuiText.drawCenteredClamped(g, font, msg,
-                panelX + panelWGui / 2, panelY + mainHGui / 2 - font.lineHeight / 2,
+                panelX + panelWGui / 2, panelY + mainHGui / 2 - StardewFonts.lineHeight(font) / 2,
                 Math.max(1, panelWGui - ui(80)), 0x404040, false);
         }
 
@@ -485,22 +486,14 @@ public class ShopScreen extends Screen {
             com.stardew.craft.client.ClientDisplayFallbacks.stablePath(
                 npcId, "lewis");
         ResourceLocation genericFallback = ResourceLocation.fromNamespaceAndPath(
-            StardewCraft.MODID, "textures/entity/npc/lewis.png");
-        ResourceLocation entityFallback = ResourceLocation.fromNamespaceAndPath(
-            StardewCraft.MODID,
-            "textures/entity/npc/" + legacyPath + ".png");
-        ResourceLocation availableEntityFallback =
-            com.stardew.craft.client.ClientDisplayFallbacks.availableResource(
-                entityFallback,
-                genericFallback,
-                this::hasClientResource);
+            StardewCraft.MODID, "textures/portraits/lewis.png");
         ResourceLocation legacyPortrait = ResourceLocation.fromNamespaceAndPath(
             StardewCraft.MODID,
             "textures/portraits/" + legacyPath + ".png");
         ResourceLocation availableLegacyPortrait =
             com.stardew.craft.client.ClientDisplayFallbacks.availableResource(
                 legacyPortrait,
-                availableEntityFallback,
+                genericFallback,
                 this::hasClientResource);
         ResourceLocation portrait =
             com.stardew.craft.client.ClientDisplayFallbacks.availableResource(

@@ -135,7 +135,11 @@ public class DehydratorBlockEntity extends TimedProductionBlockEntity {
 
 	@SuppressWarnings("null")
 	private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack stack) {
-		ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+	    return createOutputFromRecipe(recipe, stack, false);
+	}
+
+	private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack stack, boolean simulate) {
+		ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
 		PreserveType preserveType = recipe.preserveType();
 		if (preserveType != null) {
 			PreservesItem.createFlavored(preserveType, stack, output);
@@ -180,7 +184,7 @@ public class DehydratorBlockEntity extends TimedProductionBlockEntity {
 		if (stack.getCount() < recipe.consumeCount()) {
 			return stack;
 		}
-		ItemStack output = createOutputFromRecipe(recipe, stack);
+		ItemStack output = createOutputFromRecipe(recipe, stack, simulate);
 		if (output.isEmpty()) {
 			return stack;
 		}

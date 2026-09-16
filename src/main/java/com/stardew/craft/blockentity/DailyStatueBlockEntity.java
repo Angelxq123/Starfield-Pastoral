@@ -34,9 +34,9 @@ public final class DailyStatueBlockEntity extends BlockEntity
     private static final String BIRTHDAYS =
             "data/stardewcraft/npc/events/npc_birthdays.json";
     private static final String GIFT_TASTES =
-            "data/stardewcraft/npc/vanilla/data/NPCGiftTastes.json";
+            "data/stardewcraft/npc/vanilla/data/npc_gift_tastes.json";
     private static final String OBJECTS =
-            "data/stardewcraft/npc/vanilla/data/Objects.json";
+            "data/stardewcraft/npc/vanilla/data/objects.json";
     private static final Map<String, Integer> SEASONS = Map.of(
             "spring", 0, "summer", 1, "fall", 2, "winter", 3);
 

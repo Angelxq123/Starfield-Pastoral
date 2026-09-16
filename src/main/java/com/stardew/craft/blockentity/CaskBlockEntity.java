@@ -1,5 +1,6 @@
 package com.stardew.craft.blockentity;
 
+import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.api.v1.internal.machine.StardewArtisanResolverRegistry;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.artisan.FlavoredArtisanDrinkItem;
@@ -21,7 +22,6 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 
 /**
  * Cask block entity.
@@ -46,15 +46,6 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
     private float agingRate = 1f;
     private int lastCheckDay = -1;
     private final UtilityItemHandler automationItemHandler = new UtilityItemHandler(this);
-
-    private static final Map<Item, Float> AGING_RATES = Map.ofEntries(
-        Map.entry(ModItems.CHEESE.get(), 4f),
-        Map.entry(ModItems.GOAT_CHEESE.get(), 4f),
-        Map.entry(ModItems.MEAD.get(), 2f),
-        Map.entry(ModItems.BEER.get(), 2f),
-        Map.entry(ModItems.PALE_ALE.get(), 1.66f),
-        Map.entry(ModItems.WINE.get(), 1f)
-    );
 
     public record RemainingTime(int days, int hours, int minutes) {}
 
@@ -146,7 +137,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
             return 0f;
         }
         float nextThreshold = getDaysForQuality(nextQuality);
-        return Math.max(0f, daysToMature - nextThreshold);
+        return Math.max(0f, (daysToMature - nextThreshold) / agingRate);
     }
 
     @SuppressWarnings("null")
@@ -159,7 +150,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
         }
 
         Float rate = resolveAgingRate(
-                stack, AGING_RATES.get(stack.getItem()));
+                stack, MachineProductionData.agingRate(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())));
         if (rate == null) {
             return false;
         }
@@ -176,7 +167,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
 
         product = output;
         ready = quality >= QualityHelper.SILVER;
-        agingRate = rate;
+        agingRate = (float) (rate / MachineProductionData.profile("cask").multiplier());
         daysToMature = getDaysForQuality(quality);
         lastCheckDay = getCurrentDayIndex();
 
@@ -218,7 +209,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
             return stack;
         }
         Float rate = resolveAgingRate(
-                stack, AGING_RATES.get(stack.getItem()));
+                stack, MachineProductionData.agingRate(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())));
         if (rate == null) {
             return stack;
         }
@@ -235,7 +226,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
         QualityHelper.ensureQualityModelData(output);
         product = output;
         ready = quality >= QualityHelper.SILVER;
-        agingRate = rate;
+        agingRate = (float) (rate / MachineProductionData.profile("cask").multiplier());
         daysToMature = getDaysForQuality(quality);
         lastCheckDay = getCurrentDayIndex();
         setChanged();
@@ -246,7 +237,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
     @Nullable
     static Float resolveAgingRate(ItemStack stack) {
         return resolveAgingRate(
-                stack, AGING_RATES.get(stack.getItem()));
+                stack, MachineProductionData.agingRate(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())));
     }
 
     @Nullable
@@ -256,7 +247,7 @@ public class CaskBlockEntity extends BlockEntity implements UtilityAutomationAcc
     ) {
         if (stack.getItem() instanceof FlavoredArtisanDrinkItem drink
                 && drink.getFlavorType() == PreserveType.WINE) {
-            return 1f;
+            return MachineProductionData.agingRate(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(ModItems.WINE.get()));
         }
         return legacyConfiguredRate != null
                 ? legacyConfiguredRate

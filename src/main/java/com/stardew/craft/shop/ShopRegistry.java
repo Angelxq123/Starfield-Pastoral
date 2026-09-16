@@ -82,7 +82,7 @@ public final class ShopRegistry {
 
     private static final String TRAVELING_CART_RARECROW_ID = "stardewcraft:scarecrow_4";
     private static final String TRAVELING_CART_VANILLA_OBJECTS_RESOURCE =
-            "data/stardewcraft/npc/vanilla/data/Objects.json";
+            "data/stardewcraft/npc/vanilla/data/objects.json";
     private static final Map<String, String> TRAVELING_CART_OBJECT_PATH_OVERRIDES = Map.ofEntries(
             Map.entry("bomb", "bomb_item"),
             Map.entry("grape_starter", "grape_seeds"),
@@ -137,9 +137,10 @@ public final class ShopRegistry {
         "stardewcraft:river_jelly",
         "stardewcraft:sea_jelly"
     );
-    private static final List<String> BOOKSELLER_TRADE_BIG_CHESTS = List.of(
-        "stardewcraft:wooden_chest",
-        "stardewcraft:stone_chest"
+    // SDV Book_Void trades BC 158/156 (slime machines), never a storage chest.
+    private static final List<String> BOOKSELLER_TRADE_SLIME_MACHINES = List.of(
+        "stardewcraft:slime_egg_press",
+        "stardewcraft:slime_incubator"
     );
     private static final List<String> BOOKSELLER_TRADE_ARTIFACT_ITEMS = List.of(
         "stardewcraft:treasure_chest",
@@ -753,7 +754,7 @@ public final class ShopRegistry {
             "stardewcraft:stuffing", 3,
             "stardewcraft:book_defense", 1);
         addBooksellerTradeEntry(result, playerId,
-            pickBooksellerItem(player, absoluteDay, "void_big_chest", BOOKSELLER_TRADE_BIG_CHESTS), 1,
+            pickBooksellerItem(player, absoluteDay, "void_slime_machine", BOOKSELLER_TRADE_SLIME_MACHINES), 1,
             "stardewcraft:book_void", 2);
         addBooksellerTradeEntry(result, playerId,
             "stardewcraft:mystery_box", 7,

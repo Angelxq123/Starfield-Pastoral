@@ -36,8 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TreeGrowthManager extends SavedData {
 	private static final String DATA_NAME = "stardew_tree_manager";
 
-	private static final int LEGACY_TOTAL_DAYS = 28;
-	private static final int LEGACY_STAGE1_DAY = 14;
 	private static final int SAPLING1_GROWTH_STAGE = 3;
 	private static final int MATURE_GROWTH_STAGE = 5;
 	private static final int SEASON_WINTER = 3;
@@ -262,12 +260,6 @@ public class TreeGrowthManager extends SavedData {
 		return fertilizedSaplings.contains(toGlobalPos(level, pos));
 	}
 
-	public int getDaysGrown(@Nonnull ServerLevel level, @Nonnull BlockPos pos) {
-		GlobalPos globalPos = toGlobalPos(level, pos);
-		int growthStage = growthStages.getOrDefault(globalPos, initialGrowthStage(level, pos));
-		return estimatedLegacyDays(growthStage);
-	}
-
 	public int getGrowthStage(@Nonnull ServerLevel level, @Nonnull BlockPos pos) {
 		GlobalPos globalPos = toGlobalPos(level, pos);
 		int growthStage = growthStages.getOrDefault(globalPos, initialGrowthStage(level, pos));
@@ -354,7 +346,7 @@ public class TreeGrowthManager extends SavedData {
 	}
 
 	private void tryMature(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull WildTrees.Def def) {
-		// 新生长只产「预制树」。绝不再生成旧的算法树——旧树仅为兼容旧存档而保留。
+		// 成熟时放置一个能容纳的预制树变体。
 		// 放不下（空间不足）时不强行生成，树苗保留、下次再试。
 		if (com.stardew.craft.tree.prefab.PrefabTreeManager.tryPlaceRandomVariant(level, pos, def)) {
 			removeSapling(level, pos);
@@ -376,17 +368,13 @@ public class TreeGrowthManager extends SavedData {
 					continue;
 				}
 				BlockPos checkPos = saplingPos.offset(xOffset, 0, zOffset);
-				WildTrees.Def nearbyDef = WildTrees.findByTrunk0(level.getBlockState(checkPos));
-					if (nearbyDef != null && level.getBlockState(checkPos.above()).getBlock() == nearbyDef.trunk1().get()) {
-						return true;
-					}
-					nearbyDef = WildTrees.findByModernRoot(level.getBlockState(checkPos));
-					if (nearbyDef != null && WildTrees.isModernCompleteTree(level, checkPos, nearbyDef)) {
-						return true;
-					}
+				WildTrees.Def nearbyDef = WildTrees.findByModernRoot(level.getBlockState(checkPos));
+				if (nearbyDef != null && WildTrees.isModernCompleteTree(level, checkPos, nearbyDef)) {
+					return true;
 				}
 			}
-			return false;
+		}
+		return false;
 	}
 
 	private static void updateVisualStage(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull WildTreeSaplingBlock saplingBlock, @Nonnull WildTrees.Def def, int growthStage) {
@@ -399,7 +387,7 @@ public class TreeGrowthManager extends SavedData {
 	}
 
 	private static boolean canMature(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull WildTrees.Def def) {
-		// 成熟门槛 = 是否至少有一个预制树变体放得下（不再用旧算法生成器判定）。
+		// 成熟门槛：至少有一个预制树变体放得下。
 		return com.stardew.craft.tree.prefab.PrefabTreeManager.canPlaceAnyVariant(level, pos, def);
 	}
 
@@ -416,22 +404,6 @@ public class TreeGrowthManager extends SavedData {
 			return SAPLING1_GROWTH_STAGE;
 		}
 		return 0;
-	}
-
-	private static int estimatedLegacyDays(int growthStage) {
-		int clampedStage = Math.max(0, Math.min(growthStage, MATURE_GROWTH_STAGE));
-		return Math.round((clampedStage / (float) MATURE_GROWTH_STAGE) * LEGACY_TOTAL_DAYS);
-	}
-
-	private static int legacyDaysToGrowthStage(int days) {
-		if (days >= LEGACY_TOTAL_DAYS) {
-			return MATURE_GROWTH_STAGE;
-		}
-		if (days >= LEGACY_STAGE1_DAY) {
-			int stage1Progress = Math.min(days - LEGACY_STAGE1_DAY, LEGACY_TOTAL_DAYS - LEGACY_STAGE1_DAY);
-			return SAPLING1_GROWTH_STAGE + stage1Progress / 7;
-		}
-		return Math.min(SAPLING1_GROWTH_STAGE - 1, days / 5);
 	}
 
 	private static int currentSeason() {
@@ -461,7 +433,6 @@ public class TreeGrowthManager extends SavedData {
 			entryTag.putString("Dimension", dimensionId);
 			entryTag.put("Pos", posTag);
 			entryTag.putInt("Stage", growthStage);
-			entryTag.putInt("Days", estimatedLegacyDays(growthStage));
 			entryTag.putBoolean("Fertilized", fertilizedSaplings.contains(globalPos));
 			list.add(entryTag);
 		}
@@ -489,9 +460,7 @@ public class TreeGrowthManager extends SavedData {
 					Objects.requireNonNull(dimension, "dimension"),
 					Objects.requireNonNull(pos, "pos")
 				);
-				int growthStage = entryTag.contains("Stage", Tag.TAG_INT)
-					? entryTag.getInt("Stage")
-					: legacyDaysToGrowthStage(entryTag.getInt("Days"));
+				int growthStage = entryTag.getInt("Stage");
 				manager.saplingPositions.add(globalPos);
 				manager.growthStages.put(globalPos, Math.max(0, Math.min(growthStage, MATURE_GROWTH_STAGE)));
 				if (entryTag.getBoolean("Fertilized")) {

@@ -31,7 +31,7 @@ public final class SecretNoteBuriedTreasureService {
         if (treasure == null) return false;
         return treasure.vanillaNumber() == 18
                 ? state.is(Blocks.SAND)
-                : state.is(ModBlocks.YELLOW_DIRT.get());
+                : (state.is(ModBlocks.YELLOW_DIRT.get()) || state.is(ModBlocks.DIRT.get()));
     }
 
     public static boolean canDig(ServerPlayer player, BlockPos pos, BlockState state) {

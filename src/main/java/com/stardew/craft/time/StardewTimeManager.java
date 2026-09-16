@@ -81,6 +81,7 @@ public class StardewTimeManager extends SavedData {
     public static final int MINUTES_PER_DAY = 1440;
     
     // 时间状态
+    private long clockRevision; // Transient: explicit time edits invalidate in-flight schedule cursors.
     private int currentTime = MORNING_START;  // 当前时间（分钟），从MC dayTime同步
     private int currentDay = 1;                // 当前日期
     private int currentSeason = 0;             // 当前季节 (0=春, 1=夏, 2=秋, 3=冬)
@@ -237,6 +238,7 @@ public class StardewTimeManager extends SavedData {
     public void setCurrentTimeFromMC(int stardewMinutes) {
         // 只有时间变化时才更新
         if (stardewMinutes != currentTime) {
+            if (stardewMinutes < currentTime || stardewMinutes - currentTime > 10) clockRevision++;
             currentTime = stardewMinutes;
             
             // 检查关键时间点
@@ -265,6 +267,7 @@ public class StardewTimeManager extends SavedData {
                     .performTenMinuteUpdate(server);
                 com.stardew.craft.festival.FestivalService.onTimeChanged(server);
                 com.stardew.craft.auction.AuctionService.onTimeChanged(server);
+                com.stardew.craft.mining.OrdinaryMineEncounters.performTenMinuteUpdate(server);
             }
         }
 
@@ -614,6 +617,8 @@ public class StardewTimeManager extends SavedData {
     }
     
     // Getters
+    public long getClockRevision() { return clockRevision; }
+
     public int getCurrentTime() {
         return DailySettlementDateView.current()
                 .map(ignored -> MORNING_START)
@@ -653,7 +658,8 @@ public class StardewTimeManager extends SavedData {
     
     // Setters (用于调试或特殊情况)
     public void setCurrentTime(int time) { 
-        this.currentTime = time; 
+        this.currentTime = time;
+        clockRevision++;
         setDirty(); 
     }
     

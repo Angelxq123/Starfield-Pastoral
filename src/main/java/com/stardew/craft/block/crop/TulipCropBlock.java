@@ -2,13 +2,9 @@ package com.stardew.craft.block.crop;
 
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
-import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -18,19 +14,11 @@ import java.util.function.Supplier;
 /**
  * 郁金香作物
  */
-public class TulipCropBlock extends StardewCropBlock {
+public class TulipCropBlock extends BlueJazzCropBlock {
 
     private static final int[] PHASE_DAYS = new int[]{1, 1, 2, 2};
     private static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 4);
     private static final int COLOR_COUNT = 5;
-
-    @SuppressWarnings("null")
-    public TulipCropBlock() {
-        super(Properties.of()
-                .mapColor(MapColor.PLANT)
-                .pushReaction(PushReaction.DESTROY)
-                .sound(SoundType.CROP));
-    }
 
         private static final int[] OUTLINE_HEIGHTS = new int[]{4, 6, 11, 16};
         private static final int[] OUTLINE_WIDTHS = new int[]{1, 6, 10, 10};
@@ -49,8 +37,7 @@ public class TulipCropBlock extends StardewCropBlock {
         if (level.isClientSide()) {
             return true;
         }
-        StardewTimeManager timeManager = StardewTimeManager.get();
-        return timeManager.getCurrentSeason() == 0;
+        return seasonForGrowth() == 0;
     }
 
     @Override
@@ -117,6 +104,7 @@ public class TulipCropBlock extends StardewCropBlock {
     @Override
     protected void addExtraProperties(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
         builder.add(COLOR);
+        builder.add(HALF);
         builder.add(PLACED_BY_PLAYER);
     }
 

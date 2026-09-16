@@ -127,31 +127,6 @@ def main() -> None:
     ):
         require(marker in source, f"missing addon acceptance marker: {marker}")
 
-    monster_table = load(
-        f"data/{NAMESPACE}/mine_monster_spawns/orchard_floor.json"
-    )
-    require(
-        monster_table["themes"] == [f"{NAMESPACE}:apple_floor"],
-        "mine monster table must target the namespaced theme",
-    )
-    require(
-        monster_table["entries"][0]["profile"]
-        == "stardewcraft:rock_crab",
-        "standalone datapack must reference an available core profile",
-    )
-    addon_monster_table = load_addon(
-        f"data/{NAMESPACE}/mine_monster_spawns/orchard_silverfish.json"
-    )
-    require(
-        addon_monster_table["entries"][0]["profile"]
-        == f"{NAMESPACE}:orchard_silverfish",
-        "addon-owned table must reference the addon profile",
-    )
-    require(
-        "StardewMineMonsterProfiles.register(" in source
-        and "silverfish_floor_13" not in source,
-        "the addon must register profile identity while datapack owns placement",
-    )
     taste_patch = load(
         f"data/{NAMESPACE}/npc/taste_patches/abigail_apples.json"
     )

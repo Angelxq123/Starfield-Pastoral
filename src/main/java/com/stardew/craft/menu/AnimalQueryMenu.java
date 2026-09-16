@@ -324,6 +324,16 @@ public class AnimalQueryMenu extends AbstractContainerMenu {
                 value -> this.autoFeederAvailable = value > 0 ? 1 : 0));
     }
 
+    private boolean displayMetadataSent;
+    @Override public void broadcastChanges(){
+        super.broadcastChanges();
+        if(!displayMetadataSent && player instanceof ServerPlayer serverPlayer){
+            displayMetadataSent=true;var tag=new net.minecraft.nbt.CompoundTag();tag.putString("Kind","query");tag.putInt("Container",containerId);
+            if(animalTypeId!=null)com.stardew.craft.animal.runtime.LivestockUiData.describe(tag,animalTypeId);
+            PacketDistributor.sendToPlayer(serverPlayer,new com.stardew.craft.animal.runtime.LivestockShopPayload(tag));
+        }
+    }
+
     private static DataSlot sync(
             java.util.function.IntSupplier getter,
             java.util.function.IntConsumer setter

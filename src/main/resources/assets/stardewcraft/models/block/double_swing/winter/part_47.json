@@ -1,0 +1,67 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/double_swing/winter/swing_winter",
+    "particle": "stardewcraft:block/double_swing/winter/swing_cable_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -0.5,
+        -13,
+        -8.5
+      ],
+      "to": [
+        0.5,
+        19,
+        -7.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            9.3125,
+            3.09375,
+            9.34375,
+            4.09375
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            9.4375,
+            3.09375,
+            9.46875,
+            4.09375
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            9.375,
+            3.09375,
+            9.40625,
+            4.09375
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            9.5,
+            3.09375,
+            9.53125,
+            4.09375
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            9.625,
+            3.09375,
+            9.65625,
+            3.125
+          ]
+        }
+      }
+    }
+  ]
+}

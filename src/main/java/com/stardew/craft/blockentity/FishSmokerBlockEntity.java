@@ -184,7 +184,7 @@ public class FishSmokerBlockEntity extends TimedProductionBlockEntity {
             return stack;
         }
         ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
-        ItemStack output = createOutputFromRecipe(recipe, stack);
+        ItemStack output = createOutputFromRecipe(recipe, stack, simulate);
         if (output.isEmpty()) {
             return stack;
         }
@@ -257,11 +257,15 @@ public class FishSmokerBlockEntity extends TimedProductionBlockEntity {
     }
 
     private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack input) {
+        return createOutputFromRecipe(recipe, input, false);
+    }
+
+    private ItemStack createOutputFromRecipe(ArtisanRecipeDataManager.Recipe recipe, ItemStack input, boolean simulate) {
         ItemStack output = ItemStack.EMPTY;
         if (recipe.outputMode() == ArtisanRecipeDataManager.OutputMode.SMOKED) {
             output = createSmokedOutput(input);
         } else if (recipe.outputMode() == ArtisanRecipeDataManager.OutputMode.FIXED && recipe.outputId() != null) {
-            output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+            output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
         }
         if (output.isEmpty()) {
             return ItemStack.EMPTY;

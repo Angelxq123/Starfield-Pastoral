@@ -1,8 +1,8 @@
 package com.stardew.craft.blockentity;
 
+import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.api.v1.machine.StardewMachineCycleKind;
 import com.stardew.craft.blockentity.registry.LightningRodRegistry;
-import com.stardew.craft.item.ModItems;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -61,14 +61,13 @@ public class LightningRodBlockEntity extends TimedProductionBlockEntity {
     @SuppressWarnings("null")
     public void startChargingFromStrike() {
         if (isBusy()) return;
-        ItemStack proposed = new ItemStack(
-                (net.minecraft.world.level.ItemLike)
-                        ModItems.BATTERY_PACK.get());
+        var cycle = MachineProductionData.cycle("lightning_rod", "default");
+        ItemStack proposed = cycle.createOutput(level.random);
         var plan = prepareMachineCycle(
                 StardewMachineCycleKind.ENVIRONMENTAL,
                 ItemStack.EMPTY,
                 proposed,
-                EFFECTIVE_MINUTES_PER_DAY,
+                cycle.rawMinutes(getCurrentAbsMinute()),
                 null,
                 true);
         plan.ifPresent(value -> restartMachineCycle(

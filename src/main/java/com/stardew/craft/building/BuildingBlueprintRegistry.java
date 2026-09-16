@@ -95,6 +95,7 @@ public final class BuildingBlueprintRegistry {
         StardewConditionContext context =
                 StardewConditionContext.forPlayer(player);
         return forBuilder(builder).stream()
+                .filter(blueprint -> !(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(blueprint.definition().resultItem()) instanceof com.stardew.craft.building.runtime.BuildingUpgradePermitItem permit) || permit.availableFor(player))
                 .filter(blueprint -> blueprint.definition()
                         .availableWhen().stream().allMatch(condition ->
                                 StardewConditions.test(condition, context)

@@ -1,0 +1,1035 @@
+{
+  "cat": {
+    "clips": {
+      "walk": 0.7,
+      "blink": 0.24,
+      "idle": 3.2,
+      "sit_down": 0.4,
+      "sit_idle": 2.8,
+      "sit_blink": 0.2,
+      "sit_rest": 2.8,
+      "sit_content": 0.2,
+      "lick_enter": 0.9,
+      "lick_loop": 0.45,
+      "lick_exit": 0.36,
+      "stand_up": 0.6,
+      "pounce_prepare": 2,
+      "pounce": 0.8,
+      "land": 0.3,
+      "lie_down": 0.8,
+      "lie_idle": 3.2,
+      "lie_up": 0.65,
+      "sleep_enter": 1.8,
+      "sleep": 2,
+      "sleep_exit": 1.65,
+      "adoption_sit": 0.48,
+      "adoption_lick": 2.64
+    },
+    "states": {
+      "Walk": {
+        "clip": "walk",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": true,
+        "end": [],
+        "timeout": [],
+        "nearby": [],
+        "random": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 3.0
+          },
+          {
+            "state": "BeginSitDown",
+            "outside": false,
+            "weight": 0.5
+          },
+          {
+            "state": "Flop",
+            "outside": false,
+            "weight": 0.425
+          },
+          {
+            "state": "Leap",
+            "outside": false,
+            "weight": 0.075
+          }
+        ]
+      },
+      "BeginSitDown": {
+        "clip": "sit_down",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownBlinkShort": {
+        "clip": "sit_blink",
+        "entry": "",
+        "exit": "",
+        "duration": 0.2,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownBlink": {
+        "clip": "sit_rest",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": 8.0,
+        "maxDuration": 30.0,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownBlinkShortContent": {
+        "clip": "sit_content",
+        "entry": "",
+        "exit": "",
+        "duration": 0.2,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "BARK",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownBlinkContent": {
+        "clip": "sit_rest",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": 8.0,
+        "maxDuration": 30.0,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "BARK",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownLick": {
+        "clip": "lick_enter",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitDownLickRepeat",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownLickRepeat": {
+        "clip": "lick_loop",
+        "entry": "",
+        "exit": "lick_exit",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 1,
+        "maxLoops": 5,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitDown": {
+        "clip": "sit_idle",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [],
+        "nearby": [],
+        "random": [
+          {
+            "state": "StandUpDown",
+            "outside": false,
+            "weight": 2.0
+          },
+          {
+            "state": "SitDownLick",
+            "outside": false,
+            "weight": 2.0
+          },
+          {
+            "state": "SitDownBlinkShort",
+            "outside": false,
+            "weight": 0.72
+          },
+          {
+            "state": "SitDownBlink",
+            "outside": false,
+            "weight": 0.88
+          },
+          {
+            "state": "SitDownBlinkShortContent",
+            "outside": false,
+            "weight": 0.18
+          },
+          {
+            "state": "SitDownBlinkContent",
+            "outside": false,
+            "weight": 0.22
+          }
+        ]
+      },
+      "StandUpDown": {
+        "clip": "stand_up",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "Leap": {
+        "clip": "pounce_prepare",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "LeapJump",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "LeapJump": {
+        "clip": "pounce",
+        "entry": "",
+        "exit": "land",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": true,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "Flop": {
+        "clip": "lie_idle",
+        "entry": "lie_down",
+        "exit": "lie_up",
+        "duration": -0.001,
+        "minDuration": 8.0,
+        "maxDuration": 30.0,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      }
+    }
+  },
+  "dog": {
+    "clips": {
+      "idle": 3.2,
+      "walk": 0.7,
+      "sprint": 0.4,
+      "blink": 0.24,
+      "sit_down": 0.4,
+      "sit_idle": 2.4,
+      "sit_pant": 0.4,
+      "sit_rest": 2.4,
+      "sit_blink": 0.5,
+      "stand_up": 0.6,
+      "sit_side_down": 0.4,
+      "sit_side_idle": 2.4,
+      "sit_side_wait": 2.4,
+      "sit_side_bark": 0.501,
+      "sit_side_wag": 0.4,
+      "sit_side_wag_fast": 0.24,
+      "sit_side_pant": 0.4,
+      "stand_side_up": 0.4,
+      "sleep_enter": 0.8,
+      "sleep": 2,
+      "sleep_exit": 0.8,
+      "adoption_sit": 0.6,
+      "adoption_bark_hold": 0.5,
+      "adoption_wag": 0.8,
+      "summit_sprint": 0.36
+    },
+    "states": {
+      "Walk": {
+        "clip": "walk",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": true,
+        "end": [],
+        "timeout": [],
+        "nearby": [],
+        "random": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 3.0
+          },
+          {
+            "state": "BeginSitSide",
+            "outside": false,
+            "weight": 1.5
+          },
+          {
+            "state": "BeginSitDown",
+            "outside": false,
+            "weight": 0.5
+          },
+          {
+            "state": "Sprint",
+            "outside": true,
+            "weight": 1.0
+          }
+        ]
+      },
+      "Sprint": {
+        "clip": "sprint",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": 1.0,
+        "maxDuration": 3.5,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "BARK",
+        "move": true,
+        "end": [],
+        "timeout": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "BeginSitDown": {
+        "clip": "sit_down",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitDown": {
+        "clip": "sit_idle",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [],
+        "nearby": [],
+        "random": [
+          {
+            "state": "StandUpDown",
+            "outside": false,
+            "weight": 2.0
+          },
+          {
+            "state": "SitDownPant",
+            "outside": false,
+            "weight": 1.0
+          },
+          {
+            "state": "SitDownCloseEyesShort",
+            "outside": false,
+            "weight": 0.3
+          },
+          {
+            "state": "SitDownCloseEyes",
+            "outside": false,
+            "weight": 0.7
+          }
+        ]
+      },
+      "SitDownPant": {
+        "clip": "sit_pant",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 7,
+        "maxLoops": 19,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownCloseEyes": {
+        "clip": "sit_rest",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": 2.0,
+        "maxDuration": 15.0,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "SitDownCloseEyesShort": {
+        "clip": "sit_blink",
+        "entry": "",
+        "exit": "",
+        "duration": 0.5,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [],
+        "random": []
+      },
+      "StandUpDown": {
+        "clip": "stand_up",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "BeginSitSide": {
+        "clip": "sit_side_down",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitSideIdle": {
+        "clip": "sit_side_wait",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": 2.0,
+        "maxDuration": 6.0,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "nearby": [
+          {
+            "state": "SitSideWagFast",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "random": []
+      },
+      "SitSide": {
+        "clip": "sit_side_idle",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [],
+        "nearby": [
+          {
+            "state": "SitSideWagFast",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "random": [
+          {
+            "state": "SitSideIdle",
+            "outside": false,
+            "weight": 1.0
+          },
+          {
+            "state": "StandUpSide",
+            "outside": false,
+            "weight": 1.0
+          },
+          {
+            "state": "SitSideBark",
+            "outside": false,
+            "weight": 1.0
+          },
+          {
+            "state": "SitSideWag",
+            "outside": false,
+            "weight": 1.0
+          },
+          {
+            "state": "SitSidePant",
+            "outside": false,
+            "weight": 1.0
+          },
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ]
+      },
+      "SitSideBark": {
+        "clip": "sit_side_bark",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "BARK",
+        "move": false,
+        "end": [
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitSideWag": {
+        "clip": "sit_side_wag",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 2,
+        "maxLoops": 5,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitSideWagFast": {
+        "clip": "sit_side_wag_fast",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 2,
+        "maxLoops": 5,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitSidePant": {
+        "clip": "sit_side_pant",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 5,
+        "maxLoops": 14,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitSide",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "StandUpSide": {
+        "clip": "stand_side_up",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      }
+    }
+  },
+  "turtle": {
+    "clips": {
+      "idle": 3.2,
+      "blink": 0.22,
+      "walk": 0.7,
+      "retract": 0.4,
+      "withdrawn": 0.1,
+      "emerge": 0.4,
+      "flop": 0.8,
+      "side_bounce": 1,
+      "sleep_enter": 0.6,
+      "sleep": 2,
+      "sleep_exit": 0.6,
+      "summit_walk": 0.36
+    },
+    "states": {
+      "Walk": {
+        "clip": "walk",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": true,
+        "end": [],
+        "timeout": [],
+        "nearby": [],
+        "random": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 3.425
+          },
+          {
+            "state": "Flop",
+            "outside": false,
+            "weight": 0.2125
+          },
+          {
+            "state": "SideBounceLeft",
+            "outside": false,
+            "weight": 0.425
+          },
+          {
+            "state": "SideBounceRight",
+            "outside": false,
+            "weight": 0.425
+          },
+          {
+            "state": "BeginSitDown",
+            "outside": false,
+            "weight": 0.2125
+          }
+        ]
+      },
+      "BeginSitDown": {
+        "clip": "retract",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "SitDown",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SitDown": {
+        "clip": "withdrawn",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.01,
+        "sound": "",
+        "move": false,
+        "end": [],
+        "timeout": [],
+        "nearby": [],
+        "random": [
+          {
+            "state": "StandUpDown",
+            "outside": false,
+            "weight": 2.0
+          }
+        ]
+      },
+      "StandUpDown": {
+        "clip": "emerge",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": -1,
+        "maxLoops": -1,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "Flop": {
+        "clip": "flop",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 3,
+        "maxLoops": 8,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SideBounceRight": {
+        "clip": "side_bounce",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 3,
+        "maxLoops": 9,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      },
+      "SideBounceLeft": {
+        "clip": "side_bounce",
+        "entry": "",
+        "exit": "",
+        "duration": -0.001,
+        "minDuration": -0.001,
+        "maxDuration": -0.001,
+        "minLoops": 3,
+        "maxLoops": 9,
+        "chance": 0.0,
+        "sound": "",
+        "move": false,
+        "end": [
+          {
+            "state": "Walk",
+            "outside": false,
+            "weight": 1.0
+          }
+        ],
+        "timeout": [],
+        "nearby": [],
+        "random": []
+      }
+    }
+  }
+}

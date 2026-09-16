@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui.festival;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
@@ -62,8 +66,8 @@ public class FairStarTokenNumberSelectionScreen extends Screen {
     @Override
     protected void init() {
         recomputeLayout();
-        amountField = new EditBox(com.stardew.craft.client.font.StardewFonts.small(), fieldX, fieldY + (fieldH - font.lineHeight) / 2,
-            fieldW, font.lineHeight, Component.empty());
+        amountField = new EditBox(com.stardew.craft.client.font.StardewFonts.small(), fieldX, fieldY + (fieldH - StardewFonts.lineHeight(font)) / 2,
+            fieldW, StardewFonts.lineHeight(font), Component.empty());
         amountField.setBordered(false);
         amountField.setTextShadow(false);
         amountField.setMaxLength(3);
@@ -105,7 +109,7 @@ public class FairStarTokenNumberSelectionScreen extends Screen {
         int questionY = panelY + 22;
         for (net.minecraft.util.FormattedCharSequence line : font.split(question, textW)) {
             graphics.drawString(font, line, panelX + 16, questionY, TEXT_DARK, false);
-            questionY += font.lineHeight + 2;
+            questionY += StardewFonts.lineHeight(font) + 2;
         }
 
         drawStepper(graphics, minusX, stepY, "-", inside(mouseX, mouseY, minusX, stepY, stepSize, stepSize));
@@ -114,12 +118,12 @@ public class FairStarTokenNumberSelectionScreen extends Screen {
 
         int total = amount() * price;
         graphics.drawString(font, Component.literal(total + "g"),
-            fieldX + fieldW + 42, fieldY + (fieldH - font.lineHeight) / 2, TEXT_MUTED, false);
+            fieldX + fieldW + 42, fieldY + (fieldH - StardewFonts.lineHeight(font)) / 2, TEXT_MUTED, false);
 
         boolean canSubmit = !waitingForServer;
         drawButton(graphics, okX, okY, okW, okH, inside(mouseX, mouseY, okX, okY, okW, okH), canSubmit);
         GuiText.drawCenteredClamped(graphics, font, Component.translatable("gui.done"),
-            okX + okW / 2, okY + (okH - font.lineHeight) / 2, okW - 12, canSubmit ? TEXT_DARK : TEXT_MUTED, false);
+            okX + okW / 2, okY + (okH - StardewFonts.lineHeight(font)) / 2, okW - 12, canSubmit ? TEXT_DARK : TEXT_MUTED, false);
 
     }
 
@@ -127,13 +131,13 @@ public class FairStarTokenNumberSelectionScreen extends Screen {
         com.stardew.craft.client.gui.common.SdvEditBoxRenderer.drawTextured(
                 graphics, com.stardew.craft.client.font.StardewFonts.small(), amountField,
                 fieldX, fieldY, fieldW, fieldH,
-                (float) minecraft.getWindow().getGuiScale(), TEXT_DARK);
+                (float) StardewGuiViewport.REFERENCE_SCALE, TEXT_DARK);
     }
 
     private void drawStepper(GuiGraphics graphics, int x, int y, String label, boolean hovered) {
         drawButton(graphics, x, y, stepSize, stepSize, hovered, true);
         GuiText.drawCenteredClamped(graphics, font, Component.literal(label),
-            x + stepSize / 2, y + (stepSize - font.lineHeight) / 2, stepSize - 4, TEXT_DARK, false);
+            x + stepSize / 2, y + (stepSize - StardewFonts.lineHeight(font)) / 2, stepSize - 4, TEXT_DARK, false);
     }
 
     private void drawButton(GuiGraphics graphics, int x, int y, int w, int h, boolean hovered, boolean active) {

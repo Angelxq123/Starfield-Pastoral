@@ -1,0 +1,347 @@
+{
+  "mode": "apply",
+  "backup": "/var/folders/ll/s258lr6555g9hwlpql65hwdh0000gn/T/stardew-terrain-map-backup-yl89mbq8",
+  "files": [
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.-1.-1.mca",
+      "blocks": {
+        "minecraft:dirt": 28154502,
+        "minecraft:grass_block": 168356,
+        "stardewcraft:yellow_dirt": 6473
+      },
+      "chunks_or_schematics": 1024,
+      "before": "508bed20c83c74a6546bcff286734dd8775c67ab4a33ee43521af298c7698c0f",
+      "after": "fbd79dfc0416fff174616cd5267a747b559416bc79b7f42dfb8fc2a54885ba67"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.-1.0.mca",
+      "blocks": {
+        "minecraft:dirt": 21807784,
+        "minecraft:grass_block": 28743,
+        "stardewcraft:yellow_dirt": 2418
+      },
+      "chunks_or_schematics": 1024,
+      "before": "8d5d2f4006cfe6c8cd3256051073ca96b00340f79ecbc2fb0a39211bc871c669",
+      "after": "083e80f5c54e413303b3e4e9a8774698a7026417a984d849b85c580a6742fc49"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.-1.1.mca",
+      "blocks": {
+        "minecraft:dirt": 21442560
+      },
+      "chunks_or_schematics": 1024,
+      "before": "31a9ee66b52389580ff83868a0f7a06032d188951caa1dc7b48904cf4c8a62b7",
+      "after": "088fd329481fd1450580473082f4eb79732b9ce9fdd8127c7b8e5c0a105dbf86"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.-1.2.mca",
+      "blocks": {
+        "minecraft:dirt": 21442560
+      },
+      "chunks_or_schematics": 1024,
+      "before": "e85b34c1c236f07ead242a11fa9f7791ff6474a5eba4381cf26585587af1f866",
+      "after": "09f8e0bb28127d4dee6269f65c8beb67be7660a618764f0ed9760b96f4326a83"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.-1.3.mca",
+      "blocks": {
+        "minecraft:dirt": 21194496
+      },
+      "chunks_or_schematics": 1024,
+      "before": "95ecc39757231ada01efdababada8763e28c14336a8ed39bed87fde992d82ccf",
+      "after": "66134196313fe098e45cf28b136125e371e44b34b1179dc2496aadfe84b6532a"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.0.-1.mca",
+      "blocks": {
+        "minecraft:dirt": 33903333,
+        "minecraft:grass_block": 225969,
+        "stardewcraft:yellow_dirt": 10317
+      },
+      "chunks_or_schematics": 1024,
+      "before": "c6bb8db8a0b76786b73c097749cf02ac6dde505fe3305cb556701e222b6a4448",
+      "after": "bbcf201021fd248e3099110cf1eb920719ca8c4452ff8233c310609b05714add"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.0.0.mca",
+      "blocks": {
+        "minecraft:dirt": 23860087,
+        "minecraft:grass_block": 28832,
+        "stardewcraft:yellow_dirt": 1707
+      },
+      "chunks_or_schematics": 1024,
+      "before": "b47b28aafe937d0fc92794ae2c492074ec3f43222e7870ffb0835a6e3e29c732",
+      "after": "1b7564d5b7860c2b3e0a7af53a36583324f682dc69494450d578fc2a585d426c"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.0.1.mca",
+      "blocks": {
+        "minecraft:dirt": 21821440
+      },
+      "chunks_or_schematics": 1024,
+      "before": "5450ebd0ded159f61e2a7a336a46d4ef00c268232638544f8f98c727233d8e57",
+      "after": "163948540b83c50aff4aa4de99ef86114163ef2e3421028935e3b057f3afdbd6"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.0.2.mca",
+      "blocks": {
+        "minecraft:dirt": 21842944
+      },
+      "chunks_or_schematics": 1024,
+      "before": "43c8f84fed4806b3bdbbf0d71082a1ed05c68383daf6403d1057613d3784f12d",
+      "after": "2df34b6ea6125b8ae00f6b99f9d16f9b1f0b0f398144efe5b12d86c9488ba2ef"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.0.3.mca",
+      "blocks": {
+        "minecraft:dirt": 21550501,
+        "minecraft:grass_block": 12365,
+        "stardewcraft:yellow_dirt": 1253
+      },
+      "chunks_or_schematics": 1024,
+      "before": "fb35818f16c8d4e620ad6d94500d0e603c2a79944c2b393edb239c67f0195a2b",
+      "after": "7c52e777ba7846827c9e339496292563eab81ec53c4c3dd89938f14ce87b8f3b"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.1.-1.mca",
+      "blocks": {
+        "minecraft:dirt": 9295555,
+        "minecraft:grass_block": 52588
+      },
+      "chunks_or_schematics": 416,
+      "before": "787729e6d0c96063b92f33ec936b555d0407bd05bdc8f86413ff79b9eea38fe7",
+      "after": "6982fdbe4413aaac22be1650511c37436d692e4b87ac9341fd4a803427762b58"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.1.0.mca",
+      "blocks": {
+        "minecraft:dirt": 8843338,
+        "minecraft:grass_block": 12779,
+        "stardewcraft:yellow_dirt": 426
+      },
+      "chunks_or_schematics": 416,
+      "before": "8e208b2491927f19f85b10bc6bf8b7f48e3561754137c9f736a5edd62cf184bb",
+      "after": "4c16e981c6006626cc1b7ae53fd39cf9d6f1527432b942231efd74a478c0488f"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.1.1.mca",
+      "blocks": {
+        "minecraft:dirt": 8690688
+      },
+      "chunks_or_schematics": 416,
+      "before": "6bdbe0fdcae32165d7107c0c5acff2933be89dba162453880fe4bef4cc60e2cc",
+      "after": "360e93ace88df2924da292fad2a6a830f14c63f6d18d965ed5b4baa88c5c8098"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.1.2.mca",
+      "blocks": {
+        "minecraft:dirt": 8690688
+      },
+      "chunks_or_schematics": 416,
+      "before": "ab4efa234d86f2f4a6fb1eab4dbe8565be416e6fd1c149f5fbdb7c7ad8701d88",
+      "after": "1c0c007dafcba9394fc5a77f62cc838d08d41e34bf4873143d966398f307550a"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.1.3.mca",
+      "blocks": {
+        "minecraft:dirt": 8673714
+      },
+      "chunks_or_schematics": 416,
+      "before": "96ac2a05c7dd96d14f9178509ca31d6bc99d82f1aa6a054a136887dc6740eebf",
+      "after": "127fe8a47a3d0d7c332f871dbd86f8ab3281b156b0f2e6dd1a6ac8032d0074d9"
+    },
+    {
+      "path": "src/main/resources/pregen/stardew_valley/region/r.23.23.mca",
+      "blocks": {
+        "minecraft:dirt": 793600,
+        "minecraft:grass_block": 6400
+      },
+      "chunks_or_schematics": 25,
+      "before": "f2e91191f865546e2879be58388e32b4b56e8cd059f4edd15885200f66228e86",
+      "after": "c092d063270593e7c10ca92aa4decef4087a45f074eef91c74599211ca2cd943"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/desert_festival.schem",
+      "blocks": {
+        "minecraft:dirt": 9804,
+        "minecraft:grass_block": 24
+      },
+      "chunks_or_schematics": 1,
+      "before": "c226123eafa40488f3f83812463b71d498a5c0df04863d6017f169055ad6c8ea",
+      "after": "9cbbab700ff24ccffdbba6e3514752d97f50e55d17b8279b2afbaf17c8dcad11"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/egg_festival_town.schem",
+      "blocks": {
+        "stardewcraft:yellow_dirt": 1147,
+        "minecraft:dirt": 2421,
+        "minecraft:grass_block": 4331
+      },
+      "chunks_or_schematics": 1,
+      "before": "62d5238f4c6711c876cbf50c9a0ae7e160de17770fdf5c2713c02b8ca3e22986",
+      "after": "237a47af00fbd3555eeb8102306161ce260ad1cccc2d9a77b1785e7de46be402"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/festival_of_ice_forest.schem",
+      "blocks": {
+        "minecraft:dirt": 18197,
+        "stardewcraft:yellow_dirt": 1279,
+        "minecraft:grass_block": 872
+      },
+      "chunks_or_schematics": 1,
+      "before": "4d637271f0c8ae05ae3feeff9533c66d04f3e77a8c514671ea1c12f8be59ee71",
+      "after": "dd8cc884a61788f40c5738d0a159012b512b7d5c756e211c6f7f9c70d5755cc9"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/huawujie.schem",
+      "blocks": {
+        "minecraft:dirt": 13018,
+        "minecraft:grass_block": 3696,
+        "stardewcraft:yellow_dirt": 206
+      },
+      "chunks_or_schematics": 1,
+      "before": "b6f27a36341121644de6cf84cc93613787fdd792233c8f13e169a28ee57a0c25",
+      "after": "194746b8c0f3f2e4b1a68b845b2280ede4e1b932c017bee2aaced7b177bbf34a"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/spirit_eve_town.schem",
+      "blocks": {
+        "minecraft:dirt": 19662,
+        "stardewcraft:yellow_dirt": 929,
+        "minecraft:grass_block": 7526
+      },
+      "chunks_or_schematics": 1,
+      "before": "b1eba1ab2d73efb3517acafb9dfe58b2773bb64d64983b517cbd6c39970cba93",
+      "after": "09df2192ad954e7b9dd05c91b35c4a7c41d305bc5b5f4f91126ee8c8f5a3ac35"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/stardew_valley_fair_town.schem",
+      "blocks": {
+        "minecraft:dirt": 181415,
+        "minecraft:grass_block": 7108,
+        "stardewcraft:yellow_dirt": 2192
+      },
+      "chunks_or_schematics": 1,
+      "before": "ec14ba18609d02225ab0c8496921c23d8163da4476f014df9ee5c65b5cd3eb7b",
+      "after": "5215ea749fd89e9b6c2bdc40267516e47492fd3777c82dd1e42f6ff51abd4c84"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/festivals/winter_star_town.schem",
+      "blocks": {
+        "minecraft:dirt": 811,
+        "minecraft:grass_block": 455,
+        "stardewcraft:yellow_dirt": 11
+      },
+      "chunks_or_schematics": 1,
+      "before": "2927ee47e1ee88bd1058db11b54b88ea91d8cec233383d26ee1645ebe9f1dd94",
+      "after": "5aec8e07a6aa2db21fa6a95f855fa96ecf6e13208a58bbc5dd142ecba6997af6"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/greenhouse/green_house_interior.schem",
+      "blocks": {
+        "stardewcraft:yellow_dirt": 120
+      },
+      "chunks_or_schematics": 1,
+      "before": "c83c909143c1eebdae946e75204febb6c530dc8d711df4f9304b44f1b616687e",
+      "after": "0339d1bc3d42cc553a90ba3d8a7309eb0394fd6b692e81343698a85025a88057"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/greenhouse/green_house_refurbished.schem",
+      "blocks": {
+        "minecraft:grass_block": 11,
+        "minecraft:dirt": 2
+      },
+      "chunks_or_schematics": 1,
+      "before": "4a3df9856cb690c33f4c3e755e496459ae48d205852b97c4345a9ba153c16467",
+      "after": "80a8d72357dd56e1ab5604148ab9ba50bb0cf24aa97d739b1acacbe4c7cfc140"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/interior/community_center_refurbished.schem",
+      "blocks": {
+        "minecraft:dirt": 2
+      },
+      "chunks_or_schematics": 1,
+      "before": "2ba1b976eeee9462f70552db985b5c449a6b4145080c0df03c963f6bd253064f",
+      "after": "697af396d8095267f4a97f34ad617214f2c820dec54e237d5d5a309cbf7a75f3"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/interior/community_center_ruins.schem",
+      "blocks": {
+        "minecraft:dirt": 1
+      },
+      "chunks_or_schematics": 1,
+      "before": "8c1d44540dec4b861093f8bfbed770e3a42d1edc1d809d9c6e3d05aac04ac424",
+      "after": "a136a91896e92170fa20f95678774eb3d44a7fa05aa8245e74443d0bbf8072f0"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/interior/mayor_house.schem",
+      "blocks": {
+        "minecraft:grass_block": 1
+      },
+      "chunks_or_schematics": 1,
+      "before": "71f8aa24e191d4a0e1b84cd4a65c2ed916ec3878a2993c9b4a150286ad13e4e8",
+      "after": "d09d79450d74d728ddce2fc1f613084fca783aa50dd38e172585ebddcb621e86"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/interior/saloon.schem",
+      "blocks": {
+        "minecraft:grass_block": 1
+      },
+      "chunks_or_schematics": 1,
+      "before": "8755b5380d3c8c50dc06110d454a94c871ee75740eed20ba3a2faec99a2f75dd",
+      "after": "834005bbc4bfeff36b31c648a39e421990e391242c3a2ec2c4b272e54febf5ce"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/mine/main.schem",
+      "blocks": {
+        "minecraft:grass_block": 1502293,
+        "minecraft:dirt": 27915
+      },
+      "chunks_or_schematics": 1,
+      "before": "1fe6c05b462d113144282d08eb5fc8e5b1336a6dbdd876fba5b72152ece2a827",
+      "after": "100112287d0e84f526c50afba50a2d9111494bde5dc92a3676bb673ea8b60f43"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/wizard_tower_exterior.schem",
+      "blocks": {
+        "minecraft:grass_block": 3
+      },
+      "chunks_or_schematics": 1,
+      "before": "23af29d06c08c518912fd3cb509237d40de009b8479d9f08cfcaa765200420c2",
+      "after": "d4a49b57495b023af721054374f4dc1a997e3afbd2786ae510984942fb86a673"
+    }
+  ],
+  "complete": true,
+  "scanned_files": 179,
+  "replaced_blocks": {
+    "minecraft:dirt": 282281038,
+    "minecraft:grass_block": 2062353,
+    "stardewcraft:yellow_dirt": 28478
+  },
+  "verified_new_farm_templates": [
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/farm/cave.schem",
+      "sha256": "b6155df2079b361410f7f24a1963697dfea570e75e268b4732ed92d76134d923"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/farm/forest.schem",
+      "sha256": "81672831bd77cad429fde4e557b710ec828b28607e7622fe5f9454c7a5a68a58"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/farm/riverland.schem",
+      "sha256": "fc1110f2bf8588881d249da6c53b66dde0d28632805d92f511d4006e7588ca63"
+    },
+    {
+      "path": "src/main/resources/data/stardewcraft/structures/farm/standard.schem",
+      "sha256": "df5de236be564a2784282dc241cf9b97ce61fd3f8827da9a1eded89b476d37a9"
+    }
+  ],
+  "map_version": 14,
+  "verification": {
+    "scanned_region_files": 136,
+    "scanned_schematics": 43,
+    "remaining_source_terrain_states": 0,
+    "manifest_copy_hashes_checked": 36,
+    "existing_player_farms_reinitialized": false
+  }
+}

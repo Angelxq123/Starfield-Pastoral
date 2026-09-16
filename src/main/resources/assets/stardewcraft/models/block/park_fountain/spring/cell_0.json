@@ -1,0 +1,167 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/spring/surface",
+    "particle": "stardewcraft:block/park_fountain/spring/particle"
+  },
+  "elements": [
+    {
+      "from": [
+        0.72792,
+        0.03125,
+        6.72792
+      ],
+      "to": [
+        24.72792,
+        4.03125,
+        18.72792
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.75,
+            2.0625,
+            7.5,
+            2.1875
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            8.3125,
+            2.0625,
+            8.6875,
+            2.1875
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            7.53125,
+            2.0625,
+            8.28125,
+            2.1875
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            8.71875,
+            2.0625,
+            9.09375,
+            2.1875
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            9.125,
+            2.0625,
+            9.875,
+            2.4375
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            9.90625,
+            2.0625,
+            10.65625,
+            2.4375
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          12.72792,
+          0.03125,
+          12.72792
+        ],
+        "rescale": false
+      }
+    },
+    {
+      "from": [
+        0.31371,
+        4.03125,
+        8.31371
+      ],
+      "to": [
+        24.31371,
+        14.03125,
+        16.31371
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.59375,
+            3.5,
+            14.34375,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "east": {
+          "uv": [
+            15.15625,
+            3.5,
+            15.40625,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "south": {
+          "uv": [
+            14.375,
+            3.5,
+            15.125,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "west": {
+          "uv": [
+            15.4375,
+            3.5,
+            15.6875,
+            3.8125
+          ],
+          "texture": "#surface"
+        },
+        "up": {
+          "uv": [
+            0.0,
+            4.53125,
+            0.75,
+            4.78125
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            0.78125,
+            4.53125,
+            1.53125,
+            4.78125
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          12.31371,
+          4.03125,
+          12.31371
+        ],
+        "rescale": false
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

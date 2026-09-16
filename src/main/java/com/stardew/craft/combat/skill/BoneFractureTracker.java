@@ -1,13 +1,9 @@
 package com.stardew.craft.combat.skill;
 
 import com.stardew.craft.StardewCraft;
-import net.minecraft.core.particles.ItemParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
@@ -25,7 +21,7 @@ public final class BoneFractureTracker {
         CompoundTag tag = target.getPersistentData();
         tag.putLong(TAG_END_TICK, nowTick + durationTicks);
         tag.putLong(TAG_LAST_PARTICLE, nowTick - PARTICLE_INTERVAL);
-        spawnParticles(level, target, 6);
+        spawnTrace(target);
     }
 
     @SubscribeEvent
@@ -56,21 +52,14 @@ public final class BoneFractureTracker {
         tag.putLong(TAG_LAST_PARTICLE, nowTick);
 
         if (entity.level() instanceof ServerLevel serverLevel) {
-            spawnParticles(serverLevel, entity, 2);
+            spawnTrace(entity);
         }
     }
 
-    @SuppressWarnings("null")
-    private static void spawnParticles(ServerLevel level, LivingEntity target, int count) {
-        ItemParticleOption bone = new ItemParticleOption(ParticleTypes.ITEM, new ItemStack(Items.BONE));
-        level.sendParticles(
-            bone,
-            target.getX(),
-            target.getY() + target.getBbHeight() * 0.6,
-            target.getZ(),
-            count,
-            0.2, 0.25, 0.2,
-            0.02
-        );
+    private static void spawnTrace(LivingEntity target) {
+        long end = target.getPersistentData().getLong(TAG_END_TICK);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,
+                new com.stardew.craft.combat.network.BoneFractureTracePayload(target.getId(), end,
+                        (int)Math.max(0, end - target.level().getGameTime())));
     }
 }

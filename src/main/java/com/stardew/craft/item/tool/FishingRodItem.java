@@ -9,7 +9,6 @@ import com.stardew.craft.item.ModItems;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.SkillType;
-import com.stardew.craft.sound.ModSounds;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -191,14 +190,12 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 	}
 
 	/**
-	 * Find the player's currently held fishing rod, checking main hand first then offhand.
+	 * Find the player's currently held fishing rod, in the main hand (rods require two free hands).
 	 * Returns {@link ItemStack#EMPTY} if no rod is held.
 	 */
 	public static ItemStack findRod(Player player) {
 		ItemStack main = player.getMainHandItem();
-		if (main.getItem() instanceof FishingRodItem) return main;
-		ItemStack off = player.getOffhandItem();
-		if (off.getItem() instanceof FishingRodItem) return off;
+		if (main.getItem() instanceof FishingRodItem && player.getOffhandItem().isEmpty()) return main;
 		return ItemStack.EMPTY;
 	}
 	
@@ -454,12 +451,24 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 	public InteractionResultHolder<ItemStack> use(@SuppressWarnings("null") Level level, @SuppressWarnings("null") Player player, @SuppressWarnings("null") InteractionHand hand) {
 		@SuppressWarnings("null")
 		ItemStack stack = player.getItemInHand(hand);
+		if (hand != InteractionHand.MAIN_HAND || !player.getOffhandItem().isEmpty()) {
+			if (player instanceof ServerPlayer serverPlayer) {
+				FishingSessionManager.get(serverPlayer.server).cancel(serverPlayer);
+				com.stardew.craft.network.payload.HudHintPayload.send(serverPlayer, "stardewcraft.fishing.requires_two_hands");
+			}
+			return InteractionResultHolder.fail(stack);
+		}
 		if (player.getCooldowns().isOnCooldown(this)) {
+			if (player instanceof ServerPlayer serverPlayer) {
+				var manager = FishingSessionManager.get(serverPlayer.server);
+				if (manager.getState(serverPlayer) == null) manager.cancel(serverPlayer);
+			}
 			return InteractionResultHolder.fail(stack);
 		}
 		if (!level.isClientSide
 				&& player instanceof ServerPlayer serverPlayer
 				&& com.stardew.craft.festival.ActiveFestivalHandlers.blocksFishingDuringActiveFestival(serverPlayer)) {
+			FishingSessionManager.get(serverPlayer.server).cancel(serverPlayer);
 			com.stardew.craft.network.payload.HudHintPayload.send(
 					serverPlayer, "stardewcraft.fishing.blocked_during_festival");
 			return InteractionResultHolder.fail(stack);
@@ -472,7 +481,10 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 				&& !player.isCreative()
 				&& !player.isSpectator()
 				&& player.level().dimension() == ModDimensions.STARDEW_VALLEY) {
-			if (!PlayerStardewDataAPI.canConsumeEnergy(serverPlayer, castStaminaCost(serverPlayer, stack))) {
+			if (FishingSessionManager.get(serverPlayer.server).getState(serverPlayer) == null
+                    && !PlayerStardewDataAPI.canConsumeEnergy(serverPlayer, castStaminaCost(serverPlayer, stack))) {
+				var manager = FishingSessionManager.get(serverPlayer.server);
+				if (manager.getState(serverPlayer) == null) manager.cancel(serverPlayer);
 				com.stardew.craft.network.payload.HudHintPayload.send(
 						serverPlayer, "stardewcraft.message.player.exhausted");
 				return InteractionResultHolder.fail(stack);
@@ -516,16 +528,22 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 					return InteractionResultHolder.consume(stack);
 				}
 
-				mgr.cancel(serverPlayer);
+				mgr.retrieve(serverPlayer);
 				setCastActive(player.getMainHandItem(), false);
 				setCastActive(player.getOffhandItem(), false);
-				net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer, new com.stardew.craft.fishing.network.FishingRodCastStatePayload(false));
+				net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer, new com.stardew.craft.fishing.network.FishingRodCastStatePayload(FishingSessionManager.get(serverPlayer.server).useId(serverPlayer), false));
 				player.getCooldowns().addCooldown(this, CAST_COOLDOWN_TICKS);
 				return InteractionResultHolder.consume(stack);
 			}
 		}
 
-		// 进入“蓄力”状态（松手时抛竿）。
+		// Bind before vanilla sends its use packet, so late replies cannot revive an older cast.
+		if (level.isClientSide) {
+			com.stardew.craft.client.fishing.FishingInteractionState.begin();
+		} else if (player instanceof ServerPlayer serverPlayer
+				&& !FishingSessionManager.get(serverPlayer.server).hasValidUse(serverPlayer)) {
+			return InteractionResultHolder.fail(stack);
+		}
 		player.startUsingItem(hand);
 		return InteractionResultHolder.consume(stack);
 	}
@@ -563,14 +581,16 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 		if (!(livingEntity instanceof Player player)) {
 			return;
 		}
-		if (player.getCooldowns().isOnCooldown(this)) {
-			return;
-		}
+		if (player.getCooldowns().isOnCooldown(this) || player.getMainHandItem() != stack
+				|| !player.getOffhandItem().isEmpty() || player.getUsedItemHand() != InteractionHand.MAIN_HAND) return;
+		if (level.isClientSide && !com.stardew.craft.client.fishing.FishingInteractionState.valid()) return;
+		if (player instanceof ServerPlayer serverPlayer
+				&& !FishingSessionManager.get(serverPlayer.server).hasValidUse(serverPlayer)) return;
 		if (level.isClientSide) {
 			// Client should flip immediately for rendering; server will authoritative-correct via packet.
-			// Write to BOTH hands in case the rod is in offhand
+			// Only the bound main-hand rod participates.
 			setCastActive(player.getMainHandItem(), true);
-			setCastActive(player.getOffhandItem(), true);
+			com.stardew.craft.client.fishing.FishingPresentationClient.castLocal();
 			return;
 		}
 		if (!(player instanceof ServerPlayer serverPlayer)) {
@@ -587,17 +607,19 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 		boolean exhaustedBefore = PlayerStardewDataAPI.isExhausted(serverPlayer);
 		if (staminaCost > 0.0F
 				&& !PlayerStardewDataAPI.consumeEnergyOrNotify(serverPlayer, staminaCost)) {
+            FishingSessionManager.get(serverPlayer.server).cancel(serverPlayer);
 			setCastActive(player.getMainHandItem(), false);
 			setCastActive(player.getOffhandItem(), false);
 			net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
 					serverPlayer,
-					new com.stardew.craft.fishing.network.FishingRodCastStatePayload(false));
+					new com.stardew.craft.fishing.network.FishingRodCastStatePayload(FishingSessionManager.get(serverPlayer.server).useId(serverPlayer), false));
 			return;
 		}
 
 		// Vanilla-like: always throw the hook. The server session will only begin bite logic once the hook lands in water.
 		boolean started = FishingSessionManager.get(serverPlayer.server).start(serverPlayer, castPower01);
 		if (!started) {
+            FishingSessionManager.get(serverPlayer.server).cancel(serverPlayer);
 			float spent = Math.max(0.0F, energyBefore - PlayerStardewDataAPI.getEnergy(serverPlayer));
 			if (spent > 0.0F) {
 				PlayerStardewDataAPI.rollbackEnergyPayment(serverPlayer, spent, exhaustedBefore);
@@ -612,17 +634,16 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 				setCastActive(player.getOffhandItem(), false);
 				net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
 					serverPlayer,
-					new com.stardew.craft.fishing.network.FishingRodCastStatePayload(false)
+					new com.stardew.craft.fishing.network.FishingRodCastStatePayload(FishingSessionManager.get(serverPlayer.server).useId(serverPlayer), false)
 				);
 			}
 			return;
 		}
 
-		// Server writes to BOTH hands
+		// Server updates the main-hand rod.
 		setCastActive(player.getMainHandItem(), true);
-		setCastActive(player.getOffhandItem(), true);
-		net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer, new com.stardew.craft.fishing.network.FishingRodCastStatePayload(true));
-		level.playSound(null, player.blockPosition(), ModSounds.CAST.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
+		net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer, new com.stardew.craft.fishing.network.FishingRodCastStatePayload(FishingSessionManager.get(serverPlayer.server).useId(serverPlayer), true));
+		// The cast cue is emitted with the physical hook release at the authored 350 ms mark.
 
 		player.getCooldowns().addCooldown(this, CAST_COOLDOWN_TICKS);
 	}
@@ -642,7 +663,7 @@ public class FishingRodItem extends net.minecraft.world.item.FishingRodItem impl
 	}
 
 	public static void setCastActive(ItemStack rodStack, boolean active) {
-		if (rodStack == null || rodStack.isEmpty()) {
+		if (rodStack == null || rodStack.isEmpty() || !(rodStack.getItem() instanceof FishingRodItem)) {
 			return;
 		}
 		// Get data once and modify it

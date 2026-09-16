@@ -1,0 +1,95 @@
+{
+  "intent": "厚实体型成年铁匠；重心稳、肩头略收、较长承重，围裙前片独立避让，不编造跛行。",
+  "intervalMin": 3.5,
+  "intervalMax": 7.3,
+  "durationMin": 0.92,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0,
+  "walkStride": 0.56152125,
+  "attentionRig": {
+    "hipHeight": 10,
+    "soleY": 0,
+    "toeDepth": 2,
+    "halfStance": 2.65,
+    "rightZ": 0.1,
+    "leftZ": -0.12,
+    "rightYaw": -3,
+    "leftYaw": 3,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "lookLimits": {
+    "yaw": 28,
+    "pitch": 8
+  },
+  "gait": {
+    "id": "clint",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42400000000000004,
+    "groundOffset": 0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.2,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.2,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -2.1,
+    "headPitch": 0.9,
+    "halfStance": 2.65,
+    "intent": "厚实体型成年铁匠；重心稳、肩头略收、较长承重，围裙前片独立避让，不编造跛行。",
+    "stance": 0.64,
+    "strideRatio": 1.5,
+    "bob": 0.2432,
+    "sway": 0.68,
+    "rootYaw": 1.5,
+    "bodyYaw": 3.5,
+    "bodyRoll": 0.95,
+    "bodyNod": 0.55,
+    "headYaw": 1.5,
+    "headRoll": 0.4,
+    "armSwing": 11.5,
+    "armOpening": 8,
+    "elbowBase": 12,
+    "elbowSwing": 5,
+    "footLift": 0.22400000000000003,
+    "heelPitch": 3.5,
+    "toePitch": 7.0,
+    "breathSeconds": 9.8,
+    "idleScale": 1.0,
+    "stride": 8.98434,
+    "reachMargin": 0.043337,
+    "legLengthStride": 15.0,
+    "previewSpeed": 0.784938,
+    "levelWalk": true
+  },
+  "cloth": {
+    "bone": "garment",
+    "kind": "apron",
+    "anchorY": 11,
+    "hemY": 8,
+    "margin": 0.35,
+    "contactBlend": 1.2
+  }
+}

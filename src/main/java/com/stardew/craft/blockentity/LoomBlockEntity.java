@@ -112,7 +112,7 @@ public class LoomBlockEntity extends TimedProductionBlockEntity {
             return false;
         }
         ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
-        int outputCount = recipe.outputCount();
+        int outputCount = recipe.rollOutputCount(level.random);
         if (outputCount <= 1) {
             outputCount = rollOutputCount(QualityHelper.getQuality(stack));
         }
@@ -203,7 +203,7 @@ public class LoomBlockEntity extends TimedProductionBlockEntity {
         if (simulate) {
             return AutomationStackHelper.remainderAfterInsert(stack, 1);
         }
-        int outputCount = recipe.outputCount();
+        int outputCount = recipe.rollOutputCount(level.random);
         if (outputCount <= 1) {
             outputCount = rollOutputCount(QualityHelper.getQuality(stack));
         }

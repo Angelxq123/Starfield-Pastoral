@@ -25,12 +25,18 @@ import java.util.List;
 @SuppressWarnings("null")
 public class UncertaintyStatueBlock extends MapDecorStaticBlock implements EntityBlock {
     public UncertaintyStatueBlock(Properties properties) {
-        super(properties, "stardewcraft:decor/common/uncertainty_statue_proxy");
+        super(properties, "stardewcraft:block/decor/uncertainty_statue");
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape canonicalShape() {
+        // Match the blockstate's clockwise quarter-turn, including its extension footprint.
+        return com.stardew.craft.block.shape.ModelVoxelShapeCache.rotateY(super.canonicalShape(), 1);
     }
 
     @Override
     public RenderShape getRenderShape(@Nonnull BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.MODEL;
     }
 
     @Override

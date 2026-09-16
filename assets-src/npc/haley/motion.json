@@ -1,0 +1,90 @@
+{
+  "intervalMin": 3.5,
+  "intervalMax": 6.9,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0.35,
+  "walkStride": 0.837872125,
+  "attentionRig": {
+    "hipHeight": 11.0,
+    "soleY": -0.35,
+    "toeDepth": 2.35,
+    "halfStance": 2.12,
+    "rightZ": 0.16,
+    "leftZ": -0.2,
+    "rightYaw": -4,
+    "leftYaw": 5,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "cloth": {
+    "bone": "qunzi",
+    "kind": "skirt",
+    "anchorY": 15.6,
+    "hemY": 7.4,
+    "margin": 0.95,
+    "standingDepthMargin": 0.8
+  },
+  "gait": {
+    "id": "haley",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42400000000000004,
+    "groundOffset": 0.35,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      }
+    },
+    "bodyPitch": -1.8,
+    "headPitch": 1.15,
+    "halfStance": 2.4299999999999997,
+    "stride": 13.405954,
+    "reachMargin": 0.036783,
+    "legLengthStride": 19.25,
+    "approvedBaseStride": 19.25,
+    "stance": 0.55,
+    "bob": 0.272,
+    "sway": 0.55,
+    "rootYaw": 2.4,
+    "bodyYaw": 5.7,
+    "armSwing": 15.8,
+    "armPhase": 0.035,
+    "footLift": 0.31360000000000005,
+    "swingPeak": 0.45,
+    "elbowBase": 12,
+    "bodyRoll": 1.02,
+    "strideScale": 1.0,
+    "intent": "成年女性、外向；轻盈、自信，抬脚稍主动，双臂较收拢；裙摆连续，避免夸张摇髋。",
+    "bodyLag": 0.065,
+    "headLag": 0.1,
+    "headYawLag": 0.05,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.800875,
+    "levelWalk": true
+  }
+}

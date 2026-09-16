@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stardewcraft:mine_planks",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "stardewcraft:mine_planks",
+              "properties": [
+                "variant",
+                "theme"
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -115,7 +115,7 @@ public final class BlacksmithService {
                 // Sends dialogue with afterCloseItemId → client shows dialogue,
                 // on close triggers totem animation + HUD pickup notification
                 String itemId = BuiltInRegistries.ITEM.getKey(toolItem).toString();
-                PacketDistributor.sendToPlayer(player,
+                com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
                     new OpenNpcDialogueScreenPayload("clint",
                         "stardewcraft.npc.clint.tool_pickup", 0, itemId, false));
             }
@@ -578,7 +578,7 @@ public final class BlacksmithService {
     }
 
     private static void sendDialogue(ServerPlayer player, String langKey, PlayerStardewData data) {
-        PacketDistributor.sendToPlayer(player,
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
             new OpenNpcDialogueScreenPayload("clint", langKey, data != null ? 0 : 0));
     }
 }

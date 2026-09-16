@@ -543,6 +543,9 @@ def draw_numbered_source_points(
     title: str,
     route: bool = False,
     start_index: int = 1,
+    marker_radius: int = 11,
+    marker_font_size: int = 13,
+    legend_title: str = "Source point legend",
 ) -> Image.Image:
     map_image = base.convert("RGBA")
     sidebar_width = 520 if len(points) <= 12 else 0
@@ -557,7 +560,7 @@ def draw_numbered_source_points(
     image.alpha_composite(map_image, (0, 0))
     overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
-    marker_font = load_font(13)
+    marker_font = load_font(marker_font_size)
     label_font = load_font(15)
     step = TILE_SIZE * scale
     origin_x, origin_y = crop_origin
@@ -565,18 +568,18 @@ def draw_numbered_source_points(
     if route and len(anchors) > 1:
         draw.line(anchors, fill=(255, 210, 55, 210), width=max(3, scale * 2), joint="curve")
     for index, ((label, _x, _y), (px, py)) in enumerate(zip(points, anchors), start=start_index):
-        radius = 11
+        radius = marker_radius
         draw.ellipse((px - radius, py - radius, px + radius, py + radius),
                      fill=(18, 22, 30, 235), outline=(255, 210, 55, 255), width=3)
         number = str(index)
         number_box = draw.textbbox((0, 0), number, font=marker_font)
-        draw.text((px - (number_box[2] - number_box[0]) / 2, py - 8), number,
+        draw.text((px - (number_box[2] - number_box[0]) / 2, py - (number_box[3] - number_box[1]) / 2 - number_box[1]), number,
                   fill=(255, 245, 200, 255), font=marker_font)
     if sidebar_width:
         left = map_image.width
         draw.rectangle((left, 0, image.width, image.height), fill=(237, 243, 248, 255))
         draw.line((left, 0, left, image.height), fill=(89, 111, 132, 255), width=2)
-        draw.text((left + 24, 24), "Source point legend", fill=(28, 42, 57, 255), font=load_font(24))
+        draw.text((left + 24, 24), legend_title, fill=(28, 42, 57, 255), font=load_font(24))
         for row, (label, _x, _y) in enumerate(points):
             index = start_index + row
             y = 72 + row * 52
@@ -584,7 +587,7 @@ def draw_numbered_source_points(
                          outline=(132, 94, 13, 255), width=2)
             number = str(index)
             number_box = draw.textbbox((0, 0), number, font=marker_font)
-            draw.text((left + 39 - (number_box[2] - number_box[0]) / 2, y + 7), number,
+            draw.text((left + 39 - (number_box[2] - number_box[0]) / 2, y + 15 - (number_box[3] - number_box[1]) / 2 - number_box[1]), number,
                       fill=(43, 37, 20, 255), font=marker_font)
             draw.text((left + 66, y + 5), label, fill=(36, 50, 64, 255), font=label_font)
     draw_title(draw, title, image.width)
@@ -3204,11 +3207,18 @@ def parse_args() -> argparse.Namespace:
                         help="Render the vanilla Clint 3/6-heart events and blank Minecraft capture workbooks.")
     parser.add_argument("--clint-schedule", action="store_true",
                         help="Render Clint schedule stops excluding Desert Festival and Community Center.")
+    parser.add_argument("--sam-schedule", action="store_true",
+                        help="Audit all Sam schedule records and render globally numbered source maps.")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.sam_schedule:
+        from render_sam_schedule_points import generate
+        output = args.out / "sam_schedule" if args.out == DEFAULT_OUTPUT_DIR else args.out
+        print(generate(output, args.scale))
+        return
     if args.winter_star_secret_santa:
         output_path = render_winter_star_secret_santa_map(args.out, args.scale, args.portrait_size)
         print(output_path.relative_to(ROOT))

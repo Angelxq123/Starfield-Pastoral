@@ -27,10 +27,8 @@
     { "cmd": "emote", "actor": "wizard", "emote": "note" },
     { "cmd": "speak", "npc_id": "wizard", "text": "event.wizard_e112.intro" },
 
-    { "cmd": "comment", "text": "Wizard teleports towards display area" },
-    { "cmd": "play_sound", "sound": "stardewcraft:wand" },
-    { "cmd": "screen_flash", "ticks": 3 },
-    { "cmd": "move_actor", "actor": "wizard", "x": -179.5, "y": 34, "z": 56.5, "ticks": 1, "relative": false },
+    { "cmd": "comment", "text": "SDV 112: face the display before summoning the Junimo; no Wizard teleport" },
+    { "cmd": "face_actor", "actor": "wizard", "yaw": -90 },
     { "cmd": "pause", "ticks": 15 },
 
     { "cmd": "comment", "text": "D1: Cut to Junimo cage closeup as wizard summons it" },
@@ -68,10 +66,11 @@
     { "cmd": "comment", "text": "Waiting for Wizard..." },
     { "cmd": "pause", "ticks": 60 },
 
-    { "cmd": "comment", "text": "Phase 2.5→3: Wizard teleports back" },
-    { "cmd": "play_sound", "sound": "stardewcraft:wand" },
-    { "cmd": "screen_flash", "ticks": 3 },
-    { "cmd": "spawn_actor", "actor": "wizard", "npc_id": "wizard", "x": -180.5, "y": 34, "z": 56.5, "relative": false, "facing": 0 },
+    { "cmd": "comment", "text": "SDV 112: Wizard returns through the door and walks into the room" },
+    { "cmd": "play_sound", "sound": "stardewcraft:door_close" },
+    { "cmd": "spawn_actor", "actor": "wizard", "npc_id": "wizard", "x": -178.5, "y": 34, "z": 63.5, "relative": false, "facing": 180 },
+    { "cmd": "move_actor", "actor": "wizard", "x": -180.5, "y": 34, "z": 56.5, "relative": false },
+    { "cmd": "face_actor", "actor": "wizard", "face_actor": "fake_player" },
     { "cmd": "pause", "ticks": 20 },
     { "cmd": "play_sound", "sound": "stardewcraft:dwop" },
     { "cmd": "emote", "actor": "wizard", "emote": "happy" },
@@ -80,10 +79,9 @@
     { "cmd": "comment", "text": "Phase 3: Wizard found the note, explains translation" },
     { "cmd": "speak", "npc_id": "wizard", "text": "event.wizard_e112.return_text" },
 
-    { "cmd": "comment", "text": "Phase 3→4: Wizard teleports to cauldron, invites player" },
-    { "cmd": "play_sound", "sound": "stardewcraft:wand" },
-    { "cmd": "screen_flash", "ticks": 3 },
-    { "cmd": "move_actor", "actor": "wizard", "x": -182.5, "y": 34, "z": 57.5, "ticks": 1, "relative": false },
+    { "cmd": "comment", "text": "SDV 112: Wizard walks to the cauldron and invites the player" },
+    { "cmd": "move_actor", "actor": "wizard", "x": -182.5, "y": 34, "z": 57.5, "relative": false },
+    { "cmd": "face_actor", "actor": "wizard", "face_actor": "fake_player" },
     { "cmd": "pause", "ticks": 20 },
     { "cmd": "speak", "npc_id": "wizard", "text": "event.wizard_e112.cauldron" },
 

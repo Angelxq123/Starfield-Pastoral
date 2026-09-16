@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "stardewcraft:block/material_templates/round_window_base"
+      }
+    }
+  ]
+}

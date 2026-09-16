@@ -1,9 +1,7 @@
 package com.stardew.craft.block.mine;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.book.BookPowerEffects;
 import com.stardew.craft.item.trinket.TrinketDropService;
-import com.stardew.craft.player.PlayerDataManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -13,96 +11,160 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.world.level.BlockGetter;
 
-/**
- * 矿井木桶方块（精确复刻 SDV BreakableContainer.releaseContents）
- *
- * 掉落逻辑按 SDV 源码 BreakableContainer.cs 行 248-450+ 还原：
- * - 20% 概率完全不掉落
- * - 0.81% mystery_box 特殊掉落
- * - 根据矿井区段（area 0/40/80）选择不同掉落表
- * - 每个区段：65% 普通掉落（80% 初级 9-way / 20% 次级）+ 40% 稀有掉落（5-way 含宝石和特殊物品）
- * - 稀有掉落中 20% 概率使用 getSpecialItemForThisMineLevel 按层级给不同价值物品
- */
+/** Two-cell mine caches; one accepted hit releases the source container loot exactly once. */
 @SuppressWarnings("null")
-public class MineBarrelBlock extends Block {
+public class MineBarrelBlock extends com.stardew.craft.block.decor.MapDecorStaticBlock {
+    private final boolean crate;
+    private record BreakOwner(ServerLevel level, BlockPos main, long tick, net.minecraft.server.level.ServerPlayer player, boolean explosion) {}
+    private static final ThreadLocal<BreakOwner> BREAK_OWNER = new ThreadLocal<>();
 
-    private static final VoxelShape SHAPE = Block.box(2.5, 0, 2.5, 13.5, 21, 13.5);
-
-    public MineBarrelBlock(Properties properties) {
-        super(properties);
+    /** Weapons and bombs must pass their owner through the actual main-cell removal. */
+    public static boolean breakBy(ServerLevel level, BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
+        return breakBy(level, pos, player, false);
     }
 
-    @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+    public static boolean breakByExplosion(ServerLevel level, BlockPos pos, net.minecraft.server.level.ServerPlayer player) {
+        return breakBy(level, pos, player, true);
     }
 
-    @Override
-    public net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!level.isClientSide()) {
-            level.destroyBlock(pos, false);
+    private static boolean breakBy(ServerLevel level, BlockPos pos, net.minecraft.server.level.ServerPlayer player, boolean explosion) {
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof MineBarrelBlock block)) return false;
+        BlockPos main = block.findMainPos(level, pos, state);
+        if (main == null) return false;
+        BreakOwner previous = BREAK_OWNER.get();
+        BREAK_OWNER.set(new BreakOwner(level, main.immutable(), level.getGameTime(), player, explosion));
+        try { return level.destroyBlock(main, false); }
+        finally {
+            if (previous == null) BREAK_OWNER.remove(); else BREAK_OWNER.set(previous);
         }
-        return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 
-    @Override
-    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (!level.isClientSide()) {
-            level.destroyBlock(pos, false);
+    public MineBarrelBlock(Properties properties) { this(properties, false); }
+
+    public MineBarrelBlock(Properties properties, boolean crate) {
+        super(properties, "block/mine/loot/earth_" + (crate ? "crate" : "barrel"));
+        this.crate = crate;
+        registerDefaultState(defaultBlockState().setValue(MineBuildingTheme.PROPERTY, MineBuildingTheme.EARTH));
+    }
+
+    @Override protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(MineBuildingTheme.PROPERTY);
+    }
+
+    @Override protected VoxelShape canonicalShape() {
+        return Block.box(0, 0, 0, 16, crate ? 20 : 25, 16);
+    }
+
+    @Override public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext context) {
+        BlockState state = super.getStateForPlacement(context);
+        return state == null ? null : state.setValue(MineBuildingTheme.PROPERTY, MineBuildingTheme.forPlacement(context));
+    }
+
+    @Override public ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+        return MineBuildingTheme.picked(this, state);
+    }
+
+    @Override protected java.util.List<ItemStack> getDrops(BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params) {
+        return java.util.List.of();
+    }
+
+    @Override public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (level instanceof ServerLevel server) {
+            BlockPos main = findMainPos(level, pos, state);
+            if (main != null) {
+                // MAIN is removed by vanilla immediately after this callback. Do not remove it here:
+                // that would skip vanilla's successful-break stats and tool durability handling.
+                BREAK_OWNER.set(new BreakOwner(server, main.immutable(), server.getGameTime(),
+                        player instanceof net.minecraft.server.level.ServerPlayer sp ? sp : null, false));
+                if (state.getValue(PART) == Part.EXTENSION) {
+                    runWithDropsSuppressed(() -> level.removeBlock(main, false));
+                    return state;
+                }
+            }
         }
-        return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide());
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
-    @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && !level.isClientSide()) {
-            dropBarrelLoot((ServerLevel) level, pos);
-            level.playSound(null, pos, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1.0F, 0.9F);
+    @Override public void onRemove(BlockState state, Level level, BlockPos pos, BlockState next, boolean moving) {
+        if (!state.is(next.getBlock()) && state.getValue(PART) == Part.MAIN && level instanceof ServerLevel server) {
+            BreakOwner owner = BREAK_OWNER.get();
+            boolean owned = owner != null && owner.level() == server && owner.main().equals(pos)
+                    && owner.tick() == server.getGameTime();
+            var player = owned ? owner.player() : null;
+            if (owner != null && owner.level() == server && owner.main().equals(pos)) BREAK_OWNER.remove();
+            if ((owned && owner.explosion() || player == null || !player.isCreative())
+                    && !com.stardew.craft.mining.OrdinaryMineRuntime.isRebuilding()) {
+                com.stardew.craft.mining.OrdinaryMineRuntime.barrelBroken(server, pos);
+                dropBarrelLoot(server, pos, state.getValue(MineBuildingTheme.PROPERTY), player);
+                level.playSound(null, pos, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1.0F, .9F);
+            }
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        runWithDropsSuppressed(() -> super.onRemove(state, level, pos, next, moving));
     }
 
-    // ======================== SDV 精确掉落逻辑 ========================
+    @Override protected BlockState updateShape(BlockState state, net.minecraft.core.Direction direction, BlockState neighbor,
+            net.minecraft.world.level.LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        level.scheduleTick(pos, this, 1); return state;
+    }
 
-    /**
-     * 仿 BreakableContainer.releaseContents()
-     * 概率链：20% 空 → 0.81% mystery_box → 区段掉落表
-     */
+    @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moving) {
+        super.onPlace(state, level, pos, old, moving);
+        if (!level.isClientSide) level.scheduleTick(pos, this, 1);
+    }
+
+    @Override protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!super.canSurvive(state, level, pos)) runWithDropsSuppressed(() -> level.removeBlock(pos, false));
+    }
+
+    /** Runtime population reserves both cells; never bake these caches into architecture. */
+    public static boolean placeRandom(ServerLevel level, BlockPos pos, RandomSource random, MineBuildingTheme theme) {
+        var block = (MineBarrelBlock) (random.nextBoolean()
+                ? com.stardew.craft.block.ModBlocks.MINE_CRATE.get() : com.stardew.craft.block.ModBlocks.MINE_BARREL.get());
+        if (!level.getBlockState(pos).canBeReplaced() || !level.getBlockState(pos.above()).canBeReplaced()) return false;
+        var state = block.defaultBlockState().setValue(MineBuildingTheme.PROPERTY, theme);
+        level.setBlock(pos, state, 2);
+        return block.placeExtensions(level, pos, state);
+    }
+
+    // ======================== BreakableContainer.releaseContents ========================
+
     public static void dropBarrelLoot(ServerLevel level, BlockPos pos) {
-        RandomSource r = level.getRandom();
         int floor = getFloorFromPos(pos);
-        int area = getArea(floor);
+        dropBarrelLoot(level, pos, floor < 40 ? MineBuildingTheme.EARTH : floor < 80 ? MineBuildingTheme.FROST : MineBuildingTheme.LAVA, null);
+    }
 
-        // SDV: 20% 概率完全不掉落
-        if (r.nextFloat() < 0.20f) {
-            return;
-        }
+    public static void dropBarrelLoot(ServerLevel level, BlockPos pos, MineBuildingTheme theme, net.minecraft.server.level.ServerPlayer player) {
+        int floor = level.dimension() == com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING
+                ? getFloorFromPos(pos) : switch (theme) {
+                    case FROST, FROST_DARK -> 40;
+                    case LAVA, LAVA_DARK -> 80;
+                    case DESERT, DESERT_DARK -> 121;
+                    default -> 1;
+                };
+        int area = switch (theme) {
+            case FROST, FROST_DARK -> 40;
+            case LAVA, LAVA_DARK, DESERT, DESERT_DARK -> 80;
+            default -> 0;
+        };
 
+        RandomSource r = com.stardew.craft.mining.MineContainerRewards.random(level, pos, floor);
         int effectiveMineLevel = floor == 77377 ? 5000 : floor;
-        TrinketDropService.trySpawnContainerDrop(level, pos, 1.0 + effectiveMineLevel * 0.001);
+        var extras = com.stardew.craft.mining.MineContainerRewards.roll(player, r, () -> {
+            com.stardew.craft.festival.desert.DesertFestivalMineService.tryAddBarrelEggDrop(level, pos, r);
+            TrinketDropService.trySpawnContainerDrop(level, pos, 1.0 + effectiveMineLevel * 0.001, player);
+        });
+        for (ItemStack stack : extras.items()) Block.popResource(level, pos, stack);
+        if (!extras.continueToContents()) return;
 
-        net.minecraft.world.entity.player.Player nearestPlayer = level.getNearestPlayer(
-            pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 12.0D, false);
-        com.stardew.craft.player.PlayerStardewData playerData = nearestPlayer instanceof net.minecraft.server.level.ServerPlayer serverPlayer
-            ? PlayerDataManager.getPlayerData(serverPlayer)
-            : null;
-        boolean reachedMineBottom = nearestPlayer instanceof net.minecraft.server.level.ServerPlayer serverPlayer
-                && com.stardew.craft.mining.MiningDataManager.getPlayerData(serverPlayer)
-                .getMaxFloorReached() >= 120;
-
-        // SDV: 0.81% mystery_box, routed through Utility.tryRollMysteryBox multiplier.
-        if (r.nextDouble() < BookPowerEffects.applyMysteryBoxChance(playerData, 0.0081)) {
-            drop(level, pos, item("mystery_box"), 1);
-        }
+        boolean reachedMineBottom = player != null && com.stardew.craft.mining.MiningDataManager
+                .getPlayerData(player).getMaxFloorReached() >= 120;
 
         // 按区段分配掉落
         switch (area) {
@@ -111,7 +173,6 @@ public class MineBarrelBlock extends Block {
             default -> dropDarkDesert(level, pos, r, floor, reachedMineBottom);
         }
 
-        com.stardew.craft.festival.desert.DesertFestivalMineService.tryAddBarrelEggDrop(level, pos, r);
     }
 
     // ======================== Standard Barrel (area 0, ItemId "118", floor 1-39) ========================
@@ -125,15 +186,15 @@ public class MineBarrelBlock extends Block {
             boolean reachedMineBottom
     ) {
         // 65% 普通掉落 ELSE 40% 稀有掉落（SDV 是 if/else if，互斥）
-        if (r.nextFloat() < 0.65f) {
-            if (r.nextFloat() < 0.80f) {
+        if (r.nextDouble() < 0.65) {
+            if (r.nextDouble() < 0.80) {
                 // r.Next(9) — case 2 为空（无掉落），保留以维持概率分布
                 switch (r.nextInt(9)) {
                     case 0 -> drop(level, pos, item("coal"), 1 + r.nextInt(2));        // (O)382
                     case 1 -> drop(level, pos, item("copper_ore"), 1 + r.nextInt(3));  // (O)378
                     case 2 -> { /* empty */ }
                     case 3 -> drop(level, pos, item("stone"), 2 + r.nextInt(4));       // (O)390
-                    case 4 -> drop(level, pos, item("wood_normal"), 2);                 // (O)388 r.Next(2,3)==2
+                    case 4 -> drop(level, pos, item("wood_normal"), 2 + r.nextInt(1));                 // (O)388 r.Next(2,3)==2
                     case 5 -> drop(level, pos,
                             item(reachedMineBottom
                                     ? "quartz"
@@ -150,7 +211,7 @@ public class MineBarrelBlock extends Block {
                     case 3       -> drop(level, pos, item("geode"), 1 + r.nextInt(2));        // (O)535
                 }
             }
-        } else if (r.nextFloat() < 0.40f) {
+        } else if (r.nextDouble() < 0.40) {
             // 40% 稀有 r.Next(5)
             switch (r.nextInt(5)) {
                 case 0 -> drop(level, pos, item("amethyst"), 1);              // (O)66
@@ -172,8 +233,8 @@ public class MineBarrelBlock extends Block {
             int floor,
             boolean reachedMineBottom
     ) {
-        if (r.nextFloat() < 0.65f) {
-            if (r.nextFloat() < 0.80f) {
+        if (r.nextDouble() < 0.65) {
+            if (r.nextDouble() < 0.80) {
                 switch (r.nextInt(9)) {
                     case 0 -> drop(level, pos, item("coal"), 1 + r.nextInt(2));        // (O)382
                     case 1 -> drop(level, pos, item("iron_ore"), 1 + r.nextInt(3));    // (O)380
@@ -195,7 +256,7 @@ public class MineBarrelBlock extends Block {
                     case 1       -> drop(level, pos, item("frozen_geode"), 1 + r.nextInt(2)); // (O)536
                 }
             }
-        } else if (r.nextFloat() < 0.40f) {
+        } else if (r.nextDouble() < 0.40) {
             switch (r.nextInt(5)) {
                 case 0 -> drop(level, pos, item("aquamarine"), 1);              // (O)62
                 case 1 -> drop(level, pos, item("jade"), 1);                    // (O)70
@@ -216,8 +277,8 @@ public class MineBarrelBlock extends Block {
             int floor,
             boolean reachedMineBottom
     ) {
-        if (r.nextFloat() < 0.65f) {
-            if (r.nextFloat() < 0.80f) {
+        if (r.nextDouble() < 0.65) {
+            if (r.nextDouble() < 0.80) {
                 // r.Next(8) — case 2 为空
                 switch (r.nextInt(8)) {
                     case 0 -> drop(level, pos, item("coal"), 1 + r.nextInt(2));        // (O)382
@@ -239,7 +300,7 @@ public class MineBarrelBlock extends Block {
                     case 3 -> drop(level, pos, item("cave_carrot"), 1 + r.nextInt(2));   // (O)78
                 }
             }
-        } else if (r.nextFloat() < 0.40f) {
+        } else if (r.nextDouble() < 0.40) {
             // r.Next(6)
             switch (r.nextInt(6)) {
                 case 0 -> drop(level, pos, item("emerald"), 1);                  // (O)60
@@ -255,6 +316,11 @@ public class MineBarrelBlock extends Block {
     // ======================== Special Item (仿 getSpecialItemForThisMineLevel) ========================
 
     private static void dropSpecialItem(ServerLevel level, BlockPos pos, RandomSource r, int floor) {
+        if (floor > 0 && level.dimension() == com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING) {
+            Block.popResource(level,pos,com.stardew.craft.mining.OrdinaryMineSpecialLoot.roll(level,floor,pos));
+            r.nextInt(4); // Source debris direction; keep the container stream aligned.
+            return;
+        }
         // Preserve the original slot count and order. The five unported club IDs
         // use the closest registered weapon by original damage range.
         String[] pool;
@@ -309,9 +375,5 @@ public class MineBarrelBlock extends Block {
         return Math.max(0, Math.round(pos.getZ() / spacing));
     }
 
-    private static int getArea(int floor) {
-        if (floor < 40) return 0;
-        if (floor < 80) return 40;
-        return 80;
-    }
+
 }

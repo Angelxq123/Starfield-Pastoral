@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "stardewcraft:block/artisan/wine"
+    },
+    "facing=east": {
+      "model": "stardewcraft:block/artisan/wine",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "stardewcraft:block/artisan/wine",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "stardewcraft:block/artisan/wine",
+      "y": 270
+    }
+  }
+}

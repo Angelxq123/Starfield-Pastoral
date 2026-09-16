@@ -8,7 +8,7 @@ import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.interior.InteriorSubspaceManager;
 import com.stardew.craft.manager.CropGrowthManager;
 import com.stardew.craft.mining.MineEntranceBootstrap;
-import com.stardew.craft.mining.MineFloorGenerator;
+import com.stardew.craft.mining.OrdinaryMineRuntime;
 import com.stardew.craft.mining.MiningCoordinates;
 import com.stardew.craft.mining.MiningDataManager;
 import com.stardew.craft.mining.MiningPlayerData;
@@ -320,7 +320,7 @@ public class StardewTeleportCommand {
             double safeY = 66.0;
 
             // 确保 floor 121 已生成
-            com.stardew.craft.mining.MineFloorGenerator.generateFloor(mineLevel, floor);
+            com.stardew.craft.mining.OrdinaryMineRuntime.ensure(mineLevel, floor);
 
             ModTeleport.to(player, mineLevel, 0.5, safeY, floorZ + 0.5, player.getYRot(), player.getXRot());
 
@@ -358,7 +358,7 @@ public class StardewTeleportCommand {
 
             MineEntranceBootstrap.ensureGenerated(mineLevel);
             if (targetFloor > 0) {
-                MineFloorGenerator.generateFloor(mineLevel, targetFloor);
+                OrdinaryMineRuntime.ensure(mineLevel, targetFloor);
             }
 
             MiningPlayerData playerData = MiningDataManager.getPlayerData(player);
@@ -367,7 +367,6 @@ public class StardewTeleportCommand {
 
             MiningCoordinates.teleportPlayerToFloor(player, mineLevel, targetFloor);
             PacketDistributor.sendToPlayer(player, new MiningFloorSyncPacket(targetFloor));
-            com.stardew.craft.event.MiningBlockBreakHandler.syncLadderStateForPlayer(player, targetFloor);
 
             context.getSource().sendSuccess(
                 () -> Component.translatable("stardewcraft.command.teleport.mine_floor_success", targetFloor),
@@ -402,7 +401,7 @@ public class StardewTeleportCommand {
             }
 
             MineEntranceBootstrap.ensureGenerated(mineLevel);
-            MineFloorGenerator.generateFloor(mineLevel, targetFloor);
+            OrdinaryMineRuntime.ensure(mineLevel, targetFloor);
 
             MiningPlayerData playerData = MiningDataManager.getPlayerData(player);
             playerData.setCurrentFloor(targetFloor);
@@ -410,7 +409,6 @@ public class StardewTeleportCommand {
 
             MiningCoordinates.teleportPlayerToFloor(player, mineLevel, targetFloor);
             PacketDistributor.sendToPlayer(player, new MiningFloorSyncPacket(targetFloor));
-            com.stardew.craft.event.MiningBlockBreakHandler.syncLadderStateForPlayer(player, targetFloor);
 
             final int displayFloor = relative;
             final int internal = targetFloor;

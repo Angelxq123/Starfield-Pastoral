@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "source_name": "Fly",
+  "family": "fly",
+  "health": 22,
+  "damage": 6,
+  "resilience": 1,
+  "miss_chance": 0,
+  "experience": 10,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:bug_meat",
+      "chance": 0.9
+    },
+    {
+      "item": "stardewcraft:white_algae",
+      "chance": 0.02
+    },
+    {
+      "item": "stardewcraft:ancient_seed",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_i",
+      "chance": 0.005
+    },
+    {
+      "item": "stardewcraft:dwarf_scroll_iv",
+      "chance": 0.001
+    }
+  ]
+}

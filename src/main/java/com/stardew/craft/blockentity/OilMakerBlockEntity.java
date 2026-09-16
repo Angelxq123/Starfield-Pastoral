@@ -138,7 +138,7 @@ public class OilMakerBlockEntity extends TimedProductionBlockEntity {
 
         ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
         Item outputItem = BuiltInRegistries.ITEM.get(recipe.outputId());
-        ItemStack output = new ItemStack(outputItem, recipe.outputCount());
+        ItemStack output = new ItemStack(outputItem, recipe.rollOutputCount(level.random));
         var plan = prepareProduction(
                 stack, output, recipe.minutes(),
                 player, false);
@@ -190,7 +190,7 @@ public class OilMakerBlockEntity extends TimedProductionBlockEntity {
 
         ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
         Item outputItem = BuiltInRegistries.ITEM.get(recipe.outputId());
-        ItemStack output = new ItemStack(outputItem, recipe.outputCount());
+        ItemStack output = new ItemStack(outputItem, recipe.rollOutputCount(level.random));
         var plan = prepareProduction(
                 stack, output, recipe.minutes(),
                 null, true);

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "stardewcraft:block/mine/paving/desert/mine_planks",
+    "bottom": "stardewcraft:block/mine/paving/desert/mine_planks_side",
+    "side": "stardewcraft:block/mine/paving/desert/mine_planks_side",
+    "particle": "stardewcraft:block/mine/paving/desert/mine_planks_side"
+  }
+}

@@ -1,825 +1,263 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
-import com.stardew.craft.client.gui.common.GuiText;
-import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.menu.FishPondManagerMenu;
 import com.stardew.craft.sound.ModSounds;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/** Pond observation window. All population, requirements and permissions are server snapshots. */
 @SuppressWarnings("null")
 public class FishPondManagerScreen extends AbstractContainerScreen<FishPondManagerMenu> {
-    private static final int CLOSE_W = 12, CLOSE_SH = 12;
+    private enum Confirm { NONE, CLEAR, DEMOLISH }
+    private record Text(Component label, int x, int y, int width, int color) { }
+    private record Icon(ItemStack item, int x, int y, int scale) { }
+    private record Requirement(ItemStack icon, Component label, int current, int needed, boolean met, int y, FishPondLayout.Row layout) { }
+    private Confirm confirm = Confirm.NONE;
+    private FishPondLayout.Page page;
+    private int line, scroll, contentHeight, pondHeight, populationY, requestTagY, mx, my, cooldown;
+    private boolean opened, dragging, hasPond;
+    private final List<Text> texts = new ArrayList<>();
+    private final List<Icon> icons = new ArrayList<>();
+    private final List<Requirement> requirements = new ArrayList<>();
+    private final List<Button> actions = new ArrayList<>();
+    private List<Object> lastState = List.of();
+    private ItemStack hoverItem = ItemStack.EMPTY;
+    private Component hoverText;
 
-    private static final int COL_TITLE = 0xFF5B3A1A;
-    private static final int COL_SUBTITLE = 0xFF8B7355;
-    private static final int COL_TEXT = 0xFF5B3A1A;
-    private static final int COL_GRAY = 0xFF9E9282;
-    private static final int COL_RED = 0xFFC62828;
-    private static final int COL_GOLD = 0xFFDAA520;
-    private static final int COL_OK = 0xFF4CAF50;
-    private static final int COL_OVERLAY = 0x88000000;
-    private static final int COL_BAR_BG = 0xFF3A3228;
-    private static final int COL_BAR_FILL = 0xFF6B8E23;
-    private static final int COL_BAR_WANT = 0xFFB5651D;
-
-    private static final int SDV_W = 660;
-
-    private float guiScale = 1.0f;
-    private long openedAtMs = -1;
-    private final float[] btnScale = {1.0f, 1.0f, 1.0f};
-    private float closeScale = 1.0f;
-    private float entryProgress;
-    private float populationBarProgress;
-    private int hoveredButton = -1;
-    private long lastHoverSoundMs;
-
-    private enum ConfirmType { NONE, DEMOLISH, CLEAR }
-    private ConfirmType confirmType = ConfirmType.NONE;
-    private long confirmOpenMs;
-
-    private int panelX;
-    private int panelY;
-    private int panelW;
-    private int panelH;
-    private int closeX;
-    private int closeY;
-    private int closeW;
-    private int closeH;
-    private int pad;
-    private int lineH;
-    private int secGap;
-    private int btnH;
-    private int clearBtnY;
-    private int btnY;
-    private int contentViewportTop;
-    private int contentViewportBottom;
-    private int contentHeight;
-    private int contentScroll;
-    private int contentLayoutKey = Integer.MIN_VALUE;
-
-    public FishPondManagerScreen(FishPondManagerMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
-        this.imageWidth = 1;
-        this.imageHeight = 1;
-        this.inventoryLabelY = Integer.MAX_VALUE;
-        this.titleLabelY = Integer.MAX_VALUE;
+    public FishPondManagerScreen(FishPondManagerMenu menu, Inventory inventory, Component title) { super(menu, inventory, title); }
+    private Component tr(String key, Object... args) { return Component.translatable("gui.stardew_craft.fish_pond_manager." + key, args); }
+    private int textHeight(Component text, int width) { return font.split(text, Math.max(1,width)).size() * (line + 3); }
+    private int buttonHeight(Component text, int width) { return Math.max(24, font.split(text, Math.max(1,width-14)).size()*(line+2)+10); }
+    private int addText(Component label,int x,int y,int width,int color) {
+        texts.add(new Text(label,x,y,width,color)); return y+textHeight(label,width);
     }
-
-    private int ui(int sdvPx) {
-        return Math.round(sdvPx / guiScale);
+    @Override protected void init() {
+        super.init(); font=StardewFonts.small(); line=StardewFonts.lineHeight(font); rebuild();
+        if (!opened) { opened=true; minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.SMALL_SELECT.get(),1f,.25f)); }
     }
-
-    private float s4() {
-        return 4.0f / guiScale;
+    private void rebuild() {
+        setFocused(null); clearWidgets(); actions.clear();
+        int cw=Math.min(420,width-12)-32;
+        int footerH;
+        if(confirm!=Confirm.NONE) footerH=Math.max(buttonHeight(tr("dialog.back"),(cw-8)/2),buttonHeight(tr(confirm==Confirm.CLEAR?"clear":"demolish"),(cw-8)/2));
+        else if(menu.isFormed()) {
+            int bw=(cw-12)/3;
+            footerH=Math.max(buttonHeight(tr("clear"),bw),Math.max(buttonHeight(tr("demolish"),bw),buttonHeight(Component.translatable("building.stardewcraft.manage_building"),cw-2*(bw+6))));
+        } else footerH=buttonHeight(tr("build"),cw);
+        page=FishPondLayout.fit(width,height,line,footerH,306);
+        layoutBody();
+        int preferred=Math.min(306,Math.max(confirm==Confirm.NONE?220:160,line+36+contentHeight+footerH+22));
+        page=FishPondLayout.fit(width,height,line,footerH,preferred);
+        leftPos=page.x(); topPos=page.y(); imageWidth=page.width(); imageHeight=page.height();
+        scroll=FishPondLayout.clampScroll(scroll,contentHeight,page.bottom()-page.top());
+        button(page.x()+page.width()-40,page.y()+12,24,Math.max(24,line+10),Component.translatable("gui.done"),false,false,true,this::onClose);
+        if(confirm!=Confirm.NONE) {
+            int bw=(cw-8)/2;
+            Button back=button(page.contentX(),page.footerY(),bw,footerH,tr("dialog.back"),false,false,false,()->switchConfirm(Confirm.NONE));
+            actions.add(button(page.contentX()+bw+8,page.footerY(),cw-bw-8,footerH,tr(confirm==Confirm.CLEAR?"clear":"demolish"),true,true,false,this::submitConfirm));
+            setInitialFocus(back);
+        } else if(menu.isFormed()) {
+            int bw=(cw-12)/3;
+            actions.add(button(page.contentX(),page.footerY(),bw,footerH,tr("clear"),false,true,false,()->switchConfirm(Confirm.CLEAR)));
+            actions.add(button(page.contentX()+bw+6,page.footerY(),bw,footerH,tr("demolish"),false,true,false,()->switchConfirm(Confirm.DEMOLISH)));
+            actions.add(button(page.contentX()+2*(bw+6),page.footerY(),cw-2*(bw+6),footerH,Component.translatable("building.stardewcraft.manage_building"),true,false,false,()->submit(FishPondManagerMenu.ACTION_BUILD_OR_REFRESH)));
+        } else actions.add(button(page.contentX(),page.footerY(),cw,footerH,tr("build"),true,false,false,()->submit(FishPondManagerMenu.ACTION_BUILD_OR_REFRESH)));
+        updateActions(); lastState=snapshot();
     }
-
-    @Override
-    protected void init() {
-        super.init();
-        Minecraft mc = Minecraft.getInstance();
-        guiScale = (float) mc.getWindow().getGuiScale();
-        float s4 = s4();
-        int borderCorner = Math.max(1, (int) (6.0f * s4));
-        int fh = this.font.lineHeight;
-
-        lineH = fh + 5;
-        pad = borderCorner + 6;
-        secGap = lineH;
-        btnH = fh + 14;
-        panelW = Math.min(ui(SDV_W), this.width - 8);
-        panelH = Math.min(pad * 2 + 11 * lineH + 2 * secGap + btnH * 2 + 8, this.height - 8);
-        panelX = (this.width - panelW) / 2;
-        panelY = (this.height - panelH) / 2;
-        clearBtnY = panelY + panelH - pad - btnH * 2 - 8;
-        btnY = panelY + panelH - pad - btnH;
-
-        closeW = (int) (CLOSE_W * s4) + 2;
-        closeH = (int) (CLOSE_SH * s4) + 2;
-        closeX = panelX + panelW - borderCorner - closeW;
-        closeY = panelY + borderCorner;
-
-        this.leftPos = panelX;
-        this.topPos = panelY;
-        this.imageWidth = panelW;
-        this.imageHeight = panelH;
-
-        if (openedAtMs < 0) {
-            openedAtMs = System.currentTimeMillis();
-            playSound(ModSounds.DOOR_CREAK.get(), 0.4f, 1.0f);
+    private void layoutBody() {
+        texts.clear(); icons.clear(); requirements.clear(); populationY=-1; requestTagY=-1;
+        int cw=page.contentWidth(); hasPond=confirm==Confirm.NONE;
+        if(!hasPond) {
+            String stem="dialog."+(confirm==Confirm.CLEAR?"clear":"demolish")+".";
+            int y=addText(tr(stem+"title"),0,0,cw,FishPondArt.INK)+16;
+            y=addText(tr(stem+"line1"),0,y,cw,FishPondArt.INK)+12;
+            y=addText(tr(stem+"line2"),0,y,cw,confirm==Confirm.DEMOLISH?FishPondArt.RED:FishPondArt.MUTED)+8;
+            contentHeight=y; return;
         }
-    }
-
-    @Override
-    protected void containerTick() {
-        super.containerTick();
-
-        ItemStack fishPreview = menu.getFishPreviewStack();
-        int layoutKey = (menu.isFormed() ? 1 : 0)
-            | (fishPreview.isEmpty() ? 2 : 0)
-            | (menu.hasGoldenAnimalCracker() ? 4 : 0)
-            | (menu.hasUnresolvedRequest() ? 8 : 0);
-        if (layoutKey != contentLayoutKey) {
-            contentLayoutKey = layoutKey;
-            contentHeight = 0;
-            contentScroll = 0;
+        pondHeight=page.columns()?92:72;
+        int summaryX=page.columns()?0:page.pondWidth()+14;
+        int summaryW=page.columns()?page.pondWidth():cw-summaryX;
+        int sy=page.columns()?pondHeight+10:0;
+        ItemStack fish=menu.getFishPreviewStack();
+        sy=addText(!menu.isFormed()?tr("unformed"):fish.isEmpty()?tr("no_fish"):fish.getHoverName(),summaryX,sy,summaryW,FishPondArt.INK)+8;
+        if(menu.isFormed() && !fish.isEmpty()) {
+            sy=addText(tr("population",menu.getCurrentPopulation(),menu.getMaxPopulation()),summaryX,sy,summaryW,FishPondArt.INK)+4;
+            populationY=sy;sy+=12;
         }
-
-        entryProgress += (1.0f - entryProgress) * 0.12f;
-        if (entryProgress > 0.99f) {
-            entryProgress = 1.0f;
+        if(menu.hasGoldenAnimalCracker()) {
+            icons.add(new Icon(new ItemStack(ModItems.GOLDEN_ANIMAL_CRACKER.get()),summaryX,sy,1));
+            sy=addText(tr("golden_cracker_yes"),summaryX+24,sy,summaryW-24,FishPondArt.MUTED)+8;
         }
-
-        float targetBar = menu.isFormed() && menu.getMaxPopulation() > 0
-            ? ((float) menu.getCurrentPopulation() / menu.getMaxPopulation()) * entryProgress
-            : 0.0f;
-        populationBarProgress += (targetBar - populationBarProgress) * 0.12f;
-
-        for (int i = 0; i < btnScale.length; i++) {
-            float target = hoveredButton == i ? 1.08f : 1.0f;
-            btnScale[i] += (target - btnScale[i]) * 0.18f;
-        }
-    }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
-        updateHover(mouseX, mouseY);
-
-        float s4 = s4();
-        CommonGuiTextures.drawTextureBox(g, panelX, panelY, panelW, panelH, s4, true);
-
-        int cx = panelX + pad;
-        int cw = panelW - pad * 2;
-        int contentWidth = Math.min(cw, 300);
-        int contentX = panelX + (panelW - contentWidth) / 2;
-        int y = panelY + pad;
-
-        Component titleText = Component.translatable("container.stardew_craft.fish_pond_manager");
-        y = GuiText.drawWrappedCentered(
-            g, this.font, titleText, panelX + panelW / 2, y,
-            panelW - pad * 2, COL_TITLE, true, 0);
-
-        Component formedText;
-        int formedColor;
-        if (menu.isOwnerMismatch()) {
-            formedText = Component.translatable("gui.stardew_craft.fish_pond_manager.owner_mismatch");
-            formedColor = COL_RED;
-        } else if (menu.isFormed()) {
-            formedText = Component.translatable("gui.stardew_craft.fish_pond_manager.formed");
-            formedColor = COL_OK;
+        int noteY=page.columns()?0:Math.max(pondHeight,sy)+16;
+        int nx=page.noteX(),nw=page.noteWidth(),y=noteY;
+        if(menu.isOwnerMismatch()) y=addText(tr("owner_mismatch"),nx,y,nw,FishPondArt.RED)+12;
+        if(menu.isFormed()) {
+            if(menu.hasUnresolvedRequest()) {
+                requestTagY=y;
+                y=addText(tr("request_bring"),nx+24,y+2,nw-24,FishPondArt.INK)+12;
+                ItemStack needed=menu.getNeededItemPreviewStack();
+                icons.add(new Icon(needed.isEmpty()?new ItemStack(Items.PAPER):needed,nx,y,2));
+                int end=addText(needed.isEmpty()?tr("status_unknown_item"):needed.getHoverName(),nx+42,y,nw-42,FishPondArt.INK)+4;
+                end=addText(tr("request_needed",menu.getNeededItemCount()),nx+42,end,nw-42,FishPondArt.GREEN);
+                y=Math.max(y+40,end)+14;
+            }
+            y=addText(menu.getStatusText(),nx,y,nw,FishPondArt.MUTED)+12;
+            if(fish.isEmpty()) y=addText(tr("status_no_fish"),nx,y,nw,FishPondArt.INK)+8;
+            else if(menu.hasCompletedRequest()) y=addText(tr("request_complete"),nx,y,nw,FishPondArt.GREEN)+8;
         } else {
-            formedText = Component.translatable("gui.stardew_craft.fish_pond_manager.unformed");
-            formedColor = COL_GRAY;
+            y=addText(tr("requirements"),nx,y,nw,FishPondArt.INK)+10;
+            boolean waterMet=menu.getWaterCellCount()>=menu.getRequiredWaterCells() && menu.getCurrentWaterWidth()>=menu.getRequiredWaterWidth() && menu.getCurrentWaterLength()>=menu.getRequiredWaterLength();
+            y=addRequirement(new ItemStack(Items.WATER_BUCKET),tr("need.water",menu.getCurrentWaterWidth(),menu.getCurrentWaterLength(),menu.getRequiredWaterWidth(),menu.getRequiredWaterLength()),menu.getWaterCellCount(),menu.getRequiredWaterCells(),waterMet,y);
+            y=addRequirement(new ItemStack(ModItems.FISH_NET.get()),tr("need.net"),menu.getNetCount(),menu.getRequiredNetCount(),menu.getNetCount()>=menu.getRequiredNetCount(),y);
+            y=addRequirement(new ItemStack(ModItems.FISH_POND_BUCKET.get()),tr("need.bucket"),menu.getCurrentBucketCount(),menu.getRequiredBucketCount(),menu.getCurrentBucketCount()==menu.getRequiredBucketCount(),y);
+            y=addText(tr(menu.canBuild()?"ready":"not_ready"),nx,y+8,nw,menu.canBuild()?FishPondArt.GREEN:FishPondArt.RED)+8;
         }
-        y = GuiText.drawWrappedCentered(
-            g, this.font, formedText, panelX + panelW / 2, y,
-            panelW - pad * 2, formedColor, false, 0);
-
-        StardewGuiUtil.drawHorizontalPartitionSmall(g, contentX, y + secGap / 2 - 2, contentWidth, s4);
-        y += secGap;
-
-        int actionTop = menu.isFormed() ? clearBtnY : btnY;
-        int div2Y = actionTop - secGap;
-        contentViewportTop = y;
-        contentViewportBottom = Math.max(y, div2Y);
-        int viewportHeight = Math.max(
-            0,
-            contentViewportBottom - contentViewportTop);
-        clampContentScroll(viewportHeight);
-        if (viewportHeight > 0) {
-            g.enableScissor(
-                panelX,
-                contentViewportTop,
-                panelX + panelW,
-                contentViewportBottom);
-            int contentTop = contentViewportTop - contentScroll;
-            int contentBottom = menu.isFormed()
-                ? renderFormedContent(
-                    g, contentX, contentTop, contentWidth - 6)
-                : renderUnformedContent(
-                    g, contentX, contentTop, contentWidth - 6);
-            contentHeight = Math.max(
-                viewportHeight,
-                contentBottom - contentTop);
-            g.disableScissor();
-            clampContentScroll(viewportHeight);
-            renderContentScrollbar(
-                g,
-                contentX + contentWidth - 3,
-                contentViewportTop,
-                viewportHeight);
-        } else {
-            contentHeight = 0;
-            contentScroll = 0;
-        }
-
-        StardewGuiUtil.drawHorizontalPartitionSmall(g, cx, div2Y + secGap / 2 - 2, cw, s4);
-
-        int gap = 8;
-        int btnW = (cw - gap) / 2;
-        if (menu.isFormed()) {
-            drawButton(g, 2, cx, clearBtnY, cw, btnH,
-                Component.translatable("gui.stardew_craft.fish_pond_manager.clear"),
-                menu.canManagePond(), mouseX, mouseY);
-            drawButton(g, 0, cx, btnY, btnW, btnH,
-                Component.translatable("gui.stardew_craft.fish_pond_manager.refresh"),
-                !menu.isOwnerMismatch(), mouseX, mouseY);
-            drawButton(g, 1, cx + btnW + gap, btnY, btnW, btnH,
-                Component.translatable("gui.stardew_craft.fish_pond_manager.demolish"),
-                menu.isFormed() && !menu.isOwnerMismatch(), mouseX, mouseY);
-        } else {
-            drawButton(g, 0, cx, btnY, cw, btnH,
-                Component.translatable("gui.stardew_craft.fish_pond_manager.build"),
-                menu.canBuild(), mouseX, mouseY);
-        }
-
-        boolean closeHovered = inside(mouseX, mouseY, closeX, closeY, closeW, closeH);
-        closeScale += ((closeHovered ? 1.15f : 1.0f) - closeScale) * 0.15f;
-        float cs = s4 * closeScale;
-        int cdx = closeX + closeW / 2 - (int) (CLOSE_W * cs / 2);
-        int cdy = closeY + closeH / 2 - (int) (CLOSE_SH * cs / 2);
-        CommonGuiTextures.drawCloseButton(g, cdx, cdy, cs);
-
-        if (confirmType != ConfirmType.NONE) {
-            renderConfirmDialog(g, mouseX, mouseY);
-        }
-
-        this.renderTooltip(g, mouseX, mouseY);
+        contentHeight=Math.max(Math.max(pondHeight,sy),y)+4;
     }
-
-    private int renderUnformedContent(GuiGraphics g, int x, int y, int width) {
-        y = GuiText.drawWrapped(
-            g,
-            this.font,
-            Component.translatable("gui.stardew_craft.fish_pond_manager.requirements"),
-            x,
-            y,
-            width,
-            COL_GOLD,
-            false,
-            0);
-
-        y = renderRequirementRow(
-            g,
-            x,
-            y,
-            width,
-            new ItemStack(Items.WATER_BUCKET),
-            Component.translatable(
-                "gui.stardew_craft.fish_pond_manager.need.water",
-                menu.getCurrentWaterWidth(),
-                menu.getCurrentWaterLength(),
-                menu.getRequiredWaterWidth(),
-                menu.getRequiredWaterLength()),
-            menu.getWaterCellCount(),
-            menu.getRequiredWaterCells());
-        y = renderRequirementRow(
-            g,
-            x,
-            y,
-            width,
-            new ItemStack(ModItems.FISH_NET.get()),
-            Component.translatable("gui.stardew_craft.fish_pond_manager.need.net"),
-            menu.getNetCount(),
-            menu.getRequiredNetCount());
-        y = renderRequirementRow(
-            g,
-            x,
-            y,
-            width,
-            new ItemStack(ModItems.FISH_POND_BUCKET.get()),
-            Component.translatable("gui.stardew_craft.fish_pond_manager.need.bucket"),
-            menu.getCurrentBucketCount(),
-            menu.getRequiredBucketCount());
-
-        y += 2;
-        Component footer = Component.translatable(
-            menu.canBuild()
-                ? "gui.stardew_craft.fish_pond_manager.ready"
-                : "gui.stardew_craft.fish_pond_manager.not_ready");
-        return GuiText.drawWrapped(
-            g,
-            this.font,
-            footer,
-            x,
-            y,
-            width,
-            menu.canBuild() ? COL_GOLD : COL_RED,
-            false,
-            0);
+    private int addRequirement(ItemStack icon,Component label,int current,int needed,boolean met,int y) {
+        int countW=font.width(current+" / "+needed);
+        int labelW=FishPondLayout.labelWidth(page.noteWidth(),countW);
+        var row=FishPondLayout.row(page.noteWidth(),countW,textHeight(label,labelW),line);
+        requirements.add(new Requirement(icon,label,current,needed,met,y,row)); return y+row.height()+4;
     }
-
-    private int renderFormedContent(GuiGraphics g, int x, int y, int width) {
-        ItemStack fishPreview = menu.getFishPreviewStack();
-        if (fishPreview.isEmpty()) {
-            CommonGuiTextures.drawItem(g, new ItemStack(Items.COD), x, y - 3, 1.0f);
-            y = drawWrappedLines(g, this.font.split(menu.getStatusText(), width - 24), x + 20, y, COL_SUBTITLE);
-            return y;
-        }
-
-        CommonGuiTextures.drawItem(g, fishPreview, x, y - 3, 1.0f);
-        y = drawWrappedLines(
-            g,
-            this.font.split(fishPreview.getHoverName(), width - 24),
-            x + 20,
-            y,
-            COL_TEXT) + 2;
-
-        Component populationText = Component.translatable(
-            "gui.stardew_craft.fish_pond_manager.population",
-            menu.getCurrentPopulation(),
-            menu.getMaxPopulation());
-        y = GuiText.drawWrapped(
-            g, this.font, populationText, x, y, width,
-            COL_TEXT, false, 0);
-
-        y = drawPopulationIcons(g, fishPreview, x, y, width, menu.getCurrentPopulation(), menu.getMaxPopulation());
-        y += 2;
-
-        y = drawWrappedLines(g, this.font.split(menu.getStatusText(), width), x, y, COL_SUBTITLE);
-
-        if (menu.hasGoldenAnimalCracker()) {
-            y += 2;
-            CommonGuiTextures.drawItem(g, new ItemStack(ModItems.GOLDEN_ANIMAL_CRACKER.get()), x, y - 3, 1.0f);
-            y = drawWrappedLines(
-                g,
-                this.font.split(
-                    Component.translatable(
-                        "gui.stardew_craft.fish_pond_manager.golden_cracker_yes"),
-                    width - 24),
-                x + 20,
-                y,
-                COL_GOLD);
-        }
-
-        if (menu.hasUnresolvedRequest()) {
-            y += 2;
-            StardewGuiUtil.drawHorizontalPartitionSmall(g, x, y + secGap / 2 - 2, width, s4());
-            y += secGap;
-            y = GuiText.drawWrapped(
-                g,
-                this.font,
-                Component.translatable(
-                    "gui.stardew_craft.fish_pond_manager.request_bring"),
-                x,
-                y,
-                width,
-                COL_GOLD,
-                false,
-                0);
-            ItemStack neededPreview = menu.getNeededItemPreviewStack();
-            CommonGuiTextures.drawItem(g, neededPreview.isEmpty() ? new ItemStack(Items.PAPER) : neededPreview, x, y - 3, 1.0f);
-            y = drawWrappedLines(g, this.font.split(
-                Component.translatable("gui.stardew_craft.fish_pond_manager.request_needed", menu.getNeededItemCount()),
-                width - 24), x + 20, y, COL_GOLD);
-        }
-
-        return y;
+    private void switchConfirm(Confirm value) { confirm=value;scroll=0;rebuild(); }
+    private void updateActions() {
+        boolean allowed=cooldown==0 && (menu.isFormed()?menu.canManagePond():menu.canBuild()&&!menu.isOwnerMismatch());
+        for(Button b:actions)b.active=allowed;
     }
-
-    private int renderRequirementRow(GuiGraphics g, int x, int y, int width, ItemStack icon, Component label, int current, int required) {
-        boolean met = current >= required;
-        String countText = current + "/" + required;
-        int countWidth = this.font.width(countText);
-        int barWidth = Math.min(70, width / 4);
-        int labelX = x + this.font.lineHeight + 6;
-        int labelWidth = Math.max(1, width - (labelX - x));
-
-        float iconScale = (this.font.lineHeight + 2) / 16.0f;
-        CommonGuiTextures.drawItem(g, icon, x, y - 1, iconScale);
-
-        int labelY = y;
-        for (FormattedCharSequence line : this.font.split(label, labelWidth)) {
-            g.drawString(this.font, line, labelX, labelY,
-                COL_TEXT, false);
-            labelY += lineH;
+    private void submit(int action) {
+        updateActions();
+        boolean allowed=action==FishPondManagerMenu.ACTION_BUILD_OR_REFRESH ? (menu.isFormed()?menu.canManagePond():menu.canBuild()&&!menu.isOwnerMismatch()) : menu.canManagePond();
+        if(!allowed || cooldown>0 || minecraft.gameMode==null)return;
+        minecraft.gameMode.handleInventoryButtonClick(menu.containerId,action);cooldown=8;updateActions();
+    }
+    private void submitConfirm() {
+        if(confirm==Confirm.NONE || !menu.canManagePond() || cooldown>0)return;
+        submit(confirm==Confirm.CLEAR?FishPondManagerMenu.ACTION_CLEAR_POND:FishPondManagerMenu.ACTION_DEMOLISH);
+        switchConfirm(Confirm.NONE);
+    }
+    private List<Object> snapshot() {
+        return List.of(menu.isFormed(),menu.isOwnerMismatch(),menu.getFishPreviewStack().getItem(),menu.getCurrentPopulation(),menu.getMaxPopulation(),menu.getNeededItemPreviewStack().getItem(),menu.getNeededItemCount(),menu.hasCompletedRequest(),menu.hasGoldenAnimalCracker(),menu.canBuild(),menu.getWaterCellCount(),menu.getNetCount(),menu.getCurrentBucketCount(),menu.getCurrentWaterWidth(),menu.getCurrentWaterLength(),menu.getRequiredWaterCells(),menu.getRequiredWaterWidth(),menu.getRequiredWaterLength(),menu.getRequiredNetCount(),menu.getRequiredBucketCount(),menu.getStatusText().getString());
+    }
+    @Override protected void containerTick() {
+        super.containerTick();if(cooldown>0)cooldown--;
+        if(!snapshot().equals(lastState)) {
+            if(!menu.canManagePond())confirm=Confirm.NONE;
+            rebuild();
         }
-        int progressY = Math.max(y + lineH, labelY);
-        g.drawString(
-            this.font,
-            countText,
-            x + width - countWidth,
-            progressY,
-            met ? COL_OK : COL_RED,
-            false);
-        int availableBarWidth = Math.max(
-            12,
-            width - (labelX - x) - countWidth - 8);
-        drawRequirementBar(
-            g,
-            labelX,
-            progressY + 2,
-            Math.min(barWidth, availableBarWidth),
-            this.font.lineHeight - 2,
-            required > 0
-                ? (float) Math.min(current, required) / required
-                : 1.0f,
-            met);
-        return progressY + lineH + 3;
+        updateActions();
     }
-
-    private void clampContentScroll(int viewportHeight) {
-        int maxScroll = Math.max(
-            0,
-            contentHeight - Math.max(0, viewportHeight));
-        contentScroll = Mth.clamp(contentScroll, 0, maxScroll);
-    }
-
-    private void renderContentScrollbar(
-        GuiGraphics g,
-        int x,
-        int y,
-        int viewportHeight
-    ) {
-        if (contentHeight <= viewportHeight || viewportHeight <= 0) {
-            return;
-        }
-        g.fill(x, y, x + 2, y + viewportHeight, 0x403A3228);
-        int thumbHeight = Math.max(
-            10,
-            viewportHeight * viewportHeight / contentHeight);
-        int maxScroll = contentHeight - viewportHeight;
-        int travel = viewportHeight - thumbHeight;
-        int thumbY = y + (maxScroll <= 0
-            ? 0
-            : contentScroll * travel / maxScroll);
-        g.fill(x, thumbY, x + 2, thumbY + thumbHeight, COL_GOLD);
-    }
-
-    private void drawRequirementBar(GuiGraphics g, int x, int y, int width, int height, float progress, boolean met) {
-        g.fill(x, y, x + width, y + height, COL_BAR_BG);
-        int fillWidth = (int) ((width - 2) * Mth.clamp(progress, 0.0f, 1.0f));
-        if (fillWidth > 0) {
-            g.fill(x + 1, y + 1, x + 1 + fillWidth, y + height - 1, met ? COL_BAR_FILL : COL_BAR_WANT);
+    @Override protected void renderBg(GuiGraphics g,float tick,int mouseX,int mouseY) {
+        FishPondArt.page(g,page);
+        String heading=title.getString();int hw=page.contentWidth()-32;
+        if(font.width(heading)>hw)heading=font.plainSubstrByWidth(heading,hw-font.width("..."))+"...";
+        g.drawString(font,heading,page.contentX(),page.y()+16,FishPondArt.INK,false);
+        if(inside(mouseX,mouseY,page.contentX(),page.y()+12,hw,line+12))hoverText=title;
+        FishPondArt.rule(g,page.contentX(),page.top()-10,page.contentWidth());
+        g.enableScissor(page.contentX()-3,page.top(),page.contentX()+page.contentWidth()+1,page.bottom());
+        g.pose().pushPose();g.pose().translate(page.contentX(),page.top()-scroll,0);
+        drawBody(g);g.pose().popPose();g.disableScissor();
+        int vh=page.bottom()-page.top(),max=Math.max(0,contentHeight-vh);
+        if(max>0) {
+            int thumb=Math.max(12,vh*vh/contentHeight),y=page.top()+(vh-thumb)*scroll/max;
+            g.fill(page.x()+page.width()-10,page.top(),page.x()+page.width()-8,page.bottom(),0xFFD2CEB5);
+            g.fill(page.x()+page.width()-11,y,page.x()+page.width()-7,y+thumb,0xFF658779);
         }
     }
-
-    private int drawPopulationIcons(GuiGraphics g, ItemStack fishPreview, int x, int y, int width, int current, int max) {
-        int slotCount = Math.max(1, max);
-        int rows = (slotCount + 4) / 5;
-        int iconStep = 18;
-        float iconScale = 0.75f;
-
-        for (int row = 0; row < rows; row++) {
-            int itemsThisRow = Math.min(5, slotCount - row * 5);
-            int rowWidth = (itemsThisRow - 1) * iconStep + 12;
-            int rowStartX = x + (width - rowWidth) / 2;
-            for (int col = 0; col < itemsThisRow; col++) {
-                int index = row * 5 + col;
-                int drawX = rowStartX + col * iconStep;
-                int drawY = y + row * iconStep;
-
-                if (index >= current) {
-                    CommonGuiTextures.drawItemTint(g, fishPreview, drawX, drawY, iconScale, 0.0F, 0.0F, 0.0F, 0.45F);
-                } else {
-                    CommonGuiTextures.drawItem(g, fishPreview, drawX, drawY, iconScale);
+    private void drawBody(GuiGraphics g) {
+        if(hasPond) {
+            FishPondArt.pond(g,0,0,page.pondWidth(),pondHeight);
+            ItemStack fish=menu.getFishPreviewStack();
+            if(menu.isFormed() && !fish.isEmpty()) {
+                int ix=(page.pondWidth()-32)/2,iy=(pondHeight-32)/2-2;
+                CommonGuiTextures.drawItem(g,fish,ix,iy,2);
+                if(inside(mx,my,ix,iy,32,32))hoverItem=fish;
+            }
+            if(populationY>=0) {
+                int x=page.columns()?0:page.pondWidth()+14,w=page.columns()?page.pondWidth():page.contentWidth()-x;
+                int max=menu.getMaxPopulation(),fill=max<=0?0:(int)((long)w*Math.min(menu.getCurrentPopulation(),max)/max);
+                g.fill(x,populationY,x+w,populationY+6,0xFFD2D2B6);g.fill(x,populationY,x+fill,populationY+6,0xFF6B9982);
+                if(max>0&&max<=20)for(int i=1;i<max;i++)g.fill(x+i*w/max,populationY,x+i*w/max+1,populationY+6,0xFFEEE8CE);
+            }
+            if(requestTagY>=0)FishPondArt.icon(g,"tag",page.noteX(),requestTagY,1);
+        }
+        for(Text t:texts) {
+            int y=t.y;
+            for(FormattedCharSequence part:font.split(t.label,Math.max(1,t.width))) {g.drawString(font,part,t.x,y,t.color,false);y+=line+3;}
+        }
+        for(Icon icon:icons) {
+            CommonGuiTextures.drawItem(g,icon.item,icon.x,icon.y,icon.scale);
+            if(inside(mx,my,icon.x,icon.y,16*icon.scale,16*icon.scale))hoverItem=icon.item;
+        }
+        for(Requirement req:requirements) {
+            int x=page.noteX(),w=page.noteWidth(),y=req.y;var r=req.layout;
+            g.renderItem(req.icon,x,y+2);int ty=y;
+            for(var part:font.split(req.label,r.labelWidth())) {g.drawString(font,part,x+24,ty,FishPondArt.INK,false);ty+=line+3;}
+            String count=req.current+" / "+req.needed;
+            g.drawString(font,count,r.stacked()?x+24:x+w-14-font.width(count),y+r.countY(),req.met?FishPondArt.GREEN:FishPondArt.RED,false);
+            FishPondArt.sprite(g,req.met?"ok":"missing",x+w-8,y+r.countY()+Math.max(0,(line-8)/2),8,8);
+            FishPondArt.rule(g,x+24,y+r.height()-2,w-24);
+            if(inside(mx,my,x,y,20,20))hoverItem=req.icon;
+        }
+    }
+    @Override protected void renderLabels(GuiGraphics g,int x,int y) { }
+    @Override public void render(GuiGraphics g,int mouseX,int mouseY,float tick) {
+        hoverItem=ItemStack.EMPTY;hoverText=null;
+        boolean within=mouseY>=page.top()&&mouseY<page.bottom();
+        mx=within?mouseX-page.contentX():-10000;my=within?mouseY-page.top()+scroll:-10000;
+        renderTransparentBackground(g);super.render(g,mouseX,mouseY,tick);
+        if(!hoverItem.isEmpty())g.renderTooltip(minecraft.font,hoverItem,mouseX,mouseY);
+        else if(hoverText!=null)g.renderTooltip(font,font.split(hoverText,Math.min(240,width-24)),mouseX,mouseY);
+    }
+    private Button button(int x,int y,int w,int h,Component label,boolean primary,boolean danger,boolean close,Runnable action) {
+        Button b=new Button(x,y,w,h,label,unused->action.run(),supplier->supplier.get()) {
+            @Override protected void renderWidget(GuiGraphics g,int mx,int my,float tick) {
+                String skin=!active?"disabled":primary?(danger?"danger":"button")+(isHoveredOrFocused()?"_hover":""):"secondary"+(isHoveredOrFocused()?"_hover":"");
+                FishPondArt.box(g,skin,getX(),getY(),getWidth(),getHeight());
+                if(close)FishPondArt.sprite(g,"close",getX()+(getWidth()-8)/2,getY()+(getHeight()-8)/2,8,8);
+                else {
+                    var ll=font.split(getMessage(),getWidth()-14);int yy=getY()+(getHeight()-ll.size()*(line+2)+2)/2;
+                    for(var part:ll) {g.drawString(font,part,getX()+(getWidth()-font.width(part))/2,yy,!active?FishPondArt.MUTED:primary?0xFFFFF4D8:danger?FishPondArt.RED:FishPondArt.INK,false);yy+=line+2;}
                 }
+                if(isFocused())g.renderOutline(getX()+3,getY()+3,getWidth()-6,getHeight()-6,primary?0xFFE7D6A9:FishPondArt.GREEN);
             }
-        }
-
-        return y + rows * iconStep;
+            @Override public void playDownSound(net.minecraft.client.sounds.SoundManager manager) {manager.play(SimpleSoundInstance.forUI(ModSounds.SMALL_SELECT.get(),1f,.25f));}
+        };
+        return addRenderableWidget(b);
     }
-
-    private int drawWrappedLines(GuiGraphics g, java.util.List<FormattedCharSequence> lines, int x, int y, int color) {
-        for (FormattedCharSequence line : lines) {
-            g.drawString(this.font, line, x, y, color);
-            y += lineH;
+    private boolean inside(double x,double y,int rx,int ry,int w,int h) {return x>=rx&&x<rx+w&&y>=ry&&y<ry+h;}
+    @Override public boolean mouseScrolled(double x,double y,double horizontal,double vertical) {
+        if(inside(x,y,page.contentX(),page.top(),page.contentWidth(),page.bottom()-page.top())&&vertical!=0) {
+            scroll=FishPondLayout.clampScroll(scroll+(vertical<0?24:-24),contentHeight,page.bottom()-page.top());return true;
         }
-        return y;
+        return super.mouseScrolled(x,y,horizontal,vertical);
     }
-
-    private void drawButton(GuiGraphics g, int idx, int x, int y, int w, int h, Component label, boolean active, int mx, int my) {
-        boolean hovered = hoveredButton == idx && active;
-        float scale = btnScale[idx];
-
-        g.pose().pushPose();
-        float cxf = x + w / 2f;
-        float cyf = y + h / 2f;
-        g.pose().translate(cxf, cyf, 0);
-        g.pose().scale(scale, scale, 1.0f);
-        g.pose().translate(-cxf, -cyf, 0);
-
-        float s4 = s4();
-        CommonGuiTextures.drawTextureBox(g, x, y, w, h, s4, false);
-        int inset = (int) (4 * s4);
-        if (!active) {
-            g.fill(x + inset, y + inset, x + w - inset, y + h - inset, 0x50888888);
-        } else if (hovered) {
-            g.fill(x + inset, y + inset, x + w - inset, y + h - inset, 0x30FFD700);
-        }
-        int textColor = !active ? 0xFF909090 : (hovered ? COL_TITLE : COL_TEXT);
-        GuiText.drawCenteredFitted(g, this.font, label, x + w / 2,
-            y + h / 2, w - 8, textColor, hovered);
-        g.pose().popPose();
+    private void drag(double y) {
+        int vh=page.bottom()-page.top(),max=Math.max(0,contentHeight-vh),thumb=Math.min(vh,Math.max(12,vh*vh/Math.max(1,contentHeight)));
+        scroll=(int)Math.round(Math.max(0,Math.min(1,(y-page.top()-thumb/2.0)/Math.max(1,vh-thumb)))*max);
     }
-
-    private void renderConfirmDialog(GuiGraphics g, int mx, int my) {
-        g.fill(0, 0, this.width, this.height, COL_OVERLAY);
-
-        int dw = Math.min(panelW - pad, this.width - 16);
-        int contentWidth = Math.max(1, dw - pad * 2);
-        Component title = confirmDialogTitle();
-        Component line1 = confirmDialogLine1();
-        Component line2 = confirmDialogLine2();
-        int textLines = GuiText.wrappedLineCount(
-            this.font, title, contentWidth, 0)
-            + GuiText.wrappedLineCount(
-                this.font, line1, contentWidth, 0)
-            + GuiText.wrappedLineCount(
-                this.font, line2, contentWidth, 0);
-        int dh = pad * 2 + textLines * lineH + secGap + btnH;
-        int dx = (this.width - dw) / 2;
-        int dy = (this.height - dh) / 2;
-
-        long elapsed = System.currentTimeMillis() - confirmOpenMs;
-        float scale = elapsed < 200 ? 0.85f + 0.15f * easeOutCubic(elapsed / 200f) : 1.0f;
-
-        g.pose().pushPose();
-        float cxf = dx + dw / 2f;
-        float cyf = dy + dh / 2f;
-        g.pose().translate(cxf, cyf, 200);
-        g.pose().scale(scale, scale, 1.0f);
-        g.pose().translate(-cxf, -cyf, 0);
-
-        float s4 = s4();
-        CommonGuiTextures.drawTextureBox(g, dx, dy, dw, dh, s4, true);
-
-        int tx = dx + pad;
-        int ty = dy + pad;
-        ty = GuiText.drawWrapped(
-            g, this.font, title, tx, ty, contentWidth,
-            COL_TITLE, false, 0);
-        ty = GuiText.drawWrapped(
-            g, this.font, line1, tx, ty, contentWidth,
-            COL_TEXT, false, 0);
-        GuiText.drawWrapped(
-            g, this.font, line2, tx, ty, contentWidth,
-            COL_RED, false, 0);
-
-        int cbW = 70;
-        int cbH = this.font.lineHeight + 12;
-        int cbY = dy + dh - pad - cbH;
-        int confirmBtnX = dx + dw / 2 - cbW - 4;
-        int cancelBtnX = dx + dw / 2 + 4;
-
-        drawDialogButton(g, confirmBtnX, cbY, cbW, cbH,
-            Component.translatable("gui.stardew_craft.fish_pond_manager.dialog.confirm"),
-            true, inside(mx, my, confirmBtnX, cbY, cbW, cbH));
-        drawDialogButton(g, cancelBtnX, cbY, cbW, cbH,
-            Component.translatable("gui.stardew_craft.fish_pond_manager.dialog.back"),
-            true, inside(mx, my, cancelBtnX, cbY, cbW, cbH));
-
-        g.pose().popPose();
+    @Override public boolean mouseClicked(double x,double y,int button) {
+        if(button==0&&contentHeight>page.bottom()-page.top()&&inside(x,y,page.x()+page.width()-13,page.top(),9,page.bottom()-page.top())) {dragging=true;drag(y);return true;}
+        return super.mouseClicked(x,y,button);
     }
-
-    private void drawDialogButton(GuiGraphics g, int x, int y, int w, int h,
-                                  Component label, boolean active, boolean hovered) {
-        float s4 = s4();
-        CommonGuiTextures.drawTextureBox(g, x, y, w, h, s4, false);
-
-        int inset = (int) (4 * s4);
-        if (!active) {
-            g.fill(x + inset, y + inset, x + w - inset, y + h - inset, 0x50888888);
-        } else if (hovered) {
-            g.fill(x + inset, y + inset, x + w - inset, y + h - inset, 0x30FFD700);
-        }
-
-        int textColor = !active ? 0xFF909090 : (hovered ? COL_TITLE : COL_TEXT);
-        GuiText.drawCenteredFitted(g, this.font, label, x + w / 2,
-            y + h / 2, w - 8, textColor, hovered);
-    }
-
-    @Override
-    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-    }
-
-    @Override
-    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-    }
-
-    @Override
-    public boolean mouseScrolled(
-        double mouseX,
-        double mouseY,
-        double scrollX,
-        double scrollY
-    ) {
-        if (confirmType == ConfirmType.NONE
-            && inside(
-                (int) mouseX,
-                (int) mouseY,
-                panelX,
-                contentViewportTop,
-                panelW,
-                Math.max(0, contentViewportBottom - contentViewportTop))
-            && contentHeight
-                > contentViewportBottom - contentViewportTop) {
-            contentScroll -= (int) Math.round(
-                scrollY * lineH * 2.0D);
-            clampContentScroll(
-                contentViewportBottom - contentViewportTop);
-            return true;
-        }
-        return super.mouseScrolled(
-            mouseX,
-            mouseY,
-            scrollX,
-            scrollY);
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) {
-            return super.mouseClicked(mouseX, mouseY, button);
-        }
-        int mx = (int) mouseX;
-        int my = (int) mouseY;
-        if (inside(mx, my, closeX, closeY, closeW, closeH)) {
-            playSound(ModSounds.CANCEL.get(), 0.3f, 1.0f);
-            this.onClose();
-            return true;
-        }
-        if (confirmType != ConfirmType.NONE) {
-            return handleConfirmClick(mx, my);
-        }
-
-        int cx = panelX + pad;
-        int cw = panelW - pad * 2;
-        int gap = 8;
-        int btnW = (cw - gap) / 2;
-        if (menu.isFormed() && menu.canManagePond() && inside(mx, my, cx, clearBtnY, cw, btnH)) {
-            enterConfirm(ConfirmType.CLEAR);
-            return true;
-        }
-        if (!menu.isFormed() && !menu.isOwnerMismatch() && menu.canBuild() && inside(mx, my, cx, btnY, cw, btnH)) {
-            if (this.minecraft != null && this.minecraft.gameMode != null) {
-                this.minecraft.gameMode.handleInventoryButtonClick(menu.containerId, FishPondManagerMenu.ACTION_BUILD_OR_REFRESH);
-                playSound(ModSounds.HAMMER.get(), 0.6f, 1.0f);
-            }
-            return true;
-        }
-        if (menu.isFormed() && !menu.isOwnerMismatch() && inside(mx, my, cx, btnY, btnW, btnH)) {
-            if (this.minecraft != null && this.minecraft.gameMode != null) {
-                this.minecraft.gameMode.handleInventoryButtonClick(menu.containerId, FishPondManagerMenu.ACTION_BUILD_OR_REFRESH);
-                playSound(ModSounds.HAMMER.get(), 0.6f, 1.0f);
-            }
-            return true;
-        }
-        if (menu.isFormed() && !menu.isOwnerMismatch() && inside(mx, my, cx + btnW + gap, btnY, btnW, btnH)) {
-            enterConfirm(ConfirmType.DEMOLISH);
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    private boolean handleConfirmClick(int mx, int my) {
-        int dw = Math.min(panelW - pad, this.width - 16);
-        int contentWidth = Math.max(1, dw - pad * 2);
-        int textLines = GuiText.wrappedLineCount(
-            this.font, confirmDialogTitle(), contentWidth, 0)
-            + GuiText.wrappedLineCount(
-                this.font, confirmDialogLine1(), contentWidth, 0)
-            + GuiText.wrappedLineCount(
-                this.font, confirmDialogLine2(), contentWidth, 0);
-        int dh = pad * 2 + textLines * lineH + secGap + btnH;
-        int dx = (this.width - dw) / 2;
-        int dy = (this.height - dh) / 2;
-        int cbW = 70;
-        int cbH = this.font.lineHeight + 12;
-        int cbY = dy + dh - pad - cbH;
-        int confirmBtnX = dx + dw / 2 - cbW - 4;
-        int cancelBtnX = dx + dw / 2 + 4;
-
-        if (inside(mx, my, confirmBtnX, cbY, cbW, cbH)) {
-            executeConfirm();
-            return true;
-        }
-        if (inside(mx, my, cancelBtnX, cbY, cbW, cbH)) {
-            exitConfirm();
-            return true;
-        }
-        if (!inside(mx, my, dx, dy, dw, dh)) {
-            exitConfirm();
-            return true;
-        }
-        return true;
-    }
-
-    private Component confirmDialogTitle() {
-        return Component.translatable(confirmType == ConfirmType.CLEAR
-            ? "gui.stardew_craft.fish_pond_manager.dialog.clear.title"
-            : "gui.stardew_craft.fish_pond_manager.dialog.demolish.title");
-    }
-
-    private Component confirmDialogLine1() {
-        return Component.translatable(confirmType == ConfirmType.CLEAR
-            ? "gui.stardew_craft.fish_pond_manager.dialog.clear.line1"
-            : "gui.stardew_craft.fish_pond_manager.dialog.demolish.line1");
-    }
-
-    private Component confirmDialogLine2() {
-        return Component.translatable(confirmType == ConfirmType.CLEAR
-            ? "gui.stardew_craft.fish_pond_manager.dialog.clear.line2"
-            : "gui.stardew_craft.fish_pond_manager.dialog.demolish.line2");
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (confirmType != ConfirmType.NONE && keyCode == 256) {
-            exitConfirm();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    @Override
-    public void onClose() {
-        playSound(ModSounds.DOOR_CREAK_REVERSE.get(), 0.4f, 1.0f);
-        super.onClose();
-    }
-
-    private void enterConfirm(ConfirmType type) {
-        confirmType = type;
-        confirmOpenMs = System.currentTimeMillis();
-        playSound(ModSounds.BIG_SELECT.get(), 0.5f, 1.0f);
-    }
-
-    private void exitConfirm() {
-        if (confirmType == ConfirmType.NONE) {
-            return;
-        }
-        confirmType = ConfirmType.NONE;
-        playSound(ModSounds.BIG_DESELECT.get(), 0.4f, 1.0f);
-    }
-
-    private void executeConfirm() {
-        if (this.minecraft != null && this.minecraft.gameMode != null) {
-            if (confirmType == ConfirmType.CLEAR) {
-                playSound(ModSounds.CANCEL.get(), 0.3f, 1.0f);
-                this.minecraft.gameMode.handleInventoryButtonClick(menu.containerId, FishPondManagerMenu.ACTION_CLEAR_POND);
-            } else if (confirmType == ConfirmType.DEMOLISH) {
-                playSound(ModSounds.EXPLOSION.get(), 0.3f, 1.0f);
-                this.minecraft.gameMode.handleInventoryButtonClick(menu.containerId, FishPondManagerMenu.ACTION_DEMOLISH);
-            }
-        }
-        exitConfirm();
-    }
-
-    private void updateHover(int mx, int my) {
-        if (confirmType != ConfirmType.NONE) {
-            hoveredButton = -1;
-            return;
-        }
-
-        int cx = panelX + pad;
-        int cw = panelW - pad * 2;
-        int gap = 8;
-        int btnW = (cw - gap) / 2;
-
-        int oldHover = hoveredButton;
-        hoveredButton = -1;
-        if (inside(mx, my, cx, clearBtnY, cw, btnH)) {
-            hoveredButton = 2;
-        } else if (inside(mx, my, cx, btnY, btnW, btnH)) {
-            hoveredButton = 0;
-        } else if (inside(mx, my, cx + btnW + gap, btnY, btnW, btnH)) {
-            hoveredButton = 1;
-        }
-
-        if (hoveredButton >= 0 && hoveredButton != oldHover) {
-            long now = System.currentTimeMillis();
-            if (now - lastHoverSoundMs > 300) {
-                playSound(ModSounds.SMALL_SELECT.get(), 0.2f, 1.0f);
-                lastHoverSoundMs = now;
-            }
-        }
-    }
-
-    private static float easeOutCubic(float t) {
-        t = Mth.clamp(t, 0.0f, 1.0f);
-        float f = 1.0f - t;
-        return 1.0f - f * f * f;
-    }
-
-    private static boolean inside(int mx, int my, int x, int y, int w, int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
-    }
-
-    private void playSound(SoundEvent sound, float volume, float pitch) {
-        var player = this.minecraft != null ? this.minecraft.player : null;
-        if (player != null) {
-            player.playSound(sound, volume, pitch);
-        }
+    @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy) {if(dragging&&button==0){drag(y);return true;}return super.mouseDragged(x,y,button,dx,dy);}
+    @Override public boolean mouseReleased(double x,double y,int button) {if(dragging){dragging=false;return true;}return super.mouseReleased(x,y,button);}
+    @Override public boolean keyPressed(int key,int scan,int mods) {
+        if(key==256&&confirm!=Confirm.NONE){switchConfirm(Confirm.NONE);return true;}
+        if(key==266||key==267){scroll=FishPondLayout.clampScroll(scroll+(key==267?60:-60),contentHeight,page.bottom()-page.top());return true;}
+        return super.keyPressed(key,scan,mods);
     }
 }

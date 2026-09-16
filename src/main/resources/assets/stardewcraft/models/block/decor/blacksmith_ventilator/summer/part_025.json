@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "stardewcraft:block/decor/blacksmith_ventilator/summer/ventilator_summer",
+    "particle": "stardewcraft:block/decor/blacksmith_ventilator/summer/hardware_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        8,
+        7
+      ],
+      "to": [
+        10,
+        9,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            5.6875,
+            3.1875,
+            5.875,
+            3.25
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            6.1875,
+            3.1875,
+            6.3125,
+            3.25
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            5.9375,
+            3.1875,
+            6.125,
+            3.25
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            6.375,
+            3.1875,
+            6.5,
+            3.25
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            6.5625,
+            3.1875,
+            6.75,
+            3.3125
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            6.8125,
+            3.1875,
+            7.0,
+            3.3125
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

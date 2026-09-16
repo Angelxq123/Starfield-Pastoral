@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "facing=north,tier=0,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_0"
+    },
+    "facing=east,tier=0,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_0",
+      "y": 90
+    },
+    "facing=south,tier=0,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_0",
+      "y": 180
+    },
+    "facing=west,tier=0,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_0",
+      "y": 270
+    },
+    "facing=north,tier=1,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_1"
+    },
+    "facing=east,tier=1,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_1",
+      "y": 90
+    },
+    "facing=south,tier=1,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_1",
+      "y": 180
+    },
+    "facing=west,tier=1,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_1",
+      "y": 270
+    },
+    "facing=north,tier=2,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_2"
+    },
+    "facing=east,tier=2,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_2",
+      "y": 90
+    },
+    "facing=south,tier=2,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_2",
+      "y": 180
+    },
+    "facing=west,tier=2,variant=0": {
+      "model": "stardewcraft:block/mine/serpent_pillars/purple_2",
+      "y": 270
+    },
+    "facing=north,tier=0,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_0"
+    },
+    "facing=east,tier=0,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_0",
+      "y": 90
+    },
+    "facing=south,tier=0,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_0",
+      "y": 180
+    },
+    "facing=west,tier=0,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_0",
+      "y": 270
+    },
+    "facing=north,tier=1,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_1"
+    },
+    "facing=east,tier=1,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_1",
+      "y": 90
+    },
+    "facing=south,tier=1,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_1",
+      "y": 180
+    },
+    "facing=west,tier=1,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_1",
+      "y": 270
+    },
+    "facing=north,tier=2,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_2"
+    },
+    "facing=east,tier=2,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_2",
+      "y": 90
+    },
+    "facing=south,tier=2,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_2",
+      "y": 180
+    },
+    "facing=west,tier=2,variant=1": {
+      "model": "stardewcraft:block/mine/serpent_pillars/green_2",
+      "y": 270
+    }
+  }
+}

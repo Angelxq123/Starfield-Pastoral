@@ -1,0 +1,86 @@
+{
+  "components": [
+    {
+      "asset": "slot.png",
+      "source": "源文件/Content/LooseSprites/Cursors_1_6.png",
+      "rect": [
+        222,
+        317,
+        16,
+        16
+      ],
+      "source_sha256": "dfcde037c229e66060c376149345f6504f33eda284119186e979e1ae1f96d78b"
+    },
+    {
+      "asset": "hover.png",
+      "source": "源文件/Content/LooseSprites/Cursors_1_6.png",
+      "rect": [
+        256,
+        317,
+        16,
+        16
+      ],
+      "source_sha256": "dfcde037c229e66060c376149345f6504f33eda284119186e979e1ae1f96d78b"
+    },
+    {
+      "asset": "locked.png",
+      "source": "源文件/Content/LooseSprites/Cursors_1_6.png",
+      "rect": [
+        272,
+        317,
+        16,
+        16
+      ],
+      "source_sha256": "dfcde037c229e66060c376149345f6504f33eda284119186e979e1ae1f96d78b"
+    },
+    {
+      "asset": "random.png",
+      "source": "源文件/Content/LooseSprites/Cursors_1_6.png",
+      "rect": [
+        496,
+        28,
+        16,
+        16
+      ],
+      "source_sha256": "dfcde037c229e66060c376149345f6504f33eda284119186e979e1ae1f96d78b"
+    },
+    {
+      "asset": "panel.png",
+      "source": "源文件/Content/LooseSprites/Cursors.png",
+      "rect": [
+        384,
+        373,
+        18,
+        18
+      ],
+      "source_sha256": "83895c54bebcef5f32421eea877ca049dbc414515043dfe1100669fdc7722aa9"
+    },
+    {
+      "asset": "close.png",
+      "source": "源文件/Content/LooseSprites/Cursors.png",
+      "rect": [
+        337,
+        494,
+        12,
+        12
+      ],
+      "source_sha256": "83895c54bebcef5f32421eea877ca049dbc414515043dfe1100669fdc7722aa9"
+    }
+  ],
+  "styles": {
+    "count": 40,
+    "source": "源文件/Content/TileSheets/bobbers.png",
+    "source_sha256": "b7d56261bcd85eed74a728db7e671aee1373aad184ba45b69f22b8a75f2af10e",
+    "source_cell": [
+      16,
+      32
+    ],
+    "crop": [
+      0,
+      0,
+      16,
+      16
+    ],
+    "magnification": 2
+  }
+}

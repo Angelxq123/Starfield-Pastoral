@@ -47,12 +47,19 @@ public final class NpcScheduleRuntimeService {
     private static final Set<String> UNKNOWN_CONDITION_LOGGED = new HashSet<>();
 
     // Schedule resolution cache: only re-resolve when game clock changes.
+    private static long cachedClockRevision = -1;
     private static int cachedScheduleClock = Integer.MIN_VALUE;
     private static String cachedWeather = "";
     private static int cachedAbsoluteDay = Integer.MIN_VALUE;
     private static boolean cachedDesertFestivalDay;
     private static boolean cachedTroutDerbyOpen;
     private static boolean cachedSquidFestOpen;
+    private static long cachedDataRevision = -1;
+    private static long lastResolutionTick = Long.MIN_VALUE;
+    private static final Map<String, CursorEntry> CURSORS = new java.util.HashMap<>();
+    private record CursorEntry(String plan, NpcScheduleCursor cursor) {}
+
+    public static void clearExecutionState() { CURSORS.clear(); invalidateCache(); }
 
     private NpcScheduleRuntimeService() {
     }
@@ -68,12 +75,17 @@ public final class NpcScheduleRuntimeService {
         if (activeWeather == null) activeWeather = "";
 
         // Skip full re-resolution if clock and weather haven't changed since last tick.
-        if (currentTime == cachedScheduleClock && activeWeather.equals(cachedWeather)
+        if (lastResolutionTick != Long.MIN_VALUE && level.getGameTime()-lastResolutionTick < 20
+            && cachedClockRevision == timeManager.getClockRevision()
+            && cachedDataRevision == NpcDataRegistry.revision() && currentTime == cachedScheduleClock && activeWeather.equals(cachedWeather)
             && absoluteDay == cachedAbsoluteDay && desertFestivalDay == cachedDesertFestivalDay
             && troutDerbyOpen == cachedTroutDerbyOpen && squidFestOpen == cachedSquidFestOpen) {
             return;
         }
+        lastResolutionTick = level.getGameTime();
         cachedScheduleClock = currentTime;
+        cachedClockRevision = timeManager.getClockRevision();
+        cachedDataRevision = NpcDataRegistry.revision();
         cachedWeather = activeWeather;
         cachedAbsoluteDay = absoluteDay;
         cachedDesertFestivalDay = desertFestivalDay;
@@ -93,6 +105,8 @@ public final class NpcScheduleRuntimeService {
             NpcRuntimeState state = runtimeData.getOrCreate(npcId);
             ScheduleNode activeNode = resolveActiveNode(level, npcId, NpcDataRegistry.schedules().get(npcId), currentTime, timeManager, activeWeather);
             if (activeNode == null) {
+                changed |= state.clearSchedule();
+                CURSORS.remove(npcId);
                 continue;
             }
 
@@ -146,6 +160,8 @@ public final class NpcScheduleRuntimeService {
 
     /** Force cache invalidation (e.g. after server context reset or data reload). */
     public static void invalidateCache() {
+        cachedDataRevision = -1;
+        NpcSchedulePlans.clear();
         cachedScheduleClock = Integer.MIN_VALUE;
         cachedWeather = "";
         cachedAbsoluteDay = Integer.MIN_VALUE;
@@ -179,31 +195,18 @@ public final class NpcScheduleRuntimeService {
             return defaultPosition == null ? null : new TargetPoint(defaultPosition, true, false);
         }
 
+        if (state.activeScheduleKey().isBlank()) return null;
         // --- Named-point override (project-native "@point_id" schedule format) ---
         // This bypasses anchor lookup and returns the exact world position from route_points.json.
         String pointId = state.namedPointId();
         if (pointId != null && !pointId.isBlank()) {
-            var registered = StardewWorldAnchors.resolve(pointId)
-                    .filter(anchor -> anchor.dimension().equals(
-                            level.dimension().location()));
-            if (registered.isPresent()) {
-                var anchor = registered.get();
-                return new TargetPoint(
-                        anchor.position(),
-                        anchor.useGroundHeight(),
-                        anchor.indoor());
-            }
-            com.google.gson.JsonObject routePointsRoot = NpcDataRegistry.events().get("npc_route_points");
-            if (routePointsRoot != null && routePointsRoot.has("points")) {
-                com.google.gson.JsonObject points = routePointsRoot.getAsJsonObject("points");
-                if (points.has(pointId)) {
-                    com.google.gson.JsonObject pt = points.getAsJsonObject(pointId);
-                    Vec3 position = NpcRoutePlanner.routePointPosition(pt, Vec3.ZERO);
-                    boolean indoor = pt.has("indoor") && pt.get("indoor").getAsBoolean();
-                    return new TargetPoint(position, false, indoor);
-                }
-            }
-            // Named point defined in schedule but missing from route_points.json — fall through to anchor.
+            var registered=StardewWorldAnchors.resolve(pointId);
+            Vec3 position=NpcRoutePlanner.pointFromConfig(level,pointId,null);
+            if(position==null) return null;
+            var point=NpcSupportTarget.point(pointId);
+            boolean indoor=registered.isPresent()?registered.get().indoor():point!=null && point.has("indoor") && point.get("indoor").getAsBoolean();
+            position=NpcSupportTarget.routePosition(level,pointId,position);
+            return position==null?null:new TargetPoint(position,false,indoor);
         }
 
         // --- Anchor lookup (legacy tile-offset or per-location anchor) ---
@@ -213,15 +216,19 @@ public final class NpcScheduleRuntimeService {
             if (anchor.useScheduleTileOffset()) {
                 double x = anchor.x() + state.tileX();
                 double z = anchor.z() + state.tileY();
-                return new TargetPoint(new Vec3(x, anchor.y(), z), anchor.useGroundHeight(), anchor.indoor());
+                Vec3 position=NpcTargetSurface.resolve(level,new Vec3(x,anchor.y(),z),anchor.useGroundHeight(),anchor.indoor());
+                return position==null?null:new TargetPoint(position,false,anchor.indoor());
             }
 
+            String reference=anchor.indoor()?anchor.indoorEntryPoint():anchor.outdoorDoorPoint();
+            if(!reference.isBlank() && NpcRoutePlanner.pointFromConfig(level,reference,null)==null) return null;
             Vec3 anchorPosition = NpcRoutePlanner.anchorPosition(location, anchor);
             if (anchorPosition == null) {
                 return null;
             }
             boolean useGroundHeight = anchor.portalTarget().isBlank() && anchor.useGroundHeight();
-            return new TargetPoint(anchorPosition, useGroundHeight, anchor.indoor());
+            Vec3 position=NpcTargetSurface.resolve(level,anchorPosition,useGroundHeight,anchor.indoor());
+            return position==null?null:new TargetPoint(position,false,anchor.indoor());
         }
 
         if ("town".equals(location) && !warnedMissingTownAnchor) {
@@ -281,26 +288,14 @@ public final class NpcScheduleRuntimeService {
             return null;
         }
 
-            JsonObject activeSchedule = resolveScheduleObjectWithGoto(level, npcId, scheduleRoot, scheduleKey);
+        JsonObject activeSchedule = resolveScheduleObjectWithGoto(level, npcId, scheduleRoot, scheduleKey);
         if (activeSchedule == null) {
             return null;
         }
         List<ScheduleNode> nodes = new ArrayList<>();
-        String lastLocation = "";
-        for (Map.Entry<String, JsonElement> entry : activeSchedule.entrySet()) {
-            if (entry.getKey().startsWith("_")) {
-                continue;
-            }
-            int checkpoint = parseCheckpoint(entry.getKey());
-            if (checkpoint < 0 || !entry.getValue().isJsonPrimitive()) {
-                continue;
-            }
-
-            ScheduleNode parsed = parseNode(scheduleKey, checkpoint, entry.getValue().getAsString(), lastLocation);
-            if (parsed != null) {
-                nodes.add(parsed);
-                lastLocation = parsed.locationName();
-            }
+        for (var node : NpcSchedulePlans.nodes(activeSchedule)) {
+            nodes.add(new ScheduleNode(scheduleKey,node.time(),node.location(),node.tileX(),node.tileY(),
+                    node.facing(),node.behavior(),node.point(),node.index()));
         }
 
         if (nodes.isEmpty()) {
@@ -313,11 +308,44 @@ public final class NpcScheduleRuntimeService {
             nodes.set(i, node.withIndex(i));
         }
 
-        ScheduleNode active = nodes.get(0);
-        for (ScheduleNode node : nodes) {
-            if (currentTime >= node.checkpoint()) {
-                active = node;
+        String planId = timeManager.getAbsoluteDay()+":"+NpcDataRegistry.revision()+":"+scheduleKey
+                +":"+timeManager.getClockRevision();
+        CursorEntry cursor = CURSORS.get(npcId);
+        if (cursor == null || !cursor.plan().equals(planId)) {
+            var execution=new NpcScheduleCursor();
+            var saved=NpcRuntimeDataManager.get(level).states().get(npcId);
+            if (cursor==null && timeManager.getClockRevision()==0 && saved!=null && saved.actualPosition()!=null
+                    && saved.actualPosition().day()==timeManager.getAbsoluteDay()
+                    && saved.activeScheduleKey().equals(scheduleKey)) {
+                int savedIndex=saved.scheduleNodeIndex();
+                if (savedIndex>=0 && savedIndex<nodes.size()
+                        && saved.scheduleCheckpoint()<=currentTime
+                        && nodes.get(savedIndex).checkpoint()==saved.scheduleCheckpoint())
+                    execution.resume(savedIndex,currentTime);
             }
+            cursor = new CursorEntry(planId,execution);
+            CURSORS.put(npcId,cursor);
+        }
+        boolean arrived = false;
+        var npc = NpcSpawnManager.getTrackedNpc(level,npcId);
+        var previous = NpcRuntimeDataManager.get(level).states().get(npcId);
+        if (npc != null && previous != null) {
+            arrived = NpcCentralMovementService.hasReachedScheduleTarget(level,npc,previous);
+        }
+        var checkpoints=nodes.stream().map(ScheduleNode::checkpoint).toList();
+        if(NpcTravelStatus.maySkip(npcId,level.getGameTime())) {
+            cursor.cursor().skipToDue(checkpoints,currentTime);
+            NpcTravelStatus.clear(npcId);
+        }
+        int selected = cursor.cursor().select(checkpoints,currentTime,arrived);
+        if (selected < 0) return null;
+        ScheduleNode active = nodes.get(selected);
+        if (scheduleRoot.has("_point_replacements")) for (var replacement : scheduleRoot.getAsJsonArray("_point_replacements")) {
+            var rule = replacement.getAsJsonObject();
+            if (active.namedPointId().equals(rule.get("from").getAsString())
+                    && NpcScheduleRules.matches(rule,ruleContext(level,npcId,scheduleRoot,timeManager,activeWeather)))
+                active = new ScheduleNode(active.scheduleKey(),active.checkpoint(),rule.get("location").getAsString(),
+                        0,0,rule.get("facing").getAsInt(),active.routeBehaviorToken(),rule.get("to").getAsString(),active.index());
         }
         return active;
     }
@@ -383,6 +411,16 @@ public final class NpcScheduleRuntimeService {
         );
     }
 
+    private static NpcScheduleRules.Context ruleContext(ServerLevel level,String npcId,JsonObject root,StardewTimeManager time,String weather) {
+        var friendship = NpcFriendshipDataManager.get(level);
+        boolean anyPlayer=root.has("_context") && root.get("_context").getAsString().equals("any_player");
+        UUID owner=resolveScheduleContextPlayer(level,npcId);
+        return new NpcScheduleRules.Context(time.getSeasonName().toLowerCase(Locale.ROOT),time.getCurrentDay(),
+                time.getCurrentYear(),weather.toLowerCase(Locale.ROOT),level.getSeed(),time.getAbsoluteDay(),
+                id -> (anyPlayer?friendship.getMaxPointsForNpc(id):friendship.getPointsForNpc(owner,id))/NpcInteractionService.POINTS_PER_HEART,
+                id -> com.stardew.craft.cutscene.server.EventSeenData.get().hasAnyPlayerSeen(id));
+    }
+
     private static String selectScheduleKey(ServerLevel level,
                                             String npcId,
                                             JsonObject scheduleRoot,
@@ -390,6 +428,8 @@ public final class NpcScheduleRuntimeService {
                                             String activeWeather) {
         NpcFriendshipDataManager friendship = NpcFriendshipDataManager.get(level);
         UUID schedulePlayerId = resolveScheduleContextPlayer(level, npcId);
+        String ruleKey = NpcScheduleRules.select(scheduleRoot,ruleContext(level,npcId,scheduleRoot,timeManager,activeWeather));
+        if (ruleKey != null) return ruleKey;
         Set<String> candidates = new LinkedHashSet<>();
         int day = Math.max(1, timeManager.getCurrentDay());
         String season = timeManager.getSeasonName().toLowerCase(Locale.ROOT);
@@ -476,7 +516,7 @@ public final class NpcScheduleRuntimeService {
                 continue;
             }
 
-            if (!scheduleConditionPasses(level, obj, schedulePlayerId)) {
+            if (!scheduleConditionPasses(level, obj, schedulePlayerId, npcId)) {
                 traceRejects.add(candidate + " -> condition_blocked");
                 continue;
             }
@@ -537,7 +577,7 @@ public final class NpcScheduleRuntimeService {
                 return null;
             }
 
-            if (!scheduleConditionPasses(level, obj, schedulePlayerId)) {
+            if (!scheduleConditionPasses(level, obj, schedulePlayerId, npcId)) {
                 return null;
             }
             if (!obj.has("_goto") || !obj.get("_goto").isJsonPrimitive()) {
@@ -556,6 +596,9 @@ public final class NpcScheduleRuntimeService {
     }
 
     private static boolean scheduleConditionPasses(ServerLevel level, JsonObject scheduleObj, UUID schedulePlayerId) {
+        return scheduleConditionPasses(level,scheduleObj,schedulePlayerId,"");
+    }
+    private static boolean scheduleConditionPasses(ServerLevel level, JsonObject scheduleObj, UUID schedulePlayerId,String npcId) {
         if (!scheduleObj.has("_condition") || !scheduleObj.get("_condition").isJsonPrimitive()) {
             return true;
         }
@@ -583,9 +626,14 @@ public final class NpcScheduleRuntimeService {
             return allowed;
         }
 
+        if (level!=null && !npcId.isBlank()) {
+            var decision=com.stardew.craft.api.v1.internal.npc.StardewNpcExecutionRegistry.condition(
+                    new com.stardew.craft.api.v1.npc.StardewNpcExecution.ConditionContext(level,
+                            com.stardew.craft.api.v1.npc.StardewNpcInteractions.normalizeNpcId(npcId),schedulePlayerId,raw));
+            if (decision.isPresent()) return decision.get();
+        }
         logUnknownCondition(raw);
-        // Unknown condition syntax: keep schedule available rather than hard-blocking it.
-        return true;
+        return false;
     }
 
     private static void logMailPolicyDecision(String rawCondition, boolean allowed) {
@@ -600,6 +648,7 @@ public final class NpcScheduleRuntimeService {
         if (!UNKNOWN_CONDITION_LOGGED.add(key)) {
             return;
         }
+        com.mojang.logging.LogUtils.getLogger().warn("Unsupported NPC schedule condition: {}",rawCondition);
     }
 
     private static boolean evaluateMailCondition(String mailId, UUID schedulePlayerId, boolean negated) {
@@ -644,30 +693,15 @@ public final class NpcScheduleRuntimeService {
             return null;
         }
 
-        List<ServerPlayer> players = level.players();
-        if (players == null || players.isEmpty()) {
-            return null;
-        }
-
-        // Multiplayer policy: always bind schedule context to host player to keep
-        // global NPC schedule deterministic across clients.
-        if (level.getServer() != null) {
-            for (ServerPlayer player : players) {
-                if (player == null) {
-                    continue;
-                }
-                if (level.getServer().isSingleplayerOwner(player.getGameProfile())) {
-                    return player.getUUID();
-                }
-            }
-        }
-
-        for (ServerPlayer player : players) {
-            if (player != null && !player.isSpectator()) {
-                return player.getUUID();
-            }
-        }
-        return players.get(0).getUUID();
+        var data=NpcRuntimeDataManager.get(level.getServer().overworld());
+        if (data.scheduleContextPlayer()!=null) return data.scheduleContextPlayer();
+        var players=level.getServer().getPlayerList().getPlayers().stream()
+                .filter(player->!player.isSpectator())
+                .sorted(java.util.Comparator.comparing(player->player.getUUID().toString())).toList();
+        UUID selected=players.stream().filter(player->level.getServer().isSingleplayerOwner(player.getGameProfile()))
+                .map(ServerPlayer::getUUID).findFirst().orElse(players.isEmpty()?null:players.getFirst().getUUID());
+        if (selected!=null) data.setScheduleContextPlayer(selected);
+        return selected;
     }
 
     private static JsonObject getScheduleObjectCaseInsensitive(JsonObject root, String candidate) {

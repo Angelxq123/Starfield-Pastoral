@@ -162,6 +162,10 @@ public final class StardewHudLayoutEditorScreen extends Screen {
                 StardewHudLayout.MIN_SCALE_PERCENT / 100.0F * visualScale,
                 StardewHudLayout.MAX_SCALE_PERCENT / 100.0F * visualScale);
 
+        if (com.stardew.craft.client.font.StardewFonts.readingScale() != 1.0F) {
+            nextScale = com.stardew.craft.client.gui.common.ReadingTextLayout.fitHudScale(
+                    nextScale, baseWidth, baseHeight, width, height);
+        }
         int nextWidth = Math.max(1, Math.round(baseWidth * nextScale));
         int nextHeight = Math.max(1, Math.round(baseHeight * nextScale));
         int nextX = dragMode.left ? dragStartBox.right() - nextWidth

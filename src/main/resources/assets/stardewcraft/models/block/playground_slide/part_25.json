@@ -1,0 +1,77 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "surface": "stardewcraft:block/playground_slide/slide_spring",
+    "particle": "stardewcraft:block/playground_slide/steel_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -5.5,
+        -5.5,
+        -8.5
+      ],
+      "to": [
+        -2.5,
+        -2.5,
+        -5.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            12.3125,
+            1.03125,
+            12.40625,
+            1.125
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            12.5625,
+            1.03125,
+            12.65625,
+            1.125
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            12.4375,
+            1.03125,
+            12.53125,
+            1.125
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            12.6875,
+            1.03125,
+            12.78125,
+            1.125
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            12.8125,
+            1.03125,
+            12.90625,
+            1.125
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            12.9375,
+            1.03125,
+            13.03125,
+            1.125
+          ]
+        }
+      }
+    }
+  ]
+}

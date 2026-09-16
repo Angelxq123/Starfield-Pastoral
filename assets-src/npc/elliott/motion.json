@@ -1,0 +1,82 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0.35,
+  "walkStride": 0.8046168125,
+  "attentionRig": {
+    "hipHeight": 11.0,
+    "soleY": -0.35,
+    "toeDepth": 2.35,
+    "halfStance": 2.18,
+    "rightZ": 0.12,
+    "leftZ": -0.22,
+    "rightYaw": -4,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "elliott",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42000000000000004,
+    "groundOffset": 0.35,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      }
+    },
+    "bodyPitch": -1.6,
+    "headPitch": 1.15,
+    "halfStance": 2.4299999999999997,
+    "stride": 12.873869,
+    "reachMargin": 0.045331,
+    "legLengthStride": 19.25,
+    "approvedBaseStride": 19.25,
+    "stance": 0.58,
+    "bob": 0.2656,
+    "sway": 0.45,
+    "rootYaw": 1.7,
+    "bodyYaw": 4.3,
+    "armSwing": 15.5,
+    "armPhase": 0.05,
+    "footLift": 0.28,
+    "swingPeak": 0.51,
+    "elbowBase": 10,
+    "bodyRoll": 0.78,
+    "strideScale": 1.02,
+    "intent": "成年男性、礼貌；直立从容、步幅舒展、手臂稍迟跟随，保持长发净空。",
+    "bodyLag": 0.08,
+    "headLag": 0.115,
+    "headYawLag": 0.065,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.754008,
+    "levelWalk": true
+  }
+}

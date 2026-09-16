@@ -23,6 +23,12 @@ public final class WeaponSkillThirdPersonAnimator {
             LivingEntity entity,
             float partialTick
     ) {
+        if (LavaKatanaSlashAnimation.applyThirdPerson(model, entity, partialTick)) {
+            return;
+        }
+        if (MeleeWeaponAnimations.applyThirdPerson(model, entity, partialTick)) {
+            return;
+        }
         float progress = WeaponSkillAnimationClient.getWorldActionProgress(
                 entity.getId(),
                 partialTick

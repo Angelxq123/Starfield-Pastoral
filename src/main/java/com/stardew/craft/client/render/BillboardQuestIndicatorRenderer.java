@@ -124,12 +124,28 @@ public final class BillboardQuestIndicatorRenderer {
 
         // 先收集所有方块
         List<BlockPos> blocks = new ArrayList<>();
-        for (int dy = -4; dy <= 4; dy++) {
-            for (int dx = -r; dx <= r; dx++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    BlockPos pos = pcenter.offset(dx, dy, dz);
-                    if (!level.getBlockState(pos).is(ModBlocks.BULLETIN_BOARD.get())) continue;
-                    blocks.add(pos.immutable());
+        // Most nearby sections contain no board at all. Check their palettes first;
+        // only inspect cells in sections which can actually contain this block.
+        int minX=pcenter.getX()-r, maxX=pcenter.getX()+r;
+        int minY=Math.max(level.getMinBuildHeight(),pcenter.getY()-4);
+        int maxY=Math.min(level.getMaxBuildHeight()-1,pcenter.getY()+4);
+        int minZ=pcenter.getZ()-r, maxZ=pcenter.getZ()+r;
+        for (int cx=minX>>4;cx<=maxX>>4;cx++) {
+            for (int cz=minZ>>4;cz<=maxZ>>4;cz++) {
+                var chunk=level.getChunkSource().getChunk(cx,cz,
+                        net.minecraft.world.level.chunk.status.ChunkStatus.FULL,false);
+                if (chunk==null) continue;
+                for (int sy=minY>>4;sy<=maxY>>4;sy++) {
+                    var section=chunk.getSection(level.getSectionIndexFromSectionY(sy));
+                    if (section.hasOnlyAir() || !section.maybeHas(state -> state.is(ModBlocks.BULLETIN_BOARD.get()))) continue;
+                    for (int y=Math.max(minY,sy<<4);y<=Math.min(maxY,(sy<<4)+15);y++) {
+                        for (int x=Math.max(minX,cx<<4);x<=Math.min(maxX,(cx<<4)+15);x++) {
+                            for (int z=Math.max(minZ,cz<<4);z<=Math.min(maxZ,(cz<<4)+15);z++) {
+                                if (section.getBlockState(x&15,y&15,z&15).is(ModBlocks.BULLETIN_BOARD.get()))
+                                    blocks.add(new BlockPos(x,y,z));
+                            }
+                        }
+                    }
                 }
             }
         }

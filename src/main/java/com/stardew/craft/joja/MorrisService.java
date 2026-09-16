@@ -170,7 +170,7 @@ public final class MorrisService {
     }
 
     private static void speak(ServerPlayer player, String translateKey) {
-        PacketDistributor.sendToPlayer(player,
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
             new OpenNpcDialogueScreenPayload("morris", translateKey, 0));
     }
 }

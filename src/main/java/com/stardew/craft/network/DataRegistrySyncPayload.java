@@ -47,7 +47,8 @@ public record DataRegistrySyncPayload(
         String masteryRewardsJson,
         String locationsJson,
         String professionsJson,
-        String secretNotesJson
+        String secretNotesJson,
+        String productionJson
 ) implements CustomPacketPayload {
     static final int MAX_DOCUMENT_BYTES = 4 * 1024 * 1024;
     static final int MAX_PAYLOAD_BYTES = 16 * 1024 * 1024;
@@ -69,6 +70,16 @@ public record DataRegistrySyncPayload(
         locationsJson = objectDocument(locationsJson);
         professionsJson = objectDocument(professionsJson);
         secretNotesJson = objectDocument(secretNotesJson);
+        productionJson = objectDocument(productionJson);
+    }
+
+    public DataRegistrySyncPayload(String artisanJson, String cookingJson, String craftingJson,
+            String preservesJson, String fishingJson, String npcEventsJson, String unlockSourcesJson,
+            String festivalsJson, String masteryRewardsJson, String locationsJson, String professionsJson,
+            String secretNotesJson) {
+        this(artisanJson, cookingJson, craftingJson, preservesJson, fishingJson, npcEventsJson,
+            unlockSourcesJson, festivalsJson, masteryRewardsJson, locationsJson, professionsJson,
+            secretNotesJson, "{}");
     }
 
     public static final StreamCodec<ByteBuf, DataRegistrySyncPayload> STREAM_CODEC = new StreamCodec<>() {
@@ -89,9 +100,10 @@ public record DataRegistrySyncPayload(
             String locations = readLargeString(buf);
             String professions = readLargeString(buf);
             String secretNotes = readLargeString(buf);
+            String production = readLargeString(buf);
             return new DataRegistrySyncPayload(
                     artisan, cooking, crafting, preserves, fishing, npcEvents, unlockSources, festivals,
-                    masteryRewards, locations, professions, secretNotes);
+                    masteryRewards, locations, professions, secretNotes, production);
         }
 
         @Override
@@ -109,6 +121,7 @@ public record DataRegistrySyncPayload(
             writeLargeString(buf, payload.locationsJson);
             writeLargeString(buf, payload.professionsJson);
             writeLargeString(buf, payload.secretNotesJson);
+            writeLargeString(buf, payload.productionJson);
             int encodedBytes = buf.writerIndex() - startIndex;
             if (encodedBytes > MAX_PAYLOAD_BYTES) {
                 throw new EncoderException("Stardew content sync payload exceeds " + MAX_PAYLOAD_BYTES + " bytes");
@@ -190,7 +203,8 @@ public record DataRegistrySyncPayload(
                 + encodedStringBytes(masteryRewardsJson)
                 + encodedStringBytes(locationsJson)
                 + encodedStringBytes(professionsJson)
-                + encodedStringBytes(secretNotesJson);
+                + encodedStringBytes(secretNotesJson)
+                + encodedStringBytes(productionJson);
     }
 
     @Override
@@ -203,6 +217,7 @@ public record DataRegistrySyncPayload(
      */
     public static void handle(DataRegistrySyncPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
+            com.stardew.craft.production.MachineProductionData.applyFromJson(payload.productionJson);
             ArtisanRecipeDataManager.applyFromJson(payload.artisanJson);
             VanillaCookingRecipeData.applyFromJson(payload.cookingJson);
             StardewCraftingRecipeData.applyFromJson(payload.craftingJson);
@@ -238,7 +253,8 @@ public record DataRegistrySyncPayload(
         String secretNotes = SecretNoteRegistry.getCachedJson();
         return new DataRegistrySyncPayload(
                 artisan, cooking, crafting, preserves, fishing, npcEvents, unlockSources, festivals,
-                masteryRewards, locations, professions, secretNotes);
+                masteryRewards, locations, professions, secretNotes,
+                com.stardew.craft.production.MachineProductionData.getCachedJson());
     }
 
     /**

@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/earth_shale_wall_inventory",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/earth_shale"
-                 }
-}

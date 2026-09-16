@@ -90,6 +90,8 @@ public final class IridiumNeedleFrenzySkillHandler implements RuntimeWeaponSkill
                         DURATION_TICKS
                 )
         );
+        com.stardew.craft.combat.skill.WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(), context.weaponId().getPath(), context.skillData().getId(), 8);
         instance.registerCommittedEffect(() -> {
             PacketDistributor.sendToPlayer(
                     context.player(),

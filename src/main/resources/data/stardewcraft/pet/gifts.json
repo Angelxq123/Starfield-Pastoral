@@ -1,0 +1,164 @@
+{
+  "cat": [
+    {
+      "query": "LOCATION_FISH Mountain 44 14 1",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "LOCATION_FISH Forest 67 52 1",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "RANDOM_ITEMS (O) 720 722",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.5
+    },
+    {
+      "query": "(O)767",
+      "count": 2,
+      "friendship": 1000,
+      "weight": 0.2
+    },
+    {
+      "query": "(O)424",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.1
+    },
+    {
+      "query": "(O)446",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.05
+    },
+    {
+      "query": "(O)444",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.05
+    }
+  ],
+  "dog": [
+    {
+      "query": "(O)881",
+      "count": 3,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)881",
+      "count": 4,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)330",
+      "count": 2,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)709",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)169",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)390",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "RANDOM_ITEMS (O) 579 585",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.1
+    },
+    {
+      "query": "RANDOM_ITEMS (O) 103 113",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.2
+    },
+    {
+      "query": "RANDOM_ITEMS (O) 100 101",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.1
+    },
+    {
+      "query": "(O)275",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.05
+    }
+  ],
+  "turtle": [
+    {
+      "query": "(O)372",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)393",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "(O)397",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 1.0
+    },
+    {
+      "query": "RANDOM_ITEMS (O) 715 719",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.5
+    },
+    {
+      "query": "(O)392",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.5
+    },
+    {
+      "query": "(O)394",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.2
+    },
+    {
+      "query": "(O)SeaJelly",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.2
+    },
+    {
+      "query": "(O)CaveJelly",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.15
+    },
+    {
+      "query": "(O)265",
+      "count": 1,
+      "friendship": 1000,
+      "weight": 0.05
+    }
+  ]
+}

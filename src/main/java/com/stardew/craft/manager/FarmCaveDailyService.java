@@ -10,8 +10,6 @@ import com.stardew.craft.farm.FarmCaveChoice;
 import com.stardew.craft.farm.FarmDailyProcessHelper;
 import com.stardew.craft.farm.FarmInstance;
 import com.stardew.craft.farm.FarmInstanceRegistry;
-import com.stardew.craft.interior.InteriorSubspaceManager;
-import com.stardew.craft.interior.PlayerInteriorAllocator;
 import com.stardew.craft.time.StardewTimeManager;
 import com.stardew.craft.time.settlement.DailySettlementContext;
 import com.stardew.craft.time.settlement.DailySettlementContextFactory;
@@ -68,10 +66,7 @@ public final class FarmCaveDailyService {
     private static final FruitEntry FRUIT_APPLE = new FruitEntry(ModBlocks.FORAGE_APPLE); // 613, 10% inside case 4
 
     /** 蘑菇盆 6 个 tile（schem local → 洞穴 origin 的偏移） */
-    public static final List<BlockPos> MUSHROOM_BOX_OFFSETS = List.of(
-            new BlockPos(3, 1, 3), new BlockPos(3, 1, 5), new BlockPos(3, 1, 7),
-            new BlockPos(5, 1, 3), new BlockPos(5, 1, 5), new BlockPos(5, 1, 7)
-    );
+    public static final List<BlockPos> MUSHROOM_BOX_OFFSETS = com.stardew.craft.interior.FarmCaveLayout.BOXES;
 
     // 蘑菇产出 item id（对齐 SDV Content/Data/Machines.json (BC)128）
     private static final ResourceLocation PURPLE_MUSHROOM = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "purple_mushroom");
@@ -125,17 +120,12 @@ public final class FarmCaveDailyService {
         Objects.requireNonNull(level, "level");
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(frozenFarms, "frozenFarms");
-        PlayerInteriorAllocator alloc = PlayerInteriorAllocator.get(level);
-        Set<UUID> processedOwners = new HashSet<>();
         List<FarmCaveDailyEntry> farmSnapshot = new ArrayList<>();
         for (UUID ownerUUID : context.farmOwnerIds()) {
-            if (!processedOwners.add(ownerUUID)) continue;
             FarmInstance farm = frozenFarms.get(ownerUUID);
             if (farm == null) continue;
-            if (!alloc.isCavePlaced(ownerUUID)) continue;
-            FarmCaveChoice choice = farm.getCaveChoice();
-            BlockPos caveOrigin = alloc.getCaveOrigin(ownerUUID);
-            farmSnapshot.add(new FarmCaveDailyEntry(ownerUUID, farm, caveOrigin, choice));
+            farmSnapshot.add(new FarmCaveDailyEntry(ownerUUID, farm,
+                    com.stardew.craft.interior.FarmCaveRuntime.origin(level, farm), farm.getCaveChoice()));
         }
         farmSnapshot.sort(Comparator.comparing(entry -> entry.ownerId().toString()));
 
@@ -170,53 +160,17 @@ public final class FarmCaveDailyService {
             int absoluteDay,
             AtomicInteger fruitCount,
             AtomicInteger mushroomCount) {
-        BlockPos caveMax = entry.caveOrigin().offset(
-                InteriorSubspaceManager.FARM_CAVE_SCHEM_W - 1,
-                0,
-                InteriorSubspaceManager.FARM_CAVE_SCHEM_L - 1);
-        try (var lease = FarmDailyProcessHelper.leaseBounds(
-                level, entry.caveOrigin(), caveMax)) {
-            if (!isFarmCaveLoadedNow(level, entry.caveOrigin())) {
-                return;
-            }
-            RandomSource random = DailySettlementRandom.forId(
-                    worldSeed, absoluteDay, "farm_cave", stableUuid(entry.ownerId()));
-            StardewFarmCaveDailyHandlers.Context addonContext =
-                    new StardewFarmCaveDailyHandlers.Context(
-                            level,
-                            StardewFarmSnapshots.from(entry.farm()),
-                            entry.caveOrigin(),
-                            random);
-            if (StardewFarmCaveDailyRegistry.runHandlers(addonContext)
-                    == StardewFarmCaveDailyHandlers.Result.SKIP_DEFAULT) {
-                return;
-            }
-            if (entry.choice() == FarmCaveChoice.NONE) {
-                return;
-            }
-            if (entry.choice() == FarmCaveChoice.FRUIT_BATS) {
-                fruitCount.addAndGet(processFruitBats(
-                        level, entry.farm(), entry.caveOrigin(), random));
-            } else if (entry.choice() == FarmCaveChoice.MUSHROOMS) {
-                mushroomCount.addAndGet(processMushrooms(level, entry.caveOrigin(), random));
-            }
-        }
-    }
-
-    private static boolean isFarmCaveLoadedNow(ServerLevel level, BlockPos caveOrigin) {
-        int minChunkX = caveOrigin.getX() >> 4;
-        int maxChunkX = (caveOrigin.getX() + InteriorSubspaceManager.FARM_CAVE_SCHEM_W - 1) >> 4;
-        int minChunkZ = caveOrigin.getZ() >> 4;
-        int maxChunkZ = (caveOrigin.getZ() + InteriorSubspaceManager.FARM_CAVE_SCHEM_L - 1) >> 4;
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(
-                        level, chunkX << 4, chunkZ << 4)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        UUID instanceId = entry.farm().getInstanceId();
+        com.stardew.craft.interior.FarmCaveRuntime.daily(level, entry.farm(), absoluteDay, () -> {
+            var current = com.stardew.craft.interior.FarmCaveRuntime.farm(instanceId);
+            if (current == null) return;
+            var origin = com.stardew.craft.interior.FarmCaveRuntime.origin(level, current);
+            RandomSource random = DailySettlementRandom.forId(worldSeed, absoluteDay, "farm_cave", stableUuid(entry.ownerId()));
+            var addonContext = new StardewFarmCaveDailyHandlers.Context(level, StardewFarmSnapshots.from(current), origin, random);
+            if (StardewFarmCaveDailyRegistry.runHandlers(addonContext) == StardewFarmCaveDailyHandlers.Result.SKIP_DEFAULT) return;
+            if (current.getCaveChoice() == FarmCaveChoice.FRUIT_BATS) processFruitBats(level, current, origin, random);
+            else if (current.getCaveChoice() == FarmCaveChoice.MUSHROOMS) processMushrooms(level, origin, random);
+        });
     }
 
     // ── Fruit Bats ──
@@ -230,12 +184,12 @@ public final class FarmCaveDailyService {
         // SDV FarmCave.DayUpdate: 不清旧水果，直接累积 → 玩家拾取前一直存在。
         int placed = 0;
         while (rng.nextDouble() < 0.66D) {
-            // SDV: x ∈ Next(1, W-1)  → W=9 → [1,7] (7 values)
-            //      z ∈ Next(1, H-4)  → H=10 → [1,5] (5 values, exclusive upper)
-            int lx = 1 + rng.nextInt(InteriorSubspaceManager.FARM_CAVE_SCHEM_W - 2);
-            int lz = 1 + rng.nextInt(InteriorSubspaceManager.FARM_CAVE_SCHEM_L - 5);
-            BlockPos place = caveOrigin.offset(lx, 1, lz);
+            // FarmCave.tmx is 12×14; keep the original 90-cell sampling domain, including failed placements.
+            int lx = 3 + rng.nextInt(10);
+            int lz = 3 + rng.nextInt(9);
+            BlockPos place = caveOrigin.offset(lx, com.stardew.craft.interior.FarmCaveLayout.FLOOR, lz);
             BlockPos below = place.below();
+            if(!com.stardew.craft.interior.FarmCaveLayout.floor(lx,lz))continue;
 
             if (!level.getBlockState(place).isAir()) continue;
             if (!level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)) continue;

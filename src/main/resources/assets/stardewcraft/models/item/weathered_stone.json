@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/weathered_stone",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/weathered_stone"
-                 }
-}

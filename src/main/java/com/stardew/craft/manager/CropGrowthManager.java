@@ -86,6 +86,11 @@ public class CropGrowthManager extends SavedData {
          */
         public int phase;
         public boolean regrowing;
+        public boolean sourcePhases = true;
+        public int sourcePhaseVersion;
+        public int lastDailyDay = -1;
+        public boolean lastDailyWatered;
+        public int lastGiantDay = -1;
         public UUID planterUuid;
 
         public CropGrowthState() {
@@ -114,6 +119,13 @@ public class CropGrowthManager extends SavedData {
         @SuppressWarnings("null")
         GlobalPos globalPos = GlobalPos.of(level.dimension(), pos.immutable());
         return cropStates.get(globalPos);
+    }
+
+    /** Restore a root after a rejected giant block-plan commit; preserves its daily stamps. */
+    public void restoreGrowthState(ServerLevel level, BlockPos pos, CropGrowthState saved) {
+        addCrop(level, pos, saved.planterUuid);
+        cropStates.put(GlobalPos.of(level.dimension(), pos.immutable()), saved);
+        setDirty();
     }
 
     public void setRegrowing(Level level, BlockPos pos, boolean regrowing, int dayInPhase, int phase) {
@@ -252,12 +264,19 @@ public class CropGrowthManager extends SavedData {
                     "crop_growth",
                     snapshot,
                     CropGrowthManager::dailyItemIdentity,
-                    globalPos -> processCropDay(level, globalPos),
+                    globalPos -> processCropDay(level, globalPos, context),
                     this::closeDailyLease);
             DailySettlementWorkUnit farmlandScan = createFarmlandScanWorkUnit(level);
             return DailySettlementWorkUnits.sequence(
                     "crop_daily",
-                    List.of(cropEntries, farmlandScan),
+                    List.of(cropEntries, DailySettlementWorkUnits.deferred("giant_growth", () -> {
+                        var ordered = new java.util.ArrayList<>(snapshot);
+                        ordered.sort(java.util.Comparator.comparing(GlobalPos::pos,
+                                com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.ORDER));
+                        return DailySettlementWorkUnits.cursor("giant_growth", ordered,
+                                CropGrowthManager::dailyItemIdentity,
+                                global -> processGiantAnchor(level, global, context), () -> {});
+                    }), farmlandScan),
                     this::finishDailyProcessing);
         } catch (RuntimeException | Error exception) {
             finishDailyProcessing();
@@ -265,52 +284,103 @@ public class CropGrowthManager extends SavedData {
         }
     }
 
-    @SuppressWarnings("null")
-    private void processCropDay(ServerLevel level, GlobalPos globalPos) {
-        if (globalPos.dimension() != level.dimension()) {
-            return;
+    private void processCropDay(ServerLevel level, GlobalPos globalPos, DailySettlementContext context) {
+        if (!globalPos.dimension().equals(level.dimension()) ||
+                !com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, globalPos.pos())) return;
+        var pos = globalPos.pos();
+        int day = context.absoluteDay(), season = context.season();
+        boolean offline = false;
+        try (var lease = activeDailyLease.lease(pos)) {
+            if (!level.hasChunkAt(pos)) return;
+            int radius = StardewCropRuntimeRegistry.dailyNeighborhoodRadius(level.getBlockState(pos));
+            try (var neighborhood = com.stardew.craft.farm.FarmDailyProcessHelper.leaseBounds(
+                    level, pos.offset(-radius, 0, -radius), pos.offset(radius, 0, radius))) {
+                var crop = StardewCropRuntimeRegistry.inspect(level, pos);
+                if (crop == null) { removeCrop(level, pos); return; }
+                if (crop.part() != StardewCropState.Part.ROOT || !crop.root().equals(pos)) return;
+                var growth = getOrCreateState(level, pos);
+                if (growth.lastDailyDay > day) return;
+                if (growth.lastDailyDay < day) {
+                    // Preserve the existing offline watering policy; pass the actual historical date.
+                    boolean wet = offline || crop.soilPositions().stream().anyMatch(soil -> level.hasChunkAt(soil)
+                            && level.getBlockState(soil).getBlock() instanceof FarmBlock
+                            && level.getBlockState(soil).getValue(FarmBlock.MOISTURE) > 0);
+                    var result = StardewCropRuntimeRegistry.growOneDay(level, pos, wet, offline, day, season);
+                    growth.lastDailyDay = day;
+                    // Paddy crops may irrigate their soil during their own daily update.
+                    growth.lastDailyWatered = wet || crop.soilPositions().stream().anyMatch(soil -> level.hasChunkAt(soil)
+                            && level.getBlockState(soil).getBlock() instanceof FarmBlock
+                            && level.getBlockState(soil).getValue(FarmBlock.MOISTURE) > 0);
+                    setDirty();
+                    if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) { removeCrop(level, pos); return; }
+                }
+            }
         }
-        BlockPos pos = globalPos.pos();
-        if (!com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, pos)) {
-            return;
+    }
+
+    private void processGiantAnchor(ServerLevel level, GlobalPos global, DailySettlementContext context) {
+        if (!global.dimension().equals(level.dimension()) ||
+                !com.stardew.craft.farm.FarmDailyProcessHelper.shouldProcessPosition(level, global.pos())) return;
+        processGiantAnchor(level, global, context.absoluteDay(), false);
+    }
+
+    public void processGiantAnchor(ServerLevel level, GlobalPos global, int absoluteDay, boolean offline) {
+        if (!global.dimension().equals(level.dimension())) return;
+        var anchor = global.pos();
+        int radius = com.stardew.craft.api.v1.internal.giant.GiantCropRegistry.definitions().stream()
+                .mapToInt(d -> Math.max(d.width(), d.depth()) - 1).max().orElse(2);
+        try (var lease = com.stardew.craft.farm.FarmDailyProcessHelper.leaseTemporaryBounds(
+                level, anchor, anchor.offset(radius, 0, radius))) {
+            var roots = new java.util.ArrayList<BlockPos>();
+            var watered = new java.util.HashSet<BlockPos>();
+            for (var candidate : BlockPos.betweenClosed(anchor, anchor.offset(radius, 0, radius))) {
+                var pos = candidate.immutable();
+                var growth = cropStates.get(GlobalPos.of(level.dimension(), pos));
+                if (growth != null && growth.lastDailyDay == absoluteDay) {
+                    roots.add(pos);
+                    if (growth.lastDailyWatered) watered.add(pos);
+                }
+            }
+            com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.process(
+                    level, roots, watered, absoluteDay, offline, java.util.List.of(anchor));
         }
-        var leaseCursor = Objects.requireNonNull(
-                activeDailyLease, "crop daily chunk lease");
-        try (var lease = leaseCursor.lease(pos)) {
-            if (!level.isLoaded(pos)) {
-                return;
-            }
+    }
 
-            BlockState state = level.getBlockState(pos);
-            Block block = state.getBlock();
-            boolean coreCrop = block instanceof StardewCropBlock;
-            StardewCropState runtimeCrop = coreCrop
-                    ? StardewCropRuntimeRegistry.inspect(level, pos)
-                    : StardewCropRuntimeRegistry.inspectAddon(level, pos);
-            if (runtimeCrop == null) {
-                removeCrop(level, pos);
-                return;
+    public com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.Statistics settleCrops(
+            ServerLevel level, java.util.List<GlobalPos> positions, int day, int season, boolean offline) {
+        isProcessing = true;
+        var roots = new java.util.ArrayList<BlockPos>();
+        var watered = new java.util.HashSet<BlockPos>();
+        try {
+            for (var global : positions) {
+                var pos = global.pos();
+                if (!global.dimension().equals(level.dimension()) || !level.hasChunkAt(pos)) continue;
+                var crop = StardewCropRuntimeRegistry.inspect(level, pos);
+                if (crop == null) { removeCrop(level, pos); continue; }
+                if (crop.part() != StardewCropState.Part.ROOT || !crop.root().equals(pos)) continue;
+                var growth = getOrCreateState(level, pos);
+                if (growth.lastDailyDay > day) continue;
+                if (growth.lastDailyDay < day) {
+                    // Preserve the existing offline watering policy; pass the actual historical date.
+                    boolean wet = offline || crop.soilPositions().stream().anyMatch(soil -> level.hasChunkAt(soil)
+                            && level.getBlockState(soil).getBlock() instanceof FarmBlock
+                            && level.getBlockState(soil).getValue(FarmBlock.MOISTURE) > 0);
+                    var result = StardewCropRuntimeRegistry.growOneDay(level, pos, wet, offline, day, season);
+                    growth.lastDailyDay = day;
+                    // Paddy crops may irrigate their soil during their own daily update.
+                    growth.lastDailyWatered = wet || crop.soilPositions().stream().anyMatch(soil -> level.hasChunkAt(soil)
+                            && level.getBlockState(soil).getBlock() instanceof FarmBlock
+                            && level.getBlockState(soil).getValue(FarmBlock.MOISTURE) > 0);
+                    setDirty();
+                    if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) { removeCrop(level, pos); continue; }
+                }
+                roots.add(pos);
+                if (growth.lastDailyWatered) watered.add(pos);
             }
-
-            boolean isWatered = runtimeCrop.soilPositions().stream()
-                    .map(level::getBlockState)
-                    .anyMatch(soil -> soil.getBlock() instanceof FarmBlock
-                            && soil.getValue(FarmBlock.MOISTURE) > 0);
-            StardewCropRuntimeAdapter.DailyResult result =
-                    StardewCropRuntimeRegistry.growOneDay(
-                            level, pos, isWatered, false);
-            setDirty();
-            if (result == StardewCropRuntimeAdapter.DailyResult.REMOVED) {
-                removeCrop(level, pos);
-                return;
-            }
-
-            BlockState afterGrow = level.getBlockState(pos);
-            if (afterGrow.getBlock() instanceof StardewCropBlock matureCheck
-                    && afterGrow.hasProperty(StardewCropBlock.AGE)
-                    && afterGrow.getValue(StardewCropBlock.AGE) == StardewCropBlock.MAX_AGE) {
-                com.stardew.craft.spawner.GiantCropSpawner.tryRoll(level, pos, matureCheck);
-            }
+            return com.stardew.craft.api.v1.internal.giant.GiantCropGrowth.process(level, roots, watered, day, offline);
+        } finally {
+            isProcessing = false;
+            applyPendingChanges();
         }
     }
 
@@ -464,29 +534,30 @@ public class CropGrowthManager extends SavedData {
                                 .isInGreenhouseInterior(level, realPos);
                         if (!permanentContainer && publicArea && !greenhouse) {
                             BlockState above = level.getBlockState(realPos.above());
-                            if (!isSoilProtectingBlock(above)) {
+                            if (!isSoilProtectingBlock(level, realPos.above(), above)) {
                                 fertilizerManager.removeFertilizer(level, realPos);
                                 level.setBlock(realPos,
-                                        com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()
-                                                .defaultBlockState(),
+                                        com.stardew.craft.block.terrain.TerrainSoils.restored(state).defaultBlockState(),
                                         Block.UPDATE_ALL);
                                 continue;
                             }
                         }
                         if (!permanentContainer && !publicArea && !greenhouse) {
                             BlockState above = level.getBlockState(realPos.above());
-                            if (!isSoilProtectingBlock(above)
+                            if (!isSoilProtectingBlock(level, realPos.above(), above)
                                     && level.random.nextFloat() < 0.1f) {
                                 fertilizerManager.removeFertilizer(level, realPos);
                                 level.setBlock(realPos,
-                                        com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get()
-                                                .defaultBlockState(),
+                                        com.stardew.craft.block.terrain.TerrainSoils.restored(state).defaultBlockState(),
                                         Block.UPDATE_ALL);
                                 continue;
                             }
                         }
                         int moisture = state.getValue(
                                 net.minecraft.world.level.block.FarmBlock.MOISTURE);
+                        var cropPos = realPos.above();
+                        if (level.getBlockState(cropPos).getBlock() instanceof com.stardew.craft.block.crop.RiceCropBlock
+                                && com.stardew.craft.block.crop.RiceCropBlock.keepPaddySoilWatered(level, cropPos)) continue;
                         if (moisture > 0) {
                             float retain = fertilizerManager.getWaterRetention(level, realPos);
                             if (retain > 0f && level.random.nextFloat() < retain) {
@@ -509,10 +580,11 @@ public class CropGrowthManager extends SavedData {
      *  - {@link StardewCropBlock}：所有自定义作物（含 WildSeedCropBlock）；
      *  - {@link com.stardew.craft.block.nature.ForageBlock}：X 季种成熟后变成的 forage 方块（蒲公英、雪人参等）。
      */
-    private static boolean isSoilProtectingBlock(BlockState above) {
+    private static boolean isSoilProtectingBlock(ServerLevel level, BlockPos abovePos, BlockState above) {
         Block block = above.getBlock();
-        return block instanceof StardewCropBlock
-            || block instanceof com.stardew.craft.block.nature.ForageBlock;
+        return above.is(net.minecraft.tags.BlockTags.MAINTAINS_FARMLAND) || block instanceof StardewCropBlock
+            || block instanceof com.stardew.craft.block.nature.ForageBlock
+            || StardewCropRuntimeRegistry.inspectAddon(level, abovePos) != null;
     }
 
     @SuppressWarnings("null")
@@ -530,6 +602,11 @@ public class CropGrowthManager extends SavedData {
                 posTag.putInt("DayInPhase", state.dayInPhase);
                 posTag.putInt("Phase", state.phase);
                 posTag.putBoolean("Regrowing", state.regrowing);
+                posTag.putBoolean("SourcePhases", state.sourcePhases);
+                posTag.putInt("SourcePhaseVersion", state.sourcePhaseVersion);
+                posTag.putInt("LastDailyDay", state.lastDailyDay);
+                posTag.putBoolean("LastDailyWatered", state.lastDailyWatered);
+                posTag.putInt("LastGiantDay", state.lastGiantDay);
                 if (state.planterUuid != null) {
                     posTag.putUUID("PlanterUuid", state.planterUuid);
                 }
@@ -564,7 +641,13 @@ public class CropGrowthManager extends SavedData {
                 int phase = posTag.contains("Phase", Tag.TAG_INT) ? posTag.getInt("Phase") : 0;
                 boolean regrowing = posTag.contains("Regrowing", Tag.TAG_BYTE) && posTag.getBoolean("Regrowing");
                 UUID planterUuid = posTag.hasUUID("PlanterUuid") ? posTag.getUUID("PlanterUuid") : null;
-                manager.cropStates.put(gp, new CropGrowthState(dayInPhase, phase, regrowing, planterUuid));
+                CropGrowthState growth = new CropGrowthState(dayInPhase, phase, regrowing, planterUuid);
+                growth.sourcePhases = posTag.getBoolean("SourcePhases");
+                growth.sourcePhaseVersion = posTag.getInt("SourcePhaseVersion");
+                growth.lastDailyDay = posTag.contains("LastDailyDay") ? posTag.getInt("LastDailyDay") : -1;
+                growth.lastDailyWatered = posTag.getBoolean("LastDailyWatered");
+                growth.lastGiantDay = posTag.contains("LastGiantDay") ? posTag.getInt("LastGiantDay") : -1;
+                manager.cropStates.put(gp, growth);
             }
         }
         if (tag.contains("PublicTilledChunks", Tag.TAG_LONG_ARRAY)) {

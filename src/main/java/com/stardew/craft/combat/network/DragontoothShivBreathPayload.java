@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-public record DragontoothShivBreathPayload(boolean active, int durationTicks) implements CustomPacketPayload {
+public record DragontoothShivBreathPayload(int casterId, boolean active, int durationTicks, long gameTick) implements CustomPacketPayload {
 
     @SuppressWarnings("null")
     public static final Type<DragontoothShivBreathPayload> TYPE = new Type<>(
@@ -18,10 +18,14 @@ public record DragontoothShivBreathPayload(boolean active, int durationTicks) im
 
     @SuppressWarnings("null")
     public static final StreamCodec<ByteBuf, DragontoothShivBreathPayload> STREAM_CODEC = StreamCodec.composite(
+        ByteBufCodecs.VAR_INT,
+        DragontoothShivBreathPayload::casterId,
         ByteBufCodecs.BOOL,
         DragontoothShivBreathPayload::active,
         ByteBufCodecs.VAR_INT,
         DragontoothShivBreathPayload::durationTicks,
+        ByteBufCodecs.VAR_LONG,
+        DragontoothShivBreathPayload::gameTick,
         DragontoothShivBreathPayload::new
     );
 
@@ -36,12 +40,7 @@ public record DragontoothShivBreathPayload(boolean active, int durationTicks) im
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(DragontoothShivBreathPayload payload) {
-        if (payload.active()) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;
-            com.stardew.craft.client.weapon.DragontoothShivBreathClientState.start(nowTick, payload.durationTicks());
-        } else {
-            com.stardew.craft.client.weapon.DragontoothShivBreathClientState.clear();
-        }
+        com.stardew.craft.client.weapon.DragontoothShivBreathClientState.apply(
+                payload.casterId(), payload.active(), payload.durationTicks(), payload.gameTick());
     }
 }

@@ -30,7 +30,9 @@ public record FarmSelectionSubmitPayload(
         String preferredName,
         String favoriteThing,
         boolean male,
-        Map<ResourceLocation, String> layoutConfiguration
+        Map<ResourceLocation, String> layoutConfiguration,
+        String petVariant,
+        String petName
 ) implements CustomPacketPayload {
     private static final int MAX_CONFIGURATION_FIELDS = 64;
 
@@ -48,6 +50,12 @@ public record FarmSelectionSubmitPayload(
             throw new IllegalArgumentException(
                     "Farm layout configuration has too many fields");
         }
+    }
+
+    public FarmSelectionSubmitPayload(String farmTypeId, String farmName, boolean forceCancelPending,
+                                      String preferredName, String favoriteThing, boolean male,
+                                      Map<ResourceLocation, String> layoutConfiguration) {
+        this(farmTypeId, farmName, forceCancelPending, preferredName, favoriteThing, male, layoutConfiguration, "", "");
     }
 
     /** Source-compatible constructor for clients without typed layout options. */
@@ -73,6 +81,8 @@ public record FarmSelectionSubmitPayload(
         buffer.writeUtf(payload.preferredName(), 64);
         buffer.writeUtf(payload.favoriteThing(), 96);
         buffer.writeBoolean(payload.male());
+        buffer.writeUtf(payload.petVariant(), 256);
+        buffer.writeUtf(payload.petName(), 48);
         buffer.writeVarInt(payload.layoutConfiguration().size());
         payload.layoutConfiguration().forEach((id, value) -> {
             ResourceLocation.STREAM_CODEC.encode(buffer, id);
@@ -89,6 +99,8 @@ public record FarmSelectionSubmitPayload(
         String preferredName = buffer.readUtf(64);
         String favoriteThing = buffer.readUtf(96);
         boolean male = buffer.readBoolean();
+        String petVariant = buffer.readUtf(256);
+        String petName = buffer.readUtf(48);
         int count = buffer.readVarInt();
         if (count < 0 || count > MAX_CONFIGURATION_FIELDS) {
             throw new IllegalArgumentException(
@@ -106,7 +118,7 @@ public record FarmSelectionSubmitPayload(
         }
         return new FarmSelectionSubmitPayload(
                 farmTypeId, farmName, forceCancelPending,
-                preferredName, favoriteThing, male, configuration);
+                preferredName, favoriteThing, male, configuration, petVariant, petName);
     }
 
     @Override
@@ -128,6 +140,13 @@ public record FarmSelectionSubmitPayload(
             if (preferredName.isBlank() || favoriteThing.isBlank()) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(
                         "stardewcraft.player_profile.validation.required"));
+                return;
+            }
+
+            if (!payload.petVariant().isEmpty() && (com.stardew.craft.pet.PetVariant.find(payload.petVariant())
+                    .filter(com.stardew.craft.pet.PetVariant::initial).isEmpty()
+                    || com.stardew.craft.pet.PetRecord.cleanName(payload.petName()).isBlank())) {
+                com.stardew.craft.pet.PetService.message(player, "name_required");
                 return;
             }
 
@@ -207,6 +226,8 @@ public record FarmSelectionSubmitPayload(
                         player, new OpenFarmSelectionPayload());
                 return;
             }
+
+            if (farm != null) com.stardew.craft.pet.PetService.selectInitial(player, farm, payload.petVariant(), payload.petName());
 
             StardewCraft.LOGGER.info("[FARM_SELECT] {} created farm '{}' (type={})",
                     player.getName().getString(), name, layout.id());

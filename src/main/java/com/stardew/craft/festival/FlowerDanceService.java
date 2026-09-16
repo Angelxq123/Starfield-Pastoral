@@ -46,7 +46,7 @@ public final class FlowerDanceService {
     private static final int FESTIVAL_START_MINUTE = 9 * 60;
     private static final int FESTIVAL_END_MINUTE = 22 * 60;
     private static final long PLAYER_INVITE_TIMEOUT_TICKS = 1200L;
-    private static final AABB ENTRY_TRIGGER_BOUNDS = inclusiveBox(new BlockPos(-56, 80, 3), new BlockPos(-283, 58, 157));
+    private static final AABB ENTRY_TRIGGER_BOUNDS = inclusiveBox(new BlockPos(-56, 80, 3), new BlockPos(-283, 58, 157)).expandTowards(0.0D, -1.0D, 0.0D);
     private static final BlockPos ENTRY_POS = new BlockPos(-176, 64, 106);
     private static final float WEST_YAW = 90.0F;
     private static final AABB PIERRE_SHOP_ZONE = inclusiveBox(new BlockPos(-224, 63, 135), new BlockPos(-219, 59, 137));

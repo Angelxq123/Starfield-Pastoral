@@ -340,7 +340,20 @@ public final class BuiltinWeaponSkillHandlers {
         WeaponSkillRuntime.register(SINGULARITY_EVOLVE, new SingularityEvolveSkillHandler());
         WeaponSkillRuntime.register(STARTRAIL_RIFT, new StartrailRiftSkillHandler());
         WeaponSkillRuntime.register(ETERNAL_COLLAPSE, new EternalCollapseSkillHandler());
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", DragonRapierRules.JAW), new DragonRapierSkillHandler(DragonRapierRules.JAW));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", DragonRapierRules.BREATH), new DragonRapierSkillHandler(DragonRapierRules.BREATH));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", DragonRapierRules.RIPOSTE), new DragonRapierSkillHandler(DragonRapierRules.RIPOSTE));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", SlammerDwarfRules.LIFT), new SlammerDwarfSkillHandler(SlammerDwarfRules.LIFT));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", SlammerDwarfRules.RUSH), new SlammerDwarfSkillHandler(SlammerDwarfRules.RUSH));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", SlammerDwarfRules.PISTON), new SlammerDwarfSkillHandler(SlammerDwarfRules.PISTON));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", SlammerDwarfRules.FAULT), new SlammerDwarfSkillHandler(SlammerDwarfRules.FAULT));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", IronClubRules.PRESS), new IronClubSkillHandler(IronClubRules.PRESS));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", IronClubRules.SWEEP), new IronClubSkillHandler(IronClubRules.SWEEP));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", WoodWeaponRules.WHIRL), new WoodWeaponSkillHandler(WoodWeaponRules.WHIRL));
+        WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", WoodWeaponRules.LEAP), new WoodWeaponSkillHandler(WoodWeaponRules.LEAP));
         WeaponSkillRuntime.register(FEMUR_SLAM, new FemurSlamSkillHandler());
+        for (String id : new String[]{HeavyHammerRules.SWEEP, HeavyHammerRules.QUAKE, HeavyHammerRules.PRESS, HeavyHammerRules.ENDLESS})
+            WeaponSkillRuntime.register(ResourceLocation.fromNamespaceAndPath("stardewcraft", id), new HeavyHammerSkillHandler(id));
         WeaponSkillRuntime.register(CRESCENT_SLASH, new CrescentSlashSkillHandler());
         WeaponSkillRuntime.register(FOREST_BLESSING, new ForestBlessingSkillHandler());
         bootstrapped = true;

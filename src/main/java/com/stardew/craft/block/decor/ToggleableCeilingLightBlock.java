@@ -17,7 +17,7 @@ public class ToggleableCeilingLightBlock extends MapDecorCeilingStaticBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public ToggleableCeilingLightBlock(Properties properties, String modelId) {
-        super(properties, modelId);
+        super(properties, modelId, true);
         registerDefaultState(defaultBlockState()
             .setValue(PART, Part.MAIN)
             .setValue(FACING, net.minecraft.core.Direction.NORTH)

@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "stardewcraft:block/material_templates/oak_template_base"
+      }
+    }
+  ]
+}

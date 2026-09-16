@@ -41,6 +41,7 @@ final class OfflineFarmCatchUpCursor<T> {
         }
         switch (phase) {
             case CROPS -> operations.growCrop(currentDay, crops.get(itemIndex));
+            case GIANTS -> operations.growGiant(currentDay, crops.get(itemIndex));
             case TREES -> operations.growTree(currentDay, trees.get(itemIndex));
             case SPRINKLERS -> operations.waterSprinkler(sprinklers.get(itemIndex));
             case COMMIT -> {
@@ -79,6 +80,11 @@ final class OfflineFarmCatchUpCursor<T> {
                     if (itemIndex < crops.size()) {
                         return;
                     }
+                    phase = Phase.GIANTS;
+                    itemIndex = 0;
+                }
+                case GIANTS -> {
+                    if (itemIndex < crops.size()) return;
                     phase = Phase.TREES;
                     itemIndex = 0;
                 }
@@ -106,6 +112,8 @@ final class OfflineFarmCatchUpCursor<T> {
     interface Operations<T> {
         void growCrop(int absoluteDay, T crop);
 
+        default void growGiant(int absoluteDay, T crop) {}
+
         void growTree(int absoluteDay, T tree);
 
         void waterSprinkler(T sprinkler);
@@ -115,6 +123,7 @@ final class OfflineFarmCatchUpCursor<T> {
 
     private enum Phase {
         CROPS,
+        GIANTS,
         TREES,
         SPRINKLERS,
         COMMIT

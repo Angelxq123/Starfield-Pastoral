@@ -1,124 +1,46 @@
 package com.stardew.craft.client.weapon;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.stardew.craft.StardewCraft;
-import com.mojang.math.Axis;
+import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 
-import java.util.List;
-
+/** Existing frost-fang texture follows the target's visible surface, with world occlusion. */
 public final class YetiMarkRenderer {
-
-    private static final ResourceLocation MARK_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/yeti_tooth_marker.png"
-    );
-
-    @SuppressWarnings("null")
-    private static final RenderType MARK_RENDER_TYPE = RenderType.create(
-        "stardew_yeti_mark",
-        DefaultVertexFormat.POSITION_TEX_COLOR,
-        VertexFormat.Mode.QUADS,
-        256,
-        false,
-        true,
-        RenderType.CompositeState.builder()
-            .setShaderState(new RenderType.ShaderStateShard(GameRenderer::getPositionTexColorShader))
-            .setTextureState(new RenderType.TextureStateShard(MARK_TEXTURE, false, false))
-            .setTransparencyState(new RenderType.TransparencyStateShard("translucent_transparency", () -> {
-                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
-            }, () -> {
-                com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-            }))
-            .setWriteMaskState(new RenderType.WriteMaskStateShard(true, false))
-            .setCullState(new RenderType.CullStateShard(false))
-            .setDepthTestState(new RenderType.DepthTestStateShard("always", 519))
-            .createCompositeState(false)
-    );
-
+    private static final RenderType MATERIAL = WeaponEffectRenderTypes.MOLTEN_GLOW;
     private YetiMarkRenderer() {}
 
-    @SuppressWarnings("null")
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
-            return;
-        }
-
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return;
+        if (mc.level == null || !Config.ENABLE_WEAPON_SPECIAL_EFFECTS.getAsBoolean()) return;
+        var ids = YetiMarkClientState.markedEntityIds();
+        if (ids.isEmpty()) return;
+        float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        long tick = mc.level.getGameTime();
+        Vec3 camera = event.getCamera().getPosition();
+        var stack = event.getPoseStack();
+        var buffers = mc.renderBuffers().bufferSource();
+        var out = buffers.getBuffer(MATERIAL);
+        for (int id : ids) {
+            if (!(mc.level.getEntity(id) instanceof LivingEntity target) || !target.isAlive()
+                    || target.distanceToSqr(camera) > 32 * 32 || !YetiMarkClientState.isMarked(id, tick)) continue;
+            var bounds = target.getBoundingBox().move(target.getPosition(partial).subtract(target.position()));
+            Vec3 center = bounds.getCenter();
+            Vec3 point = bounds.clip(camera, center).orElse(center)
+                    .add(camera.subtract(center).normalize().scale(0.04)).subtract(camera);
+            float size = 0.25f * (1 + 0.055f * (float) Math.sin((tick + partial) * 0.55));
+            stack.pushPose(); stack.translate(point.x, point.y, point.z);
+            stack.mulPose(event.getCamera().rotation());
+            Matrix4f pose = stack.last().pose();
+            WeaponEffectShapes.mark(out, pose, WeaponEffectShapes.Mark.FROST, size, 151, 228, 255, 230);
+            stack.popPose();
         }
-
-        Vec3 camPos = event.getCamera().getPosition();
-        long nowTick = mc.level.getGameTime();
-        AABB box = new AABB(
-            camPos.x - 48, camPos.y - 48, camPos.z - 48,
-            camPos.x + 48, camPos.y + 48, camPos.z + 48
-        );
-
-        List<LivingEntity> entities = mc.level.getEntitiesOfClass(LivingEntity.class, box);
-        if (entities.isEmpty()) {
-            return;
-        }
-
-        PoseStack poseStack = event.getPoseStack();
-        MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-        VertexConsumer consumer = buffer.getBuffer(MARK_RENDER_TYPE);
-        EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
-
-        for (LivingEntity entity : entities) {
-            if (!YetiMarkClientState.isMarked(entity.getId(), nowTick)) {
-                continue;
-            }
-
-            Vec3 pos = entity.position().add(0, entity.getBbHeight() * 0.6, 0);
-            double x = pos.x - camPos.x;
-            double y = pos.y - camPos.y;
-            double z = pos.z - camPos.z;
-
-            poseStack.pushPose();
-            poseStack.translate(x, y, z);
-            poseStack.mulPose(dispatcher.cameraOrientation());
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.scale(0.6f, 0.6f, 0.6f);
-
-            PoseStack.Pose last = poseStack.last();
-            Matrix4f pose = last.pose();
-
-            float size = 0.6f;
-            vertex(consumer, pose, 0xF000F0, -size, -size, 0, 1);
-            vertex(consumer, pose, 0xF000F0, size, -size, 1, 1);
-            vertex(consumer, pose, 0xF000F0, size, size, 1, 0);
-            vertex(consumer, pose, 0xF000F0, -size, size, 0, 0);
-
-            poseStack.popPose();
-        }
-
-        buffer.endBatch(MARK_RENDER_TYPE);
+        buffers.endBatch(MATERIAL);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light,
-                               float x, float y, float u, float v) {
-        consumer.addVertex(pose, x, y, 0.0f)
-            .setColor(255, 255, 255, 255)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
 }

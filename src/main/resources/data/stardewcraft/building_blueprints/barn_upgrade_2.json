@@ -1,0 +1,19 @@
+{
+  "builder": "stardewcraft:robin",
+  "order": 21,
+  "display_name": "building.stardewcraft.barn_2",
+  "description": "building.stardewcraft.upgrade_offer",
+  "money": 12000,
+  "materials": [
+    {
+      "item": "stardewcraft:wood_normal",
+      "count": 450
+    },
+    {
+      "item": "stardewcraft:stone",
+      "count": 200
+    }
+  ],
+  "result_item": "stardewcraft:barn_upgrade_2_permit",
+  "upgrade": true
+}

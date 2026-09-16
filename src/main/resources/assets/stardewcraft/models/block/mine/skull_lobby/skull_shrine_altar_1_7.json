@@ -1,0 +1,149 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/mine/shrine/altar_active_stone",
+    "1": "stardewcraft:block/mine/shrine/altar_active_glow",
+    "2": "stardewcraft:block/mine/shrine/shrine_stone_particle",
+    "particle": "stardewcraft:block/mine/shrine/shrine_stone_particle"
+  },
+  "elements": [
+    {
+      "name": "左火炬落地石足",
+      "from": [
+        0,
+        0,
+        -6
+      ],
+      "to": [
+        12,
+        3,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.0625,
+            2.4375,
+            11.8125,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            13.5,
+            2.4375,
+            14.25,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.875,
+            2.4375,
+            12.625,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12.6875,
+            2.4375,
+            13.4375,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            14.3125,
+            2.4375,
+            15.0625,
+            3.1875
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            15.125,
+            2.4375,
+            15.875,
+            3.1875
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "左火炬石柱",
+      "from": [
+        2,
+        3,
+        -4
+      ],
+      "to": [
+        10,
+        21,
+        4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.0625,
+            3.25,
+            0.5625,
+            4.375
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            1.75,
+            3.25,
+            2.25,
+            4.375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.625,
+            3.25,
+            1.125,
+            4.375
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            1.1875,
+            3.25,
+            1.6875,
+            4.375
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            2.3125,
+            3.25,
+            2.8125,
+            3.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2.875,
+            3.25,
+            3.375,
+            3.75
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

@@ -54,7 +54,11 @@ git diff -- compatibility/public-api-v1.txt
 
 A baseline update must not be used to hide an accidental break.
 
-## Addon canaries
+## Optional external addon canaries
+
+These external canaries are optional diagnostics and are not part of the core
+release workflow. Compatibility with their pinned versions is not a release
+guarantee.
 
 `addon-canaries.json` pins each external addon to an exact source commit and
 records the compatibility inputs reviewed by this repository. Canaries verify

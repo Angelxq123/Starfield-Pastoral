@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "stardewcraft:block/artisan/mead"
+    },
+    "facing=east": {
+      "model": "stardewcraft:block/artisan/mead",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "stardewcraft:block/artisan/mead",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "stardewcraft:block/artisan/mead",
+      "y": 270
+    }
+  }
+}

@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
-      "model": "stardewcraft:block/fish_pond_bucket"
+    "golden=false,ready=false": {
+      "model": "stardewcraft:block/utility/pond_bucket_wood_empty"
+    },
+    "golden=false,ready=true": {
+      "model": "stardewcraft:block/utility/pond_bucket_wood_ready"
+    },
+    "golden=true,ready=false": {
+      "model": "stardewcraft:block/utility/pond_bucket_gold_empty"
+    },
+    "golden=true,ready=true": {
+      "model": "stardewcraft:block/utility/pond_bucket_gold_ready"
     }
   }
 }

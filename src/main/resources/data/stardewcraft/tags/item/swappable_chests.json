@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "stardewcraft:wooden_chest",
+    "stardewcraft:stone_chest",
+    "stardewcraft:big_chest",
+    "stardewcraft:big_stone_chest"
+  ]
+}

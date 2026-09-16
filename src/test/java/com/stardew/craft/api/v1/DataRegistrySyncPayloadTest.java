@@ -50,7 +50,7 @@ class DataRegistrySyncPayloadTest {
                 "{}", "{}", "{}", "{}", "{}", "{}",
                 "{}", "{}", "{}", "{}", "{}", "{}");
 
-        assertEquals(36, payload.estimatedEncodedBytes());
+        assertEquals(39, payload.estimatedEncodedBytes());
     }
 
     @Test

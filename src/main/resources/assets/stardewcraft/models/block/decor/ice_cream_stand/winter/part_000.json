@@ -1,0 +1,79 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "0": "stardewcraft:block/decor/ice_cream_stand/winter/ice_cream_stand_winter",
+    "particle": "stardewcraft:block/decor/ice_cream_stand/winter/stand_wood_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -7,
+        7,
+        -15
+      ],
+      "to": [
+        23,
+        10,
+        31
+      ],
+      "faces": {
+        "north": {
+          "texture": "#0",
+          "uv": [
+            3.0,
+            6.5,
+            4.875,
+            6.6875
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            7.0625,
+            5.9375,
+            9.9375,
+            6.125
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            4.9375,
+            6.5,
+            6.8125,
+            6.6875
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            10.0,
+            5.9375,
+            12.875,
+            6.125
+          ]
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            6.3125,
+            0.0625,
+            8.1875,
+            2.9375
+          ]
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            8.25,
+            0.0625,
+            10.125,
+            2.9375
+          ]
+        }
+      },
+      "shade": true
+    }
+  ]
+}

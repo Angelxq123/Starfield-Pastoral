@@ -70,7 +70,7 @@ public final class LuauFestivalService {
     private static final int FESTIVAL_START_MINUTE = 9 * 60;
     private static final int FESTIVAL_END_MINUTE = 22 * 60;
 
-    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-3, 73, 83), new BlockPos(141, 59, 175));
+    private static final AABB ENTRY_EXIT_BOUNDS = inclusiveBox(new BlockPos(-3, 73, 83), new BlockPos(141, 59, 175)).expandTowards(0.0D, -1.0D, 0.0D);
     private static final AABB VENUE_BOUNDS = inclusiveBox(new BlockPos(27, 59, 88), new BlockPos(90, 63, 160));
     private static final AABB PIERRE_SHOP_ZONE = inclusiveBox(new BlockPos(72, 60, 95), new BlockPos(64, 62, 91));
     private static final AABB SOUP_CAULDRON_ZONE = inclusiveBox(new BlockPos(59, 60, 108), new BlockPos(63, 61, 110));
@@ -462,11 +462,7 @@ public final class LuauFestivalService {
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, false);
         syncFestivalMusic(player, FestivalMusicStatePayload.EVENT2);
         player.getPersistentData().putBoolean(TAG_MUSIC_SYNCED, true);
-        Vec3 target = LAST_INSIDE_ENTRY.get(player.getUUID());
-        if (!isInsideEntryBounds(target)) {
-            target = pushInsideEntry(player.position());
-        }
-        target = safeInsideEntryTarget(player, target);
+        Vec3 target = safeInsideEntryTarget(player, SAFE_ENTRY_RETURN);
         ModTeleport.to(player, player.serverLevel(), target.x, target.y, target.z, player.getYRot(), player.getXRot());
         player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0F;

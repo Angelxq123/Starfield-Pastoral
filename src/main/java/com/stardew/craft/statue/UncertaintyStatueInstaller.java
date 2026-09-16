@@ -9,7 +9,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,7 +18,7 @@ import javax.annotation.Nonnull;
 
 public final class UncertaintyStatueInstaller extends SavedData {
     private static final String DATA_NAME = "stardew_uncertainty_statue";
-    private static final int SITE_VERSION = 1;
+    private static final int SITE_VERSION = 3;
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
     private static final BlockPos STATUE_POS = new BlockPos(4, 51, 57);
 
@@ -50,8 +49,26 @@ public final class UncertaintyStatueInstaller extends SavedData {
         }
 
         StardewCraft.LOGGER.info("[UNCERTAINTY_STATUE] Installing statue (version {} -> {})", placedVersion, SITE_VERSION);
-        clearRequestedStrip(stardewLevel);
-        placeStatue(stardewLevel);
+        if (placedVersion == 0) clearRequestedStrip(stardewLevel);
+        if (!placeStatue(stardewLevel)) {
+            StardewCraft.LOGGER.warn("[UNCERTAINTY_STATUE] New footprint is obstructed; migration will retry on next installation check");
+            return;
+        }
+        // v1 extended along X; v2 extended north. Keep any cell owned by the rotated statue.
+        MapDecorStaticBlock.runWithDropsSuppressed(() -> {
+            for (BlockPos oldColumn : new BlockPos[]{STATUE_POS.west(), STATUE_POS.east(), STATUE_POS.north()}) {
+                for (int dy = 0; dy <= 1; dy++) {
+                    BlockPos oldCell = oldColumn.above(dy);
+                    BlockState oldState = stardewLevel.getBlockState(oldCell);
+                    if (oldState.is(ModBlocks.UNCERTAINTY_STATUE.get())
+                            && oldState.getValue(MapDecorStaticBlock.PART) == MapDecorStaticBlock.Part.EXTENSION
+                            && !STATUE_POS.equals(((MapDecorStaticBlock) ModBlocks.UNCERTAINTY_STATUE.get())
+                                .findMainPos(stardewLevel, oldCell, oldState))) {
+                        stardewLevel.removeBlock(oldCell, false);
+                    }
+                }
+            }
+        });
         placedVersion = SITE_VERSION;
         setDirty();
     }
@@ -62,12 +79,12 @@ public final class UncertaintyStatueInstaller extends SavedData {
         }
     }
 
-    private static void placeStatue(ServerLevel level) {
+    private static boolean placeStatue(ServerLevel level) {
         BlockState state = ModBlocks.UNCERTAINTY_STATUE.get().defaultBlockState()
             .setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)
             .setValue(MapDecorStaticBlock.FACING, Direction.SOUTH);
         level.setBlock(STATUE_POS, state, FLAGS);
-        ModBlocks.UNCERTAINTY_STATUE.get().setPlacedBy(level, STATUE_POS, state, null, ItemStack.EMPTY);
+        return ((MapDecorStaticBlock) ModBlocks.UNCERTAINTY_STATUE.get()).placeExtensions(level, STATUE_POS, state);
     }
 
     @Override

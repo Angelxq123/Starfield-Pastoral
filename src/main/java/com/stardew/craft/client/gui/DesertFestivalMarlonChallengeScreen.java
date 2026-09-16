@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.item.ModItems;
@@ -68,7 +72,7 @@ public class DesertFestivalMarlonChallengeScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        guiScale = (float) minecraft.getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         scale = 4.0f / guiScale;
         int sdvViewportW = Math.round(width * guiScale);
         int sdvViewportH = Math.round(height * guiScale);
@@ -246,7 +250,7 @@ public class DesertFestivalMarlonChallengeScreen extends Screen {
     }
 
     private int acceptButtonSdvH() {
-        return Math.round(font.lineHeight * 4.0F) + 24;
+        return Math.round(StardewFonts.lineHeight(font) * 4.0F) + 24;
     }
 
     private float fittingDescriptionScale(Component description) {
@@ -268,7 +272,7 @@ public class DesertFestivalMarlonChallengeScreen extends Screen {
     }
 
     private int lineStepSdv(float textScale) {
-        return Math.round(font.lineHeight * 4.0F * textScale + 8.0F);
+        return Math.round(StardewFonts.lineHeight(font) * 4.0F * textScale + 8.0F);
     }
 
     private int px(int sdvPixels) {

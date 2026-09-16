@@ -1,5 +1,0 @@
-﻿{
-  "type": "minecraft:stonecutting",
-  "ingredient": { "item": "stardewcraft:cracked_slate" },
-  "result": { "count": 1, "id": "stardewcraft:cracked_slate_wall" }
-}

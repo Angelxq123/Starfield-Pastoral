@@ -1,0 +1,45 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "stardewcraft:block/mine/mine_canopy",
+    "particle": "stardewcraft:block/mine/mine_canopy_particle"
+  },
+  "elements": [
+    {
+      "name": "贴顶根茎连接_south",
+      "from": [
+        4,
+        15.9375,
+        8
+      ],
+      "to": [
+        12,
+        15.9375,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#0",
+          "uv": [
+            6.0,
+            4.5,
+            7.0,
+            6.5
+          ],
+          "rotation": 180
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            6.0,
+            14.5,
+            7.0,
+            12.5
+          ],
+          "rotation": 180
+        }
+      }
+    }
+  ]
+}

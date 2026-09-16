@@ -153,7 +153,7 @@ public class FruitTreeBlock extends Block implements EntityBlock {
     }
 
     private static BlockPos findRoot(LevelReader level, BlockPos pos, FruitTreeType type) {
-        for (BlockPos offset : legacyExtensionOffsets(type)) {
+        for (BlockPos offset : extensionOffsets(type)) {
             BlockPos candidate = pos.subtract(offset);
             if (level.getBlockState(candidate).getBlock() instanceof FruitTreeBlock fruitTreeBlock
                     && fruitTreeBlock.getType() == type) {
@@ -205,7 +205,6 @@ public class FruitTreeBlock extends Block implements EntityBlock {
     }
 
     public static void ensureExtensions(ServerLevel level, BlockPos rootPos) {
-        pruneLegacyCanopyExtensions(level, rootPos);
         placeExtensions(level, rootPos);
     }
 
@@ -214,7 +213,7 @@ public class FruitTreeBlock extends Block implements EntityBlock {
         if (type == null) {
             return;
         }
-        for (BlockPos offset : legacyExtensionOffsets(type)) {
+        for (BlockPos offset : extensionOffsets(type)) {
             BlockPos pos = rootPos.offset(offset);
             if (level.getBlockState(pos).getBlock() instanceof FruitTreeExtensionBlock extensionBlock
                     && extensionBlock.getType() == type) {
@@ -231,44 +230,11 @@ public class FruitTreeBlock extends Block implements EntityBlock {
         return List.copyOf(offsets);
     }
 
-    private static void pruneLegacyCanopyExtensions(ServerLevel level, BlockPos rootPos) {
-        FruitTreeType type = getTreeType(level, rootPos);
-        if (type == null) {
-            return;
-        }
-        for (BlockPos offset : legacyExtensionOffsets(type)) {
-            if (isTrunkExtensionOffset(offset, type)) {
-                continue;
-            }
-            BlockPos pos = rootPos.offset(offset);
-            if (level.getBlockState(pos).getBlock() instanceof FruitTreeExtensionBlock extensionBlock
-                    && extensionBlock.getType() == type) {
-                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-            }
-        }
-    }
-
     private static boolean isTrunkExtensionOffset(BlockPos offset, FruitTreeType type) {
         return offset.getX() == 0
                 && offset.getZ() == 0
                 && offset.getY() >= 1
                 && offset.getY() <= type.trunkTopY();
-    }
-
-    private static List<BlockPos> legacyExtensionOffsets(FruitTreeType type) {
-        List<BlockPos> offsets = new ArrayList<>();
-        for (int y = 1; y <= type.maxExtensionY(); y++) {
-            if (y < type.canopyStartY()) {
-                offsets.add(new BlockPos(0, y, 0));
-                continue;
-            }
-            for (int dx = -type.extensionRadiusX(); dx <= type.extensionRadiusX(); dx++) {
-                for (int dz = -type.extensionRadiusZ(); dz <= type.extensionRadiusZ(); dz++) {
-                    offsets.add(new BlockPos(dx, y, dz));
-                }
-            }
-        }
-        return List.copyOf(offsets);
     }
 
     @Nullable

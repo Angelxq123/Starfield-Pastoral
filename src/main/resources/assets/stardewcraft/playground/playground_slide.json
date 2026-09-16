@@ -1,0 +1,544 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/playground_slide/part_0",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "name": "入口(4, 1)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_1",
+      "offset": [
+        0,
+        16,
+        0
+      ],
+      "name": "入口(4, 1)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_2",
+      "offset": [
+        0,
+        32,
+        0
+      ],
+      "name": "入口(4, 1)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_3",
+      "offset": [
+        0,
+        0,
+        16
+      ],
+      "name": "入口(4, 14)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_4",
+      "offset": [
+        0,
+        16,
+        16
+      ],
+      "name": "入口(4, 14)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_5",
+      "offset": [
+        0,
+        32,
+        16
+      ],
+      "name": "入口(4, 14)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_6",
+      "offset": [
+        32,
+        0,
+        0
+      ],
+      "name": "入口(28, 1)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_7",
+      "offset": [
+        32,
+        16,
+        0
+      ],
+      "name": "入口(28, 1)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_8",
+      "offset": [
+        32,
+        32,
+        0
+      ],
+      "name": "入口(28, 1)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_9",
+      "offset": [
+        32,
+        0,
+        16
+      ],
+      "name": "入口(28, 14)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_10",
+      "offset": [
+        32,
+        16,
+        16
+      ],
+      "name": "入口(28, 14)钢柱上"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_11",
+      "offset": [
+        32,
+        32,
+        16
+      ],
+      "name": "入口(28, 14)钢柱下"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_12",
+      "offset": [
+        16,
+        48,
+        16
+      ],
+      "name": "平台下承梁前"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_13",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "平台下承梁后"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_14",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "入口承台"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_15",
+      "offset": [
+        0,
+        48,
+        0
+      ],
+      "name": "扶手后立柱4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_16",
+      "offset": [
+        0,
+        64,
+        0
+      ],
+      "name": "扶手上横杆4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_17",
+      "offset": [
+        0,
+        64,
+        16
+      ],
+      "name": "扶手圆折4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_18",
+      "offset": [
+        0,
+        64,
+        16
+      ],
+      "name": "扶手上转接4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_19",
+      "offset": [
+        0,
+        48,
+        16
+      ],
+      "name": "扶手下转接4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_20",
+      "offset": [
+        0,
+        48,
+        16
+      ],
+      "name": "扶手前立柱4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_21",
+      "offset": [
+        0,
+        48,
+        16
+      ],
+      "name": "扶手法兰前4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_22",
+      "offset": [
+        32,
+        48,
+        0
+      ],
+      "name": "扶手后立柱28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_23",
+      "offset": [
+        32,
+        64,
+        0
+      ],
+      "name": "扶手上横杆28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_24",
+      "offset": [
+        32,
+        64,
+        16
+      ],
+      "name": "扶手圆折28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_25",
+      "offset": [
+        32,
+        64,
+        16
+      ],
+      "name": "扶手上转接28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_26",
+      "offset": [
+        32,
+        48,
+        16
+      ],
+      "name": "扶手下转接28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_27",
+      "offset": [
+        32,
+        48,
+        16
+      ],
+      "name": "扶手前立柱28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_28",
+      "offset": [
+        32,
+        48,
+        16
+      ],
+      "name": "扶手法兰前28"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_29",
+      "offset": [
+        0,
+        0,
+        -16
+      ],
+      "name": "倾斜登梯(7, 0)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_30",
+      "offset": [
+        0,
+        32,
+        0
+      ],
+      "name": "倾斜登梯(7, 1)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_31",
+      "offset": [
+        0,
+        0,
+        -16
+      ],
+      "name": "登梯防滑脚7"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_32",
+      "offset": [
+        32,
+        0,
+        -16
+      ],
+      "name": "倾斜登梯(25, 0)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_33",
+      "offset": [
+        32,
+        32,
+        0
+      ],
+      "name": "倾斜登梯(25, 1)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_34",
+      "offset": [
+        32,
+        0,
+        -16
+      ],
+      "name": "登梯防滑脚25"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_35",
+      "offset": [
+        16,
+        0,
+        -16
+      ],
+      "name": "防滑踏步0"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_36",
+      "offset": [
+        16,
+        16,
+        -16
+      ],
+      "name": "防滑踏步1"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_37",
+      "offset": [
+        16,
+        16,
+        -16
+      ],
+      "name": "防滑踏步2"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_38",
+      "offset": [
+        16,
+        32,
+        -16
+      ],
+      "name": "防滑踏步3"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_39",
+      "offset": [
+        16,
+        32,
+        0
+      ],
+      "name": "防滑踏步4"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_40",
+      "offset": [
+        16,
+        48,
+        0
+      ],
+      "name": "防滑踏步5"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_41",
+      "offset": [
+        16,
+        32,
+        16
+      ],
+      "name": "滑面0"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_42",
+      "offset": [
+        0,
+        32,
+        16
+      ],
+      "name": "橙色侧护边(0, 5)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_43",
+      "offset": [
+        32,
+        32,
+        16
+      ],
+      "name": "橙色侧护边(0, 27)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_44",
+      "offset": [
+        16,
+        16,
+        48
+      ],
+      "name": "滑面1"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_45",
+      "offset": [
+        0,
+        16,
+        48
+      ],
+      "name": "橙色侧护边(1, 5)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_46",
+      "offset": [
+        32,
+        16,
+        48
+      ],
+      "name": "橙色侧护边(1, 27)"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_47",
+      "offset": [
+        16,
+        0,
+        64
+      ],
+      "name": "出滑口缓坡"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_48",
+      "offset": [
+        16,
+        0,
+        64
+      ],
+      "name": "出口平缓托面"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_49",
+      "offset": [
+        16,
+        0,
+        80
+      ],
+      "name": "出口圆钝端沿"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_50",
+      "offset": [
+        0,
+        0,
+        32
+      ],
+      "name": "斜槽支撑(6, 37)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_51",
+      "offset": [
+        0,
+        16,
+        32
+      ],
+      "name": "斜槽支撑(6, 37)钢柱"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_52",
+      "offset": [
+        32,
+        0,
+        32
+      ],
+      "name": "斜槽支撑(26, 37)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_53",
+      "offset": [
+        32,
+        16,
+        32
+      ],
+      "name": "斜槽支撑(26, 37)钢柱"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_54",
+      "offset": [
+        16,
+        32,
+        32
+      ],
+      "name": "斜槽托梁37"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_55",
+      "offset": [
+        0,
+        0,
+        48
+      ],
+      "name": "斜槽支撑(6, 53)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_56",
+      "offset": [
+        0,
+        0,
+        48
+      ],
+      "name": "斜槽支撑(6, 53)钢柱"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_57",
+      "offset": [
+        32,
+        0,
+        48
+      ],
+      "name": "斜槽支撑(26, 53)底板"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_58",
+      "offset": [
+        32,
+        0,
+        48
+      ],
+      "name": "斜槽支撑(26, 53)钢柱"
+    },
+    {
+      "model": "stardewcraft:block/playground_slide/part_59",
+      "offset": [
+        16,
+        16,
+        48
+      ],
+      "name": "斜槽托梁53"
+    }
+  ]
+}

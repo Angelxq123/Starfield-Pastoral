@@ -1,7 +1,8 @@
 package com.stardew.craft.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.stardew.craft.client.combat.CombatCollapseModelPose;
+import com.stardew.craft.client.combat.CollapsePlayerModel;
 import com.stardew.craft.cutscene.runtime.EventPlayerActorEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidArmorModel;
@@ -30,6 +31,8 @@ public class EventPlayerActorRenderer extends MobRenderer<EventPlayerActorEntity
             ResourceLocation.withDefaultNamespace("textures/entity/player/wide/steve.png");
     private final PlayerModel<EventPlayerActorEntity> wideModel;
     private final PlayerModel<EventPlayerActorEntity> slimModel;
+    private final PlayerModel<EventPlayerActorEntity> collapsedWide = new CollapsePlayerModel<>(false);
+    private final PlayerModel<EventPlayerActorEntity> collapsedSlim = new CollapsePlayerModel<>(true);
 
     public EventPlayerActorRenderer(EntityRendererProvider.Context context) {
         super(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false), 0.5F);
@@ -67,18 +70,18 @@ public class EventPlayerActorRenderer extends MobRenderer<EventPlayerActorEntity
     @Override
     public void render(@javax.annotation.Nonnull EventPlayerActorEntity entity, float entityYaw, float partialTicks,
                        @javax.annotation.Nonnull PoseStack poseStack, @javax.annotation.Nonnull MultiBufferSource buffer, int packedLight) {
-        this.model = entity.isSlimSkinModel() ? slimModel : wideModel;
+        // The hidden actor anchor is beside the bed. Do not cast a detached floor
+        // shadow there while the visible body is still lying on the mattress.
+        float bedsideShadow = entity.isInHospitalBedScene()
+                ? Math.clamp((entity.hospitalBedTime(partialTicks) - 80) / 24, 0, 1) : 1;
+        this.shadowRadius = .5F * bedsideShadow * bedsideShadow * (3 - 2 * bedsideShadow);
+        this.model = CombatCollapseModelPose.frame(entity, partialTicks) != null
+                ? (entity.isSlimSkinModel() ? collapsedSlim : collapsedWide)
+                : (entity.isSlimSkinModel() ? slimModel : wideModel);
         this.model.rightArmPose = entity.isEatingItem()
                 ? HumanoidModel.ArmPose.ITEM
                 : HumanoidModel.ArmPose.EMPTY;
         poseStack.pushPose();
-        if (entity.isCollapsed()) {
-            // SDV's PlayerKilled event uses showFrame 5 while the farmer is
-            // unconscious. Minecraft has no equivalent frame, so rotate the
-            // full player model onto the floor until the authored "idle" cue.
-            poseStack.translate(0.0D, 0.18D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        }
         // Apply item-above-head arm pose before rendering
         if (entity.isHoldingItemAboveHead()) {
             PlayerModel<EventPlayerActorEntity> model = this.getModel();
@@ -92,6 +95,26 @@ public class EventPlayerActorRenderer extends MobRenderer<EventPlayerActorEntity
         }
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         poseStack.popPose();
+    }
+
+    @Override
+    protected void setupRotations(EventPlayerActorEntity entity, PoseStack stack, float bob,
+                                  float yaw, float partialTick, float scale) {
+        if (entity.isInHospitalBedScene()) {
+            com.stardew.craft.client.combat.HospitalBedPose.root(stack,model,
+                    com.stardew.craft.client.combat.HospitalBedPose.sample(entity.hospitalBedTime(partialTick),
+                            com.stardew.craft.client.combat.HospitalBedPose.hasArmor(entity)));
+            return;
+        }
+        super.setupRotations(entity, stack, bob, yaw, partialTick, scale);
+        var frame = CombatCollapseModelPose.frame(entity, partialTick);
+        if (frame != null) CombatCollapseModelPose.root(stack, model, frame, .9375F, entity);
+    }
+
+    @Override
+    protected void scale(EventPlayerActorEntity entity, PoseStack stack, float partialTick) {
+        // Match PlayerRenderer so the skin actor does not grow during the scene handoff.
+        stack.scale(.9375F, .9375F, .9375F);
     }
 
     private static AbstractClientPlayer findSkinSource(EventPlayerActorEntity entity) {

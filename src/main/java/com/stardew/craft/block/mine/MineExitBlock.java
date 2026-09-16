@@ -5,109 +5,124 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.*;
+import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.*;
 
-/**
- * 矿井出口方块 - 金色梯子
- * 
- * 特性：
- * - 必须依附在其他方块上（像原版梯子）
- * - 有方向性（FACING属性）
- * - 右键打开GUI选择传送目标
- * - 碰撞箱与原版梯子相同
- */
+import javax.annotation.Nullable;
+
+/** Four-high mine return ladder. All sections retain the existing exit interaction. */
+@SuppressWarnings("null")
 public class MineExitBlock extends Block {
-    
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
-    private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/mine_exit", Direction.NORTH);
+    public static final EnumProperty<MineLadderBlock.Theme> THEME = EnumProperty.create("theme", MineLadderBlock.Theme.class);
+    public static final IntegerProperty TIER = IntegerProperty.create("tier", 0, 3);
+    private static final VoxelShape[][] COLLISIONS = new VoxelShape[4][];
+    private static final VoxelShape[] OUTLINES = new VoxelShape[4];
 
-    @SuppressWarnings("null")
+    static {
+        for (int tier = 0; tier < 4; tier++) {
+            COLLISIONS[tier] = ModelVoxelShapeCache.horizontalShapes(
+                    "stardewcraft:block/mine_exit_ladder/" + tier, Direction.SOUTH);
+        }
+        for (int direction = 0; direction < 4; direction++) {
+            VoxelShape shape = Shapes.empty();
+            for (int tier = 0; tier < 4; tier++) shape = Shapes.or(shape, COLLISIONS[tier][direction].move(0, tier, 0));
+            OUTLINES[direction] = shape.optimize();
+        }
+    }
+
     public MineExitBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.SOUTH).setValue(TIER, 0).setValue(THEME, MineLadderBlock.Theme.EARTH));
     }
 
-    @Override
-    protected void createBlockStateDefinition(@SuppressWarnings("null") StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, TIER, THEME);
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public BlockState getStateForPlacement(@SuppressWarnings("null") BlockPlaceContext context) {
+    @Nullable
+    @Override public BlockState getStateForPlacement(BlockPlaceContext context) {
+        var level = context.getLevel();
         BlockPos pos = context.getClickedPos();
-        for (Direction dir : context.getNearestLookingDirections()) {
-            if (!dir.getAxis().isHorizontal()) {
-                continue;
-            }
-            Direction facing = dir.getOpposite(); // 朝向玩家
-            @SuppressWarnings("null")
-            BlockState state = this.defaultBlockState().setValue(FACING, facing);
-            if (state.canSurvive(context.getLevel(), pos)) {
-                return state;
+        if (pos.getY() + 3 >= level.getMaxBuildHeight()) return null;
+        Direction facing = context.getClickedFace().getAxis().isHorizontal()
+                ? context.getClickedFace() : context.getHorizontalDirection().getOpposite();
+        for (int tier = 0; tier < 4; tier++) {
+            BlockPos cell = pos.above(tier), wall = cell.relative(facing.getOpposite());
+            if (tier > 0 && !level.getBlockState(cell).canBeReplaced(context)) return null;
+            if (!level.getBlockState(wall).isFaceSturdy(level, wall, facing)) return null;
+        }
+        var theme = context.getItemInHand().getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                net.minecraft.world.item.component.BlockItemStateProperties.EMPTY).get(THEME);
+        if (theme == null) {
+            theme = MineLadderBlock.Theme.EARTH;
+            var wall = level.getBlockState(pos.relative(facing.getOpposite()));
+            for (var family : MineBuildingTheme.values()) if (family.rank(wall) >= 0) theme = MineLadderBlock.Theme.valueOf(family.name());
+        }
+        return defaultBlockState().setValue(FACING, facing).setValue(THEME, theme);
+    }
+
+    @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (!level.isClientSide) placeExtensions(level, pos, state);
+    }
+
+    /** Also used by authored mine generation; never overwrites an occupied upper cell. */
+    public void placeExtensions(Level level, BlockPos pos, BlockState state) {
+        if (state.getValue(TIER) != 0 || pos.getY() + 3 >= level.getMaxBuildHeight()) return;
+        for (int tier = 1; tier < 4; tier++) {
+            BlockState other = level.getBlockState(pos.above(tier));
+            if (!other.canBeReplaced() && other != state.setValue(TIER, tier)) return;
+        }
+        for (int tier = 1; tier < 4; tier++) level.setBlock(pos.above(tier), state.setValue(TIER, tier), 3);
+    }
+
+    @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
+        if (!replacement.is(this) && !level.isClientSide) {
+            BlockPos root = pos.below(state.getValue(TIER));
+            for (int tier = 0; tier < 4; tier++) {
+                BlockPos cell = root.above(tier);
+                BlockState other = level.getBlockState(cell);
+                if (!cell.equals(pos) && other.is(this) && other.getValue(TIER) == tier
+                        && other.getValue(FACING) == state.getValue(FACING)) level.setBlock(cell, Blocks.AIR.defaultBlockState(), 3);
             }
         }
-        return null;
-    }
-    
-    /**
-     * 检查方块是否可以存在（必须依附在实体方块上）
-     */
-    @SuppressWarnings("null")
-    @Override
-    public boolean canSurvive(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") net.minecraft.world.level.LevelReader level, @SuppressWarnings("null") BlockPos pos) {
-        @SuppressWarnings("null")
-        Direction facing = state.getValue(FACING);
-        @SuppressWarnings("null")
-        BlockPos attachPos = pos.relative(facing.getOpposite());
-        @SuppressWarnings("null")
-        BlockState attachState = level.getBlockState(attachPos);
-        // 必须依附在完整实体方块上（像梯子一样）
-        return attachState.isFaceSturdy(level, attachPos, facing.getOpposite());
+        super.onRemove(state, level, pos, replacement, moving);
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public VoxelShape getShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+    @Override public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
+                                                 boolean willHarvest, net.minecraft.world.level.material.FluidState fluid) {
+        return player.isCreative() && super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public BlockState rotate(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Rotation rotation) {
+    @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return OUTLINES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))].move(0, -state.getValue(TIER), 0);
+    }
+
+    @Override public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return COLLISIONS[state.getValue(TIER)][ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
+    }
+
+    @Override public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        ItemStack stack = new ItemStack(this);
+        stack.set(net.minecraft.core.component.DataComponents.BLOCK_STATE,
+                net.minecraft.world.item.component.BlockItemStateProperties.EMPTY.with(THEME, state));
+        return stack;
+    }
+
+    @Override public BlockState rotate(BlockState state, Rotation rotation) {
         return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public BlockState mirror(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Mirror mirror) {
-        return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
-    }
-
-    /**
-     * 检查方块是否可以存在（需要依附在其他方块上）
-     */
-    @Override
-    public BlockState updateShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Direction facing, @SuppressWarnings("null") BlockState facingState, 
-                                   @SuppressWarnings("null")    LevelAccessor level, @SuppressWarnings("null")    BlockPos currentPos, @SuppressWarnings("null")    BlockPos facingPos) {
-        // 依附方块被破坏时掉落
-        return this.canSurvive(state, level, currentPos)
-            ? state
-            : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+    @Override public BlockState mirror(BlockState state, Mirror mirror) {
+        return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 
     /**

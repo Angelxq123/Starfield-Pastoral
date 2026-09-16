@@ -10,7 +10,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /** Server-authoritative 3D projection of Stardew's facing-based melee area. */
-final class StardewWeaponAreaAttack {
+public final class StardewWeaponAreaAttack {
     private StardewWeaponAreaAttack() {
     }
 
@@ -62,7 +62,7 @@ final class StardewWeaponAreaAttack {
         }
     }
 
-    static boolean contains(
+    public static boolean contains(
             WeaponType type,
             double forwardDistance,
             double sideDistance,

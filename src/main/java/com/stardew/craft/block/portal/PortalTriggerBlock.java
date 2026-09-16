@@ -125,6 +125,15 @@ public class PortalTriggerBlock extends Block implements EntityBlock {
     }
 
     @Override
+    public void entityInside(BlockState state,Level level,BlockPos pos,Entity entity) {
+        if(entity instanceof ServerPlayer player && !player.isSpectator()
+                && level.getBlockEntity(pos) instanceof PortalTriggerBlockEntity portal
+                && ("farm_cave_enter".equals(portal.getTargetId()) || "farm_cave_exit".equals(portal.getTargetId()))) {
+            InteriorPortalInteractionEvents.handlePortalInteraction(player,portal.getTargetId());
+        }
+    }
+
+    @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         // 无碰撞箱，玩家可穿过
         return Shapes.empty();

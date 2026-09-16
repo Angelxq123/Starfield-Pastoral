@@ -1,0 +1,75 @@
+{
+  "format_version": 1,
+  "family": "silo",
+  "authored_front": "south",
+  "anchor_convention": "northwest corner of retained ground layer",
+  "reservation_bounds_from_anchor": {
+    "min": [
+      0,
+      0,
+      0
+    ],
+    "max_exclusive": [
+      7,
+      15,
+      7
+    ]
+  },
+  "self_build": {
+    "radius": 1,
+    "height": 19,
+    "manager_price": 100
+  },
+  "tiers": [
+    {
+      "tier": 1,
+      "structure": "stardewcraft:farm_buildings/silo",
+      "size": [
+        7,
+        15,
+        7
+      ],
+      "anchor": [
+        0,
+        0,
+        0
+      ],
+      "bounds_from_anchor": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max_exclusive": [
+          7,
+          15,
+          7
+        ]
+      },
+      "manager": {
+        "position": [
+          3,
+          1,
+          5
+        ],
+        "facing": "south",
+        "approach": [
+          3,
+          1,
+          6
+        ]
+      },
+      "animal_spawn": [
+        3,
+        1,
+        6
+      ],
+      "facilities": {
+        "troughs": 0,
+        "automatic_troughs": 0,
+        "hoppers": 0,
+        "incubators": 0
+      }
+    }
+  ]
+}

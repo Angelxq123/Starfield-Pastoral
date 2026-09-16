@@ -1,0 +1,110 @@
+{
+  "textures": {
+    "0": "stardewcraft:block/mine/support_themes/earth_dark",
+    "particle": "stardewcraft:block/mine/support_themes/earth_dark_particle"
+  },
+  "elements": [
+    {
+      "name": "post",
+      "from": [
+        4,
+        0,
+        0
+      ],
+      "to": [
+        8,
+        16,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.0,
+            2.0,
+            2.0,
+            4.0
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2.0,
+            2.0,
+            3.25,
+            4.0
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0.0,
+            2.0,
+            1.0,
+            4.0
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            2.0,
+            4.5,
+            4.0
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "crossbeam",
+      "from": [
+        2,
+        0,
+        4
+      ],
+      "to": [
+        16,
+        2,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.5,
+            2.0,
+            10.0,
+            2.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            6.5,
+            1.0,
+            10.0,
+            1.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.0,
+            1.0,
+            12.5,
+            1.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6.5,
+            3.0,
+            10.0,
+            3.75
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

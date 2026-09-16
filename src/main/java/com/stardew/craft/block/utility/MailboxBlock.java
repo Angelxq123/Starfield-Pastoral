@@ -11,11 +11,14 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 
@@ -29,9 +32,17 @@ import java.util.List;
  */
 @SuppressWarnings("null")
 public class MailboxBlock extends MapUtilityStaticBlock implements EntityBlock {
+    public static final BooleanProperty HAS_MAIL = BooleanProperty.create("has_mail");
 
     public MailboxBlock(Properties properties) {
-        super(properties, "stardewcraft:block/utility/mailbox");
+        super(properties, "stardewcraft:block/utility/mailbox", true);
+        registerDefaultState(defaultBlockState().setValue(HAS_MAIL, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(HAS_MAIL);
     }
 
     @SuppressWarnings("null")

@@ -17,7 +17,7 @@ public class ToggleableWallLightBlock extends MapDecorWallStaticBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public ToggleableWallLightBlock(Properties properties, String modelId) {
-        super(properties, modelId);
+        super(properties, modelId, true);
         registerDefaultState(defaultBlockState()
             .setValue(PART, Part.MAIN)
             .setValue(FACING, net.minecraft.core.Direction.NORTH)
@@ -45,6 +45,15 @@ public class ToggleableWallLightBlock extends MapDecorWallStaticBlock {
         }
         boolean nextLit = !mainState.getValue(LIT);
         level.setBlock(mainPos, mainState.setValue(LIT, nextLit), 3);
+        for (var offset : occupiedOffsets(mainState.getValue(FACING))) {
+            BlockPos target = mainPos.offset(offset.dx(), offset.dy(), offset.dz());
+            if (target.equals(mainPos)) continue;
+            BlockState extension = level.getBlockState(target);
+            if (extension.is(this) && extension.getValue(PART) == Part.EXTENSION
+                    && mainPos.equals(findMainPos(level, target, extension))) {
+                level.setBlock(target, extension.setValue(LIT, nextLit), 3);
+            }
+        }
         level.playSound(null, mainPos, net.minecraft.sounds.SoundEvents.LEVER_CLICK, net.minecraft.sounds.SoundSource.BLOCKS, 0.35F, nextLit ? 0.7F : 0.5F);
         return InteractionResult.CONSUME;
     }

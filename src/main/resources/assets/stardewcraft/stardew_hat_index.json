@@ -11,7 +11,7 @@
     "tags": "",
     "icon": "textures/item/hat/cowboy_hat.png",
     "itemModel": "models/item/cowboy_hat.json",
-    "entityModel": "models/entity/hat/cowboy_hat.json"
+    "entityModel": "native_models/entity/hat/cowboy_hat.json"
   },
   {
     "vanillaId": "1",
@@ -25,7 +25,7 @@
     "tags": "",
     "icon": "textures/item/hat/bowler_hat.png",
     "itemModel": "models/item/bowler_hat.json",
-    "entityModel": "models/entity/hat/bowler_hat.json"
+    "entityModel": "native_models/entity/hat/bowler_hat.json"
   },
   {
     "vanillaId": "2",
@@ -39,7 +39,7 @@
     "tags": "",
     "icon": "textures/item/hat/top_hat.png",
     "itemModel": "models/item/top_hat.json",
-    "entityModel": "models/entity/hat/top_hat.json"
+    "entityModel": "native_models/entity/hat/top_hat.json"
   },
   {
     "vanillaId": "3",
@@ -53,7 +53,7 @@
     "tags": "",
     "icon": "textures/item/hat/sombrero.png",
     "itemModel": "models/item/sombrero.json",
-    "entityModel": "models/entity/hat/sombrero.json"
+    "entityModel": "native_models/entity/hat/sombrero.json"
   },
   {
     "vanillaId": "4",
@@ -67,7 +67,7 @@
     "tags": "",
     "icon": "textures/item/hat/straw_hat.png",
     "itemModel": "models/item/straw_hat.json",
-    "entityModel": "models/entity/hat/straw_hat.json"
+    "entityModel": "native_models/entity/hat/straw_hat.json"
   },
   {
     "vanillaId": "5",
@@ -81,7 +81,7 @@
     "tags": "",
     "icon": "textures/item/hat/official_cap.png",
     "itemModel": "models/item/official_cap.json",
-    "entityModel": "models/entity/hat/official_cap.json"
+    "entityModel": "native_models/entity/hat/official_cap.json"
   },
   {
     "vanillaId": "6",
@@ -95,7 +95,7 @@
     "tags": "",
     "icon": "textures/item/hat/blue_bonnet.png",
     "itemModel": "models/item/blue_bonnet.json",
-    "entityModel": "models/entity/hat/blue_bonnet.json"
+    "entityModel": "native_models/entity/hat/blue_bonnet.json"
   },
   {
     "vanillaId": "7",
@@ -109,7 +109,7 @@
     "tags": "",
     "icon": "textures/item/hat/plum_chapeau.png",
     "itemModel": "models/item/plum_chapeau.json",
-    "entityModel": "models/entity/hat/plum_chapeau.json"
+    "entityModel": "native_models/entity/hat/plum_chapeau.json"
   },
   {
     "vanillaId": "8",
@@ -123,7 +123,7 @@
     "tags": "",
     "icon": "textures/item/hat/skeleton_mask.png",
     "itemModel": "models/item/skeleton_mask.json",
-    "entityModel": "models/entity/hat/skeleton_mask.json"
+    "entityModel": "native_models/entity/hat/skeleton_mask.json"
   },
   {
     "vanillaId": "9",
@@ -137,7 +137,7 @@
     "tags": "",
     "icon": "textures/item/hat/goblin_mask.png",
     "itemModel": "models/item/goblin_mask.json",
-    "entityModel": "models/entity/hat/goblin_mask.json"
+    "entityModel": "native_models/entity/hat/goblin_mask.json"
   },
   {
     "vanillaId": "10",
@@ -151,7 +151,7 @@
     "tags": "",
     "icon": "textures/item/hat/chicken_mask.png",
     "itemModel": "models/item/chicken_mask.json",
-    "entityModel": "models/entity/hat/chicken_mask.json"
+    "entityModel": "native_models/entity/hat/chicken_mask.json"
   },
   {
     "vanillaId": "11",
@@ -165,7 +165,7 @@
     "tags": "",
     "icon": "textures/item/hat/earmuffs.png",
     "itemModel": "models/item/earmuffs.json",
-    "entityModel": "models/entity/hat/earmuffs.json"
+    "entityModel": "native_models/entity/hat/earmuffs.json"
   },
   {
     "vanillaId": "12",
@@ -179,7 +179,7 @@
     "tags": "",
     "icon": "textures/item/hat/delicate_bow.png",
     "itemModel": "models/item/delicate_bow.json",
-    "entityModel": "models/entity/hat/delicate_bow.json"
+    "entityModel": "native_models/entity/hat/delicate_bow.json"
   },
   {
     "vanillaId": "13",
@@ -193,7 +193,7 @@
     "tags": "",
     "icon": "textures/item/hat/tropiclip.png",
     "itemModel": "models/item/tropiclip.json",
-    "entityModel": "models/entity/hat/tropiclip.json"
+    "entityModel": "native_models/entity/hat/tropiclip.json"
   },
   {
     "vanillaId": "14",
@@ -207,7 +207,7 @@
     "tags": "",
     "icon": "textures/item/hat/butterfly_bow.png",
     "itemModel": "models/item/butterfly_bow.json",
-    "entityModel": "models/entity/hat/butterfly_bow.json"
+    "entityModel": "native_models/entity/hat/butterfly_bow.json"
   },
   {
     "vanillaId": "15",
@@ -221,7 +221,7 @@
     "tags": "",
     "icon": "textures/item/hat/hunters_cap.png",
     "itemModel": "models/item/hunters_cap.json",
-    "entityModel": "models/entity/hat/hunters_cap.json"
+    "entityModel": "native_models/entity/hat/hunters_cap.json"
   },
   {
     "vanillaId": "16",
@@ -235,7 +235,7 @@
     "tags": "",
     "icon": "textures/item/hat/trucker_hat.png",
     "itemModel": "models/item/trucker_hat.json",
-    "entityModel": "models/entity/hat/trucker_hat.json"
+    "entityModel": "native_models/entity/hat/trucker_hat.json"
   },
   {
     "vanillaId": "17",
@@ -249,7 +249,7 @@
     "tags": "",
     "icon": "textures/item/hat/sailors_cap.png",
     "itemModel": "models/item/sailors_cap.json",
-    "entityModel": "models/entity/hat/sailors_cap.json"
+    "entityModel": "native_models/entity/hat/sailors_cap.json"
   },
   {
     "vanillaId": "18",
@@ -263,7 +263,7 @@
     "tags": "",
     "icon": "textures/item/hat/good_ol_cap.png",
     "itemModel": "models/item/good_ol_cap.json",
-    "entityModel": "models/entity/hat/good_ol_cap.json"
+    "entityModel": "native_models/entity/hat/good_ol_cap.json"
   },
   {
     "vanillaId": "19",
@@ -277,7 +277,7 @@
     "tags": "",
     "icon": "textures/item/hat/fedora.png",
     "itemModel": "models/item/fedora.json",
-    "entityModel": "models/entity/hat/fedora.json"
+    "entityModel": "native_models/entity/hat/fedora.json"
   },
   {
     "vanillaId": "20",
@@ -291,7 +291,7 @@
     "tags": "",
     "icon": "textures/item/hat/cool_cap.png",
     "itemModel": "models/item/cool_cap.json",
-    "entityModel": "models/entity/hat/cool_cap.json"
+    "entityModel": "native_models/entity/hat/cool_cap.json"
   },
   {
     "vanillaId": "21",
@@ -305,7 +305,7 @@
     "tags": "",
     "icon": "textures/item/hat/lucky_bow.png",
     "itemModel": "models/item/lucky_bow.json",
-    "entityModel": "models/entity/hat/lucky_bow.json"
+    "entityModel": "native_models/entity/hat/lucky_bow.json"
   },
   {
     "vanillaId": "22",
@@ -319,7 +319,7 @@
     "tags": "",
     "icon": "textures/item/hat/polka_bow.png",
     "itemModel": "models/item/polka_bow.json",
-    "entityModel": "models/entity/hat/polka_bow.json"
+    "entityModel": "native_models/entity/hat/polka_bow.json"
   },
   {
     "vanillaId": "23",
@@ -333,7 +333,7 @@
     "tags": "",
     "icon": "textures/item/hat/gnomes_cap.png",
     "itemModel": "models/item/gnomes_cap.json",
-    "entityModel": "models/entity/hat/gnomes_cap.json"
+    "entityModel": "native_models/entity/hat/gnomes_cap.json"
   },
   {
     "vanillaId": "24",
@@ -347,7 +347,7 @@
     "tags": "",
     "icon": "textures/item/hat/eye_patch.png",
     "itemModel": "models/item/eye_patch.json",
-    "entityModel": "models/entity/hat/eye_patch.json"
+    "entityModel": "native_models/entity/hat/eye_patch.json"
   },
   {
     "vanillaId": "25",
@@ -361,7 +361,7 @@
     "tags": "",
     "icon": "textures/item/hat/santa_hat.png",
     "itemModel": "models/item/santa_hat.json",
-    "entityModel": "models/entity/hat/santa_hat.json"
+    "entityModel": "native_models/entity/hat/santa_hat.json"
   },
   {
     "vanillaId": "26",
@@ -375,7 +375,7 @@
     "tags": "",
     "icon": "textures/item/hat/tiara.png",
     "itemModel": "models/item/tiara.json",
-    "entityModel": "models/entity/hat/tiara.json"
+    "entityModel": "native_models/entity/hat/tiara.json"
   },
   {
     "vanillaId": "27",
@@ -389,7 +389,7 @@
     "tags": "",
     "icon": "textures/item/hat/hard_hat.png",
     "itemModel": "models/item/hard_hat.json",
-    "entityModel": "models/entity/hat/hard_hat.json"
+    "entityModel": "native_models/entity/hat/hard_hat.json"
   },
   {
     "vanillaId": "28",
@@ -403,7 +403,7 @@
     "tags": "",
     "icon": "textures/item/hat/sou_wester.png",
     "itemModel": "models/item/sou_wester.json",
-    "entityModel": "models/entity/hat/sou_wester.json"
+    "entityModel": "native_models/entity/hat/sou_wester.json"
   },
   {
     "vanillaId": "29",
@@ -417,7 +417,7 @@
     "tags": "",
     "icon": "textures/item/hat/daisy.png",
     "itemModel": "models/item/daisy.json",
-    "entityModel": "models/entity/hat/daisy.json"
+    "entityModel": "native_models/entity/hat/daisy.json"
   },
   {
     "vanillaId": "30",
@@ -431,7 +431,7 @@
     "tags": "",
     "icon": "textures/item/hat/watermelon_band.png",
     "itemModel": "models/item/watermelon_band.json",
-    "entityModel": "models/entity/hat/watermelon_band.json"
+    "entityModel": "native_models/entity/hat/watermelon_band.json"
   },
   {
     "vanillaId": "31",
@@ -445,7 +445,7 @@
     "tags": "",
     "icon": "textures/item/hat/mouse_ears.png",
     "itemModel": "models/item/mouse_ears.json",
-    "entityModel": "models/entity/hat/mouse_ears.json"
+    "entityModel": "native_models/entity/hat/mouse_ears.json"
   },
   {
     "vanillaId": "32",
@@ -459,7 +459,7 @@
     "tags": "",
     "icon": "textures/item/hat/cat_ears.png",
     "itemModel": "models/item/cat_ears.json",
-    "entityModel": "models/entity/hat/cat_ears.json"
+    "entityModel": "native_models/entity/hat/cat_ears.json"
   },
   {
     "vanillaId": "33",
@@ -473,7 +473,7 @@
     "tags": "",
     "icon": "textures/item/hat/cowgal_hat.png",
     "itemModel": "models/item/cowgal_hat.json",
-    "entityModel": "models/entity/hat/cowgal_hat.json"
+    "entityModel": "native_models/entity/hat/cowgal_hat.json"
   },
   {
     "vanillaId": "34",
@@ -487,7 +487,7 @@
     "tags": "",
     "icon": "textures/item/hat/cowpoke_hat.png",
     "itemModel": "models/item/cowpoke_hat.json",
-    "entityModel": "models/entity/hat/cowpoke_hat.json"
+    "entityModel": "native_models/entity/hat/cowpoke_hat.json"
   },
   {
     "vanillaId": "35",
@@ -501,7 +501,7 @@
     "tags": "",
     "icon": "textures/item/hat/archers_cap.png",
     "itemModel": "models/item/archers_cap.json",
-    "entityModel": "models/entity/hat/archers_cap.json"
+    "entityModel": "native_models/entity/hat/archers_cap.json"
   },
   {
     "vanillaId": "36",
@@ -515,7 +515,7 @@
     "tags": "",
     "icon": "textures/item/hat/panda_hat.png",
     "itemModel": "models/item/panda_hat.json",
-    "entityModel": "models/entity/hat/panda_hat.json"
+    "entityModel": "native_models/entity/hat/panda_hat.json"
   },
   {
     "vanillaId": "37",
@@ -529,7 +529,7 @@
     "tags": "",
     "icon": "textures/item/hat/blue_cowboy_hat.png",
     "itemModel": "models/item/blue_cowboy_hat.json",
-    "entityModel": "models/entity/hat/blue_cowboy_hat.json"
+    "entityModel": "native_models/entity/hat/blue_cowboy_hat.json"
   },
   {
     "vanillaId": "38",
@@ -543,7 +543,7 @@
     "tags": "",
     "icon": "textures/item/hat/red_cowboy_hat.png",
     "itemModel": "models/item/red_cowboy_hat.json",
-    "entityModel": "models/entity/hat/red_cowboy_hat.json"
+    "entityModel": "native_models/entity/hat/red_cowboy_hat.json"
   },
   {
     "vanillaId": "39",
@@ -557,7 +557,7 @@
     "tags": "",
     "icon": "textures/item/hat/cone_hat.png",
     "itemModel": "models/item/cone_hat.json",
-    "entityModel": "models/entity/hat/cone_hat.json"
+    "entityModel": "native_models/entity/hat/cone_hat.json"
   },
   {
     "vanillaId": "40",
@@ -571,7 +571,7 @@
     "tags": "",
     "icon": "textures/item/hat/living_hat.png",
     "itemModel": "models/item/living_hat.json",
-    "entityModel": "models/entity/hat/living_hat.json"
+    "entityModel": "native_models/entity/hat/living_hat.json"
   },
   {
     "vanillaId": "41",
@@ -585,7 +585,7 @@
     "tags": "",
     "icon": "textures/item/hat/emilys_magic_hat.png",
     "itemModel": "models/item/emilys_magic_hat.json",
-    "entityModel": "models/entity/hat/emilys_magic_hat.json"
+    "entityModel": "native_models/entity/hat/emilys_magic_hat.json"
   },
   {
     "vanillaId": "42",
@@ -599,7 +599,7 @@
     "tags": "",
     "icon": "textures/item/hat/mushroom_cap.png",
     "itemModel": "models/item/mushroom_cap.json",
-    "entityModel": "models/entity/hat/mushroom_cap.json"
+    "entityModel": "native_models/entity/hat/mushroom_cap.json"
   },
   {
     "vanillaId": "43",
@@ -613,7 +613,7 @@
     "tags": "",
     "icon": "textures/item/hat/dinosaur_hat.png",
     "itemModel": "models/item/dinosaur_hat.json",
-    "entityModel": "models/entity/hat/dinosaur_hat.json"
+    "entityModel": "native_models/entity/hat/dinosaur_hat.json"
   },
   {
     "vanillaId": "44",
@@ -627,7 +627,7 @@
     "tags": "",
     "icon": "textures/item/hat/totem_mask.png",
     "itemModel": "models/item/totem_mask.json",
-    "entityModel": "models/entity/hat/totem_mask.json"
+    "entityModel": "native_models/entity/hat/totem_mask.json"
   },
   {
     "vanillaId": "45",
@@ -641,7 +641,7 @@
     "tags": "",
     "icon": "textures/item/hat/logo_cap.png",
     "itemModel": "models/item/logo_cap.json",
-    "entityModel": "models/entity/hat/logo_cap.json"
+    "entityModel": "native_models/entity/hat/logo_cap.json"
   },
   {
     "vanillaId": "46",
@@ -655,7 +655,7 @@
     "tags": "",
     "icon": "textures/item/hat/wearable_dwarf_helm.png",
     "itemModel": "models/item/wearable_dwarf_helm.json",
-    "entityModel": "models/entity/hat/wearable_dwarf_helm.json"
+    "entityModel": "native_models/entity/hat/wearable_dwarf_helm.json"
   },
   {
     "vanillaId": "47",
@@ -669,7 +669,7 @@
     "tags": "",
     "icon": "textures/item/hat/fashion_hat.png",
     "itemModel": "models/item/fashion_hat.json",
-    "entityModel": "models/entity/hat/fashion_hat.json"
+    "entityModel": "native_models/entity/hat/fashion_hat.json"
   },
   {
     "vanillaId": "48",
@@ -683,7 +683,7 @@
     "tags": "",
     "icon": "textures/item/hat/pumpkin_mask.png",
     "itemModel": "models/item/pumpkin_mask.json",
-    "entityModel": "models/entity/hat/pumpkin_mask.json"
+    "entityModel": "native_models/entity/hat/pumpkin_mask.json"
   },
   {
     "vanillaId": "49",
@@ -697,7 +697,7 @@
     "tags": "",
     "icon": "textures/item/hat/hair_bone.png",
     "itemModel": "models/item/hair_bone.json",
-    "entityModel": "models/entity/hat/hair_bone.json"
+    "entityModel": "native_models/entity/hat/hair_bone.json"
   },
   {
     "vanillaId": "50",
@@ -711,7 +711,7 @@
     "tags": "",
     "icon": "textures/item/hat/knights_helmet.png",
     "itemModel": "models/item/knights_helmet.json",
-    "entityModel": "models/entity/hat/knights_helmet.json"
+    "entityModel": "native_models/entity/hat/knights_helmet.json"
   },
   {
     "vanillaId": "51",
@@ -725,7 +725,7 @@
     "tags": "",
     "icon": "textures/item/hat/squires_helmet.png",
     "itemModel": "models/item/squires_helmet.json",
-    "entityModel": "models/entity/hat/squires_helmet.json"
+    "entityModel": "native_models/entity/hat/squires_helmet.json"
   },
   {
     "vanillaId": "52",
@@ -739,7 +739,7 @@
     "tags": "",
     "icon": "textures/item/hat/spotted_headscarf.png",
     "itemModel": "models/item/spotted_headscarf.json",
-    "entityModel": "models/entity/hat/spotted_headscarf.json"
+    "entityModel": "native_models/entity/hat/spotted_headscarf.json"
   },
   {
     "vanillaId": "53",
@@ -753,7 +753,7 @@
     "tags": "",
     "icon": "textures/item/hat/beanie.png",
     "itemModel": "models/item/beanie.json",
-    "entityModel": "models/entity/hat/beanie.json"
+    "entityModel": "native_models/entity/hat/beanie.json"
   },
   {
     "vanillaId": "54",
@@ -767,7 +767,7 @@
     "tags": "",
     "icon": "textures/item/hat/floppy_beanie.png",
     "itemModel": "models/item/floppy_beanie.json",
-    "entityModel": "models/entity/hat/floppy_beanie.json"
+    "entityModel": "native_models/entity/hat/floppy_beanie.json"
   },
   {
     "vanillaId": "55",
@@ -781,7 +781,7 @@
     "tags": "",
     "icon": "textures/item/hat/fishing_hat.png",
     "itemModel": "models/item/fishing_hat.json",
-    "entityModel": "models/entity/hat/fishing_hat.json"
+    "entityModel": "native_models/entity/hat/fishing_hat.json"
   },
   {
     "vanillaId": "56",
@@ -795,7 +795,7 @@
     "tags": "",
     "icon": "textures/item/hat/blobfish_mask.png",
     "itemModel": "models/item/blobfish_mask.json",
-    "entityModel": "models/entity/hat/blobfish_mask.json"
+    "entityModel": "native_models/entity/hat/blobfish_mask.json"
   },
   {
     "vanillaId": "57",
@@ -809,7 +809,7 @@
     "tags": "",
     "icon": "textures/item/hat/party_hat.png",
     "itemModel": "models/item/party_hat.json",
-    "entityModel": "models/entity/hat/party_hat.json"
+    "entityModel": "native_models/entity/hat/party_hat.json"
   },
   {
     "vanillaId": "58",
@@ -823,7 +823,7 @@
     "tags": "",
     "icon": "textures/item/hat/party_hat_58.png",
     "itemModel": "models/item/party_hat_58.json",
-    "entityModel": "models/entity/hat/party_hat_58.json"
+    "entityModel": "native_models/entity/hat/party_hat_58.json"
   },
   {
     "vanillaId": "59",
@@ -837,7 +837,7 @@
     "tags": "",
     "icon": "textures/item/hat/party_hat_59.png",
     "itemModel": "models/item/party_hat_59.json",
-    "entityModel": "models/entity/hat/party_hat_59.json"
+    "entityModel": "native_models/entity/hat/party_hat_59.json"
   },
   {
     "vanillaId": "60",
@@ -851,7 +851,7 @@
     "tags": "",
     "icon": "textures/item/hat/arcane_hat.png",
     "itemModel": "models/item/arcane_hat.json",
-    "entityModel": "models/entity/hat/arcane_hat.json"
+    "entityModel": "native_models/entity/hat/arcane_hat.json"
   },
   {
     "vanillaId": "61",
@@ -865,7 +865,7 @@
     "tags": "",
     "icon": "textures/item/hat/chef_hat.png",
     "itemModel": "models/item/chef_hat.json",
-    "entityModel": "models/entity/hat/chef_hat.json"
+    "entityModel": "native_models/entity/hat/chef_hat.json"
   },
   {
     "vanillaId": "62",
@@ -879,7 +879,7 @@
     "tags": "",
     "icon": "textures/item/hat/pirate_hat.png",
     "itemModel": "models/item/pirate_hat.json",
-    "entityModel": "models/entity/hat/pirate_hat.json"
+    "entityModel": "native_models/entity/hat/pirate_hat.json"
   },
   {
     "vanillaId": "63",
@@ -893,7 +893,7 @@
     "tags": "",
     "icon": "textures/item/hat/flat_topped_hat.png",
     "itemModel": "models/item/flat_topped_hat.json",
-    "entityModel": "models/entity/hat/flat_topped_hat.json"
+    "entityModel": "native_models/entity/hat/flat_topped_hat.json"
   },
   {
     "vanillaId": "64",
@@ -907,7 +907,7 @@
     "tags": "",
     "icon": "textures/item/hat/elegant_turban.png",
     "itemModel": "models/item/elegant_turban.json",
-    "entityModel": "models/entity/hat/elegant_turban.json"
+    "entityModel": "native_models/entity/hat/elegant_turban.json"
   },
   {
     "vanillaId": "65",
@@ -921,7 +921,7 @@
     "tags": "",
     "icon": "textures/item/hat/white_turban.png",
     "itemModel": "models/item/white_turban.json",
-    "entityModel": "models/entity/hat/white_turban.json"
+    "entityModel": "native_models/entity/hat/white_turban.json"
   },
   {
     "vanillaId": "66",
@@ -935,7 +935,7 @@
     "tags": "",
     "icon": "textures/item/hat/garbage_hat.png",
     "itemModel": "models/item/garbage_hat.json",
-    "entityModel": "models/entity/hat/garbage_hat.json"
+    "entityModel": "native_models/entity/hat/garbage_hat.json"
   },
   {
     "vanillaId": "67",
@@ -949,7 +949,7 @@
     "tags": "",
     "icon": "textures/item/hat/golden_mask_hat.png",
     "itemModel": "models/item/golden_mask_hat.json",
-    "entityModel": "models/entity/hat/golden_mask_hat.json"
+    "entityModel": "native_models/entity/hat/golden_mask_hat.json"
   },
   {
     "vanillaId": "68",
@@ -963,7 +963,7 @@
     "tags": "",
     "icon": "textures/item/hat/propeller_hat.png",
     "itemModel": "models/item/propeller_hat.json",
-    "entityModel": "models/entity/hat/propeller_hat.json"
+    "entityModel": "native_models/entity/hat/propeller_hat.json"
   },
   {
     "vanillaId": "69",
@@ -977,7 +977,7 @@
     "tags": "",
     "icon": "textures/item/hat/bridal_veil.png",
     "itemModel": "models/item/bridal_veil.json",
-    "entityModel": "models/entity/hat/bridal_veil.json"
+    "entityModel": "native_models/entity/hat/bridal_veil.json"
   },
   {
     "vanillaId": "70",
@@ -991,7 +991,7 @@
     "tags": "",
     "icon": "textures/item/hat/witch_hat.png",
     "itemModel": "models/item/witch_hat.json",
-    "entityModel": "models/entity/hat/witch_hat.json"
+    "entityModel": "native_models/entity/hat/witch_hat.json"
   },
   {
     "vanillaId": "71",
@@ -1005,7 +1005,7 @@
     "tags": "",
     "icon": "textures/item/hat/copper_pan_hat.png",
     "itemModel": "models/item/copper_pan_hat.json",
-    "entityModel": "models/entity/hat/copper_pan_hat.json"
+    "entityModel": "native_models/entity/hat/copper_pan_hat.json"
   },
   {
     "vanillaId": "72",
@@ -1019,7 +1019,7 @@
     "tags": "",
     "icon": "textures/item/hat/green_turban.png",
     "itemModel": "models/item/green_turban.json",
-    "entityModel": "models/entity/hat/green_turban.json"
+    "entityModel": "native_models/entity/hat/green_turban.json"
   },
   {
     "vanillaId": "73",
@@ -1033,7 +1033,7 @@
     "tags": "Prismatic",
     "icon": "textures/item/hat/magic_cowboy_hat.png",
     "itemModel": "models/item/magic_cowboy_hat.json",
-    "entityModel": "models/entity/hat/magic_cowboy_hat.json"
+    "entityModel": "native_models/entity/hat/magic_cowboy_hat.json"
   },
   {
     "vanillaId": "74",
@@ -1047,7 +1047,7 @@
     "tags": "Prismatic",
     "icon": "textures/item/hat/magic_turban.png",
     "itemModel": "models/item/magic_turban.json",
-    "entityModel": "models/entity/hat/magic_turban.json"
+    "entityModel": "native_models/entity/hat/magic_turban.json"
   },
   {
     "vanillaId": "75",
@@ -1061,7 +1061,7 @@
     "tags": "",
     "icon": "textures/item/hat/golden_helmet.png",
     "itemModel": "models/item/golden_helmet.json",
-    "entityModel": "models/entity/hat/golden_helmet.json"
+    "entityModel": "native_models/entity/hat/golden_helmet.json"
   },
   {
     "vanillaId": "76",
@@ -1075,7 +1075,7 @@
     "tags": "",
     "icon": "textures/item/hat/deluxe_pirate_hat.png",
     "itemModel": "models/item/deluxe_pirate_hat.json",
-    "entityModel": "models/entity/hat/deluxe_pirate_hat.json"
+    "entityModel": "native_models/entity/hat/deluxe_pirate_hat.json"
   },
   {
     "vanillaId": "77",
@@ -1089,7 +1089,7 @@
     "tags": "",
     "icon": "textures/item/hat/pink_bow.png",
     "itemModel": "models/item/pink_bow.json",
-    "entityModel": "models/entity/hat/pink_bow.json"
+    "entityModel": "native_models/entity/hat/pink_bow.json"
   },
   {
     "vanillaId": "78",
@@ -1103,7 +1103,7 @@
     "tags": "",
     "icon": "textures/item/hat/frog_hat.png",
     "itemModel": "models/item/frog_hat.json",
-    "entityModel": "models/entity/hat/frog_hat.json"
+    "entityModel": "native_models/entity/hat/frog_hat.json"
   },
   {
     "vanillaId": "79",
@@ -1117,7 +1117,7 @@
     "tags": "",
     "icon": "textures/item/hat/small_cap.png",
     "itemModel": "models/item/small_cap.json",
-    "entityModel": "models/entity/hat/small_cap.json"
+    "entityModel": "native_models/entity/hat/small_cap.json"
   },
   {
     "vanillaId": "80",
@@ -1131,7 +1131,7 @@
     "tags": "",
     "icon": "textures/item/hat/bluebird_mask.png",
     "itemModel": "models/item/bluebird_mask.json",
-    "entityModel": "models/entity/hat/bluebird_mask.json"
+    "entityModel": "native_models/entity/hat/bluebird_mask.json"
   },
   {
     "vanillaId": "81",
@@ -1145,7 +1145,7 @@
     "tags": "",
     "icon": "textures/item/hat/deluxe_cowboy_hat.png",
     "itemModel": "models/item/deluxe_cowboy_hat.json",
-    "entityModel": "models/entity/hat/deluxe_cowboy_hat.json"
+    "entityModel": "native_models/entity/hat/deluxe_cowboy_hat.json"
   },
   {
     "vanillaId": "82",
@@ -1159,7 +1159,7 @@
     "tags": "",
     "icon": "textures/item/hat/mr_qis_hat.png",
     "itemModel": "models/item/mr_qis_hat.json",
-    "entityModel": "models/entity/hat/mr_qis_hat.json"
+    "entityModel": "native_models/entity/hat/mr_qis_hat.json"
   },
   {
     "vanillaId": "83",
@@ -1173,7 +1173,7 @@
     "tags": "",
     "icon": "textures/item/hat/dark_cowboy_hat.png",
     "itemModel": "models/item/dark_cowboy_hat.json",
-    "entityModel": "models/entity/hat/dark_cowboy_hat.json"
+    "entityModel": "native_models/entity/hat/dark_cowboy_hat.json"
   },
   {
     "vanillaId": "84",
@@ -1187,7 +1187,7 @@
     "tags": "",
     "icon": "textures/item/hat/radioactive_goggles.png",
     "itemModel": "models/item/radioactive_goggles.json",
-    "entityModel": "models/entity/hat/radioactive_goggles.json"
+    "entityModel": "native_models/entity/hat/radioactive_goggles.json"
   },
   {
     "vanillaId": "85",
@@ -1201,7 +1201,7 @@
     "tags": "",
     "icon": "textures/item/hat/swashbuckler_hat.png",
     "itemModel": "models/item/swashbuckler_hat.json",
-    "entityModel": "models/entity/hat/swashbuckler_hat.json"
+    "entityModel": "native_models/entity/hat/swashbuckler_hat.json"
   },
   {
     "vanillaId": "86",
@@ -1215,7 +1215,7 @@
     "tags": "",
     "icon": "textures/item/hat/qi_mask.png",
     "itemModel": "models/item/qi_mask.json",
-    "entityModel": "models/entity/hat/qi_mask.json"
+    "entityModel": "native_models/entity/hat/qi_mask.json"
   },
   {
     "vanillaId": "87",
@@ -1229,7 +1229,7 @@
     "tags": "",
     "icon": "textures/item/hat/star_helmet.png",
     "itemModel": "models/item/star_helmet.json",
-    "entityModel": "models/entity/hat/star_helmet.json"
+    "entityModel": "native_models/entity/hat/star_helmet.json"
   },
   {
     "vanillaId": "88",
@@ -1243,7 +1243,7 @@
     "tags": "",
     "icon": "textures/item/hat/sunglasses.png",
     "itemModel": "models/item/sunglasses.json",
-    "entityModel": "models/entity/hat/sunglasses.json"
+    "entityModel": "native_models/entity/hat/sunglasses.json"
   },
   {
     "vanillaId": "89",
@@ -1257,7 +1257,7 @@
     "tags": "",
     "icon": "textures/item/hat/goggles.png",
     "itemModel": "models/item/goggles.json",
-    "entityModel": "models/entity/hat/goggles.json"
+    "entityModel": "native_models/entity/hat/goggles.json"
   },
   {
     "vanillaId": "90",
@@ -1271,7 +1271,7 @@
     "tags": "",
     "icon": "textures/item/hat/foragers_hat.png",
     "itemModel": "models/item/foragers_hat.json",
-    "entityModel": "models/entity/hat/foragers_hat.json"
+    "entityModel": "native_models/entity/hat/foragers_hat.json"
   },
   {
     "vanillaId": "91",
@@ -1285,7 +1285,7 @@
     "tags": "",
     "icon": "textures/item/hat/tiger_hat.png",
     "itemModel": "models/item/tiger_hat.json",
-    "entityModel": "models/entity/hat/tiger_hat.json"
+    "entityModel": "native_models/entity/hat/tiger_hat.json"
   },
   {
     "vanillaId": "92",
@@ -1299,7 +1299,7 @@
     "tags": "",
     "icon": "textures/item/hat/unknown.png",
     "itemModel": "models/item/unknown.json",
-    "entityModel": "models/entity/hat/unknown.json"
+    "entityModel": "native_models/entity/hat/unknown.json"
   },
   {
     "vanillaId": "93",
@@ -1313,7 +1313,7 @@
     "tags": "",
     "icon": "textures/item/hat/warrior_helmet.png",
     "itemModel": "models/item/warrior_helmet.json",
-    "entityModel": "models/entity/hat/warrior_helmet.json"
+    "entityModel": "native_models/entity/hat/warrior_helmet.json"
   },
   {
     "vanillaId": "AbigailsBow",
@@ -1327,7 +1327,7 @@
     "tags": "",
     "icon": "textures/item/hat/abigails_bow.png",
     "itemModel": "models/item/abigails_bow.json",
-    "entityModel": "models/entity/hat/abigails_bow.json"
+    "entityModel": "native_models/entity/hat/abigails_bow.json"
   },
   {
     "vanillaId": "TricornHat",
@@ -1341,7 +1341,7 @@
     "tags": "",
     "icon": "textures/item/hat/tricorn_hat.png",
     "itemModel": "models/item/tricorn_hat.json",
-    "entityModel": "models/entity/hat/tricorn_hat.json"
+    "entityModel": "native_models/entity/hat/tricorn_hat.json"
   },
   {
     "vanillaId": "JojaCap",
@@ -1355,7 +1355,7 @@
     "tags": "",
     "icon": "textures/item/hat/joja_cap.png",
     "itemModel": "models/item/joja_cap.json",
-    "entityModel": "models/entity/hat/joja_cap.json"
+    "entityModel": "native_models/entity/hat/joja_cap.json"
   },
   {
     "vanillaId": "LaurelWreathCrown",
@@ -1369,7 +1369,7 @@
     "tags": "",
     "icon": "textures/item/hat/laurel_wreath_crown.png",
     "itemModel": "models/item/laurel_wreath_crown.json",
-    "entityModel": "models/entity/hat/laurel_wreath_crown.json"
+    "entityModel": "native_models/entity/hat/laurel_wreath_crown.json"
   },
   {
     "vanillaId": "GilsHat",
@@ -1383,7 +1383,7 @@
     "tags": "",
     "icon": "textures/item/hat/gils_hat.png",
     "itemModel": "models/item/gils_hat.json",
-    "entityModel": "models/entity/hat/gils_hat.json"
+    "entityModel": "native_models/entity/hat/gils_hat.json"
   },
   {
     "vanillaId": "BlueBow",
@@ -1397,7 +1397,7 @@
     "tags": "",
     "icon": "textures/item/hat/blue_bow.png",
     "itemModel": "models/item/blue_bow.json",
-    "entityModel": "models/entity/hat/blue_bow.json"
+    "entityModel": "native_models/entity/hat/blue_bow.json"
   },
   {
     "vanillaId": "DarkVelvetBow",
@@ -1411,7 +1411,7 @@
     "tags": "",
     "icon": "textures/item/hat/dark_velvet_bow.png",
     "itemModel": "models/item/dark_velvet_bow.json",
-    "entityModel": "models/entity/hat/dark_velvet_bow.json"
+    "entityModel": "native_models/entity/hat/dark_velvet_bow.json"
   },
   {
     "vanillaId": "MummyMask",
@@ -1425,7 +1425,7 @@
     "tags": "",
     "icon": "textures/item/hat/mummy_mask.png",
     "itemModel": "models/item/mummy_mask.json",
-    "entityModel": "models/entity/hat/mummy_mask.json"
+    "entityModel": "native_models/entity/hat/mummy_mask.json"
   },
   {
     "vanillaId": "BucketHat",
@@ -1439,7 +1439,7 @@
     "tags": "",
     "icon": "textures/item/hat/bucket_hat.png",
     "itemModel": "models/item/bucket_hat.json",
-    "entityModel": "models/entity/hat/bucket_hat.json"
+    "entityModel": "native_models/entity/hat/bucket_hat.json"
   },
   {
     "vanillaId": "SquidHat",
@@ -1453,7 +1453,7 @@
     "tags": "",
     "icon": "textures/item/hat/squid_hat.png",
     "itemModel": "models/item/squid_hat.json",
-    "entityModel": "models/entity/hat/squid_hat.json"
+    "entityModel": "native_models/entity/hat/squid_hat.json"
   },
   {
     "vanillaId": "SportsCap",
@@ -1467,7 +1467,7 @@
     "tags": "",
     "icon": "textures/item/hat/sports_cap.png",
     "itemModel": "models/item/sports_cap.json",
-    "entityModel": "models/entity/hat/sports_cap.json"
+    "entityModel": "native_models/entity/hat/sports_cap.json"
   },
   {
     "vanillaId": "RedFez",
@@ -1481,7 +1481,7 @@
     "tags": "",
     "icon": "textures/item/hat/red_fez.png",
     "itemModel": "models/item/red_fez.json",
-    "entityModel": "models/entity/hat/red_fez.json"
+    "entityModel": "native_models/entity/hat/red_fez.json"
   },
   {
     "vanillaId": "RaccoonHat",
@@ -1495,7 +1495,7 @@
     "tags": "",
     "icon": "textures/item/hat/raccoon_hat.png",
     "itemModel": "models/item/raccoon_hat.json",
-    "entityModel": "models/entity/hat/raccoon_hat.json"
+    "entityModel": "native_models/entity/hat/raccoon_hat.json"
   },
   {
     "vanillaId": "SteelPanHat",
@@ -1509,7 +1509,7 @@
     "tags": "",
     "icon": "textures/item/hat/steel_pan_hat.png",
     "itemModel": "models/item/steel_pan_hat.json",
-    "entityModel": "models/entity/hat/steel_pan_hat.json"
+    "entityModel": "native_models/entity/hat/steel_pan_hat.json"
   },
   {
     "vanillaId": "GoldPanHat",
@@ -1523,7 +1523,7 @@
     "tags": "",
     "icon": "textures/item/hat/gold_pan_hat.png",
     "itemModel": "models/item/gold_pan_hat.json",
-    "entityModel": "models/entity/hat/gold_pan_hat.json"
+    "entityModel": "native_models/entity/hat/gold_pan_hat.json"
   },
   {
     "vanillaId": "IridiumPanHat",
@@ -1537,7 +1537,7 @@
     "tags": "",
     "icon": "textures/item/hat/iridium_pan_hat.png",
     "itemModel": "models/item/iridium_pan_hat.json",
-    "entityModel": "models/entity/hat/iridium_pan_hat.json"
+    "entityModel": "native_models/entity/hat/iridium_pan_hat.json"
   },
   {
     "vanillaId": "MysteryHat",
@@ -1551,7 +1551,7 @@
     "tags": "",
     "icon": "textures/item/hat/mystery_hat.png",
     "itemModel": "models/item/mystery_hat.json",
-    "entityModel": "models/entity/hat/mystery_hat.json"
+    "entityModel": "native_models/entity/hat/mystery_hat.json"
   },
   {
     "vanillaId": "DarkBallcap",
@@ -1565,7 +1565,7 @@
     "tags": "",
     "icon": "textures/item/hat/dark_ballcap.png",
     "itemModel": "models/item/dark_ballcap.json",
-    "entityModel": "models/entity/hat/dark_ballcap.json"
+    "entityModel": "native_models/entity/hat/dark_ballcap.json"
   },
   {
     "vanillaId": "LeprechuanHat",
@@ -1579,7 +1579,7 @@
     "tags": "",
     "icon": "textures/item/hat/leprechaun_hat.png",
     "itemModel": "models/item/leprechaun_hat.json",
-    "entityModel": "models/entity/hat/leprechaun_hat.json"
+    "entityModel": "native_models/entity/hat/leprechaun_hat.json"
   },
   {
     "vanillaId": "JunimoHat",
@@ -1593,7 +1593,7 @@
     "tags": "",
     "icon": "textures/item/hat/junimo_hat.png",
     "itemModel": "models/item/junimo_hat.json",
-    "entityModel": "models/entity/hat/junimo_hat.json"
+    "entityModel": "native_models/entity/hat/junimo_hat.json"
   },
   {
     "vanillaId": "PaperHat",
@@ -1607,7 +1607,7 @@
     "tags": "",
     "icon": "textures/item/hat/paper_hat.png",
     "itemModel": "models/item/paper_hat.json",
-    "entityModel": "models/entity/hat/paper_hat.json"
+    "entityModel": "native_models/entity/hat/paper_hat.json"
   },
   {
     "vanillaId": "PageboyCap",
@@ -1621,7 +1621,7 @@
     "tags": "",
     "icon": "textures/item/hat/pageboy_cap.png",
     "itemModel": "models/item/pageboy_cap.json",
-    "entityModel": "models/entity/hat/pageboy_cap.json"
+    "entityModel": "native_models/entity/hat/pageboy_cap.json"
   },
   {
     "vanillaId": "JesterHat",
@@ -1635,7 +1635,7 @@
     "tags": "",
     "icon": "textures/item/hat/jester_hat.png",
     "itemModel": "models/item/jester_hat.json",
-    "entityModel": "models/entity/hat/jester_hat.json"
+    "entityModel": "native_models/entity/hat/jester_hat.json"
   },
   {
     "vanillaId": "BlueRibbon",
@@ -1649,7 +1649,7 @@
     "tags": "",
     "icon": "textures/item/hat/blue_ribbon.png",
     "itemModel": "models/item/blue_ribbon.json",
-    "entityModel": "models/entity/hat/blue_ribbon.json"
+    "entityModel": "native_models/entity/hat/blue_ribbon.json"
   },
   {
     "vanillaId": "GovernorsHat",
@@ -1663,7 +1663,7 @@
     "tags": "",
     "icon": "textures/item/hat/governors_hat.png",
     "itemModel": "models/item/governors_hat.json",
-    "entityModel": "models/entity/hat/governors_hat.json"
+    "entityModel": "native_models/entity/hat/governors_hat.json"
   },
   {
     "vanillaId": "WhiteBow",
@@ -1677,7 +1677,7 @@
     "tags": "",
     "icon": "textures/item/hat/white_bow.png",
     "itemModel": "models/item/white_bow.json",
-    "entityModel": "models/entity/hat/white_bow.json"
+    "entityModel": "native_models/entity/hat/white_bow.json"
   },
   {
     "vanillaId": "SpaceHelmet",
@@ -1691,7 +1691,7 @@
     "tags": "",
     "icon": "textures/item/hat/space_helmet.png",
     "itemModel": "models/item/space_helmet.json",
-    "entityModel": "models/entity/hat/space_helmet.json"
+    "entityModel": "native_models/entity/hat/space_helmet.json"
   },
   {
     "vanillaId": "InfinityCrown",
@@ -1705,6 +1705,6 @@
     "tags": "",
     "icon": "textures/item/hat/infinity_crown.png",
     "itemModel": "models/item/infinity_crown.json",
-    "entityModel": "models/entity/hat/infinity_crown.json"
+    "entityModel": "native_models/entity/hat/infinity_crown.json"
   }
 ]

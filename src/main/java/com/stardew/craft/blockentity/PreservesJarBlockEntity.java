@@ -186,11 +186,15 @@ public class PreservesJarBlockEntity extends TimedProductionBlockEntity {
 
 	@SuppressWarnings("null")
 	private ItemStack createFlavoredOutput(ArtisanRecipeDataManager.Recipe recipe, ItemStack ingredientForFlavor) {
+	    return createFlavoredOutput(recipe, ingredientForFlavor, false);
+	}
+
+	private ItemStack createFlavoredOutput(ArtisanRecipeDataManager.Recipe recipe, ItemStack ingredientForFlavor, boolean simulate) {
 		PreserveType preserveType = recipe.preserveType();
 		if (preserveType == null) {
 			return ItemStack.EMPTY;
 		}
-		ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), recipe.outputCount());
+		ItemStack output = new ItemStack(BuiltInRegistries.ITEM.get(recipe.outputId()), (simulate ? recipe.outputCount() : recipe.rollOutputCount(level.random)));
 		PreservesItem.createFlavored(preserveType, ingredientForFlavor, output);
 		return output;
 	}
@@ -241,7 +245,7 @@ public class PreservesJarBlockEntity extends TimedProductionBlockEntity {
 			var recipeOpt = ArtisanRecipeDataManager.getRecipeByOutput("preserves_jar", outputId);
 			if (recipeOpt.isPresent()) {
 				ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
-				output = createFlavoredOutput(recipe, ingredientForFlavor);
+				output = createFlavoredOutput(recipe, ingredientForFlavor, simulate);
 				minutes = recipe.minutes();
 			}
 		} else if ("stardewcraft.type.crop".equals(StardewItemDataApi.getTypeKey(stack))) {
@@ -250,7 +254,7 @@ public class PreservesJarBlockEntity extends TimedProductionBlockEntity {
 				var recipeOpt = ArtisanRecipeDataManager.getRecipe("preserves_jar", stack);
 				if (recipeOpt.isPresent()) {
 					ArtisanRecipeDataManager.Recipe recipe = recipeOpt.get();
-					output = createFlavoredOutput(recipe, stack);
+					output = createFlavoredOutput(recipe, stack, simulate);
 					minutes = recipe.minutes();
 				}
 			}

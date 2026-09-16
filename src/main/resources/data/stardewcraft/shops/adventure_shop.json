@@ -171,6 +171,26 @@
       "item": "stardewcraft:immunity_band",
       "price": 4000,
       "min_mine_level": 80
+    },
+    {
+      "item": "stardewcraft:slingshot",
+      "price": 500,
+      "min_mine_level": 40
+    },
+    {
+      "item": "stardewcraft:master_slingshot",
+      "price": 1000,
+      "min_mine_level": 70
+    },
+    {
+      "item": "stardewcraft:explosive_ammo",
+      "price": 300,
+      "available_when": [
+        {
+          "type": "stardewcraft:known_recipe",
+          "data": "explosive_ammo"
+        }
+      ]
     }
   ],
   "accepted_sell_types": [

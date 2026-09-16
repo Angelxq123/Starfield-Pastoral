@@ -115,6 +115,7 @@ public final class SteelFalchionTraceSkillHandler
             SkillInstance instance,
             SkillInstance.EndReason reason
     ) {
+        if(reason!=SkillInstance.EndReason.COMPLETED)instance.executionState(SteelFalchionTraceExecutionState.class).ifPresent(state->state.cancelVisual(context.player()));
         instance.executionState(SteelFalchionTraceExecutionState.class)
                 .ifPresent(state -> state.cancel(
                         context.player(),

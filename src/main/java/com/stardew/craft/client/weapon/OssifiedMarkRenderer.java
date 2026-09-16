@@ -1,17 +1,12 @@
 package com.stardew.craft.client.weapon;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.stardew.craft.StardewCraft;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -23,33 +18,8 @@ import java.util.List;
 @SuppressWarnings("unused")
 public final class OssifiedMarkRenderer {
 
-    private static final ResourceLocation MARK_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/ossified_blade_marker.png"
-    );
 
-    @SuppressWarnings("null")
-    private static final RenderType MARK_RENDER_TYPE = RenderType.create(
-        "stardew_ossified_mark",
-        DefaultVertexFormat.POSITION_TEX_COLOR,
-        VertexFormat.Mode.QUADS,
-        256,
-        false,
-        true,
-        RenderType.CompositeState.builder()
-            .setShaderState(new RenderType.ShaderStateShard(GameRenderer::getPositionTexColorShader))
-            .setTextureState(new RenderType.TextureStateShard(MARK_TEXTURE, false, false))
-            .setTransparencyState(new RenderType.TransparencyStateShard("translucent_transparency", () -> {
-                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
-            }, () -> {
-                com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-            }))
-            .setWriteMaskState(new RenderType.WriteMaskStateShard(true, false))
-            .setCullState(new RenderType.CullStateShard(false))
-            .setDepthTestState(new RenderType.DepthTestStateShard("always", 519))
-            .createCompositeState(false)
-    );
+    private static final RenderType MARK_RENDER_TYPE = WeaponEffectRenderTypes.MOLTEN_GLOW;
 
     private OssifiedMarkRenderer() {}
 
@@ -60,7 +30,7 @@ public final class OssifiedMarkRenderer {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
+        if (mc.level == null || !com.stardew.craft.Config.ENABLE_WEAPON_SPECIAL_EFFECTS.getAsBoolean()) {
             return;
         }
 
@@ -86,7 +56,10 @@ public final class OssifiedMarkRenderer {
                 continue;
             }
 
-            Vec3 pos = entity.position().add(0, entity.getBbHeight() * 0.6, 0);
+            float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+            var bounds = entity.getBoundingBox().move(entity.getPosition(partial).subtract(entity.position()));
+            Vec3 center = bounds.getCenter();
+            Vec3 pos = bounds.clip(camPos, center).orElse(center).add(camPos.subtract(center).normalize().scale(0.04));
             double x = pos.x - camPos.x;
             double y = pos.y - camPos.y;
             double z = pos.z - camPos.z;
@@ -95,16 +68,13 @@ public final class OssifiedMarkRenderer {
             poseStack.translate(x, y, z);
             poseStack.mulPose(dispatcher.cameraOrientation());
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.scale(0.7f, 0.7f, 0.7f);
+            float scale = Math.clamp(entity.getBbHeight()*0.65f, 0.55f, 1.4f);
+            poseStack.scale(scale, scale, scale);
 
             PoseStack.Pose last = poseStack.last();
             Matrix4f pose = last.pose();
 
-            float size = 0.7f;
-            vertex(consumer, pose, 0xF000F0, -size, -size, 0, 1);
-            vertex(consumer, pose, 0xF000F0, size, -size, 1, 1);
-            vertex(consumer, pose, 0xF000F0, size, size, 1, 0);
-            vertex(consumer, pose, 0xF000F0, -size, size, 0, 0);
+            MineralEffectGeometry.boneMark(consumer, pose, OssifiedMarkClientState.fade(entity.getId(), nowTick + partial));
 
             poseStack.popPose();
         }
@@ -112,14 +82,5 @@ public final class OssifiedMarkRenderer {
         buffer.endBatch(MARK_RENDER_TYPE);
     }
 
-    @SuppressWarnings("null")
-    private static void vertex(VertexConsumer consumer, Matrix4f pose, int light,
-                               float x, float y, float u, float v) {
-        consumer.addVertex(pose, x, y, 0.0f)
-            .setColor(255, 255, 255, 255)
-            .setUv(u, v)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setLight(light)
-            .setNormal(0.0f, 1.0f, 0.0f);
-    }
+
 }

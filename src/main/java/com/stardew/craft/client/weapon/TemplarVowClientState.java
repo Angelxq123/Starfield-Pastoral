@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Player;
 
 public final class TemplarVowClientState {
 
+    private static net.minecraft.client.multiplayer.ClientLevel activeLevel;
     private static boolean active = false;
     private static long endTick = 0L;
     private static int totalTicks = 0;
@@ -12,6 +13,7 @@ public final class TemplarVowClientState {
     private TemplarVowClientState() {}
 
     public static void start(long nowTick, int durationTicks) {
+        activeLevel = Minecraft.getInstance().level;
         active = true;
         totalTicks = Math.max(1, durationTicks);
         endTick = nowTick + totalTicks;
@@ -24,6 +26,7 @@ public final class TemplarVowClientState {
     }
 
     public static boolean isActive(Player player) {
+        if (activeLevel != Minecraft.getInstance().level) clear();
         if (!active || player == null || player.level() == null) {
             return false;
         }

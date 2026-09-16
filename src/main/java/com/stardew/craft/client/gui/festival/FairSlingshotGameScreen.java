@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.festival;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
@@ -102,7 +104,7 @@ public class FairSlingshotGameScreen extends Screen implements com.stardew.craft
     @Override
     protected void init() {
         lastUpdateMs = System.currentTimeMillis();
-        guiScale = (float) Minecraft.getInstance().getWindow().getGuiScale();
+        guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         computeViewport();
         StardewMusicManager.stopForCutsceneSilence();
         if (targets.isEmpty()) {

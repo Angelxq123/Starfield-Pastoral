@@ -10,12 +10,13 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-/** Client-side fertilizer state, spatially indexed by dimension and chunk. */
+/** Main-thread updates publish immutable chunk snapshots for worker-thread model baking. */
 public final class ClientFertilizerCache {
     private static final Map<ResourceKey<Level>, Map<Long, Map<BlockPos, FertilizerType>>>
-            DIMENSION_CHUNKS = new HashMap<>();
+            DIMENSION_CHUNKS = new ConcurrentHashMap<>();
 
     private ClientFertilizerCache() {
     }
@@ -36,9 +37,14 @@ public final class ClientFertilizerCache {
             BlockPos pos,
             FertilizerType type
     ) {
-        chunks(dimension, true)
-                .computeIfAbsent(ChunkPos.asLong(pos), ignored -> new HashMap<>())
-                .put(pos.immutable(), type);
+        Map<Long, Map<BlockPos, FertilizerType>> chunks = chunks(dimension, true);
+        long key = ChunkPos.asLong(pos);
+        Map<BlockPos, FertilizerType> previous = chunks.getOrDefault(key, Map.of());
+        if (previous.get(pos) == type) return;
+        Map<BlockPos, FertilizerType> next = new HashMap<>(previous);
+        next.put(pos.immutable(), type);
+        chunks.put(key, Map.copyOf(next));
+        invalidate(dimension, pos);
     }
 
     @Nullable
@@ -83,11 +89,16 @@ public final class ClientFertilizerCache {
         if (chunk == null) {
             return;
         }
-        chunk.remove(pos);
-        if (chunk.isEmpty()) {
+        if (!chunk.containsKey(pos)) return;
+        Map<BlockPos, FertilizerType> next = new HashMap<>(chunk);
+        next.remove(pos);
+        if (next.isEmpty()) {
             chunks.remove(chunkKey);
             removeDimensionIfEmpty(dimension, chunks);
+        } else {
+            chunks.put(chunkKey, Map.copyOf(next));
         }
+        invalidate(dimension, pos);
     }
 
     /** Atomically replaces all fertilizer state for one server-synchronized chunk. */
@@ -98,12 +109,7 @@ public final class ClientFertilizerCache {
     ) {
         Map<Long, Map<BlockPos, FertilizerType>> chunks = chunks(dimension, true);
         long chunkKey = chunkPos.toLong();
-        if (snapshot.isEmpty()) {
-            chunks.remove(chunkKey);
-            removeDimensionIfEmpty(dimension, chunks);
-            return;
-        }
-
+        Map<BlockPos, FertilizerType> previous = chunks.getOrDefault(chunkKey, Map.of());
         Map<BlockPos, FertilizerType> replacement = new HashMap<>();
         for (Map.Entry<BlockPos, FertilizerType> entry : snapshot.entrySet()) {
             BlockPos pos = entry.getKey();
@@ -111,12 +117,19 @@ public final class ClientFertilizerCache {
                 replacement.put(pos.immutable(), entry.getValue());
             }
         }
+        if (previous.equals(replacement)) return;
         if (replacement.isEmpty()) {
             chunks.remove(chunkKey);
             removeDimensionIfEmpty(dimension, chunks);
         } else {
-            chunks.put(chunkKey, replacement);
+            chunks.put(chunkKey, Map.copyOf(replacement));
         }
+        previous.forEach((pos, type) -> {
+            if (!replacement.containsKey(pos)) invalidate(dimension, pos);
+        });
+        replacement.forEach((pos, type) -> {
+            if (previous.get(pos) != type) invalidate(dimension, pos);
+        });
     }
 
     public static void clearChunk(ChunkPos chunkPos) {
@@ -129,13 +142,17 @@ public final class ClientFertilizerCache {
     public static void clearChunk(ResourceKey<Level> dimension, ChunkPos chunkPos) {
         Map<Long, Map<BlockPos, FertilizerType>> chunks = chunks(dimension, false);
         if (chunks != null) {
-            chunks.remove(chunkPos.toLong());
+            Map<BlockPos, FertilizerType> removed = chunks.remove(chunkPos.toLong());
             removeDimensionIfEmpty(dimension, chunks);
+            if (removed != null) removed.keySet().forEach(pos -> invalidate(dimension, pos));
         }
     }
 
     public static void clear() {
+        var minecraft = Minecraft.getInstance();
+        boolean refresh = minecraft != null && minecraft.level != null && DIMENSION_CHUNKS.containsKey(minecraft.level.dimension());
         DIMENSION_CHUNKS.clear();
+        if (refresh) minecraft.levelRenderer.allChanged();
     }
 
     public static boolean hasFertilizer(BlockPos pos) {
@@ -219,7 +236,7 @@ public final class ClientFertilizerCache {
             boolean create
     ) {
         return create
-                ? DIMENSION_CHUNKS.computeIfAbsent(dimension, ignored -> new HashMap<>())
+                ? DIMENSION_CHUNKS.computeIfAbsent(dimension, ignored -> new ConcurrentHashMap<>())
                 : DIMENSION_CHUNKS.get(dimension);
     }
 
@@ -236,5 +253,12 @@ public final class ClientFertilizerCache {
     private static ResourceKey<Level> currentDimension() {
         Level level = Minecraft.getInstance().level;
         return level == null ? null : level.dimension();
+    }
+
+    private static void invalidate(ResourceKey<Level> dimension, BlockPos pos) {
+        var minecraft = Minecraft.getInstance();
+        if (minecraft != null && minecraft.level != null && minecraft.level.dimension().equals(dimension)) {
+            minecraft.levelRenderer.setBlocksDirty(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
+        }
     }
 }

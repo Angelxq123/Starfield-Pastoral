@@ -10,6 +10,16 @@ import net.minecraft.world.level.GameRules;
 public final class ModGameRules {
     public static final int DEFAULT_MAX_FARMERS_PER_FARM = 4;
 
+    /** Allows player construction in public areas without granting farm or container permissions. */
+    public static final GameRules.Key<GameRules.BooleanValue> RULE_STARDEW_ALLOW_PUBLIC_BUILDING =
+            GameRules.register("stardewAllowPublicBuilding", GameRules.Category.PLAYER,
+                    GameRules.BooleanValue.create(false, (server, value) -> {
+                        if (server != null) {
+                            net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(
+                                    new com.stardew.craft.network.payload.PublicBuildingRuleSyncPayload(value.get()));
+                        }
+                    }));
+
     /**
      * 星露谷维度中需要多少百分比的玩家睡觉才能过夜。
      * 默认 100（全员制），设为 0 则一人即可过夜。

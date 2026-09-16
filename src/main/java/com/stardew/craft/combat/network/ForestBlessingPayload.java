@@ -2,65 +2,33 @@ package com.stardew.craft.combat.network;
 
 import com.stardew.craft.StardewCraft;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
 
-public record ForestBlessingPayload(
-        int casterEntityId,
-        boolean active,
-        int durationTicks,
-        boolean completedCycle
-) implements CustomPacketPayload {
-
-    @SuppressWarnings("null")
-    public static final Type<ForestBlessingPayload> TYPE = new Type<>(
-        ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "forest_blessing_state")
-    );
-
-    @SuppressWarnings("null")
-    public static final StreamCodec<ByteBuf, ForestBlessingPayload> STREAM_CODEC = StreamCodec.composite(
-        ByteBufCodecs.VAR_INT,
-        ForestBlessingPayload::casterEntityId,
-        ByteBufCodecs.BOOL,
-        ForestBlessingPayload::active,
-        ByteBufCodecs.VAR_INT,
-        ForestBlessingPayload::durationTicks,
-        ByteBufCodecs.BOOL,
-        ForestBlessingPayload::completedCycle,
-        ForestBlessingPayload::new
-    );
-
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+/** Cast identity keeps late cancellation from removing a newer field. */
+public record ForestBlessingPayload(int casterId, long castTick, long tick, Phase phase, int duration, boolean empowered) implements CustomPacketPayload {
+    public enum Phase { START, HEAL, END }
+    public static final Type<ForestBlessingPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "forest_blessing_state"));
+    public static final StreamCodec<ByteBuf, ForestBlessingPayload> STREAM_CODEC = new StreamCodec<>() {
+        @Override public ForestBlessingPayload decode(ByteBuf b) {
+            return new ForestBlessingPayload(b.readInt(), b.readLong(), b.readLong(), Phase.values()[b.readUnsignedByte()],
+                    b.readInt(), b.readBoolean());
+        }
+        @Override public void encode(ByteBuf b, ForestBlessingPayload p) {
+            b.writeInt(p.casterId); b.writeLong(p.castTick); b.writeLong(p.tick); b.writeByte(p.phase.ordinal());
+            b.writeInt(p.duration); b.writeBoolean(p.empowered);
+        }
+    };
+    @Override public Type<ForestBlessingPayload> type() { return TYPE; }
+    public static void send(ServerPlayer p, long castTick, Phase phase, int duration, boolean empowered) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(p,
+                new ForestBlessingPayload(p.getId(), castTick, p.level().getGameTime(), phase, duration, empowered));
     }
-
     public static void handle(ForestBlessingPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> handleClient(payload));
-    }
-
-    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
-    private static void handleClient(ForestBlessingPayload payload) {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-        com.stardew.craft.client.weapon.presentation.SkillPresentationClient
-                .setForestBlessingState(
-                        payload.casterEntityId(),
-                        payload.active(),
-                        payload.durationTicks(),
-                        payload.completedCycle()
-                );
-        if (mc.player == null || mc.player.getId() != payload.casterEntityId()) {
-            return;
-        }
-        if (payload.active()) {
-            long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;
-            com.stardew.craft.client.weapon.ForestBlessingClientState.start(nowTick, payload.durationTicks());
-        } else {
-            com.stardew.craft.client.weapon.ForestBlessingClientState.clear();
-        }
+        context.enqueueWork(() -> com.stardew.craft.client.weapon.GroveWeaponVisuals.phase(payload));
     }
 }

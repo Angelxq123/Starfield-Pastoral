@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "stardewcraft:block/plaza_red_bricks/spring/single",
+    "side": "stardewcraft:block/plaza_red_bricks/spring/side",
+    "bottom": "stardewcraft:block/plaza_red_bricks/spring/bottom",
+    "particle": "stardewcraft:block/plaza_red_bricks/spring/particle"
+  }
+}

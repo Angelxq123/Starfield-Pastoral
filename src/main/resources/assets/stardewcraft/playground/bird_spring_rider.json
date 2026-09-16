@@ -1,0 +1,324 @@
+{
+  "parts": [
+    {
+      "part": "part_0",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0,
+      "name": "锚固底座"
+    },
+    {
+      "part": "part_1",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0,
+      "name": "内导杆"
+    },
+    {
+      "part": "part_2",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.21428571428571427,
+      "name": "弹簧0前"
+    },
+    {
+      "part": "part_3",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.21428571428571427,
+      "name": "弹簧0右"
+    },
+    {
+      "part": "part_4",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.21428571428571427,
+      "name": "弹簧0后"
+    },
+    {
+      "part": "part_5",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.21428571428571427,
+      "name": "弹簧0左"
+    },
+    {
+      "part": "part_6",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.5,
+      "name": "弹簧1前"
+    },
+    {
+      "part": "part_7",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.5,
+      "name": "弹簧1右"
+    },
+    {
+      "part": "part_8",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.5,
+      "name": "弹簧1后"
+    },
+    {
+      "part": "part_9",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.5,
+      "name": "弹簧1左"
+    },
+    {
+      "part": "part_10",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.7857142857142857,
+      "name": "弹簧2前"
+    },
+    {
+      "part": "part_11",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.7857142857142857,
+      "name": "弹簧2右"
+    },
+    {
+      "part": "part_12",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.7857142857142857,
+      "name": "弹簧2后"
+    },
+    {
+      "part": "part_13",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 0.7857142857142857,
+      "name": "弹簧2左"
+    },
+    {
+      "part": "part_14",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "弹簧承托板"
+    },
+    {
+      "part": "part_15",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "鸟身"
+    },
+    {
+      "part": "part_16",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "腹部收底"
+    },
+    {
+      "part": "part_17",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "前胸"
+    },
+    {
+      "part": "part_18",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "颈部"
+    },
+    {
+      "part": "part_19",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "鸟头"
+    },
+    {
+      "part": "part_20",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "头顶收肩"
+    },
+    {
+      "part": "part_21",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "上喙"
+    },
+    {
+      "part": "part_22",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "喙尖"
+    },
+    {
+      "part": "part_23",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "座面"
+    },
+    {
+      "part": "part_24",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "尾根"
+    },
+    {
+      "part": "part_25",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "尾羽左"
+    },
+    {
+      "part": "part_26",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "尾羽右"
+    },
+    {
+      "part": "part_27",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "扶手中杆"
+    },
+    {
+      "part": "part_28",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "扶手左握把"
+    },
+    {
+      "part": "part_29",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "扶手右握把"
+    },
+    {
+      "part": "part_30",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "左脚踏"
+    },
+    {
+      "part": "part_31",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "flex": 1,
+      "name": "右脚踏"
+    }
+  ]
+}

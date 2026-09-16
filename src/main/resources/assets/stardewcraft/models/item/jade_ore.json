@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/jade_ore",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/jade_ore"
-                 }
-}

@@ -1,0 +1,104 @@
+// A running development game must never lazy-load classes/resources from live compiler output.
+// Each launch gets a private directory; subsequent `classes` or tests cannot change it.
+class DevRuntimeSnapshot {
+    static void copyTree(java.nio.file.Path from, java.nio.file.Path to) {
+        java.nio.file.Files.walk(from).withCloseable { paths ->
+            paths.forEach { path ->
+                def destination = to.resolve(from.relativize(path))
+                if (java.nio.file.Files.isDirectory(path)) java.nio.file.Files.createDirectories(destination)
+                else java.nio.file.Files.copy(path, destination, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES)
+            }
+        }
+    }
+
+    static Map<String, String> stamp(java.nio.file.Path root) {
+        def result = new TreeMap<String, String>()
+        java.nio.file.Files.walk(root).withCloseable { paths ->
+            paths.filter { java.nio.file.Files.isRegularFile(it) }.forEach { path ->
+                result[root.relativize(path).toString()] = "${java.nio.file.Files.size(path)}:${java.nio.file.Files.getLastModifiedTime(path)}".toString()
+            }
+        }
+        result
+    }
+
+    static File freeze(def run, File root) {
+        root.mkdirs()
+        def destination = java.nio.file.Files.createTempDirectory(root.toPath(), run.name + '-').toFile()
+        def folderProviders = run.jvmArgumentProviders.findAll { provider ->
+            provider.asArguments().any { it.startsWith('-Dfml.modFolders=') }
+        }
+        if (folderProviders.size() != 1) throw new GradleException('Expected one ModDev mod-folder argument provider')
+        def argument = folderProviders.first().asArguments().find { it.startsWith('-Dfml.modFolders=') }
+        def folders = argument.substring('-Dfml.modFolders='.length()).split(java.util.regex.Pattern.quote(File.pathSeparator))
+        def initial = folders.collectEntries { entry ->
+            int split = entry.indexOf('%%')
+            if (split < 1) throw new GradleException("Invalid mod-folder entry: ${entry}")
+            String source = entry.substring(split + 2)
+            [(source): stamp(new File(source).toPath())]
+        }
+        def remap = new LinkedHashMap<String, String>()
+        def frozenFolders = folders.collect { entry ->
+            int split = entry.indexOf('%%')
+            if (split < 1) throw new GradleException("Invalid mod-folder entry: ${entry}")
+            String source = entry.substring(split + 2)
+            if (!remap.containsKey(source)) {
+                def from = new File(source).toPath()
+                def to = new File(destination, "output-${remap.size()}").toPath()
+                if (!java.nio.file.Files.isDirectory(from)) throw new GradleException("Missing mod output: ${source}")
+                def before = initial[source]
+                copyTree(from, to)
+                if (before != stamp(from) || before != stamp(to))
+                    throw new GradleException('Compiler output changed while preparing client snapshot; launch again after compilation finishes')
+                remap[source] = to.toFile().absolutePath
+            }
+            entry.substring(0, split + 2) + remap[source]
+        }.join(File.pathSeparator)
+        initial.each { source, before ->
+            if (before != stamp(new File(source).toPath()))
+                throw new GradleException('Compiler output changed across snapshot roots; launch again after compilation finishes')
+        }
+        def mapFiles = { collection -> collection.files.collect { file -> new File(remap.getOrDefault(file.absolutePath, file.absolutePath)) } }
+        def providerFiles = mapFiles(run.classpathProvider)
+        def extraFiles = mapFiles(run.classpath)
+        run.classpathProvider.setFrom(providerFiles)
+        run.setClasspath(run.project.files(extraFiles))
+        run.jvmArgumentProviders.removeAll(folderProviders)
+        run.systemProperty('fml.modFolders', frozenFolders)
+        run.environmentProperty.put('MOD_CLASSES', frozenFolders)
+        new File(destination, 'mod-folders.txt').text = frozenFolders + '\n'
+        run.logger.lifecycle("Development runtime snapshot: ${destination}")
+        destination
+    }
+}
+
+def clientSnapshots = layout.projectDirectory.dir('.gradle/dev-runtimes').asFile
+tasks.withType(JavaExec).configureEach {
+    if (!hasProperty('classpathProvider') || !hasProperty('environmentProperty')) return
+    notCompatibleWithConfigurationCache('A unique immutable runtime is captured immediately before each game launch')
+    doFirst { run -> run.extensions.extraProperties.set('clientRuntimeSnapshotDir', DevRuntimeSnapshot.freeze(run, clientSnapshots)) }
+    doLast { run -> run.project.delete(run.extensions.extraProperties.get('clientRuntimeSnapshotDir')) }
+}
+
+tasks.register('checkDevRuntimeSnapshot') {
+    group = 'verification'
+    description = 'Verify the actual client launch paths and copy isolation without opening a game window'
+    dependsOn 'classes', 'prepareClientRun'
+    notCompatibleWithConfigurationCache('Inspects the prepared client launch task without executing it')
+    doLast {
+        def run = tasks.named('runClient').get()
+        def snapshot = DevRuntimeSnapshot.freeze(run, clientSnapshots)
+        assert run.systemProperties['fml.modFolders'].contains(snapshot.absolutePath)
+        assert !run.jvmArgumentProviders.any { p -> p.asArguments().any { it.startsWith('-Dfml.modFolders=') } }
+        assert !run.classpathProvider.files.any { sourceSets.main.output.files.contains(it) }
+        def fixture = java.nio.file.Files.createTempDirectory('client-snapshot-check-')
+        try {
+            def source = java.nio.file.Files.createDirectories(fixture.resolve('source'))
+            java.nio.file.Files.writeString(source.resolve('late-loaded-class'), 'original')
+            DevRuntimeSnapshot.copyTree(source, fixture.resolve('snapshot'))
+            java.nio.file.Files.writeString(source.resolve('late-loaded-class'), 'recompiled')
+            assert java.nio.file.Files.readString(fixture.resolve('snapshot/late-loaded-class')) == 'original'
+        } finally { delete fixture.toFile() }
+        delete snapshot
+        logger.lifecycle('Client snapshot isolation verified; no client was launched.')
+    }
+}

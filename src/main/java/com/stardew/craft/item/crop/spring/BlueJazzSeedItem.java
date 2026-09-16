@@ -45,7 +45,7 @@ public class BlueJazzSeedItem extends Item implements IStardewItem {
         BlockPos abovePos = pos.above();
         @SuppressWarnings("null")
         BlockState aboveState = level.getBlockState(abovePos);
-        if (!aboveState.isAir()) {
+        if (!aboveState.isAir() || !level.getBlockState(abovePos.above()).isAir()) {
             return InteractionResult.PASS;
         }
 
@@ -83,4 +83,3 @@ public class BlueJazzSeedItem extends Item implements IStardewItem {
         return blockId.contains("farmland");
     }
 }
-

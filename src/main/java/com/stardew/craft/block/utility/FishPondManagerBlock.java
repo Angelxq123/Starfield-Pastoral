@@ -2,9 +2,6 @@ package com.stardew.craft.block.utility;
 
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.fishpond.data.FishPondWorldData;
-import com.stardew.craft.fishpond.service.FishPondColorSyncService;
-import com.stardew.craft.fishpond.service.FishPondManagerValidationService;
-import com.stardew.craft.fishpond.service.FishPondWaterService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,13 +18,12 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-import java.util.Optional;
 
 @SuppressWarnings("null")
-public class FishPondManagerBlock extends Block {
+public class FishPondManagerBlock extends BuildingManagerModelBlock {
 
     public FishPondManagerBlock(Properties properties) {
-        super(properties);
+        super(properties, "stardewcraft:block/fish_pond_manager");
     }
 
     @Override
@@ -42,7 +38,7 @@ public class FishPondManagerBlock extends Block {
                 .findPondByManagerAnyOwner(serverLevel.dimension().location().toString(), pos)
                 .isPresent();
             if (hasBinding) {
-                player.displayClientMessage(Component.translatable("message.stardew_craft.manager.break_blocked"), true);
+                if (player instanceof ServerPlayer receiver) com.stardew.craft.network.GlobalHudMessagePayload.sendTo(receiver, Component.translatable("message.stardew_craft.manager.break_blocked"));
                 return false;
             }
         }
@@ -76,6 +72,20 @@ public class FishPondManagerBlock extends Block {
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer) {
+            var record = com.stardew.craft.building.runtime.FishPondPrefabs.at(serverPlayer.serverLevel(),pos);
+            if (record == null) {
+                com.stardew.craft.building.runtime.BuildingPlacementService.message(serverPlayer,"prefab_only");
+                return InteractionResult.CONSUME;
+            }
+            if (!com.stardew.craft.building.runtime.BuildingService.canManage(serverPlayer,record)) {
+                com.stardew.craft.building.runtime.BuildingPlacementService.message(serverPlayer,"permission");
+                return InteractionResult.CONSUME;
+            }
+            if (record.phase()!=com.stardew.craft.building.runtime.BuildingRecord.Phase.READY) {
+                com.stardew.craft.building.runtime.BuildingManagerInteraction.open(serverPlayer,pos);
+                return InteractionResult.CONSUME;
+            }
+            com.stardew.craft.building.runtime.FishPondPrefabs.bind(serverPlayer.serverLevel(),record);
             serverPlayer.openMenu(
                 new SimpleMenuProvider(
                     (containerId, playerInventory, playerEntity) -> new com.stardew.craft.menu.FishPondManagerMenu(containerId, playerInventory, pos),
@@ -87,81 +97,12 @@ public class FishPondManagerBlock extends Block {
     }
 
     public static boolean tryCreateOrRefreshPond(ServerLevel level, BlockPos managerPos, ServerPlayer player) {
-        java.util.UUID farmOwner = com.stardew.craft.farm.FarmResourceOwnership
-                .resolveManageableOwner(level, managerPos, player);
-        if (farmOwner == null) {
-            return false;
-        }
-        FishPondWorldData worldData = FishPondWorldData.get(level);
-        worldData.reconcileFarmOwnership(level);
-        Optional<com.stardew.craft.fishpond.model.FishPondRecord> existingAnyOwner =
-            worldData.findPondByManagerAnyOwner(level.dimension().location().toString(), managerPos);
-        if (existingAnyOwner.isPresent()
-            && !farmOwner.toString().equals(existingAnyOwner.get().ownerPlayerUuid())) {
-            player.displayClientMessage(
-                Component.translatable("message.stardew_craft.manager.relocate_owner_mismatch"),
-                true
-            );
-            return false;
-        }
-
-        FishPondManagerValidationService.ValidationResult validation =
-            FishPondManagerValidationService.validate(level, managerPos);
-        Optional<com.stardew.craft.fishpond.model.FishPondRecord> existingOwn =
-            worldData.findPondByManager(level.dimension().location().toString(), farmOwner, managerPos);
-
-        if (!validation.ok()) {
-            player.displayClientMessage(validation.message(), true);
-            return false;
-        }
-
-        BlockPos bucketPos = validation.scan().bucketPositions().iterator().next();
-        String pondId = worldData.createOrUpdatePondAtManager(
-            level,
-            farmOwner,
-            managerPos,
-            bucketPos,
-            validation.scan().netPositions(),
-            validation.scan().waterCells(),
-            validation.scan().minX(),
-            validation.scan().minY(),
-            validation.scan().minZ(),
-            validation.scan().maxX(),
-            validation.scan().maxY(),
-            validation.scan().maxZ()
-        );
-        FishPondWaterService.rebindPondWater(level, existingOwn.orElse(null), validation.scan().waterCells());
-        com.stardew.craft.fishpond.model.FishPondRecord updated =
-                worldData.getPond(pondId).orElseThrow();
-        FishPondColorSyncService.syncPondChange(
-                level, existingOwn.orElse(null), updated);
-
-        return true;
+        return com.stardew.craft.building.runtime.BuildingManagerInteraction.open(player, managerPos);
     }
 
     public static boolean tryDemolishPond(ServerLevel level, BlockPos managerPos, ServerPlayer player) {
-        java.util.UUID farmOwner = com.stardew.craft.farm.FarmResourceOwnership
-                .resolveManageableOwner(level, managerPos, player);
-        if (farmOwner == null) {
-            return false;
-        }
-        FishPondWorldData worldData = FishPondWorldData.get(level);
-        worldData.reconcileFarmOwnership(level);
-        Optional<com.stardew.craft.fishpond.model.FishPondRecord> removed = worldData.removePondByManager(
-            level.dimension().location().toString(),
-            farmOwner,
-            managerPos
-        );
-        if (removed.isEmpty()) {
-            return false;
-        }
-
-        FishPondWaterService.removePondWater(level, removed.get());
-        FishPondColorSyncService.syncPondChange(level, removed.get(), null);
-        BlockState state = level.getBlockState(managerPos);
-        level.levelEvent(2001, managerPos, Block.getId(state));
-        level.removeBlock(managerPos, false);
-        popResource(level, managerPos, new ItemStack(ModBlocks.FISH_POND_MANAGER.get()));
-        return true;
+        var record = com.stardew.craft.building.runtime.FishPondPrefabs.at(level,managerPos);
+        return record != null && com.stardew.craft.building.runtime.BuildingService.canManage(player,record)
+                && com.stardew.craft.building.runtime.BuildingDemolition.perform(player,record);
     }
 }

@@ -1,0 +1,42 @@
+{
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/fall/surface",
+    "particle": "stardewcraft:block/park_fountain/fall/particle"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        0
+      ],
+      "to": [
+        15,
+        3,
+        32
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            5.0625,
+            0.0,
+            5.5,
+            1.0
+          ],
+          "texture": "#surface"
+        },
+        "down": {
+          "uv": [
+            5.53125,
+            0.0,
+            5.96875,
+            1.0
+          ],
+          "texture": "#surface"
+        }
+      },
+      "shade": true
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

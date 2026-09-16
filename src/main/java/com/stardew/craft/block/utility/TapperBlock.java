@@ -51,7 +51,7 @@ public class TapperBlock extends Block implements EntityBlock {
 	 */
 	public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 	private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/tapper", Direction.SOUTH);
-	private static final int MAX_TAPPERS_PER_TREE = 4;
+	private static final int MAX_TAPPERS_PER_TREE = 1;
 
 	@SuppressWarnings("null")
 	public TapperBlock(Properties properties) {
@@ -268,8 +268,7 @@ public class TapperBlock extends Block implements EntityBlock {
 		if (treeRoot == null) {
 			return null;
 		}
-		int tappers = countTappersOnTree(level, treeRoot, def);
-		return tappers > 0 && tappers <= MAX_TAPPERS_PER_TREE ? def : null;
+		return isActiveTapper(coreTappers(level, treeRoot, def), pos) ? def : null;
 	}
 
 	public static boolean isValidProductionSite(LevelReader level, BlockPos pos, BlockState state) {
@@ -293,8 +292,7 @@ public class TapperBlock extends Block implements EntityBlock {
 		if (tree == null) {
 			return null;
 		}
-		int tappers = countAddonTappersOnTree(level, tree);
-		return tappers > 0 && tappers <= MAX_TAPPERS_PER_TREE ? tree : null;
+		return isActiveTapper(attachedTappers(level, tree.tapperSupports()), pos) ? tree : null;
 	}
 
 	private static boolean hasReachedTapperLimit(LevelReader level, BlockPos treeRoot, WildTrees.Def def) {
@@ -317,30 +315,43 @@ public class TapperBlock extends Block implements EntityBlock {
 	}
 
 	private static int countTappersOnTree(LevelReader level, BlockPos treeRoot, WildTrees.Def def) {
-		Set<BlockPos> tappers = new HashSet<>();
-		if (def.isModernRoot(level.getBlockState(treeRoot))) {
-			WildTrees.forEachLiveGeneratedModernLogInTree(level, treeRoot, def, logPos -> {
-				collectAdjacentTappers(level, logPos, tappers);
-			});
-			return tappers.size();
-		}
-		collectAdjacentTappers(level, treeRoot, tappers);
-		return tappers.size();
+		return coreTappers(level, treeRoot, def).size();
 	}
 
-	private static boolean hasAdjacentTapper(LevelReader level, BlockPos pos) {
+	private static Set<BlockPos> coreTappers(LevelReader level, BlockPos root, WildTrees.Def def) {
+		Set<BlockPos> supports = new HashSet<>();
+		if (level instanceof ServerLevel serverLevel) {
+			var tree = com.stardew.craft.tree.prefab.PrefabTreeRegistry.get(serverLevel).getByRoot(root);
+			if (tree != null && !tree.felled()) {
+				for (BlockPos member : tree.members()) {
+					BlockState state = level.getBlockState(member);
+					if (def.isModernRoot(state) || def.isModernLog(state)) supports.add(member);
+				}
+			}
+		}
+		return attachedTappers(level, supports);
+	}
+
+	public static Set<BlockPos> attachedTappers(LevelReader level, Iterable<BlockPos> supports) {
 		Set<BlockPos> tappers = new HashSet<>();
-		collectAdjacentTappers(level, pos, tappers);
-		return !tappers.isEmpty();
+		for (BlockPos support : supports) collectAdjacentTappers(level, support, tappers);
+		return tappers;
 	}
 
 	private static void collectAdjacentTappers(LevelReader level, BlockPos pos, Set<BlockPos> tappers) {
 		for (Direction d : Direction.Plane.HORIZONTAL) {
 			BlockPos tapperPos = pos.relative(d);
-			if (level.getBlockState(tapperPos).is(ModBlocks.TAPPER.get())) {
+			BlockState state = level.getBlockState(tapperPos);
+			if (state.is(ModBlocks.TAPPER.get()) && state.getValue(FACING) == d.getOpposite()) {
 				tappers.add(tapperPos.immutable());
 			}
 		}
+	}
+
+	private static boolean isActiveTapper(Set<BlockPos> tappers, BlockPos pos) {
+		// Legacy duplicates stay recoverable; only one machine on the tree produces.
+		return tappers.stream().min(java.util.Comparator.comparingLong(BlockPos::asLong))
+				.map(pos::equals).orElse(false);
 	}
 
 	@SuppressWarnings("null")

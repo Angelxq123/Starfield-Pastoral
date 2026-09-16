@@ -14,6 +14,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemInHandRenderer.class)
 public class ItemInHandRendererWeaponTrailCaptureMixin {
+    @Inject(method = "renderHandsWithItems", at = @At("TAIL"))
+    private void stardewcraft$renderHandTrails(
+            float partialTick, PoseStack poseStack, MultiBufferSource.BufferSource buffers,
+            net.minecraft.client.player.LocalPlayer player, int light, CallbackInfo ci) {
+        com.stardew.craft.client.weapon.trail.WeaponTrailClient.renderFirstPerson();
+    }
+
     @Inject(method = "renderItem", at = @At("HEAD"))
     private void stardewcraft$beginWeaponTrailCapture(
             LivingEntity entity,

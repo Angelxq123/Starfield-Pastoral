@@ -36,15 +36,15 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("null")
-public class WoodenChestBlockEntity extends net.minecraft.world.level.block.entity.BlockEntity implements Container, MenuProvider, GeoBlockEntity {
+public class WoodenChestBlockEntity extends net.minecraft.world.level.block.entity.BlockEntity implements Container, MenuProvider, GeoBlockEntity, com.stardew.craft.inventory.ChestStorage {
     private static final String TAG_ITEMS = "items";
     private static final String TAG_COLOR_SELECTION = "colorSelection";
-    private static final int SLOT_COUNT = 27;
+    private static final int SLOT_COUNT = com.stardew.craft.menu.ChestMenuLayout.NORMAL_CAPACITY;
 
     private static final RawAnimation OPEN_ANIM = RawAnimation.begin().thenPlayAndHold("OPEN");
     private static final RawAnimation CLOSE_ANIM = RawAnimation.begin().thenPlayAndHold("CLOSE");
 
-    private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> localItems;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private int openCount;
@@ -52,14 +52,28 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
     private int colorSelection = -1;
 
     public WoodenChestBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.WOODEN_CHEST.get(), pos, state);
+        this(ModBlockEntities.WOODEN_CHEST.get(), pos, state, SLOT_COUNT);
     }
+
+    protected WoodenChestBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type,
+                                     BlockPos pos, BlockState state, int capacity) {
+        super(type, pos, state);
+        this.localItems = NonNullList.withSize(capacity, ItemStack.EMPTY);
+    }
+
+    protected NonNullList<ItemStack> inventoryItems() { return localItems; }
+
+    public com.stardew.craft.block.utility.ChestVariant variant() {
+        return com.stardew.craft.block.utility.ChestVariant.of(getBlockState().getBlock());
+    }
+
+    @Override public boolean isInUse() { return openCount > 0; }
 
     public void dropAllContents(Level level, BlockPos pos) {
         if (level.isClientSide) {
             return;
         }
-        SimpleContainer container = new SimpleContainer(items.toArray(new ItemStack[0]));
+        SimpleContainer container = new SimpleContainer(inventoryItems().toArray(new ItemStack[0]));
         Containers.dropContents(level, pos, container);
         clearContent();
     }
@@ -69,7 +83,7 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
     }
 
     public void setColorSelection(int selection) {
-        int clamped = WoodenChestColorPalette.clampIndex(selection);
+        int clamped = variant().dyeable ? WoodenChestColorPalette.clampIndex(selection) : -1;
         if (colorSelection == clamped) {
             return;
         }
@@ -80,12 +94,12 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
 
     @Override
     public int getContainerSize() {
-        return SLOT_COUNT;
+        return inventoryItems().size();
     }
 
     @Override
     public boolean isEmpty() {
-        for (ItemStack stack : items) {
+        for (ItemStack stack : inventoryItems()) {
             if (!stack.isEmpty()) {
                 return false;
             }
@@ -95,19 +109,19 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
 
     @Override
     public ItemStack getItem(int slot) {
-        if (slot < 0 || slot >= items.size()) {
+        if (slot < 0 || slot >= inventoryItems().size()) {
             return ItemStack.EMPTY;
         }
-        return items.get(slot);
+        return inventoryItems().get(slot);
     }
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
-        if (slot < 0 || slot >= items.size() || amount <= 0) {
+        if (slot < 0 || slot >= inventoryItems().size() || amount <= 0) {
             return ItemStack.EMPTY;
         }
 
-        ItemStack stack = items.get(slot);
+        ItemStack stack = inventoryItems().get(slot);
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
@@ -117,7 +131,7 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
         out.setCount(removed);
 
         if (removed >= stack.getCount()) {
-            items.set(slot, ItemStack.EMPTY);
+            inventoryItems().set(slot, ItemStack.EMPTY);
         } else {
             stack.shrink(removed);
         }
@@ -129,11 +143,11 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
-        if (slot < 0 || slot >= items.size()) {
+        if (slot < 0 || slot >= inventoryItems().size()) {
             return ItemStack.EMPTY;
         }
-        ItemStack out = items.get(slot);
-        items.set(slot, ItemStack.EMPTY);
+        ItemStack out = inventoryItems().get(slot);
+        inventoryItems().set(slot, ItemStack.EMPTY);
         setChanged();
         syncToClient();
         return out;
@@ -141,16 +155,16 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        if (slot < 0 || slot >= items.size()) {
+        if (slot < 0 || slot >= inventoryItems().size()) {
             return;
         }
 
         if (stack.isEmpty()) {
-            items.set(slot, ItemStack.EMPTY);
+            inventoryItems().set(slot, ItemStack.EMPTY);
         } else {
             ItemStack copy = stack.copy();
             copy.setCount(Math.min(copy.getCount(), copy.getMaxStackSize()));
-            items.set(slot, copy);
+            inventoryItems().set(slot, copy);
         }
 
         setChanged();
@@ -164,8 +178,8 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
 
     @Override
     public void clearContent() {
-        for (int i = 0; i < items.size(); i++) {
-            items.set(i, ItemStack.EMPTY);
+        for (int i = 0; i < inventoryItems().size(); i++) {
+            inventoryItems().set(i, ItemStack.EMPTY);
         }
         setChanged();
         syncToClient();
@@ -192,6 +206,11 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
         if (openCount == 0 && level != null) {
             level.playSound(null, worldPosition, ModSounds.DOOR_CREAK_REVERSE.get(), SoundSource.BLOCKS, 0.7f, 1.0f);
         }
+        updateOpenState();
+    }
+
+    @Override public void onLoad() {
+        super.onLoad();
         updateOpenState();
     }
 
@@ -225,7 +244,7 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.stardew_craft.wooden_chest");
+        return Component.translatable("block.stardewcraft." + variant().id);
     }
 
     @Nullable
@@ -239,8 +258,8 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
         super.saveAdditional(tag, registries);
 
         ListTag list = new ListTag();
-        for (int i = 0; i < items.size(); i++) {
-            ItemStack stack = items.get(i);
+        for (int i = 0; i < localItems.size(); i++) {
+            ItemStack stack = localItems.get(i);
             if (stack.isEmpty()) {
                 continue;
             }
@@ -257,8 +276,8 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
     protected void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
 
-        for (int i = 0; i < items.size(); i++) {
-            items.set(i, ItemStack.EMPTY);
+        for (int i = 0; i < localItems.size(); i++) {
+            localItems.set(i, ItemStack.EMPTY);
         }
 
         if (tag.contains(TAG_ITEMS, 9)) {
@@ -266,16 +285,16 @@ public class WoodenChestBlockEntity extends net.minecraft.world.level.block.enti
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag entry = list.getCompound(i);
                 int slot = entry.getInt("Slot");
-                if (slot < 0 || slot >= items.size()) {
+                if (slot < 0 || slot >= localItems.size()) {
                     continue;
                 }
                 ItemStack parsed = ItemStack.parse(registries, entry.getCompound("Stack")).orElse(ItemStack.EMPTY);
-                items.set(slot, parsed);
+                localItems.set(slot, parsed);
             }
         }
 
         if (tag.contains(TAG_COLOR_SELECTION)) {
-            colorSelection = WoodenChestColorPalette.clampIndex(tag.getInt(TAG_COLOR_SELECTION));
+            colorSelection = variant().dyeable ? WoodenChestColorPalette.clampIndex(tag.getInt(TAG_COLOR_SELECTION)) : -1;
         } else {
             colorSelection = -1;
         }

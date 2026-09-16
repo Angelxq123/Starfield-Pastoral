@@ -34,7 +34,7 @@ public record MarnieMenuChoicePayload(int choice) implements CustomPacketPayload
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
             int choice = payload.choice();
-            if (choice < 0 || choice > 2) return;
+            if (choice < 0 || choice > 3) return;
             MarnieService.handleChoice(player, choice);
         });
     }

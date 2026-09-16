@@ -44,6 +44,7 @@ public record DwarfDaggerThrustPayload(boolean active, int durationTicks, double
 
     @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void handleClient(DwarfDaggerThrustPayload payload) {
+        com.stardew.craft.client.weapon.DwarfWeaponVisuals.ensureLevel();
         if (payload.active()) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             long nowTick = mc.level != null ? mc.level.getGameTime() : 0L;
@@ -51,6 +52,7 @@ public record DwarfDaggerThrustPayload(boolean active, int durationTicks, double
             com.stardew.craft.client.weapon.DwarfDaggerThrustClientState.start(nowTick, payload.durationTicks(), end);
         } else {
             com.stardew.craft.client.weapon.DwarfDaggerThrustClientState.clear();
+            com.stardew.craft.client.weapon.DwarfWeaponVisuals.stopLocalThrust();
         }
     }
 }

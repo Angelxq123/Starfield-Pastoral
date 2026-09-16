@@ -6,8 +6,6 @@ import com.stardew.craft.fishing.network.FishingResultPayload;
 import com.stardew.craft.item.tool.FishingRodItem;
 import com.stardew.craft.player.SkillType;
 import com.stardew.craft.sound.ModSounds;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,38 +21,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.Random;
 import java.util.UUID;
 
-public final class FishingMinigameScreen extends Screen implements com.stardew.craft.client.gui.StardewRealtimeScreen {
-	private static final float UI_SCALE = 0.7f;
+public final class FishingMinigameScreen extends Screen implements com.stardew.craft.client.gui.StardewRealtimeScreen,
+        com.stardew.craft.client.gui.common.StardewGuiContentSize {
+	@Override public int minimumCanvasWidth() { return 480; }
+	@Override public int minimumCanvasHeight() { return 348; }
 	// Stardew values (see StardewValley.Menus.BobberBar)
 	private static final int BOBBER_TRACK_HEIGHT = 548;
 	private static final int BOBBER_BAR_TRACK_HEIGHT = 568;
 	private static final int TIME_PER_FISH_SIZE_REDUCTION_MS = 800;
-
-	// Stardew UI layout constants (from BobberBar)
-	private static final int UI_TRACK_CENTER_X = 70;
-	private static final int UI_TRACK_CENTER_Y = 296;
-	private static final int UI_BAR_X = 64;
-	private static final int UI_BAR_Y = 12;
-	private static final int UI_FISH_X = 64 + 18;
-	private static final int UI_FISH_Y = 12 + 24;
-	private static final int UI_PROGRESS_X = 124;
-	private static final int UI_PROGRESS_Y = 4;
-	private static final int UI_PROGRESS_HEIGHT = 580;
-	private static final int UI_PROGRESS_WIDTH = 16;
-	private static final int UI_REEL_X = 18;
-	private static final int UI_REEL_Y = 514;
-
-	// Textured UI pieces (user-provided). If missing, we fall back to simple rectangles.
-	private static final ResourceLocation TEX_BUBBLE = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/bubble.png");
-	private static final ResourceLocation TEX_TRACK = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/track.png");
-	private static final ResourceLocation TEX_BAR_TOP = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/bar_top.png");
-	private static final ResourceLocation TEX_BAR_MID = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/bar_mid.png");
-	private static final ResourceLocation TEX_BAR_BOTTOM = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/bar_bottom.png");
-	private static final ResourceLocation TEX_FISH = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/fish.png");
-	private static final ResourceLocation TEX_FISH_BOSS = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/fish_boss.png");
-	private static final ResourceLocation TEX_REEL = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/reel.png");
-	private static final ResourceLocation TEX_TREASURE = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/treasure.png");
-	private static final ResourceLocation TEX_TREASURE_GOLD = ResourceLocation.fromNamespaceAndPath("stardewcraft", "textures/gui/fishing/treasure_gold.png");
 
 	private final UUID sessionId;
 	private final float difficulty;
@@ -77,7 +51,6 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 	private final Random random;
 
 	private boolean sentResult;
-	private long lastReelSoundMs;
 	private boolean hasChallengeBait;
 	private int challengeBaitFishes;
 
@@ -129,8 +102,6 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 	private float treasureShakeY;
 	private boolean treasureCaught;
 
-	// Cached texture availability checks (per screen instance)
-	private Boolean hasTexturedUi;
 
 	public FishingMinigameScreen(UUID sessionId, int difficulty, int motionTypeId, boolean legendaryFish, int durationTicks,
 	                             boolean hasTreasure, boolean goldenTreasure,
@@ -223,8 +194,6 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 
 		this.lastUpdateMs = Util.getMillis();
 		this.accumulatedMs = 0L;
-		this.hasTexturedUi = null;
-		this.lastReelSoundMs = 0L;
 
 		this.sonarFishStack = net.minecraft.world.item.ItemStack.EMPTY;
 		if (hasSonarBobber && !sonarFishItemId.isBlank()) {
@@ -263,76 +232,6 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 		minecraft.player.playSound(sound, volume, pitch);
 	}
 
-	private boolean hasTexturedUi() {
-		if (hasTexturedUi != null) {
-			return hasTexturedUi;
-		}
-		Minecraft mc = Minecraft.getInstance();
-		if (mc == null) {
-			hasTexturedUi = false;
-			return false;
-		}
-		try {
-			// Track + fish + bar middle is enough to consider textures present.
-			@SuppressWarnings("null")
-			boolean ok = mc.getResourceManager().getResource(TEX_TRACK).isPresent()
-					&& mc.getResourceManager().getResource(TEX_FISH).isPresent()
-					&& mc.getResourceManager().getResource(TEX_BAR_MID).isPresent();
-			hasTexturedUi = ok;
-			return ok;
-		} catch (Exception ignored) {
-			hasTexturedUi = false;
-			return false;
-		}
-	}
-
-	private static float computeFitScale(int screenW, int screenH) {
-		// Stardew's bobber UI track renders to ~600px tall (38x150 scaled by 4).
-		float fitH = (screenH - 40f) / 600f;
-		float fitW = (screenW - 40f) / 220f;
-		return Mth.clamp(Math.min(fitH, fitW) * UI_SCALE, 0.45f, 1.25f);
-	}
-
-	private static void beginAlpha(float alpha) {
-		RenderSystem.enableBlend();
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.setShaderColor(1f, 1f, 1f, alpha);
-	}
-
-	private static void endAlpha() {
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-	}
-
-	@SuppressWarnings("null")
-	private static void blitCenteredScaled(GuiGraphics g, ResourceLocation tex, float cx, float cy, int w, int h, float scale) {
-		var pose = g.pose();
-		pose.pushPose();
-		pose.translate(cx, cy, 0f);
-		pose.scale(scale, scale, 1f);
-		g.blit(tex, -w / 2, -h / 2, 0, 0, w, h, w, h);
-		pose.popPose();
-	}
-
-	@SuppressWarnings("null")
-	private static void blitTopLeftScaled(GuiGraphics g, ResourceLocation tex, float x, float y, int w, int h, float scaleX, float scaleY) {
-		var pose = g.pose();
-		pose.pushPose();
-		pose.translate(x, y, 0f);
-		pose.scale(scaleX, scaleY, 1f);
-		g.blit(tex, 0, 0, 0, 0, w, h, w, h);
-		pose.popPose();
-	}
-
-	@SuppressWarnings("null")
-	private static void blitRotated(GuiGraphics g, ResourceLocation tex, float x, float y, int w, int h, float originX, float originY, float rotationRad, float scale) {
-		var pose = g.pose();
-		pose.pushPose();
-		pose.translate(x, y, 0f);
-		pose.mulPose(Axis.ZP.rotation(rotationRad));
-		pose.scale(scale, scale, 1f);
-		g.blit(tex, (int) (-originX), (int) (-originY), 0, 0, w, h, w, h);
-		pose.popPose();
-	}
 
 	@Override
 	public boolean isPauseScreen() {
@@ -364,11 +263,11 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 
 	@SuppressWarnings("null")
 	private boolean isUsePressed() {
-		if (minecraft == null) {
+		if (minecraft == null || minecraft.screen != null && minecraft.screen != this) {
 			return false;
 		}
 		// Stardew: LeftMouse / useToolButton / gamepad X/A
-		return mouseHeld || minecraft.options.keyUse.isDown() || minecraft.options.keyJump.isDown();
+		return minecraft.options.keyAttack.isDown() || minecraft.options.keyUse.isDown() || minecraft.options.keyJump.isDown();
 	}
 
 	@Override
@@ -393,6 +292,24 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 	@SuppressWarnings("null")
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft != null && minecraft.player != null) {
+			for (int i = 0; i < 9; i++) {
+				if (minecraft.options.keyHotbarSlots[i].matches(keyCode, scanCode)) {
+					FishingInteractionState.selectSlot(i);
+					return true;
+				}
+			}
+			if (minecraft.options.keySwapOffhand.matches(keyCode, scanCode)
+					|| minecraft.options.keyDrop.matches(keyCode, scanCode)) {
+				boolean swap = minecraft.options.keySwapOffhand.matches(keyCode, scanCode);
+				FishingInteractionState.cancel(true);
+				if (swap) minecraft.player.connection.send(new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+						net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
+						net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN));
+				else minecraft.player.drop(hasControlDown());
+				return true;
+			}
+		}
 		// Space / jump as a backup (some users prefer keyboard)
 		if (minecraft != null && minecraft.options.keyJump.matches(keyCode, scanCode)) {
 			mouseHeld = true;
@@ -402,6 +319,15 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 	}
 
 	@SuppressWarnings("null")
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+		if (minecraft != null && minecraft.player != null && scrollY != 0) {
+			FishingInteractionState.selectSlot(Math.floorMod(minecraft.player.getInventory().selected - (int) Math.signum(scrollY), 9));
+			return true;
+		}
+		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+	}
+
 	@Override
 	public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
 		if (minecraft != null && minecraft.options.keyJump.matches(keyCode, scanCode)) {
@@ -606,13 +532,7 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 		if (bobberInBar) {
 			distanceFromCatching += 0.002f;
 			reelRotation += (float) Math.PI / 8f;
-			if (!sentResult) {
-				long now = Util.getMillis();
-				if (now - lastReelSoundMs >= 280L) {
-					playLocal(ModSounds.FAST_REEL.get(), 0.7f, 1.0f);
-					lastReelSoundMs = now;
-				}
-			}
+
 			fishShakeX = (float) (random.nextInt(21) - 10) / 10f;
 			fishShakeY = (float) (random.nextInt(21) - 10) / 10f;
 			barShakeX = 0f;
@@ -640,13 +560,7 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 			}
 			float distanceAway = Math.abs(bobberPosition - (bobberBarPos + (float) (bobberBarHeight / 2)));
 			reelRotation -= (float) Math.PI / Math.max(10f, 200f - distanceAway);
-			if (!sentResult) {
-				long now = Util.getMillis();
-				if (now - lastReelSoundMs >= 320L) {
-					playLocal(ModSounds.SLOW_REEL.get(), 0.6f, 1.0f);
-					lastReelSoundMs = now;
-				}
-			}
+
 			barShakeX = (float) (random.nextInt(21) - 10) / 10f;
 			barShakeY = (float) (random.nextInt(21) - 10) / 10f;
 			fishShakeX = 0f;
@@ -666,9 +580,7 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 				currentFishSize--;
 			}
 			playLocal(ModSounds.JINGLE1.get(), 1.0f, 1.0f);
-			// Stardew does a fish-to-player animation whose endSound is tinyWhip.
-			// We don't simulate that animation yet, but we can at least play the cue.
-			playLocal(ModSounds.TINY_WHIP.get(), 1.0f, 1.0f);
+
 			finish(true);
 			return;
 		}
@@ -692,24 +604,47 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 		}
 		PacketDistributor.sendToServer(new FishingResultPayload(sessionId, success, distanceFromCatching,
 				treasureCaught, numCaught, perfect, currentFishSize));
-		Minecraft.getInstance().setScreen(null);
+		FishingMinigameHud.finish(this, success);
+	}
+
+	@Override
+	public void removed() {
+		if (!sentResult) {
+			sentResult = true;
+			mouseHeld = false;
+			FishingInteractionState.cancel(true);
+		}
+		super.removed();
+	}
+
+	public void cancelWithoutResult() {
+		if (sentResult) return;
+		mouseHeld = false;
+		sentResult = true;
+		if (minecraft != null && minecraft.screen == this) minecraft.setScreen(null);
 	}
 
 	@Override
 	public void onClose() {
-		mouseHeld = false;
-		// User-initiated close counts as escape; close immediately.
-		if (!sentResult) {
-			emergencyShutDown();
-		}
+		FishingInteractionState.cancel(true);
+		cancelWithoutResult();
 	}
 
-	@SuppressWarnings("null")
-	@Override
-	public void render(@SuppressWarnings("null") GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		if (sentResult) {
-			return;
-		}
+    public UUID session() { return sessionId; }
+    public record Snapshot(float fishPosition,float fishVelocity,float barPosition,int barHeight,boolean inBar,
+        boolean held,float progress,boolean perfect,boolean legendary,net.minecraft.world.item.ItemStack sonar,
+        boolean hasTreasure,boolean golden,float treasurePosition,float treasureScale,float treasureProgress,
+        boolean treasureCaught,int challengeFish,float scale,boolean entering,float fishShakeX,float fishShakeY,
+        float barShakeX,float barShakeY,float treasureShakeX,float treasureShakeY) {}
+    public Snapshot snapshot() { return new Snapshot(bobberPosition,bobberSpeed,bobberBarPos,bobberBarHeight,bobberInBar,
+        buttonPressed,distanceFromCatching,perfect,legendaryFish,sonarFishStack,hasTreasure,goldenTreasure,
+        treasurePosition,treasureScale,treasureCatchLevel,treasureCaught,challengeBaitFishes,scale,fadeIn,
+        fishShakeX,fishShakeY,barShakeX,barShakeY,treasureShakeX,treasureShakeY); }
+    /** Start the unchanged simulator clock with the first visible HUD frame. */
+    public void startPresentation(long now) { lastUpdateMs=now;accumulatedMs=0; }
+    public void suspendPresentation(long now) { startPresentation(now);mouseHeld=false;buttonPressed=false; }
+    public void advance() {
+        if(sentResult)return;
 		// Run SV-like simulation at ~60fps based on real time.
 		long now = Util.getMillis();
 		long dt = now - lastUpdateMs;
@@ -725,231 +660,8 @@ public final class FishingMinigameScreen extends Screen implements com.stardew.c
 			return;
 		}
 
-		// Background first (Minecraft blur/dim), then draw our UI on top.
-		renderBackground(graphics, mouseX, mouseY, partialTick);
-
-		int centerX = width / 2;
-		int centerY = height / 2;
-		float fit = computeFitScale(width, height);
-
-		// Emulate Stardew layout by anchoring the track center to screen center.
-		float uiX = centerX - UI_TRACK_CENTER_X * fit;
-		float uiY = centerY - UI_TRACK_CENTER_Y * fit;
-
-		float shakeX = everythingShakeX * fit;
-		float shakeY = everythingShakeY * fit;
-
-		boolean textured = hasTexturedUi();
-
-		// Geometry fallback (only when textures are missing).
-		int fallbackTrackW = Math.round(16 * fit);
-		int fallbackTrackH = Math.round(180 * fit);
-		int fallbackTrackX = centerX - fallbackTrackW / 2;
-		int fallbackTrackY = centerY - fallbackTrackH / 2;
-
-		int progW = Math.round(120 * fit);
-		int progH = Math.round(10 * fit);
-		int progX = centerX - progW / 2;
-		int progY = fallbackTrackY + fallbackTrackH + Math.round(16 * fit);
-		if (!textured) {
-			graphics.fill(fallbackTrackX - 2, fallbackTrackY - 2, fallbackTrackX + fallbackTrackW + 2, fallbackTrackY + fallbackTrackH + 2, 0xAA000000);
-			graphics.fill(fallbackTrackX, fallbackTrackY, fallbackTrackX + fallbackTrackW, fallbackTrackY + fallbackTrackH, 0xFF2B2B2B);
-
-			float barYNorm = bobberBarPos / (float) BOBBER_BAR_TRACK_HEIGHT;
-			float barHNorm = bobberBarHeight / (float) BOBBER_BAR_TRACK_HEIGHT;
-			int barY = fallbackTrackY + Math.round(barYNorm * fallbackTrackH);
-			int barH = Math.max(6, Math.round(barHNorm * fallbackTrackH));
-			barY = Mth.clamp(barY, fallbackTrackY, fallbackTrackY + fallbackTrackH - barH);
-			int barColor = bobberInBar ? 0xFF4CFF4C : 0x804CFF4C;
-			graphics.fill(fallbackTrackX, barY, fallbackTrackX + fallbackTrackW, barY + barH, barColor);
-
-			float fishYNorm = bobberPosition / (float) BOBBER_TRACK_HEIGHT;
-			int fishY = fallbackTrackY + Math.round(fishYNorm * fallbackTrackH);
-			fishY = Mth.clamp(fishY, fallbackTrackY, fallbackTrackY + fallbackTrackH - 4);
-			graphics.fill(fallbackTrackX - 3, fishY, fallbackTrackX + fallbackTrackW + 3, fishY + 4, 0xFFFFD34C);
-
-			graphics.fill(progX - 1, progY - 1, progX + progW + 1, progY + progH + 1, 0xAA000000);
-			graphics.fill(progX, progY, progX + progW, progY + progH, 0xFF1F1F1F);
-			graphics.fill(progX, progY, progX + Math.round(progW * Mth.clamp(distanceFromCatching, 0f, 1f)), progY + progH, 0xFF4C8CFF);
-		}
-		if (textured) {
-			// Stardew draws most UI at x4 scale, plus fade scale.
-			float uiScale = fit * scale;
-			float s4 = 4f * uiScale;
-			float s2 = 2f * uiScale;
-
-			// Bubble background (slightly transparent)
-			beginAlpha(0.6f * scale);
-			blitCenteredScaled(
-					graphics,
-					TEX_BUBBLE,
-					(uiX + 84f * fit) + shakeX,
-					(uiY + 298f * fit) + shakeY,
-					52,
-					157,
-					s4
-			);
-			endAlpha();
-
-			// Track
-			beginAlpha(scale);
-			blitCenteredScaled(
-					graphics,
-					TEX_TRACK,
-					(uiX + UI_TRACK_CENTER_X * fit) + shakeX,
-					(uiY + UI_TRACK_CENTER_Y * fit) + shakeY,
-					38,
-					150,
-					s4
-			);
-			endAlpha();
-
-			// Only draw the interactive elements once fully faded in, matching Stardew.
-			if (scale >= 1f) {
-				float blink = (float) Math.sin((double) Util.getMillis() / 100.0);
-				float barAlpha = bobberInBar ? 1f : (0.25f * (blink + 2f));
-				barAlpha = Mth.clamp(barAlpha, 0f, 1f);
-				beginAlpha(barAlpha);
-				float barX = (uiX + UI_BAR_X * fit) + (barShakeX * fit) + shakeX;
-				float barYBase = (uiY + UI_BAR_Y * fit) + (bobberBarPos * fit) + (barShakeY * fit) + shakeY;
-				// Top cap (9x2)
-				blitTopLeftScaled(graphics, TEX_BAR_TOP, barX, barYBase, 9, 2, s4, s4);
-				// Middle stretch (9x1) - IMPORTANT: scaleY must be the target pixel height (no extra uiScale factor)
-				float midH = Math.max(0f, (bobberBarHeight - 16) * fit);
-				blitTopLeftScaled(graphics, TEX_BAR_MID, barX, barYBase + 8f * fit, 9, 1, s4, midH);
-				// Bottom cap (9x2)
-				blitTopLeftScaled(graphics, TEX_BAR_BOTTOM, barX, barYBase + (bobberBarHeight - 8f) * fit, 9, 2, s4, s4);
-				endAlpha();
-
-				// Fish icon (20x20) at x2
-				// Use server-selected fish category rather than local difficulty heuristic.
-				beginAlpha(1f);
-				float fishX = (uiX + UI_FISH_X * fit) + (fishShakeX * fit) + shakeX;
-				float fishYpx = (uiY + UI_FISH_Y * fit) + (bobberPosition * fit) + (fishShakeY * fit) + shakeY;
-				ResourceLocation fishTex = legendaryFish ? TEX_FISH_BOSS : TEX_FISH;
-				blitCenteredScaled(graphics, fishTex, fishX, fishYpx, 20, 20, s2);
-				endAlpha();
-
-				// Sonar Bobber: show hooked fish icon next to the UI (SV draws a small popup + fishObject)
-				if (hasSonarBobber && !sonarFishStack.isEmpty()) {
-					float xPositionOnScreen = uiX;
-					float yPositionOnScreen = uiY;
-					float sonarX = (xPositionOnScreen > (width * 0.75f))
-							? (xPositionOnScreen - 80f * fit)
-							: (xPositionOnScreen + 216f * fit);
-					boolean flip = sonarX < xPositionOnScreen;
-
-					// Background rectangle sized like SV's (29x24) at 4x scale.
-					int bgX = Math.round(sonarX - 52f * uiScale + shakeX);
-					int bgY = Math.round(yPositionOnScreen + shakeY);
-					int bgW = Math.round(116f * uiScale);
-					int bgH = Math.round(96f * uiScale);
-					graphics.fill(bgX, bgY, bgX + bgW, bgY + bgH, 0xAA000000);
-					graphics.fill(bgX + 1, bgY + 1, bgX + bgW - 1, bgY + bgH - 1, 0xFF1F1F1F);
-
-					// Fish icon in the popup; scale to match SV menu (4x).
-					float iconX = (sonarX + (flip ? -32f : -16f) * uiScale) + shakeX;
-					float iconY = (yPositionOnScreen + 16f * uiScale) + shakeY;
-					var pose = graphics.pose();
-					pose.pushPose();
-					pose.translate(iconX, iconY, 0f);
-					pose.scale(4f * uiScale, 4f * uiScale, 1f);
-					graphics.renderItem(sonarFishStack, 0, 0);
-					pose.popPose();
-				}
-
-				// Catch progress meter (simple colored bar, Stardew is red->green)
-				float progXf = (uiX + UI_PROGRESS_X * fit) + shakeX;
-				float progYf = (uiY + UI_PROGRESS_Y * fit) + shakeY;
-				int filledH = Math.round(UI_PROGRESS_HEIGHT * fit * Mth.clamp(distanceFromCatching, 0f, 1f));
-				int top = Math.round(progYf + (UI_PROGRESS_HEIGHT * fit) - filledH);
-				int left = Math.round(progXf);
-				int right = left + Math.round(UI_PROGRESS_WIDTH * fit);
-				int bottom = Math.round(progYf + (UI_PROGRESS_HEIGHT * fit));
-				int color = lerpRedToGreen(distanceFromCatching);
-				graphics.fill(left, top, right, bottom, color);
-
-				// Reel icon (5x10) x4 and rotated
-				if (Minecraft.getInstance().getResourceManager().getResource(TEX_REEL).isPresent()) {
-					float reelX = (uiX + UI_REEL_X * fit) + shakeX;
-					float reelY = (uiY + UI_REEL_Y * fit) + shakeY;
-					beginAlpha(1f);
-					blitRotated(graphics, TEX_REEL, reelX, reelY, 5, 10, 2f, 10f, reelRotation, s4);
-					endAlpha();
-				}
-
-				// ========== 宝箱渲染（参考 BobberBar.cs draw方法） ==========
-				if (hasTreasure && treasureScale > 0f) {
-					ResourceLocation treasureTex = goldenTreasure ? TEX_TREASURE_GOLD : TEX_TREASURE;
-					float treasX = (uiX + UI_FISH_X * fit) + (treasureShakeX * fit) + shakeX;
-					float treasY = (uiY + UI_FISH_Y * fit) + (treasurePosition * fit) + (treasureShakeY * fit) + shakeY;
-
-					beginAlpha(1f);
-					// 宝箱图标（20x24）at x2 scale，缩放动画
-					float treasScale = s2 * treasureScale;
-					blitCenteredScaled(graphics, treasureTex, treasX, treasY, 20, 24, treasScale);
-					endAlpha();
-
-					// 宝箱捕获进度条（橙色）
-					if (treasureCatchLevel > 0f && !treasureCaught) {
-					int treasBarX = Math.round((uiX + UI_BAR_X * fit) + shakeX);
-					int treasBarY = Math.round((uiY + UI_BAR_Y * fit) + (treasurePosition * fit) + shakeY);
-					int treasBarW = Math.round(40 * fit);
-					int treasBarH = Math.round(8 * fit);
-
-					// 背景（深灰色）
-					graphics.fill(treasBarX, treasBarY, treasBarX + treasBarW, treasBarY + treasBarH, 0x80696969);
-					// 进度（橙色）
-					int treasProgW = Math.round(treasBarW * treasureCatchLevel);
-					graphics.fill(treasBarX, treasBarY, treasBarX + treasProgW, treasBarY + treasBarH, 0xFFFF8800);
-					}
-				}
-				// ========== 宝箱渲染结束 ==========
-			}
-		}
-
-		// No top title text (matches desired clean SV-like UI).
-		// Hint removed: user requested no additional on-screen hint text.
-		if (perfect && distanceFromCatching > 0f && !fadeOut) {
-			Component perfectText = Component.translatable("stardewcraft.fishing.minigame.perfect");
-			// Vanilla BobberBar anchors SparklingText at
-			// (xPositionOnScreen - 16, yPositionOnScreen - 64), clear of the track.
-			int perfectX = Math.round(uiX - 16f * fit);
-			int perfectY = Math.round(uiY - 64f * fit);
-			graphics.drawString(font, perfectText, perfectX, perfectY, 0xFFE87B, false);
-		}
-
-		// Do NOT call super.render() here: Screen.render may draw background again on some versions,
-		// which would re-apply blur/dim over our minigame UI.
-	}
-
-	@SuppressWarnings("unused")
-	private static void drawVerticalHint(GuiGraphics g, net.minecraft.client.gui.Font font, String text, int x, int y, int color, float scale) {
-		// Render as vertical text on the left: one visible character per line.
-		var pose = g.pose();
-		pose.pushPose();
-		pose.translate(x, y, 0f);
-		pose.scale(scale, scale, 1f);
-		int line = 0;
-		int lineH = font.lineHeight + 1;
-		for (int offset = 0; offset < text.length(); ) {
-			int cp = text.codePointAt(offset);
-			offset += Character.charCount(cp);
-			if (Character.isWhitespace(cp)) {
-				continue;
-			}
-			String s = new String(Character.toChars(cp));
-			g.drawString(font, s, 0, line * lineH, color);
-			line++;
-		}
-		pose.popPose();
-	}
-
-	private static int lerpRedToGreen(float t) {
-		float x = Mth.clamp(t, 0f, 1f);
-		int r = (int) Mth.lerp(1f - x, 0x2A, 0x4C);
-		int g = (int) Mth.lerp(x, 0x2A, 0xFF);
-		int b = (int) Mth.lerp(x, 0x2A, 0x4C);
-		return 0xFF000000 | (r << 16) | (g << 8) | b;
-	}
+    }
+    @Override public void render(GuiGraphics graphics,int mouseX,int mouseY,float partialTick) {
+        FishingMinigameHud.draw(graphics,snapshot(),width,height);
+    }
 }

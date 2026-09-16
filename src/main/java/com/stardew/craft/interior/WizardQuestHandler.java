@@ -318,7 +318,7 @@ public final class WizardQuestHandler {
     }
 
     private static void sendDialogue(ServerPlayer player, String translateKey, int friendshipPoints) {
-        PacketDistributor.sendToPlayer(player,
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
             new OpenNpcDialogueScreenPayload(NPC_ID, translateKey, friendshipPoints));
     }
 

@@ -7,26 +7,27 @@
     { "cmd": "comment", "text": "=== SDV Data/Events/Hospital:PlayerKilled; authored in STARDEW_VALLEY ===" },
     { "cmd": "lock_player" },
     { "cmd": "spawn_actor", "actor": "fake_player", "npc_id": "player",
-      "x": 23, "y": 43, "z": -16, "relative": false, "facing": -90 },
-    { "cmd": "animate", "actor": "fake_player", "anim": "collapsed", "loop": true },
+      "x": 23.65, "y": 43, "z": -14.625, "relative": false, "facing": -90 },
+    { "cmd": "animate", "actor": "fake_player", "anim": "hospital_bed", "loop": true },
 
     { "cmd": "spawn_actor", "actor": "harvey", "npc_id": "harvey",
-      "x": 25, "y": 43, "z": -16, "relative": false, "facing": 90 },
+      "x": 24.8, "y": 43, "z": -15.65, "relative": false, "facing": 90 },
 
-    { "cmd": "camera", "x": 24.384, "y": 44.082, "z": -12.294,
-      "yaw": -178.3, "pitch": 31.1, "relative": false },
+    { "cmd": "camera", "x": 25.8, "y": 45.2, "z": -13.5,
+      "yaw": 120, "pitch": 25, "relative": false },
     { "cmd": "fade", "mode": "in", "ticks": 20 },
 
-    { "cmd": "pause", "ticks": 75 },
+    { "cmd": "pause", "ticks": 30 },
     { "cmd": "message", "text": "event.combat_rescue.hospital.wake_first" },
-    { "cmd": "pause", "ticks": 50 },
+    { "cmd": "pause", "ticks": 20 },
     { "cmd": "message", "text": "event.combat_rescue.hospital.wake_second" },
-    { "cmd": "pause", "ticks": 50 },
+    { "cmd": "pause", "ticks": 20 },
 
     { "cmd": "speak", "npc_id": "harvey", "text": "event.combat_rescue.hospital.harvey" },
 
-    { "cmd": "animate", "actor": "fake_player", "anim": "idle", "loop": false },
-    { "cmd": "pause", "ticks": 50 },
+    { "cmd": "animate", "actor": "fake_player", "anim": "hospital_get_up", "loop": false },
+    { "cmd": "face_actor", "actor": "harvey", "face_actor": "fake_player" },
+    { "cmd": "pause", "ticks": 108 },
     { "cmd": "emote", "actor": "fake_player", "emote": "sad" },
     { "cmd": "pause", "ticks": 30 },
     { "cmd": "end" }

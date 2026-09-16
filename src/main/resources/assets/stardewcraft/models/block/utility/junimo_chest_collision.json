@@ -1,0 +1,19 @@
+{
+  "textures": {
+    "particle": "minecraft:block/oak_log"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        21,
+        15
+      ]
+    }
+  ]
+}

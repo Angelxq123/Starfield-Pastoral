@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:decor/common/light_8",
+  "textures": {
+    "particle": "stardewcraft:block/decor/common/light_8_particle"
+  }
+}

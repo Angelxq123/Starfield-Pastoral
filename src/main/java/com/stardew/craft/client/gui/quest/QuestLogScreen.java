@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui.quest;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
 import com.stardew.craft.client.gui.common.StardewRenderMapping;
@@ -87,7 +89,7 @@ public class QuestLogScreen extends Screen {
         super.init();
         QuestIconHud.dismissQuestPing();
 
-        float guiScale = (float) minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         mapping = new StardewRenderMapping(width, height, guiScale);
         s4 = mapping.s4();
 

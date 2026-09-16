@@ -1,0 +1,82 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.76146725,
+  "attentionRig": {
+    "hipHeight": 10.0,
+    "soleY": 0.0,
+    "toeDepth": 2.5,
+    "halfStance": 2.16,
+    "rightZ": 0.12,
+    "leftZ": -0.18,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "lewis",
+    "revision": "character-articulated-3",
+    "rootMean": 0.44800000000000006,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      },
+      "left": {
+        "hip": [
+          2.0,
+          10.0,
+          0.0
+        ],
+        "knee": 5.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.5,
+        "toe": -2.5
+      }
+    },
+    "bodyPitch": -2.0,
+    "headPitch": 1.15,
+    "halfStance": 2.16,
+    "stride": 12.183476,
+    "reachMargin": 0.046064,
+    "legLengthStride": 17.5,
+    "approvedBaseStride": 17.5,
+    "stance": 0.6,
+    "bob": 0.26239999999999997,
+    "sway": 0.5,
+    "rootYaw": 1.6,
+    "bodyYaw": 4.2,
+    "armSwing": 14.8,
+    "armPhase": 0.045,
+    "footLift": 0.2548,
+    "swingPeak": 0.54,
+    "elbowBase": 10,
+    "bodyRoll": 0.82,
+    "strideScale": 0.97,
+    "intent": "年长成年男性；步子踏实、抬脚稍低、承重稍长，保留行动利落而非人为跛行。",
+    "bodyLag": 0.075,
+    "headLag": 0.11,
+    "headYawLag": 0.06,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.82539,
+    "levelWalk": true
+  }
+}

@@ -1,0 +1,14 @@
+// Run with: ./gradlew -I compatibility/template-rendering-tests.gradle test
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('java')) {
+            sourceSets.test.java.setSrcDirs([file('compatibility/template-rendering')])
+            sourceSets.test.resources.setSrcDirs([])
+            tasks.named('test') {
+                include 'com/stardew/craft/templates/client/**'
+                reports.junitXml.outputLocation = layout.buildDirectory.dir('test-results/template-rendering')
+                reports.html.outputLocation = layout.buildDirectory.dir('reports/tests/template-rendering')
+            }
+        }
+    }
+}

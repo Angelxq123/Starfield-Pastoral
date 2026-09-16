@@ -33,6 +33,6 @@ public class ItemRendererWeaponTrailCaptureMixin {
             BakedModel model,
             CallbackInfo ci
     ) {
-        WeaponRenderCaptureContext.capture(poseStack.last().pose());
+        WeaponRenderCaptureContext.capture(poseStack.last().pose(), model, buffers);
     }
 }

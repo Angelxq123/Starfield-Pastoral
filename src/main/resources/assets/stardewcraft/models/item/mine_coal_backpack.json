@@ -1,0 +1,35 @@
+{
+  "parent": "stardewcraft:block/mine/backpack/frost_full",
+  "overrides": [
+    {
+      "predicate": {
+        "stardewcraft:mine_backpack_variant": 1
+      },
+      "model": "stardewcraft:item/mine_backpack/frost_empty"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_backpack_variant": 2
+      },
+      "model": "stardewcraft:item/mine_backpack/frost_dark_full"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_backpack_variant": 3
+      },
+      "model": "stardewcraft:item/mine_backpack/frost_dark_empty"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_backpack_variant": 4
+      },
+      "model": "stardewcraft:item/mine_backpack/desert_dark_full"
+    },
+    {
+      "predicate": {
+        "stardewcraft:mine_backpack_variant": 5
+      },
+      "model": "stardewcraft:item/mine_backpack/desert_dark_empty"
+    }
+  ]
+}

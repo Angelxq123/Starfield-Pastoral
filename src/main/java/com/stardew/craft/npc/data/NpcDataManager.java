@@ -90,9 +90,16 @@ public final class NpcDataManager {
                 ResourceLocation id = entry.getKey();
                 JsonElement element = entry.getValue();
                 if (element == null || !element.isJsonObject()) {
+                    // Other loaders also own resources below npc/ (e.g. friendship_gift_mail is an array).
+                    String category=id.getPath().split("/",2)[0];
+                    if(Set.of("taste_patches","capabilities","location_mappings","dialogue","schedules","tastes","events").contains(category)) {
+                        StardewCraft.LOGGER.error("Rejected NPC reload: {}: expected an object",id);
+                        return;
+                    }
                     continue;
                 }
 
+                try {
                 String path = id.getPath();
                 JsonObject root = element.getAsJsonObject();
                 String lowerPath = path.toLowerCase(Locale.ROOT);
@@ -175,6 +182,10 @@ public final class NpcDataManager {
                                 tastePatchDiagnostics);
                     }
                 }
+                } catch(RuntimeException invalid) {
+                    StardewCraft.LOGGER.error("Rejected NPC reload: {}: {}",id,invalid.getMessage());
+                    return;
+                }
             }
 
             if (locationMappings.isEmpty()) {
@@ -183,7 +194,29 @@ public final class NpcDataManager {
 
             Map<String, JsonObject> filteredSchedules = new HashMap<>();
             for (Map.Entry<String, JsonObject> entry : schedules.entrySet()) {
-                filteredSchedules.put(entry.getKey(), NpcContentFilter.filterSchedules(entry.getValue(), locationMappings));
+                try {
+                    JsonObject filtered=NpcContentFilter.filterSchedules(entry.getValue(), locationMappings);
+                    NpcScheduleCompiler.compile(filtered);
+                    filteredSchedules.put(entry.getKey(),filtered);
+                } catch (RuntimeException invalid) {
+                    StardewCraft.LOGGER.error("Rejected NPC reload: invalid schedule {}: {}",entry.getKey(),invalid.getMessage());
+                    return;
+                }
+            }
+
+            Map<ResourceLocation, StardewWorldAnchor> legacyAnchors;
+            try {
+                NpcActivityCatalog.compile(events);
+                NpcRoutePoints.compile(events);
+                NpcRouteDataValidation.validate(events);
+                legacyAnchors=legacyRouteAnchors(events);
+                com.stardew.craft.npc.runtime.NpcQuestionAuthority.validate(events);
+                com.stardew.craft.npc.runtime.NpcMotionProfile.compile(events);
+                com.stardew.craft.npc.runtime.NpcNavigationPolicy.decode(events.get("npc_runtime"));
+                com.stardew.craft.npc.runtime.NpcTravelStatus.decode(events.get("npc_runtime"));
+            } catch (RuntimeException invalid) {
+                StardewCraft.LOGGER.error("Rejected NPC reload: {}",invalid.getMessage());
+                return;
             }
 
             applyTastePatches(
@@ -225,8 +258,6 @@ public final class NpcDataManager {
 
             NpcDataRegistry.replaceAll(capabilities, dialogues, filteredSchedules, tastes, events,
                     locationMappings, locationAliases, locationAnchors);
-            Map<ResourceLocation, StardewWorldAnchor> legacyAnchors =
-                    legacyRouteAnchors(events);
             WorldAnchorRegistry.replaceLegacyNpcAnchors(legacyAnchors);
             StardewCraft.LOGGER.info(
                     "[WorldAnchors] Projected {} legacy NPC route points",
@@ -616,6 +647,8 @@ public final class NpcDataManager {
                     double x = readDouble(obj, "x", 0.0D);
                     double y = readDouble(obj, "y", 0.0D);
                     double z = readDouble(obj, "z", 0.0D);
+                    if(!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z))
+                        throw new IllegalArgumentException("anchors."+name+": coordinates must be finite");
                     boolean indoor = readBoolean(obj, "indoor", false);
                     boolean useGround = readBoolean(obj, "use_ground_height", !indoor);
                     String portalTarget = readString(obj, "portal_target");

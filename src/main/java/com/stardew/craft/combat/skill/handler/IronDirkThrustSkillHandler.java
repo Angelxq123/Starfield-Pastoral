@@ -90,7 +90,15 @@ public final class IronDirkThrustSkillHandler implements RuntimeWeaponSkillHandl
                 context.player(),
                 BEHIND_DISTANCE
         );
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
+            Vec3 visualOrigin = context.player().position();
             context.player().addEffect(new MobEffectInstance(
                     MobEffects.DAMAGE_RESISTANCE,
                     RESISTANCE_DURATION_TICKS,
@@ -112,15 +120,11 @@ public final class IronDirkThrustSkillHandler implements RuntimeWeaponSkillHandl
             );
             teleportPlayer(context.player(), behindPosition);
             faceTarget(context.player(), target);
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(context.player(),
+                    new com.stardew.craft.combat.network.IronWindMovePayload(context.player().getId(), context.nowTick(),
+                            com.stardew.craft.combat.network.IronWindMovePayload.Mode.IRON_BLINK, visualOrigin, context.player().position()));
         });
 
-        // Preserve legacy synchronization order: animation packet precedes lock.
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
-                ANIMATION_TICKS
-        );
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),

@@ -27,7 +27,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-public class PointPlanWandItem extends Item {
+public class PointPlanWandItem extends Item implements com.stardew.craft.item.IStardewItem {
+    @Override
+    public String getItemTypeKey() {
+        return "stardewcraft.type.tool";
+    }
+
     private static final String TAG_SELECTED_PLAN = "SelectedPlan";
     private static final String TAG_PLANS = "PointPlans";
     private static final String TAG_PLAN_ID = "PlanId";

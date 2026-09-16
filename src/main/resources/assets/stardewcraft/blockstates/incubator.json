@@ -1,23 +1,64 @@
 {
   "variants": {
-    "facing=south,working=false,part=main": { "model": "stardewcraft:block/utility/incubator" },
-    "facing=west,working=false,part=main": { "model": "stardewcraft:block/utility/incubator", "y": 90 },
-    "facing=north,working=false,part=main": { "model": "stardewcraft:block/utility/incubator", "y": 180 },
-    "facing=east,working=false,part=main": { "model": "stardewcraft:block/utility/incubator", "y": 270 },
-
-    "facing=south,working=true,part=main": { "model": "stardewcraft:block/utility/incubator" },
-    "facing=west,working=true,part=main": { "model": "stardewcraft:block/utility/incubator", "y": 90 },
-    "facing=north,working=true,part=main": { "model": "stardewcraft:block/utility/incubator", "y": 180 },
-    "facing=east,working=true,part=main": { "model": "stardewcraft:block/utility/incubator", "y": 270 },
-
-    "facing=south,working=false,part=extension": { "model": "stardewcraft:block/utility/incubator_extension" },
-    "facing=west,working=false,part=extension": { "model": "stardewcraft:block/utility/incubator_extension", "y": 90 },
-    "facing=north,working=false,part=extension": { "model": "stardewcraft:block/utility/incubator_extension", "y": 180 },
-    "facing=east,working=false,part=extension": { "model": "stardewcraft:block/utility/incubator_extension", "y": 270 },
-
-    "facing=south,working=true,part=extension": { "model": "stardewcraft:block/utility/incubator_extension" },
-    "facing=west,working=true,part=extension": { "model": "stardewcraft:block/utility/incubator_extension", "y": 90 },
-    "facing=north,working=true,part=extension": { "model": "stardewcraft:block/utility/incubator_extension", "y": 180 },
-    "facing=east,working=true,part=extension": { "model": "stardewcraft:block/utility/incubator_extension", "y": 270 }
+    "facing=north,working=false,part=main": {
+      "model": "stardewcraft:block/utility/incubator"
+    },
+    "facing=north,working=false,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension"
+    },
+    "facing=north,working=true,part=main": {
+      "model": "stardewcraft:block/utility/incubator"
+    },
+    "facing=north,working=true,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension"
+    },
+    "facing=east,working=false,part=main": {
+      "model": "stardewcraft:block/utility/incubator",
+      "y": 90
+    },
+    "facing=east,working=false,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension",
+      "y": 90
+    },
+    "facing=east,working=true,part=main": {
+      "model": "stardewcraft:block/utility/incubator",
+      "y": 90
+    },
+    "facing=east,working=true,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension",
+      "y": 90
+    },
+    "facing=south,working=false,part=main": {
+      "model": "stardewcraft:block/utility/incubator",
+      "y": 180
+    },
+    "facing=south,working=false,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension",
+      "y": 180
+    },
+    "facing=south,working=true,part=main": {
+      "model": "stardewcraft:block/utility/incubator",
+      "y": 180
+    },
+    "facing=south,working=true,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension",
+      "y": 180
+    },
+    "facing=west,working=false,part=main": {
+      "model": "stardewcraft:block/utility/incubator",
+      "y": 270
+    },
+    "facing=west,working=false,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension",
+      "y": 270
+    },
+    "facing=west,working=true,part=main": {
+      "model": "stardewcraft:block/utility/incubator",
+      "y": 270
+    },
+    "facing=west,working=true,part=extension": {
+      "model": "stardewcraft:block/utility/incubator_extension",
+      "y": 270
+    }
   }
 }

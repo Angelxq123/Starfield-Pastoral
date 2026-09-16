@@ -1,0 +1,82 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": -0.0,
+  "walkStride": 0.877505625,
+  "attentionRig": {
+    "hipHeight": 12.0,
+    "soleY": 0.0,
+    "toeDepth": 2.0,
+    "halfStance": 2.18,
+    "rightZ": 0.18,
+    "leftZ": -0.18,
+    "rightYaw": -4,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "gait": {
+    "id": "alex",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42400000000000004,
+    "groundOffset": -0.0,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      },
+      "left": {
+        "hip": [
+          2.0,
+          12.0,
+          0.0
+        ],
+        "knee": 6.0,
+        "ankle": 1.5,
+        "sole": 0.0,
+        "heel": 2.0,
+        "toe": -2.0
+      }
+    },
+    "bodyPitch": -1.7,
+    "headPitch": 1.15,
+    "halfStance": 2.18,
+    "stride": 14.04009,
+    "reachMargin": 0.043194,
+    "legLengthStride": 21.0,
+    "approvedBaseStride": 21.0,
+    "stance": 0.54,
+    "bob": 0.2848,
+    "sway": 0.48,
+    "rootYaw": 2.3,
+    "bodyYaw": 5.4,
+    "armSwing": 20.5,
+    "armPhase": 0.02,
+    "footLift": 0.322,
+    "swingPeak": 0.45,
+    "elbowBase": 8,
+    "bodyRoll": 0.95,
+    "strideScale": 1.03,
+    "intent": "成年男性，运动体型、外向；步子有力、摆臂明确，躯干稳住方向，区别于 Abigail 的轻快。",
+    "bodyLag": 0.05,
+    "headLag": 0.085,
+    "headYawLag": 0.035,
+    "headNod": 0.45,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.754008,
+    "levelWalk": true
+  }
+}

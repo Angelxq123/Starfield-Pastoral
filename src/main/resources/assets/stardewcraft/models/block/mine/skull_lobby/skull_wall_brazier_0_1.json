@@ -1,0 +1,8 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "body": "stardewcraft:block/mine/skull_lobby/skull_wall_brazier",
+    "particle": "stardewcraft:block/mine/skull_lobby/skull_wall_brazier_particle"
+  },
+  "elements": []
+}

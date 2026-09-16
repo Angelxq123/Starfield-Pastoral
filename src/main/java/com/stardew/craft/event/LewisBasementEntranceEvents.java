@@ -74,7 +74,7 @@ public final class LewisBasementEntranceEvents {
     ) {
         return player != null
                 && stack != null
-                && stack.is(ModItems.MINE_LADDER.get())
+                && stack.is(ModItems.STAIRCASE.get())
                 && player.serverLevel().dimension()
                         == ModDimensions.STARDEW_VALLEY
                 && isInLewisStaircaseArea(player.blockPosition());

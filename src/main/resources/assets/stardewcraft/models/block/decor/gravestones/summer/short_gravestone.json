@@ -1,0 +1,174 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:solid",
+  "textures": {
+    "surface": "stardewcraft:block/decor/gravestones/summer/gravestones_spring",
+    "particle": "stardewcraft:block/decor/gravestones/summer/gravestone_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        5
+      ],
+      "to": [
+        12,
+        8,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            7.0,
+            4.5,
+            9.0,
+            6.5
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            11.5,
+            4.5,
+            13.0,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            9.25,
+            4.5,
+            11.25,
+            6.5
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            13.25,
+            4.5,
+            14.75,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            2.25,
+            6.75,
+            4.25,
+            8.25
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        8,
+        5
+      ],
+      "to": [
+        11,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            4.5,
+            6.75,
+            6.0,
+            7.0
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            8.0,
+            6.75,
+            9.5,
+            7.0
+          ]
+        },
+        "south": {
+          "texture": "#surface",
+          "uv": [
+            6.25,
+            6.75,
+            7.75,
+            7.0
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            9.75,
+            6.75,
+            11.25,
+            7.0
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            11.5,
+            6.75,
+            13.0,
+            8.25
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        8,
+        5
+      ],
+      "to": [
+        5,
+        8,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            15.0,
+            6.75,
+            15.25,
+            8.25
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        8,
+        5
+      ],
+      "to": [
+        12,
+        8,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            15.5,
+            6.75,
+            15.75,
+            8.25
+          ]
+        }
+      }
+    }
+  ]
+}

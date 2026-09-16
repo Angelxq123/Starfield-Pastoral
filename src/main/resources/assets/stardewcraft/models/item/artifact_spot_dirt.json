@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "top": "stardewcraft:block/artifact_spot_top",
-    "side": "stardewcraft:block/yellow_dirt_side",
-    "bottom": "stardewcraft:block/yellow_dirt_bottom",
-    "particle": "stardewcraft:block/yellow_dirt_side"
-  }
-}

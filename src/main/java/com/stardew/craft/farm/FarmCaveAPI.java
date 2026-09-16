@@ -3,8 +3,6 @@ package com.stardew.craft.farm;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.api.v1.internal.farm.StardewFarmCaveDailyRegistry;
 import com.stardew.craft.block.ModBlocks;
-import com.stardew.craft.interior.PlayerInteriorAllocator;
-import com.stardew.craft.manager.FarmCaveDailyService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -15,17 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-/**
- * 农场洞穴选择对外 API。未来剧情系统（Demetrius 事件等）直接调这里。
- *
- * <p>当前 Step 1 实现只负责：读写 {@link FarmInstance#caveChoice} + 持久化。
- * Step 2 / Step 5 会接入实际副作用：
- * <ul>
- *   <li>切到 {@link FarmCaveChoice#MUSHROOMS} 时在洞内放 6 个蘑菇培养盆；</li>
- *   <li>切到 {@link FarmCaveChoice#FRUIT_BATS} / {@link FarmCaveChoice#NONE} 时清空蘑菇盆；</li>
- *   <li>切到 {@link FarmCaveChoice#NONE} 时清理洞内已生成的水果 forage。</li>
- * </ul>
- */
+/** Farm cave choice API; installation and mode changes run through the readiness queue. */
 public final class FarmCaveAPI {
 
     private FarmCaveAPI() {}
@@ -72,21 +60,7 @@ public final class FarmCaveAPI {
         // 洞穴内副作用（需要 ServerLevel）
         ServerLevel level = resolveStardewLevel();
         if (level != null) {
-            PlayerInteriorAllocator alloc = PlayerInteriorAllocator.get(level);
-            UUID owner = farm.getOwnerUUID();
-            if (alloc.isCavePlaced(owner)) {
-                BlockPos caveOrigin = alloc.getCaveOrigin(owner);
-                // 切到蘑菇：放 6 个蘑菇盆；离开蘑菇：拆除
-                if (choice == FarmCaveChoice.MUSHROOMS) {
-                    placeMushroomBoxes(level, caveOrigin);
-                } else if (old == FarmCaveChoice.MUSHROOMS) {
-                    removeMushroomBoxes(level, caveOrigin);
-                }
-                // 离开 FRUIT_BATS（无论切到 NONE 还是 MUSHROOMS）都清除残留水果
-                if (old == FarmCaveChoice.FRUIT_BATS) {
-                    clearCaveFruits(level, caveOrigin);
-                }
-            }
+            com.stardew.craft.interior.FarmCaveRuntime.request(level,farm);
             // 广播给农场所有在线成员
             broadcastChoice(level, farm, choice);
         }
@@ -108,30 +82,11 @@ public final class FarmCaveAPI {
         }
     }
 
-    private static void placeMushroomBoxes(ServerLevel level, BlockPos caveOrigin) {
-        Block box = ModBlocks.MUSHROOM_BOX.get();
-        for (BlockPos off : FarmCaveDailyService.MUSHROOM_BOX_OFFSETS) {
-            BlockPos p = caveOrigin.offset(off);
-            if (!level.getBlockState(p).isAir()) continue;
-            level.setBlock(p, box.defaultBlockState(), Block.UPDATE_ALL);
-        }
-    }
-
-    private static void removeMushroomBoxes(ServerLevel level, BlockPos caveOrigin) {
-        Block box = ModBlocks.MUSHROOM_BOX.get();
-        for (BlockPos off : FarmCaveDailyService.MUSHROOM_BOX_OFFSETS) {
-            BlockPos p = caveOrigin.offset(off);
-            if (level.getBlockState(p).is(box)) {
-                level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-            }
-        }
-    }
-
-    private static void clearCaveFruits(ServerLevel level, BlockPos caveOrigin) {
+    public static void clearCaveFruits(ServerLevel level, BlockPos caveOrigin) {
         // 复用 DailyService 的清理逻辑通过放置空水果列表的方式不太直观，
         // 这里直接对水果层做一次快速扫描。
-        int w = com.stardew.craft.interior.InteriorSubspaceManager.FARM_CAVE_SCHEM_W;
-        int l = com.stardew.craft.interior.InteriorSubspaceManager.FARM_CAVE_SCHEM_L;
+        int w = com.stardew.craft.interior.FarmCaveLayout.WIDTH;
+        int l = com.stardew.craft.interior.FarmCaveLayout.LENGTH;
         java.util.Set<Block> fruits = new java.util.LinkedHashSet<>(java.util.List.of(
                 ModBlocks.FORAGE_SALMONBERRY.get(), ModBlocks.FORAGE_SPICE_BERRY.get(),
                 ModBlocks.FORAGE_WILD_PLUM.get(), ModBlocks.FORAGE_BLACKBERRY.get(),
@@ -142,7 +97,7 @@ public final class FarmCaveAPI {
         fruits.addAll(StardewFarmCaveDailyRegistry.managedFruitBlocks());
         for (int lx = 0; lx < w; lx++) {
             for (int lz = 0; lz < l; lz++) {
-                BlockPos p = caveOrigin.offset(lx, 1, lz);
+                BlockPos p = caveOrigin.offset(lx, com.stardew.craft.interior.FarmCaveLayout.FLOOR, lz);
                 var st = level.getBlockState(p);
                 for (Block f : fruits) {
                     if (st.is(f)) {

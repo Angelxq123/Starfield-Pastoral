@@ -4,10 +4,7 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.combat.equipment.EquipmentNegativeStatusProtection;
 import com.stardew.craft.combat.network.ElfBladeMarkPayload;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -61,20 +58,7 @@ public final class ElfBladeMarkTracker {
                 new ElfBladeMarkPayload(target.getId(), appliedDuration, stacks)
             );
 
-            if (target.level() instanceof ServerLevel serverLevel) {
-                double x = target.getX();
-                double y = target.getY() + target.getBbHeight() * 0.6;
-                double z = target.getZ();
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
-                    x, y, z,
-                    10, 0.35, 0.2, 0.35, 0.02);
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.GLOW,
-                    x, y, z,
-                    6, 0.25, 0.15, 0.25, 0.01);
-                serverLevel.playSound(null, target.blockPosition(),
-                    SoundEvents.AMETHYST_BLOCK_CHIME,
-                    SoundSource.PLAYERS, 0.6f, 1.4f);
-            }
+
         }
     }
 

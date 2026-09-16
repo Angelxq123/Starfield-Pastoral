@@ -2,6 +2,8 @@ package com.stardew.craft.event;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.tree.NewTreePartBlock;
+import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.block.utility.TapperBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -53,6 +55,10 @@ public final class NewTreeFootprintEvents {
 
 	private static boolean violatesTreeFootprint(ServerLevel level, BlockPos placedPos) {
 		BlockState placedState = level.getBlockState(placedPos);
+		// A verified tapper is a tree attachment, including on the root of a bent trunk.
+		if (placedState.is(ModBlocks.TAPPER.get()) && TapperBlock.isValidProductionSite(level, placedPos, placedState)) {
+			return false;
+		}
 		if (placedState.getBlock() instanceof NewTreePartBlock placedPart
 				&& placedPart.requiresHorizontalClearance()
 				&& !NewTreePartBlock.hasHorizontalClearance(level, placedPos)) {

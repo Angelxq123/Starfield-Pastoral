@@ -56,7 +56,7 @@ public final class NpcInteractionService {
     private static final String STARDROP_TEA_ID = "stardewcraft:stardrop_tea";
     private static final String GOLDEN_PUMPKIN_ID = "stardewcraft:golden_pumpkin";
     private static final String MAGIC_ROCK_CANDY_ID = "stardewcraft:magic_rock_candy";
-    private static final String VANILLA_OBJECTS_RESOURCE = "data/stardewcraft/npc/vanilla/data/Objects.json";
+    private static final String VANILLA_OBJECTS_RESOURCE = "data/stardewcraft/npc/vanilla/data/objects.json";
     private static final Set<String> NON_GIFTABLE_TYPE_KEYS = Set.of(
         "stardewcraft.type.tool",
         "stardewcraft.type.weapon",
@@ -75,6 +75,23 @@ public final class NpcInteractionService {
     );
     private static final Map<UUID, String> ACTIVE_DIALOGUE_NPC_BY_PLAYER = new HashMap<>();
     private static final Map<String, Integer> ACTIVE_DIALOGUE_LOCK_COUNTS = new HashMap<>();
+    private record DialogueBinding(net.minecraft.resources.ResourceKey<Level> dimension,UUID actor) {}
+    private static final Map<UUID,DialogueBinding> DIALOGUE_BINDINGS=new HashMap<>();
+
+    /** Reading a dialogue has no arbitrary deadline; invalid actor/player contexts do. */
+    public static void tickDialogueSessions(net.minecraft.server.MinecraftServer server) {
+        if(server.getTickCount()%20!=0) return;
+        for(var entry:java.util.List.copyOf(DIALOGUE_BINDINGS.entrySet())) {
+            var player=server.getPlayerList().getPlayer(entry.getKey());
+            var binding=entry.getValue();
+            boolean invalid=player==null || !player.isAlive() || !player.level().dimension().equals(binding.dimension());
+            if(!invalid && binding.actor()!=null) {
+                var actor=player.serverLevel().getEntity(binding.actor());
+                invalid=actor==null || actor.isRemoved() || !actor.isAlive() || player.distanceToSqr(actor)>64;
+            }
+            if(invalid) endDialogueSession(entry.getKey(),null);
+        }
+    }
     private static volatile Map<String, Boolean> vanillaObjectGiftabilityByName;
 
     private NpcInteractionService() {
@@ -276,8 +293,15 @@ public final class NpcInteractionService {
     }
 
     public static void onServerStopped() {
+        NpcQuestionAuthority.clear();
         ACTIVE_DIALOGUE_NPC_BY_PLAYER.clear();
         ACTIVE_DIALOGUE_LOCK_COUNTS.clear();
+        DIALOGUE_BINDINGS.clear();
+    }
+
+    public static void cancelNpcSessions(String npcId) {
+        for(var entry:java.util.List.copyOf(ACTIVE_DIALOGUE_NPC_BY_PLAYER.entrySet()))
+            if(entry.getValue().equals(npcId)) endDialogueSession(entry.getKey(),npcId);
     }
 
     private static void beginDialogueSession(ServerPlayer player, String npcId) {
@@ -294,6 +318,8 @@ public final class NpcInteractionService {
 
         endDialogueSession(playerId, previousNpcId);
         ACTIVE_DIALOGUE_NPC_BY_PLAYER.put(playerId, normalizedNpcId);
+        var actor=NpcSpawnManager.getTrackedNpc(player.serverLevel(),normalizedNpcId);
+        DIALOGUE_BINDINGS.put(playerId,new DialogueBinding(player.level().dimension(),actor==null?null:actor.getUUID()));
         ACTIVE_DIALOGUE_LOCK_COUNTS.merge(normalizedNpcId, 1, Integer::sum);
     }
 
@@ -314,7 +340,9 @@ public final class NpcInteractionService {
             }
         }
 
+        NpcQuestionAuthority.close(playerId);
         ACTIVE_DIALOGUE_NPC_BY_PLAYER.remove(playerId);
+        DIALOGUE_BINDINGS.remove(playerId);
         ACTIVE_DIALOGUE_LOCK_COUNTS.computeIfPresent(activeNpcId, (key, count) -> count <= 1 ? null : count - 1);
     }
 
@@ -367,6 +395,16 @@ public final class NpcInteractionService {
         NpcFriendshipDataManager friendshipManager = NpcFriendshipDataManager.get(serverLevel);
         NpcFriendshipDataManager.FriendshipState state = friendshipManager.getOrCreate(serverPlayer.getUUID(), npcId);
         state.normalizeGiftWeek(dayContext.weekKey());
+        if (serverPlayer.getPersistentData().contains("SlingshotHit_" + npcId)
+                && serverPlayer.getPersistentData().getInt("SlingshotHit_" + npcId) == currentDayKey()) {
+            serverPlayer.getPersistentData().remove("SlingshotHit_" + npcId);
+            String reaction = resolveDialogueTextByKey(NpcDataRegistry.dialogues().get(npcId), "HitBySlingshot", currentDayKey());
+            if (reaction == null || reaction.isBlank()) reaction = "message.stardewcraft.slingshot.npc_hit_"
+                    + serverPlayer.getRandom().nextInt(2);
+            sendDialoguePacket(serverPlayer, npcId, reaction, state.points());
+            return InteractionResult.SUCCESS;
+        }
+
 
         if (npcId.equals("pierre") && com.stardew.craft.festival.ActiveFestivalHandlers.tryOpenPierreFestivalShop(serverPlayer)) {
             return InteractionResult.SUCCESS;
@@ -680,16 +718,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -704,19 +734,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> {
-            markActiveFestivalDialogueSeen(player, npcId);
-            sendDialoguePacket(player, npcId, dialogueText, points, false);
-        });
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -731,17 +750,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        markActiveFestivalDialogueSeen(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -756,17 +766,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        markActiveFestivalDialogueSeen(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -781,17 +782,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        markActiveFestivalDialogueSeen(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -806,17 +798,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        markActiveFestivalDialogueSeen(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -831,17 +814,8 @@ public final class NpcInteractionService {
             return false;
         }
 
-        boolean canGainFriendship = NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        markActiveFestivalDialogueSeen(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, true);
         return true;
     }
 
@@ -853,7 +827,7 @@ public final class NpcInteractionService {
                                                         NpcFriendshipDataManager friendshipManager) {
         String dialogueText = com.stardew.craft.festival.WinterStarFestivalService.resolveDialogueKey(player, npcId);
         boolean formalFestivalDay = com.stardew.craft.festival.WinterStarFestivalService.isFormalFestivalDay();
-        if (com.stardew.craft.festival.WinterStarFestivalService.tryPromptSecretGift(player, npc, npcId)) {
+        if (com.stardew.craft.festival.WinterStarFestivalService.tryPromptSecretGift(player, npc, npcId, () -> {
             if (formalFestivalDay && NpcSocialRules.canSocialize(npcId, player)
                 && state.lastTalkDayKey() != dayContext.dayKey()) {
                 grantConversationFriendship(npcId, state, dayContext,
@@ -863,24 +837,39 @@ public final class NpcInteractionService {
                 syncFriendshipStatus(player, npcId, state, dayContext);
                 com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
             }
+        })) {
             return true;
         }
         if (dialogueText == null || dialogueText.isBlank()) {
             return false;
         }
 
-        boolean canGainFriendship = formalFestivalDay && NpcSocialRules.canSocialize(npcId, player);
-        if (canGainFriendship && state.lastTalkDayKey() != dayContext.dayKey()) {
-            grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
-            NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
-            friendshipManager.setDirty();
-        }
-        syncFriendshipStatus(player, npcId, state, dayContext);
-        com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
-        markActiveFestivalDialogueSeen(player, npcId);
-        int points = state.points();
-        npc.facePlayerTemporarily(player, 60, () -> sendDialoguePacket(player, npcId, dialogueText, points, false));
+        openFestivalDialogueAfterFacing(player, npc, npcId, state, dayContext, friendshipManager,
+            dialogueText, formalFestivalDay);
         return true;
+    }
+
+    private static void openFestivalDialogueAfterFacing(ServerPlayer player,
+                                                        StardewNpcEntity npc,
+                                                        String npcId,
+                                                        NpcFriendshipDataManager.FriendshipState state,
+                                                        DayContext dayContext,
+                                                        NpcFriendshipDataManager friendshipManager,
+                                                        String dialogueText,
+                                                        boolean canGainFriendship) {
+        // A rejected/cancelled turn must not consume either the daily conversation or festival dialogue.
+        npc.facePlayerTemporarily(player, 60, () -> {
+            if (canGainFriendship && NpcSocialRules.canSocialize(npcId, player)
+                && state.lastTalkDayKey() != dayContext.dayKey()) {
+                grantConversationFriendship(npcId, state, dayContext, dialogueText, player);
+                NpcFriendshipRewardService.applyEligibleRewards(player, npcId, state.points());
+                friendshipManager.setDirty();
+            }
+            sendDialoguePacket(player, npcId, dialogueText, state.points(), false);
+            markActiveFestivalDialogueSeen(player, npcId);
+            syncFriendshipStatus(player, npcId, state, dayContext);
+            com.stardew.craft.quest.StardewQuestEvents.fireNpcSocialized(player, npcId);
+        });
     }
 
     private static boolean isLewis(String npcId) {
@@ -1227,6 +1216,24 @@ public final class NpcInteractionService {
         // Vanilla formula: (maxHearts + 1) * POINTS_PER_HEART - 1
         // Thus 8 hearts -> 9 * 250 - 1 = 2249 points (which safely renders as 8 hearts and no more)
         return (maxHearts + 1) * POINTS_PER_HEART - 1;
+    }
+
+    /** NPC.getHitByPlayer: react without treating a projectile as lethal NPC damage. */
+    public static void onSlingshotHit(ServerPlayer player, com.stardew.craft.entity.npc.StardewNpcEntity npc) {
+        String id = npc.getNpcId();
+        var manager = NpcFriendshipDataManager.get(player.serverLevel());
+        var state = manager.get(player.getUUID(), id);
+        var emote = EmoteCatalog.byId("angry");
+        if (emote != null) PacketDistributor.sendToAllPlayers(
+                new EmoteBroadcastPayload(npc.getId(), EmoteCatalog.getBubbleBaseIndex(emote)));
+        if (state != null) {
+            state.addPoints(-30, Integer.MAX_VALUE);
+            manager.setDirty();
+            syncFriendshipStatus(player, id, state, currentDayContext(player.serverLevel()));
+            player.getPersistentData().putInt("SlingshotHit_" + id, currentDayKey());
+        }
+        npc.level().playSound(null, npc.blockPosition(), com.stardew.craft.sound.ModSounds.HIT_ENEMY.get(),
+                net.minecraft.sounds.SoundSource.NEUTRAL, 1, 1);
     }
 
     private static void syncFriendshipStatus(ServerPlayer player,
@@ -1999,7 +2006,7 @@ public final class NpcInteractionService {
             translateKey = "...";
         }
         beginDialogueSession(player, npcId);
-        PacketDistributor.sendToPlayer(player,
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
                 new OpenNpcDialogueScreenPayload(
                         npcId,
                         translateKey,
@@ -2010,6 +2017,13 @@ public final class NpcInteractionService {
                                 .answeredDialogueIds(player.getUUID()))));
     }
 
+    /** Common server send path, also used by wizard/Joja/shop dialogue adapters. */
+    public static void sendDialogue(ServerPlayer player,OpenNpcDialogueScreenPayload payload) {
+        beginDialogueSession(player,payload.npcId());
+        NpcQuestionAuthority.open(player,payload.npcId(),payload.translateKey());
+        PacketDistributor.sendToPlayer(player,payload);
+    }
+
     public static void handleClientQuestionAnswer(
             ServerPlayer player,
             String npcId,
@@ -2018,6 +2032,12 @@ public final class NpcInteractionService {
             String answerId
     ) {
         if (npcId == null || npcId.isBlank()) return;
+        if (!npcId.equals(ACTIVE_DIALOGUE_NPC_BY_PLAYER.get(player.getUUID()))) return;
+        var answer = NpcQuestionAuthority.consume(player,npcId,answerId,friendshipDelta,nextDialogueNode);
+        if (answer == null) return;
+        friendshipDelta = answer.points();
+        nextDialogueNode = answer.next();
+        answerId = answer.id();
 
         if (answerId != null && answerId.matches("[A-Za-z0-9_-]{1,64}")) {
             NpcDialogueEventData.get(player.getServer())

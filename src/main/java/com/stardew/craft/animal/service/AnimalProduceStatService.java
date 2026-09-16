@@ -55,7 +55,7 @@ public final class AnimalProduceStatService {
         return stats.size();
     }
 
-    static List<String> matchingStats(
+    public static List<String> matchingStats(
             FarmAnimalDefinition definition,
             ItemStack produce
     ) {

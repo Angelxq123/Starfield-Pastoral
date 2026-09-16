@@ -23,7 +23,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -121,18 +120,20 @@ public final class DesertFestivalMineService {
         if (drops == null || entity == null || player == null || !(entity.level() instanceof ServerLevel level) || !isActive()) {
             return;
         }
-        int floor = skullFloorFromPos(entity.blockPosition());
-        if (floor <= SKULL_CAVERN_FIRST_FLOOR) {
-            return;
-        }
-        int floorIndex = floor - SKULL_CAVERN_FIRST_FLOOR;
-        int rating = currentRating(level);
-        float chance = 0.02f + (rating * 5 + 1 + floorIndex) * 0.002f;
-        chance = Math.min(chance, 0.5f);
-        if (random.nextFloat() < chance) {
-            drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(),
-                new ItemStack(ModItems.CALICO_EGG.get(), 1 + random.nextInt(3))));
-        }
+        int count = monsterEggCount(level, skullFloorFromPos(entity.blockPosition()), random);
+        if (count > 0) drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), new ItemStack(ModItems.CALICO_EGG.get(), count)));
+    }
+
+    /** Monster.InitializeForLocation rolls these into born loot, including Skull Cavern floor one. */
+    public static int monsterEggCount(ServerLevel level, int floor, RandomSource random) {
+        if (level.dimension() != com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING || !isActive()) return 0;
+        return rollMonsterEggCount(floor, currentRating(level), random);
+    }
+
+    public static int rollMonsterEggCount(int floor, int rating, RandomSource random) {
+        if (floor < SKULL_CAVERN_FIRST_FLOOR) return 0;
+        float chance = Math.min(.02F + (rating * 5 + 1 + floor - SKULL_CAVERN_FIRST_FLOOR) * .002F, .5F);
+        return random.nextFloat() < chance ? 1 + random.nextInt(3) : 0;
     }
 
     public static void tryAddBarrelEggDrop(ServerLevel level, BlockPos pos, RandomSource random) {
@@ -152,50 +153,27 @@ public final class DesertFestivalMineService {
         }
     }
 
+    /** Source OnStoneDestroyed includes the first Skull Cavern floor (absolute mine level 121). */
+    public static int rollStoneEggCount(int floor, RandomSource random) {
+        if (floor < SKULL_CAVERN_FIRST_FLOOR) return 0;
+        float chance = Math.min(0.01f + (floor - SKULL_CAVERN_FIRST_FLOOR) * 0.0005f, 0.5f);
+        return random.nextFloat() < chance ? 1 + random.nextInt(3) : 0;
+    }
+
     public static void tryAddStoneEggDrop(ServerLevel level, ServerPlayer player, BlockPos pos, RandomSource random) {
-        if (level == null || player == null || pos == null || random == null || !isActive()) {
-            return;
-        }
-        int floor = skullFloorFromPos(pos);
-        if (floor <= SKULL_CAVERN_FIRST_FLOOR) {
-            return;
-        }
-        int floorIndex = floor - SKULL_CAVERN_FIRST_FLOOR;
-        float chance = Math.min(0.01f + floorIndex * 0.0005f, 0.5f);
-        if (random.nextFloat() < chance) {
-            Block.popResource(level, pos, new ItemStack(ModItems.CALICO_EGG.get(), 1 + random.nextInt(3)));
-        }
+        if (level == null || player == null || pos == null || random == null || !isActive()
+                || level.dimension() != com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING) return;
+        int count = rollStoneEggCount(skullFloorFromPos(pos), random);
+        if (count > 0) Block.popResource(level, pos, new ItemStack(ModItems.CALICO_EGG.get(), count));
     }
 
-    public static boolean isCalicoEggStone(BlockState state) {
-        return state != null && state.is(ModBlocks.CALICO_EGG_STONE.get());
-    }
 
-    public static void dropCalicoEggStone(ServerLevel level, ServerPlayer player, BlockPos pos, RandomSource random) {
-        int luckLevel = PlayerStardewDataAPI.getLuckBuffLevel(player);
-        int miningLevel = PlayerStardewDataAPI.getSkillLevel(player, SkillType.MINING);
-        int count = 1 + random.nextInt(3);
-        if (random.nextFloat() < luckLevel / 100.0f) {
-            count++;
-        }
-        if (random.nextFloat() < miningLevel / 100.0f) {
-            count++;
-        }
-        Block.popResource(level, pos, new ItemStack(ModItems.CALICO_EGG.get(), Mth.clamp(count, 1, 999)));
-    }
 
-    public static Block pickCalicoEggStone(RandomSource random) {
-        return ModBlocks.CALICO_EGG_STONE.get();
-    }
 
-    public static boolean shouldUseCalicoEggStone(ServerLevel level, int floorNumber, RandomSource random) {
-        if (level == null || random == null || !isActive() || floorNumber <= SKULL_CAVERN_FIRST_FLOOR) {
-            return false;
-        }
-        int rating = currentRating(level);
-        double chance = 0.13D + (rating * 5) / 1000.0D;
-        return random.nextDouble() < chance;
-    }
+
+
+
+
 
     public static boolean activateCalicoStatue(ServerPlayer player, ServerLevel level, BlockPos pos, RandomSource random) {
         if (player == null || level == null || random == null || !isActive()) {
@@ -261,42 +239,6 @@ public final class DesertFestivalMineService {
                 player.playNotifySound(ModSounds.YOBA.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             }
         }));
-    }
-
-    public static int adjustMonsterCountForCalicoStatues(ServerLevel level, int baseCount) {
-        if (level == null || !isActive()) {
-            return baseCount;
-        }
-        MineData data = get(level);
-        data.prepareForToday();
-        int invasionAmount = data.statueEffectAmount(0) + data.statueEffectAmount(1)
-            + data.statueEffectAmount(2) + data.statueEffectAmount(3);
-        double modifier = (1.0D + invasionAmount * 0.01D) * (1.0D + data.statueEffectAmount(7) * 0.2D);
-        return Mth.clamp((int)Math.ceil(baseCount * modifier), 1, 60);
-    }
-
-    public static EntityType<?> applyCalicoStatueInvasion(ServerLevel level, RandomSource random, EntityType<?> fallback) {
-        if (level == null || random == null || !isActive()) {
-            return fallback;
-        }
-        MineData data = get(level);
-        data.prepareForToday();
-        int[] invasionIds = {3, 0, 1, 2};
-        for (int invasionId : invasionIds) {
-            int amount = data.statueEffectAmount(invasionId);
-            for (int i = 0; i < amount; i++) {
-                if (random.nextFloat() < 0.15F) {
-                    return switch (invasionId) {
-                        case 3 -> EntityType.PHANTOM;
-                        case 0 -> EntityType.HUSK;
-                        case 1 -> EntityType.VEX;
-                        case 2 -> random.nextFloat() < 0.33F ? EntityType.PHANTOM : EntityType.SKELETON;
-                        default -> fallback;
-                    };
-                }
-            }
-        }
-        return fallback;
     }
 
     public static float monsterDamageMultiplier(ServerLevel level) {

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "source_name": "Carbon Ghost",
+  "family": "carbon_ghost",
+  "health": 190,
+  "damage": 25,
+  "resilience": 3,
+  "miss_chance": 0.0,
+  "experience": 20,
+  "mine_monster": true,
+  "drops": [
+    {
+      "item": "stardewcraft:omni_geode",
+      "chance": 0.99
+    },
+    {
+      "item": "stardewcraft:refined_quartz",
+      "chance": 0.1
+    }
+  ]
+}

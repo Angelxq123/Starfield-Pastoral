@@ -1,0 +1,317 @@
+{
+  "schema_version": 1,
+  "source": "ResourceClump.GetDefaultHealth / performToolAction / destroy; MineShaft.populateLevel",
+  "note": "Source mapping for the upcoming generator. No generation enabled by this manifest. Health and footprint are ResourceClump properties, not ordinary Object properties.",
+  "entries": [
+    {
+      "source_id": "C752",
+      "source_kind": "resource_clump",
+      "source_index": 752,
+      "block": "stardewcraft:mine_rock_clump_752",
+      "item": "stardewcraft:mine_rock_clump_752",
+      "model": "stardewcraft:block/mine/nodes/stone_752",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 752,
+        "rect": [
+          128,
+          496,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 8,
+      "minimum_pickaxe_tier": 0,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all occupied cells return the same world-space bound",
+      "drop": {
+        "item": "stardewcraft:stone",
+        "count": 10,
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "non-frost normal mine areas",
+          "condition": "free 2x2; item/stone/monster branches not selected; random <=0.005; !isDarkArea(); !mustKillAllMonstersToAdvance(); difficulty <=0",
+          "conditional_appearance_weight": "1/2"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    },
+    {
+      "source_id": "C754",
+      "source_kind": "resource_clump",
+      "source_index": 754,
+      "block": "stardewcraft:mine_rock_clump_754",
+      "item": "stardewcraft:mine_rock_clump_754",
+      "model": "stardewcraft:block/mine/nodes/stone_754",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 754,
+        "rect": [
+          160,
+          496,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 8,
+      "minimum_pickaxe_tier": 0,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all occupied cells return the same world-space bound",
+      "drop": {
+        "item": "stardewcraft:stone",
+        "count": 10,
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "non-frost normal mine areas",
+          "condition": "free 2x2; item/stone/monster branches not selected; random <=0.005; !isDarkArea(); !mustKillAllMonstersToAdvance(); difficulty <=0",
+          "conditional_appearance_weight": "1/2"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    },
+    {
+      "source_id": "C756",
+      "source_kind": "resource_clump",
+      "source_index": 756,
+      "block": "stardewcraft:mine_rock_clump_756",
+      "item": "stardewcraft:mine_rock_clump_756",
+      "model": "stardewcraft:block/mine/nodes/stone_756",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 756,
+        "rect": [
+          192,
+          496,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 8,
+      "minimum_pickaxe_tier": 0,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all occupied cells return the same world-space bound",
+      "drop": {
+        "item": "stardewcraft:stone",
+        "count": 10,
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "ordinary frost mine",
+          "condition": "free2x2; preceding scatter branches not selected; random<=0.005; !isDarkArea(); !mustKillAllMonstersToAdvance(); getMineArea()==40; difficulty<=0",
+          "conditional_appearance_weight": "1/2"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    },
+    {
+      "source_id": "C758",
+      "source_kind": "resource_clump",
+      "source_index": 758,
+      "block": "stardewcraft:mine_rock_clump_758",
+      "item": "stardewcraft:mine_rock_clump_758",
+      "model": "stardewcraft:block/mine/nodes/stone_758",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 758,
+        "rect": [
+          224,
+          496,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 8,
+      "minimum_pickaxe_tier": 0,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all occupied cells return the same world-space bound",
+      "drop": {
+        "item": "stardewcraft:stone",
+        "count": 10,
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "ordinary frost mine",
+          "condition": "free2x2; preceding scatter branches not selected; random<=0.005; !isDarkArea(); !mustKillAllMonstersToAdvance(); getMineArea()==40; difficulty<=0",
+          "conditional_appearance_weight": "1/2"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    },
+    {
+      "source_id": "C672",
+      "source_kind": "resource_clump",
+      "source_index": 672,
+      "block": "stardewcraft:mine_rock_clump_672",
+      "item": "stardewcraft:mine_rock_clump_672",
+      "model": "stardewcraft:block/mine/nodes/stone_672",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 672,
+        "rect": [
+          0,
+          448,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 10,
+      "minimum_pickaxe_tier": 2,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all eight occupied cells return the same world-space bound",
+      "drop": {
+        "item": "stardewcraft:stone",
+        "count": 15,
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "Farm and maps with ResourceClump 672",
+          "condition": "map-authored 2x2 boulder"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    },
+    {
+      "source_id": "C622",
+      "source_kind": "resource_clump",
+      "source_index": 622,
+      "block": "stardewcraft:mine_rock_clump_622",
+      "item": "stardewcraft:mine_rock_clump_622",
+      "model": "stardewcraft:block/mine/nodes/stone_622",
+      "source_sprite": {
+        "texture": "Maps/springobjects",
+        "index": 622,
+        "rect": [
+          352,
+          400,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 20,
+      "minimum_pickaxe_tier": 3,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all eight occupied cells return the same world-space bound",
+      "drop": {
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false,
+        "fixed": {
+          "stardewcraft:iridium_ore": 10,
+          "stardewcraft:stone": 8,
+          "stardewcraft:omni_geode": 2
+        },
+        "prismatic_shard_chance": 0.25,
+        "shard_seed": "Utility.CreateRandom(world seed, main X, float(main Z)*983728f); main anchor retained before extension cleanup"
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "Farm",
+          "condition": "SoundInTheNightEvent meteorite; free landing 2x2"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    },
+    {
+      "source_id": "C148",
+      "source_kind": "resource_clump",
+      "source_index": 148,
+      "block": "stardewcraft:mine_rock_clump_148",
+      "item": "stardewcraft:mine_rock_clump_148",
+      "model": "stardewcraft:block/mine/nodes/stone_148",
+      "source_sprite": {
+        "texture": "TileSheets/Objects_2",
+        "index": 148,
+        "rect": [
+          64,
+          288,
+          32,
+          32
+        ]
+      },
+      "source_footprint": [
+        2,
+        2
+      ],
+      "source_health": 20,
+      "minimum_pickaxe_tier": 3,
+      "source_damage": "max(1, (upgradeLevel + 1) * 0.75); Powerful additionalPower is not read",
+      "collision": "aabb; above soil only; all eight occupied cells return the same world-space bound",
+      "drop": {
+        "item": "stardewcraft:stone",
+        "count": 10,
+        "mining_xp": 0,
+        "secret_note_chance": 0.05,
+        "ordinary_stone_roll": false,
+        "ladder_roll": false
+      },
+      "source_explosion": "GameLocation.explode does not process resourceClumps",
+      "contexts": [
+        {
+          "area": "quarry mine area77377",
+          "condition": "fixed ResourceClump at original tiles47,37 and36,12"
+        }
+      ],
+      "implemented": true,
+      "generation_enabled": false
+    }
+  ]
+}

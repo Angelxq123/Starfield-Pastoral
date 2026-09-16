@@ -101,6 +101,9 @@ public final class StardewItemCatalog {
             StardewCatalogTab.MINING, MINING_TYPES,
             StardewCatalogTab.COMBAT, COMBAT_TYPES,
             StardewCatalogTab.DECOR, DECOR_TYPES,
+            StardewCatalogTab.NATURE, List.of("stardewcraft.type.natural_ground", "stardewcraft.type.natural_rock",
+                    "stardewcraft.type.natural_grass", "stardewcraft.type.natural_flower", "stardewcraft.type.natural_aquatic"),
+            StardewCatalogTab.BUILDING, List.of("stardewcraft.type.building"),
             StardewCatalogTab.SPECIAL, SPECIAL_TYPES
     );
 
@@ -115,7 +118,11 @@ public final class StardewItemCatalog {
             if (tabForItem(item) != tab) {
                 continue;
             }
-            for (ItemStack stack : StardewItemDisplayStacks.stacksForItem(item)) {
+            List<ItemStack> displayStacks = StardewItemDisplayStacks.stacksForItem(item);
+            if (tab == StardewCatalogTab.BUILDING || tab == StardewCatalogTab.NATURE) {
+                displayStacks = displayStacks.stream().sorted(StardewItemComparator.STACK).toList();
+            }
+            for (ItemStack stack : displayStacks) {
                 output.accept(stack);
             }
         }

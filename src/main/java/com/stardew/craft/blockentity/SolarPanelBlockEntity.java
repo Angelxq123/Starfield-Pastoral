@@ -1,6 +1,6 @@
 package com.stardew.craft.blockentity;
 
-import com.stardew.craft.item.ModItems;
+import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 
 public class SolarPanelBlockEntity extends BlockEntity implements UtilityAutomationAccess, FairyDustAcceleratable, AdvanceableUtility {
     private static final int EFFECTIVE_MINUTES_PER_DAY = 1260;
-    private static final int DAYS_TO_CHARGE = 1;
 
     private static final String TAG_PRODUCT = "product";
     private static final String TAG_REMAINING = "remainingAbsMinutes";
@@ -31,6 +30,8 @@ public class SolarPanelBlockEntity extends BlockEntity implements UtilityAutomat
     private boolean ready = false;
     private long lastDayIndex = -1;
     private boolean paused = false;
+    private boolean minuteMode;
+    private long lastAbsMinute = -1;
     private final UtilityItemHandler automationItemHandler = new UtilityItemHandler(this);
 
     public record RemainingTime(int days, int hours, int minutes) {}
@@ -66,7 +67,20 @@ public class SolarPanelBlockEntity extends BlockEntity implements UtilityAutomat
             lastDayIndex = currentDayIndex;
         }
 
-        if (currentDayIndex != lastDayIndex) {
+        if (minuteMode) {
+            long now = TimedProductionBlockEntity.getCurrentAbsMinute();
+            if (lastAbsMinute < 0) lastAbsMinute = now;
+            long elapsed = Math.max(0, now - lastAbsMinute);
+            if (elapsed > 0) {
+                lastAbsMinute = now;
+                if (!paused && !product.isEmpty() && !ready) {
+                    remainingAbsMinutes = Math.max(0, remainingAbsMinutes - elapsed);
+                    ready = remainingAbsMinutes == 0;
+                    syncToClient();
+                }
+                setChanged();
+            }
+        } else if (currentDayIndex != lastDayIndex) {
             long deltaDays = Math.max(0, currentDayIndex - lastDayIndex);
             lastDayIndex = currentDayIndex;
 
@@ -86,8 +100,13 @@ public class SolarPanelBlockEntity extends BlockEntity implements UtilityAutomat
 
     @SuppressWarnings("null")
     private void startCycle(Level level) {
-        product = new ItemStack((net.minecraft.world.level.ItemLike) ModItems.BATTERY_PACK.get());
-        remainingAbsMinutes = (long) DAYS_TO_CHARGE * (long) EFFECTIVE_MINUTES_PER_DAY;
+        var cycle = MachineProductionData.cycle("solar_panel", "default");
+        var profile = MachineProductionData.profile("solar_panel");
+        product = cycle.createOutput(level.random);
+        remainingAbsMinutes = MachineProductionData.minutes("solar_panel",
+            cycle.mornings() ? cycle.duration() * EFFECTIVE_MINUTES_PER_DAY : cycle.duration());
+        minuteMode = !cycle.mornings() || profile.minutes() != null || profile.multiplier() != 1;
+        lastAbsMinute = TimedProductionBlockEntity.getCurrentAbsMinute();
         ready = false;
         lastDayIndex = getCurrentDayIndex();
         paused = computePaused(level, worldPosition);
@@ -282,6 +301,8 @@ public class SolarPanelBlockEntity extends BlockEntity implements UtilityAutomat
         tag.putBoolean(TAG_READY, ready);
         tag.putLong(TAG_LAST_DAY, lastDayIndex);
         tag.putBoolean(TAG_PAUSED, paused);
+        tag.putBoolean("minuteMode", minuteMode);
+        tag.putLong("lastAbsMinute", lastAbsMinute);
     }
 
     @SuppressWarnings("null")
@@ -301,5 +322,7 @@ public class SolarPanelBlockEntity extends BlockEntity implements UtilityAutomat
             lastDayIndex = -1;
         }
         paused = tag.getBoolean(TAG_PAUSED);
+        minuteMode = tag.getBoolean("minuteMode");
+        lastAbsMinute = tag.contains("lastAbsMinute") ? tag.getLong("lastAbsMinute") : -1;
     }
 }

@@ -1,19 +1,1028 @@
 {
   "variants": {
-    "facing=north": {
-      "model": "stardewcraft:block/elevator"
+    "facing=north,part=main,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
+      "y": 0
     },
-    "facing=south": {
-      "model": "stardewcraft:block/elevator",
+    "facing=north,part=main,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
       "y": 180
     },
-    "facing=west": {
-      "model": "stardewcraft:block/elevator",
+    "facing=south,part=main,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
       "y": 270
     },
-    "facing=east": {
-      "model": "stardewcraft:block/elevator",
+    "facing=west,part=main,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=earth": {
+      "model": "stardewcraft:block/mine/architecture/earth/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
       "y": 90
+    },
+    "facing=east,part=main,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=frost": {
+      "model": "stardewcraft:block/mine/architecture/frost/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=lava": {
+      "model": "stardewcraft:block/mine/architecture/lava/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=desert": {
+      "model": "stardewcraft:block/mine/architecture/desert/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=earth_dark": {
+      "model": "stardewcraft:block/mine/architecture/earth_dark/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=frost_dark": {
+      "model": "stardewcraft:block/mine/architecture/frost_dark/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=lava_dark": {
+      "model": "stardewcraft:block/mine/architecture/lava_dark/elevator_button",
+      "y": 270
+    },
+    "facing=north,part=main,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=main,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=main,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=main,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 0
+    },
+    "facing=north,part=extension,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 0
+    },
+    "facing=north,part=extension,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 0
+    },
+    "facing=north,part=extension,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 0
+    },
+    "facing=north,part=extension,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 0
+    },
+    "facing=east,part=main,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=main,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=main,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=main,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 90
+    },
+    "facing=east,part=extension,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 90
+    },
+    "facing=east,part=extension,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 90
+    },
+    "facing=east,part=extension,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 90
+    },
+    "facing=east,part=extension,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 90
+    },
+    "facing=south,part=main,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=main,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=main,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=main,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 180
+    },
+    "facing=south,part=extension,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 180
+    },
+    "facing=south,part=extension,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 180
+    },
+    "facing=south,part=extension,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 180
+    },
+    "facing=south,part=extension,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 180
+    },
+    "facing=west,part=main,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=main,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=main,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=main,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 270
+    },
+    "facing=west,part=extension,section=0,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator",
+      "y": 270
+    },
+    "facing=west,part=extension,section=1,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_middle",
+      "y": 270
+    },
+    "facing=west,part=extension,section=2,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_upper",
+      "y": 270
+    },
+    "facing=west,part=extension,section=3,theme=desert_dark": {
+      "model": "stardewcraft:block/mine/architecture/desert_dark/elevator_button",
+      "y": 270
     }
   }
 }

@@ -1,0 +1,249 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid",
+    "1": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle",
+    "particle": "stardewcraft:block/decor/bookseller/bookseller_balloon_vivid_particle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "from": [
+        4.72183,
+        -7,
+        3.5
+      ],
+      "to": [
+        20.27817,
+        11,
+        3.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.15625,
+            6.65625,
+            1.3993178125,
+            6.9375
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1.4375,
+            6.65625,
+            1.6805678125,
+            6.9375
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          12.5,
+          -7,
+          3.5
+        ],
+        "axis": "y",
+        "angle": -45,
+        "rescale": false
+      }
+    },
+    {
+      "from": [
+        5.72183,
+        11,
+        2.5
+      ],
+      "to": [
+        21.27817,
+        15,
+        2.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.25,
+            6.65625,
+            6.4930678125,
+            6.71875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            6.53125,
+            6.65625,
+            6.7743178125,
+            6.71875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          13.5,
+          11,
+          2.5
+        ],
+        "axis": "y",
+        "angle": -45,
+        "rescale": false
+      }
+    },
+    {
+      "from": [
+        -6,
+        -9,
+        2
+      ],
+      "to": [
+        6,
+        11,
+        2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.875,
+            6.65625,
+            9.0625,
+            6.96875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            9.09375,
+            6.65625,
+            9.28125,
+            6.96875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        4.34315,
+        -9,
+        6
+      ],
+      "to": [
+        15.65685,
+        11,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.5,
+            6.65625,
+            11.6767765625,
+            6.96875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            11.71875,
+            6.65625,
+            11.8955265625,
+            6.96875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          10,
+          -9,
+          6
+        ],
+        "axis": "y",
+        "angle": -45,
+        "rescale": false
+      }
+    },
+    {
+      "from": [
+        -6,
+        11,
+        1
+      ],
+      "to": [
+        6,
+        15,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12.375,
+            6.65625,
+            12.5625,
+            6.71875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12.59375,
+            6.65625,
+            12.78125,
+            6.71875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        4.13604,
+        11,
+        5.5
+      ],
+      "to": [
+        16.86396,
+        15,
+        5.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            15.0625,
+            6.65625,
+            15.26137375,
+            6.71875
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            15.296875,
+            6.65625,
+            15.49574875,
+            6.71875
+          ],
+          "texture": "#0"
+        }
+      },
+      "shade": true,
+      "rotation": {
+        "origin": [
+          10.5,
+          11,
+          5.5
+        ],
+        "axis": "y",
+        "angle": -45,
+        "rescale": false
+      }
+    }
+  ]
+}

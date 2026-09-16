@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "stardewcraft:block/terrain/shapes/dark_grass_slab_bottom"
+    },
+    "type=top": {
+      "model": "stardewcraft:block/terrain/shapes/dark_grass_slab_top"
+    },
+    "type=double": {
+      "model": "stardewcraft:block/terrain/shapes/dark_grass_slab_double"
+    }
+  }
+}

@@ -1,7 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/cube_all",
-    "textures":  {
-                     "all":  "stardewcraft:block/mine/lava_gold_ore",
-                     "particle":  "stardewcraft:block/mine/lava_gold_ore"
-                 }
-}

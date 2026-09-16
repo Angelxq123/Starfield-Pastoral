@@ -1,0 +1,32 @@
+{
+  "elements": [
+    {
+      "from": [
+        -10,
+        12,
+        -10
+      ],
+      "to": [
+        22,
+        12,
+        22
+      ],
+      "faces": {
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            1.03125,
+            8.25,
+            2.03125,
+            9.25
+          ]
+        }
+      }
+    }
+  ],
+  "textures": {
+    "surface": "stardewcraft:block/park_fountain/winter/surface",
+    "particle": "stardewcraft:block/park_fountain/winter/particle"
+  },
+  "render_type": "minecraft:cutout"
+}

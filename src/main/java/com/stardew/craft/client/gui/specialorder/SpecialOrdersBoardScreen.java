@@ -1,5 +1,9 @@
 package com.stardew.craft.client.gui.specialorder;
 
+import com.stardew.craft.client.font.StardewFonts;
+
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.StardewRenderMapping;
@@ -55,7 +59,7 @@ public class SpecialOrdersBoardScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        float guiScale = (float) minecraft.getWindow().getGuiScale();
+        float guiScale = (float) StardewGuiViewport.REFERENCE_SCALE;
         mapping = new StardewRenderMapping(width, height, guiScale);
         s4 = mapping.s4();
         winW = Math.round(338 * s4);
@@ -152,7 +156,7 @@ public class SpecialOrdersBoardScreen extends Screen {
 
         if (showAcceptButton) {
             int buttonW = font.width(I18n.get("stardewcraft.special_orders.accept")) + u(24);
-            int buttonH = font.lineHeight + u(24);
+            int buttonH = StardewFonts.lineHeight(font) + u(24);
             int buttonX = winX + (side == 0 ? winW / 4 : winW * 3 / 4) - u(128);
             int buttonY = winY + winH - u(128);
             acceptButtons[side] = new ButtonBounds(buttonX, buttonY, buttonW, buttonH, order.getString("Id"));
@@ -299,7 +303,7 @@ public class SpecialOrdersBoardScreen extends Screen {
     private void drawDescription(GuiGraphics graphics, Component desc, int x, int y, int width, int color, boolean shadow) {
         float textScale = 1.0F;
         List<FormattedCharSequence> lines = font.split(desc, width);
-        int lineStep = font.lineHeight + 2;
+        int lineStep = StardewFonts.lineHeight(font) + 2;
         int maxHeight = u(400);
         while (lines.size() * lineStep * textScale > maxHeight && textScale > 0.55F) {
             textScale -= 0.05F;

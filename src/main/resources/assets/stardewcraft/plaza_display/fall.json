@@ -1,0 +1,292 @@
+{
+  "parts": [
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_000",
+      "scene_offset": [
+        -5,
+        4,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_001",
+      "scene_offset": [
+        -5,
+        15,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_002",
+      "scene_offset": [
+        -5,
+        -7,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_003",
+      "scene_offset": [
+        1,
+        4,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_004",
+      "scene_offset": [
+        1,
+        16,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_005",
+      "scene_offset": [
+        1,
+        -7,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_006",
+      "scene_offset": [
+        7,
+        3,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_007",
+      "scene_offset": [
+        7,
+        14,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_008",
+      "scene_offset": [
+        7,
+        -7,
+        30
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_009",
+      "scene_offset": [
+        9,
+        0,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_010",
+      "scene_offset": [
+        9,
+        7,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_011",
+      "scene_offset": [
+        9,
+        -7,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_012",
+      "scene_offset": [
+        15,
+        0,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_013",
+      "scene_offset": [
+        15,
+        8,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_014",
+      "scene_offset": [
+        15,
+        -7,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_015",
+      "scene_offset": [
+        21,
+        -1,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_016",
+      "scene_offset": [
+        21,
+        6,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_017",
+      "scene_offset": [
+        21,
+        -7,
+        11
+      ],
+      "material": "hay"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_018",
+      "scene_offset": [
+        -1,
+        -3,
+        0
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_019",
+      "scene_offset": [
+        -1,
+        -3,
+        -6
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_020",
+      "scene_offset": [
+        -1,
+        -3,
+        6
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_021",
+      "scene_offset": [
+        -1,
+        1,
+        0
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_022",
+      "scene_offset": [
+        -1,
+        -7,
+        0
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_023",
+      "scene_offset": [
+        -1,
+        3,
+        0
+      ],
+      "material": "stem"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_024",
+      "scene_offset": [
+        0,
+        4,
+        0
+      ],
+      "material": "stem"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_025",
+      "scene_offset": [
+        16,
+        13,
+        10
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_026",
+      "scene_offset": [
+        16,
+        13,
+        5
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_027",
+      "scene_offset": [
+        16,
+        13,
+        15
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_028",
+      "scene_offset": [
+        16,
+        17,
+        10
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_029",
+      "scene_offset": [
+        16,
+        10,
+        10
+      ],
+      "material": "pumpkin"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_030",
+      "scene_offset": [
+        16,
+        19,
+        10
+      ],
+      "material": "stem"
+    },
+    {
+      "model": "stardewcraft:block/plaza_display/fall/part_031",
+      "scene_offset": [
+        17,
+        20,
+        10
+      ],
+      "material": "stem"
+    }
+  ]
+}

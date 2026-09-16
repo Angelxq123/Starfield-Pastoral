@@ -1,12 +1,31 @@
 {
   "variants": {
-    "part=main,facing=north": { "model": "stardewcraft:decor/common/shrine_7" },
-    "part=main,facing=east": { "model": "stardewcraft:decor/common/shrine_7", "y": 90 },
-    "part=main,facing=south": { "model": "stardewcraft:decor/common/shrine_7", "y": 180 },
-    "part=main,facing=west": { "model": "stardewcraft:decor/common/shrine_7", "y": 270 },
-    "part=extension,facing=north": { "model": "stardewcraft:block/decor/extensions/shrine_7_extension_empty" },
-    "part=extension,facing=east": { "model": "stardewcraft:block/decor/extensions/shrine_7_extension_empty" },
-    "part=extension,facing=south": { "model": "stardewcraft:block/decor/extensions/shrine_7_extension_empty" },
-    "part=extension,facing=west": { "model": "stardewcraft:block/decor/extensions/shrine_7_extension_empty" }
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/spring/grandpa_shrine"
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/empty"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/spring/grandpa_shrine",
+      "y": 90
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/empty"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/spring/grandpa_shrine",
+      "y": 180
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/empty"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/spring/grandpa_shrine",
+      "y": 270
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/decor/grandpa_shrine/empty"
+    }
   }
 }

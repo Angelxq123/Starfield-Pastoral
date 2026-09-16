@@ -17,7 +17,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * 矿井出口操作数据包 — 客户端 → 服务端。
  * 
- * 不再依赖 MineExitMenu 容器，直接在服务端处理传送逻辑。
+ * 在服务端处理离矿对话的传送操作。
  * 映射自 SDV "ExitMine" 对话回调。
  */
 public record MineExitActionPayload(Action action) implements CustomPacketPayload {
@@ -58,7 +58,7 @@ public record MineExitActionPayload(Action action) implements CustomPacketPayloa
 						// 骷髅矿：返回沙漠（而非矿井 Floor 0）
 						com.stardew.craft.mining.SkullCavernSessionManager.onPlayerLeave(
 								serverPlayer, (ServerLevel) serverPlayer.level());
-						teleportToDesert(serverPlayer, playerData);
+						teleportToFloor(serverPlayer, playerData, com.stardew.craft.mining.SkullCavernRuntime.LOBBY);
 						StardewCraft.LOGGER.info("Player {} exited skull cavern to desert", serverPlayer.getName().getString());
 					} else {
 						// SDV ExitMine_Leave: Game1.warpFarmer("Mine", 23, 8) → 传送到矿井入口大厅（0层）
@@ -68,11 +68,16 @@ public record MineExitActionPayload(Action action) implements CustomPacketPayloa
 				}
 				case GO_UP_FLOOR -> {
 					int currentFloor = playerData.getCurrentFloor();
-					if (currentFloor > 0) {
+					if (currentFloor > 0 && currentFloor <= 120) {
 						teleportToFloor(serverPlayer, playerData, currentFloor - 1);
 					}
 				}
-				case GO_TO_FLOOR_0 -> teleportToFloor(serverPlayer, playerData, 0);
+				case GO_TO_FLOOR_0 -> {
+                    if(playerData.getCurrentFloor()>120) {
+                        com.stardew.craft.mining.SkullCavernSessionManager.onPlayerLeave(serverPlayer,serverPlayer.serverLevel());
+                        teleportToFloor(serverPlayer,playerData,com.stardew.craft.mining.SkullCavernRuntime.LOBBY);
+                    } else teleportToFloor(serverPlayer,playerData,0);
+                }
 			}
 		});
 	}
@@ -83,7 +88,7 @@ public record MineExitActionPayload(Action action) implements CustomPacketPayloa
 		if (mineLevel == null) return;
 
 		if (targetFloor > 0) {
-			com.stardew.craft.mining.MineFloorGenerator.generateFloor(mineLevel, targetFloor);
+			com.stardew.craft.mining.OrdinaryMineRuntime.ensure(mineLevel, targetFloor);
 		}
 
 		MiningCoordinates.teleportPlayerToFloor(serverPlayer, mineLevel, targetFloor);
@@ -94,7 +99,6 @@ public record MineExitActionPayload(Action action) implements CustomPacketPayloa
 			serverPlayer,
 			new com.stardew.craft.network.MiningFloorSyncPacket(targetFloor)
 		);
-		com.stardew.craft.event.MiningBlockBreakHandler.syncLadderStateForPlayer(serverPlayer, targetFloor);
 	}
 
 	/** 骷髅矿出口 → 传送到沙漠矿洞入口附近 */

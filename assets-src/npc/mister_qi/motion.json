@@ -1,0 +1,83 @@
+{
+  "intervalMin": 3.9,
+  "intervalMax": 7.4,
+  "durationMin": 0.94,
+  "durationMax": 1.14,
+  "doubleChance": 0.08,
+  "groundOffset": 0.35,
+  "walkStride": 0.804856625,
+  "attentionRig": {
+    "hipHeight": 11.0,
+    "soleY": -0.35,
+    "toeDepth": 2.35,
+    "halfStance": 2.16,
+    "rightZ": 0.12,
+    "leftZ": -0.18,
+    "rightYaw": -3,
+    "leftYaw": 4,
+    "lift": 0.8,
+    "lean": 1.2,
+    "armSwing": 3.3
+  },
+  "blinkMode": "occluded",
+  "gait": {
+    "id": "mister_qi",
+    "revision": "character-articulated-3",
+    "rootMean": 0.42400000000000004,
+    "groundOffset": 0.35,
+    "sides": {
+      "right": {
+        "hip": [
+          -2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      },
+      "left": {
+        "hip": [
+          2.0,
+          11.0,
+          0.0
+        ],
+        "knee": 5.5,
+        "ankle": 1.5,
+        "sole": -0.35,
+        "heel": 2.35,
+        "toe": -2.35
+      }
+    },
+    "bodyPitch": -1.5,
+    "headPitch": 1.15,
+    "halfStance": 2.4299999999999997,
+    "stride": 12.877706,
+    "reachMargin": 0.044394,
+    "legLengthStride": 19.25,
+    "approvedBaseStride": 19.25,
+    "stance": 0.58,
+    "bob": 0.26239999999999997,
+    "sway": 0.39,
+    "rootYaw": 1.2,
+    "bodyYaw": 3.4,
+    "armSwing": 13.8,
+    "armPhase": 0.048,
+    "footLift": 0.2604,
+    "swingPeak": 0.52,
+    "elbowBase": 9,
+    "bodyRoll": 0.6,
+    "strideScale": 1.0,
+    "intent": "成年男性、神秘且从容的角色呈现；头肩稳定、摆臂克制、方向明确，不做僵直滑行。",
+    "bodyLag": 0.078,
+    "headLag": 0.113,
+    "headYawLag": 0.063,
+    "headNod": 0.34,
+    "heelPitch": 5.6,
+    "toePitch": 9.799999999999999,
+    "previewSpeed": 0.769318,
+    "levelWalk": true
+  }
+}

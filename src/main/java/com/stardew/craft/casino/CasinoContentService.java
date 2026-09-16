@@ -106,7 +106,7 @@ public final class CasinoContentService {
         data.addMailFlag(MR_QI_CASINO_DIALOGUE_SEEN_FLAG);
         saveAndSync(player, data);
         npc.facePlayerTemporarily(player, 60, null);
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload(
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload(
                 MR_QI_NPC_ID, "stardewcraft.npc.mister_qi.casino_member", 0));
         return InteractionResult.SUCCESS;
     }

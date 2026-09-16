@@ -1,0 +1,26 @@
+{
+  "intervalMin": 4.1,
+  "intervalMax": 7.8,
+  "durationMin": 0.98,
+  "durationMax": 1.18,
+  "doubleChance": 0.06,
+  "groundOffset": 0,
+  "walkStride": 1,
+  "lookLimits": {
+    "yaw": 48,
+    "pitch": 15
+  },
+  "attentionRig": {
+    "hipHeight": 11,
+    "soleY": 2,
+    "toeDepth": 3,
+    "halfStance": 2,
+    "rightZ": 0,
+    "leftZ": 0,
+    "rightYaw": 0,
+    "leftYaw": 0,
+    "lift": 0,
+    "lean": 0,
+    "armSwing": 0
+  }
+}

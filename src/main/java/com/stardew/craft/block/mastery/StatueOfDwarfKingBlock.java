@@ -43,7 +43,7 @@ import java.util.Random;
 @SuppressWarnings("null")
 public class StatueOfDwarfKingBlock extends TallMasteryBlock implements EntityBlock {
     public StatueOfDwarfKingBlock(Properties properties) {
-        super(properties, "stardewcraft:block/mastery/statue_of_dwarf_king", Direction.SOUTH);
+        super(properties, "stardewcraft:block/mastery/statue_of_dwarf_king", Direction.EAST);
     }
 
     @Nullable

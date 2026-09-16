@@ -139,9 +139,10 @@ public record StartMinigamePayload(
 
 	@net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
 	private static void handleClient(StartMinigamePayload payload) {
+		if (!com.stardew.craft.client.fishing.FishingInteractionState.accepts(payload.sessionId())) return;
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		if (mc != null && mc.player != null) {
-			mc.setScreen(new com.stardew.craft.client.fishing.FishingMinigameScreen(
+			com.stardew.craft.client.fishing.FishingMinigameHud.open(new com.stardew.craft.client.fishing.FishingMinigameScreen(
 					payload.sessionId(),
 					payload.difficulty(),
 					payload.motionTypeId(),

@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/block","render_type":"minecraft:solid","textures":{"0":"stardewcraft:block/vehicles/joja_truck/fall/joja_truck","particle":"stardewcraft:block/vehicles/joja_truck/fall/joja_truck_cargo_particle"},"elements":[{"from":[14,2,3],"to":[16,10,13],"faces":{"west":{"uv":[5.21875,0.03125,5.53125,0.28125],"texture":"#0"}}}]}

@@ -1,0 +1,169 @@
+{
+  "parent": "minecraft:block/block",
+  "credit": "StardewCraft: source stone 752 reference; original per-face pixel art matched to mine environment",
+  "textures": {
+    "0": "stardewcraft:block/mine/nodes/stone_752",
+    "particle": "stardewcraft:block/mine/nodes/stone_752_particle"
+  },
+  "stardewcraft:collision": {
+    "mode": "aabb"
+  },
+  "elements": [
+    {
+      "name": "宽左岩体",
+      "from": [
+        3,
+        -8,
+        5
+      ],
+      "to": [
+        17,
+        13,
+        27
+      ],
+      "rotation": {
+        "origin": [
+          12,
+          1,
+          16
+        ],
+        "axis": "z",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            0.0,
+            0.0,
+            1.75,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1.875,
+            0.0,
+            3.625,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            3.75,
+            0.0,
+            5.5,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.625,
+            0.0,
+            7.375,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            7.5,
+            0.0,
+            10.25,
+            2.625
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            10.375,
+            0.0,
+            13.125,
+            2.625
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "低右岩体",
+      "from": [
+        14,
+        -8,
+        7
+      ],
+      "to": [
+        28,
+        10,
+        26
+      ],
+      "rotation": {
+        "origin": [
+          22,
+          1,
+          18
+        ],
+        "axis": "z",
+        "angle": 22.5
+      },
+      "faces": {
+        "up": {
+          "uv": [
+            13.25,
+            0.0,
+            15.0,
+            2.375
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0.0,
+            2.875,
+            1.75,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            1.875,
+            2.875,
+            3.625,
+            5.125
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.75,
+            2.875,
+            5.5,
+            5.125
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5.625,
+            2.875,
+            8.0,
+            5.125
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8.125,
+            2.875,
+            10.5,
+            5.125
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

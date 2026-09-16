@@ -55,7 +55,7 @@ public class MineFloorDataManager extends SavedData {
         }
         
         // 检查是否是新的一天
-        int currentDay = com.stardew.craft.time.StardewTimeManager.get().getCurrentDay();
+        int currentDay = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
         int lastDay = floorGenerationDays.get(floor);
         return currentDay != lastDay;
     }
@@ -64,17 +64,11 @@ public class MineFloorDataManager extends SavedData {
      * 标记楼层已生成
      */
     public void markGenerated(int floor) {
-        int currentDay = com.stardew.craft.time.StardewTimeManager.get().getCurrentDay();
+        int currentDay = com.stardew.craft.time.StardewTimeManager.get().getAbsoluteDay();
         floorGenerationDays.put(floor, currentDay);
         setDirty();
     }
     
-    /**
-     * 获取或创建楼层数据
-     */
-    public MineFloorData getOrCreateFloorData(int floorNumber, int initialStones) {
-        return floorDataMap.computeIfAbsent(floorNumber, k -> new MineFloorData(initialStones));
-    }
     
     /**
      * 获取楼层数据（如果不存在返回null）
@@ -94,6 +88,8 @@ public class MineFloorDataManager extends SavedData {
     /**
      * 清除楼层数据（隔天刷新时调用）
      */
+    public java.util.Set<Integer> floorNumbers() { return java.util.Set.copyOf(floorDataMap.keySet()); }
+
     public void clearFloorData(int floorNumber) {
         floorDataMap.remove(floorNumber);
         setDirty();

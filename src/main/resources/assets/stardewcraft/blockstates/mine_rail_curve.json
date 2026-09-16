@@ -1,0 +1,68 @@
+{
+  "variants": {
+    "facing=north,section=0": {
+      "model": "stardewcraft:block/mine_rail/curve_00",
+      "y": 0
+    },
+    "facing=north,section=1": {
+      "model": "stardewcraft:block/mine_rail/curve_01",
+      "y": 0
+    },
+    "facing=north,section=2": {
+      "model": "stardewcraft:block/mine_rail/curve_10",
+      "y": 0
+    },
+    "facing=north,section=3": {
+      "model": "stardewcraft:block/mine_rail/curve_11",
+      "y": 0
+    },
+    "facing=east,section=0": {
+      "model": "stardewcraft:block/mine_rail/curve_00",
+      "y": 90
+    },
+    "facing=east,section=1": {
+      "model": "stardewcraft:block/mine_rail/curve_01",
+      "y": 90
+    },
+    "facing=east,section=2": {
+      "model": "stardewcraft:block/mine_rail/curve_10",
+      "y": 90
+    },
+    "facing=east,section=3": {
+      "model": "stardewcraft:block/mine_rail/curve_11",
+      "y": 90
+    },
+    "facing=south,section=0": {
+      "model": "stardewcraft:block/mine_rail/curve_00",
+      "y": 180
+    },
+    "facing=south,section=1": {
+      "model": "stardewcraft:block/mine_rail/curve_01",
+      "y": 180
+    },
+    "facing=south,section=2": {
+      "model": "stardewcraft:block/mine_rail/curve_10",
+      "y": 180
+    },
+    "facing=south,section=3": {
+      "model": "stardewcraft:block/mine_rail/curve_11",
+      "y": 180
+    },
+    "facing=west,section=0": {
+      "model": "stardewcraft:block/mine_rail/curve_00",
+      "y": 270
+    },
+    "facing=west,section=1": {
+      "model": "stardewcraft:block/mine_rail/curve_01",
+      "y": 270
+    },
+    "facing=west,section=2": {
+      "model": "stardewcraft:block/mine_rail/curve_10",
+      "y": 270
+    },
+    "facing=west,section=3": {
+      "model": "stardewcraft:block/mine_rail/curve_11",
+      "y": 270
+    }
+  }
+}

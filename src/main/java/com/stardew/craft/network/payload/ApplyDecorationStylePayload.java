@@ -17,19 +17,19 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import javax.annotation.Nullable;
 
 public record ApplyDecorationStylePayload(
-    String decorationType, BlockPos targetPos, String styleId,
+    String decorationType, BlockPos targetPos, String styleId, int segment,
     boolean regionMode, @Nullable BlockPos cornerA, @Nullable BlockPos cornerB
 ) implements CustomPacketPayload {
 
-    /** Convenience constructor for flood-fill mode (backward compatible). */
-    public ApplyDecorationStylePayload(String decorationType, BlockPos targetPos, String styleId) {
-        this(decorationType, targetPos, styleId, false, null, null);
+    /** Convenience constructor for flood-fill mode. */
+    public ApplyDecorationStylePayload(String decorationType, BlockPos targetPos, String styleId, int segment) {
+        this(decorationType, targetPos, styleId, segment, false, null, null);
     }
 
     /** Convenience constructor for region-select mode. */
-    public static ApplyDecorationStylePayload region(String decorationType, BlockPos targetPos, String styleId,
+    public static ApplyDecorationStylePayload region(String decorationType, BlockPos targetPos, String styleId, int segment,
                                                       BlockPos cornerA, BlockPos cornerB) {
-        return new ApplyDecorationStylePayload(decorationType, targetPos, styleId, true, cornerA, cornerB);
+        return new ApplyDecorationStylePayload(decorationType, targetPos, styleId, segment, true, cornerA, cornerB);
     }
 
     @SuppressWarnings("null")
@@ -42,6 +42,7 @@ public record ApplyDecorationStylePayload(
             buf.writeUtf(payload.decorationType(), 32);
             buf.writeBlockPos(payload.targetPos());
             buf.writeUtf(payload.styleId(), 64);
+            buf.writeInt(payload.segment());
             buf.writeBoolean(payload.regionMode());
             if (payload.regionMode() && payload.cornerA() != null && payload.cornerB() != null) {
                 buf.writeBlockPos(payload.cornerA());
@@ -52,13 +53,14 @@ public record ApplyDecorationStylePayload(
             String decoType = buf.readUtf(32);
             BlockPos target = buf.readBlockPos();
             String style = buf.readUtf(64);
+            int segment = buf.readInt();
             boolean region = buf.readBoolean();
             BlockPos cA = null, cB = null;
             if (region) {
                 cA = buf.readBlockPos();
                 cB = buf.readBlockPos();
             }
-            return new ApplyDecorationStylePayload(decoType, target, style, region, cA, cB);
+            return new ApplyDecorationStylePayload(decoType, target, style, segment, region, cA, cB);
         }
     );
 
@@ -84,6 +86,11 @@ public record ApplyDecorationStylePayload(
 
             if (DecorationStyleRegistry.getStyle(type, payload.styleId()) == null) {
                 HudHintPayload.send(player, "stardewcraft.decoration.error.unknown_style");
+                return;
+            }
+
+            if (type == DecorationType.WALLPAPER && (payload.segment() < -1 || payload.segment() > 2)) {
+                HudHintPayload.send(player, "stardewcraft.decoration.error.invalid_type");
                 return;
             }
 
@@ -119,9 +126,11 @@ public record ApplyDecorationStylePayload(
                     HudHintPayload.send(player, "stardewcraft.decoration.error.corners_too_far");
                     return;
                 }
-                changed = DecorationService.applyToRegion(player.level(), payload.cornerA(), payload.cornerB(), type, payload.styleId());
+                changed = DecorationService.applyToRegion(player.level(), payload.cornerA(), payload.cornerB(), type,
+                    payload.styleId(), payload.segment());
             } else {
-                changed = DecorationService.applyToConnected(player.level(), payload.targetPos(), type, payload.styleId());
+                changed = DecorationService.applyToConnected(player.level(), payload.targetPos(), type,
+                    payload.styleId(), payload.segment());
             }
             if (changed <= 0) {
                 HudHintPayload.send(player, "stardewcraft.decoration.error.nothing_found");

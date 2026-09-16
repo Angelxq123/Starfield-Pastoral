@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/minecart_power_unit",
+      "y": 0
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/minecart_power_unit",
+      "y": 90
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/minecart_power_unit",
+      "y": 180
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/minecart_power_unit",
+      "y": 270
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/minecart_power_unit_extension",
+      "y": 0
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/minecart_power_unit_extension",
+      "y": 90
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/minecart_power_unit_extension",
+      "y": 180
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/minecart_power_unit_extension",
+      "y": 270
+    }
+  }
+}

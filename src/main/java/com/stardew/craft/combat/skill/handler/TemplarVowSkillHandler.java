@@ -19,7 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class TemplarVowSkillHandler implements RuntimeWeaponSkillHandler {
     public static final int ACTIVE_DURATION_TICKS = 40;
-    public static final int ANIMATION_TICKS = 40;
+    public static final int ANIMATION_TICKS = 42;
     public static final double COUNTER_TARGET_RANGE = 4.0D;
     public static final float COUNTER_DAMAGE_MULTIPLIER = 1.10F;
     public static final float EXPIRE_SLASH_DAMAGE_MULTIPLIER = 0.80F;

@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "stardewcraft:mine_masonry",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "stardewcraft:mine_masonry",
+              "properties": [
+                "variant",
+                "theme"
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

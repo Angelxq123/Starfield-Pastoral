@@ -1,6 +1,0 @@
-{
-    "parent":  "stardewcraft:block/unstable_rock",
-    "textures":  {
-                     "particle":  "stardewcraft:block/mine/unstable_rock"
-                 }
-}

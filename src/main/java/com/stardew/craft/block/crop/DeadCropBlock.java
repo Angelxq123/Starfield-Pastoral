@@ -20,13 +20,10 @@ import org.jetbrains.annotations.Nullable;
 public class DeadCropBlock extends BushBlock {
     public static final MapCodec<DeadCropBlock> CODEC = simpleCodec(DeadCropBlock::new);
     public static final IntegerProperty VARIANT = IntegerProperty.create("variant", 0, 3);
-    protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 7.0D, 16.0D);
-    private volatile VoxelShape[] variantShapes;
-    private volatile boolean variantShapesResolved;
 
     @SuppressWarnings("null")
     public DeadCropBlock(Properties properties) {
-        super(properties);
+        super(properties.dynamicShape());
         this.registerDefaultState(this.stateDefinition.any().setValue(VARIANT, 0));
     }
 
@@ -46,40 +43,18 @@ public class DeadCropBlock extends BushBlock {
         if (com.stardew.craft.block.utility.GardenPotBlock.isPottedPlant(level, pos, state)) {
             return net.minecraft.world.phys.shapes.Shapes.empty();
         }
-        VoxelShape[] shapes = getVariantShapes(state);
-        int variant = state.getValue(VARIANT);
-        variant = Math.max(0, Math.min(3, variant));
-        return shapes[variant];
-    }
-
-    @SuppressWarnings("null")
-    private VoxelShape[] getVariantShapes(BlockState state) {
-        if (variantShapesResolved) {
-            return variantShapes != null ? variantShapes : new VoxelShape[]{ SHAPE, SHAPE, SHAPE, SHAPE };
+        String model = ModelVoxelShapeCache.variantModel(
+                BuiltInRegistries.BLOCK.getKey(this).toString(), "variant=" + state.getValue(VARIANT));
+        VoxelShape shape = ModelVoxelShapeCache.requiredShape(model);
+        BlockPos soil = pos.below();
+        BlockState support = level.getBlockState(soil);
+        double offset = 0;
+        if (support.getBlock() instanceof com.stardew.craft.block.decor.GardenPlanterBlock) offset = -.25;
+        else if (support.getBlock() instanceof net.minecraft.world.level.block.FarmBlock) {
+            VoxelShape floor = support.getCollisionShape(level, soil);
+            if (!floor.isEmpty()) offset = floor.max(net.minecraft.core.Direction.Axis.Y) - 1;
         }
-
-        synchronized (this) {
-            if (variantShapesResolved) {
-                return variantShapes != null ? variantShapes : new VoxelShape[]{ SHAPE, SHAPE, SHAPE, SHAPE };
-            }
-
-            @SuppressWarnings("null")
-            Block block = state.getBlock();
-            String blockId = BuiltInRegistries.BLOCK.getKey(block).toString();
-            VoxelShape[] resolved = new VoxelShape[4];
-            for (int i = 0; i < 4; i++) {
-                String modelId = ModelVoxelShapeCache.variantModel(blockId, "variant=" + i);
-                if (modelId == null || modelId.isBlank()) {
-                    resolved = null;
-                    break;
-                }
-                resolved[i] = ModelVoxelShapeCache.shape(modelId);
-            }
-
-            variantShapes = resolved;
-            variantShapesResolved = true;
-            return variantShapes != null ? variantShapes : new VoxelShape[]{ SHAPE, SHAPE, SHAPE, SHAPE };
-        }
+        return shape.move(0, offset, 0);
     }
 
     @SuppressWarnings("null")

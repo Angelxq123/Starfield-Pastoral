@@ -101,6 +101,12 @@ public final class StardewFonts {
         return spriteTextColored;
     }
 
+    /** Client preference shared by all languages; does not alter font atlas metrics. */
+    public static float readingScale() {
+        return com.stardew.craft.client.gui.common.ReadingTextLayout.scale(
+                Config.CLIENT_SPEC.isLoaded() ? Config.CLIENT.READING_TEXT_SCALE_PERCENT.get() : 100);
+    }
+
     /** Use Stardew's tintable SpriteText sheet for a colored screen heading. */
     public static MutableComponent title(Component text) {
         return text.copy().withStyle(style -> style
@@ -161,6 +167,14 @@ public final class StardewFonts {
     public static float lineHeight(Role role) {
         StardewFontData data = StardewFontManager.data(role);
         return data == null ? 9.0F : data.lineHeight();
+    }
+
+    /** Font.lineHeight is a vanilla constant; localized Stardew glyphs have their own metrics. */
+    public static int lineHeight(Font font) {
+        Role role = font == dialogue ? Role.DIALOGUE : font == small ? Role.SMALL
+                : font == tiny ? Role.TINY : font == tooltip ? Role.TOOLTIP_BODY
+                : font == spriteText ? Role.SPRITE_TEXT : font == spriteTextColored ? Role.SPRITE_TEXT_COLORED : null;
+        return role == null ? font.lineHeight : Math.max(1, (int) Math.ceil(lineHeight(role)));
     }
 
     private static Font create(ResourceLocation defaultFont) {

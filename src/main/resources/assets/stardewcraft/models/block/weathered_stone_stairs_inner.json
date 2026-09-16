@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:block/inner_stairs",
-  "textures": {
-    "bottom": "stardewcraft:block/mine/weathered_stone",
-    "top": "stardewcraft:block/mine/weathered_stone",
-    "side": "stardewcraft:block/mine/weathered_stone",
-    "particle": "stardewcraft:block/mine/weathered_stone"
-  }
-}

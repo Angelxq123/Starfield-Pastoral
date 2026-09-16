@@ -1,15 +1,7 @@
 package com.stardew.craft.client.weapon.presentation;
 
-import com.stardew.craft.Config;
-import com.stardew.craft.client.weapon.CameraShakeState;
-import com.stardew.craft.combat.network.WeaponSkillImpactPayload;
-import com.stardew.craft.weather.ModParticles;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 /**
@@ -38,6 +30,9 @@ final class CrescentSlashPresentation implements SkillPresentation {
 
     @Override
     public void tick() {
+        if (context.caster()==null||!context.caster().isAlive()||net.minecraft.client.Minecraft.getInstance().isPaused())return;
+        var action=com.stardew.craft.client.weapon.WeaponSkillAnimationClient.getWorldAction(casterEntityId());
+        if(action==null||!skillId().equals(action.skillId()))return;
         if (!releasePlayed
                 && context.actionAge(0.0f) >= context.payload().activeTickOffset()) {
             releasePlayed = true;
@@ -53,49 +48,6 @@ final class CrescentSlashPresentation implements SkillPresentation {
     public boolean isComplete() {
         return context.actionAge(0.0f)
                 >= context.payload().actionDurationTicks() + TRAIL_SETTLE_TICKS;
-    }
-
-    @Override
-    public void onImpact(WeaponSkillImpactPayload payload) {
-        if (payload.targetEntityIds().isEmpty()) {
-            return;
-        }
-        if (context.isLocalCaster()) {
-            CameraShakeState.kick(0.07f, 2, 0.72f);
-        }
-        if (!Config.ENABLE_WEAPON_SPECIAL_EFFECTS.getAsBoolean()) {
-            return;
-        }
-
-        Vec3 forward = context.forward();
-        for (int targetId : payload.targetEntityIds()) {
-            Entity entity = context.level().getEntity(targetId);
-            if (!(entity instanceof LivingEntity target)) {
-                continue;
-            }
-            Vec3 point = target.position().add(0.0, target.getBbHeight() * 0.56, 0.0);
-            context.level().addParticle(
-                    ModParticles.CRESCENT_IMPACT.get(),
-                    point.x,
-                    point.y,
-                    point.z,
-                    forward.x,
-                    0.0,
-                    forward.z
-            );
-        }
-        Entity firstTarget = context.level().getEntity(payload.targetEntityIds().getFirst());
-        Vec3 soundPoint = firstTarget != null ? firstTarget.position() : context.anchor();
-        context.level().playLocalSound(
-                soundPoint.x,
-                soundPoint.y,
-                soundPoint.z,
-                SoundEvents.PLAYER_ATTACK_STRONG,
-                SoundSource.PLAYERS,
-                0.34f,
-                1.08f,
-                false
-        );
     }
 
     private void playReleaseSound() {

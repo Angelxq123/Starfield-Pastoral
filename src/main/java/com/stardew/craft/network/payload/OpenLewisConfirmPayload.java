@@ -66,6 +66,10 @@ public record OpenLewisConfirmPayload(UUID requestId, int kind, String questionK
         if (mc.player == null) {
             return;
         }
+        if (payload.kind() == KIND_AUCTION_START || payload.kind() == KIND_AUCTION_CANCEL) {
+            mc.setScreen(new com.stardew.craft.client.gui.auction.AuctionConfirmScreen(payload));
+            return;
+        }
         mc.setScreen(com.stardew.craft.client.gui.common.StardewConfirmDialogScreen.createQuestionDialog(
             com.stardew.craft.client.gui.common.StardewQuestionDialogSpec.of(
                 Component.translatable(payload.questionKey(), payload.args().toArray()),

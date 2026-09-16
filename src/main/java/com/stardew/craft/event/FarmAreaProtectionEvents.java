@@ -4,15 +4,8 @@ import com.stardew.craft.StardewCraft;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.core.FarmAreaResolver;
 import com.stardew.craft.core.ModDimensions;
-import com.stardew.craft.entity.animal.BaseCoopAnimalEntity;
-import com.stardew.craft.entity.monster.LuckyPurpleShortsMonsterEntity;
-import com.stardew.craft.entity.junimo.JunimoEntity;
-import com.stardew.craft.entity.npc.BooksellerEntity;
-import com.stardew.craft.entity.npc.CamelMerchantEntity;
-import com.stardew.craft.entity.npc.StardewNpcEntity;
-import com.stardew.craft.entity.npc.TravelingCartEntity;
+import com.stardew.craft.core.ModGameRules;
 import com.stardew.craft.farm.FarmInstance;
-import com.stardew.craft.festival.FairFestivalService;
 import com.stardew.craft.greenhouse.GreenhouseInteriorCache;
 import com.stardew.craft.interior.PlayerInteriorAllocator;
 import com.stardew.craft.manager.CoalForestArea;
@@ -21,7 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerPotBlock;
@@ -30,14 +22,13 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.util.TriState;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 
 /**
  * 农场区域保护：
- * - 非农场区域（公共区域）不可放置/破坏方块
+ * - 非农场区域（公共区域）默认不可放置/破坏方块，可通过游戏规则开放
  * - 别人的农场：无权限(0)不可进入，仅访问权限(1)不可修改方块，完全权限(2)可操作
  * - 自己的农场：完全权限
  * - 创造模式不受限
@@ -45,12 +36,21 @@ import net.neoforged.neoforge.event.level.ExplosionEvent;
 @EventBusSubscriber(modid = StardewCraft.MODID)
 public class FarmAreaProtectionEvents {
 
+    private static void denyBuilding(ServerPlayer player) {
+        com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,Component.translatable("stardewcraft.farm.protected"));
+    }
+
     /**
      * 破坏方块：BreakEvent 取消安全（方块不会被破坏，无物品丢失）。
      */
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        if (com.stardew.craft.building.runtime.BuildingProtection.protects(level,event.getPos())) {
+            event.setCanceled(true);
+            if(event.getPlayer() instanceof ServerPlayer player) denyBuilding(player);
             return;
         }
         if (level.dimension() != ModDimensions.STARDEW_VALLEY) {
@@ -66,6 +66,7 @@ public class FarmAreaProtectionEvents {
             return;
         }
         if (com.stardew.craft.communitycenter.quarry.QuarryAccessManager.isInQuarryArea(event.getPos())
+                && !level.getGameRules().getBoolean(ModGameRules.RULE_STARDEW_ALLOW_PUBLIC_BUILDING)
                 && !com.stardew.craft.manager.QuarrySpawnService.canPlayerBreakInQuarry(event.getState())) {
             event.setCanceled(true);
             return;
@@ -79,8 +80,8 @@ public class FarmAreaProtectionEvents {
         if (com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, event.getPos())) {
             if (!canModifyGreenhouseAt(player, level, event.getPos())) {
                 event.setCanceled(true);
-                player.displayClientMessage(
-                        Component.translatable("stardewcraft.farm.build_farm_only"), true);
+                com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                        Component.translatable("stardewcraft.farm.build_farm_only"));
             } else if (GreenhouseBreakPolicy.shouldProtectOriginalGreenhouseBlock(
                     isOriginalGreenhouseStructureBlock(level, event.getPos()),
                     event.getState().getBlock() instanceof SprinklerBlock)) {
@@ -90,16 +91,16 @@ public class FarmAreaProtectionEvents {
         }
         if (event.getState().is(ModBlocks.CRAB_POT.get()) && !canAccessCrabPot(level, event.getPos(), player)) {
             event.setCanceled(true);
-            player.displayClientMessage(Component.translatable("message.stardew_craft.crab_pot.not_owner"), true);
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,Component.translatable("message.stardew_craft.crab_pot.not_owner"));
             return;
         }
         if (isPublicWaterCrabPot(level, event.getPos())) {
             return;
         }
-        if (!canModifyAt(player, event.getPos())) {
+        if (!canBuildAt(player, event.getPos())) {
             event.setCanceled(true);
-            player.displayClientMessage(
-                    Component.translatable("stardewcraft.farm.build_farm_only"), true);
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                    Component.translatable("stardewcraft.farm.build_farm_only"));
         }
     }
 
@@ -114,6 +115,11 @@ public class FarmAreaProtectionEvents {
             return;
         }
         if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        if (com.stardew.craft.building.runtime.BuildingProtection.protects(level,event.getPos())) {
+            event.setCanceled(true);
+            if(event.getEntity() instanceof ServerPlayer player) denyBuilding(player);
             return;
         }
         if (level.dimension() != ModDimensions.STARDEW_VALLEY) {
@@ -137,8 +143,8 @@ public class FarmAreaProtectionEvents {
 
         event.setCanceled(true);
         if (player != null) {
-            player.displayClientMessage(
-                    Component.translatable("stardewcraft.farm.build_farm_only"), true);
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                    Component.translatable("stardewcraft.farm.build_farm_only"));
         }
     }
 
@@ -151,6 +157,8 @@ public class FarmAreaProtectionEvents {
      * 可被外部调用（镰刀、作物交互、工具等自定义逻辑需要统一权限检查）。
      */
     public static boolean canModifyAt(ServerPlayer player, BlockPos pos) {
+        if(com.stardew.craft.interior.FarmCaveRuntime.fixed(player.serverLevel(),pos))return false;
+        if (com.stardew.craft.building.runtime.BuildingProtection.protects(player.serverLevel(),pos)) return false;
         // 采石场区域：所有玩家都可以挖掘/放置（非农场但属于公共可操作区）
         if (com.stardew.craft.communitycenter.quarry.QuarryAccessManager.isInQuarryArea(pos)) {
             return true;
@@ -168,8 +176,24 @@ public class FarmAreaProtectionEvents {
                 .canModify(ownerUUID, player.getUUID());
     }
 
+    /** Construction only: do not grant crop, machine or inventory access with this rule. */
+    public static boolean canBuildAt(ServerPlayer player, BlockPos pos) {
+        if (com.stardew.craft.building.runtime.BuildingProtection.protects(player.serverLevel(),pos)) return false;
+        return canModifyAt(player, pos)
+                || (player.serverLevel().getGameRules().getBoolean(ModGameRules.RULE_STARDEW_ALLOW_PUBLIC_BUILDING)
+                    && isKnownPublicPlacementTarget(player.serverLevel(), pos)
+                    && !com.stardew.craft.greenhouse.GreenhouseManager
+                            .isInGreenhouseExterior(player.serverLevel(), pos));
+    }
+
     /** Permission gate for entity-backed decorations which do not emit BlockEvent placement/break events. */
     public static boolean canModifyDecorationAt(ServerPlayer player, ServerLevel level, BlockPos pos) {
+        var buildings=com.stardew.craft.building.runtime.BuildingWorldData.peek(level.getServer());
+        if(buildings!=null){var id=buildings.occupying(level.dimension().location(),pos);var building=id==null?null:buildings.find(id);
+            if(building!=null && (buildings.transfer(id)!=null || building.phase()==com.stardew.craft.building.runtime.BuildingRecord.Phase.CONSTRUCTING
+                    || building.phase()==com.stardew.craft.building.runtime.BuildingRecord.Phase.UPGRADING && com.stardew.craft.building.runtime.BuildingProtection.protects(level,pos)))return false;
+        }
+
         if (player.isCreative() || level.dimension() != ModDimensions.STARDEW_VALLEY) {
             return true;
         }
@@ -179,7 +203,7 @@ public class FarmAreaProtectionEvents {
         if (com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, pos)) {
             return canModifyGreenhouseAt(player, level, pos);
         }
-        return canModifyAt(player, pos);
+        return canBuildAt(player, pos);
     }
 
     public static boolean isProtectedNonFarmArea(ServerLevel level, BlockPos pos) {
@@ -234,19 +258,19 @@ public class FarmAreaProtectionEvents {
         if (event.getPlayer() instanceof ServerPlayer sp && sp.isCreative()) return;
 
         // 草方块始终禁止被锄（无论什么工具）
-        if (event.getState().is(Blocks.GRASS_BLOCK)) {
+        if (event.getState().getBlock() instanceof net.minecraft.world.level.block.GrassBlock) {
             event.setCanceled(true);
             return;
         }
 
         // 公共主区域的普通黄土不允许直接锄成耕地；只有远古斑点黄土允许挖。
-        if (event.getState().is(ModBlocks.YELLOW_DIRT.get())
+        if ((event.getState().is(ModBlocks.YELLOW_DIRT.get()) || event.getState().is(ModBlocks.DIRT.get()))
                 && FarmAreaResolver.isInStardewButNotFarm(level, event.getPos())
                 && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, event.getPos())) {
             event.setCanceled(true);
             if (event.getPlayer() instanceof ServerPlayer player) {
-                player.displayClientMessage(
-                        Component.translatable("stardewcraft.farm.build_farm_only"), true);
+                com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                        Component.translatable("stardewcraft.farm.build_farm_only"));
             }
             return;
         }
@@ -255,8 +279,8 @@ public class FarmAreaProtectionEvents {
             && com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(level, event.getPos())
             && !canModifyGreenhouseAt(player, level, event.getPos())) {
             event.setCanceled(true);
-            player.displayClientMessage(
-                Component.translatable("stardewcraft.farm.build_farm_only"), true);
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                Component.translatable("stardewcraft.farm.build_farm_only"));
             return;
         }
 
@@ -275,6 +299,9 @@ public class FarmAreaProtectionEvents {
     public static void onBlockMultiPlace(BlockEvent.EntityMultiPlaceEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
+        }
+        for(var snapshot:event.getReplacedBlockSnapshots()) if(com.stardew.craft.building.runtime.BuildingProtection.protects(level,snapshot.getPos())) {
+            event.setCanceled(true);if(event.getEntity() instanceof ServerPlayer player)denyBuilding(player);return;
         }
         if (level.dimension() != ModDimensions.STARDEW_VALLEY) {
             return;
@@ -297,10 +324,9 @@ public class FarmAreaProtectionEvents {
 
             event.setCanceled(true);
             if (player != null) {
-                player.displayClientMessage(
+                com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
                         Component.translatable(
-                                "stardewcraft.farm.build_farm_only"),
-                        true);
+                                "stardewcraft.farm.build_farm_only"));
             }
             return;
         }
@@ -324,46 +350,6 @@ public class FarmAreaProtectionEvents {
         event.getAffectedBlocks().removeIf(pos -> isProtectedNonFarmArea(level, pos));
     }
 
-    @SubscribeEvent
-    public static void onProtectedNonFarmMobJoin(EntityJoinLevelEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) {
-            return;
-        }
-        if (!(event.getEntity() instanceof Mob mob)) {
-            return;
-        }
-        if (mob instanceof StardewNpcEntity || mob instanceof JunimoEntity || mob instanceof BooksellerEntity
-            || mob instanceof CamelMerchantEntity || mob instanceof TravelingCartEntity) {
-            return;
-        }
-        if (mob instanceof LuckyPurpleShortsMonsterEntity || mob.getTags().contains(LuckyPurpleShortsMonsterEntity.TAG_MARKER)) {
-            return;
-        }
-        if (mob instanceof BaseCoopAnimalEntity animal
-            && (animal.getTags().contains(FairFestivalService.FAIR_ANIMAL_MARKER_TAG)
-                || animal.getPersistentData().getBoolean(FairFestivalService.FAIR_ANIMAL_PERSISTENT_FLAG))) {
-            return;
-        }
-        if (mob.getTags().contains("stardewcraft_spirit_eve_monster")
-            || mob.getPersistentData().getBoolean("stardewcraft_spirit_eve_monster")) {
-            return;
-        }
-        if (mob.getPersistentData().getBoolean("StardewTrinketParrot")) {
-            return;
-        }
-        if (com.stardew.craft.world.MutantBugLairService.isLairMonster(mob)) {
-            return;
-        }
-        if (!isProtectedNonFarmArea(level, mob.blockPosition())) {
-            return;
-        }
-
-        event.setCanceled(true);
-        if (mob.isAlive()) {
-            mob.discard();
-        }
-    }
-
     // ═══════════════════════════════════════════════════════════
     // 右键交互保护：阻止在别人农场上使用机器、箱子、收割作物等
     // ═══════════════════════════════════════════════════════════
@@ -374,7 +360,19 @@ public class FarmAreaProtectionEvents {
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (com.stardew.craft.building.runtime.BuildingProtection.blockInteraction(event)) {
+            if (event.getEntity() instanceof ServerPlayer player) denyBuilding(player);
+            return;
+        }
         if (event.getEntity().level().dimension() != ModDimensions.STARDEW_VALLEY) {
+            return;
+        }
+
+        // A pinned document is a virtual interaction, not access to the block below it.
+        // Document services authorize the eventual build/upgrade on the server.
+        if (event.getItemStack().getItem() instanceof com.stardew.craft.building.runtime.BuildingBlueprintItem
+                || event.getItemStack().getItem() instanceof com.stardew.craft.building.runtime.BuildingUpgradePermitItem) {
+            event.setUseBlock(TriState.FALSE);
             return;
         }
 
@@ -384,6 +382,7 @@ public class FarmAreaProtectionEvents {
         // The farm-instance region is coordinate-defined and therefore safe to
         // check on the client without relying on the server-only farm registry.
         if (event.getLevel().getBlockState(event.getPos()).getBlock() instanceof FlowerPotBlock
+                && !event.getLevel().getGameRules().getBoolean(ModGameRules.RULE_STARDEW_ALLOW_PUBLIC_BUILDING)
                 && !com.stardew.craft.farm.FarmInstanceAllocator.isInFarmInstanceRegion(event.getPos())
                 && !com.stardew.craft.greenhouse.GreenhouseManager.isInGreenhouseInterior(
                         event.getLevel(), event.getPos())) {
@@ -397,7 +396,12 @@ public class FarmAreaProtectionEvents {
                 ? targetPos
                 : targetPos.relative(event.getFace());
         net.minecraft.world.item.ItemStack heldItem = event.getItemStack();
+        if(event.getEntity() instanceof ServerPlayer actor && (heldItem.getItem() instanceof BlockItem || heldItem.getItem() instanceof net.minecraft.world.item.BucketItem)
+                && com.stardew.craft.building.runtime.BuildingProtection.protects(actor.serverLevel(),placePos)) {
+            event.setUseItem(TriState.FALSE);denyBuilding(actor);return;
+        }
         if (!event.getEntity().isCreative()
+                && !event.getLevel().getGameRules().getBoolean(ModGameRules.RULE_STARDEW_ALLOW_PUBLIC_BUILDING)
                 && heldItem.getItem() instanceof BlockItem blockItem
                 && isKnownPublicPlacementTarget(event.getLevel(), placePos)
                 && !isPublicCrabPotItem(blockItem)) {
@@ -405,10 +409,9 @@ public class FarmAreaProtectionEvents {
             // own interaction (for example, a door can open while a block is held).
             event.setUseItem(TriState.FALSE);
             if (event.getEntity() instanceof ServerPlayer player) {
-                player.displayClientMessage(
+                com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
                         Component.translatable(
-                                "stardewcraft.farm.build_farm_only"),
-                        true);
+                                "stardewcraft.farm.build_farm_only"));
             }
             return;
         }
@@ -427,8 +430,8 @@ public class FarmAreaProtectionEvents {
             }
             event.setCanceled(true);
             event.setCancellationResult(net.minecraft.world.InteractionResult.CONSUME);
-            player.displayClientMessage(
-                    Component.translatable("stardewcraft.farm.build_farm_only"), true);
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                    Component.translatable("stardewcraft.farm.build_farm_only"));
             return;
         }
         // 传送触发方块不受保护（进入别人家的屋内/屋外必须能触发传送）
@@ -442,11 +445,11 @@ public class FarmAreaProtectionEvents {
         if (heldItem.getItem() instanceof net.minecraft.world.item.BucketItem bucket) {
             // 空桶（拾取流体）允许通过；有内容的桶才做放置保护
             if (bucket.content != net.minecraft.world.level.material.Fluids.EMPTY) {
-                if (!canModifyAt(player, placePos)) {
+                if (!canBuildAt(player, placePos)) {
                     event.setCanceled(true);
                     event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
-                    player.displayClientMessage(
-                            Component.translatable("stardewcraft.farm.build_farm_only"), true);
+                    com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                            Component.translatable("stardewcraft.farm.build_farm_only"));
                     return;
                 }
             }
@@ -455,8 +458,8 @@ public class FarmAreaProtectionEvents {
         if (isOnProtectedFarm(player, event.getPos())) {
             event.setCanceled(true);
             event.setCancellationResult(net.minecraft.world.InteractionResult.CONSUME);
-            player.displayClientMessage(
-                    Component.translatable("stardewcraft.farm.build_farm_only"), true);
+            com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,
+                    Component.translatable("stardewcraft.farm.build_farm_only"));
         }
     }
 
@@ -466,6 +469,7 @@ public class FarmAreaProtectionEvents {
             BlockPos pos,
             net.minecraft.world.level.block.state.BlockState replacedState
     ) {
+        if(com.stardew.craft.building.runtime.BuildingProtection.protects(level,pos))return false;
         if (com.stardew.craft.greenhouse.GreenhouseManager
                 .isInGreenhouseExterior(level, pos)) {
             return false;
@@ -477,14 +481,12 @@ public class FarmAreaProtectionEvents {
         if (isPublicWaterCrabPot(level, pos)) {
             return true;
         }
-        if (replacedState.is(ModBlocks.ARTIFACT_SPOT_DIRT.get())
-                || replacedState.is(ModBlocks.DESERT_ARTIFACT_SPOT.get())
-                || replacedState.is(ModBlocks.BEACH_ARTIFACT_SPOT.get())) {
-            return true;
+        if (com.stardew.craft.manager.ArtifactSpotDigService.isSpot(replacedState)) {
+            return player == null || com.stardew.craft.manager.ArtifactSpotDigService.allowed(player, pos);
         }
         return player == null
                 ? !isProtectedNonFarmArea(level, pos)
-                : canModifyAt(player, pos);
+                : canBuildAt(player, pos);
     }
 
     private static boolean isKnownPublicPlacementTarget(
@@ -492,6 +494,7 @@ public class FarmAreaProtectionEvents {
             BlockPos pos
     ) {
         return level.dimension() == ModDimensions.STARDEW_VALLEY
+                && !com.stardew.craft.interior.FarmCaveRuntime.isCaveRegion(pos)
                 && !com.stardew.craft.farm.FarmInstanceAllocator
                         .isInFarmInstanceRegion(pos)
                 && !com.stardew.craft.greenhouse.GreenhouseManager

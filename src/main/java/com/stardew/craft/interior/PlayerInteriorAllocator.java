@@ -67,9 +67,9 @@ public class PlayerInteriorAllocator extends SavedData {
     }
 
     /** 获取指定玩家的农场洞穴室内原点 */
-    public BlockPos getCaveOrigin(UUID playerUUID) {
+    public BlockPos getLegacyCaveOrigin(UUID playerUUID) {
         int index = getOrAllocateIndex(playerUUID);
-        return InteriorSubspaceManager.FARM_CAVE_INTERIOR_ORIGIN.offset(0, 0, index * CAVE_Z_STRIDE);
+        return InteriorSubspaceManager.LEGACY_FARM_CAVE_INTERIOR_ORIGIN.offset(0, 0, index * CAVE_Z_STRIDE);
     }
 
     private int getOrAllocateIndex(UUID playerUUID) {
@@ -141,24 +141,21 @@ public class PlayerInteriorAllocator extends SavedData {
     /**
      * 确保指定玩家的农场洞穴室内结构已加载。
      *
-     * @return 该玩家的洞穴 origin（= schem min corner）
+     * @return 新洞穴已就绪时返回 origin；加载中或失败返回 null，调用者不得传送。
      */
+    @Nullable
     public BlockPos ensureCaveLoaded(ServerLevel level, UUID playerUUID) {
-        BlockPos origin = getCaveOrigin(playerUUID);
-        if (!cavePlaced.contains(playerUUID)) {
-            boolean ok = StructureLoader.loadAndPlaceWithResult(
-                level, InteriorSubspaceManager.FARM_CAVE_PATH, origin);
-            if (ok) {
-                cavePlaced.add(playerUUID);
-                setDirty();
-                spawnCaveExitPortals(level, origin);
-                forceChunksForCave(level, origin, true);
-                StardewCraft.LOGGER.info("[INTERIOR-ALLOC] Farm cave interior loaded for player {} at {}", playerUUID, origin);
-            } else {
-                StardewCraft.LOGGER.error("[INTERIOR-ALLOC] Failed to load farm cave for player {} at {}", playerUUID, origin);
-            }
-        }
-        return origin;
+        var farm=com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(playerUUID);
+        if(farm==null)return null;
+        FarmCaveRuntime.request(level,farm);
+        return FarmCaveRuntime.ready(level,farm)?FarmCaveRuntime.origin(level,farm):null;
+    }
+
+    public BlockPos getCaveOrigin(UUID owner) {
+        var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        var level=server==null?null:server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+        var farm=com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(owner);
+        return level!=null && farm!=null?FarmCaveRuntime.origin(level,farm):getLegacyCaveOrigin(owner);
     }
 
     /**
@@ -166,7 +163,8 @@ public class PlayerInteriorAllocator extends SavedData {
      * 由 {@link InteriorSubspaceManager#ensureLoaded} 在静态结构加载后调用。
      */
     public void reloadAllPlaced(ServerLevel level) {
-        reloadQueue.reset(ccPlaced, ghPlaced, cavePlaced);
+        // Farm caves use their own versioned, non-destructive migration.
+        reloadQueue.reset(ccPlaced, ghPlaced, java.util.Set.of());
         StardewCraft.LOGGER.info(
                 "[INTERIOR-ALLOC] Scheduled {} per-player interiors for gradual reload",
                 reloadQueue.size());
@@ -230,14 +228,10 @@ public class PlayerInteriorAllocator extends SavedData {
     }
 
     private boolean reloadFarmCave(ServerLevel level, UUID uuid) {
-        BlockPos origin = getCaveOrigin(uuid);
-        if (!StructureLoader.loadAndPlaceWithResult(
-                level, InteriorSubspaceManager.FARM_CAVE_PATH, origin)) {
-            return false;
-        }
-        spawnCaveExitPortals(level, origin);
-        forceChunksForCave(level, origin, true);
-        return true;
+        var farm = com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(uuid);
+        if (farm == null) return true;
+        FarmCaveRuntime.request(level, farm);
+        return FarmCaveRuntime.ready(level, farm);
     }
 
     // ── 坐标查询 ──
@@ -328,8 +322,13 @@ public class PlayerInteriorAllocator extends SavedData {
     }
 
     /** 洞穴是否已为指定玩家放置 */
-    public boolean isCavePlaced(UUID playerUUID) {
-        return cavePlaced.contains(playerUUID);
+    public boolean isLegacyCavePlaced(UUID playerUUID) { return cavePlaced.contains(playerUUID); }
+
+    public boolean isCavePlaced(UUID owner) {
+        var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        var level=server==null?null:server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+        var farm=com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(owner);
+        return level!=null && farm!=null && FarmCaveRuntime.installed(level,farm);
     }
 
     public Set<UUID> getPlayersWithCC() {
@@ -353,16 +352,24 @@ public class PlayerInteriorAllocator extends SavedData {
     /** 查找世界坐标所属的洞穴玩家 UUID，不在任何洞穴内返回 null */
     @Nullable
     public UUID findCaveOwner(BlockPos worldPos) {
-        BlockPos base = InteriorSubspaceManager.FARM_CAVE_INTERIOR_ORIGIN;
+        var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        var level=server==null?null:server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+        var farm=level==null?null:FarmCaveRuntime.farmAt(level,worldPos);
+        return farm!=null?farm.getOwnerUUID():findLegacyCaveOwner(worldPos);
+    }
+
+    @Nullable
+    public UUID findLegacyCaveOwner(BlockPos worldPos) {
+        BlockPos base = InteriorSubspaceManager.LEGACY_FARM_CAVE_INTERIOR_ORIGIN;
         int rx = worldPos.getX() - base.getX();
         int ry = worldPos.getY() - base.getY();
         int rz = worldPos.getZ() - base.getZ();
-        if (rx < 0 || rx >= InteriorSubspaceManager.FARM_CAVE_SCHEM_W
-                || ry < 0 || ry >= InteriorSubspaceManager.FARM_CAVE_SCHEM_H
+        if (rx < 0 || rx >= 9
+                || ry >= 6
                 || rz < 0) return null;
         int candidateIndex = rz / CAVE_Z_STRIDE;
         int localZ = rz - candidateIndex * CAVE_Z_STRIDE;
-        if (localZ < 0 || localZ >= InteriorSubspaceManager.FARM_CAVE_SCHEM_L) return null;
+        if (localZ < 0 || localZ >= 10) return null;
         for (var entry : playerIndices.entrySet()) {
             if (entry.getValue() == candidateIndex && cavePlaced.contains(entry.getKey())) {
                 return entry.getKey();
@@ -379,16 +386,6 @@ public class PlayerInteriorAllocator extends SavedData {
             level, exitPortal, 2, 1, 1,
             "sdv_portal_marker:greenhouse_inside",
             "sdv_portal_target:greenhouse_exit"
-        );
-    }
-
-    private void spawnCaveExitPortals(ServerLevel level, BlockPos origin) {
-        BlockPos exitPortal = origin.offset(InteriorSubspaceManager.FARM_CAVE_INDOOR_EXIT_PORTAL_OFFSET);
-        // 1×1×2：1 格长 × 1 格宽 × 2 格高（参数为 height, x, z）
-        InteriorSubspaceManager.spawnInteractionArea(
-            level, exitPortal, 2, 1, 1,
-            InteriorSubspaceManager.TAG_PORTAL_MARKER_FARM_CAVE_INSIDE,
-            "sdv_portal_target:farm_cave_exit"
         );
     }
 
@@ -409,11 +406,8 @@ public class PlayerInteriorAllocator extends SavedData {
         forceChunksForRegion(level, origin, GH_SCHEM_X, GH_SCHEM_Z, force);
     }
 
-    private void forceChunksForCave(ServerLevel level, BlockPos origin, boolean force) {
-        forceChunksForRegion(level, origin,
-            InteriorSubspaceManager.FARM_CAVE_SCHEM_W,
-            InteriorSubspaceManager.FARM_CAVE_SCHEM_L,
-            force);
+    public void releaseLegacyCaveChunks(ServerLevel level,BlockPos origin) {
+        forceChunksForRegion(level,origin,9,10,false);
     }
 
     private void forceChunksForRegion(ServerLevel level, BlockPos origin, int sizeX, int sizeZ, boolean force) {

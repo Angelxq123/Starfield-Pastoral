@@ -178,8 +178,10 @@ public final class ExampleStardewAddon {
         registerNpcInteractionProvider();
         registerMapInteractions();
         registerNpcSocialExtensions();
+        ExampleNpcExecution.register();
         registerAgricultureProvider();
         registerCropRuntimeExample();
+        ExampleGiantCrops.register();
         registerAnimalLifecycleExamples();
         registerFarmLifecycleExamples();
         registerWorldAndFestivalExamples();

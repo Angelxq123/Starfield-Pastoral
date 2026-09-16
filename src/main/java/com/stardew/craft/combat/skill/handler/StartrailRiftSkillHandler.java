@@ -1,9 +1,6 @@
 package com.stardew.craft.combat.skill.handler;
 
 import com.stardew.craft.combat.CombatHealing;
-import com.stardew.craft.combat.VfxColors;
-import com.stardew.craft.combat.network.RiftPathPayload;
-import com.stardew.craft.combat.network.ShockwaveRingPayload;
 import com.stardew.craft.combat.skill.DashMovementTracker;
 import com.stardew.craft.combat.skill.SkillContext;
 import com.stardew.craft.combat.skill.StartrailTracker;
@@ -21,12 +18,10 @@ import com.stardew.craft.item.weapon.WeaponSkillData;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Server-authoritative extraction of Galaxy Sword's original Startrail Rift.
@@ -45,9 +40,6 @@ public final class StartrailRiftSkillHandler
     public static final int SPEED_AMPLIFIER = 0;
     public static final int HIT_CONTEXT_LIFETIME_TICKS = 5;
     public static final int ANIMATION_TICKS = 8;
-    public static final int RIFT_DURATION_TICKS = 14;
-    public static final float SHOCKWAVE_RADIUS = 1.25F;
-    public static final int SHOCKWAVE_DURATION_TICKS = 8;
 
     @Override
     public SkillValidation validate(SkillExecutionContext context) {
@@ -140,6 +132,12 @@ public final class StartrailRiftSkillHandler
         instance.initializeExecutionState(executionState);
 
         instance.registerCommittedEffect(() -> {
+            WeaponSkillAnimationDispatcher.sendSkillAnim(
+                    context.player(),
+                    weaponId,
+                    skillId,
+                    ANIMATION_TICKS
+            );
             for (LivingEntity target : targets) {
                 attackTarget(context, target, boosted);
             }
@@ -149,7 +147,6 @@ public final class StartrailRiftSkillHandler
                     end,
                     DASH_DURATION_TICKS
             );
-            sendRiftPresentation(context, start, end, boosted);
             context.player().addEffect(new MobEffectInstance(
                     MobEffects.MOVEMENT_SPEED,
                     SPEED_DURATION_TICKS,
@@ -158,12 +155,7 @@ public final class StartrailRiftSkillHandler
                     true,
                     true
             ));
-            WeaponSkillAnimationDispatcher.sendSkillAnim(
-                    context.player(),
-                    weaponId,
-                    skillId,
-                    ANIMATION_TICKS
-            );
+
             WeaponSkillAnimationLock.setLock(
                     context.player(),
                     context.nowTick(),
@@ -221,21 +213,6 @@ public final class StartrailRiftSkillHandler
                 .build();
     }
 
-    static int riftSegmentCount(double pathLength) {
-        return Mth.clamp((int) (pathLength / 0.7D), 6, 10);
-    }
-
-    static int presentationColor(boolean boosted) {
-        if (!boosted) {
-            return VfxColors.GALAXY_PURPLE;
-        }
-        int color = VfxColors.GALAXY_PURPLE;
-        int red = Math.min(255, (int) (((color >> 16) & 0xFF) * 1.25F));
-        int green = Math.min(255, (int) (((color >> 8) & 0xFF) * 1.25F));
-        int blue = Math.min(255, (int) ((color & 0xFF) * 1.25F));
-        return (red << 16) | (green << 8) | blue;
-    }
-
     private static void attackTarget(
             SkillExecutionContext context,
             LivingEntity target,
@@ -252,58 +229,4 @@ public final class StartrailRiftSkillHandler
         );
     }
 
-    private static void sendRiftPresentation(
-            SkillExecutionContext context,
-            Vec3 start,
-            Vec3 end,
-            boolean boosted
-    ) {
-        Vec3 path = end.subtract(start);
-        double pathLength = path.length();
-        if (pathLength > 0.05D) {
-            Vec3 direction = path.normalize();
-            float yaw = (float) (
-                    Math.atan2(-direction.x, direction.z)
-                            * (180.0D / Math.PI)
-            );
-            int segments = riftSegmentCount(pathLength);
-            float segmentLength = (float) Math.max(
-                    0.6D,
-                    pathLength / segments
-            );
-            int color = presentationColor(boosted);
-            for (int segment = 0; segment < segments; segment++) {
-                Vec3 position = start.add(
-                        direction.scale(
-                                (segment + 0.5D) * segmentLength
-                        )
-                );
-                PacketDistributor.sendToPlayersInDimension(
-                        context.player().serverLevel(),
-                        new RiftPathPayload(
-                                (float) position.x,
-                                (float) position.y,
-                                (float) position.z,
-                                yaw,
-                                segmentLength,
-                                RIFT_DURATION_TICKS,
-                                color
-                        )
-                );
-            }
-        }
-        if (boosted) {
-            PacketDistributor.sendToPlayersInDimension(
-                    context.player().serverLevel(),
-                    new ShockwaveRingPayload(
-                            (float) end.x,
-                            (float) end.y,
-                            (float) end.z,
-                            SHOCKWAVE_RADIUS,
-                            SHOCKWAVE_DURATION_TICKS,
-                            VfxColors.GALAXY_PURPLE
-                    )
-            );
-        }
-    }
 }

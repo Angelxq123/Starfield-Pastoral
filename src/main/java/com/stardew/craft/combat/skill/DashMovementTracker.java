@@ -9,12 +9,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.ClipContext;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -224,41 +220,11 @@ public final class DashMovementTracker {
             return false;
         }
 
-        Vec3 current = player.position();
-        Vec3 desired = current.add(state.step);
-        if (nowTick + 1 >= state.endTick) {
-            desired = state.end;
-        }
-        desired = new Vec3(desired.x, player.getY(), desired.z);
-
-        Vec3 safe = findSafePosition(
-                player,
-                adjustForCollision(player, desired)
-        );
-        if (safe == null) {
-            sendClientState(player, false, 0, null);
-            WeaponSkillMovementArbiter.release(state.lease);
-            return false;
-        }
-
-        Vec3 desiredVel = safe.subtract(current);
         Vec3 currentVel = player.getDeltaMovement();
-        Vec3 nextVel = currentVel.add(
-                desiredVel.subtract(currentVel).scale(0.6)
-        );
-        player.setDeltaMovement(nextVel.x, currentVel.y, nextVel.z);
+        Vec3 horizontal = DashMotionRules.horizontalVelocity(player.position(), state.end, state.step.horizontalDistance());
+        player.setDeltaMovement(horizontal.x, currentVel.y, horizontal.z);
         player.hasImpulse = true;
-        player.move(
-                net.minecraft.world.entity.MoverType.SELF,
-                player.getDeltaMovement()
-        );
-        player.fallDistance = 0.0F;
-
-        Vec3 afterMove = player.position();
-        if (afterMove.subtract(current).horizontalDistanceSqr() < 1.0e-4) {
-            player.teleportTo(safe.x, safe.y, safe.z);
-            player.fallDistance = 0.0F;
-        }
+        // The normal player movement loop performs the sole collision-aware integration.
         return true;
     }
 
@@ -323,44 +289,6 @@ public final class DashMovementTracker {
         double endZ = end != null ? end.z : 0.0;
         PacketDistributor.sendToPlayer(player,
             new DashMovementPayload(active, durationTicks, endX, endY, endZ));
-    }
-
-    @SuppressWarnings("null")
-    private static Vec3 adjustForCollision(ServerPlayer player, Vec3 desired) {
-        Vec3 start = player.position();
-        Vec3 look = desired.subtract(start);
-        if (look.lengthSqr() < 1.0E-6) {
-            return desired;
-        }
-        Vec3 dir = new Vec3(look.x, 0.0, look.z).normalize();
-        HitResult hit = player.level().clip(new ClipContext(
-            start.add(0, player.getBbHeight() * 0.5, 0),
-            desired.add(0, player.getBbHeight() * 0.5, 0),
-            ClipContext.Block.COLLIDER,
-            ClipContext.Fluid.NONE,
-            player
-        ));
-
-        if (hit.getType() != HitResult.Type.MISS) {
-            Vec3 hitPos = hit.getLocation();
-            return hitPos.subtract(dir.scale(0.4));
-        }
-        return desired;
-    }
-
-    @SuppressWarnings("null")
-    private static Vec3 findSafePosition(Player player, Vec3 desired) {
-        if (desired == null) return null;
-        AABB box = player.getBoundingBox().move(desired.x - player.getX(), desired.y - player.getY(), desired.z - player.getZ());
-        if (player.level().noCollision(player, box)) {
-            return desired;
-        }
-        Vec3 raised = desired.add(0, 0.25, 0);
-        AABB boxUp = player.getBoundingBox().move(raised.x - player.getX(), raised.y - player.getY(), raised.z - player.getZ());
-        if (player.level().noCollision(player, boxUp)) {
-            return raised;
-        }
-        return null;
     }
 
     /** Stops shared dash state while the concrete player can still be synced. */

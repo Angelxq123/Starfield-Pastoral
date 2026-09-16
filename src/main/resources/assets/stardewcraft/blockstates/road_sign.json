@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/decor/road_sign"
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/decor/extensions/road_sign_empty"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/decor/road_sign",
+      "y": 90
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/decor/extensions/road_sign_empty"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/decor/road_sign",
+      "y": 180
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/decor/extensions/road_sign_empty"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/decor/road_sign",
+      "y": 270
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/decor/extensions/road_sign_empty"
+    }
+  }
+}

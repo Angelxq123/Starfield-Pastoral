@@ -82,6 +82,13 @@ public final class CrystalDaggerLayerSkillHandler implements RuntimeWeaponSkillH
         if (target != null) {
             instance.setTargetEntityIds(List.of(target.getId()));
         }
+        WeaponSkillAnimationDispatcher.sendSkillAnim(
+                context.player(),
+                weaponId,
+                skillId,
+                ANIMATION_TICKS
+        );
+
         instance.registerCommittedEffect(() -> {
             if (target == null) {
                 DashMovementTracker.start(
@@ -115,12 +122,6 @@ public final class CrystalDaggerLayerSkillHandler implements RuntimeWeaponSkillH
         WeaponSkillAnimationLock.setLock(
                 context.player(),
                 context.nowTick(),
-                ANIMATION_TICKS
-        );
-        WeaponSkillAnimationDispatcher.sendSkillAnim(
-                context.player(),
-                weaponId,
-                skillId,
                 ANIMATION_TICKS
         );
     }

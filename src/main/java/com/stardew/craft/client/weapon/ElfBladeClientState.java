@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Player;
 
 public final class ElfBladeClientState {
 
+    private static net.minecraft.world.level.Level activeLevel;
     private static boolean active = false;
     private static long endTick = 0L;
     private static int totalTicks = 0;
@@ -12,6 +13,7 @@ public final class ElfBladeClientState {
     private ElfBladeClientState() {}
 
     public static void start(long nowTick, int durationTicks) {
+        activeLevel = Minecraft.getInstance().level;
         active = true;
         totalTicks = Math.max(1, durationTicks);
         endTick = nowTick + totalTicks;
@@ -24,7 +26,7 @@ public final class ElfBladeClientState {
     }
 
     public static boolean isActive(Player player) {
-        if (!active || player == null || player.level() == null) {
+        if (!active || player == null || player.level() != activeLevel) {
             return false;
         }
         long nowTick = player.level().getGameTime();
@@ -49,7 +51,7 @@ public final class ElfBladeClientState {
 
     public static void clearIfNoPlayer() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
+        if (mc.player == null || mc.level == null || mc.level != activeLevel) {
             clear();
         }
     }

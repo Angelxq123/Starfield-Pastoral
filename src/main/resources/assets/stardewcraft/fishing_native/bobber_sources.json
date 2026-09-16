@@ -1,0 +1,27 @@
+{
+  "styles": 39,
+  "specialShortsStyle": 39,
+  "sheet": "源文件/Content/TileSheets/bobbers.png",
+  "sha256": "b7d56261bcd85eed74a728db7e671aee1373aad184ba45b69f22b8a75f2af10e",
+  "machine": {
+    "map": "FishShop",
+    "tile": [
+      10,
+      4
+    ],
+    "sheet": "Maps/townInterior_2.png",
+    "tileColumns": [
+      2,
+      3,
+      4
+    ],
+    "tileRows": [
+      38,
+      39,
+      40
+    ],
+    "status": "Accepted 48-cuboid cabinet with native 128px textures and emissive inverted lamp shell"
+  },
+  "models": 40,
+  "models_path": "fishing_native/bobbers/{style}.json"
+}

@@ -1,9 +1,0 @@
-﻿{
-    "parent":  "minecraft:block/outer_stairs",
-    "textures":  {
-                     "bottom":  "stardewcraft:block/mine/scoria",
-                     "top":  "stardewcraft:block/mine/scoria",
-                     "side":  "stardewcraft:block/mine/scoria",
-                     "particle":  "stardewcraft:block/mine/scoria"
-                 }
-}

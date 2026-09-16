@@ -1,7 +1,0 @@
-﻿{
-  "type": "minecraft:crafting_shaped",
-  "category": "building",
-  "key": { "#": { "item": "stardewcraft:salt_rock" } },
-  "pattern": [ "###", "###" ],
-  "result": { "count": 6, "id": "stardewcraft:salt_rock_wall" }
-}

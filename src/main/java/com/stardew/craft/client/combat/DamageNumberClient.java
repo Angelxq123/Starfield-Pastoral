@@ -195,6 +195,7 @@ public final class DamageNumberClient {
         }
 
         private String getText() {
+            if ("monster_heal".equals(skillId)) return String.valueOf(damage);
             if (crit) {
                 if (isIridiumNeedleSkill(skillId)) {
                     return getSkillEmoji(skillId) + damage + "!";
@@ -315,6 +316,7 @@ public final class DamageNumberClient {
         }
 
         private int getSkillColor(String id) {
+            if ("monster_heal".equals(id)) return 0x50E849;
             if ("tetanus_strike".equals(id)) return 0x7CD992; // greenish
             if ("tree_blessing".equals(id)) return 0x6FCF8A; // fresh green
             if ("dash_slash".equals(id)) return 0xF5B041; // orange

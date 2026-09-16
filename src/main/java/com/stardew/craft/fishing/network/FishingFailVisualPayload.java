@@ -9,12 +9,12 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 /** Server -> client: show a short "failed/escaped" visual. */
-public record FishingFailVisualPayload() implements CustomPacketPayload {
+public record FishingFailVisualPayload(java.util.UUID sessionId) implements CustomPacketPayload {
 	@SuppressWarnings("null")
 	public static final Type<FishingFailVisualPayload> TYPE = new Type<>(
 			ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "fishing_fail_visual")
 	);
-	public static final StreamCodec<ByteBuf, FishingFailVisualPayload> STREAM_CODEC = StreamCodec.unit(new FishingFailVisualPayload());
+	public static final StreamCodec<ByteBuf, FishingFailVisualPayload> STREAM_CODEC = StreamCodec.composite(net.minecraft.core.UUIDUtil.STREAM_CODEC, FishingFailVisualPayload::sessionId, FishingFailVisualPayload::new);
 
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type() {
@@ -27,6 +27,7 @@ public record FishingFailVisualPayload() implements CustomPacketPayload {
 
 	@net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
 	private static void handleClient(FishingFailVisualPayload payload) {
+		if (!com.stardew.craft.client.fishing.FishingInteractionState.accepts(payload.sessionId())) return;
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		if (mc.player == null) {
 			return;

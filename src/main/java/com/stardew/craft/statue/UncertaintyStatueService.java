@@ -140,7 +140,7 @@ public final class UncertaintyStatueService {
     }
 
     private static void showDialogue(ServerPlayer player, String translationKey) {
-        PacketDistributor.sendToPlayer(player, new OpenNpcDialogueScreenPayload("", translationKey, 0));
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player, new OpenNpcDialogueScreenPayload("", translationKey, 0));
     }
 
     private static void playDogBarks(ServerPlayer player, BlockPos pos) {

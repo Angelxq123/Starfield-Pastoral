@@ -1,0 +1,78 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "surface": "stardewcraft:block/playground_slide/slide_spring",
+    "particle": "stardewcraft:block/playground_slide/orange_particle"
+  },
+  "elements": [
+    {
+      "from": [
+        -6,
+        4.100505063388333,
+        -3.2720779386421412
+      ],
+      "to": [
+        -4,
+        8.100505063388333,
+        28.72792206135786
+      ],
+      "faces": {
+        "north": {
+          "texture": "#surface",
+          "uv": [
+            9.5625,
+            3.09375,
+            9.625,
+            3.21875
+          ]
+        },
+        "east": {
+          "texture": "#surface",
+          "uv": [
+            9.75,
+            3.09375,
+            10.75,
+            3.21875
+          ]
+        },
+        "west": {
+          "texture": "#surface",
+          "uv": [
+            10.78125,
+            3.09375,
+            11.78125,
+            3.21875
+          ]
+        },
+        "up": {
+          "texture": "#surface",
+          "uv": [
+            11.8125,
+            3.09375,
+            11.875,
+            4.09375
+          ]
+        },
+        "down": {
+          "texture": "#surface",
+          "uv": [
+            11.90625,
+            3.09375,
+            11.96875,
+            4.09375
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "x",
+        "angle": 45,
+        "origin": [
+          -5,
+          6.100505063388333,
+          12.727922061357859
+        ],
+        "rescale": false
+      }
+    }
+  ]
+}

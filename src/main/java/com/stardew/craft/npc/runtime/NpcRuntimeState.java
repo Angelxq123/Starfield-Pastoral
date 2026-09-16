@@ -22,6 +22,20 @@ public final class NpcRuntimeState {
      */
     private String namedPointId;
     private boolean pathingSuppressed;
+    private ActualPosition actualPosition;
+    public record ActualPosition(String dimension,double x,double y,double z,float yaw,int day) {
+        public ActualPosition {
+            if (dimension == null || dimension.isBlank() || !Double.isFinite(x) || !Double.isFinite(y)
+                    || !Double.isFinite(z) || !Float.isFinite(yaw)) throw new IllegalArgumentException("Invalid NPC position");
+        }
+    }
+    public ActualPosition actualPosition() { return actualPosition; }
+    public boolean rememberPosition(ActualPosition position) {
+        if (java.util.Objects.equals(actualPosition,position)) return false;
+        actualPosition = position;
+        return true;
+    }
+
 
     public NpcRuntimeState(String npcId) {
         this.npcId = npcId;
@@ -35,6 +49,15 @@ public final class NpcRuntimeState {
         this.routeBehaviorToken = "";
         this.namedPointId = "";
         this.pathingSuppressed = false;
+    }
+
+    /** Clear desired work without discarding physical recovery data or caller-owned suppression. */
+    public boolean clearSchedule() {
+        boolean changed = !activeScheduleKey.isEmpty() || !locationName.isEmpty()
+                || !namedPointId.isEmpty() || !routeBehaviorToken.isEmpty();
+        activeScheduleKey = ""; locationName = ""; namedPointId = ""; routeBehaviorToken = "";
+        scheduleCheckpoint = 0; scheduleNodeIndex = 0; tileX = 0; tileY = 0;
+        return changed;
     }
 
     public String npcId() {
@@ -127,6 +150,13 @@ public final class NpcRuntimeState {
 
     public CompoundTag toNbt() {
         CompoundTag tag = new CompoundTag();
+        if (actualPosition != null) {
+            var p = new CompoundTag();
+            p.putString("Dimension",actualPosition.dimension());
+            p.putDouble("X",actualPosition.x()); p.putDouble("Y",actualPosition.y()); p.putDouble("Z",actualPosition.z());
+            p.putFloat("Yaw",actualPosition.yaw()); p.putInt("Day",actualPosition.day());
+            tag.put("ActualPosition",p);
+        }
         tag.putString("NpcId", npcId);
         tag.putString("LocationName", locationName);
         tag.putString("ActiveScheduleKey", activeScheduleKey);
@@ -154,6 +184,11 @@ public final class NpcRuntimeState {
         state.routeBehaviorToken = tag.contains("RouteBehaviorToken") ? tag.getString("RouteBehaviorToken") : "";
         state.namedPointId = tag.contains("NamedPointId") ? tag.getString("NamedPointId") : "";
         state.pathingSuppressed = tag.getBoolean("PathingSuppressed");
+        if (tag.contains("ActualPosition")) {
+            var p=tag.getCompound("ActualPosition");
+            try { state.actualPosition=new ActualPosition(p.getString("Dimension"),p.getDouble("X"),p.getDouble("Y"),p.getDouble("Z"),p.getFloat("Yaw"),p.getInt("Day")); }
+            catch (IllegalArgumentException invalid) { /* Old or damaged records recover from their schedule. */ }
+        }
         return state;
     }
 }

@@ -61,7 +61,7 @@ class FarmSystemDailyWorkUnitTest {
     private static final List<SystemContract> SYSTEMS = List.of(
             new SystemContract("manager/AnimalGrowthManager.java", "AnimalGrowthManager",
                     "growDaily", 2, "processAnimalDay", "forId", "animal_growth", "animalId"),
-            new SystemContract("fishpond/service/FishPondDailyUpdateService.java", "FishPondDailyUpdateService",
+            new SystemContract("fishpond/service/FishPondHusbandry.java", "FishPondHusbandry",
                     "onNewDay", 1, "processPondDay", "forId", "fish_pond", "entry.stableId()"),
             new SystemContract("manager/PastureGrassGrowthManager.java", "PastureGrassGrowthManager",
                     "growDaily", 1, "processPastureGrassDay", "forPosition", "pasture_grass", "pos"),
@@ -533,7 +533,7 @@ class FarmSystemDailyWorkUnitTest {
                 "AnimalCatchUpRules.initializeCheckpoint");
         assertInvokesQualified(animal.method("applyDayUpdate", -1),
                 "AnimalDayReducer.begin", "AnimalDayReducer.finish");
-        assertInvokesQualified(fish.method("applySingleDay", -1),
+        assertInvokesQualified(fish.method("applySingleDay", 5),
                 "FishPondDailyDecisions.rollChance");
         assertInvokesQualified(grass.method("processPastureGrassDay", -1),
                 "FarmDailyDecisions.rollGrassSource",

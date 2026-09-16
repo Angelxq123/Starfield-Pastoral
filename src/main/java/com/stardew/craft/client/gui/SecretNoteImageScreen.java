@@ -1,5 +1,7 @@
 package com.stardew.craft.client.gui;
 
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.StardewRenderMapping;
@@ -40,7 +42,7 @@ public final class SecretNoteImageScreen extends Screen {
 
     @Override
     protected void init() {
-        mapping = new StardewRenderMapping(width, height, (float) minecraft.getWindow().getGuiScale());
+        mapping = new StardewRenderMapping(width, height, (float) StardewGuiViewport.REFERENCE_SCALE);
         letterW = mapping.ui(1280);
         letterH = mapping.ui(720);
         letterX = mapping.centerX(letterW);

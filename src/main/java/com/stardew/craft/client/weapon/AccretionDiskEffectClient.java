@@ -3,12 +3,10 @@ package com.stardew.craft.client.weapon;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.stardew.craft.StardewCraft;
 import com.stardew.craft.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -20,10 +18,6 @@ import java.util.List;
 
 public final class AccretionDiskEffectClient {
 
-    private static final ResourceLocation DISK_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        StardewCraft.MODID,
-        "textures/gui/weapon_skill/special_effect/1_a.png"
-    );
 
     private static final List<Disk> DISKS = new ArrayList<>();
 
@@ -67,25 +61,12 @@ public final class AccretionDiskEffectClient {
             return;
         }
 
-        var shader = WeaponShaderRegistry.getWeaponEffect();
 
         Vec3 camPos = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        float shaderTime = mc.level.getGameTime() + partial;
-        if (shader != null) {
-            shader.safeGetUniform("Time").set(shaderTime);
-            shader.safeGetUniform("FlowStrength").set(1.25f);
-            shader.safeGetUniform("NoiseStrength").set(0.35f);
-            shader.safeGetUniform("TextureColorStrength").set(0.0f);
-            shader.safeGetUniform("AlphaFloor").set(0.0f);
-            shader.safeGetUniform("GlowStrength").set(0.2f);
-            shader.safeGetUniform("ErosionStrength").set(0.0f);
-            shader.safeGetUniform("UseTextureAlpha").set(1.0f);
-            shader.safeGetUniform("AlphaBoost").set(1.6f);
-        }
-        RenderType diskType = WeaponEffectRenderTypes.weaponEffect(DISK_TEXTURE);
+        RenderType diskType = WeaponEffectRenderTypes.MOLTEN_GLOW;
         VertexConsumer consumer = buffer.getBuffer(diskType);
 
         for (Disk disk : DISKS) {

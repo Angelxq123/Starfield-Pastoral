@@ -2,53 +2,30 @@ package com.stardew.craft.client.gui.auction;
 
 import com.stardew.craft.client.auction.AuctionClientState;
 import com.stardew.craft.client.gui.StardewRealtimeScreen;
-import com.stardew.craft.client.gui.common.CommonGuiTextures;
-import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.auction.AuctionService;
 import com.stardew.craft.network.payload.AuctionBidSubmitPayload;
 import com.stardew.craft.network.payload.OpenAuctionBidPayload;
-import com.stardew.craft.sound.ModSounds;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import javax.annotation.Nonnull;
-
 @SuppressWarnings("null")
-public class AuctionBidScreen extends Screen implements StardewRealtimeScreen {
-    // Fixed design canvas, scaled uniformly to fit the screen so the layout is identical at every GUI scale.
-    private static final int DESIGN_W = 720;
-    private static final int DESIGN_H = 470;
-    /** Snapshot the screen was opened with; only seeds the first frames before live sync arrives. */
+public class AuctionBidScreen extends AuctionScreen implements StardewRealtimeScreen {
     private final OpenAuctionBidPayload seed;
-    private float fitScale = 1.0f;
-    private int fitOriginX, fitOriginY;
-    private int panelX, panelY, panelW, panelH;
-    private int contentX, contentY, contentW, contentH;
-    private int ribbonCx, ribbonY, metaY, timerX, timerY, timerW;
-    private int stageX, stageY, stageW, stageH;
-    private int railX, railY, railW, railH;
-    private int plateY, plateH, plateGap;
-    private int quickX, quickY, quickW;
-    private int fieldBoxX, fieldBoxY, fieldBoxW, fieldBoxH;
-    private int submitX, submitY, submitW, submitH;
-    private boolean compact;
-    private boolean opened;
-    private boolean wasLive;
+    private boolean wasLive, wide, customBid;
     private long lastSubmitMs;
+    private String draft;
+    private int shownLot = -1, lotY, priceX, priceY, priceW, quickY, fieldY, hintY, bidderY;
+    private AuctionLayout.Bid geometry;
     private EditBox bidField;
-
+    private Button submit;
+    private final Button[] quick = new Button[3];
     public AuctionBidScreen(OpenAuctionBidPayload payload) {
-        super(Component.translatable("stardewcraft.auction.bid.title"));
-        this.seed = payload;
+        super("stardewcraft.auction.bid.title"); this.seed = payload;
     }
-
-    // ── Live data: prefer the realtime board sync, fall back to the open snapshot before the first sync ──
-
     private boolean live() {
         return AuctionClientState.board().active();
     }
@@ -97,419 +74,104 @@ public class AuctionBidScreen extends Screen implements StardewRealtimeScreen {
         return AuctionService.bidStep(currentPrice());
     }
 
-    @Override
-    protected void init() {
-        fitScale = Math.min(1.5f, 0.94f * Math.min(width / (float) DESIGN_W, height / (float) DESIGN_H));
-        fitOriginX = Math.round((width - DESIGN_W * fitScale) / 2f);
-        fitOriginY = Math.round((height - DESIGN_H * fitScale) / 2f);
-        panelW = DESIGN_W;
-        panelH = DESIGN_H;
-        panelX = 0;
-        panelY = 0;
-        int pad = Math.max(30, Math.min(50, panelW / 15));
-        contentX = panelX + pad;
-        contentY = panelY + pad;
-        contentW = panelW - pad * 2;
-        contentH = panelH - pad * 2;
-
-        ribbonCx = contentX + contentW / 2;
-        ribbonY = contentY;
-        metaY = contentY + 24;
-        timerX = contentX + 4;
-        timerY = contentY + 40;
-        timerW = contentW - 8;
-
-        compact = contentW < 560;
-        int gap = Math.max(12, contentW / 42);
-        int bodyY = contentY + 54;
-        int bodyH = contentH - 54;
-        plateGap = 8;
-
-        int innerX;
-        int innerW;
-        if (compact) {
-            // Single column: a slim lot strip over the essential bidding controls.
-            stageX = contentX;
-            stageY = bodyY;
-            stageW = contentW;
-            stageH = 66;
-            railX = contentX;
-            railY = stageY + stageH + 10;
-            railW = contentW;
-            railH = contentY + contentH - railY;
-            innerX = railX + 12;
-            innerW = railW - 24;
-            plateH = 40;
-            plateY = railY + 12;
-            quickX = innerX;
-            quickW = innerW;
-            quickY = plateY + plateH + 22;
-            submitW = innerW;
-            submitH = 30;
-            submitX = innerX;
-            submitY = railY + railH - submitH - 10;
-            // The custom field is dropped on small screens; the EditBox still backs the bid value off-screen.
-            fieldBoxX = -1000;
-            fieldBoxY = -1000;
-            fieldBoxW = 0;
-            fieldBoxH = font.lineHeight + 10;
+    @Override protected Component heading() { return Component.literal(auctionName()); }
+    @Override protected void layout() {
+        wide = contentW >= 350;
+        int lotHeight = wide ? 58 : Math.max(22, line + 6);
+        priceX = wide ? 172 : 0;
+        priceW = contentW - priceX;
+        int quickHeight = buttonHeight(Component.literal(String.valueOf(Integer.MAX_VALUE)), (priceW - 8) / 3);
+        geometry = AuctionLayout.bid(contentW, line,
+                wrappedHeight(tr("bid.lot_meta", lotIndex(), lotCount(), AuctionService.LOT_SECONDS), contentW), lotHeight,
+                wrappedHeight(tr("bid.current", wide ? "" : Integer.MAX_VALUE + "g"), priceW), wrappedHeight(tr("bid.next", Integer.MAX_VALUE + "g"), priceW), quickHeight);
+        lotY = geometry.lotY(); priceY = geometry.priceY(); quickY = geometry.quickY();
+        int qw = (priceW - 8) / 3;
+        for (int i = 0; i < 3; i++) {
+            int index = i;
+            quick[i] = button(priceX + i * (qw + 4), quickY, qw, Component.literal(String.valueOf(Integer.MAX_VALUE)),
+                    () -> { bidField.setValue(String.valueOf(raise(index))); bidField.setFocused(true); setFocused(bidField); });
+        }
+        fieldY = geometry.fieldY();
+        if (draft == null) draft = String.valueOf(nextBid());
+        bidField = field(priceX, fieldY, priceW, tr("bid.custom"), draft, 10, true, v -> { draft = v; customBid = true; });
+        hintY = geometry.hintY();
+        bidderY = wide ? lotY + 116 + 2 * (line + 3) : hintY;
+        // Reserve enough space for every status message, including a live outbid and blocked state.
+        int hints = Math.max(wrappedHeight(tr("bid.ready_hint"), priceW),
+                Math.max(wrappedHeight(tr("bid.blocked_hint"), priceW), wrappedHeight(tr("bid.need_next", Integer.MAX_VALUE), priceW)));
+        if (!wide) bidderY = hintY + hints + 8;
+        contentHeight = Math.max(hintY + hints, bidderY + 2 * (line + 3)) + 10;
+        footer(tr("picker.cancel"), false, false, this::onClose);
+        // Allocate height for the longest supported integer before live amounts change.
+        submit = footer(tr("bid.submit_amount", Integer.MAX_VALUE), true, true, this::submit);
+        shownLot = lotIndex();
+    }
+    private int raise(int n) { return (int) Math.min(Integer.MAX_VALUE, (long) nextBid() + (long) quickStep() * n); }
+    @Override protected void updateState() {
+        if (live()) wasLive = true;
+        else if (wasLive) { onClose(); return; }
+        if (shownLot != lotIndex()) { draft = String.valueOf(nextBid()); customBid = false; resetScroll(); rebuild(); }
+        if (!customBid && amount(draft) != nextBid()) {
+            bidField.setValue(String.valueOf(nextBid())); customBid = false;
+        }
+        for (int i = 0; i < quick.length; i++) {
+            quick[i].setMessage(Component.literal(String.valueOf(raise(i))));
+            quick[i].active = canBid();
+        }
+        submit.active = canBid() && amount(draft) >= nextBid();
+        submit.setMessage(tr("bid.submit_amount", amount(draft)));
+    }
+    @Override protected void drawBody(GuiGraphics g, float partialTick) {
+        paragraph(g, tr("bid.lot_meta", lotIndex(), lotCount(), Math.max(0, remainingSeconds())), 0, 0, contentW, AuctionUi.BODY);
+        float ratio = Math.max(0, Math.min(1, remainingSeconds() / (float) AuctionService.LOT_SECONDS));
+        int timerY = lotY - 9;
+        g.fill(0, timerY, contentW, timerY + 3, 0xFFCCB590);
+        g.fill(0, timerY, Math.round(contentW * ratio), timerY + 3,
+                remainingSeconds() <= AuctionService.FINAL_EXTENSION_SECONDS ? AuctionUi.ERROR : AuctionUi.GOLD);
+        if (wide) {
+            AuctionUi.sprite(g, "pedestal", 36, lotY + 12, 80, 52);
+            item(g, lotStack(), 60, lotY + 13, 2);
+            text(g, lotStack().getHoverName(), 0, lotY + 78, 154, AuctionUi.INK);
+            text(g, tr("bid.seller", sellerName()), 0, lotY + 82 + line, 154, AuctionUi.MUTED);
         } else {
-            stageX = contentX;
-            stageY = bodyY;
-            stageW = Math.min(296, Math.max(224, (contentW - gap) * 46 / 100));
-            stageH = bodyH;
-            railX = stageX + stageW + gap;
-            railY = bodyY;
-            railW = contentW - stageW - gap;
-            railH = bodyH;
-            innerX = railX + 12;
-            innerW = railW - 24;
-            plateH = 50;
-            plateY = railY + 14;
-            quickX = innerX;
-            quickW = innerW;
-            quickY = plateY + plateH + 26;
-            fieldBoxX = innerX;
-            fieldBoxW = innerW;
-            fieldBoxH = Math.max(28, font.lineHeight + 15);
-            submitW = innerW;
-            submitH = 30;
-            submitX = innerX;
-            submitY = railY + railH - submitH - 14;
-            fieldBoxY = submitY - fieldBoxH - 22;
+            item(g, lotStack(), 0, lotY, 1);
+            text(g, lotStack().getHoverName(), 24, lotY + 2, contentW - 24, AuctionUi.INK);
         }
-
-        bidField = new EditBox(com.stardew.craft.client.font.StardewFonts.small(), fieldBoxX + 31, fieldBoxY + (fieldBoxH - font.lineHeight) / 2,
-            Math.max(10, fieldBoxW - 43), font.lineHeight, Component.translatable("stardewcraft.auction.bid.input_hint"));
-        bidField.setBordered(false);
-        bidField.setTextShadow(false);
-        bidField.setTextColor(0xFF3F2411);
-        bidField.setTextColorUneditable(0xFF3F2411);
-        bidField.setHint(Component.translatable("stardewcraft.auction.bid.input_hint"));
-        bidField.setMaxLength(9);
-        bidField.setValue(String.valueOf(nextBid()));
-        addWidget(bidField);
-
-        if (!opened) {
-            opened = true;
-            playOpen();
+        if (wide) {
+            paragraph(g, tr("bid.current", ""), priceX, priceY, priceW, AuctionUi.MUTED);
+            String price = currentPrice() + "g";
+            int scale = font.width(price) * 2 <= priceW ? 2 : 1;
+            g.pose().pushPose();
+            g.pose().translate(priceX, geometry.valueY(), 0); g.pose().scale(scale, scale, 1);
+            g.drawString(font, price, 0, 0, AuctionUi.INK, false); g.pose().popPose();
+        } else paragraph(g, tr("bid.current", currentPrice() + "g"), priceX, priceY, priceW, AuctionUi.INK);
+        paragraph(g, tr("bid.next", nextBid() + "g"), priceX, geometry.minimumY(), priceW, AuctionUi.GOLD);
+        if (wide) text(g, tr("bid.custom"), priceX, fieldY - line - 5, priceW, AuctionUi.INK);
+        Component hint = tr(!canBid() ? "bid.blocked_hint" : amount(draft) < nextBid() ? "bid.need_next" : "bid.ready_hint", nextBid());
+        paragraph(g, hint, priceX, hintY, priceW, submit.active ? AuctionUi.MUTED : AuctionUi.ERROR);
+        Component bidder = highestBidderName().isBlank() ? tr("bid.no_bidder") : tr("bid.bidder", highestBidderName());
+        text(g, bidder, 0, bidderY, wide ? 154 : contentW, AuctionUi.BODY);
+        if (!wide) text(g, tr("bid.seller", sellerName()), 0, bidderY + line + 3, contentW, AuctionUi.MUTED);
+    }
+    @Override public boolean keyPressed(int key, int scan, int mods) {
+        if (bidField.isFocused()) {
+            if (key == 257 || key == 335) { submit(); return true; }
+            if ((key == 264 || key == 265) && canBid()) {
+                long proposed = (long) amount(draft) + (key == 265 ? quickStep() : -quickStep());
+                bidField.setValue(String.valueOf(Math.min(Integer.MAX_VALUE, Math.max(nextBid(), proposed))));
+                return true;
+            }
         }
+        return super.keyPressed(key, scan, mods);
     }
-
-    @Override
-    public void render(@Nonnull GuiGraphics g, int rawMouseX, int rawMouseY, float partialTick) {
-        // Auto-close once the auction we were following ends (the board stops syncing / goes inactive).
-        if (live()) {
-            wasLive = true;
-        } else if (wasLive) {
-            onClose();
-            return;
-        }
-        // While the player isn't editing a custom amount, track the current minimum legal bid so a live
-        // outbid is reflected without forcing a re-open.
-        if (bidField != null && !bidField.isFocused() && parseBid() != nextBid()) {
-            bidField.setValue(String.valueOf(nextBid()));
-        }
-
-        renderTransparentBackground(g);
-        int mouseX = lmx(rawMouseX);
-        int mouseY = lmy(rawMouseY);
-        g.pose().pushPose();
-        g.pose().translate(fitOriginX, fitOriginY, 0);
-        g.pose().scale(fitScale, fitScale, 1f);
-        StardewGuiUtil.drawDialogueBoxFrame(g, panelX, panelY, panelW, panelH);
-        drawHeader(g);
-        if (compact) {
-            drawStageCompact(g);
-            drawRailCompact(g, mouseX, mouseY);
-        } else {
-            drawStage(g);
-            drawRail(g, mouseX, mouseY);
-            bidField.render(g, mouseX, mouseY, partialTick);
-        }
-        g.pose().popPose();
-    }
-
-    private int lmx(double mouseX) { return (int) Math.round((mouseX - fitOriginX) / fitScale); }
-    private int lmy(double mouseY) { return (int) Math.round((mouseY - fitOriginY) / fitScale); }
-    private double ldx(double mouseX) { return (mouseX - fitOriginX) / fitScale; }
-    private double ldy(double mouseY) { return (mouseY - fitOriginY) / fitScale; }
-
-    private void drawStageCompact(GuiGraphics g) {
-        AuctionUi.band(g, stageX, stageY, stageW, stageH);
-        int ped = stageH - 16;
-        int pedX = stageX + 12;
-        int pedY = stageY + 8;
-        AuctionUi.inset(g, pedX, pedY, ped, ped);
-        ItemStack stack = lotStack();
-        float itemScale = Math.max(1.4f, (ped * 0.6f) / 16.0f);
-        int itemSize = Math.round(16 * itemScale);
-        CommonGuiTextures.drawItem(g, stack, pedX + (ped - itemSize) / 2, pedY + (ped - itemSize) / 2, itemScale);
-        int textX = pedX + ped + 12;
-        int textW = stageX + stageW - textX - 12;
-        AuctionUi.drawClamped(g, font, stack.getHoverName(), textX, stageY + 12, textW, AuctionUi.INK);
-        AuctionUi.drawClamped(g, font, lewisCall(), textX, stageY + 30, textW, AuctionUi.GOLD);
-        String bidder = highestBidderName().isBlank()
-            ? Component.translatable("stardewcraft.auction.bid.no_bidder").getString()
-            : Component.translatable("stardewcraft.auction.bid.bidder", highestBidderName()).getString();
-        AuctionUi.drawClamped(g, font, Component.literal(bidder), textX, stageY + 45, textW, AuctionUi.MUTED);
-    }
-
-    private void drawRailCompact(GuiGraphics g, int mouseX, int mouseY) {
-        AuctionUi.band(g, railX, railY, railW, railH);
-        int innerX = railX + 12;
-        int innerW = railW - 24;
-        int plateW = (innerW - plateGap) / 2;
-        AuctionUi.pricePlate(g, font, Component.translatable("stardewcraft.auction.bid.current", ""),
-            currentPrice(), innerX, plateY, plateW, plateH, false);
-        AuctionUi.pricePlate(g, font, Component.translatable("stardewcraft.auction.bid.next", ""),
-            nextBid(), innerX + plateW + plateGap, plateY, innerW - plateW - plateGap, plateH, true);
-        AuctionUi.sectionLabel(g, font, Component.translatable("stardewcraft.auction.bid.quick"), quickX, quickY - 15, quickW);
-        drawQuickButtons(g, mouseX, mouseY);
-        boolean enabled = canBid() && parseBid() >= nextBid();
-        boolean hover = enabled && AuctionUi.inside(mouseX, mouseY, submitX, submitY, submitW, submitH);
-        AuctionUi.drawClamped(g, font, bidHint(), railX + 13, submitY - 13, innerW - 2,
-            enabled ? AuctionUi.MUTED : AuctionUi.ERROR);
-        AuctionUi.actionButton(g, font,
-            Component.translatable(canBid() ? "stardewcraft.auction.bid.submit" : "stardewcraft.auction.bid.blocked"),
-            submitX, submitY, submitW, submitH, enabled, hover);
-    }
-
-    private void drawHeader(GuiGraphics g) {
-        AuctionUi.ribbon(g, font, Component.literal(AuctionUi.fit(font, auctionName(), contentW - 60)), ribbonCx, ribbonY);
-        AuctionUi.drawCentered(g, font, Component.translatable("stardewcraft.auction.bid.lot_meta",
-            lotIndex(), lotCount(), Math.max(0, remainingSeconds())), ribbonCx, metaY, contentW - 12, AuctionUi.MUTED);
-        drawTimer(g);
-    }
-
-    private void drawTimer(GuiGraphics g) {
-        int remaining = remainingSeconds();
-        float ratio = Math.max(0.0F, Math.min(1.0F, remaining / (float) AuctionService.LOT_SECONDS));
-        int h = 7;
-        g.fill(timerX, timerY, timerX + timerW, timerY + h, 0x66A66B26);
-        g.fill(timerX, timerY, timerX + timerW, timerY + 1, 0x55FFE9B9);
-        int fill = Math.max(3, Math.round(timerW * ratio));
-        int color = remaining <= AuctionService.FINAL_EXTENSION_SECONDS
-            ? AuctionUi.blend(0xB93A24, AuctionUi.GOLD_BRIGHT, AuctionUi.pulse())
-            : AuctionUi.GOLD;
-        g.fill(timerX, timerY, timerX + fill, timerY + h, color);
-    }
-
-    private void drawStage(GuiGraphics g) {
-        AuctionUi.band(g, stageX, stageY, stageW, stageH);
-        int innerX = stageX + 14;
-        int innerW = stageW - 28;
-
-        // Lot on its pedestal.
-        int ped = Math.min(innerW - 24, Math.max(58, stageH / 3));
-        int pedX = stageX + (stageW - ped) / 2;
-        int pedY = stageY + 16;
-        AuctionUi.inset(g, pedX, pedY, ped, ped);
-        ItemStack stack = lotStack();
-        float itemScale = Math.max(1.6f, (ped * 0.58f) / 16.0f);
-        int itemSize = Math.round(16 * itemScale);
-        CommonGuiTextures.drawItem(g, stack, pedX + (ped - itemSize) / 2, pedY + (ped - itemSize) / 2, itemScale);
-
-        int textY = pedY + ped + 9;
-        AuctionUi.drawCentered(g, font, stack.getHoverName(), stageX + stageW / 2, textY, innerW, AuctionUi.INK);
-        AuctionUi.drawCentered(g, font, Component.translatable("stardewcraft.auction.bid.seller", sellerName()),
-            stageX + stageW / 2, textY + 16, innerW, AuctionUi.MUTED);
-        String bidder = highestBidderName().isBlank()
-            ? Component.translatable("stardewcraft.auction.bid.no_bidder").getString()
-            : Component.translatable("stardewcraft.auction.bid.bidder", highestBidderName()).getString();
-        AuctionUi.drawCentered(g, font, Component.literal(bidder), stageX + stageW / 2, textY + 31, innerW, AuctionUi.BODY);
-
-        // Lewis's call slip at the foot of the stage.
-        int callH = 26;
-        int callY = stageY + stageH - callH - 12;
-        AuctionUi.inset(g, innerX, callY, innerW, callH);
-        AuctionUi.drawCentered(g, font, lewisCall(), stageX + stageW / 2, callY + (callH - font.lineHeight) / 2,
-            innerW - 14, AuctionUi.GOLD);
-    }
-
-    private Component lewisCall() {
-        String bidder = highestBidderName();
-        if (remainingSeconds() <= AuctionService.THIRD_CALL_SECONDS && !bidder.isBlank()) {
-            return Component.translatable("stardewcraft.auction.bid.call_last", currentPrice());
-        }
-        if (bidder.isBlank()) {
-            return Component.translatable("stardewcraft.auction.bid.call_open", currentPrice());
-        }
-        return Component.translatable("stardewcraft.auction.bid.call_lead", currentPrice(), bidder);
-    }
-
-    private void drawRail(GuiGraphics g, int mouseX, int mouseY) {
-        AuctionUi.band(g, railX, railY, railW, railH);
-        int innerX = railX + 12;
-        int innerW = railW - 24;
-
-        // Price plates.
-        int plateW = (innerW - plateGap) / 2;
-        AuctionUi.pricePlate(g, font, Component.translatable("stardewcraft.auction.bid.current", ""),
-            currentPrice(), innerX, plateY, plateW, plateH, false);
-        AuctionUi.pricePlate(g, font, Component.translatable("stardewcraft.auction.bid.next", ""),
-            nextBid(), innerX + plateW + plateGap, plateY, innerW - plateW - plateGap, plateH, true);
-
-        // Quick raise paddles.
-        AuctionUi.sectionLabel(g, font, Component.translatable("stardewcraft.auction.bid.quick"), quickX, quickY - 15, quickW);
-        drawQuickButtons(g, mouseX, mouseY);
-
-        // Custom amount field.
-        g.drawString(font, Component.translatable("stardewcraft.auction.bid.custom"), fieldBoxX, fieldBoxY - 14, AuctionUi.BODY, false);
-        AuctionUi.inputBox(g, fieldBoxX, fieldBoxY, fieldBoxW, fieldBoxH, bidField.isFocused(),
-            AuctionUi.inside(mouseX, mouseY, fieldBoxX, fieldBoxY, fieldBoxW, fieldBoxH), parseBid() < nextBid());
-        CommonGuiTextures.drawGoldCoin16(g, fieldBoxX + 10, fieldBoxY + (fieldBoxH - 14) / 2, 0.58f);
-        g.fill(fieldBoxX + 28, fieldBoxY + 7, fieldBoxX + 29, fieldBoxY + fieldBoxH - 7, 0x55A66B26);
-
-        // Hint + confirm.
-        boolean enabled = canBid() && parseBid() >= nextBid();
-        boolean hover = enabled && AuctionUi.inside(mouseX, mouseY, submitX, submitY, submitW, submitH);
-        AuctionUi.drawClamped(g, font, bidHint(), railX + 13, submitY - 13, innerW - 2,
-            enabled ? AuctionUi.MUTED : AuctionUi.ERROR);
-        AuctionUi.actionButton(g, font,
-            Component.translatable(canBid() ? "stardewcraft.auction.bid.submit" : "stardewcraft.auction.bid.blocked"),
-            submitX, submitY, submitW, submitH, enabled, hover);
-    }
-
-    private void drawQuickButtons(GuiGraphics g, int mouseX, int mouseY) {
-        int step = quickStep();
-        int base = nextBid();
-        int gap = 7;
-        int w = Math.max(48, (quickW - gap * 2) / 3);
-        drawRaiseButton(g, mouseX, mouseY, quickX, quickY, w, 28, base);
-        drawRaiseButton(g, mouseX, mouseY, quickX + w + gap, quickY, w, 28, base + step);
-        drawRaiseButton(g, mouseX, mouseY, quickX + (w + gap) * 2, quickY, w, 28, base + step * 2);
-    }
-
-    private void drawRaiseButton(GuiGraphics g, int mouseX, int mouseY, int x, int y, int w, int h, int value) {
-        boolean enabled = canBid();
-        boolean hover = enabled && AuctionUi.inside(mouseX, mouseY, x, y, w, h);
-        AuctionUi.paddleButton(g, font, value + "g", x, y, w, h, enabled, hover);
-    }
-
-    private Component bidHint() {
-        if (!canBid()) {
-            return Component.translatable("stardewcraft.auction.bid.blocked_hint");
-        }
-        if (parseBid() < nextBid()) {
-            return Component.translatable("stardewcraft.auction.bid.need_next", nextBid());
-        }
-        return Component.translatable("stardewcraft.auction.bid.ready_hint");
-    }
-
-    @Override
-    public boolean mouseClicked(double rawX, double rawY, int button) {
-        double mouseX = ldx(rawX);
-        double mouseY = ldy(rawY);
-        if (clickQuick(mouseX, mouseY)) return true;
-        if (AuctionUi.inside(mouseX, mouseY, fieldBoxX, fieldBoxY, fieldBoxW, fieldBoxH)) {
-            bidField.setFocused(true);
-            setFocused(bidField);
-            return bidField.mouseClicked(mouseX, mouseY, button) || true;
-        }
-        if (AuctionUi.inside(mouseX, mouseY, submitX, submitY, submitW, submitH)) {
-            submit();
-            return true;
-        }
-        bidField.setFocused(false);
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    private boolean clickQuick(double mouseX, double mouseY) {
-        int step = quickStep();
-        int base = nextBid();
-        int gap = 7;
-        int w = Math.max(48, (quickW - gap * 2) / 3);
-        if (clickRaise(mouseX, mouseY, quickX, quickY, w, 28, base)) return true;
-        if (clickRaise(mouseX, mouseY, quickX + w + gap, quickY, w, 28, base + step)) return true;
-        return clickRaise(mouseX, mouseY, quickX + (w + gap) * 2, quickY, w, 28, base + step * 2);
-    }
-
-    private boolean clickRaise(double mouseX, double mouseY, int x, int y, int w, int h, int value) {
-        if (canBid() && AuctionUi.inside(mouseX, mouseY, x, y, w, h)) {
-            bidField.setValue(String.valueOf(value));
-            bidField.setFocused(true);
-            setFocused(bidField);
-            playSelect();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean charTyped(char codePoint, int modifiers) {
-        if (bidField != null && bidField.isFocused() && !Character.isDigit(codePoint)) {
-            return false;
-        }
-        return super.charTyped(codePoint, modifiers);
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 257 || keyCode == 335) {
-            submit();
-            return true;
-        }
-        int step = quickStep();
-        if (keyCode == 265 && canBid()) {
-            bidField.setValue(String.valueOf(Math.max(nextBid(), parseBid() + step)));
-            bidField.setFocused(true);
-            setFocused(bidField);
-            playSelect();
-            return true;
-        }
-        if (keyCode == 264 && canBid()) {
-            bidField.setValue(String.valueOf(Math.max(nextBid(), parseBid() - step)));
-            bidField.setFocused(true);
-            setFocused(bidField);
-            playSelect();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
     private void submit() {
-        int bid = parseBid();
-        if (!canBid() || bid < nextBid()) {
-            playCancel();
-            return;
-        }
-        // Debounce double-submits; the server echoes the new price back via the board sync.
+        int bid = amount(draft);
+        if (!canBid() || bid < nextBid()) { cancelSound(); return; }
         long now = System.currentTimeMillis();
-        if (now - lastSubmitMs < 250L) {
-            return;
-        }
+        if (now - lastSubmitMs < 250) return;
         lastSubmitMs = now;
         PacketDistributor.sendToServer(new AuctionBidSubmitPayload(bid));
-        playSelect();
-        // Stay open: the live board refresh shows the new highest bid and the next legal bid in place,
-        // so the player can keep raising without re-opening the screen.
+        customBid = false;
         bidField.setFocused(false);
-    }
-
-    private int parseBid() {
-        try {
-            return Math.max(0, Integer.parseInt(bidField.getValue().trim()));
-        } catch (NumberFormatException ex) {
-            return 0;
-        }
-    }
-
-    private void playSelect() {
-        if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.SMALL_SELECT.get(), 0.7f, 1.05f));
-        }
-    }
-
-    private void playOpen() {
-        if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.BIG_SELECT.get(), 0.82f, 0.78f));
-        }
-    }
-
-    private void playCancel() {
-        if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.CANCEL.get(), 0.92f, 0.45f));
-        }
     }
 }

@@ -1,3 +1,11 @@
 {
-  "parent": "stardewcraft:block/mastery/statue_of_blessings"
+  "parent": "stardewcraft:block/mastery/statue_of_blessings",
+  "transform": {
+    "rotation": [
+      0,
+      180,
+      0
+    ],
+    "origin": "center"
+  }
 }

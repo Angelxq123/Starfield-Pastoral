@@ -96,6 +96,7 @@ public final class CombatTrackerCleanup {
                 () -> WickedKrisPoisonTracker.removePlayer(playerId),
                 () -> WindSpireTracker.removePlayer(playerId),
                 () -> OrdinaryWeaponAttackFrameStore.clear(playerId),
+                () -> OrdinaryAttackCooldownHandoffStore.clear(playerId),
                 () -> StardewWeaponAttackRecovery.clear(playerId),
                 () -> CombatDamageHistory.remove(playerId),
                 () -> com.stardew.craft.combat.equipment

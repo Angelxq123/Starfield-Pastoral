@@ -123,7 +123,18 @@ public final class NpcSystem {
     public static void onServerStopped(ServerStoppedEvent event) {
         NpcRuntimeManager.onServerStopped(event.getServer());
         NpcSpawnManager.onServerStopped(event.getServer());
-        NpcCentralMovementService.onServerStopped(event.getServer());
+        try {
+            NpcCentralMovementService.onServerStopped(event.getServer());
+        } catch (NoClassDefFoundError missingRuntimeClass) {
+            // Keep shutdown safe when an older/incomplete mod jar was copied
+            // while the server was running. A complete build never enters
+            // this branch, but the remaining lifecycle cleanup must continue.
+            StardewCraft.LOGGER.error(
+                    "NPC movement cleanup skipped because the deployment is missing "
+                            + "NpcCentralMovementService.class",
+                    missingRuntimeClass
+            );
+        }
         com.stardew.craft.npc.runtime.NpcInteractionService.onServerStopped();
         NpcScheduleRuntimeService.invalidateCache();
         previouslyHadPlayers = false;

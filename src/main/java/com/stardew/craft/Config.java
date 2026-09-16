@@ -40,13 +40,17 @@ public final class Config {
     private Config() {
     }
 
-    /** Routine settlement diagnostics stay quiet until the server config is loaded. */
-    public static boolean isSettlementDebugLoggingEnabled() {
+    /** Routine server diagnostics stay quiet until the server config is loaded. */
+    public static boolean isServerDebugLoggingEnabled() {
         try {
             return SERVER.DEBUG.get();
         } catch (IllegalStateException ignored) {
             return false;
         }
+    }
+
+    public static boolean isSettlementDebugLoggingEnabled() {
+        return isServerDebugLoggingEnabled();
     }
 
     public static final class Client {
@@ -174,7 +178,7 @@ public final class Config {
 
             builder.push("performance");
             DEBUG = builder
-                    .comment("Enable routine daily settlement diagnostics in the server log.",
+                    .comment("Enable routine settlement and combat diagnostics in the server log.",
                             "Errors and permanent failures are still logged when this is false.")
                     .define("debug", false);
             DAILY_SETTLEMENT_BUDGET_MILLIS = builder

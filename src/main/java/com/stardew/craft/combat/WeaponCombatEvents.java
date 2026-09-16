@@ -32,6 +32,10 @@ import net.neoforged.neoforge.entity.PartEntity;
 @EventBusSubscriber(modid = StardewCraft.MODID)
 public class WeaponCombatEvents {
 
+    public static void discardRejectedNativeHit(Player player) {
+        WeaponIncomingHitStore.clear(player);
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onSweepAttack(SweepAttackEvent event) {
         ItemStack weapon = event.getEntity().getMainHandItem();
@@ -46,8 +50,23 @@ public class WeaponCombatEvents {
     public static void onAttackEntity(AttackEntityEvent event) {
         Player player = event.getEntity();
         long nowTick = player.level().getGameTime();
+        WeaponCombatDebug.log(
+                "attack_event_received",
+                player,
+                event.getTarget(),
+                "eventCanceled={} targetHealth={}",
+                event.isCanceled(),
+                WeaponCombatDebug.health(event.getTarget())
+        );
         if (WeaponSkillAnimationLock.isLocked(player, nowTick)
             && !WeaponSkillContextStore.hasPending(player, nowTick)) {
+            WeaponCombatDebug.log(
+                    "attack_event_blocked_animation_lock",
+                    player,
+                    event.getTarget(),
+                    "targetHealth={}",
+                    WeaponCombatDebug.health(event.getTarget())
+            );
             event.setCanceled(true);
             return;
         }
@@ -59,6 +78,13 @@ public class WeaponCombatEvents {
                 && sp.level().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
             net.minecraft.core.BlockPos targetPos = event.getTarget().blockPosition();
             if (com.stardew.craft.event.FarmAreaProtectionEvents.isOnProtectedFarm(sp, targetPos)) {
+                WeaponCombatDebug.log(
+                        "attack_event_blocked_farm_protection",
+                        player,
+                        event.getTarget(),
+                        "targetHealth={}",
+                        WeaponCombatDebug.health(event.getTarget())
+                );
                 event.setCanceled(true);
                 sp.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("stardewcraft.farm.build_farm_only"), true);
@@ -75,11 +101,37 @@ public class WeaponCombatEvents {
             attackedEntity = part.getParent();
         }
         if (!(attackedEntity instanceof LivingEntity target)) {
+            WeaponCombatDebug.log(
+                    "attack_event_ignored_non_living",
+                    player,
+                    attackedEntity,
+                    ""
+            );
+            return;
+        }
+        if (!event.getTarget().isAttackable()
+                || event.getTarget().skipAttackInteraction(player)) {
+            WeaponCombatDebug.log(
+                    "attack_event_ignored_not_attackable",
+                    player,
+                    event.getTarget(),
+                    "isAttackable={} skipInteraction={} targetHealth={}",
+                    event.getTarget().isAttackable(),
+                    event.getTarget().skipAttackInteraction(player),
+                    WeaponCombatDebug.health(target)
+            );
             return;
         }
 
         ItemStack stack = player.getMainHandItem();
         if (!WeaponCombatIdentity.isWeapon(stack)) {
+            WeaponCombatDebug.log(
+                    "attack_event_ignored_non_stardew_weapon",
+                    player,
+                    target,
+                    "targetHealth={}",
+                    WeaponCombatDebug.health(target)
+            );
             return;
         }
 
@@ -89,20 +141,50 @@ public class WeaponCombatEvents {
                 stack,
                 nowTick
         )) {
+            WeaponCombatDebug.log(
+                    "attack_event_consumed_silver_saber",
+                    player,
+                    target,
+                    "targetHealth={}",
+                    WeaponCombatDebug.health(target)
+            );
             event.setCanceled(true);
             return;
         }
 
-        if (player instanceof ServerPlayer serverPlayer
-                && !WeaponSkillContextStore.hasPending(player, nowTick)
-                && !StardewWeaponAttackRecovery.tryAcquire(
-                        serverPlayer,
-                        stack,
-                        nowTick
-                )) {
-            event.setCanceled(true);
-            return;
+        if (player instanceof ServerPlayer serverPlayer) {
+            boolean authoredSkill = WeaponSkillContextStore.hasPending(
+                    player,
+                    nowTick
+            );
+            if (!authoredSkill
+                    && !StardewWeaponAttackRecovery.tryAcquire(
+                            serverPlayer,
+                            stack
+                    )) {
+                WeaponCombatDebug.log(
+                        "attack_event_blocked_recovery",
+                        player,
+                        target,
+                        "serverTick={} targetHealth={}",
+                        serverPlayer.server.getTickCount(),
+                        WeaponCombatDebug.health(target)
+                );
+                event.setCanceled(true);
+                return;
+            }
         }
+
+        WeaponCombatDebug.log(
+                "attack_event_admitted",
+                player,
+                target,
+                "serverTick={} targetHealth={}",
+                player instanceof ServerPlayer serverPlayer
+                        ? serverPlayer.server.getTickCount()
+                        : -1,
+                WeaponCombatDebug.health(target)
+        );
 
     }
 
@@ -130,11 +212,23 @@ public class WeaponCombatEvents {
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
-        if (DimensionDamageMapper.isInStardewDimension(target)) return;
 
         DamageSource source = event.getSource();
         Entity attacker = source.getEntity();
         if (!(attacker instanceof Player player)) return;
+
+        if (DimensionDamageMapper.isInStardewDimension(target)) {
+            WeaponCombatDebug.log(
+                    "incoming_damage",
+                    player,
+                    target,
+                    "amount={} source={} route=deferred_to_damage_pre targetHealth={}",
+                    event.getAmount(),
+                    source.getMsgId(),
+                    WeaponCombatDebug.health(target)
+            );
+            return;
+        }
 
         long nowTick = target.level().getGameTime();
         WeaponDamageAdmission admission = classifyWeaponDamageProvenance(
@@ -143,8 +237,19 @@ public class WeaponCombatEvents {
                 target,
                 nowTick
         );
+        WeaponCombatDebug.log(
+                "incoming_damage",
+                player,
+                target,
+                "amount={} source={} provenance={} targetHealth={}",
+                event.getAmount(),
+                source.getMsgId(),
+                admission.provenance(),
+                WeaponCombatDebug.health(target)
+        );
         if (!isEligibleWeaponDamageSource(admission.provenance())) return;
 
+        float nativeInputDamage = event.getAmount();
         WeaponIncomingHitStore.discardExpired(nowTick);
         IncomingWeaponResolution resolution = evaluateWeaponHit(
                 player,
@@ -154,16 +259,38 @@ public class WeaponCombatEvents {
                 admission,
                 null
         );
-        if (resolution == null) return;
+        if (resolution == null) {
+            WeaponCombatDebug.log(
+                    "incoming_damage_unresolved",
+                    player,
+                    target,
+                    "provenance={} targetHealth={}",
+                    admission.provenance(),
+                    WeaponCombatDebug.health(target)
+            );
+            return;
+        }
 
-        event.setAmount(resolution.authoritativeDamage());
+        WeaponCombatDebug.log(
+                "incoming_damage_authoritative",
+                player,
+                target,
+                "amount={} nativeProbe={} suppressed={} targetHealth={}",
+                resolution.authoritativeDamage(),
+                nativeInputDamage,
+                resolution.hit() == null,
+                WeaponCombatDebug.health(target)
+        );
         if (resolution.hit() != null) {
             WeaponIncomingHitStore.bind(
                     event.getContainer(),
                     resolution.hit(),
+                    nativeInputDamage,
                     nowTick,
                     nowTick + 2L
             );
+        } else {
+            event.setAmount(0.0F);
         }
     }
 
@@ -175,6 +302,18 @@ public class WeaponCombatEvents {
             LivingIncomingDamageEvent event
     ) {
         if (event.isCanceled()) {
+            Entity attacker = event.getSource().getEntity();
+            if (attacker instanceof Player player) {
+                WeaponCombatDebug.log(
+                        "incoming_damage_canceled",
+                        player,
+                        event.getEntity(),
+                        "amount={} source={} targetHealth={}",
+                        event.getAmount(),
+                        event.getSource().getMsgId(),
+                        WeaponCombatDebug.health(event.getEntity())
+                );
+            }
             WeaponIncomingHitStore.discard(event.getContainer());
         }
     }
@@ -343,8 +482,29 @@ public class WeaponCombatEvents {
                 : null;
         long nowTick = target.level().getGameTime();
 
+        if (player != null) {
+            WeaponCombatDebug.log(
+                    "damage_pre",
+                    player,
+                    target,
+                    "amount={} source={} inStardewDimension={} targetHealth={}",
+                    event.getNewDamage(),
+                    source.getMsgId(),
+                    DimensionDamageMapper.isInStardewDimension(target),
+                    WeaponCombatDebug.health(target)
+            );
+        }
+
         if (target instanceof ServerPlayer
                 && DimensionDamageMapper.isInStardewDimension(target)) {
+            WeaponCombatDebug.log(
+                    "damage_pre_zeroed_stardew_player",
+                    player,
+                    target,
+                    "amountBefore={} targetHealth={}",
+                    event.getNewDamage(),
+                    WeaponCombatDebug.health(target)
+            );
             event.setNewDamage(0.0F);
             return;
         }
@@ -367,16 +527,65 @@ public class WeaponCombatEvents {
                     admission,
                     null
             );
-            if (resolution == null) return;
+            if (resolution == null) {
+                WeaponCombatDebug.log(
+                        "damage_pre_unresolved",
+                        player,
+                        target,
+                        "targetHealth={}",
+                        WeaponCombatDebug.health(target)
+                );
+                return;
+            }
             event.setNewDamage(resolution.authoritativeDamage());
             hit = resolution.hit();
         } else {
-            hit = WeaponIncomingHitStore.consume(
+            WeaponIncomingHitStore.ProtectedHit protectedHit =
+                    WeaponIncomingHitStore.consume(
                     event.getContainer(),
                     nowTick
             );
+            hit = protectedHit == null ? null : protectedHit.hit();
+            if (protectedHit != null) {
+                float protectedNativeDamage = event.getNewDamage();
+                float authoredDamage = NativeWeaponDamageBridge
+                        .applyProtectionRatio(
+                                hit.finalDamage(),
+                                protectedHit.nativeInputDamage(),
+                                protectedNativeDamage
+                        );
+                event.setNewDamage(authoredDamage);
+                WeaponCombatDebug.log(
+                        "damage_pre_native_bridge",
+                        player,
+                        target,
+                        "nativeInput={} protectedNative={} authored={} targetHealth={}",
+                        protectedHit.nativeInputDamage(),
+                        protectedNativeDamage,
+                        authoredDamage,
+                        WeaponCombatDebug.health(target)
+                );
+            }
         }
-        if (hit == null) return;
+        if (hit == null) {
+            WeaponCombatDebug.log(
+                    "damage_pre_no_bound_hit",
+                    player,
+                    target,
+                    "amount={} targetHealth={}",
+                    event.getNewDamage(),
+                    WeaponCombatDebug.health(target)
+            );
+            return;
+        }
+        WeaponCombatDebug.log(
+                "damage_pre_committed",
+                player,
+                target,
+                "amount={} targetHealth={}",
+                event.getNewDamage(),
+                WeaponCombatDebug.health(target)
+        );
         hit.preparationReservation().commit();
         WeaponEvaluatedHitCoordinator.apply(hit);
     }
@@ -591,6 +800,16 @@ public class WeaponCombatEvents {
         Entity attacker = event.getSource().getEntity();
         if (!(attacker instanceof Player player)) return;
 
+        WeaponCombatDebug.log(
+                "damage_post",
+                player,
+                target,
+                "appliedDamage={} source={} targetHealth={}",
+                event.getNewDamage(),
+                event.getSource().getMsgId(),
+                WeaponCombatDebug.health(target)
+        );
+
         long nowTick = target.level().getGameTime();
         DamageNumberContextStore.Meta meta = DamageNumberContextStore.consume(
                 player,
@@ -600,9 +819,32 @@ public class WeaponCombatEvents {
         );
         if (meta == null) return;
 
-        WeaponAppliedHitCoordinator.apply(
-                ResolvedWeaponHit.from(event, player, meta, nowTick)
+        ResolvedWeaponHit resolvedHit = ResolvedWeaponHit.from(
+                event,
+                player,
+                meta,
+                nowTick
         );
+        WeaponAppliedHitCoordinator.apply(resolvedHit);
+
+        if (resolvedHit.dealtPositiveDamage()
+                && "normal".equals(
+                        resolvedHit.authoredSkillContext().getSkillId()
+                )) {
+            OrdinaryAttackCooldownHandoffStore.record(
+                    player,
+                    target,
+                    nowTick
+            );
+            WeaponCombatDebug.log(
+                    "ordinary_attack_handoff_recorded",
+                    player,
+                    target,
+                    "targetHealth={} appliedDamage={}",
+                    WeaponCombatDebug.health(target),
+                    event.getNewDamage()
+            );
+        }
     }
 
     private static boolean isSweepDamageSource(DamageSource source) {

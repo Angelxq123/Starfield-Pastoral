@@ -1,9 +1,11 @@
 package com.stardew.craft.mixin;
 
 import com.stardew.craft.combat.OrdinaryWeaponAttackFrameStore;
-import com.stardew.craft.combat.WeaponStats;
 import com.stardew.craft.combat.WeaponCombatIdentity;
+import com.stardew.craft.combat.WeaponCombatDebug;
+import com.stardew.craft.combat.WeaponCombatEvents;
 import com.stardew.craft.combat.skill.WeaponDamageSnapshot;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Player.class)
 public abstract class PlayerSweepAttackMixin {
+    private static final float NATIVE_DAMAGE_SENTINEL = 1.0F;
+
     @Redirect(
             method = "attack",
             at = @At(
@@ -49,11 +53,49 @@ public abstract class PlayerSweepAttackMixin {
                 snapshot,
                 player.level().getGameTime()
         );
+        float stardewDamageInput = stableStardewDamageInput(vanillaDamage);
+        float healthBefore = combatTarget.getHealth();
+        WeaponCombatDebug.log(
+                "native_hurt_begin",
+                player,
+                combatTarget,
+                "vanillaInput={} stardewInput={} invulnerableTime={} lastHurt={} bypassesCooldown={} targetHealth={}",
+                vanillaDamage,
+                stardewDamageInput,
+                combatTarget.invulnerableTime,
+                WeaponCombatDebug.lastHurt(combatTarget),
+                source.is(DamageTypeTags.BYPASSES_COOLDOWN),
+                WeaponCombatDebug.health(combatTarget)
+        );
         try {
-            return target.hurt(
+            boolean accepted = target.hurt(
                     source,
-                    stableStardewDamageInput(vanillaDamage)
+                    stardewDamageInput
             );
+            if (!accepted) {
+                WeaponCombatDebug.log(
+                        "native_hurt_rejected",
+                        player,
+                        combatTarget,
+                        "bukkit={} targetHealth={}",
+                        WeaponCombatDebug.bukkitRejection(combatTarget),
+                        WeaponCombatDebug.health(combatTarget)
+                );
+                WeaponCombatEvents.discardRejectedNativeHit(player);
+            }
+            WeaponCombatDebug.log(
+                "native_hurt_end",
+                player,
+                combatTarget,
+                    "accepted={} healthBefore={} healthAfter={} invulnerableTime={} lastHurt={} alive={}",
+                    accepted,
+                    healthBefore,
+                    combatTarget.getHealth(),
+                    combatTarget.invulnerableTime,
+                    WeaponCombatDebug.lastHurt(combatTarget),
+                    combatTarget.isAlive()
+            );
+            return accepted;
         } finally {
             OrdinaryWeaponAttackFrameStore.discard(
                     player,
@@ -88,11 +130,13 @@ public abstract class PlayerSweepAttackMixin {
         if (!WeaponCombatIdentity.isWeapon(weapon)) {
             return vanillaDamage;
         }
-        float averageDamage = WeaponStats.fromItemStack(weapon)
-                .getAverageDamage();
-        return Float.isFinite(averageDamage)
-                ? Math.max(0.001F, averageDamage)
-                : 0.001F;
+        // Keep Player.attack's native damage as the Bukkit/Youer probe. A
+        // one-point probe can be reduced to zero by armor or a server plugin
+        // before LivingDamageEvent.Pre is reached. The Stardew amount is
+        // restored in WeaponCombatEvents after that native protection pass.
+        return Float.isFinite(vanillaDamage)
+                ? Math.max(NATIVE_DAMAGE_SENTINEL, vanillaDamage)
+                : NATIVE_DAMAGE_SENTINEL;
     }
 
     private static LivingEntity canonicalLivingTarget(Entity target) {

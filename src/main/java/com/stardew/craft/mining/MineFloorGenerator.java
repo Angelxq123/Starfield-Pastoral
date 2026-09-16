@@ -9,6 +9,7 @@ import com.stardew.craft.api.v1.mining.StardewMineMonsterProfile;
 import com.stardew.craft.api.v1.mining.StardewMineMonsterProfiles;
 import com.stardew.craft.api.v1.mining.StardewMineMonsterProviders;
 import com.stardew.craft.api.v1.mining.StardewMineThemeDefinition;
+import com.stardew.craft.event.MineMonsterSpawnHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -33,7 +34,9 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -56,7 +59,8 @@ import java.util.Set;
 @SuppressWarnings({"null", "unused"})
 public class MineFloorGenerator {
 
-    private static final int GENERATION_VERSION = 24;
+    private static final int GENERATION_VERSION = 26;
+    private static final int INITIAL_MONSTER_SPAWN_DELAY_TICKS = 40;
 
     // Perlin 噪声频率 — 控制地质带宽度（越小越宽）
     private static final double PERLIN_FREQ = 0.08;
@@ -136,6 +140,8 @@ public class MineFloorGenerator {
             && existingData != null
             && existingData.getGenerationVersion() == GENERATION_VERSION) {
             StardewCraft.LOGGER.info("[MINE] Floor {} already generated today, skipping refresh.", floorNumber);
+            scheduleReusedFloorMonsterRepair(
+                    level, floorNumber, existingData.getEnemyCount());
             return;
         }
         clearExistingFloorMobs(level, floorNumber);
@@ -245,20 +251,20 @@ public class MineFloorGenerator {
     // 记录当日已生成
     manager.markGenerated(floorNumber);
 
-    // 11. 预放置怪物（所有类型，不依赖原生刷怪）
-        int monstersSpawned = spawnMonsters(
+    // 11. 玩家传送完成后的下一 tick 投放怪物，避开混合端的无人区生成过滤。
+        floorData.setEnemyCount(0);
+        manager.setFloorData(floorNumber, floorData);
+        scheduleInitialMonsterSpawn(
                 level, random, centerX, centerZ, floorNumber, isDark,
                 stonePlacementChance, originalMonsterRoll, traversableSurface);
-        floorData.setEnemyCount(monstersSpawned);
-        manager.setFloorData(floorNumber, floorData);
         
         StardewCraft.LOGGER.info(
                 "[MINE] Floor {} generation complete: traversable={}, exposed={}, stoneChance={}, "
-                        + "metals={}, coal={}, diamonds={}, gems={}, surfaceItems={}, barrels={}, monsters={}, ladderStones={}",
+                        + "metals={}, coal={}, diamonds={}, gems={}, surfaceItems={}, barrels={}, monsters=pending, ladderStones={}",
                 floorNumber, traversableSurface.size(), exposedStones.size(),
                 String.format(java.util.Locale.ROOT, "%.2f", stonePlacementChance),
                 metalNodesPlaced, coalNodesPlaced, diamondNodesPlaced, gemNodesPlaced, surfaceItemsPlaced,
-                barrelsPlaced, monstersSpawned, stonesLeft);
+                barrelsPlaced, stonesLeft);
     }
 
     private static void clearExistingFloorMobs(ServerLevel level, int floorNumber) {
@@ -438,15 +444,21 @@ public class MineFloorGenerator {
      * 先保留原版“石头抽取失败后才抽怪物”的串联概率，再按 Minecraft
      * 实体的控制范围与战斗耗时折算密度；总量始终随实际可行走表面变化。
      */
-    private static int spawnMonsters(ServerLevel level, RandomSource random,
-                                     int centerX, int centerZ, int floorNumber,
-                                     boolean isDark, double stonePlacementChance,
-                                     double originalMonsterRoll,
-                                     List<BlockPos> traversableSurface) {
+    private static MonsterSpawnResult spawnMonsters(
+            ServerLevel level,
+            RandomSource random,
+            int centerX,
+            int centerZ,
+            int floorNumber,
+            boolean isDark,
+            double stonePlacementChance,
+            double originalMonsterRoll,
+            List<BlockPos> traversableSurface
+    ) {
         if (floorNumber <= 0
                 || (floorNumber < 121 && floorNumber % 10 == 0)
                 || traversableSurface.isEmpty()) {
-            return 0;
+            return MonsterSpawnResult.empty();
         }
 
         double monsterChance = MineGenerationBalance.monsterChancePerTile(
@@ -464,6 +476,26 @@ public class MineFloorGenerator {
                 floorNumber, totalCount,
                 hasMonsterMuskPlayer(level, floorNumber));
         if (totalCount <= 0) {
+            return MonsterSpawnResult.empty();
+        }
+
+        int spawned = spawnMonsterBatch(
+                level, random, centerX, centerZ, floorNumber, isDark,
+                traversableSurface, totalCount);
+        return new MonsterSpawnResult(totalCount, spawned);
+    }
+
+    private static int spawnMonsterBatch(
+            ServerLevel level,
+            RandomSource random,
+            int centerX,
+            int centerZ,
+            int floorNumber,
+            boolean isDark,
+            List<BlockPos> traversableSurface,
+            int totalCount
+    ) {
+        if (totalCount <= 0 || traversableSurface.isEmpty()) {
             return 0;
         }
 
@@ -471,13 +503,38 @@ public class MineFloorGenerator {
 
         int spawned = 0;
         int maxAttempts = totalCount * 12;
+        SpawnBatchStats stats = new SpawnBatchStats();
+        List<BlockPos> nearEntranceSurface = new ArrayList<>(
+                traversableSurface.stream()
+                        .filter(pos -> MineGenerationBalance
+                                .isNearEntranceSpawnCandidate(
+                                        pos.getX(), pos.getY(), pos.getZ(),
+                                        centerX, SAFE_ZONE_Y_START + 1, centerZ))
+                        .toList());
+        BlockPos entrance = new BlockPos(
+                centerX, SAFE_ZONE_Y_START + 1, centerZ);
+        nearEntranceSurface.sort(java.util.Comparator.comparingDouble(
+                pos -> pos.distSqr(entrance)));
+        stats.nearEntranceCandidates = nearEntranceSurface.size();
+        int nearSpawnTarget = MineGenerationBalance
+                .nearEntranceSpawnTarget(totalCount);
 
         for (int attempt = 0; attempt < maxAttempts && spawned < totalCount; attempt++) {
-            BlockPos spawnPos = traversableSurface.get(random.nextInt(traversableSurface.size()));
+            stats.attempts++;
+            BlockPos spawnPos;
+            if (spawned < nearSpawnTarget && !nearEntranceSurface.isEmpty()) {
+                int nearestPoolSize = Math.min(32, nearEntranceSurface.size());
+                spawnPos = nearEntranceSurface.remove(
+                        random.nextInt(nearestPoolSize));
+            } else {
+                spawnPos = traversableSurface.get(
+                        random.nextInt(traversableSurface.size()));
+            }
             int x = spawnPos.getX();
             int z = spawnPos.getZ();
             if (!level.getBlockState(spawnPos).isAir()
                     || !level.getBlockState(spawnPos.above()).isAir()) {
+                stats.spaceRejected++;
                 continue;
             }
 
@@ -487,6 +544,7 @@ public class MineFloorGenerator {
             MonsterSelection selection = pickMonsterForFloor(
                     floorNumber, random, isDark, distFromCenter);
             EntityType<?> type = selection.entityType();
+            stats.recordType(type);
             if (floorNumber > 120) {
                 EntityType<?> invaded =
                         com.stardew.craft.festival.desert
@@ -518,29 +576,28 @@ public class MineFloorGenerator {
                 if (!level.getBlockState(pos).isAir()) continue;
 
                 net.minecraft.world.entity.Mob mob = (net.minecraft.world.entity.Mob) type.create(level);
-                if (mob != null) {
-                    mob.moveTo(x + 0.5, y, z + 0.5, random.nextFloat() * 360, 0);
-                    mob.setPersistenceRequired();
-                    markSelectedProfile(mob, selection);
-                    if (level.addFreshEntity(mob)) {
-                        spawned++;
-                    }
+                if (mob != null && submitGeneratedMonster(
+                        level, mob, selection, x + 0.5, y, z + 0.5,
+                        floorNumber, random, stats)) {
+                    spawned++;
                 }
             } else {
                 BlockPos below = spawnPos.below();
                 if (!level.getBlockState(below).isAir()) {
                     net.minecraft.world.entity.Mob mob = (net.minecraft.world.entity.Mob) type.create(level);
-                    if (mob != null) {
-                        mob.moveTo(x + 0.5, spawnPos.getY(), z + 0.5, random.nextFloat() * 360, 0);
-                        mob.setPersistenceRequired();
-                        markSelectedProfile(mob, selection);
-                        if (level.addFreshEntity(mob)) {
-                            spawned++;
-                        }
+                    if (mob != null && submitGeneratedMonster(
+                            level, mob, selection, x + 0.5, spawnPos.getY(), z + 0.5,
+                            floorNumber, random, stats)) {
+                        spawned++;
                     }
+                } else {
+                    stats.spaceRejected++;
                 }
             }
         }
+
+        logMonsterSpawnDiagnostics(
+                floorNumber, totalCount, maxAttempts, spawned, stats);
 
         if (spawned > 0) {
             StardewCraft.LOGGER.info("[MINE] Spawned {} monsters on floor {} (target={})", 
@@ -552,16 +609,347 @@ public class MineFloorGenerator {
         return spawned;
     }
 
-    private static void markSelectedProfile(
+    private static boolean submitGeneratedMonster(
+            ServerLevel level,
             Mob mob,
-            MonsterSelection selection
+            MonsterSelection selection,
+            double x,
+            double y,
+            double z,
+            int floorNumber,
+            RandomSource random,
+            SpawnBatchStats stats
     ) {
-        if (selection.profileId() != null
-                && !StardewMineMonsterProfiles.mark(
-                        mob, selection.profileId())) {
-            StardewCraft.LOGGER.error(
-                    "[MINE] Selected unknown monster profile {}",
-                    selection.profileId());
+        mob.moveTo(x, y, z, random.nextFloat() * 360, 0);
+        mob.setPersistenceRequired();
+        stats.created++;
+        if (!MineMonsterSpawnHandler.configureGeneratedMonster(
+                mob, selection.profileId(), floorNumber)) {
+            stats.profileRejected++;
+            mob.discard();
+            return false;
+        }
+
+        if (!hasClearSpawnSpace(level, mob)) {
+            stats.collisionRejected++;
+            mob.discard();
+            return false;
+        }
+        if (!MineMonsterSpawnHandler.addWithSpawnReason(level, mob)) {
+            stats.levelRejected++;
+            mob.discard();
+            return false;
+        }
+        stats.accepted++;
+        stats.minAcceptedY = Math.min(stats.minAcceptedY, mob.getBlockY());
+        stats.maxAcceptedY = Math.max(stats.maxAcceptedY, mob.getBlockY());
+        return true;
+    }
+
+    /** Checks the block cells covered by the entity's actual pre-join box. */
+    private static boolean hasClearSpawnSpace(ServerLevel level, Mob mob) {
+        AABB box = mob.getBoundingBox();
+        int minX = (int) Math.floor(box.minX);
+        int maxX = (int) Math.floor(box.maxX - 1.0E-7D);
+        int minY = (int) Math.floor(box.minY);
+        int maxY = (int) Math.floor(box.maxY - 1.0E-7D);
+        int minZ = (int) Math.floor(box.minZ);
+        int maxZ = (int) Math.floor(box.maxZ - 1.0E-7D);
+        for (int blockX = minX; blockX <= maxX; blockX++) {
+            for (int blockY = minY; blockY <= maxY; blockY++) {
+                for (int blockZ = minZ; blockZ <= maxZ; blockZ++) {
+                    if (!level.getBlockState(new BlockPos(blockX, blockY, blockZ)).isAir()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private static void logMonsterSpawnDiagnostics(
+            int floorNumber,
+            int target,
+            int maxAttempts,
+            int spawned,
+            SpawnBatchStats stats
+    ) {
+        if (!com.stardew.craft.Config.isServerDebugLoggingEnabled()) {
+            return;
+        }
+        StardewCraft.LOGGER.info(
+                "[MINE] Spawn diagnostics floor={} target={} spawned={} attempts={}/{} "
+                        + "created={} profileRejected={} spaceRejected={} collisionRejected={} "
+                        + "levelRejected={} nearCandidates={} acceptedY={} types={}",
+                floorNumber, target, spawned, stats.attempts, maxAttempts,
+                stats.created, stats.profileRejected, stats.spaceRejected,
+                stats.collisionRejected, stats.levelRejected,
+                stats.nearEntranceCandidates, stats.acceptedYRange(), stats.types);
+    }
+
+    private static final class SpawnBatchStats {
+        private int attempts;
+        private int created;
+        private int profileRejected;
+        private int spaceRejected;
+        private int collisionRejected;
+        private int levelRejected;
+        private int accepted;
+        private int nearEntranceCandidates;
+        private int minAcceptedY = Integer.MAX_VALUE;
+        private int maxAcceptedY = Integer.MIN_VALUE;
+        private final Map<String, Integer> types = new LinkedHashMap<>();
+
+        private void recordType(EntityType<?> type) {
+            String id = BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
+            types.merge(id, 1, Integer::sum);
+        }
+
+        private String acceptedYRange() {
+            return accepted == 0 ? "none" : minAcceptedY + ".." + maxAcceptedY;
+        }
+    }
+
+    private static void scheduleInitialMonsterSpawn(
+            ServerLevel level,
+            RandomSource random,
+            int centerX,
+            int centerZ,
+            int floorNumber,
+            boolean isDark,
+            double stonePlacementChance,
+            double originalMonsterRoll,
+            List<BlockPos> traversableSurface
+    ) {
+        List<BlockPos> candidates = List.copyOf(traversableSurface);
+        com.stardew.craft.time.StardewSimulationTaskScheduler.schedule(
+                level,
+                INITIAL_MONSTER_SPAWN_DELAY_TICKS,
+                () -> {
+                    MonsterSpawnResult result = spawnMonsters(
+                            level, random, centerX, centerZ, floorNumber,
+                            isDark, stonePlacementChance,
+                            originalMonsterRoll, candidates);
+                    MineFloorDataManager manager =
+                            MineFloorDataManager.get(level);
+                    MineFloorData floorData =
+                            manager.getFloorData(floorNumber);
+                    if (floorData != null) {
+                        floorData.setEnemyCount(result.spawned());
+                        manager.setFloorData(floorNumber, floorData);
+                    }
+                    scheduleMonsterSpawnVerification(
+                            level, floorNumber, result.target(),
+                            isDark, candidates);
+                });
+    }
+
+    private static void scheduleReusedFloorMonsterRepair(
+            ServerLevel level,
+            int floorNumber,
+            int persistedEnemyCount
+    ) {
+        int expected = MineGenerationBalance.expectedReusedFloorPopulation(
+                floorNumber, persistedEnemyCount);
+        if (expected <= 0) {
+            return;
+        }
+        com.stardew.craft.time.StardewSimulationTaskScheduler.schedule(
+                level,
+                INITIAL_MONSTER_SPAWN_DELAY_TICKS,
+                () -> {
+                    int alive = countGeneratedMonsters(level, floorNumber);
+                    if (alive >= expected) {
+                        return;
+                    }
+                    List<BlockPos> candidates =
+                            collectReusedFloorMonsterCandidates(
+                                    level, floorNumber);
+                    if (candidates.isEmpty()) {
+                        StardewCraft.LOGGER.warn(
+                                "[MINE] Cannot repair monster population on reused floor {}: no entrance-band spawn candidates",
+                                floorNumber);
+                        return;
+                    }
+                    replenishMissingMonsters(
+                            level, floorNumber, expected, alive,
+                            false, candidates);
+                    scheduleMonsterPopulationDebugSnapshot(
+                            level, floorNumber, expected, 5);
+                });
+    }
+
+    private static List<BlockPos> collectReusedFloorMonsterCandidates(
+            ServerLevel level,
+            int floorNumber
+    ) {
+        BlockPos center = MiningCoordinates.getFloorCenter(floorNumber);
+        List<BlockPos> candidates = new ArrayList<>();
+        for (int x = center.getX() - 28; x <= center.getX() + 28; x++) {
+            for (int z = center.getZ() - 28; z <= center.getZ() + 28; z++) {
+                for (int y = SAFE_ZONE_Y_START - 4;
+                     y <= SAFE_ZONE_Y_START + 5; y++) {
+                    if (!MineGenerationBalance.isNearEntranceSpawnCandidate(
+                            x, y, z,
+                            center.getX(), SAFE_ZONE_Y_START + 1,
+                            center.getZ())) {
+                        continue;
+                    }
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (level.getBlockState(pos).isAir()
+                            && level.getBlockState(pos.above()).isAir()
+                            && !level.getBlockState(pos.below()).isAir()) {
+                        candidates.add(pos);
+                    }
+                }
+            }
+        }
+        candidates.sort(java.util.Comparator.comparingDouble(
+                pos -> pos.distSqr(center)));
+        return candidates;
+    }
+
+    private static void scheduleMonsterSpawnVerification(
+            ServerLevel level,
+            int floorNumber,
+            int expected,
+            boolean isDark,
+            List<BlockPos> traversableSurface
+    ) {
+        if (expected <= 0) {
+            return;
+        }
+        com.stardew.craft.time.StardewSimulationTaskScheduler.schedule(
+                level,
+                40,
+                () -> {
+                    List<Mob> aliveMonsters = generatedMonstersOnFloor(
+                            level, floorNumber);
+                    int alive = aliveMonsters.size();
+                    logMonsterPopulationDebug(
+                            level, floorNumber, expected, aliveMonsters);
+                    if (alive < expected) {
+                        replenishMissingMonsters(
+                                level, floorNumber, expected, alive,
+                                isDark, traversableSurface);
+                        scheduleMonsterPopulationDebugSnapshot(
+                                level, floorNumber, expected, 5);
+                    }
+                });
+    }
+
+    private static void scheduleMonsterPopulationDebugSnapshot(
+            ServerLevel level,
+            int floorNumber,
+            int expected,
+            int delayTicks
+    ) {
+        if (!com.stardew.craft.Config.isServerDebugLoggingEnabled()) {
+            return;
+        }
+        com.stardew.craft.time.StardewSimulationTaskScheduler.schedule(
+                level,
+                delayTicks,
+                () -> logMonsterPopulationDebug(
+                        level,
+                        floorNumber,
+                        expected,
+                        generatedMonstersOnFloor(level, floorNumber)));
+    }
+
+    private static int countGeneratedMonsters(
+            ServerLevel level,
+            int floorNumber
+    ) {
+        return generatedMonstersOnFloor(level, floorNumber).size();
+    }
+
+    private static List<Mob> generatedMonstersOnFloor(
+            ServerLevel level,
+            int floorNumber
+    ) {
+        BlockPos center = MiningCoordinates.getFloorCenter(floorNumber);
+        int halfSize = MAX_SIZE / 2 + 8;
+        AABB bounds = new AABB(
+                center.getX() - halfSize, FLOOR_Y_START - 4,
+                center.getZ() - halfSize,
+                center.getX() + halfSize, FLOOR_Y_END + 8,
+                center.getZ() + halfSize);
+        return level.getEntitiesOfClass(
+                Mob.class, bounds,
+                mob -> mob.getTags().stream()
+                        .anyMatch(tag -> tag.startsWith("sd_mob_")));
+    }
+
+    private static void logMonsterPopulationDebug(
+            ServerLevel level,
+            int floorNumber,
+            int expected,
+            List<Mob> monsters
+    ) {
+        if (!com.stardew.craft.Config.isServerDebugLoggingEnabled()) {
+            return;
+        }
+        List<ServerPlayer> players = level.players().stream()
+                .filter(player -> MineMonsterSpawnHandler.inferFloor(player)
+                        == floorNumber)
+                .toList();
+        java.util.StringJoiner details = new java.util.StringJoiner(", ");
+        monsters.stream().limit(12).forEach(mob -> {
+            double nearest = players.stream()
+                    .mapToDouble(player -> player.distanceToSqr(mob))
+                    .min()
+                    .orElse(Double.POSITIVE_INFINITY);
+            details.add(String.format(
+                    java.util.Locale.ROOT,
+                    "%s#%d@(%d,%d,%d) invisible=%s nearest=%.1f",
+                    BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()),
+                    mob.getId(), mob.getBlockX(), mob.getBlockY(),
+                    mob.getBlockZ(), mob.isInvisible(),
+                    Math.sqrt(nearest)
+            ));
+            details.add("watching=" + level.getChunkSource().chunkMap
+                    .getPlayersWatching(mob).size());
+        });
+        StardewCraft.LOGGER.info(
+                "[MINE_DEBUG] population floor={} expected={} alive={} players={} mobs=[{}]",
+                floorNumber, expected, monsters.size(), players.size(),
+                details);
+    }
+
+    private static void replenishMissingMonsters(
+            ServerLevel level,
+            int floorNumber,
+            int expected,
+            int alive,
+            boolean isDark,
+            List<BlockPos> traversableSurface
+    ) {
+        BlockPos center = MiningCoordinates.getFloorCenter(floorNumber);
+        int repaired = spawnMonsterBatch(
+                level, level.getRandom(), center.getX(), center.getZ(),
+                floorNumber, isDark, traversableSurface, expected - alive);
+        int finalCount = alive + repaired;
+        MineFloorDataManager manager = MineFloorDataManager.get(level);
+        MineFloorData floorData = manager.getFloorData(floorNumber);
+        if (floorData != null) {
+            floorData.setEnemyCount(finalCount);
+            manager.setFloorData(floorNumber, floorData);
+        }
+        if (finalCount < expected) {
+            StardewCraft.LOGGER.warn(
+                    "[MINE] Monster population repair incomplete on floor {}: target={}, alive={}, repaired={}, final={}",
+                    floorNumber, expected, alive, repaired, finalCount);
+        } else {
+            StardewCraft.LOGGER.info(
+                    "[MINE] Repaired {} missing monster(s) on floor {}",
+                    repaired, floorNumber);
+        }
+    }
+
+    private record MonsterSpawnResult(int target, int spawned) {
+        private static MonsterSpawnResult empty() {
+            return new MonsterSpawnResult(0, 0);
         }
     }
 

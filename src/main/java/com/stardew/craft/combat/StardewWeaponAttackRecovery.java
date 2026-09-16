@@ -15,24 +15,37 @@ import net.minecraft.world.item.ItemStack;
  * Authored skill damage does not enter this class.</p>
  */
 public final class StardewWeaponAttackRecovery {
-    private static final Map<UUID, Double> READY_TICKS = new HashMap<>();
+    private static final Map<UUID, RecoveryState> RECOVERY_STATES =
+            new HashMap<>();
 
     private StardewWeaponAttackRecovery() {
     }
 
     public static boolean tryAcquire(
             ServerPlayer player,
-            ItemStack weapon,
-            long nowTick
+            ItemStack weapon
     ) {
         WeaponStats stats = WeaponStats.fromItemStack(weapon);
         float equipmentSpeed = EquipmentResolver.getMergedStats(player)
                 .getWeaponSpeedMultiplier();
         return tryAcquire(
                 player.getUUID(),
-                nowTick,
+                Integer.toUnsignedLong(player.server.getTickCount()),
                 recoveryIntervalTicks(stats, equipmentSpeed)
         );
+    }
+
+    /**
+     * Compatibility overload for callers compiled against 0.5.4-0.5.6.
+     * Dimension game time is deliberately ignored because it may pause or
+     * move backwards when a player changes Stardew dimensions.
+     */
+    public static boolean tryAcquire(
+            ServerPlayer player,
+            ItemStack weapon,
+            long ignoredDimensionTick
+    ) {
+        return tryAcquire(player, weapon);
     }
 
     static double recoveryIntervalTicks(
@@ -76,24 +89,41 @@ public final class StardewWeaponAttackRecovery {
             long nowTick,
             double recoveryTicks
     ) {
-        double interval = Math.max(1.0D, recoveryTicks);
-        Double readyTick = READY_TICKS.get(playerId);
-        if (readyTick != null && nowTick + 1.0E-9D < readyTick) {
+        double interval = Double.isFinite(recoveryTicks)
+                ? Math.max(1.0D, recoveryTicks)
+                : 1.0D;
+        RecoveryState state = RECOVERY_STATES.get(playerId);
+        if (state != null && nowTick < state.lastObservedTick()) {
+            state = null;
+        }
+        if (state != null && nowTick + 1.0E-9D < state.readyTick()) {
+            RECOVERY_STATES.put(
+                    playerId,
+                    new RecoveryState(state.readyTick(), nowTick)
+            );
             return false;
         }
-        double scheduleBase = readyTick != null
-                && nowTick - readyTick < interval
-                ? readyTick
+        double scheduleBase = state != null
+                && nowTick - state.readyTick() < interval
+                ? state.readyTick()
                 : nowTick;
-        READY_TICKS.put(
+        RECOVERY_STATES.put(
                 playerId,
-                Math.min((double) Long.MAX_VALUE, scheduleBase + interval)
+                new RecoveryState(
+                        Math.min(
+                                (double) Long.MAX_VALUE,
+                                scheduleBase + interval
+                        ),
+                        nowTick
+                )
         );
         return true;
     }
 
     public static synchronized void clear(UUID playerId) {
-        READY_TICKS.remove(playerId);
+        RECOVERY_STATES.remove(playerId);
     }
+
+    private record RecoveryState(double readyTick, long lastObservedTick) {}
 
 }

@@ -160,6 +160,24 @@ class ClientOvernightFlowTest {
     }
 
     @Test
+    void lateJoinBarrierOnlyAutomaticallyAcknowledgesAfterWorldReady() {
+        RecordingGateway gateway = new RecordingGateway();
+        ClientOvernightFlow flow = new ClientOvernightFlow(gateway);
+
+        flow.receiveBarrierState(new OvernightBarrierPayload(226, true));
+        flow.receiveSettlement(OvernightSettlementPayload.barrierOnly(226));
+
+        assertTrue(flow.isLocked());
+        assertEquals(List.of(), gateway.acknowledgedDays);
+        assertEquals(List.of(), gateway.startedStages);
+
+        flow.receiveWorldReady(new OvernightWorldReadyPayload(226));
+
+        assertFalse(flow.isLocked());
+        assertEquals(List.of(226), gateway.acknowledgedDays);
+    }
+
+    @Test
     void emptyShipmentStillUsesTheNightSettlementAnimation() {
         assertEquals(
                 List.of(ClientOvernightHandler.SettlementStage.SHIPPING),

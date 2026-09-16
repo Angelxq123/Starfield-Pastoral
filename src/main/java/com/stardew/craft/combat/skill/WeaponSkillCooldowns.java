@@ -16,6 +16,8 @@ import com.stardew.craft.player.ProfessionType;
 public final class WeaponSkillCooldowns {
 
     private static final String TAG_ROOT = "StardewSkillCooldowns";
+    private static final String TAG_CLOCK_VERSION = "clockVersion";
+    private static final int CLOCK_VERSION = 1;
 
     private WeaponSkillCooldowns() {}
 
@@ -31,14 +33,20 @@ public final class WeaponSkillCooldowns {
             return 0;
         }
         CompoundTag cd = root.getCompound(TAG_ROOT);
+        // Older releases stored an expiry from the active dimension. Do not
+        // reinterpret that value as the new persistent server clock.
+        if (!cd.contains(TAG_CLOCK_VERSION)
+                || cd.getInt(TAG_CLOCK_VERSION) != CLOCK_VERSION) {
+            return 0;
+        }
         String key = getKey(weaponId, skillId);
         if (!cd.contains(key)) {
             return 0;
         }
         @SuppressWarnings("null")
         long nextTick = cd.getLong(key);
-        long remaining = nextTick - nowTick;
-        return (int) Math.max(0, remaining);
+        long remaining = nextTick - currentClock(player, nowTick);
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(0, remaining));
     }
 
     @SuppressWarnings("null")
@@ -84,13 +92,16 @@ public final class WeaponSkillCooldowns {
             long nowTick,
             long endTick
     ) {
-        long normalizedEndTick = Math.max(nowTick, endTick);
+        long duration = SkillCooldownTime.durationBetween(nowTick, endTick);
+        long clockNow = currentClock(player, nowTick);
+        long normalizedEndTick = SkillCooldownTime.endAt(clockNow, 0L, duration);
         int remainingTicks = (int) Math.min(
                 Integer.MAX_VALUE,
-                normalizedEndTick - nowTick
+                normalizedEndTick - clockNow
         );
         CompoundTag root = player.getPersistentData();
         CompoundTag cd = root.contains(TAG_ROOT) ? root.getCompound(TAG_ROOT) : new CompoundTag();
+        cd.putInt(TAG_CLOCK_VERSION, CLOCK_VERSION);
         cd.putLong(getKey(weaponId, skillId), normalizedEndTick);
         root.put(TAG_ROOT, cd);
 
@@ -104,6 +115,17 @@ public final class WeaponSkillCooldowns {
                         remainingTicks
                 ));
         }
+    }
+
+    private static long currentClock(Player player, long fallback) {
+        if (player instanceof ServerPlayer serverPlayer
+                && serverPlayer.server != null
+                && serverPlayer.server.overworld() != null) {
+            // The overworld game time is persistent across restarts and is the
+            // same clock regardless of the dimension containing the player.
+            return serverPlayer.server.overworld().getGameTime();
+        }
+        return fallback;
     }
 
     static int adjustedDuration(Player player, int durationTicks) {

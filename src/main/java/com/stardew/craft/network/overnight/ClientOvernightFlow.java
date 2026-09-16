@@ -130,6 +130,16 @@ final class ClientOvernightFlow {
         OvernightSettlementPayload payload = pendingReadyPayload;
         settlementStarted = true;
         ui.startSettlement(absoluteDay, payload);
+        // A late joiner receives a barrier-only payload. There are no
+        // settlement screens to dismiss for that payload, so consider its
+        // local sequence complete and acknowledge it as soon as WORLD_READY
+        // arrives. Otherwise the server barrier would keep the player frozen.
+        if (!payload.personalSettlement()) {
+            settlementSequenceFinished = true;
+            if (worldReady) {
+                finishSettlementSequence();
+            }
+        }
         return true;
     }
 

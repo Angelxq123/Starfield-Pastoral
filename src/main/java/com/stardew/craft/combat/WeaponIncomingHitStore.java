@@ -23,17 +23,20 @@ final class WeaponIncomingHitStore {
     static synchronized void bind(
             DamageContainer container,
             EvaluatedWeaponHit hit,
+            float nativeInputDamage,
             long nowTick,
             long expireTick
     ) {
         discardExpired(nowTick);
         ACTIVE.put(
                 container,
-                new BoundHit(hit.attacker().getUUID(), expireTick, hit)
+                new BoundHit(
+                        hit.attacker().getUUID(), expireTick, hit,
+                        nativeInputDamage)
         );
     }
 
-    static synchronized EvaluatedWeaponHit consume(
+    static synchronized ProtectedHit consume(
             DamageContainer container,
             long nowTick
     ) {
@@ -45,7 +48,7 @@ final class WeaponIncomingHitStore {
             bound.hit().preparationReservation().release();
             return null;
         }
-        return bound.hit();
+        return new ProtectedHit(bound.hit(), bound.nativeInputDamage());
     }
 
     static synchronized void discard(DamageContainer container) {
@@ -82,7 +85,14 @@ final class WeaponIncomingHitStore {
     private record BoundHit(
             UUID attackerId,
             long expireTick,
-            EvaluatedWeaponHit hit
+            EvaluatedWeaponHit hit,
+            float nativeInputDamage
+    ) {
+    }
+
+    record ProtectedHit(
+            EvaluatedWeaponHit hit,
+            float nativeInputDamage
     ) {
     }
 }

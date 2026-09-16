@@ -1,0 +1,8 @@
+name: StarfieldItemsAdderDamageBlocker
+version: '${version}'
+main: com.stardew.compat.itemsadder.ItemsAdderDamageBlockerPlugin
+api-version: '1.21'
+author: StarfieldPastoral
+description: Disables ItemsAdder's player protection damage listener while keeping its resource-pack features.
+softdepend:
+  - ItemsAdder

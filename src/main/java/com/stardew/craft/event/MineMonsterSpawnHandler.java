@@ -19,16 +19,21 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.MobDespawnEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.lang.reflect.Method;
 import java.util.function.Consumer;
 import java.util.Set;
 
@@ -58,8 +63,10 @@ public class MineMonsterSpawnHandler {
     private static final java.util.Set<String> prismaticSlimeFloors = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private static long lastCountRefreshTick = 0;
     private static final long COUNT_REFRESH_INTERVAL = 60; // refresh every 3 seconds
-
-        private static final java.util.List<String> SUMMONABLE_MONSTER_IDS = java.util.List.of(
+    private static volatile Method youerAddFreshEntityMethod;
+    private static volatile Object youerCustomSpawnReason;
+    private static volatile boolean youerSpawnBridgeResolved;
+    private static final java.util.List<String> SUMMONABLE_MONSTER_IDS = java.util.List.of(
             "mummy",
             "serpent",
             "royal_serpent",
@@ -233,15 +240,150 @@ public class MineMonsterSpawnHandler {
         if (!applySummonProfile(mob, normalizedId, floor)) {
             return null;
         }
+        preserveMineMonsterProxyBehavior(mob);
         if (configureBeforeSpawn != null) {
             configureBeforeSpawn.accept(mob);
         }
-        if (!level.addFreshEntity(mob)) {
+        if (!addWithSpawnReason(level, mob)) {
             return null;
         }
 
         invalidateFloorMobCount(floor);
         return mob;
+    }
+
+    /**
+     * Uses Youer's Bukkit-aware overload when present. Youer routes this path
+     * through addEntityByReason, which preserves CUSTOM while still honoring
+     * its entity limits, bans, and join events. Plain NeoForge keeps using the
+     * native overload without a compile-time Bukkit dependency.
+     */
+    public static boolean addWithSpawnReason(ServerLevel level, Mob mob) {
+        if (level == null || mob == null) {
+            return false;
+        }
+
+        resolveYouerSpawnBridge();
+        Method addMethod = youerAddFreshEntityMethod;
+        Object customReason = youerCustomSpawnReason;
+        if (addMethod == null || customReason == null) {
+            return level.addFreshEntity(mob);
+        }
+
+        try {
+            return (Boolean) addMethod.invoke(level, mob, customReason);
+        } catch (ReflectiveOperationException | LinkageError failure) {
+            StardewCraft.LOGGER.debug(
+                    "[MINE] Youer custom spawn bridge invocation failed; using native entity add",
+                    failure);
+            return level.addFreshEntity(mob);
+        }
+    }
+
+    /** Keeps managed mine encounters alive when the shared server difficulty is peaceful. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onMineMonsterDespawn(MobDespawnEvent event) {
+        Mob mob = event.getEntity();
+        if (!ModMiningDimensions.STARDEW_MINING.equals(mob.level().dimension())
+                || mob.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL
+                || !mob.isPersistenceRequired()
+                || mob.getTags().stream().noneMatch(
+                        tag -> tag.startsWith("sd_mob_"))) {
+            return;
+        }
+        event.setResult(MobDespawnEvent.Result.DENY);
+    }
+
+    private static void resolveYouerSpawnBridge() {
+        if (youerSpawnBridgeResolved) {
+            return;
+        }
+        synchronized (MineMonsterSpawnHandler.class) {
+            if (youerSpawnBridgeResolved) {
+                return;
+            }
+
+            try {
+                Class<?> spawnReasonClass = Class.forName(
+                        "org.bukkit.event.entity.CreatureSpawnEvent$SpawnReason");
+                youerAddFreshEntityMethod = ServerLevel.class.getMethod(
+                        "addFreshEntity",
+                        net.minecraft.world.entity.Entity.class,
+                        spawnReasonClass);
+                @SuppressWarnings({"rawtypes", "unchecked"})
+                Object customReason = Enum.valueOf(
+                        (Class<? extends Enum>) spawnReasonClass.asSubclass(Enum.class),
+                        "CUSTOM");
+                youerCustomSpawnReason = customReason;
+            } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+                // Plain NeoForge has no Bukkit bridge and uses the native path.
+            } catch (RuntimeException | LinkageError failure) {
+                StardewCraft.LOGGER.debug(
+                        "[MINE] Youer custom spawn bridge unavailable; using native entity add",
+                        failure);
+            } finally {
+                youerSpawnBridgeResolved = true;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)
+                || !(event.getEntity() instanceof Mob mob)
+                || mob.getTags().stream().noneMatch(
+                        tag -> tag.startsWith("sd_mob_"))) {
+            return;
+        }
+        if (com.stardew.craft.Config.isServerDebugLoggingEnabled()) {
+            StardewCraft.LOGGER.info(
+                    "[MINE_DEBUG] entity_leave type={} id={} reason={} age={} "
+                            + "persistent={} difficulty={} pos={} alive={} tags={}",
+                    EntityType.getKey(mob.getType()),
+                    mob.getId(),
+                    mob.getRemovalReason(),
+                    mob.tickCount,
+                    mob.isPersistenceRequired(),
+                    level.getDifficulty(),
+                    mob.blockPosition(),
+                    mob.isAlive(),
+                    mob.getTags());
+        }
+        invalidateFloorMobCount(getFloorFromPos(mob));
+    }
+
+    /**
+     * Applies the selected mine profile before hybrid-server spawn filters run.
+     * Generated floor mobs must already carry an {@code sd_mob_*} tag when
+     * they are submitted to the level; deferring this to EntityJoinLevelEvent
+     * lets Bukkit-side filters reject otherwise valid low-floor monsters.
+     */
+    public static boolean configureGeneratedMonster(
+            Mob mob,
+            ResourceLocation profileId,
+            int floor
+    ) {
+        if (mob == null) {
+            return false;
+        }
+        if (profileId == null) {
+            boolean configured = applyDefaultProfile(mob, floor);
+            if (configured) {
+                preserveMineMonsterProxyBehavior(mob);
+            }
+            return configured;
+        }
+        if (!StardewMineMonsterProfiles.mark(mob, profileId)) {
+            StardewCraft.LOGGER.error(
+                    "[MINE] Selected unknown monster profile {}",
+                    profileId);
+            return false;
+        }
+        boolean configured = StardewMineMonsterProfiles.applyMarkedProfile(mob, floor);
+        if (configured) {
+            preserveMineMonsterProxyBehavior(mob);
+        }
+        return configured;
     }
 
     @SubscribeEvent
@@ -255,6 +397,7 @@ public class MineMonsterSpawnHandler {
         // 已经标记过的不再重复配置；仅升级旧版写入的英文 literal 名称。
         // 迁移不限于矿井维度，因为神秘森林、变异虫穴与松露蟹也使用同一标记。
         if (mob.getTags().stream().anyMatch(t -> t.startsWith("sd_mob_"))) {
+            preserveMineMonsterProxyBehavior(mob);
             MineMonsterNames.migrateLegacyDisplayName(
                     mob.getCustomName(), mob.getTags()
             ).ifPresent(name -> {
@@ -304,6 +447,20 @@ public class MineMonsterSpawnHandler {
         if (!applyDefaultProfile(mob, floor)) {
             // 不属于矿井怪物映射表：取消生成
             event.setCanceled(true);
+        } else {
+            preserveMineMonsterProxyBehavior(mob);
+        }
+    }
+
+    /**
+     * Pepper Rex uses a Hoglin render proxy, but the mine is not the Nether.
+     * Without this flag vanilla converts the proxy to a Zoglin after a short
+     * delay; the mine filter then rejects that untagged replacement entity.
+     */
+    private static void preserveMineMonsterProxyBehavior(Mob mob) {
+        if (mob instanceof Hoglin hoglin && mob.getTags().contains("sd_mob_dino")) {
+            hoglin.setImmuneToZombification(true);
+            mob.setPersistenceRequired();
         }
     }
 

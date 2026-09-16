@@ -1,5 +1,7 @@
 package com.stardew.craft.combat.skill;
 
+import com.stardew.craft.combat.OrdinaryAttackCooldownHandoffStore;
+import com.stardew.craft.combat.WeaponCombatDebug;
 import com.stardew.craft.combat.WeaponStats;
 import com.stardew.craft.combat.WeaponCombatIdentity;
 import com.stardew.craft.combat.skill.runtime.WeaponSkillRuntime;
@@ -236,6 +238,22 @@ public final class WeaponSkillDamage {
                     serverPlayer.damageSources().playerAttack(serverPlayer),
                     hitCooldownPolicy
             );
+            if (hitCooldownPolicy == HitCooldownPolicy.RESPECT_VANILLA
+                    && OrdinaryAttackCooldownHandoffStore.consume(
+                            serverPlayer,
+                            target,
+                            nowTick
+                    )) {
+                source = HitCooldownDamageSource.bypassVanillaCooldown(source);
+                WeaponCombatDebug.log(
+                        "skill_cooldown_handoff_consumed",
+                        serverPlayer,
+                        target,
+                        "skill={} targetHealth={}",
+                        skillContext.getSkillId(),
+                        WeaponCombatDebug.health(target)
+                );
+            }
             target.hurt(
                     source,
                     pipelineInputDamage(resolvedSnapshot, skillContext)

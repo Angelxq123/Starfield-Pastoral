@@ -16,6 +16,7 @@ import com.stardew.craft.festival.FairFestivalService;
 import com.stardew.craft.greenhouse.GreenhouseInteriorCache;
 import com.stardew.craft.interior.PlayerInteriorAllocator;
 import com.stardew.craft.manager.CoalForestArea;
+import com.stardew.craft.block.utility.SprinklerBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -80,7 +81,9 @@ public class FarmAreaProtectionEvents {
                 event.setCanceled(true);
                 player.displayClientMessage(
                         Component.translatable("stardewcraft.farm.build_farm_only"), true);
-            } else if (isOriginalGreenhouseStructureBlock(level, event.getPos())) {
+            } else if (GreenhouseBreakPolicy.shouldProtectOriginalGreenhouseBlock(
+                    isOriginalGreenhouseStructureBlock(level, event.getPos()),
+                    event.getState().getBlock() instanceof SprinklerBlock)) {
                 event.setCanceled(true);
             }
             return;

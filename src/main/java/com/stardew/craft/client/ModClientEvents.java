@@ -487,6 +487,7 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
+        com.stardew.craft.client.weapon.WeaponSkillCooldownsClient.tick();
         com.stardew.craft.client.casino.CasinoNpcVisibilityClient.tick();
         com.stardew.craft.client.render.MapInteractionHintRenderer.onClientTick();
         com.stardew.craft.client.sound.StardewMusicManager.onClientTick();
@@ -1385,6 +1386,7 @@ public class ModClientEvents {
         com.stardew.craft.client.ClientMailIndex.clear();
         com.stardew.craft.client.ClientFestivalAvailability.clear();
         com.stardew.craft.client.ClientJeiCatalog.clear();
+        com.stardew.craft.client.weapon.WeaponSkillCooldownsClient.clear();
         com.stardew.craft.api.v1.internal.festival
                 .StardewFestivalClientSessionCache.clear();
         com.stardew.craft.communitycenter.network.BundleClientData.INSTANCE.clear();

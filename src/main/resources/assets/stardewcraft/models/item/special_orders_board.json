@@ -1,6 +1,25 @@
 {
-  "parent": "stardewcraft:decor/special_orders_board",
+  "parent": "stardewcraft:block/decor/special_orders/special_orders_board/spring",
   "textures": {
-    "particle": "stardewcraft:block/decor/special_orders_board"
+    "particle": "stardewcraft:block/decor/special_orders/special_orders_board/spring_particle"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        -2,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
+    }
   }
 }

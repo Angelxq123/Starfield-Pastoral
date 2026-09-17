@@ -1,0 +1,23 @@
+{
+  "textures": {
+    "particle": "stardewcraft:block/utility/seed_maker_particle"
+  },
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          1,
+          0,
+          2
+        ],
+        "to": [
+          15,
+          9,
+          14
+        ]
+      }
+    ]
+  }
+}

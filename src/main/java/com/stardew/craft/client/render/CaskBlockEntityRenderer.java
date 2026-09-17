@@ -52,7 +52,7 @@ public class CaskBlockEntityRenderer implements BlockEntityRenderer<CaskBlockEnt
             ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
             RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
             RandomSource rand = RandomSource.create(0L);
-            renderer.tesselateBlock(
+            SpatialBlockModelRenderer.render(renderer,
                 level,
                 model,
                 state,

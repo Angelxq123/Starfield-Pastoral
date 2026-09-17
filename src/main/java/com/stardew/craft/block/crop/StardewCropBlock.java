@@ -49,7 +49,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import com.stardew.craft.manager.CropGrowthManager;
-import javax.annotation.Nonnull;
 
 /**
  * 星露谷作物基类
@@ -415,7 +414,6 @@ public abstract class StardewCropBlock extends Block {
         BlockPos belowPos = pos.below();
         @SuppressWarnings("null")
         BlockState belowState = level.getBlockState(belowPos);
-        @Nonnull Block block = belowState.getBlock();
 
         // 双高作物：UPPER 只要求下方是同类作物的 LOWER
         if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
@@ -432,52 +430,16 @@ public abstract class StardewCropBlock extends Block {
             }
         }
 
-        // 检查是否是耕地
-        if (block instanceof net.minecraft.world.level.block.FarmBlock) {
-            return true;
-        }
-
-        // 兼容其他模组的耕地
-        String blockId = BuiltInRegistries.BLOCK.getKey(block).toString().toLowerCase();
-        return blockId.contains("farmland");
+        return com.stardew.craft.block.terrain.TerrainSoils.cropSupport(belowState);
     }
 
     /**
-     * 是否是“泥土类”自然地表：草方块、泥土、砂土、灰化土、菌丝、黄土、苔藓、湿泥、根泥以及耕地。
+     * 成品花只接受本模组的自然土壤、耕地与花盆。
      */
     public static boolean isNaturalSoil(BlockState belowState) {
-        Block block = belowState.getBlock();
-        if (block instanceof net.minecraft.world.level.block.FarmBlock) {
-            return true;
-        }
-        if (belowState.is(net.minecraft.tags.BlockTags.DIRT)) {
-            return true;
-        }
-        if (block instanceof net.minecraft.world.level.block.GrassBlock
-                || blockStateIsAny(belowState,
-                        Blocks.DIRT,
-                        Blocks.COARSE_DIRT,
-                        Blocks.ROOTED_DIRT,
-                        Blocks.PODZOL,
-                        Blocks.MYCELIUM,
-                        Blocks.MOSS_BLOCK,
-                        Blocks.MUD,
-                        Blocks.MUDDY_MANGROVE_ROOTS)) {
-            return true;
-        }
-        String id = BuiltInRegistries.BLOCK.getKey(block).toString().toLowerCase();
-        return id.contains("farmland") || id.contains("dirt") || id.contains("grass_block") || id.contains("mycelium");
+        return com.stardew.craft.block.terrain.TerrainSoils.treeGround(belowState) || com.stardew.craft.block.terrain.TerrainSoils.cropSupport(belowState);
     }
 
-    private static boolean blockStateIsAny(BlockState state, Block... blocks) {
-        for (Block b : blocks) {
-            if (state.is(b)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
     @SuppressWarnings("null")
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
@@ -485,7 +447,7 @@ public abstract class StardewCropBlock extends Block {
             double factor = player instanceof ServerPlayer serverPlayer
                     ? BookPowerEffects.getGrassSpeedFactor(PlayerDataManager.getPlayerData(serverPlayer))
                     : level.isClientSide ? BookPowerEffects.getClientGrassSpeedFactor() : BookPowerEffects.getGrassSpeedFactor(false);
-            entity.makeStuckInBlock(state, new Vec3(factor, 1.0D, factor));
+            if (factor < 1.0D) entity.makeStuckInBlock(state, new Vec3(factor, 1.0D, factor));
         }
         super.entityInside(state, level, pos, entity);
     }
@@ -1038,7 +1000,8 @@ public abstract class StardewCropBlock extends Block {
     }
 
     public final boolean canPlantAt(Level level, BlockPos pos) {
-        return SeasonLocationRules.seedsIgnoreSeasonsHere(level, pos) || isInSeason(level);
+        return com.stardew.craft.block.terrain.TerrainSoils.cropSupport(level.getBlockState(pos.below()))
+                && (SeasonLocationRules.seedsIgnoreSeasonsHere(level, pos) || isInSeason(level));
     }
     
     /**
@@ -1140,6 +1103,8 @@ public abstract class StardewCropBlock extends Block {
             return;
         }
         
+        if (!com.stardew.craft.block.terrain.TerrainSoils.cropSupport(level.getBlockState(pos.below()))) return;
+
         // 检查季节（对齐 Stardew 的 SeedsIgnoreSeasonsHere 语义）。
         var calendar = com.stardew.craft.api.v1.internal.crop.StardewCropRuntimeRegistry.activeDay();
         var historicalData = calendar != null && calendar.offlineCatchUp()
@@ -1177,6 +1142,10 @@ public abstract class StardewCropBlock extends Block {
         if (growthState.phase == 0 && growthState.dayInPhase == 0 && !growthState.regrowing && currentAge > 0) {
             growthState.phase = currentAge >= MAX_AGE ? lastPhase : Math.min(currentAge, preHarvestPhase);
         }
+
+        if ((growthState.regrowing || growthState.phase < lastPhase)
+                && !growthState.advanceOnSoil(com.stardew.craft.block.terrain.TerrainSoils.infertile(
+                        level.getBlockState(pos.below())))) return;
 
         if (growthState.regrowing && canRegrow()) {
             // 再生倒计时：dayInPhase 表示 remaining days，<=0 即成熟可收割。

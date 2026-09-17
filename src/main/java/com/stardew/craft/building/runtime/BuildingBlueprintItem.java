@@ -55,7 +55,15 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         return ground.subtract(PrefabDefinitions.rotateCell(frontCell, PrefabDefinitions.rotation(facing)));
     }
     @Override public void inventoryTick(ItemStack stack,Level level,net.minecraft.world.entity.Entity entity,int slot,boolean selected) {
-        if (entity instanceof ServerPlayer player && (selected || player.getOffhandItem()==stack)) {
+        if (entity instanceof ServerPlayer player) {
+            // The world transfer is committed before the hand interaction returns.  If an
+            // inventory restore, disconnect or crash leaves that document behind, its saved
+            // revision can no longer move the building and would otherwise pin endless ghosts.
+            if (isMove(stack) && moving(player.serverLevel(), stack) == null) {
+                discardMoveDocument(player, stack);
+                return;
+            }
+            if (!selected && player.getOffhandItem() != stack) return;
             var before = draft(stack); var tag = before.copy();
             if (!tag.contains("DraftFacing")) tag.putString("DraftFacing",player.getDirection().getOpposite().getName());
             // Vanilla inventory synchronization covers initial selection, offhand and reconnects.
@@ -130,6 +138,11 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         return record != null && record.revision() == tag.getLong("MoveRevision") ? record : null;
     }
     public static boolean isMove(ItemStack stack) { return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().hasUUID("MoveBuilding"); }
+    private static void discardMoveDocument(ServerPlayer player, ItemStack stack) {
+        BuildingDrafts.get(player.server).consume(stack);
+        stack.shrink(1);
+        player.getInventory().setChanged();
+    }
     /** Remove duplicate documents left by an interrupted/repeated move click. */
     public static void consumeMoveDocuments(ServerPlayer player, UUID buildingId) {
         var held = new java.util.ArrayList<ItemStack>(player.getInventory().items);
@@ -170,6 +183,11 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         if (player == null) return InteractionResult.PASS;
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.SUCCESS;
         BuildingDrafts.get(serverPlayer.server).apply(stack);
+        if (isMove(stack) && moving(serverPlayer.serverLevel(), stack) == null) {
+            discardMoveDocument(serverPlayer, stack);
+            BuildingPlacementService.message(serverPlayer, "work_stale");
+            return InteractionResult.FAIL;
+        }
         if(player.isShiftKeyDown()) {
             if(draft(stack).contains("DraftAnchor"))cancel(serverPlayer,hand,false);
             return InteractionResult.CONSUME;

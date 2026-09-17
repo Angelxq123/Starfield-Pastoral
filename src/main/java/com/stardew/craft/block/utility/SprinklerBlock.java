@@ -131,7 +131,7 @@ public class SprinklerBlock extends Block {
     @SuppressWarnings("null")
     public static void waterNow(ServerLevel level, BlockPos sprinklerPos, SprinklerTier tier, boolean withEffects) {
         for (BlockPos target : getWateredPositions(sprinklerPos, tier)) {
-            if (com.stardew.craft.block.terrain.TerrainSoils.sandy(level.getBlockState(target))) continue;
+            if (com.stardew.craft.block.terrain.TerrainSoils.blocksSprinklers(level.getBlockState(target))) continue;
             waterTile(level, target);
             if (withEffects) {
                 spawnWaterParticles(level, target);

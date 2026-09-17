@@ -5,6 +5,7 @@ import com.stardew.craft.client.font.StardewFonts;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
+import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.forge.ForgeRuleService;
 import com.stardew.craft.item.equipment.CombinedRingData;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -96,6 +98,8 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
     private boolean pendingUnforge;
     private boolean pendingPrismaticForge;
     private boolean playedOpenSound;
+    private float trashCanLidRotation;
+    private boolean trashCanLidSoundPlayed;
     private final List<ForgeSprite> tempSprites = new ArrayList<>();
 
     public MiniForgeScreen(MiniForgeMenu menu, Inventory playerInventory, Component title) {
@@ -146,6 +150,7 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         drawForgePanel(guiGraphics, mouseX, mouseY);
         renderDescription(guiGraphics);
         drawOkButton(guiGraphics);
+        drawTrashCan(guiGraphics, mouseX, mouseY);
     }
 
     @Override
@@ -163,6 +168,10 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         }
         if (button == 0 && isInsideSdv(mouseX, mouseY, OK_X, OK_Y, 64, 64)) {
             onClose();
+            return true;
+        }
+        if (button == 0 && trashCanContains(mouseX, mouseY)) {
+            trashCarried();
             return true;
         }
 
@@ -207,6 +216,58 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == InputConstants.KEY_DELETE && !menu.getCarried().isEmpty()) {
+            trashCarried();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private void trashCarried() {
+        if (minecraft == null || minecraft.gameMode == null || menu.getCarried().isEmpty()) {
+            return;
+        }
+        if (com.stardew.craft.inventory.InventoryTrashPolicy.canTrash(menu.getCarried())) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MiniForgeMenu.ACTION_TRASH);
+            playSound(ModSounds.THROW_DOWN_ITEM.get());
+        } else {
+            playSound(ModSounds.CANCEL.get());
+        }
+    }
+
+    private int trashCanX() {
+        return leftPos + imageWidth + ui(4);
+    }
+
+    private int trashCanY() {
+        return topPos + imageHeight - ui(192 + 32 + BORDER + 104);
+    }
+
+    private boolean trashCanContains(double mouseX, double mouseY) {
+        return mouseX >= trashCanX() && mouseX < trashCanX() + ui(64)
+                && mouseY >= trashCanY() && mouseY < trashCanY() + ui(104);
+    }
+
+    private void drawTrashCan(GuiGraphics graphics, int mouseX, int mouseY) {
+        boolean hovered = trashCanContains(mouseX, mouseY);
+        if (hovered && !trashCanLidSoundPlayed) {
+            playSound(ModSounds.TRASHCANLID.get());
+            trashCanLidSoundPlayed = true;
+        } else if (!hovered) {
+            trashCanLidSoundPlayed = false;
+        }
+        float step = (float) Math.PI / 48.0f;
+        trashCanLidRotation = hovered
+                ? Math.min(trashCanLidRotation + step, (float) Math.PI / 2.0f)
+                : Math.max(trashCanLidRotation - step, 0.0f);
+        int x = trashCanX();
+        int y = trashCanY();
+        TrashCanWidget.render(graphics, x, y, s4(), x + ui(60), y + ui(40), s4(),
+                -16, -10, trashCanLidRotation);
     }
 
     private void drawPartitions(GuiGraphics guiGraphics) {
@@ -658,10 +719,16 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
         return List.of(
                 new Rect2i(leftPos + ui(EQUIP_RING_X), topPos + ui(EQUIP_RING_Y), ui(SDV_SLOT), ui(SDV_SLOT)),
                 new Rect2i(leftPos + ui(EQUIP_RING_X), topPos + ui(EQUIP_RING_Y + EQUIP_RING_GAP), ui(SDV_SLOT), ui(SDV_SLOT)),
-                new Rect2i(leftPos + ui(OK_X), topPos + ui(OK_Y), ui(64), ui(64)));
+                new Rect2i(leftPos + ui(OK_X), topPos + ui(OK_Y), ui(64), ui(64)),
+                new Rect2i(trashCanX(), trashCanY(), ui(64), ui(104)));
     }
 
     private void renderCustomTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        if (trashCanContains(mouseX, mouseY)) {
+            guiGraphics.renderTooltip(font, TrashCanWidget.tooltip(menu.getCarried()),
+                    java.util.Optional.empty(), mouseX, mouseY);
+            return;
+        }
         int ringSlot = ringSlotAt(mouseX, mouseY);
         if (ringSlot >= 0) {
             ItemStack ringStack = equippedRingStack(ringSlot == EquipmentActionPayload.SLOT_LEFT_RING);

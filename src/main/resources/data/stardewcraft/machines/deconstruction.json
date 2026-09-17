@@ -1,0 +1,2650 @@
+{
+  "source": "Stardew Valley 1.6 CraftingRecipes; Object.OutputDeconstructor (single-output only, crab pot override)",
+  "recipes": [
+    {
+      "source_recipe": "Wood Fence",
+      "source_id": "(O)322",
+      "input": "stardewcraft:wood_fence",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 2,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stone Fence",
+      "source_id": "(O)323",
+      "input": "stardewcraft:stone_fence",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 2,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Hardwood Fence",
+      "source_id": "(O)298",
+      "input": "stardewcraft:hardwood_fence",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "709"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Grass Starter",
+      "source_id": "(O)297",
+      "input": "stardewcraft:grass_starter",
+      "ingredients": [
+        {
+          "item": "stardewcraft:fiber",
+          "count": 10,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Blue Grass Starter",
+      "source_id": "(O)BlueGrassStarter",
+      "input": "stardewcraft:blue_grass_starter",
+      "ingredients": [
+        {
+          "item": "stardewcraft:fiber",
+          "count": 25,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:moss",
+          "count": 10,
+          "unit_price": 5,
+          "source_id": "Moss"
+        },
+        {
+          "item": "stardewcraft:mystic_syrup",
+          "count": 1,
+          "unit_price": 1000,
+          "source_id": "MysticSyrup"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Gate",
+      "source_id": "(O)325",
+      "input": "stardewcraft:gate",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Chest",
+      "source_id": "(BC)130",
+      "input": "stardewcraft:wooden_chest",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Big Chest",
+      "source_id": "(BC)BigChest",
+      "input": "stardewcraft:big_chest",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 120,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 2,
+          "unit_price": 60,
+          "source_id": "334"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stone Chest",
+      "source_id": "(BC)232",
+      "input": "stardewcraft:stone_chest",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Big Stone Chest",
+      "source_id": "(BC)BigStoneChest",
+      "input": "stardewcraft:big_stone_chest",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 250,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Torch",
+      "source_id": "(O)93",
+      "input": "minecraft:torch",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:sap",
+          "count": 2,
+          "unit_price": 2,
+          "source_id": "92"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Scarecrow",
+      "source_id": "(BC)8",
+      "input": "stardewcraft:scarecrow_0",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 20,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Deluxe Scarecrow",
+      "source_id": "(BC)167",
+      "input": "stardewcraft:scarecrow_9",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:iridium_ore",
+          "count": 1,
+          "unit_price": 100,
+          "source_id": "386"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 40,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Bee House",
+      "source_id": "(BC)10",
+      "input": "stardewcraft:bee_house",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 40,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 8,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:maple_syrup",
+          "count": 1,
+          "unit_price": 200,
+          "source_id": "724"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Keg",
+      "source_id": "(BC)12",
+      "input": "stardewcraft:keg",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 30,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:oak_resin",
+          "count": 1,
+          "unit_price": 150,
+          "source_id": "725"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Cask",
+      "source_id": "(BC)163",
+      "input": "stardewcraft:cask",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 20,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "709"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Dehydrator",
+      "source_id": "(BC)Dehydrator",
+      "input": "stardewcraft:dehydrator",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 30,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:clay",
+          "count": 2,
+          "unit_price": 20,
+          "source_id": "330"
+        },
+        {
+          "item": "stardewcraft:fire_quartz",
+          "count": 1,
+          "unit_price": 100,
+          "source_id": "82"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Furnace",
+      "source_id": "(BC)13",
+      "input": "stardewcraft:furnace",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_ore",
+          "count": 20,
+          "unit_price": 5,
+          "source_id": "378"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Heavy Furnace",
+      "source_id": "(BC)HeavyFurnace",
+      "input": "stardewcraft:heavy_furnace",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bc_13",
+          "count": 2,
+          "unit_price": 0,
+          "source_id": "(BC)13"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 3,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Anvil",
+      "source_id": "(BC)Anvil",
+      "input": "stardewcraft:anvil_mastery",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 50,
+          "unit_price": 120,
+          "source_id": "335"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mini-Forge",
+      "source_id": "(BC)MiniForge",
+      "input": "stardewcraft:mini_forge",
+      "ingredients": [
+        {
+          "item": "stardewcraft:dragon_tooth",
+          "count": 5,
+          "unit_price": 500,
+          "source_id": "852"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 10,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 10,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 5,
+          "unit_price": 1000,
+          "source_id": "337"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Garden Pot",
+      "source_id": "(BC)62",
+      "input": "stardewcraft:garden_pot",
+      "ingredients": [
+        {
+          "item": "stardewcraft:clay",
+          "count": 1,
+          "unit_price": 20,
+          "source_id": "330"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:refined_quartz",
+          "count": 1,
+          "unit_price": 50,
+          "source_id": "338"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wood Sign",
+      "source_id": "(BC)37",
+      "input": "stardewcraft:wood_sign",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stone Sign",
+      "source_id": "(BC)38",
+      "input": "stardewcraft:stone_sign",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Dark Sign",
+      "source_id": "(BC)39",
+      "input": "stardewcraft:dark_sign",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bat_wing",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "767"
+        },
+        {
+          "item": "stardewcraft:bone_fragment",
+          "count": 5,
+          "unit_price": 12,
+          "source_id": "881"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Text Sign",
+      "source_id": "(BC)TextSign",
+      "input": "stardewcraft:text_sign",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Cheese Press",
+      "source_id": "(BC)16",
+      "input": "stardewcraft:cheese_press",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 45,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 45,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mayonnaise Machine",
+      "source_id": "(BC)24",
+      "input": "stardewcraft:mayonnaise_machine",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 15,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 15,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:earth_crystal",
+          "count": 1,
+          "unit_price": 50,
+          "source_id": "86"
+        },
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Seed Maker",
+      "source_id": "(BC)25",
+      "input": "stardewcraft:seed_maker",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Loom",
+      "source_id": "(BC)17",
+      "input": "stardewcraft:loom",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 60,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 30,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:pine_tar",
+          "count": 1,
+          "unit_price": 100,
+          "source_id": "726"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Oil Maker",
+      "source_id": "(BC)19",
+      "input": "stardewcraft:oil_maker",
+      "ingredients": [
+        {
+          "item": "stardewcraft:slime_item",
+          "count": 50,
+          "unit_price": 5,
+          "source_id": "766"
+        },
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 20,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Recycling Machine",
+      "source_id": "(BC)20",
+      "input": "stardewcraft:recycling_machine",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Worm Bin",
+      "source_id": "(BC)154",
+      "input": "stardewcraft:worm_bin",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 15,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 50,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Deluxe Worm Bin",
+      "source_id": "(BC)DeluxeWormBin",
+      "input": "stardewcraft:deluxe_worm_bin",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bc_154",
+          "count": 1,
+          "unit_price": 0,
+          "source_id": "(BC)154"
+        },
+        {
+          "item": "stardewcraft:moss",
+          "count": 30,
+          "unit_price": 5,
+          "source_id": "Moss"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Bait Maker",
+      "source_id": "(BC)BaitMaker",
+      "input": "stardewcraft:bait_maker",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 3,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:coral",
+          "count": 3,
+          "unit_price": 80,
+          "source_id": "393"
+        },
+        {
+          "item": "stardewcraft:sea_urchin",
+          "count": 1,
+          "unit_price": 160,
+          "source_id": "397"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Fish Smoker",
+      "source_id": "(BC)FishSmoker",
+      "input": "stardewcraft:fish_smoker",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:sea_jelly",
+          "count": 1,
+          "unit_price": 200,
+          "source_id": "SeaJelly"
+        },
+        {
+          "item": "stardewcraft:river_jelly",
+          "count": 1,
+          "unit_price": 125,
+          "source_id": "RiverJelly"
+        },
+        {
+          "item": "stardewcraft:cave_jelly",
+          "count": 1,
+          "unit_price": 180,
+          "source_id": "CaveJelly"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Preserves Jar",
+      "source_id": "(BC)15",
+      "input": "stardewcraft:preserves_jar",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 40,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 8,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Charcoal Kiln",
+      "source_id": "(BC)114",
+      "input": "stardewcraft:charcoal_kiln",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 20,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 2,
+          "unit_price": 60,
+          "source_id": "334"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Tapper",
+      "source_id": "(BC)105",
+      "input": "stardewcraft:tapper",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 40,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 2,
+          "unit_price": 60,
+          "source_id": "334"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mushroom Log",
+      "source_id": "(BC)MushroomLog",
+      "input": "stardewcraft:mushroom_log",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:moss",
+          "count": 10,
+          "unit_price": 5,
+          "source_id": "Moss"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Lightning Rod",
+      "source_id": "(BC)9",
+      "input": "stardewcraft:lightning_rod",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:refined_quartz",
+          "count": 1,
+          "unit_price": 50,
+          "source_id": "338"
+        },
+        {
+          "item": "stardewcraft:bat_wing",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "767"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Slime Incubator",
+      "source_id": "(BC)156",
+      "input": "stardewcraft:slime_incubator",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 2,
+          "unit_price": 1000,
+          "source_id": "337"
+        },
+        {
+          "item": "stardewcraft:slime_item",
+          "count": 100,
+          "unit_price": 5,
+          "source_id": "766"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Slime Egg-Press",
+      "source_id": "(BC)158",
+      "input": "stardewcraft:slime_egg_press",
+      "ingredients": [
+        {
+          "item": "stardewcraft:coal",
+          "count": 25,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:fire_quartz",
+          "count": 1,
+          "unit_price": 100,
+          "source_id": "82"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Crystalarium",
+      "source_id": "(BC)21",
+      "input": "stardewcraft:crystalarium",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 99,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 5,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 2,
+          "unit_price": 1000,
+          "source_id": "337"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mini-Jukebox",
+      "source_id": "(BC)209",
+      "input": "stardewcraft:jukebox",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 2,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Sprinkler",
+      "source_id": "(O)599",
+      "input": "stardewcraft:sprinkler",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Quality Sprinkler",
+      "source_id": "(O)621",
+      "input": "stardewcraft:quality_sprinkler",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:refined_quartz",
+          "count": 1,
+          "unit_price": 50,
+          "source_id": "338"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Iridium Sprinkler",
+      "source_id": "(O)645",
+      "input": "stardewcraft:iridium_sprinkler",
+      "ingredients": [
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 1,
+          "unit_price": 1000,
+          "source_id": "337"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Staircase",
+      "source_id": "(BC)71",
+      "input": "stardewcraft:staircase",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 99,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Flute Block",
+      "source_id": "(O)464",
+      "input": "stardewcraft:flute_block",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:copper_ore",
+          "count": 2,
+          "unit_price": 5,
+          "source_id": "378"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 20,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Drum Block",
+      "source_id": "(O)463",
+      "input": "stardewcraft:drum_block",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:copper_ore",
+          "count": 2,
+          "unit_price": 5,
+          "source_id": "378"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 20,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Basic Fertilizer",
+      "source_id": "(O)368",
+      "input": "stardewcraft:basic_fertilizer",
+      "ingredients": [
+        {
+          "item": "stardewcraft:sap",
+          "count": 2,
+          "unit_price": 2,
+          "source_id": "92"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Tree Fertilizer",
+      "source_id": "(O)805",
+      "input": "stardewcraft:tree_fertilizer",
+      "ingredients": [
+        {
+          "item": "stardewcraft:fiber",
+          "count": 5,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 5,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mystic Tree Seed",
+      "source_id": "(O)MysticTreeSeed",
+      "input": "stardewcraft:mystic_tree_seed",
+      "ingredients": [
+        {
+          "item": "stardewcraft:acorn",
+          "count": 5,
+          "unit_price": 20,
+          "source_id": "309"
+        },
+        {
+          "item": "stardewcraft:maple_seed",
+          "count": 5,
+          "unit_price": 5,
+          "source_id": "310"
+        },
+        {
+          "item": "stardewcraft:pine_cone",
+          "count": 5,
+          "unit_price": 5,
+          "source_id": "311"
+        },
+        {
+          "item": "stardewcraft:mahogany_seed",
+          "count": 5,
+          "unit_price": 100,
+          "source_id": "292"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Basic Retaining Soil",
+      "source_id": "(O)370",
+      "input": "stardewcraft:basic_retaining_soil",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 2,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Hyper Speed-Gro",
+      "source_id": "(O)918",
+      "input": "stardewcraft:hyper_speed_gro",
+      "ingredients": [
+        {
+          "item": "stardewcraft:radioactive_ore",
+          "count": 1,
+          "unit_price": 300,
+          "source_id": "909"
+        },
+        {
+          "item": "stardewcraft:bone_fragment",
+          "count": 3,
+          "unit_price": 12,
+          "source_id": "881"
+        },
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 1,
+          "unit_price": 40,
+          "source_id": "768"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Deluxe Retaining Soil",
+      "source_id": "(O)920",
+      "input": "stardewcraft:deluxe_retaining_soil",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 5,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 3,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:clay",
+          "count": 1,
+          "unit_price": 20,
+          "source_id": "330"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Cherry Bomb",
+      "source_id": "(O)286",
+      "input": "stardewcraft:cherry_bomb",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_ore",
+          "count": 4,
+          "unit_price": 5,
+          "source_id": "378"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Bomb",
+      "source_id": "(O)287",
+      "input": "stardewcraft:bomb_item",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_ore",
+          "count": 4,
+          "unit_price": 10,
+          "source_id": "380"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mega Bomb",
+      "source_id": "(O)288",
+      "input": "stardewcraft:mega_bomb",
+      "ingredients": [
+        {
+          "item": "stardewcraft:gold_ore",
+          "count": 4,
+          "unit_price": 25,
+          "source_id": "384"
+        },
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 1,
+          "unit_price": 40,
+          "source_id": "768"
+        },
+        {
+          "item": "stardewcraft:void_essence",
+          "count": 1,
+          "unit_price": 50,
+          "source_id": "769"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Ancient Seeds",
+      "source_id": "(O)499",
+      "input": "stardewcraft:ancient_fruit_seeds",
+      "ingredients": [
+        {
+          "item": "stardewcraft:ancient_seed",
+          "count": 1,
+          "unit_price": 5,
+          "source_id": "114"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Tea Sapling",
+      "source_id": "(O)251",
+      "input": "stardewcraft:tea_sapling",
+      "ingredients": [
+        {
+          "item": "stardewcraft:777",
+          "count": 2,
+          "unit_price": 0,
+          "source_id": "-777"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 5,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 5,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Warp Totem: Farm",
+      "source_id": "(O)688",
+      "input": "stardewcraft:warp_totem_farm",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:honey",
+          "count": 1,
+          "unit_price": 100,
+          "source_id": "340"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 20,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Warp Totem: Mountains",
+      "source_id": "(O)689",
+      "input": "stardewcraft:warp_totem_mountain",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Warp Totem: Beach",
+      "source_id": "(O)690",
+      "input": "stardewcraft:warp_totem_beach",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:coral",
+          "count": 2,
+          "unit_price": 80,
+          "source_id": "393"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 10,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Warp Totem: Desert",
+      "source_id": "(O)261",
+      "input": "stardewcraft:warp_totem_desert",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 2,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:coconut",
+          "count": 1,
+          "unit_price": 100,
+          "source_id": "88"
+        },
+        {
+          "item": "stardewcraft:iridium_ore",
+          "count": 4,
+          "unit_price": 100,
+          "source_id": "386"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Warp Totem: Island",
+      "source_id": "(O)886",
+      "input": "stardewcraft:warp_totem_island",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:dragon_tooth",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "852"
+        },
+        {
+          "item": "stardewcraft:ginger",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "829"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Rain Totem",
+      "source_id": "(O)681",
+      "input": "stardewcraft:rain_totem",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:truffle_oil",
+          "count": 1,
+          "unit_price": 1065,
+          "source_id": "432"
+        },
+        {
+          "item": "stardewcraft:pine_tar",
+          "count": 5,
+          "unit_price": 100,
+          "source_id": "726"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Treasure Totem",
+      "source_id": "(O)TreasureTotem",
+      "input": "stardewcraft:treasure_totem",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:mystic_syrup",
+          "count": 1,
+          "unit_price": 1000,
+          "source_id": "MysticSyrup"
+        },
+        {
+          "item": "stardewcraft:moss",
+          "count": 10,
+          "unit_price": 5,
+          "source_id": "Moss"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Cookout Kit",
+      "source_id": "(O)926",
+      "input": "stardewcraft:cookout_kit",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 15,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 10,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 3,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Tent Kit",
+      "source_id": "(O)TentKit",
+      "input": "stardewcraft:tent_kit",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 25,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:cloth",
+          "count": 1,
+          "unit_price": 470,
+          "source_id": "428"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Field Snack",
+      "source_id": "(O)403",
+      "input": "stardewcraft:field_snack",
+      "ingredients": [
+        {
+          "item": "stardewcraft:acorn",
+          "count": 1,
+          "unit_price": 20,
+          "source_id": "309"
+        },
+        {
+          "item": "stardewcraft:maple_seed",
+          "count": 1,
+          "unit_price": 5,
+          "source_id": "310"
+        },
+        {
+          "item": "stardewcraft:pine_cone",
+          "count": 1,
+          "unit_price": 5,
+          "source_id": "311"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Statue Of Blessings",
+      "source_id": "(BC)StatueOfBlessings",
+      "input": "stardewcraft:statue_of_blessings",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 999,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 999,
+          "unit_price": 1,
+          "source_id": "771"
+        },
+        {
+          "item": "stardewcraft:sap",
+          "count": 999,
+          "unit_price": 2,
+          "source_id": "92"
+        },
+        {
+          "item": "stardewcraft:moss",
+          "count": 333,
+          "unit_price": 5,
+          "source_id": "Moss"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Statue Of The Dwarf King",
+      "source_id": "(BC)StatueOfTheDwarfKing",
+      "input": "stardewcraft:statue_of_dwarf_king",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 20,
+          "unit_price": 1000,
+          "source_id": "337"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Jack-O-Lantern",
+      "source_id": "(O)746",
+      "input": "stardewcraft:spirit_eve_jack_o_lantern",
+      "ingredients": [
+        {
+          "item": "stardewcraft:pumpkin",
+          "count": 1,
+          "unit_price": 320,
+          "source_id": "276"
+        },
+        {
+          "item": "stardewcraft:torch",
+          "count": 1,
+          "unit_price": 5,
+          "source_id": "93"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wood Floor",
+      "source_id": "(O)328",
+      "input": "stardewcraft:wood_floor",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Straw Floor",
+      "source_id": "(O)401",
+      "input": "stardewcraft:straw_floor",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 1,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Weathered Floor",
+      "source_id": "(O)331",
+      "input": "stardewcraft:weathered_floor",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Rustic Plank Floor",
+      "source_id": "(O)840",
+      "input": "stardewcraft:rustic_plank_floor",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stone Floor",
+      "source_id": "(O)329",
+      "input": "stardewcraft:stone_floor",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stone Walkway Floor",
+      "source_id": "(O)841",
+      "input": "stardewcraft:stone_walkway_floor",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wood Path",
+      "source_id": "(O)405",
+      "input": "stardewcraft:wood_path",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "388"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Gravel Path",
+      "source_id": "(O)407",
+      "input": "stardewcraft:gravel_path",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Cobblestone Path",
+      "source_id": "(O)411",
+      "input": "stardewcraft:cobblestone_path",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stepping Stone Path",
+      "source_id": "(O)415",
+      "input": "stardewcraft:stepping_stone_path",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 1,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Spinner",
+      "source_id": "(O)686",
+      "input": "stardewcraft:spinner",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 2,
+          "unit_price": 120,
+          "source_id": "335"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Dressed Spinner",
+      "source_id": "(O)687",
+      "input": "stardewcraft:dressed_spinner",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 2,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:cloth",
+          "count": 1,
+          "unit_price": 470,
+          "source_id": "428"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Trap Bobber",
+      "source_id": "(O)694",
+      "input": "stardewcraft:trap_bobber",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        },
+        {
+          "item": "stardewcraft:sap",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "92"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Sonar Bobber",
+      "source_id": "(O)SonarBobber",
+      "input": "stardewcraft:sonar_bobber",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:refined_quartz",
+          "count": 2,
+          "unit_price": 50,
+          "source_id": "338"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Cork Bobber",
+      "source_id": "(O)695",
+      "input": "stardewcraft:cork_bobber",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:slime_item",
+          "count": 10,
+          "unit_price": 5,
+          "source_id": "766"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Treasure Hunter",
+      "source_id": "(O)693",
+      "input": "stardewcraft:treasure_hunter",
+      "ingredients": [
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 2,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Barbed Hook",
+      "source_id": "(O)691",
+      "input": "stardewcraft:barbed_hook",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Crab Pot",
+      "source_id": "(O)710",
+      "input": "stardewcraft:crab_pot",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 2,
+          "unit_price": 60,
+          "source_id": "334"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Tub o' Flowers",
+      "source_id": "(BC)108",
+      "input": "stardewcraft:tub_o_flowers",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 15,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:tulip_bulb",
+          "count": 1,
+          "unit_price": 10,
+          "source_id": "427"
+        },
+        {
+          "item": "stardewcraft:jazz_seeds",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "429"
+        },
+        {
+          "item": "stardewcraft:poppy_seeds",
+          "count": 1,
+          "unit_price": 50,
+          "source_id": "453"
+        },
+        {
+          "item": "stardewcraft:spangle_seeds",
+          "count": 1,
+          "unit_price": 25,
+          "source_id": "455"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wooden Brazier",
+      "source_id": "(BC)143",
+      "input": "stardewcraft:wooden_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 5,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wicked Statue",
+      "source_id": "(BC)83",
+      "input": "stardewcraft:wicked_statue",
+      "ingredients": [
+        {
+          "item": "stardewcraft:coal",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 25,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stone Brazier",
+      "source_id": "(BC)144",
+      "input": "stardewcraft:stone_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 5,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Gold Brazier",
+      "source_id": "(BC)145",
+      "input": "stardewcraft:gold_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 5,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Campfire",
+      "source_id": "(BC)146",
+      "input": "stardewcraft:campfire",
+      "ingredients": [
+        {
+          "item": "stardewcraft:stone",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 10,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:fiber",
+          "count": 10,
+          "unit_price": 1,
+          "source_id": "771"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Stump Brazier",
+      "source_id": "(BC)147",
+      "input": "stardewcraft:stump_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 5,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Carved Brazier",
+      "source_id": "(BC)148",
+      "input": "stardewcraft:carved_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Skull Brazier",
+      "source_id": "(BC)149",
+      "input": "stardewcraft:skull_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bone_fragment",
+          "count": 10,
+          "unit_price": 12,
+          "source_id": "881"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Barrel Brazier",
+      "source_id": "(BC)150",
+      "input": "stardewcraft:barrel_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 1,
+          "unit_price": 40,
+          "source_id": "768"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 1,
+          "unit_price": 15,
+          "source_id": "382"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Marble Brazier",
+      "source_id": "(BC)151",
+      "input": "stardewcraft:marble_brazier",
+      "ingredients": [
+        {
+          "item": "stardewcraft:marble",
+          "count": 1,
+          "unit_price": 110,
+          "source_id": "567"
+        },
+        {
+          "item": "stardewcraft:aquamarine",
+          "count": 1,
+          "unit_price": 180,
+          "source_id": "62"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 100,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wood Lamp-post",
+      "source_id": "(BC)152",
+      "input": "stardewcraft:wood_lamppost",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_normal",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "388"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Iron Lamp-post",
+      "source_id": "(BC)153",
+      "input": "stardewcraft:iron_lamppost",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 1,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Fairy Dust",
+      "source_id": "(O)872",
+      "input": "stardewcraft:fairy_dust",
+      "ingredients": [
+        {
+          "item": "stardewcraft:diamond",
+          "count": 1,
+          "unit_price": 750,
+          "source_id": "72"
+        },
+        {
+          "item": "stardewcraft:fairy_rose",
+          "count": 1,
+          "unit_price": 290,
+          "source_id": "595"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Bug Steak",
+      "source_id": "(O)874",
+      "input": "stardewcraft:bug_steak",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bug_meat",
+          "count": 10,
+          "unit_price": 8,
+          "source_id": "684"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Quality Bobber",
+      "source_id": "(O)877",
+      "input": "stardewcraft:quality_bobber",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 1,
+          "unit_price": 60,
+          "source_id": "334"
+        },
+        {
+          "item": "stardewcraft:sap",
+          "count": 20,
+          "unit_price": 2,
+          "source_id": "92"
+        },
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 5,
+          "unit_price": 40,
+          "source_id": "768"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Monster Musk",
+      "source_id": "(O)879",
+      "input": "stardewcraft:monster_musk",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bat_wing",
+          "count": 30,
+          "unit_price": 15,
+          "source_id": "767"
+        },
+        {
+          "item": "stardewcraft:slime_item",
+          "count": 30,
+          "unit_price": 5,
+          "source_id": "766"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Mini-Obelisk",
+      "source_id": "(BC)238",
+      "input": "stardewcraft:mini_obelisk",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 30,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 20,
+          "unit_price": 40,
+          "source_id": "768"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 3,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Farm Computer",
+      "source_id": "(BC)239",
+      "input": "stardewcraft:farm_computer",
+      "ingredients": [
+        {
+          "item": "stardewcraft:dwarf_gadget",
+          "count": 1,
+          "unit_price": 200,
+          "source_id": "122"
+        },
+        {
+          "item": "stardewcraft:battery_pack",
+          "count": 1,
+          "unit_price": 500,
+          "source_id": "787"
+        },
+        {
+          "item": "stardewcraft:refined_quartz",
+          "count": 10,
+          "unit_price": 50,
+          "source_id": "338"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Ostrich Incubator",
+      "source_id": "(BC)254",
+      "input": "stardewcraft:ostrich_incubator",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bone_fragment",
+          "count": 50,
+          "unit_price": 12,
+          "source_id": "881"
+        },
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 50,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:cinder_shard",
+          "count": 20,
+          "unit_price": 50,
+          "source_id": "848"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Geode Crusher",
+      "source_id": "(BC)182",
+      "input": "stardewcraft:geode_crusher",
+      "ingredients": [
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 2,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:diamond",
+          "count": 1,
+          "unit_price": 750,
+          "source_id": "72"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Solar Panel",
+      "source_id": "(BC)231",
+      "input": "stardewcraft:solar_panel",
+      "ingredients": [
+        {
+          "item": "stardewcraft:refined_quartz",
+          "count": 10,
+          "unit_price": 50,
+          "source_id": "338"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 5,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 5,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Bone Mill",
+      "source_id": "(BC)90",
+      "input": "stardewcraft:bone_mill",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bone_fragment",
+          "count": 10,
+          "unit_price": 12,
+          "source_id": "881"
+        },
+        {
+          "item": "stardewcraft:clay",
+          "count": 3,
+          "unit_price": 20,
+          "source_id": "330"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 20,
+          "unit_price": 2,
+          "source_id": "390"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Heavy Tapper",
+      "source_id": "(BC)264",
+      "input": "stardewcraft:heavy_tapper",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 30,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:radioactive_bar",
+          "count": 1,
+          "unit_price": 3000,
+          "source_id": "910"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Hopper",
+      "source_id": "(BC)275",
+      "input": "stardewcraft:hopper",
+      "ingredients": [
+        {
+          "item": "stardewcraft:wood_hard",
+          "count": 10,
+          "unit_price": 15,
+          "source_id": "709"
+        },
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 1,
+          "unit_price": 1000,
+          "source_id": "337"
+        },
+        {
+          "item": "stardewcraft:radioactive_bar",
+          "count": 1,
+          "unit_price": 3000,
+          "source_id": "910"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Iridium Band",
+      "source_id": "(O)527",
+      "input": "stardewcraft:iridium_band",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 5,
+          "unit_price": 1000,
+          "source_id": "337"
+        },
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 50,
+          "unit_price": 40,
+          "source_id": "768"
+        },
+        {
+          "item": "stardewcraft:void_essence",
+          "count": 50,
+          "unit_price": 50,
+          "source_id": "769"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Wedding Ring",
+      "source_id": "(O)801",
+      "input": "stardewcraft:wedding_ring",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iridium_bar",
+          "count": 5,
+          "unit_price": 1000,
+          "source_id": "337"
+        },
+        {
+          "item": "stardewcraft:prismatic_shard",
+          "count": 1,
+          "unit_price": 2000,
+          "source_id": "74"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Ring of Yoba",
+      "source_id": "(O)524",
+      "input": "stardewcraft:ring_of_yoba",
+      "ingredients": [
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 5,
+          "unit_price": 250,
+          "source_id": "336"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 5,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:diamond",
+          "count": 1,
+          "unit_price": 750,
+          "source_id": "72"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Sturdy Ring",
+      "source_id": "(O)525",
+      "input": "stardewcraft:sturdy_ring",
+      "ingredients": [
+        {
+          "item": "stardewcraft:copper_bar",
+          "count": 2,
+          "unit_price": 60,
+          "source_id": "334"
+        },
+        {
+          "item": "stardewcraft:bug_meat",
+          "count": 25,
+          "unit_price": 8,
+          "source_id": "684"
+        },
+        {
+          "item": "stardewcraft:slime_item",
+          "count": 25,
+          "unit_price": 5,
+          "source_id": "766"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Warrior Ring",
+      "source_id": "(O)521",
+      "input": "stardewcraft:warrior_ring",
+      "ingredients": [
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 10,
+          "unit_price": 120,
+          "source_id": "335"
+        },
+        {
+          "item": "stardewcraft:coal",
+          "count": 25,
+          "unit_price": 15,
+          "source_id": "382"
+        },
+        {
+          "item": "stardewcraft:frozen_tear",
+          "count": 10,
+          "unit_price": 75,
+          "source_id": "84"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Thorns Ring",
+      "source_id": "(O)839",
+      "input": "stardewcraft:thorns_ring",
+      "ingredients": [
+        {
+          "item": "stardewcraft:bone_fragment",
+          "count": 50,
+          "unit_price": 12,
+          "source_id": "881"
+        },
+        {
+          "item": "stardewcraft:stone",
+          "count": 50,
+          "unit_price": 2,
+          "source_id": "390"
+        },
+        {
+          "item": "stardewcraft:gold_bar",
+          "count": 1,
+          "unit_price": 250,
+          "source_id": "336"
+        }
+      ]
+    },
+    {
+      "source_recipe": "Glowstone Ring",
+      "source_id": "(O)888",
+      "input": "stardewcraft:glowstone_ring",
+      "ingredients": [
+        {
+          "item": "stardewcraft:solar_essence",
+          "count": 5,
+          "unit_price": 40,
+          "source_id": "768"
+        },
+        {
+          "item": "stardewcraft:iron_bar",
+          "count": 5,
+          "unit_price": 120,
+          "source_id": "335"
+        }
+      ]
+    }
+  ]
+}

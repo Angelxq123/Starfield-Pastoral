@@ -1,7 +1,23 @@
 {
-  "ambientocclusion": false,
   "textures": {
-    "particle": "stardewcraft:block/mastery/heavy_furnace"
+    "particle": "stardewcraft:block/mastery/heavy_furnace_particle"
   },
-  "elements": []
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          0,
+          0,
+          1
+        ],
+        "to": [
+          16,
+          16,
+          16
+        ]
+      }
+    ]
+  }
 }

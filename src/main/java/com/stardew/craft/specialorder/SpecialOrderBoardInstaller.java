@@ -9,9 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -19,9 +17,10 @@ import javax.annotation.Nonnull;
 
 public final class SpecialOrderBoardInstaller extends SavedData {
     private static final String DATA_NAME = "stardew_special_order_board";
-    private static final int SITE_VERSION = 1;
+    private static final int SITE_VERSION = 2;
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
     public static final BlockPos BOARD_POS = new BlockPos(57, 64, 46);
+    public static final BlockPos TICKET_BOX_POS = BOARD_POS.west(2);
 
     private int placedVersion = 0;
 
@@ -50,27 +49,44 @@ public final class SpecialOrderBoardInstaller extends SavedData {
         }
 
         StardewCraft.LOGGER.info("[SPECIAL_ORDERS] Installing special orders board (version {} -> {})", placedVersion, SITE_VERSION);
-        placeBoard(stardewLevel);
-        placedVersion = SITE_VERSION;
-        setDirty();
+        if (placeSite(stardewLevel, BOARD_POS)) {
+            placedVersion = SITE_VERSION;
+            setDirty();
+        } else {
+            StardewCraft.LOGGER.warn("[SPECIAL_ORDERS] Board site is obstructed; retaining its installation version for retry");
+        }
     }
 
-    private static void placeBoard(ServerLevel level) {
-        MapDecorStaticBlock.runWithDropsSuppressed(() -> {
-            for (int x = BOARD_POS.getX() - 1; x <= BOARD_POS.getX() + 1; x++) {
-                BlockPos clearPos = new BlockPos(x, BOARD_POS.getY(), BOARD_POS.getZ());
-                BlockState here = level.getBlockState(clearPos);
-                if (here.isAir() || here.is(ModBlocks.SPECIAL_ORDERS_BOARD.get())) {
-                    level.setBlock(clearPos, Blocks.AIR.defaultBlockState(), FLAGS);
-                }
+    /** Installs or upgrades the complete 3x2 board and its adjacent 1x2 collection box atomically. */
+    public static boolean placeSite(ServerLevel level, BlockPos boardPos) {
+        var previous = new java.util.LinkedHashMap<BlockPos, BlockState>();
+        BlockPos ticketPos = boardPos.west(2);
+        for (int dx = -2; dx <= 1; dx++) {
+            for (int dy = 0; dy < 2; dy++) {
+                BlockPos pos = boardPos.offset(dx, dy, 0);
+                var block = (MapDecorStaticBlock) (dx == -2 ? ModBlocks.PRIZE_TICKET_BOX.get() : ModBlocks.SPECIAL_ORDERS_BOARD.get());
+                BlockPos anchor = dx == -2 ? ticketPos : boardPos;
+                if (level.isOutsideBuildHeight(pos) || !level.getWorldBorder().isWithinBounds(pos)) return false;
+                BlockState here = level.getBlockState(pos);
+                boolean owned = here.is(block) && (pos.equals(anchor)
+                        ? here.getValue(MapDecorStaticBlock.PART) == MapDecorStaticBlock.Part.MAIN
+                        : here.getValue(MapDecorStaticBlock.PART) == MapDecorStaticBlock.Part.EXTENSION
+                            && anchor.equals(block.findMainPos(level, pos, here)));
+                if (level.getBlockEntity(pos) != null || (!here.canBeReplaced() && !owned)) return false;
+                previous.put(pos, here);
             }
-        });
-
-        BlockState state = ModBlocks.SPECIAL_ORDERS_BOARD.get().defaultBlockState()
-            .setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)
-            .setValue(MapDecorStaticBlock.FACING, Direction.SOUTH);
-        level.setBlock(BOARD_POS, state, FLAGS);
-        ModBlocks.SPECIAL_ORDERS_BOARD.get().setPlacedBy(level, BOARD_POS, state, null, ItemStack.EMPTY);
+        }
+        for (BlockPos anchor : java.util.List.of(boardPos, ticketPos)) {
+            var block = (MapDecorStaticBlock) (anchor.equals(boardPos) ? ModBlocks.SPECIAL_ORDERS_BOARD.get() : ModBlocks.PRIZE_TICKET_BOX.get());
+            BlockState state = block.defaultBlockState().setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)
+                    .setValue(MapDecorStaticBlock.FACING, Direction.SOUTH);
+            if ((!level.getBlockState(anchor).equals(state) && !level.setBlock(anchor, state, FLAGS))
+                    || !block.placeExtensions(level, anchor, state)) {
+                MapDecorStaticBlock.runWithDropsSuppressed(() -> previous.forEach((pos, before) -> level.setBlock(pos, before, FLAGS)));
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

@@ -31,6 +31,34 @@ public final class ArtisanJeiRecipeFactory {
     private static final ResourceLocation PRESERVES_JAR = id("preserves_jar");
     private static final ResourceLocation FISH_SMOKER = id("fish_smoker");
 
+    private static List<ArtisanJeiRecipe> reclamationRecipes(MachineJeiRegistry.Machine machine) {
+        List<ArtisanJeiRecipe> recipes = new ArrayList<>();
+        if (machine.id().equals(id("deconstructor"))) {
+            for (var inputId : com.stardew.craft.item.artisan.DeconstructorRecipes.inputs().stream().sorted().toList()) {
+                ItemStack input = itemStack(inputId, 1);
+                ItemStack output = com.stardew.craft.item.artisan.DeconstructorRecipes.output(input);
+                if (input.isEmpty() || output.isEmpty()) continue;
+                recipes.add(new ArtisanJeiRecipe(id("deconstructor/" + inputId.getPath()), machine,
+                    List.of(new ArtisanJeiRecipe.Input(List.of(input), 1, false)),
+                    List.of(new ArtisanJeiRecipe.Output(List.of(output), output.getCount(), output.getCount(), 1)), 60, false, 0));
+            }
+        } else {
+            for (boolean hardwood : new boolean[]{false, true}) {
+                ItemStack input = new ItemStack(hardwood ? ModItems.WOOD_HARD.get() : ModItems.DRIFTWOOD.get());
+                List<ArtisanJeiRecipe.Output> outputs = new ArrayList<>();
+                outputs.add(new ArtisanJeiRecipe.Output(List.of(new ItemStack(ModItems.WOOD_NORMAL.get(), 5)), 5, 10, hardwood ? .882 : 1));
+                if (hardwood) {
+                    outputs.add(new ArtisanJeiRecipe.Output(List.of(new ItemStack(ModItems.WOOD_NORMAL.get(), 15)), 15, 20, .098));
+                    outputs.add(new ArtisanJeiRecipe.Output(List.of(itemStack(id("maple_syrup"), 1),
+                        itemStack(id("oak_resin"), 1), itemStack(id("pine_tar"), 1)), 1, 1, .02));
+                }
+                recipes.add(new ArtisanJeiRecipe(id("wood_chipper/" + (hardwood ? "hardwood" : "driftwood")), machine,
+                    List.of(new ArtisanJeiRecipe.Input(List.of(input), 1, false)), outputs, 180, false, 0));
+            }
+        }
+        return recipes;
+    }
+
     private ArtisanJeiRecipeFactory() {
     }
 
@@ -41,6 +69,9 @@ public final class ArtisanJeiRecipeFactory {
                     machine.id(), machine.itemId());
             return List.of();
         }
+
+        if (machine.id().equals(id("deconstructor")) || machine.id().equals(id("wood_chipper")))
+            return reclamationRecipes(machine);
 
         List<ArtisanRecipeDataManager.Recipe> definitions =
                 ArtisanRecipeDataManager.getRecipes(machine.id().toString());

@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "stardewcraft:milk_pail",
+    "stardewcraft:shears",
+    "stardewcraft:paintbrush",
+    "stardewcraft:autofeed_trough_upgrader",
+    "stardewcraft:mine_totem",
+    "stardewcraft:wizard_tower_compass",
+    "stardewcraft:dwarvish_translation_guide",
+    "stardewcraft:warp_wand",
+    "stardewcraft:money_contract",
+    "stardewcraft:auction_paddle",
+    "stardewcraft:junimo_note",
+    "stardewcraft:junimo_bundle",
+    "stardewcraft:junimo_star",
+    "stardewcraft:junimo_greenhouse_rune",
+    "stardewcraft:wallpaper_icon",
+    "stardewcraft:flooring_icon"
+  ]
+}

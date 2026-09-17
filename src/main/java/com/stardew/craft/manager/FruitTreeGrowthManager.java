@@ -87,7 +87,10 @@ public class FruitTreeGrowthManager extends SavedData {
     public int getDaysRemaining(@Nonnull ServerLevel level, @Nonnull BlockPos pos) {
         BlockPos lowerPos = resolveSaplingLowerPos(level, pos);
         SaplingEntry entry = saplings.get(toGlobalPos(level, lowerPos));
-        return entry == null ? FruitTreeType.DAYS_TO_MATURE : Math.max(0, entry.daysRemaining);
+        int remaining = entry == null ? FruitTreeType.DAYS_TO_MATURE : Math.max(0, entry.daysRemaining);
+        if (com.stardew.craft.block.terrain.TerrainSoils.infertile(level.getBlockState(lowerPos.below())))
+            return Math.max(0, (remaining * 5 - (entry == null ? 0 : entry.infertileProgress) + 3) / 4);
+        return remaining;
     }
 
     public int getGrowthStage(@Nonnull ServerLevel level, @Nonnull BlockPos pos) {
@@ -291,6 +294,8 @@ public class FruitTreeGrowthManager extends SavedData {
             return;
         }
 
+        if (!com.stardew.craft.block.terrain.TerrainSoils.treeGround(level.getBlockState(pos.below()))) return;
+
         FruitTreeType type = saplingBlock.getType();
         if (entry.daysRemaining <= 0) {
             matureSapling(level, pos, type);
@@ -302,6 +307,12 @@ public class FruitTreeGrowthManager extends SavedData {
             return;
         }
 
+        if (com.stardew.craft.block.terrain.TerrainSoils.infertile(level.getBlockState(pos.below()))) {
+            entry.infertileProgress += 4;
+            setDirty();
+            if (entry.infertileProgress < 5) return;
+            entry.infertileProgress -= 5;
+        } else entry.infertileProgress = 0;
         entry.daysRemaining--;
         updateVisualStage(level, pos, state, type.visualStageFromDaysRemaining(entry.daysRemaining));
         if (entry.daysRemaining <= 0) {
@@ -383,6 +394,7 @@ public class FruitTreeGrowthManager extends SavedData {
             CompoundTag entryTag = writeGlobalPos(mapEntry.getKey());
             entryTag.putString("Type", mapEntry.getValue().type.id());
             entryTag.putInt("DaysRemaining", mapEntry.getValue().daysRemaining);
+            entryTag.putInt("InfertileProgress", mapEntry.getValue().infertileProgress);
             saplingList.add(entryTag);
         }
         tag.put("Saplings", saplingList);
@@ -405,7 +417,9 @@ public class FruitTreeGrowthManager extends SavedData {
                 if (globalPos != null) {
                     FruitTreeType type = FruitTreeType.byId(entryTag.getString("Type"));
                     int days = Math.max(0, Math.min(FruitTreeType.DAYS_TO_MATURE, entryTag.getInt("DaysRemaining")));
-                    manager.saplings.put(globalPos, new SaplingEntry(type, days));
+                    SaplingEntry entry = new SaplingEntry(type, days);
+                    entry.infertileProgress = Math.clamp(entryTag.getInt("InfertileProgress"), 0, 4);
+                    manager.saplings.put(globalPos, entry);
                 }
             }
         }
@@ -436,7 +450,7 @@ public class FruitTreeGrowthManager extends SavedData {
     }
 
     private static GlobalPos readGlobalPos(CompoundTag tag) {
-        if (!tag.contains("Dimension", Tag.TAG_STRING) || !tag.contains("Pos", Tag.TAG_COMPOUND)) {
+        if (!tag.contains("Dimension", Tag.TAG_STRING) || !tag.contains("Pos")) {
             return null;
         }
         ResourceKey<Level> dimension = ResourceKey.create(
@@ -449,6 +463,7 @@ public class FruitTreeGrowthManager extends SavedData {
     private static final class SaplingEntry {
         private final FruitTreeType type;
         private int daysRemaining;
+        private int infertileProgress;
 
         private SaplingEntry(FruitTreeType type, int daysRemaining) {
             this.type = type;

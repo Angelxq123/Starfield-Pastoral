@@ -4,7 +4,6 @@ import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.farming.SeasonLocationRules;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -14,7 +13,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -100,9 +98,6 @@ public class WildSeedsItem extends Item implements IStardewItem {
 
     @SuppressWarnings("null")
     private static boolean isFarmland(BlockState state) {
-        Block block = state.getBlock();
-        if (block instanceof FarmBlock) return true;
-        String blockId = BuiltInRegistries.BLOCK.getKey(block).toString().toLowerCase();
-        return blockId.contains("farmland");
+        return com.stardew.craft.block.terrain.TerrainSoils.cropSupport(state);
     }
 }

@@ -309,6 +309,8 @@ public class TreeGrowthManager extends SavedData {
 			return;
 		}
 
+        if (!com.stardew.craft.block.terrain.TerrainSoils.treeGround(level.getBlockState(pos.below()))) return;
+
 		WildTrees.Def def = Objects.requireNonNull(saplingBlock.getDef(), "def");
 		int growthStage = growthStages.getOrDefault(globalPos, initialGrowthStage(level, pos));
 		boolean fertilized = fertilizedSaplings.contains(globalPos);
@@ -326,6 +328,10 @@ public class TreeGrowthManager extends SavedData {
 		if (growthStage >= maxGrowthStage) {
 			return;
 		}
+
+        // Preserve original growth/Tree Fertilizer rules; compact soil reduces daily opportunities by 20%.
+        if (com.stardew.craft.block.terrain.TerrainSoils.infertile(level.getBlockState(pos.below()))
+                && level.random.nextFloat() >= .8F) return;
 
 		boolean grows = level.random.nextFloat() < def.growthChance();
 		if (!grows && fertilized) {

@@ -127,6 +127,12 @@ public final class SiloRuntimeGameTests {
                 BuildingPlacementService.finish(level,record);record=data.find(record.id());
                 h.assertTrue(FarmFeed.capacity(server,farm.getInstanceId())==240 && record.phase()==BuildingRecord.Phase.READY,"Completed silo has no capacity");
                 h.assertTrue(level.getBlockState(record.manager()).is(ModBlocks.SILO_MANAGER.get()),"Lost manager marker");
+                h.assertTrue(data.assessResidence(record.id(),record.revision(),0)==BuildingWorldData.Result.SUCCESS,"Could not simulate an interrupted prefab assessment");
+                h.assertTrue(data.find(record.id()).residence()==BuildingRecord.Residence.INVALID
+                        && FarmFeed.capacity(server,farm.getInstanceId())==240
+                        && data.find(record.id()).residence()==BuildingRecord.Residence.VALID,
+                        "A purchased silo could not recover its capacity assessment");
+                record=data.find(record.id());
                 h.assertTrue(PrefabDefinitions.retainedGround(level,record).stream().allMatch(p->level.getBlockState(p).is(Blocks.STONE)),"Completion replaced natural support");
                 h.assertTrue(data.beginUpgrade(record.id(),record.revision(),14)!=BuildingWorldData.Result.SUCCESS,"Silo exposes a nonexistent upgrade");
                 var nativeCells=BuildingTransfer.nativeCells(level,record,1);

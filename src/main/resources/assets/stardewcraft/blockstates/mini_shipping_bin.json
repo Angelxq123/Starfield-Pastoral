@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,open=false": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin"
+    },
+    "facing=east,open=false": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin",
+      "y": 90
+    },
+    "facing=south,open=false": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin",
+      "y": 180
+    },
+    "facing=west,open=false": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin",
+      "y": 270
+    },
+    "facing=north,open=true": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin"
+    },
+    "facing=east,open=true": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin",
+      "y": 90
+    },
+    "facing=south,open=true": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin",
+      "y": 180
+    },
+    "facing=west,open=true": {
+      "model": "stardewcraft:block/utility/mini_shipping_bin",
+      "y": 270
+    }
+  }
+}

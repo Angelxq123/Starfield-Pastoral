@@ -74,9 +74,8 @@ public class FurnaceBlockEntity extends TimedProductionBlockEntity {
 
         double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 0.2;
         double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 0.2;
-        double y = pos.getY() + 1.2;
+        double y = pos.getY() + 2.0;
         level.addParticle(ParticleTypes.SMOKE, x, y + 0.05, z, 0.0, 0.01, 0.0);
-        level.addParticle(ParticleTypes.FLAME, x, y, z, 0.0, 0.01, 0.0);
     }
 
 

@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.entity.npc.StardewNpcEntity;
+import com.stardew.craft.entity.npc.NpcPathNavigation;
 import com.stardew.craft.npc.runtime.NpcRuntimeDataManager;
 import com.stardew.craft.npc.runtime.NpcRuntimeState;
 import com.stardew.craft.npc.runtime.NpcCentralMovementService;
@@ -17,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -162,6 +164,18 @@ public final class NpcDebugCommand {
         source.sendSuccess(() -> Component.translatable(
             "stardewcraft.command.npc.navigation",
             hasPath, pathDone, navTarget == null ? "<none>" : navTarget.toShortString(), entities.size()), false);
+        if (hasPath) {
+            var path = nav.getPath();
+            List<String> nodes = new ArrayList<>();
+            int start = Math.max(0, path.getNextNodeIndex() - 2);
+            int end = Math.min(path.getNodeCount(), path.getNextNodeIndex() + 8);
+            for (int index = start; index < end; index++) {
+                String marker = index == path.getNextNodeIndex() ? ">" : "";
+                nodes.add(marker + index + ":" + path.getNodePos(index).toShortString());
+            }
+            source.sendSuccess(() -> Component.literal(
+                    "  pathReachable=" + path.canReach() + " pathNodes=" + nodes), false);
+        }
 
         NpcCentralMovementService.DebugSnapshot movement = NpcCentralMovementService.getDebugSnapshot(npcId);
         if (movement != null) {
@@ -193,6 +207,14 @@ public final class NpcDebugCommand {
                 movement.missingPointId == null || movement.missingPointId.isBlank() ? "<none>" : movement.missingPointId,
                 movement.missingPortalLinkId == null || movement.missingPortalLinkId.isBlank() ? "<none>" : movement.missingPortalLinkId
             )), false);
+            if (movement.target != null && entity.getNavigation() instanceof NpcPathNavigation npcNavigation) {
+                var npcPath = npcNavigation.createNpcDiagnosticPath(BlockPos.containing(movement.target));
+                var vanillaPath = npcNavigation.createVanillaDiagnosticPath(BlockPos.containing(movement.target));
+                source.sendSuccess(() -> Component.literal(
+                        "  npcComparator=" + summarizePath(npcPath, entity)), false);
+                source.sendSuccess(() -> Component.literal(
+                        "  vanillaComparator=" + summarizePath(vanillaPath, entity)), false);
+            }
         }
 
         NpcScheduleRuntimeService.ScheduleKeyTrace keyTrace = NpcScheduleRuntimeService.getLastKeyTrace(npcId);
@@ -275,6 +297,13 @@ public final class NpcDebugCommand {
                     tBelow.getBlock().getDescriptionId()
                 )), false);
             }
+            source.sendSuccess(() -> Component.literal(
+                    "  local collision grid (feetY=" + entityBP.getY() + ", north first):"), false);
+            for (String row : collisionGrid(level, entity, entityBP, 4)) {
+                source.sendSuccess(() -> Component.literal("    " + row), false);
+            }
+            source.sendSuccess(() -> Component.literal(
+                    "    legend: N=npc .=body-clear #=body-blocked ~=unsupported D=door G=gate"), false);
         }
     }
 
@@ -288,6 +317,54 @@ public final class NpcDebugCommand {
             }
         }
         return matches;
+    }
+
+    private static List<String> collisionGrid(ServerLevel level,
+                                              StardewNpcEntity entity,
+                                              BlockPos center,
+                                              int radius) {
+        List<String> rows = new ArrayList<>();
+        for (int dz = -radius; dz <= radius; dz++) {
+            StringBuilder row = new StringBuilder();
+            for (int dx = -radius; dx <= radius; dx++) {
+                BlockPos pos = center.offset(dx, 0, dz);
+                row.append(dx == 0 && dz == 0 ? 'N' : collisionSymbol(level, entity, pos));
+            }
+            rows.add(row.toString());
+        }
+        return rows;
+    }
+
+    private static String summarizePath(net.minecraft.world.level.pathfinder.Path path,
+                                        StardewNpcEntity entity) {
+        if (path == null) return "null";
+        Vec3 end = path.getEndNode() == null || path.getNodeCount() == 0
+                ? null : path.getEntityPosAtNode(entity, path.getNodeCount() - 1);
+        return "reachable=" + path.canReach() + " nodes=" + path.getNodeCount()
+                + " end=" + formatVec(end) + " dist=" + path.getDistToTarget();
+    }
+
+    private static char collisionSymbol(ServerLevel level, StardewNpcEntity entity, BlockPos feet) {
+        BlockState feetState = level.getBlockState(feet);
+        BlockState headState = level.getBlockState(feet.above());
+        if (feetState.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock
+                || headState.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock) {
+            return 'G';
+        }
+        if (feetState.getBlock() instanceof net.minecraft.world.level.block.DoorBlock
+                || headState.getBlock() instanceof net.minecraft.world.level.block.DoorBlock) {
+            return 'D';
+        }
+        double halfWidth = entity.getBbWidth() * 0.5D;
+        AABB body = new AABB(
+                feet.getX() + 0.5D - halfWidth, feet.getY(), feet.getZ() + 0.5D - halfWidth,
+                feet.getX() + 0.5D + halfWidth, feet.getY() + entity.getBbHeight(), feet.getZ() + 0.5D + halfWidth
+        ).deflate(1.0E-7D);
+        if (!level.noBlockCollision(entity, body)) {
+            return '#';
+        }
+        AABB supportProbe = body.move(0.0D, -0.08D, 0.0D);
+        return level.noBlockCollision(entity, supportProbe) ? '~' : '.';
     }
 
     private static String formatVec(Vec3 v) {

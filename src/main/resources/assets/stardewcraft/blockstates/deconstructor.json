@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "part=main,facing=north,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor"
+    },
+    "part=main,facing=north,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor"
+    },
+    "part=extension,facing=north,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor_extension"
+    },
+    "part=extension,facing=north,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor_extension"
+    },
+    "part=main,facing=east,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor",
+      "y": 90
+    },
+    "part=main,facing=east,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor",
+      "y": 90
+    },
+    "part=extension,facing=east,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor_extension",
+      "y": 90
+    },
+    "part=extension,facing=east,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor_extension",
+      "y": 90
+    },
+    "part=main,facing=south,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor",
+      "y": 180
+    },
+    "part=main,facing=south,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor",
+      "y": 180
+    },
+    "part=extension,facing=south,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor_extension",
+      "y": 180
+    },
+    "part=extension,facing=south,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor_extension",
+      "y": 180
+    },
+    "part=main,facing=west,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor",
+      "y": 270
+    },
+    "part=main,facing=west,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor",
+      "y": 270
+    },
+    "part=extension,facing=west,ready=false": {
+      "model": "stardewcraft:block/utility/deconstructor_extension",
+      "y": 270
+    },
+    "part=extension,facing=west,ready=true": {
+      "model": "stardewcraft:block/utility/deconstructor_extension",
+      "y": 270
+    }
+  }
+}

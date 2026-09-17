@@ -52,6 +52,8 @@ public final class MachineJeiRegistry {
             machine("incubator", Layout.STANDARD, false),
             machine("keg", Layout.STANDARD, true),
             machine("loom", Layout.STANDARD, true),
+            machine("deconstructor", Layout.STANDARD, true),
+            machine("wood_chipper", Layout.RANDOM_OUTPUT, true),
             machine("mayonnaise_machine", Layout.STANDARD, true),
             machine("oil_maker", Layout.STANDARD, true),
             machine("preserves_jar", Layout.STANDARD, true),

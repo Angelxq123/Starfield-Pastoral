@@ -6,7 +6,7 @@
     "0": "stardewcraft:block/utility/oil_maker_1",
     "1": "stardewcraft:block/utility/oil_maker_2",
     "3": "stardewcraft:block/utility/oil_maker_4",
-    "particle": "stardewcraft:block/utility/oil_maker_1"
+    "particle": "stardewcraft:block/utility/oil_maker_particle"
   },
   "elements": [
     {

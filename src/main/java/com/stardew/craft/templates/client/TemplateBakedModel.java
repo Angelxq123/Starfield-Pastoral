@@ -383,6 +383,7 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
     private static BakedQuad remapReference(BakedQuad reference, @Nullable BakedQuad source,
                                             TextureAtlasSprite sprite) {
         int[] data = Arrays.copyOf(reference.getVertices(), reference.getVertices().length);
+        float[] targetBounds = faceBounds(reference);
         for (int vertex = 0; vertex < 4; vertex++) {
             int offset = vertex * IQuadTransformer.STRIDE;
             Vector3f position = new Vector3f(
@@ -391,9 +392,8 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
                     Float.intBitsToFloat(data[offset + IQuadTransformer.POSITION + 2]));
             float[] point = faceCoordinates(reference.getDirection(), position);
             float[] uv = source == null
-                    ? new float[]{sprite.getU(Mth.clamp(point[0], 0F, 1F)),
-                            sprite.getV(Mth.clamp(point[1], 0F, 1F))}
-                    : sourceUv(source, point);
+                    ? spriteUv(sprite, point[0], point[1])
+                    : sourceUv(source, point, targetBounds);
             data[offset + IQuadTransformer.UV0] = Float.floatToRawIntBits(uv[0]);
             data[offset + IQuadTransformer.UV0 + 1] = Float.floatToRawIntBits(uv[1]);
         }
@@ -407,7 +407,7 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
         random.setSeed(42L);
         List<BakedQuad> directed = model.getQuads(material, direction, random, ModelData.EMPTY, renderType);
         if (!directed.isEmpty()) {
-            return directed;
+            return representativeSurfaces(directed);
         }
         random.setSeed(42L);
         ArrayList<BakedQuad> matching = new ArrayList<>();
@@ -416,13 +416,34 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
                 matching.add(quad);
             }
         }
-        return matching;
+        return representativeSurfaces(matching);
+    }
+
+    /**
+     * Multipart and shaped block models can expose several small faces in one direction. A building template
+     * borrows a material surface, not the source block's geometry, so stamping every small face over the whole
+     * template creates overlapping, unrelated textures. Keep the largest coincident surface and its overlays.
+     */
+    private static List<BakedQuad> representativeSurfaces(List<BakedQuad> candidates) {
+        if (candidates.size() < 2) return candidates;
+        BakedQuad largest = candidates.stream().max(java.util.Comparator.comparingDouble(TemplateBakedModel::faceArea))
+                .orElse(candidates.getFirst());
+        float[] bounds = faceBounds(largest);
+        java.util.LinkedHashMap<SurfaceKey, BakedQuad> result = new java.util.LinkedHashMap<>();
+        for (BakedQuad candidate : candidates) {
+            if (sameBounds(bounds, faceBounds(candidate))) {
+                result.putIfAbsent(new SurfaceKey(candidate.getSprite().contents().name(), candidate.getTintIndex(),
+                        candidate.isShade(), candidate.hasAmbientOcclusion()), candidate);
+            }
+        }
+        return result.isEmpty() ? List.of(largest) : List.copyOf(result.values());
     }
 
     private static BakedQuad bake(TemplateMesh.MeshQuad quad, BakedQuad source) {
         int[] data = Arrays.copyOf(source.getVertices(), source.getVertices().length);
         Vector3f normal = normal(quad);
         int packedNormal = packNormal(normal);
+        float[] targetBounds = faceBounds(quad);
         for (int vertex = 0; vertex < 4; vertex++) {
             int offset = vertex * IQuadTransformer.STRIDE;
             Vector3f position = quad.vertices().get(vertex);
@@ -432,8 +453,8 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
 
             TemplateMesh.TexturePoint texturePoint = quad.texturePoint(vertex);
             float[] uv = texturePoint == null
-                    ? sourceUv(source, faceCoordinates(quad.direction(), position))
-                    : sourceUv(source, new float[]{texturePoint.u(), texturePoint.v()});
+                    ? sourceUv(source, faceCoordinates(quad.direction(), position), targetBounds)
+                    : sourceUv(source, new float[]{texturePoint.u(), texturePoint.v()}, targetBounds);
             data[offset + IQuadTransformer.UV0] = Float.floatToRawIntBits(uv[0]);
             data[offset + IQuadTransformer.UV0 + 1] = Float.floatToRawIntBits(uv[1]);
             data[offset + IQuadTransformer.NORMAL] = packedNormal;
@@ -462,8 +483,7 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
             TemplateMesh.TexturePoint texturePoint = quad.texturePoint(vertexIndex);
             float[] uv = texturePoint == null
                     ? fallbackUv(quad.direction(), vertex, sprite)
-                    : new float[]{sprite.getU(Mth.clamp(texturePoint.u(), 0F, 1F)),
-                            sprite.getV(Mth.clamp(texturePoint.v(), 0F, 1F))};
+                    : spriteUv(sprite, texturePoint.u(), texturePoint.v());
             baker.addVertex(vertex.x, vertex.y, vertex.z)
                     .setUv(uv[0], uv[1])
                     .setColor(-1)
@@ -485,11 +505,10 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
 
     private static float[] fallbackUv(Direction direction, Vector3f vertex, TextureAtlasSprite sprite) {
         float[] point = faceCoordinates(direction, vertex);
-        return new float[]{sprite.getU(Mth.clamp(point[0], 0F, 1F)),
-                sprite.getV(Mth.clamp(point[1], 0F, 1F))};
+        return spriteUv(sprite, point[0], point[1]);
     }
 
-    private static float[] sourceUv(BakedQuad source, float[] point) {
+    private static float[] sourceUv(BakedQuad source, float[] point, float[] targetBounds) {
         int[] data = source.getVertices();
         float[][] points = new float[4][2];
         float[][] texture = new float[4][2];
@@ -500,20 +519,112 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
                     Float.intBitsToFloat(data[offset + IQuadTransformer.POSITION + 1]),
                     Float.intBitsToFloat(data[offset + IQuadTransformer.POSITION + 2]));
             points[vertex] = faceCoordinates(source.getDirection(), position);
-            texture[vertex][0] = Float.intBitsToFloat(data[offset + IQuadTransformer.UV0]);
-            texture[vertex][1] = Float.intBitsToFloat(data[offset + IQuadTransformer.UV0 + 1]);
+            texture[vertex][0] = source.getSprite().getUOffset(
+                    Float.intBitsToFloat(data[offset + IQuadTransformer.UV0]));
+            texture[vertex][1] = source.getSprite().getVOffset(
+                    Float.intBitsToFloat(data[offset + IQuadTransformer.UV0 + 1]));
         }
 
+        float[] sourceBounds = bounds(points);
+        boolean contained = contains(sourceBounds, targetBounds);
+        if (!contained) {
+            normalize(points, sourceBounds);
+            point = normalized(point, targetBounds);
+            float[] textureBounds = bounds(texture);
+            normalize(texture, textureBounds);
+        }
         int[] triangle = nonDegenerateTriangle(points);
         if (triangle == null) {
-            return new float[]{source.getSprite().getU(Mth.clamp(point[0], 0F, 1F)),
-                    source.getSprite().getV(Mth.clamp(point[1], 0F, 1F))};
+            return spriteUv(source.getSprite(), point[0], point[1]);
         }
         float[] weights = barycentric(points[triangle[0]], points[triangle[1]], points[triangle[2]], point);
-        return new float[]{
-                weights[0] * texture[triangle[0]][0] + weights[1] * texture[triangle[1]][0] + weights[2] * texture[triangle[2]][0],
-                weights[0] * texture[triangle[0]][1] + weights[1] * texture[triangle[1]][1] + weights[2] * texture[triangle[2]][1]
-        };
+        float u = weights[0] * texture[triangle[0]][0] + weights[1] * texture[triangle[1]][0]
+                + weights[2] * texture[triangle[2]][0];
+        float v = weights[0] * texture[triangle[0]][1] + weights[1] * texture[triangle[1]][1]
+                + weights[2] * texture[triangle[2]][1];
+        return contained
+                ? new float[]{source.getSprite().getU(Mth.clamp(u, 0F, 1F)),
+                        source.getSprite().getV(Mth.clamp(v, 0F, 1F))}
+                : spriteUv(source.getSprite(), u, v);
+    }
+
+    private static float[] spriteUv(TextureAtlasSprite sprite, float u, float v) {
+        float shrink = sprite.uvShrinkRatio();
+        float safeU = Mth.lerp(shrink, Mth.clamp(u, 0F, 1F), 0.5F);
+        float safeV = Mth.lerp(shrink, Mth.clamp(v, 0F, 1F), 0.5F);
+        return new float[]{sprite.getU(safeU), sprite.getV(safeV)};
+    }
+
+    private static float[] faceBounds(BakedQuad quad) {
+        int[] data = quad.getVertices();
+        float[][] points = new float[4][2];
+        for (int vertex = 0; vertex < 4; vertex++) {
+            int offset = vertex * IQuadTransformer.STRIDE;
+            points[vertex] = faceCoordinates(quad.getDirection(), new Vector3f(
+                    Float.intBitsToFloat(data[offset + IQuadTransformer.POSITION]),
+                    Float.intBitsToFloat(data[offset + IQuadTransformer.POSITION + 1]),
+                    Float.intBitsToFloat(data[offset + IQuadTransformer.POSITION + 2])));
+        }
+        return bounds(points);
+    }
+
+    private static float[] faceBounds(TemplateMesh.MeshQuad quad) {
+        float[][] points = new float[quad.vertices().size()][2];
+        for (int vertex = 0; vertex < quad.vertices().size(); vertex++) {
+            TemplateMesh.TexturePoint texturePoint = quad.texturePoint(vertex);
+            points[vertex] = texturePoint == null
+                    ? faceCoordinates(quad.direction(), quad.vertices().get(vertex))
+                    : new float[]{texturePoint.u(), texturePoint.v()};
+        }
+        return bounds(points);
+    }
+
+    private static float[] bounds(float[][] points) {
+        float minU = Float.POSITIVE_INFINITY, minV = Float.POSITIVE_INFINITY;
+        float maxU = Float.NEGATIVE_INFINITY, maxV = Float.NEGATIVE_INFINITY;
+        for (float[] point : points) {
+            minU = Math.min(minU, point[0]);
+            minV = Math.min(minV, point[1]);
+            maxU = Math.max(maxU, point[0]);
+            maxV = Math.max(maxV, point[1]);
+        }
+        return new float[]{minU, minV, maxU, maxV};
+    }
+
+    private static boolean contains(float[] outer, float[] inner) {
+        float epsilon = 1.0E-5F;
+        return inner[0] >= outer[0] - epsilon && inner[1] >= outer[1] - epsilon
+                && inner[2] <= outer[2] + epsilon && inner[3] <= outer[3] + epsilon;
+    }
+
+    private static boolean sameBounds(float[] first, float[] second) {
+        float epsilon = 1.0E-5F;
+        for (int index = 0; index < first.length; index++) {
+            if (Math.abs(first[index] - second[index]) > epsilon) return false;
+        }
+        return true;
+    }
+
+    private static float faceArea(BakedQuad quad) {
+        float[] bounds = faceBounds(quad);
+        return Math.max(0F, bounds[2] - bounds[0]) * Math.max(0F, bounds[3] - bounds[1]);
+    }
+
+    private static void normalize(float[][] points, float[] bounds) {
+        float width = bounds[2] - bounds[0];
+        float height = bounds[3] - bounds[1];
+        if (width <= 1.0E-6F || height <= 1.0E-6F) return;
+        for (float[] point : points) {
+            point[0] = (point[0] - bounds[0]) / width;
+            point[1] = (point[1] - bounds[1]) / height;
+        }
+    }
+
+    private static float[] normalized(float[] point, float[] bounds) {
+        float width = bounds[2] - bounds[0];
+        float height = bounds[3] - bounds[1];
+        return new float[]{width <= 1.0E-6F ? 0.5F : (point[0] - bounds[0]) / width,
+                height <= 1.0E-6F ? 0.5F : (point[1] - bounds[1]) / height};
     }
 
     @Nullable
@@ -587,5 +698,9 @@ final class TemplateBakedModel extends BakedModelWrapper<BakedModel> implements 
     }
 
     private record CacheKey(BlockState material, @Nullable BlockState fill, @Nullable RenderType renderType, @Nullable Direction side, int season, int phase, int edges, int hiddenSections, boolean study, @Nullable ShapedMaterialContext context) {
+    }
+
+    private record SurfaceKey(net.minecraft.resources.ResourceLocation sprite, int tint, boolean shade,
+                              boolean ambientOcclusion) {
     }
 }

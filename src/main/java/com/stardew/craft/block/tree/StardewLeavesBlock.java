@@ -1,18 +1,50 @@
 package com.stardew.craft.block.tree;
 
+import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.core.ModDimensions;
+import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class StardewLeavesBlock extends LeavesBlock {
 	private static final int FAST_DECAY_DELAY = 3;
+	private static volatile int clientSeason = -1;
 
 	public StardewLeavesBlock(Properties properties) {
 		super(properties);
+	}
+
+	public static void updateClientSeason(int season) {
+		clientSeason = season;
+	}
+
+	/** Dormancy is visual/physical only: never delete a prefab's saved leaves. */
+	public static boolean dormant(BlockState state, BlockGetter getter) {
+		if (!(getter instanceof Level level) || !level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return false;
+		int season = level instanceof ServerLevel ? StardewTimeManager.get().getCurrentSeason() : clientSeason;
+		return season == 3 && (state.is(ModBlocks.OAK_LEAVES.get())
+				|| state.is(ModBlocks.MAPLE_LEAVES.get()) || state.is(ModBlocks.MAHOGANY_LEAVES.get())
+				|| state.is(ModBlocks.POINTED_LEAVES.get()));
+	}
+
+	@Override
+	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+		return dormant(state, level) ? Shapes.empty() : super.getShape(state, level, pos, context);
+	}
+
+	@Override
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+		return dormant(state, level) ? Shapes.empty() : super.getCollisionShape(state, level, pos, context);
 	}
 
 	@SuppressWarnings("null")

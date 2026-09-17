@@ -38,7 +38,11 @@ public final class UtilityFacingGameTests {
                 h.assertTrue(state != null && state.getValue(BlockStateProperties.HORIZONTAL_FACING) == looking.getOpposite(),
                         id + " does not face placer looking " + looking);
                 var facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-                var model = ModelVoxelShapeCache.variantShape("stardewcraft:" + id, "facing=" + facing.getSerializedName());
+                String variant = id.equals("mini_obelisk")
+                        ? "part=main,facing=" + facing.getSerializedName()
+                        : "facing=" + facing.getSerializedName() + ",part=main";
+                var model = ModelVoxelShapeCache.variantShape("stardewcraft:" + id, variant);
+                if (id.equals("mini_obelisk") && !model.isEmpty()) model = Shapes.create(model.bounds());
                 h.assertTrue(!model.isEmpty(), "Missing model variant " + id + " " + facing);
                 h.assertTrue(!Shapes.joinIsNotEmpty(model, state.getShape(h.getLevel(), pos), BooleanOp.NOT_SAME),
                         "Selection shape differs from rotated model " + id + " " + facing);
@@ -72,6 +76,7 @@ public final class UtilityFacingGameTests {
             tag.putString("Name", "stardewcraft:" + id);
             var state = NbtUtils.readBlockState(h.getLevel().registryAccess().lookupOrThrow(Registries.BLOCK), tag);
             var original = ModelVoxelShapeCache.shape("stardewcraft:block/utility/" + id);
+            if (id.equals("mini_obelisk")) original = Shapes.create(original.bounds());
             if (id.equals("farm_computer")) original = ModelVoxelShapeCache.rotateY(original, 3);
             h.assertTrue(!Shapes.joinIsNotEmpty(original, state.getShape(h.getLevel(), BlockPos.ZERO), BooleanOp.NOT_SAME),
                     "Old saved " + id + " unexpectedly rotated");

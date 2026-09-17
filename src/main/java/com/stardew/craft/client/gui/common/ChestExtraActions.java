@@ -3,6 +3,7 @@ package com.stardew.craft.client.gui.common;
 import com.stardew.craft.inventory.ChestMenuActions;
 import com.stardew.craft.inventory.InventoryTrashPolicy;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
@@ -48,19 +49,19 @@ public final class ChestExtraActions {
         long now = net.minecraft.Util.getMillis();
         float dt = Math.min(1F, (now - lastFrame) / 90F); lastFrame = now;
         lidAngle += ((hover ? -.45F : 0F) - lidAngle) * dt;
-        CommonGuiTextures.drawGameMenuTrashBody(g, x, y + 8, 1F);
-        g.pose().pushPose();
-        g.pose().translate(x + 2, y + 8, 0);
-        g.pose().mulPose(com.mojang.math.Axis.ZP.rotation(lidAngle));
-        CommonGuiTextures.drawGameMenuTrashLidAtCurrentPose(g, -2, -8);
-        g.pose().popPose();
+        TrashCanWidget.render(g, x, y + 8, 1F, x + 2, y + 8, 1F, -2, -8, lidAngle);
     }
-    public void tooltip(GuiGraphics g, int mx, int my) {
+    public void tooltip(GuiGraphics g, Font font, int mx, int my) {
         if (!enabled) return;
         String key = hit(mx, my, fillY, 18) ? "stardewcraft.chest.fill_stacks"
                 : noteVisible() && hit(mx, my, fillY + 24, 18) ? "stardewcraft.bundle.viewer"
                 : hit(mx, my, trashY(), 34) ? "stardewcraft.game_menu.inventory.trash" : null;
-        if (key != null) g.renderTooltip(Minecraft.getInstance().font, Component.translatable(key), mx, my);
+        if ("stardewcraft.game_menu.inventory.trash".equals(key)) {
+            g.renderTooltip(font, TrashCanWidget.tooltip(menu.getCarried()),
+                    java.util.Optional.empty(), mx, my);
+        } else if (key != null) {
+            g.renderTooltip(font, Component.translatable(key), mx, my);
+        }
     }
     public boolean click(double mx, double my, int button) {
         if (!enabled || button != 0) return false;
@@ -81,6 +82,9 @@ public final class ChestExtraActions {
             if (InventoryTrashPolicy.canTrash(menu.getCarried()) && client.gameMode != null) {
                 client.gameMode.handleInventoryButtonClick(menu.containerId, ChestMenuActions.TRASH);
                 client.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(com.stardew.craft.sound.ModSounds.TRASHCAN.get(), 1F));
+            } else if (!menu.getCarried().isEmpty()) {
+                client.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                        com.stardew.craft.sound.ModSounds.CANCEL.get(), 1F));
             }
             return true;
         }

@@ -3,22 +3,30 @@ package com.stardew.craft.client.model.terrain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 
 /** Clips baked native top faces into rectangular pixel groups, preserving UV scale. */
 final class TerrainFarmlandQuads {
     private final BakedQuad[] blends;
     private final boolean wet;
-    private final Map<Integer, List<BakedQuad>> cache = new ConcurrentHashMap<>();
+    private BakedQuad[] peers;
+    private final Map<Long, List<BakedQuad>> cache = new LinkedHashMap<>(64, .75f, true) {
+        @Override protected boolean removeEldestEntry(Map.Entry<Long, List<BakedQuad>> entry) { return size() > 512; }
+    };
 
     TerrainFarmlandQuads(BakedQuad[] blends, boolean wet) {
         this.blends = blends;
         this.wet = wet;
     }
 
-    List<BakedQuad> get(int soil, int moisture) {
-        int key = GrassConnectionMask.canonical(soil) | (wet ? 0 : GrassConnectionMask.canonical(moisture) << 8);
+    void setPeers(BakedQuad[] peers) { this.peers = peers; cache.clear(); }
+
+    List<BakedQuad> get(int soil, int moisture) { return get(soil, moisture, 0); }
+
+    synchronized List<BakedQuad> get(int soil, int moisture, int peerMasks) {
+        long key = GrassConnectionMask.canonical(soil) | (wet ? 0 : GrassConnectionMask.canonical(moisture) << 8)
+                | ((long) peerMasks << 16);
         return cache.computeIfAbsent(key, this::build);
     }
 
@@ -31,11 +39,22 @@ final class TerrainFarmlandQuads {
         return new BakedQuad(vertices, source.getTintIndex(), source.getDirection(), source.getSprite(), source.isShade(), source.hasAmbientOcclusion());
     }
 
-    private List<BakedQuad> build(int key) {
+    private List<BakedQuad> build(long key) {
         int[] grid = new int[256];
         boolean[] used = new boolean[256];
         for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++)
-            grid[z * 16 + x] = TerrainFarmlandEdges.blendIndex(wet, key & 255, key >>> 8, x, z);
+        {
+            int type = TerrainFarmlandEdges.blendIndex(wet, (int) key & 255, (int) (key >>> 8) & 255, x, z);
+            // Bare-ground finishing and dry/wet transitions keep priority at mixed junctions.
+            if (type == 0 && peers != null) {
+                int strongest = 0;
+                for (int family=0;family<3;family++) {
+                    int weight = TerrainFarmlandEdges.weight((int) (key >>> (16 + family*8)), x, z);
+                    if (weight > strongest) { strongest = weight; type = 16 + family*3 + weight-1; }
+                }
+            }
+            grid[z * 16 + x] = type;
+        }
         List<BakedQuad> result = new ArrayList<>();
         for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
             int i = z * 16 + x;
@@ -48,7 +67,7 @@ final class TerrainFarmlandQuads {
                 height++;
             }
             for (int dz = 0; dz < height; dz++) for (int dx = 0; dx < width; dx++) used[(z + dz) * 16 + x + dx] = true;
-            result.add(crop(blends[type], x / 16f, z / 16f, (x + width) / 16f, (z + height) / 16f));
+            result.add(crop(type < 16 ? blends[type] : peers[type-16], x / 16f, z / 16f, (x + width) / 16f, (z + height) / 16f));
         }
         return List.copyOf(result);
     }

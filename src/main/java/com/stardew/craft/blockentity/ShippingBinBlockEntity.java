@@ -51,8 +51,8 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     private static final String TAG_ITEMS = "items";
     private static final String TAG_BUFFER_DAY = "bufferDay";
     private static final int SLOT_COUNT = 1;
-    private static final int PROXIMITY_CHECK_INTERVAL = 10;
 
+    private static final RawAnimation SHIP_ANIM = RawAnimation.begin().thenPlay("ship");
     private static final RawAnimation OPEN_ANIM = RawAnimation.begin().thenPlayAndHold("open");
     private static final RawAnimation CLOSE_ANIM = RawAnimation.begin().thenPlayAndHold("close");
 
@@ -62,7 +62,12 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    private int openCount;
+    public final com.stardew.craft.model.ShippingBinLidMotion lidMotion = new com.stardew.craft.model.ShippingBinLidMotion();
+    private ItemStack shipmentItem = ItemStack.EMPTY;
+    private long shipmentTick = Long.MIN_VALUE;
+    private long shipmentSerial;
+    private long animatedShipmentSerial;
+    private boolean footprintChecked;
     private boolean nearbyOpen;
     private boolean lastAnimatedOpen;
     private int pendingCloseStepTicks;
@@ -76,6 +81,17 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         LOADED_BINS.add(this);
     }
 
+    @Override public void onLoad() { super.onLoad(); LOADED_BINS.add(this); }
+    @Override public void setRemoved() { LOADED_BINS.remove(this); super.setRemoved(); }
+
+    public boolean hasFullFootprint() {
+        if (level == null) return true;
+        var facing = getBlockState().getValue(ShippingBinBlock.FACING);
+        var other = level.getBlockState(worldPosition.relative(facing.getClockWise()));
+        return other.is(getBlockState().getBlock()) && other.getValue(ShippingBinBlock.PART) == ShippingBinBlock.Part.EXTENSION
+                && other.getValue(ShippingBinBlock.FACING) == facing;
+    }
+
     /**
      * 夜间结算时调用：将所有出货箱 buffer 中剩余物品记录到出货追踪器。
      */
@@ -86,11 +102,15 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ShippingBinBlockEntity be) {
+        if (!be.footprintChecked && level.getGameTime() % 20 == 0) {
+            // Existing installations reserve the second cell only if it is free.
+            be.footprintChecked = ((ShippingBinBlock) state.getBlock()).placeExtensions(level, pos, state);
+        }
         be.flushExpiredBufferIfNeeded();
 
         if (be.pendingCloseStepTicks > 0) {
             be.pendingCloseStepTicks--;
-            if (be.pendingCloseStepTicks == 0 && !be.nearbyOpen && be.openCount <= 0) {
+            if (be.pendingCloseStepTicks == 0 && !be.nearbyOpen) {
                 level.playSound(null, pos, ModSounds.WOODY_STEP.get(), SoundSource.BLOCKS, 0.7f, 1.0f);
             }
         }
@@ -102,30 +122,16 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
             }
         }
 
-        if (level.getGameTime() % PROXIMITY_CHECK_INTERVAL != 0) {
-            return;
-        }
-        AABB lidOpenArea = new AABB(
-            pos.getX() - 1.0D,
-            pos.getY(),
-            pos.getZ() - 1.0D,
-            pos.getX() + 3.0D,
-            pos.getY() + 2.5D,
-            pos.getZ() + 3.0D
-        );
+        AABB lidOpenArea = ShippingBinBlock.proximityArea(pos, state);
         boolean shouldOpenByProximity = !level.getEntitiesOfClass(Player.class, lidOpenArea, p -> !p.isSpectator()).isEmpty();
         if (be.nearbyOpen != shouldOpenByProximity) {
             be.nearbyOpen = shouldOpenByProximity;
             be.refreshOpenState();
         }
 
-        boolean isOpen = state.hasProperty(ShippingBinBlock.OPEN) && state.getValue(ShippingBinBlock.OPEN);
+        boolean isOpen = be.getBlockState().getValue(ShippingBinBlock.OPEN);
         if (isOpen) {
-            // Pixel-perfect inner void of the bin: X/Z 1 to 15 pixels, Y 1 to 10 pixels.
-            AABB swallowArea = new AABB(
-                pos.getX() + (1.0D / 16.0D), pos.getY() + (1.0D / 16.0D), pos.getZ() + (1.0D / 16.0D),
-                pos.getX() + (15.0D / 16.0D), pos.getY() + (10.0D / 16.0D), pos.getZ() + (15.0D / 16.0D)
-            );
+            AABB swallowArea = ShippingBinBlock.intakeArea(pos, state, be.hasFullFootprint());
             java.util.List<net.minecraft.world.entity.item.ItemEntity> itemEntities = level.getEntitiesOfClass(
                 net.minecraft.world.entity.item.ItemEntity.class, swallowArea, net.minecraft.world.entity.Entity::isAlive
             );
@@ -146,7 +152,9 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         UUID depositor = entityTag.hasUUID("Thrower") ? entityTag.getUUID("Thrower") : null;
         if (depositor == null || PlayerDataManager.get().getData(depositor) == null) return;
         flushExpiredBufferIfNeeded();
-        pushToBufferSlot(entity.getItem().copy(), depositor);
+        ItemStack incoming = entity.getItem().copy();
+        pushToBufferSlot(incoming, depositor);
+        showShipment(incoming);
         entity.discard();
         level.playSound(null, worldPosition, ModSounds.BACKPACK_IN.get(), SoundSource.BLOCKS, 0.6f, 1.0f);
         pendingShipSoundTicks = 5;
@@ -211,8 +219,9 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         ItemStack incoming = stack.copy();
         // Commit the previous batch to its depositor before assigning the new batch.
         pushToBufferSlot(incoming, player.getUUID());
-        level.playSound(null, worldPosition, ModSounds.BACKPACK_IN.get(), SoundSource.BLOCKS, 0.6f, 1.0f);
-        pendingShipSoundTicks = 5;
+        showShipment(incoming);
+        // SDV shipItem(menu) calls showShipment(playThrowSound: false).
+        level.playSound(null, worldPosition, ModSounds.SHIP.get(), SoundSource.BLOCKS, 0.8f, 1.0f);
         return true;
     }
 
@@ -227,7 +236,7 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
             return;
         }
 
-        boolean shouldOpen = openCount > 0 || nearbyOpen;
+        boolean shouldOpen = nearbyOpen;
         boolean wasOpen = state.getValue(ShippingBinBlock.OPEN);
         if (wasOpen == shouldOpen) {
             return;
@@ -448,23 +457,23 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
         syncToClient();
     }
 
-    @Override
-    public void startOpen(Player player) {
-        if (player.isSpectator()) {
-            return;
-        }
-        openCount++;
-        refreshOpenState();
+    // The menu is independent of the proximity-driven lid, as in SDV.
+    @Override public void startOpen(Player player) { }
+    @Override public void stopOpen(Player player) { }
+
+    public void tickLid() { lidMotion.tick(getBlockState().getValue(ShippingBinBlock.OPEN), 4.8f); }
+
+    private void showShipment(ItemStack stack) {
+        shipmentItem = stack.copyWithCount(1);
+        shipmentTick = level.getGameTime();
+        shipmentSerial++;
+        syncToClient();
     }
 
-    @Override
-    public void stopOpen(Player player) {
-        if (player.isSpectator()) {
-            return;
-        }
-        openCount = Math.max(0, openCount - 1);
-        refreshOpenState();
+    public float shipmentAge(float partialTick) {
+        return level == null || shipmentTick == Long.MIN_VALUE ? 100 : (level.getGameTime() - shipmentTick + partialTick) / 20f;
     }
+    public ItemStack shipmentItem() { return shipmentAge(0) < .38f ? shipmentItem : ItemStack.EMPTY; }
 
     @Override
     public Component getDisplayName() {
@@ -522,6 +531,11 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
             bufferOwnerId = tag.hasUUID("lastInteractorId") ? tag.getUUID("lastInteractorId") : null;
         }
         if (items.get(0).isEmpty()) bufferOwnerId = null;
+        if (level != null && level.isClientSide && tag.contains("ShipmentItem")) {
+            shipmentItem = ItemStack.parse(registries, tag.getCompound("ShipmentItem")).orElse(ItemStack.EMPTY);
+            shipmentTick = tag.getLong("ShipmentTick");
+            shipmentSerial = tag.getLong("ShipmentSerial");
+        }
     }
 
     @Nullable
@@ -534,6 +548,11 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
     public CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         saveAdditional(tag, registries);
+        if (shipmentAge(0) < .5f) {
+            tag.put("ShipmentItem", shipmentItem.save(registries));
+            tag.putLong("ShipmentTick", shipmentTick);
+            tag.putLong("ShipmentSerial", shipmentSerial);
+        }
         return tag;
     }
 
@@ -548,6 +567,14 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
             }
             return PlayState.CONTINUE;
         }));
+        controllers.add(new AnimationController<>(this, "shipment", 0, state -> {
+            if (shipmentAge(0) >= .5f) return PlayState.STOP;
+            if (animatedShipmentSerial != shipmentSerial) {
+                state.getController().forceAnimationReset();
+                animatedShipmentSerial = shipmentSerial;
+            }
+            return state.setAndContinue(SHIP_ANIM);
+        }));
     }
 
     @Override
@@ -557,6 +584,6 @@ public class ShippingBinBlockEntity extends net.minecraft.world.level.block.enti
 
     @SuppressWarnings("null")
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition).inflate(1.0);
+        return ShippingBinBlock.proximityArea(worldPosition, getBlockState()).inflate(.5);
     }
 }

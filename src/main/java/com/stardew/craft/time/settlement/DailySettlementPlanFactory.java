@@ -249,8 +249,10 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
         public DailySettlementWorkUnit create(String name, DailySettlementContext context) {
             freezeFarms(context);
             return switch (name) {
-                case "shipping_bin_flush" -> atomic(name,
-                        com.stardew.craft.blockentity.ShippingBinBlockEntity::flushAllForOvernight);
+                case "shipping_bin_flush" -> atomic(name, () -> {
+                    com.stardew.craft.blockentity.MiniShippingBinBlockEntity.flushAllForOvernight();
+                    com.stardew.craft.blockentity.ShippingBinBlockEntity.flushAllForOvernight();
+                });
                 case "non_participant_cleanup" -> createNonParticipantCleanupWorkUnit(
                         context, playerId -> cleanupNonParticipant(context, playerId));
                 case "daily_process_scope" -> createDailyProcessScope(context);

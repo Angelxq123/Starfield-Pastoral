@@ -16,7 +16,20 @@ import com.stardew.craft.client.gui.WorkbenchScreen;
 import com.stardew.craft.client.gui.WoodenChestScreen;
 import com.stardew.craft.client.gui.StoneChestScreen;
 import com.stardew.craft.client.gui.MiniForgeScreen;
+import com.stardew.craft.client.gui.AquariumScreen;
+import com.stardew.craft.client.gui.CookingPotScreen;
+import com.stardew.craft.client.gui.ElevatorScreen;
+import com.stardew.craft.client.gui.FishPondManagerScreen;
+import com.stardew.craft.client.gui.ShippingBinScreen;
+import com.stardew.craft.client.gui.SiloManagerScreen;
+import com.stardew.craft.client.gui.common.GuiLayoutMath;
+import com.stardew.craft.client.gui.common.StardewGuiViewport;
+import com.stardew.craft.client.fishing.TreasureChestScreen;
+import com.stardew.craft.client.gui.festival.FairGrangeDisplayScreen;
 import com.stardew.craft.client.gui.menu.StardewGameMenuScreen;
+import com.stardew.craft.client.gui.specialorder.SpecialOrderDropBoxScreen;
+import com.stardew.craft.communitycenter.client.BundleRewardScreen;
+import com.stardew.craft.communitycenter.client.BundleScreen;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
@@ -35,6 +48,7 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.runtime.IJeiRuntime;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.api.runtime.IIngredientManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
@@ -100,25 +114,49 @@ public class StardewJeiPlugin implements IModPlugin {
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
         IIngredientManager ingredientManager = registration.getJeiHelpers().getIngredientManager();
 
+        // Stardew screens render on a fixed design canvas and are then projected into
+        // the native window. JEI renders in native GUI coordinates, so relying on its
+        // default AbstractContainerScreen bounds makes the item list overlap the scaled UI.
+        registerProjectedContainer(registration, AquariumScreen.class);
+        registerProjectedContainer(registration, CookingPotScreen.class);
+        registerProjectedContainer(registration, ElevatorScreen.class);
+        registerProjectedContainer(registration, FishPondManagerScreen.class);
+        registerProjectedContainer(registration, MiniForgeScreen.class);
+        registerProjectedContainer(registration, ShippingBinScreen.class);
+        registerProjectedContainer(registration, SiloManagerScreen.class);
+        registerProjectedContainer(registration, StoneChestScreen.class);
+        registerProjectedContainer(registration, WoodenChestScreen.class);
+        registerProjectedContainer(registration, TreasureChestScreen.class);
+        registerProjectedContainer(registration, FairGrangeDisplayScreen.class);
+        registerProjectedContainer(registration, SpecialOrderDropBoxScreen.class);
+        registerProjectedContainer(registration, BundleRewardScreen.class);
+        registerProjectedContainer(registration, BundleScreen.class);
+
         registerExtraAreas(registration, WoodenChestScreen.class, WoodenChestScreen::jeiGuiExtraAreas);
         registerExtraAreas(registration, StoneChestScreen.class, StoneChestScreen::jeiGuiExtraAreas);
         registerExtraAreas(registration, MiniForgeScreen.class, MiniForgeScreen::jeiGuiExtraAreas);
+        registerExtraAreas(registration, CookingPotScreen.class, CookingPotScreen::jeiGuiExtraAreas);
+        registerExtraAreas(registration, ShippingBinScreen.class, ShippingBinScreen::jeiGuiExtraAreas);
+        registerExtraAreas(registration, FairGrangeDisplayScreen.class, FairGrangeDisplayScreen::jeiGuiExtraAreas);
 
         // The V-menu is a real container now, but only its inventory and crafting tabs
         // should reserve space for JEI. Other tabs use the full screen for non-item UI.
         registration.addGuiScreenHandler(StardewGameMenuScreen.class, screen -> {
+            if (!screen.shouldShowJei()) {
+                return fullScreenProperties(screen);
+            }
             JeiScreenBounds bounds = menuJeiBounds(screen.shouldShowJei(), screen.width, screen.height,
                     screen.jeiGuiLeft(), screen.jeiGuiTop(), screen.jeiGuiWidth(), screen.jeiGuiHeight());
             if (bounds == null) {
                 return null;
             }
-            return properties(screen, bounds.left(), bounds.top(), bounds.width(), bounds.height());
+            return projectedProperties(screen, bounds.left(), bounds.top(), bounds.width(), bounds.height());
         });
         registration.addGuiContainerHandler(StardewGameMenuScreen.class,
                 new IGuiContainerHandler<StardewGameMenuScreen>() {
                     @Override
                     public List<Rect2i> getGuiExtraAreas(StardewGameMenuScreen screen) {
-                        return screen.jeiGuiExtraAreas();
+                        return projectedAreas(screen, screen.jeiGuiExtraAreas());
                     }
 
                     @Override
@@ -127,9 +165,11 @@ public class StardewJeiPlugin implements IModPlugin {
                         if (!screen.shouldShowJei()) {
                             return Optional.empty();
                         }
-                        StardewGameMenuScreen.ClickableItem target = screen.jeiIngredientAt(mouseX, mouseY);
+                        JeiProjection projection = projection(screen);
+                        StardewGameMenuScreen.ClickableItem target = screen.jeiIngredientAt(
+                                projection.canvasX(mouseX), projection.canvasY(mouseY));
                         return target == null ? Optional.empty() : clickableIngredient(ingredientManager,
-                                target.stack(), target.x(), target.y(), target.width(), target.height());
+                                projection, target.stack(), target.x(), target.y(), target.width(), target.height());
                     }
                 });
 
@@ -139,7 +179,7 @@ public class StardewJeiPlugin implements IModPlugin {
             if (screen.jeiGuiWidth() <= 0 || screen.jeiGuiHeight() <= 0) {
                 return null;
             }
-            return properties(screen, screen.jeiGuiLeft(), screen.jeiGuiTop(),
+            return projectedProperties(screen, screen.jeiGuiLeft(), screen.jeiGuiTop(),
                     screen.jeiGuiWidth(), screen.jeiGuiHeight());
         });
         registration.addGlobalGuiHandler(new mezz.jei.api.gui.handlers.IGlobalGuiHandler() {
@@ -149,11 +189,19 @@ public class StardewJeiPlugin implements IModPlugin {
                 if (!(minecraft.screen instanceof WorkbenchScreen screen)) {
                     return Optional.empty();
                 }
-                WorkbenchScreen.ClickableItem target = screen.jeiIngredientAt(mouseX, mouseY);
+                JeiProjection projection = projection(screen);
+                WorkbenchScreen.ClickableItem target = screen.jeiIngredientAt(
+                        projection.canvasX(mouseX), projection.canvasY(mouseY));
                 return target == null ? Optional.empty() : clickableIngredient(ingredientManager,
-                        target.stack(), target.x(), target.y(), target.width(), target.height());
+                        projection, target.stack(), target.x(), target.y(), target.width(), target.height());
             }
         });
+    }
+
+    private static <T extends AbstractContainerScreen<?>> void registerProjectedContainer(
+            IGuiHandlerRegistration registration, Class<T> screenClass) {
+        registration.addGuiScreenHandler(screenClass, screen -> projectedProperties(screen,
+                screen.getGuiLeft(), screen.getGuiTop(), screen.getXSize(), screen.getYSize()));
     }
 
     private static <T extends AbstractContainerScreen<?>> void registerExtraAreas(
@@ -161,7 +209,7 @@ public class StardewJeiPlugin implements IModPlugin {
         registration.addGuiContainerHandler(screenClass, new IGuiContainerHandler<T>() {
             @Override
             public List<Rect2i> getGuiExtraAreas(T screen) {
-                return areas.apply(screen);
+                return projectedAreas(screen, areas.apply(screen));
             }
         });
     }
@@ -187,19 +235,69 @@ public class StardewJeiPlugin implements IModPlugin {
     record JeiScreenBounds(int left, int top, int width, int height) {
     }
 
-    private static Optional<IClickableIngredient<?>> clickableIngredient(
-            IIngredientManager ingredientManager, ItemStack stack, int x, int y, int width, int height) {
-        return ingredientManager.createClickableIngredient(stack, new Rect2i(x, y, width, height), true)
+    private static Optional<IClickableIngredient<?>> clickableIngredient(IIngredientManager ingredientManager,
+            JeiProjection projection, ItemStack stack, int x, int y, int width, int height) {
+        Rect2i area = projection.project(x, y, width, height);
+        return ingredientManager.createClickableIngredient(stack, area, true)
                 .map(ingredient -> (IClickableIngredient<?>) ingredient);
     }
 
-    private static IGuiProperties properties(Screen screen, int x, int y, int width, int height) {
-        return new ScreenProperties(screen.getClass(), x, y, width, height, screen.width, screen.height);
+    private static IGuiProperties projectedProperties(Screen screen, int x, int y, int width, int height) {
+        JeiProjection projection = projection(screen);
+        Rect2i area = projection.project(x, y, width, height);
+        return new ScreenProperties(screen.getClass(), area.getX(), area.getY(), area.getWidth(), area.getHeight(),
+                projection.screenWidth(), projection.screenHeight());
+    }
+
+    private static IGuiProperties fullScreenProperties(Screen screen) {
+        JeiProjection projection = projection(screen);
+        return new ScreenProperties(screen.getClass(), 0, 0, projection.screenWidth(), projection.screenHeight(),
+                projection.screenWidth(), projection.screenHeight());
+    }
+
+    private static List<Rect2i> projectedAreas(Screen screen, List<Rect2i> areas) {
+        if (areas.isEmpty()) {
+            return List.of();
+        }
+        JeiProjection projection = projection(screen);
+        return areas.stream()
+                .map(area -> projection.project(area.getX(), area.getY(), area.getWidth(), area.getHeight()))
+                .toList();
+    }
+
+    private static JeiProjection projection(Screen screen) {
+        GuiLayoutMath.Viewport viewport = StardewGuiViewport.forScreen(screen, Minecraft.getInstance().getWindow());
+        return projection(viewport);
+    }
+
+    static JeiProjection projection(GuiLayoutMath.Viewport viewport) {
+        return new JeiProjection(viewport.scale(), viewport.x(), viewport.y(),
+                Math.max(1, (int) Math.ceil(viewport.projectedWidth())),
+                Math.max(1, (int) Math.ceil(viewport.projectedHeight())));
     }
 
     private record ScreenProperties(Class<? extends Screen> screenClass, int guiLeft, int guiTop,
                                     int guiXSize, int guiYSize, int screenWidth, int screenHeight)
             implements IGuiProperties {
+    }
+
+    record JeiProjection(double scale, double x, double y, int screenWidth, int screenHeight) {
+        Rect2i project(int left, int top, int width, int height) {
+            int projectedLeft = (int) Math.floor(x + left * scale);
+            int projectedTop = (int) Math.floor(y + top * scale);
+            int projectedRight = (int) Math.ceil(x + (left + width) * scale);
+            int projectedBottom = (int) Math.ceil(y + (top + height) * scale);
+            return new Rect2i(projectedLeft, projectedTop,
+                    Math.max(1, projectedRight - projectedLeft), Math.max(1, projectedBottom - projectedTop));
+        }
+
+        double canvasX(double nativeX) {
+            return (nativeX - x) / scale;
+        }
+
+        double canvasY(double nativeY) {
+            return (nativeY - y) / scale;
+        }
     }
 
     @Override

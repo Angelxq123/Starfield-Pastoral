@@ -1,5 +1,13 @@
 package com.stardew.craft.client.render;
 
+import net.minecraft.util.RandomSource;
+
+import net.minecraft.client.resources.model.BakedModel;
+
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.stardew.craft.StardewCraft;
@@ -20,8 +28,12 @@ import javax.annotation.Nonnull;
 
 public class LightningRodBlockEntityRenderer implements BlockEntityRenderer<LightningRodBlockEntity> {
     private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/bubble.png");
-    private static final ResourceLocation MODEL = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "models/block/utility/lightning_rod.json");
     private static final float PX = 1.0f / 32.0f;
+
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(LightningRodBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(0.25, 1.25, 0.25);
+    }
 
     public LightningRodBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -33,8 +45,31 @@ public class LightningRodBlockEntityRenderer implements BlockEntityRenderer<Ligh
         ItemStack product = be.getProduct();
         BlockState state = be.getBlockState();
         Level level = be.getLevel();
+        if (level != null) {
+            poseStack.pushPose();
+            if (be.isWorking() && !ready) {
+                UtilityWorkingAnimation.applyGroundedWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+            }
 
-        BlockbenchElementRenderer.renderNegativeOnly(MODEL, poseStack, buffer, packedLight, packedOverlay);
+            Minecraft mc = Minecraft.getInstance();
+            BakedModel model = mc.getBlockRenderer().getBlockModel(state);
+            ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
+            RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
+            RandomSource rand = RandomSource.create(0L);
+            SpatialBlockModelRenderer.render(renderer,
+                level,
+                model,
+                state,
+                be.getBlockPos(),
+                poseStack,
+                buffer.getBuffer(renderType),
+                true,
+                rand,
+                0L,
+                packedOverlay
+            );
+            poseStack.popPose();
+        }
 
         if (!ready || product.isEmpty() || level == null) {
             return;

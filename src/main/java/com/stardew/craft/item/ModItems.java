@@ -179,6 +179,10 @@ public class ModItems {
         public static final DeferredItem<Item> DIRT = ITEMS.register("dirt",
                         () -> new StardewBlockItem(ModBlocks.DIRT.get(), "stardewcraft.type.natural_ground", -1,
                                         new Item.Properties().stacksTo(999)));
+        public static final DeferredItem<Item> HARD_SOIL = ITEMS.register("hard_soil",
+                        () -> new StardewBlockItem(ModBlocks.HARD_SOIL.get(), "stardewcraft.type.natural_ground", -1, "stardewcraft.hard_soil.description", new Item.Properties().stacksTo(999)));
+        public static final DeferredItem<Item> INFERTILE_FARMLAND = ITEMS.register("infertile_farmland",
+                        () -> new StardewBlockItem(ModBlocks.INFERTILE_FARMLAND.get(), "stardewcraft.type.natural_ground", -1, "stardewcraft.hard_soil.description", new Item.Properties().stacksTo(999)));
         public static final DeferredItem<Item> SAND = ITEMS.register("sand",
                         () -> new StardewBlockItem(ModBlocks.SAND.get(), "stardewcraft.type.natural_ground", -1,
                                         new Item.Properties().stacksTo(999)));
@@ -400,6 +404,7 @@ public class ModItems {
 
         // 閲庤崏鏂瑰潡鐗╁搧锛氫富鍏ュ彛浣跨敤缁熶竴 wild_weeds銆?
         // 鏃?seasonal id 淇濈暀涓哄吋瀹瑰埆鍚嶏紙閬垮厤宸叉湁瀛樻。/鐗╁搧涓㈠け锛夈€?
+        public static final DeferredItem<Item> FARM_TWIG = blockItem("farm_twig", ModBlocks.FARM_TWIG, "stardewcraft.type.natural_grass");
         public static final DeferredItem<Item> WILD_WEEDS = blockItem("wild_weeds", ModBlocks.WILD_WEEDS, "stardewcraft.type.natural_grass");
 
         // 鏄ュ閲庤崏 (legacy alias)
@@ -813,6 +818,9 @@ public class ModItems {
         public static final DeferredItem<Item> OAK_ROOT = blockItem("oak_root", ModBlocks.OAK_ROOT);
         public static final DeferredItem<Item> OAK_LOG = blockItem("oak_log", ModBlocks.OAK_LOG);
         public static final DeferredItem<Item> OAK_LEAVES = blockItem("oak_leaves", ModBlocks.OAK_LEAVES);
+        public static final DeferredItem<Item> BLOSSOM_LEAVES = blockItem("blossom_leaves", ModBlocks.BLOSSOM_LEAVES, "stardewcraft.type.natural_grass");
+        public static final DeferredItem<Item> FINE_LEAVES = blockItem("fine_leaves", ModBlocks.FINE_LEAVES, "stardewcraft.type.natural_grass");
+        public static final DeferredItem<Item> POINTED_LEAVES = blockItem("pointed_leaves", ModBlocks.POINTED_LEAVES, "stardewcraft.type.natural_grass");
         public static final DeferredItem<Item> OAK_LEAVES_QUESTION = blockItem("oak_leaves_question", ModBlocks.OAK_LEAVES_QUESTION);
         public static final DeferredItem<Item> OAK_BRANCH = blockItem("oak_branch", ModBlocks.OAK_BRANCH);
 
@@ -862,6 +870,12 @@ public class ModItems {
                         () -> new StardewBlockItem(ModBlocks.FISH_SMOKER.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
         public static final DeferredItem<Item> PRIZE_TICKET_MACHINE = ITEMS.register("prize_ticket_machine",
                         () -> new StardewBlockItem(ModBlocks.PRIZE_TICKET_MACHINE.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
+        public static final DeferredItem<Item> DECONSTRUCTOR = ITEMS.register("deconstructor",
+                () -> new StardewBlockItem(ModBlocks.DECONSTRUCTOR.get(), "stardewcraft.type.utility", -1,
+                        "item.stardewcraft.deconstructor.desc", new Item.Properties().stacksTo(999)));
+        public static final DeferredItem<Item> WOOD_CHIPPER = ITEMS.register("wood_chipper",
+                () -> new StardewBlockItem(ModBlocks.WOOD_CHIPPER.get(), "stardewcraft.type.utility", -1,
+                        "item.stardewcraft.wood_chipper.desc", new Item.Properties().stacksTo(999)));
         public static final DeferredItem<Item> RECYCLING_MACHINE = ITEMS.register("recycling_machine",
                         () -> new StardewBlockItem(ModBlocks.RECYCLING_MACHINE.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
         public static final DeferredItem<Item> COOKING_POT = ITEMS.register("cooking_pot",
@@ -984,6 +998,9 @@ public class ModItems {
 
         public static final DeferredItem<Item> MAILBOX = ITEMS.register("mailbox",
                         () -> new StardewBlockItem(ModBlocks.MAILBOX.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
+
+        public static final DeferredItem<Item> MINI_SHIPPING_BIN = ITEMS.register("mini_shipping_bin",
+                        () -> new StardewBlockItem(ModBlocks.MINI_SHIPPING_BIN.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
 
         public static final DeferredItem<Item> SHIPPING_BIN = ITEMS.register("shipping_bin",
                         () -> new StardewBlockItem(ModBlocks.SHIPPING_BIN.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
@@ -1583,6 +1600,16 @@ public class ModItems {
     public static final DeferredItem<Item> FLOORING_ICON = ITEMS.register("flooring_icon",
             () -> new SimpleStardewItem("stardewcraft.type.hidden", -1, new Item.Properties().stacksTo(1)));
 
+    // Internal GenericTool-style entries used only by Clint's upgrade shop and completion flow.
+    public static final DeferredItem<Item> COPPER_TRASH_CAN_UPGRADE = ITEMS.register("copper_trash_can_upgrade",
+            () -> new TrashCanUpgradeItem(15, new Item.Properties()));
+    public static final DeferredItem<Item> STEEL_TRASH_CAN_UPGRADE = ITEMS.register("steel_trash_can_upgrade",
+            () -> new TrashCanUpgradeItem(30, new Item.Properties()));
+    public static final DeferredItem<Item> GOLD_TRASH_CAN_UPGRADE = ITEMS.register("gold_trash_can_upgrade",
+            () -> new TrashCanUpgradeItem(45, new Item.Properties()));
+    public static final DeferredItem<Item> IRIDIUM_TRASH_CAN_UPGRADE = ITEMS.register("iridium_trash_can_upgrade",
+            () -> new TrashCanUpgradeItem(60, new Item.Properties()));
+
     public static final DeferredItem<Item> STATUE_OF_ENDLESS_FORTUNE =
             ITEMS.register("statue_of_endless_fortune",
                     () -> new StardewBlockItem(
@@ -1614,19 +1641,19 @@ public class ModItems {
 
     // 宸ュ叿 - 閿勫ご
     public static final DeferredItem<Item> HOE = ITEMS.register("hoe",
-            () -> new HoeItem(HoeItem.Tier.STARTER, new Item.Properties()));
+            () -> new HoeItem(HoeItem.Tier.STARTER, new Item.Properties().stacksTo(1)));
 
     public static final DeferredItem<Item> COPPER_HOE = ITEMS.register("copper_hoe",
-            () -> new HoeItem(HoeItem.Tier.COPPER, new Item.Properties()));
+            () -> new HoeItem(HoeItem.Tier.COPPER, new Item.Properties().stacksTo(1)));
 
     public static final DeferredItem<Item> STEEL_HOE = ITEMS.register("steel_hoe",
-            () -> new HoeItem(HoeItem.Tier.STEEL, new Item.Properties()));
+            () -> new HoeItem(HoeItem.Tier.STEEL, new Item.Properties().stacksTo(1)));
 
     public static final DeferredItem<Item> GOLD_HOE = ITEMS.register("gold_hoe",
-            () -> new HoeItem(HoeItem.Tier.GOLD, new Item.Properties()));
+            () -> new HoeItem(HoeItem.Tier.GOLD, new Item.Properties().stacksTo(1)));
 
     public static final DeferredItem<Item> IRIDIUM_HOE = ITEMS.register("iridium_hoe",
-            () -> new HoeItem(HoeItem.Tier.IRIDIUM, new Item.Properties()));
+            () -> new HoeItem(HoeItem.Tier.IRIDIUM, new Item.Properties().stacksTo(1)));
 
     // 宸ュ叿 - 鍠峰６
     public static final DeferredItem<Item> WATERING_CAN = ITEMS.register("watering_can",

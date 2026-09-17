@@ -50,7 +50,7 @@ public class LuckyPurpleShortsBlockEntityRenderer implements BlockEntityRenderer
         BakedModel model = minecraft.getBlockRenderer().getBlockModel(renderState);
         ModelBlockRenderer renderer = minecraft.getBlockRenderer().getModelRenderer();
         RenderType renderType = ItemBlockRenderTypes.getRenderType(renderState, false);
-        renderer.tesselateBlock(
+        SpatialBlockModelRenderer.render(renderer,
             level,
             model,
                 renderState,

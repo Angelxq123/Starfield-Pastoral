@@ -1,5 +1,10 @@
 {
   "textures": [
-    "minecraft:bubble"
+    "stardewcraft:oil_working_0",
+    "stardewcraft:oil_working_1",
+    "stardewcraft:oil_working_2",
+    "stardewcraft:oil_working_3",
+    "stardewcraft:oil_working_4",
+    "stardewcraft:oil_working_5"
   ]
 }

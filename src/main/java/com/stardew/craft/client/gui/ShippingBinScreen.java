@@ -1,12 +1,16 @@
 package com.stardew.craft.client.gui;
 
 import com.stardew.craft.client.gui.common.GuiText;
+import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.menu.ShippingBinMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+
+import java.util.List;
 
 @SuppressWarnings("null")
 public class ShippingBinScreen extends AbstractContainerScreen<ShippingBinMenu> {
@@ -14,6 +18,7 @@ public class ShippingBinScreen extends AbstractContainerScreen<ShippingBinMenu> 
     private static final int ROWS = 1;
     private static final int SLOT_X = 80;
     private static final int SLOT_Y = 18;
+    private final TrashCanWidget.Controller trashCan = new TrashCanWidget.Controller();
 
     public ShippingBinScreen(ShippingBinMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -52,6 +57,31 @@ public class ShippingBinScreen extends AbstractContainerScreen<ShippingBinMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
+        trashCan.render(graphics, trashX(), trashY(), mouseX, mouseY);
         this.renderTooltip(graphics, mouseX, mouseY);
+        trashCan.renderTooltip(graphics, font, menu, trashX(), trashY(), mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return trashCan.click(menu, trashX(), trashY(), mouseX, mouseY, button)
+                || super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return trashCan.deleteKey(menu, keyCode) || super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private int trashX() {
+        return trashCan.xBeside(leftPos, imageWidth, width);
+    }
+
+    private int trashY() {
+        return topPos + imageHeight - 34;
+    }
+
+    public List<Rect2i> jeiGuiExtraAreas() {
+        return List.of(new Rect2i(trashX(), trashY(), 18, 34));
     }
 }

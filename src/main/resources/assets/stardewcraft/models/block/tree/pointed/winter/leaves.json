@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout_mipped",
+  "textures": {
+    "all": "stardewcraft:block/tree/pointed/winter/leaves",
+    "particle": "stardewcraft:block/tree/pointed/winter/particle"
+  },
+  "elements": []
+}

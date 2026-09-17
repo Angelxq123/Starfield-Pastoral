@@ -31,7 +31,7 @@ public record PlayerDataSyncPacket(CompoundTag data) implements CustomPacketPayl
             "UnlockedTrinketSlots", "Professions", "UnlockedRecipes", "MailFlags",
             "SpecialItems", "SecretNotesSeen", "RevealedGiftTastes", "Stats",
             "HasFarm", "FarmName", "FarmOwnerUUID", "RecipeCraftCounts",
-            "FishCatchCounts", "ShippedBasic", "ItemsShipped");
+            "FishCatchCounts", "ShippedBasic", "ItemsShipped", "TrashCanLevel");
     
     @SuppressWarnings("null")
     public static final Type<PlayerDataSyncPacket> TYPE = new Type<>(

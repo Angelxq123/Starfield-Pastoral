@@ -1,14 +1,14 @@
 {
   "event_id": "npc_runtime",
   "navigation": {
-    "searches_per_tick": 4,
+    "searches_per_tick": 1,
     "retry_ticks": 20,
     "max_retry_ticks": 200,
-    "arrival_radius": 0.5,
+    "arrival_radius": 0.2,
     "vertical_tolerance": 0.55,
     "corridor_radius": 1,
     "max_visited_nodes": 4096,
-    "search_range": 96
+    "search_range": 192
   },
   "actors": {
     "jas": {

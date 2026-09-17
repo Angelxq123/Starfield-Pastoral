@@ -125,7 +125,7 @@ public class WoodenChestScreen extends AbstractContainerScreen<WoodenChestMenu> 
         }
 
         this.renderTooltip(graphics, mouseX, mouseY);
-        extraActions.tooltip(graphics, mouseX, mouseY);
+        extraActions.tooltip(graphics, this.font, mouseX, mouseY);
 
         if (isHoveringColorButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.wooden_chest.color_picker"), mouseX, mouseY);

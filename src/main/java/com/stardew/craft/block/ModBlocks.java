@@ -67,6 +67,13 @@ public class ModBlocks {
                         BLOCKS.register("dirt", () -> new com.stardew.craft.block.terrain.TerrainDirtBlock(
                                         Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DIRT)));
 
+        public static final DeferredBlock<com.stardew.craft.block.terrain.HardSoilBlock> HARD_SOIL =
+                        BLOCKS.register("hard_soil", () -> new com.stardew.craft.block.terrain.HardSoilBlock(
+                                        Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DIRT).strength(1.0F)));
+        public static final DeferredBlock<com.stardew.craft.block.terrain.TerrainFarmlandBlock.Infertile> INFERTILE_FARMLAND =
+                        BLOCKS.register("infertile_farmland", () -> new com.stardew.craft.block.terrain.TerrainFarmlandBlock.Infertile(
+                                        Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.FARMLAND)));
+
         public static final DeferredBlock<com.stardew.craft.block.terrain.TerrainSandBlock> SAND =
                         BLOCKS.register("sand", () -> new com.stardew.craft.block.terrain.TerrainSandBlock(
                                         Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.SAND)));
@@ -448,6 +455,11 @@ public class ModBlocks {
 
         // 自然/杂草
         @SuppressWarnings("null")
+        public static final DeferredBlock<com.stardew.craft.block.decor.FarmTwigBlock> FARM_TWIG = BLOCKS.register("farm_twig",
+                () -> new com.stardew.craft.block.decor.FarmTwigBlock(Block.Properties.of().mapColor(MapColor.WOOD)
+                        .strength(0.5F).sound(SoundType.WOOD).noOcclusion()
+                        .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)));
+
         public static final DeferredBlock<Block> WILD_WEEDS = BLOCKS.register("wild_weeds",
                         () -> new com.stardew.craft.block.nature.WildWeedsBlock(Block.Properties.of()
                                         .mapColor(net.minecraft.world.level.material.MapColor.PLANT)
@@ -1497,6 +1509,7 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                                 .sound(net.minecraft.world.level.block.SoundType.GRASS)
                                                 .strength(0.2F)
                                                 .randomTicks()
+                                                .dynamicShape()
                                                 .noOcclusion()));
         }
 
@@ -1507,6 +1520,15 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
         }
 
         // 预制树组件与木制建筑方块
+        private static DeferredBlock<Block> decorativeLeaves(String name) {
+                return BLOCKS.register(name, () -> new com.stardew.craft.block.tree.StardewLeavesBlock(
+                                Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.OAK_LEAVES).dynamicShape()));
+        }
+
+        public static final DeferredBlock<Block> BLOSSOM_LEAVES = decorativeLeaves("blossom_leaves");
+        public static final DeferredBlock<Block> FINE_LEAVES = decorativeLeaves("fine_leaves");
+        public static final DeferredBlock<Block> POINTED_LEAVES = decorativeLeaves("pointed_leaves");
+
         public static final DeferredBlock<Block> OAK_ROOT = newTreeRoot("oak");
         public static final DeferredBlock<Block> OAK_LOG = newTreeLog("oak");
         public static final DeferredBlock<Block> OAK_LEAVES = newTreeLeaves("oak");
@@ -1871,6 +1893,18 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .lightLevel(state -> state.getValue(com.stardew.craft.block.utility.FishSmokerBlock.WORKING) ? 13 : 0)
                                         .strength(1.5F, 3.0F)));
 
+        public static final DeferredBlock<Block> DECONSTRUCTOR = BLOCKS.register("deconstructor",
+                () -> new com.stardew.craft.block.utility.ReclamationMachineBlock(Block.Properties.of()
+                        .mapColor(net.minecraft.world.level.material.MapColor.METAL)
+                        .sound(net.minecraft.world.level.block.SoundType.METAL).noOcclusion()
+                        .strength(1.5F, 3.0F), "deconstructor"));
+
+        public static final DeferredBlock<Block> WOOD_CHIPPER = BLOCKS.register("wood_chipper",
+                () -> new com.stardew.craft.block.utility.ReclamationMachineBlock(Block.Properties.of()
+                        .mapColor(net.minecraft.world.level.material.MapColor.METAL)
+                        .sound(net.minecraft.world.level.block.SoundType.METAL).noOcclusion()
+                        .strength(1.5F, 3.0F), "wood_chipper"));
+
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> RECYCLING_MACHINE = BLOCKS.register("recycling_machine",
                         () -> new com.stardew.craft.block.utility.RecyclingMachineBlock(Block.Properties.of()
@@ -2048,7 +2082,13 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                                                 .strength(-1.0F, 3600000.0F)
                                                                 .noLootTable()
                                                                 .noOcclusion(),
-                                                                "stardewcraft:decor/special_orders_board"));
+                                                                "stardewcraft:block/decor/special_orders/special_orders_board/spring"));
+
+                public static final DeferredBlock<Block> PRIZE_TICKET_BOX = BLOCKS.register("prize_ticket_box",
+                                () -> new com.stardew.craft.block.decor.PrizeTicketBoxBlock(Block.Properties.of()
+                                                .mapColor(MapColor.WOOD).sound(SoundType.WOOD)
+                                                .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK)
+                                                .strength(-1.0F, 3600000.0F).noLootTable().noOcclusion()));
 
                 @SuppressWarnings("null")
                 public static final DeferredBlock<Block> GEODE_CRUSHER = BLOCKS.register("geode_crusher",
@@ -2234,7 +2274,7 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .mapColor(net.minecraft.world.level.material.MapColor.METAL)
                                         .sound(net.minecraft.world.level.block.SoundType.METAL)
                                         .noOcclusion()
-                                        .strength(1.5F, 3.0F), "stardewcraft:decor/common/fridge"));
+                                        .strength(1.5F, 3.0F), "stardewcraft:block/utility/fridge"));
 
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> MAILBOX = BLOCKS.register("mailbox",
@@ -2243,6 +2283,13 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .sound(net.minecraft.world.level.block.SoundType.WOOD)
                                         .noOcclusion()
                                         .strength(1.5F, 3.0F)));
+
+        @SuppressWarnings("null")
+        public static final DeferredBlock<Block> MINI_SHIPPING_BIN = BLOCKS.register("mini_shipping_bin",
+                        () -> new com.stardew.craft.block.utility.MiniShippingBinBlock(Block.Properties.of()
+                                        .mapColor(net.minecraft.world.level.material.MapColor.WOOD)
+                                        .sound(net.minecraft.world.level.block.SoundType.WOOD)
+                                        .noOcclusion().strength(1.5F, 3.0F)));
 
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> SHIPPING_BIN = BLOCKS.register("shipping_bin",

@@ -47,7 +47,7 @@
     "background": 0,
     "attachedItems": [
       {
-        "id": "stardewcraft:shipping_bin",
+        "id": "stardewcraft:mini_shipping_bin",
         "count": 1
       }
     ]
@@ -58,7 +58,7 @@
     "background": 0,
     "attachedItems": [
       {
-        "id": "stardewcraft:shipping_bin",
+        "id": "stardewcraft:mini_shipping_bin",
         "count": 1
       }
     ]

@@ -34,6 +34,8 @@
     "stardewcraft:dirt_slab",
     "stardewcraft:dirt_stairs",
     "stardewcraft:sand",
-    "stardewcraft:sandy_farmland"
+    "stardewcraft:sandy_farmland",
+    "stardewcraft:hard_soil",
+    "stardewcraft:infertile_farmland"
   ]
 }

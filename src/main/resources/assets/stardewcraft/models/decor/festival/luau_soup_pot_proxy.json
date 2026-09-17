@@ -1,35 +1,240 @@
 {
-  "ambientocclusion": false,
-  "credit": "Collision proxy for Geckolib Luau soup pot occupancy",
-  "texture_size": [
-    256,
-    256
-  ],
+  "parent": "minecraft:block/block",
   "textures": {
-    "0": "stardewcraft:block/festival/luau_soup_pot",
-    "particle": "stardewcraft:block/festival/luau_soup_pot"
+    "particle": "stardewcraft:block/festival/luau_soup_pot_particle"
   },
-  "elements": [
-    {
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ],
-      "faces": {
-        "north": { "uv": [0, 0, 16, 16], "texture": "#0" },
-        "east": { "uv": [0, 0, 16, 16], "texture": "#0" },
-        "south": { "uv": [0, 0, 16, 16], "texture": "#0" },
-        "west": { "uv": [0, 0, 16, 16], "texture": "#0" },
-        "up": { "uv": [0, 0, 16, 16], "texture": "#0" },
-        "down": { "uv": [0, 0, 16, 16], "texture": "#0" }
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          -22,
+          0,
+          -16
+        ],
+        "to": [
+          38,
+          17,
+          -10
+        ]
+      },
+      {
+        "from": [
+          -22,
+          17,
+          -16
+        ],
+        "to": [
+          -16,
+          24,
+          -10
+        ]
+      },
+      {
+        "from": [
+          32,
+          17,
+          -16
+        ],
+        "to": [
+          38,
+          24,
+          -10
+        ]
+      },
+      {
+        "from": [
+          -28,
+          0,
+          -10
+        ],
+        "to": [
+          44,
+          17,
+          -2
+        ]
+      },
+      {
+        "from": [
+          -28,
+          17,
+          -10
+        ],
+        "to": [
+          -22,
+          24,
+          -2
+        ]
+      },
+      {
+        "from": [
+          38,
+          17,
+          -10
+        ],
+        "to": [
+          44,
+          24,
+          -2
+        ]
+      },
+      {
+        "from": [
+          -32,
+          0,
+          -2
+        ],
+        "to": [
+          48,
+          17,
+          18
+        ]
+      },
+      {
+        "from": [
+          -32,
+          17,
+          -2
+        ],
+        "to": [
+          -26,
+          24,
+          18
+        ]
+      },
+      {
+        "from": [
+          42,
+          17,
+          -2
+        ],
+        "to": [
+          48,
+          24,
+          18
+        ]
+      },
+      {
+        "from": [
+          -28,
+          0,
+          18
+        ],
+        "to": [
+          44,
+          17,
+          26
+        ]
+      },
+      {
+        "from": [
+          -28,
+          17,
+          18
+        ],
+        "to": [
+          -22,
+          24,
+          26
+        ]
+      },
+      {
+        "from": [
+          38,
+          17,
+          18
+        ],
+        "to": [
+          44,
+          24,
+          26
+        ]
+      },
+      {
+        "from": [
+          -22,
+          0,
+          26
+        ],
+        "to": [
+          38,
+          17,
+          32
+        ]
+      },
+      {
+        "from": [
+          -22,
+          17,
+          26
+        ],
+        "to": [
+          -16,
+          24,
+          32
+        ]
+      },
+      {
+        "from": [
+          32,
+          17,
+          26
+        ],
+        "to": [
+          38,
+          24,
+          32
+        ]
+      },
+      {
+        "from": [
+          -22,
+          17,
+          -16
+        ],
+        "to": [
+          38,
+          24,
+          -10
+        ]
+      },
+      {
+        "from": [
+          -22,
+          17,
+          26
+        ],
+        "to": [
+          38,
+          24,
+          32
+        ]
+      },
+      {
+        "from": [
+          0,
+          0,
+          -34
+        ],
+        "to": [
+          16,
+          6,
+          -26
+        ]
+      },
+      {
+        "from": [
+          0,
+          0,
+          -26
+        ],
+        "to": [
+          16,
+          12,
+          -14
+        ]
       }
-    }
-  ],
-  "stardewcraft:collision": {"mode": "custom", "boxes": [{"from": [-25.66, 0, -5.26], "to": [41.66, 20.1, 21.26]}]}
+    ]
+  }
 }

@@ -1,23 +1,64 @@
 {
   "variants": {
-    "facing=south,part=main,working=false": { "model": "stardewcraft:block/utility/solar_panel_main" },
-    "facing=west,part=main,working=false": { "model": "stardewcraft:block/utility/solar_panel_main", "y": 90 },
-    "facing=north,part=main,working=false": { "model": "stardewcraft:block/utility/solar_panel_main", "y": 180 },
-    "facing=east,part=main,working=false": { "model": "stardewcraft:block/utility/solar_panel_main", "y": 270 },
-
-    "facing=south,part=main,working=true": { "model": "stardewcraft:block/utility/solar_panel_main" },
-    "facing=west,part=main,working=true": { "model": "stardewcraft:block/utility/solar_panel_main", "y": 90 },
-    "facing=north,part=main,working=true": { "model": "stardewcraft:block/utility/solar_panel_main", "y": 180 },
-    "facing=east,part=main,working=true": { "model": "stardewcraft:block/utility/solar_panel_main", "y": 270 },
-
-    "facing=south,part=extension,working=false": { "model": "stardewcraft:block/utility/solar_panel_extension" },
-    "facing=west,part=extension,working=false": { "model": "stardewcraft:block/utility/solar_panel_extension", "y": 90 },
-    "facing=north,part=extension,working=false": { "model": "stardewcraft:block/utility/solar_panel_extension", "y": 180 },
-    "facing=east,part=extension,working=false": { "model": "stardewcraft:block/utility/solar_panel_extension", "y": 270 },
-
-    "facing=south,part=extension,working=true": { "model": "stardewcraft:block/utility/solar_panel_extension" },
-    "facing=west,part=extension,working=true": { "model": "stardewcraft:block/utility/solar_panel_extension", "y": 90 },
-    "facing=north,part=extension,working=true": { "model": "stardewcraft:block/utility/solar_panel_extension", "y": 180 },
-    "facing=east,part=extension,working=true": { "model": "stardewcraft:block/utility/solar_panel_extension", "y": 270 }
+    "facing=south,part=main,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel"
+    },
+    "facing=south,part=main,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel"
+    },
+    "facing=west,part=main,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel",
+      "y": 90
+    },
+    "facing=west,part=main,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel",
+      "y": 90
+    },
+    "facing=north,part=main,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel",
+      "y": 180
+    },
+    "facing=north,part=main,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel",
+      "y": 180
+    },
+    "facing=east,part=main,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel",
+      "y": 270
+    },
+    "facing=east,part=main,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel",
+      "y": 270
+    },
+    "facing=south,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel_extension"
+    },
+    "facing=south,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel_extension"
+    },
+    "facing=west,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel_extension",
+      "y": 90
+    },
+    "facing=west,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel_extension",
+      "y": 90
+    },
+    "facing=north,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel_extension",
+      "y": 180
+    },
+    "facing=north,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel_extension",
+      "y": 180
+    },
+    "facing=east,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/solar_panel_extension",
+      "y": 270
+    },
+    "facing=east,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/solar_panel_extension",
+      "y": 270
+    }
   }
 }

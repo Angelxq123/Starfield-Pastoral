@@ -153,11 +153,7 @@ public class SunflowerCropBlock extends StardewCropBlock {
             return below.getBlock() == this && below.getValue(HALF) == DoubleBlockHalf.LOWER;
         }
         BlockState below = level.getBlockState(pos.below());
-        boolean farmland = below.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
-        if (!farmland) {
-            String blockId = below.getBlock().builtInRegistryHolder().key().location().toString().toLowerCase();
-            farmland = blockId.contains("farmland");
-        }
+        boolean farmland = com.stardew.craft.block.terrain.TerrainSoils.cropSupport(below);
         // 玩家手动放置的成品花：允许種在泥土/草方块/菌丝等自然地表上
         if (!farmland
             && StardewCropBlock.isDecorativeFlowerState(state)

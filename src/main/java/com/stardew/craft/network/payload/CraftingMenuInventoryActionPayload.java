@@ -1,7 +1,7 @@
 package com.stardew.craft.network.payload;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.inventory.InventoryTrashPolicy;
+import com.stardew.craft.inventory.TrashCanService;
 import com.stardew.craft.item.tool.FishingRodItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -26,6 +26,7 @@ public record CraftingMenuInventoryActionPayload(int action, int slotIndex, bool
     public static final int ACTION_DRAG_DISTRIBUTE = 4;
     public static final int ACTION_DOUBLE_CLICK_COLLECT = 5;
     public static final int ACTION_SHIFT_RIGHT_CLICK_SLOT = 6;
+    public static final int ACTION_TRASH_INVENTORY_SLOT = 7;
 
     public CraftingMenuInventoryActionPayload(int action, int slotIndex, boolean rightClick) {
         this(action, slotIndex, rightClick, new int[0]);
@@ -66,6 +67,8 @@ public record CraftingMenuInventoryActionPayload(int action, int slotIndex, bool
                 case ACTION_DRAG_DISTRIBUTE -> handleDragDistribute(player, payload.slots, payload.rightClick);
                 case ACTION_DOUBLE_CLICK_COLLECT -> handleDoubleClickCollect(player, payload.slotIndex);
                 case ACTION_SHIFT_RIGHT_CLICK_SLOT -> handleClickSlot(player, payload.slotIndex, true, true);
+                case ACTION_TRASH_INVENTORY_SLOT -> trashInventorySlot(player, payload.slotIndex,
+                        payload.rightClick, payload.slots);
                 default -> {
                 }
             }
@@ -314,11 +317,19 @@ public record CraftingMenuInventoryActionPayload(int action, int slotIndex, bool
     }
 
     private static void trashCarried(ServerPlayer player) {
-        ItemStack carried = player.containerMenu.getCarried();
-        if (!InventoryTrashPolicy.canTrash(carried)) {
+        if (TrashCanService.trashCarried(player, player.containerMenu).success()) {
+            syncInventory(player);
+        }
+    }
+
+    private static void trashInventorySlot(ServerPlayer player, int slotIndex, boolean takeOne, int[] expectedStack) {
+        if (expectedStack == null || expectedStack.length != 2) {
             return;
         }
-        player.containerMenu.setCarried(ItemStack.EMPTY);
+        net.minecraft.world.item.Item expected = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .byId(expectedStack[0]);
+        TrashCanService.trashInventorySlot(player, slotIndex, takeOne, expected, expectedStack[1]);
+        // Always correct the local-only Geode cursor view, including stale/rejected requests.
         syncInventory(player);
     }
 

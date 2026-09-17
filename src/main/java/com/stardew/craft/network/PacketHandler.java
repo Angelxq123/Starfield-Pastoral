@@ -90,10 +90,10 @@ public class PacketHandler {
         // separates overnight collapse presentation from the final multiplayer settlement,
         // including the pre-2AM multiplayer return-to-bed acknowledgement.
         // Reject mixed old/new clients explicitly.
-        // Adds the per-player daily-info snapshot for HUD addons.
+        // Adds per-player daily-info and Robin construction snapshots for HUD addons.
         // Fishing now carries use identities and complete catch stacks plus their world origins.
         // Pet selection now carries namespaced breed IDs and validates the addon catalog before login.
-        final PayloadRegistrar registrar = event.registrar("28");
+        final PayloadRegistrar registrar = event.registrar("29");
 
         registrar.configurationToClient(com.stardew.craft.pet.PetCatalogHandshake.Offer.TYPE, com.stardew.craft.pet.PetCatalogHandshake.Offer.CODEC, com.stardew.craft.pet.PetCatalogHandshake.Offer::handle);
         registrar.configurationToServer(com.stardew.craft.pet.PetCatalogHandshake.Ack.TYPE, com.stardew.craft.pet.PetCatalogHandshake.Ack.CODEC, com.stardew.craft.pet.PetCatalogHandshake.Ack::handle);
@@ -324,6 +324,10 @@ public class PacketHandler {
         );
         
         registrar.playToClient(DailyInfoSyncPayload.TYPE, DailyInfoSyncPayload.CODEC, DailyInfoSyncPayload::handle);
+        registrar.playToClient(
+            com.stardew.craft.network.payload.BuildingConstructionProgressSyncPayload.TYPE,
+            com.stardew.craft.network.payload.BuildingConstructionProgressSyncPayload.STREAM_CODEC,
+            com.stardew.craft.network.payload.BuildingConstructionProgressSyncPayload::handle);
 
         registrar.playToClient(
             TimeSyncPacket.TYPE,

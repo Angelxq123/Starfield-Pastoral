@@ -29,9 +29,14 @@ public class DeluxeWormBinBlockEntity extends TimedProductionBlockEntity impleme
         super(ModBlockEntities.DELUXE_WORM_BIN.get(), pos, state);
     }
 
+    private boolean modelFootprintChecked;
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, DeluxeWormBinBlockEntity be) {
         if (level.isClientSide) {
             return;
+        }
+        if (!be.modelFootprintChecked) {
+            be.modelFootprintChecked = com.stardew.craft.block.utility.MachineModelFootprint.repair(level, pos, state);
         }
         be.tickServer(level);
     }

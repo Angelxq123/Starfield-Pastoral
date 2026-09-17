@@ -1,7 +1,9 @@
 package com.stardew.craft.entity.npc;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
@@ -12,6 +14,7 @@ import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,9 +29,35 @@ import java.util.Set;
  * no road is available.</p>
  */
 public class NpcNodeEvaluator extends WalkNodeEvaluator {
+    private static final double TRAFFIC_SCAN_RADIUS = 12.0D;
+    private static final double TRAFFIC_PERSONAL_SPACE = 0.35D;
+    private static final float TRAFFIC_COST_PER_ACTOR = 8.0F;
+    private static final float MAX_TRAFFIC_COST = 32.0F;
     com.stardew.craft.npc.runtime.NpcSquareArea squareArea;
     private record Failure(float cost, long expiresAt) {}
     private final java.util.LinkedHashMap<BlockPos, Failure> failures = new java.util.LinkedHashMap<>();
+    private List<AABB> trafficBodies = List.of();
+
+    @Override
+    public void prepare(PathNavigationRegion region, Mob mob) {
+        super.prepare(region, mob);
+        // Snapshot nearby actors once per A* search. NPCs are dynamic soft obstacles:
+        // prefer an open aisle when one exists, but never declare a one-tile doorway
+        // permanently unreachable just because another NPC is passing through it.
+        trafficBodies = mob.level().getEntitiesOfClass(
+                StardewNpcEntity.class,
+                mob.getBoundingBox().inflate(TRAFFIC_SCAN_RADIUS, 2.0D, TRAFFIC_SCAN_RADIUS),
+                other -> other != mob && other.isAlive() && other.isPushable())
+            .stream()
+            .map(other -> other.getBoundingBox().inflate(TRAFFIC_PERSONAL_SPACE, 0.0D, TRAFFIC_PERSONAL_SPACE))
+            .toList();
+    }
+
+    @Override
+    public void done() {
+        trafficBodies = List.of();
+        super.done();
+    }
 
     void penalize(BlockPos pos, long now) {
         failures.entrySet().removeIf(entry -> entry.getValue().expiresAt <= now);
@@ -109,6 +138,12 @@ public class NpcNodeEvaluator extends WalkNodeEvaluator {
                     getFloorLevel(new BlockPos(neighbor.x,neighbor.y,neighbor.z)),neighbor.z+.5),this.mob.getBbWidth()/2.)
                     ||!com.stardew.craft.interior.InteriorRegionRegistry.fixedInteriorIdAt(this.mob.blockPosition())
                     .equals(com.stardew.craft.interior.InteriorRegionRegistry.fixedInteriorIdAt(new BlockPos(neighbor.x,neighbor.y,neighbor.z)))))continue;
+            // WalkNodeEvaluator may offer a diagonal between two individually valid
+            // cells even though the NPC's body clips the inside corner between them.
+            // That produced valid-looking saloon paths which the move controller could
+            // never physically follow. Reject only the clipped edge so A* can choose
+            // the adjacent cardinal cell and round the corner normally.
+            if (!hasClearHorizontalEdge(node, neighbor)) continue;
             // Vanilla accepts a one-block jump even with a 0.6 step height. Reject
             // that edge, not the cached node: the same node may have a level approach.
             if (!canStepBetween(node, neighbor)) continue;
@@ -152,6 +187,7 @@ public class NpcNodeEvaluator extends WalkNodeEvaluator {
                 // on cached Nodes across visits, and never change another NPC's costs.
                 neighbor.costMalus += failure.cost;
             }
+            neighbor.costMalus += trafficCost(neighbor);
             buffer[accepted++] = neighbor;
         }
         return accepted;
@@ -171,7 +207,52 @@ public class NpcNodeEvaluator extends WalkNodeEvaluator {
             feetY + this.mob.getBbHeight(),
             z + halfWidth
         ).deflate(1.0E-7D);
-        return this.mob.level().noCollision(this.mob, box);
+        // Entity occupancy is transient and must not erase the only route through
+        // a doorway. Physical NPC collision and the finite traffic cost below own
+        // crowd handling; this check is strictly architectural clearance.
+        return this.mob.level().noBlockCollision(this.mob, box);
+    }
+
+    private float trafficCost(Node node) {
+        if (trafficBodies.isEmpty() || this.mob == null) return 0.0F;
+        double halfWidth = this.mob.getBbWidth() * 0.5D;
+        double x = node.x + 0.5D;
+        double z = node.z + 0.5D;
+        double feetY = getFloorLevel(new BlockPos(node.x, node.y, node.z));
+        AABB body = new AABB(
+            x - halfWidth,
+            feetY,
+            z - halfWidth,
+            x + halfWidth,
+            feetY + this.mob.getBbHeight(),
+            z + halfWidth
+        ).deflate(1.0E-7D);
+        float cost = 0.0F;
+        for (AABB occupied : trafficBodies) {
+            if (body.intersects(occupied)) {
+                cost = Math.min(MAX_TRAFFIC_COST, cost + TRAFFIC_COST_PER_ACTOR);
+            }
+        }
+        return cost;
+    }
+
+    private boolean hasClearHorizontalEdge(Node from, Node to) {
+        if (this.mob == null || from.x == to.x || from.z == to.z) return true;
+        double fromFloor = getFloorLevel(new BlockPos(from.x, from.y, from.z));
+        double toFloor = getFloorLevel(new BlockPos(to.x, to.y, to.z));
+        if (Math.abs(fromFloor - toFloor) > 0.05D) return true;
+
+        double halfWidth = this.mob.getBbWidth() * 0.5D;
+        AABB body = new AABB(
+            from.x + 0.5D - halfWidth,
+            fromFloor,
+            from.z + 0.5D - halfWidth,
+            from.x + 0.5D + halfWidth,
+            fromFloor + this.mob.getBbHeight(),
+            from.z + 0.5D + halfWidth
+        ).deflate(1.0E-7D);
+        return this.mob.level().noBlockCollision(this.mob, body.expandTowards(
+                to.x - from.x, 0.0D, to.z - from.z));
     }
 
     private boolean canStepBetween(Node from, Node to) {

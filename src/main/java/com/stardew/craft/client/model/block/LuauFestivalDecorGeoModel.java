@@ -9,6 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 
 public class LuauFestivalDecorGeoModel extends GeoModel<LuauFestivalDecorBlockEntity> {
+    private static final ResourceLocation WIZARD_MODEL = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "geo/block/decor/wizard_cauldron.geo.json");
+    private static final ResourceLocation WIZARD_TEXTURE = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/block/decor/common/wizard_cauldron.png");
+    private static final ResourceLocation WIZARD_ANIMATION = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "animations/block/festival/wizard_cauldron.animation.json");
+    private static final ResourceLocation SOUP_ANIMATION = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "animations/block/festival/luau_soup_pot.animation.json");
     private static final ResourceLocation SOUP_POT_MODEL = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "geo/block/festival/luau_soup_pot.geo.json");
     private static final ResourceLocation SOUP_POT_TEXTURE = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/block/festival/luau_soup_pot.png");
     private static final ResourceLocation TOTEM_MODEL = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "geo/block/festival/luau_totem.geo.json");
@@ -23,6 +27,7 @@ public class LuauFestivalDecorGeoModel extends GeoModel<LuauFestivalDecorBlockEn
 
     @Override
     public ResourceLocation getModelResource(LuauFestivalDecorBlockEntity animatable) {
+        if (animatable.getBlockState().is(ModBlocks.WIZARD_CAULDRON.get())) return WIZARD_MODEL;
         if (animatable.getBlockState().is(ModBlocks.WINTER_STAR_TREE.get())) {
             return WINTER_STAR_TREE_MODEL;
         }
@@ -40,6 +45,7 @@ public class LuauFestivalDecorGeoModel extends GeoModel<LuauFestivalDecorBlockEn
 
     @Override
     public ResourceLocation getTextureResource(LuauFestivalDecorBlockEntity animatable) {
+        if (animatable.getBlockState().is(ModBlocks.WIZARD_CAULDRON.get())) return WIZARD_TEXTURE;
         if (animatable.getBlockState().is(ModBlocks.WINTER_STAR_TREE.get())) {
             return WINTER_STAR_TREE_TEXTURE;
         }
@@ -57,6 +63,8 @@ public class LuauFestivalDecorGeoModel extends GeoModel<LuauFestivalDecorBlockEn
 
     @Override
     public ResourceLocation getAnimationResource(LuauFestivalDecorBlockEntity animatable) {
+        if (animatable.getBlockState().is(ModBlocks.WIZARD_CAULDRON.get())) return WIZARD_ANIMATION;
+        if (animatable.getBlockState().is(ModBlocks.LUAU_SOUP_POT.get())) return SOUP_ANIMATION;
         return null;
     }
 

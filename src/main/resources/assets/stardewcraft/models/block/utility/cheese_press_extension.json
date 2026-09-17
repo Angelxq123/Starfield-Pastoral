@@ -1,8 +1,23 @@
 {
-  "ambientocclusion": false,
-  "parent": "minecraft:block/block",
   "textures": {
     "particle": "stardewcraft:block/utility/cheese_press_particle"
   },
-  "elements": []
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          1,
+          0,
+          2
+        ],
+        "to": [
+          15,
+          15,
+          14
+        ]
+      }
+    ]
+  }
 }

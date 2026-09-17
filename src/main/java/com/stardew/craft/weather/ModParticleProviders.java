@@ -1,6 +1,9 @@
 package com.stardew.craft.weather;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.model.OilMakerAnimation;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import com.stardew.craft.client.particle.WeaponSkillParticles;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
@@ -289,24 +292,24 @@ public class ModParticleProviders {
         }
     }
 
-    /**
-     * 暗黄色油泡粒子（轻微上浮）
-     */
+    /** Source six-frame oil effect; motion is in the sprite, not particle drift. */
     public static class OilBubbleParticle extends TextureSheetParticle {
+        private final SpriteSet sprites;
 
         @SuppressWarnings("null")
-        protected OilBubbleParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites) {
-            super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-            this.setSprite(sprites.get(level.random));
-            this.gravity = -0.01F;
-            this.lifetime = 10 + level.random.nextInt(6);
-            this.friction = 0.85F;
+        protected OilBubbleParticle(ClientLevel level, double x, double y, double z,
+                                    double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites) {
+            super(level, x, y, z);
+            this.sprites = sprites;
+            this.lifetime = 67;
             this.hasPhysics = false;
-            this.alpha = 0.7F;
-            this.rCol = 0.95F;
-            this.gCol = 0.82F;
-            this.bCol = 0.25F;
-            this.quadSize = 0.08F + level.random.nextFloat() * 0.06F;
+            this.xd = this.yd = this.zd = 0;
+            // Source Color=Yellow is multiplicative; keep its green/olive pixel groups.
+            this.rCol = this.gCol = 1;
+            this.bCol = 0;
+            // 32-square padded atlas: visible field is one block wide and two high.
+            this.quadSize = 1;
+            setSprite(sprites.get(0, 5));
         }
 
         @Override
@@ -316,13 +319,20 @@ public class ModParticleProviders {
 
         @Override
         public void tick() {
-            super.tick();
-            this.xd += (this.random.nextDouble() - 0.5) * 0.002;
-            this.zd += (this.random.nextDouble() - 0.5) * 0.002;
-            this.alpha = Math.max(0.0F, this.alpha - 0.02F);
-            if (this.alpha <= 0.02F) {
-                this.remove();
-            }
+            xo = x;
+            yo = y;
+            zo = z;
+            if (++age >= lifetime) remove();
+        }
+
+        @Override
+        public void render(VertexConsumer buffer, Camera camera, float partialTick) {
+            float elapsedMillis = (age + partialTick) * 50;
+            // Original AlphaFade=.005 at 60 updates/sec, six frames at 80 ms each.
+            alpha = OilMakerAnimation.particleAlpha(elapsedMillis);
+            if (alpha == 0) return;
+            setSprite(sprites.get(OilMakerAnimation.particleFrame(elapsedMillis), 5));
+            super.render(buffer, camera, partialTick);
         }
 
         public static class Provider implements ParticleProvider<SimpleParticleType> {

@@ -41,6 +41,9 @@
     "stardewcraft:tulip_crop",
     "stardewcraft:wheat_crop",
     "stardewcraft:yam_crop",
-    "stardewcraft:yellow_dirt"
+    "stardewcraft:yellow_dirt",
+    "stardewcraft:blossom_leaves",
+    "stardewcraft:fine_leaves",
+    "stardewcraft:pointed_leaves"
   ]
 }

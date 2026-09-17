@@ -37,6 +37,7 @@ public final class SpecialOrderBoardIndicatorRenderer {
         if (player == null || level == null) return;
         if (!ModDimensions.STARDEW_VALLEY.equals(level.dimension())) return;
         if (!ClientSpecialOrderUnlockState.isUnlocked()) return;
+        renderTicket(event, mc, player, level);
         if (!ClientSpecialOrderBoardData.hasUnclaimedAvailableOrders()) return;
 
         BlockPos pos = SpecialOrderBoardInstaller.BOARD_POS;
@@ -64,6 +65,27 @@ public final class SpecialOrderBoardIndicatorRenderer {
         ps.popPose();
 
         buf.endBatch();
+    }
+
+    private static void renderTicket(RenderLevelStageEvent event, Minecraft mc, Player player, Level level) {
+        if (com.stardew.craft.client.ClientPlayerDataCache.getSpecialOrderPrizeTickets() <= 0) return;
+        if (com.stardew.craft.api.v1.internal.festival.StardewFestivalClientSessionCache.all().stream()
+                .anyMatch(com.stardew.craft.api.v1.festival.StardewFestivalClientSessionSnapshot::localPlayerParticipating)) return;
+        BlockPos pos = SpecialOrderBoardInstaller.TICKET_BOX_POS;
+        if (!level.getBlockState(pos).is(ModBlocks.PRIZE_TICKET_BOX.get())
+                || player.distanceToSqr(Vec3.atCenterOf(pos)) > RENDER_RANGE_SQ) return;
+        PoseStack pose = event.getPoseStack();
+        Vec3 camera = event.getCamera().getPosition();
+        double bob = Math.sin((level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false)) / 5.0) * 0.08;
+        pose.pushPose();
+        pose.translate(pos.getX() + .5 - camera.x, pos.getY() + 1.85 + bob - camera.y, pos.getZ() + .5 - camera.z);
+        pose.mulPose(event.getCamera().rotation());
+        pose.scale(.45F, .45F, .45F);
+        mc.getItemRenderer().renderStatic(new net.minecraft.world.item.ItemStack(com.stardew.craft.item.ModItems.PRIZE_TICKET.get()),
+                net.minecraft.world.item.ItemDisplayContext.FIXED, 0xF000F0,
+                net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, pose, mc.renderBuffers().bufferSource(), level, 0);
+        pose.popPose();
+        mc.renderBuffers().bufferSource().endBatch();
     }
 
     private static void drawGlyph(Font font, PoseStack ps, MultiBufferSource buf,

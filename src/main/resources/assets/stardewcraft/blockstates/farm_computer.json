@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,part=main": {
       "model": "stardewcraft:block/utility/farm_computer"
     },
-    "facing=east": {
+    "facing=east,part=main": {
       "model": "stardewcraft:block/utility/farm_computer",
       "y": 90
     },
-    "facing=south": {
+    "facing=south,part=main": {
       "model": "stardewcraft:block/utility/farm_computer",
       "y": 180
     },
-    "facing=west": {
+    "facing=west,part=main": {
       "model": "stardewcraft:block/utility/farm_computer",
+      "y": 270
+    },
+    "facing=north,part=extension": {
+      "model": "stardewcraft:block/utility/farm_computer_extension"
+    },
+    "facing=east,part=extension": {
+      "model": "stardewcraft:block/utility/farm_computer_extension",
+      "y": 90
+    },
+    "facing=south,part=extension": {
+      "model": "stardewcraft:block/utility/farm_computer_extension",
+      "y": 180
+    },
+    "facing=west,part=extension": {
+      "model": "stardewcraft:block/utility/farm_computer_extension",
       "y": 270
     }
   }

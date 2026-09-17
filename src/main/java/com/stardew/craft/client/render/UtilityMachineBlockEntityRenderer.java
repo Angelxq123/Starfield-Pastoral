@@ -66,7 +66,7 @@ public class UtilityMachineBlockEntityRenderer<T extends BlockEntity & UtilityMa
         ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
         RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
         RandomSource rand = RandomSource.create(0L);
-        renderer.tesselateBlock(level, model, state, be.getBlockPos(), poseStack, buffer.getBuffer(renderType), true, rand, 0L, packedOverlay);
+        SpatialBlockModelRenderer.render(renderer, level, model, state, be.getBlockPos(), poseStack, buffer.getBuffer(renderType), true, rand, 0L, packedOverlay);
     }
 
     protected void renderReadyBubble(T be, ItemStack product, BlockState state, Level level, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {

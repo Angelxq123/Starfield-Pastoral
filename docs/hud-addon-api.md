@@ -1,10 +1,10 @@
-# HUD and daily-info addon API
+# HUD, daily-info and construction-progress addon API
 
 This API supports UI Info Suite-style overlays without reading StardewCraft's private HUD classes,
 player NBT or server singletons. It is included in the next build, not the previously published JAR.
 The new `api.v1.client` types are **experimental** under the repository's maturity policy; importing
 from `api.v1` does not yet promise a frozen binary contract. This document describes the implemented
-contract. Server and client must run the matching new StardewCraft version (payload protocol 26).
+contract. Server and client must run the matching new StardewCraft version (payload protocol 29).
 
 ## Festival names
 
@@ -95,6 +95,44 @@ item type, not a mutable inventory stack. Resolve birthday names/portraits throu
 English NPC names. This information is calendar data; it does not filter NPCs by whether the player
 has met/unlocked them.
 
+## Robin construction progress
+
+Call `StardewClientConstructionProgress.current()` on the client. It returns an
+`Optional<StardewConstructionProgressSnapshot>`. Empty means the first server snapshot has not
+arrived; a present snapshot whose `orders()` list is empty means Robin has no active work the local
+player may manage. The cache clears on login and logout and must not be retained between worlds.
+
+The snapshot is a list because multiplayer servers can have several simultaneous building orders.
+Each `StardewConstructionOrderSnapshot` contains a stable building UUID, namespaced building family,
+optional custom name, construction-versus-upgrade type, target tier and `remainingWorkDays()`.
+`readyForCompletion()` is true at zero while the server is waiting to project the completed building.
+Use `displayName()` for a localized `Component`; it uses the custom name when present and otherwise
+resolves the registered family title for the target tier.
+
+`remainingWorkDays()` follows the authoritative construction clock. Festivals, first-year green rain
+and other recorded non-working days do not reduce it. It is deliberately not an estimated calendar
+date. Addons should render the number as remaining Robin work days rather than adding it directly to
+today's date.
+
+Only orders on farms the recipient may manage are synchronized. This includes the farm owner,
+members and players granted the existing farm modification permission. Other farms' building IDs,
+names and progress are omitted. The server checks once per 20 ticks and sends a complete replacement
+snapshot only when the visible list changes.
+
+The payload carries at most 256 orders. `totalOrderCount()` reports the complete authorized count and
+`truncated()` reports whether the transmitted list hit that bound. Entries have deterministic order;
+addons should still use `buildingId()` as identity rather than list position.
+
+```java
+StardewClientConstructionProgress.current().ifPresent(progress -> {
+    for (StardewConstructionOrderSnapshot order : progress.orders()) {
+        int days = order.remainingWorkDays();
+        Component buildingName = order.displayName();
+        // Draw a Robin/construction icon and the remaining work-day count.
+    }
+});
+```
+
 ## Follow the main HUD
 
 Subscribe to `StardewHudRenderEvent` on the **NeoForge game bus**, in a `Dist.CLIENT`-only class.
@@ -134,7 +172,9 @@ The dedicated headless `stardewcraft_daily_info` GameTests cover packet round tr
 players, immutable/replaced cache contents and clearing, actual upgrade-state extraction and pickup,
 year-boundary estimates, multi-NPC/addon birthdays and TV luck thresholds. Cooking checks cover
 off-air days, the first Wednesday, Sunday/two-year boundaries, distinct per-player reruns, exact TV
-payload agreement, read-only queries, known/watched flags and watched-recipe pinning. These do not claim a
+payload agreement, read-only queries, known/watched flags and watched-recipe pinning. Construction
+checks cover simultaneous build/upgrade orders, owner/member/outsider visibility, remaining work-day
+semantics, immutable snapshots and packet round trips. These do not claim a
 live two-client multiplayer session or visual rendering validation. No extra game client is required.
 
 Local headless geometry checks also passed for GUI scales 1–6, 25/100/150/200% HUD scaling and a

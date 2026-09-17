@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "part=main,facing=north": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/spring"
+    },
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/empty"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/spring",
+      "y": 90
+    },
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/empty"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/spring",
+      "y": 180
+    },
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/empty"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/spring",
+      "y": 270
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/decor/special_orders/prize_ticket_box/empty"
+    }
+  }
+}

@@ -35,8 +35,11 @@ com.stardew.craft.api.v1.building.StardewBuildingBuilders
 com.stardew.craft.api.v1.building.StardewBuildingFamilies
 com.stardew.craft.api.v1.building.StardewBuildingMaterial
 com.stardew.craft.api.v1.client.StardewCalendarDate
+com.stardew.craft.api.v1.client.StardewClientConstructionProgress
 com.stardew.craft.api.v1.client.StardewClientDailyInfo
 com.stardew.craft.api.v1.client.StardewClientHud
+com.stardew.craft.api.v1.client.StardewConstructionOrderSnapshot
+com.stardew.craft.api.v1.client.StardewConstructionProgressSnapshot
 com.stardew.craft.api.v1.client.StardewDailyInfoSnapshot
 com.stardew.craft.api.v1.client.StardewHudRenderEvent
 com.stardew.craft.api.v1.client.StardewHudSnapshot

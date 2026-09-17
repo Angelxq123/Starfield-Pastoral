@@ -224,7 +224,7 @@ public class PastureGrassGrowthManager extends SavedData {
                         .setValue(PastureGrassBlock.VARIANT,
                                 FarmDailyDecisions.rollGrassVariant(random))
                         .setValue(PastureGrassBlock.CLUMPS, random.nextInt(2) + 1);
-                if (isDiggableFarmGround(level.getBlockState(neighbor.below()).getBlock())
+                if (canSpreadGrassAt(level, neighbor)
                         && spread.canSurvive(level, neighbor)) {
                     level.setBlock(neighbor, spread, Block.UPDATE_ALL);
                     if (knownPositions.add(neighbor.asLong())) {
@@ -251,20 +251,9 @@ public class PastureGrassGrowthManager extends SavedData {
             ServerLevel level, FarmInstance farm, int x, int z) {
         BlockPos min = farm.getFarmBoundsMin();
         BlockPos max = farm.getFarmBoundsMax();
-        for (int y = max.getY(); y >= min.getY(); y--) {
-            BlockPos ground = new BlockPos(x, y, z);
-            if (!level.isLoaded(ground)) {
-                return null;
-            }
-            BlockState groundState = level.getBlockState(ground);
-            if (groundState.isAir()) {
-                continue;
-            }
-            BlockPos place = ground.above();
-            return isDiggableFarmGround(groundState.getBlock())
-                    && farm.contains(ground) && level.getBlockState(place).isAir() ? place : null;
-        }
-        return null;
+        com.stardew.craft.farm.FarmDebrisPlacementRules.Surface surface =
+                com.stardew.craft.farm.FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+        return surface == null ? null : surface.place();
     }
 
     private static BlockPos randomFarmColumn(FarmInstance farm, RandomSource random) {
@@ -276,8 +265,16 @@ public class PastureGrassGrowthManager extends SavedData {
     }
 
     private static boolean isDiggableFarmGround(Block block) {
-        return (block == ModBlocks.YELLOW_DIRT.get() || block == ModBlocks.DIRT.get())
-                || block instanceof net.minecraft.world.level.block.GrassBlock;
+        return com.stardew.craft.farm.FarmDebrisPlacementRules.isNaturalFarmGround(block);
+    }
+
+    private static boolean canSpreadGrassAt(ServerLevel level, BlockPos place) {
+        UUID owner = FarmInstanceRegistry.get().getOwnerAt(place);
+        FarmInstance farm = owner == null ? null : FarmInstanceRegistry.get().getFarm(owner);
+        return farm != null && farm.contains(place)
+                && com.stardew.craft.farm.FarmDebrisPlacementRules.isCompletelyOpen(level, place)
+                && com.stardew.craft.farm.FarmDebrisPlacementRules.isBareDebrisGround(
+                        level.getBlockState(place.below()));
     }
 
     private static List<PastureScanTask> createPastureScanTasks(List<FarmInstance> farms) {
@@ -333,8 +330,8 @@ public class PastureGrassGrowthManager extends SavedData {
     private static Map<UUID, FarmInstance> snapshotOnlineFarms(ServerLevel level) {
         FarmInstanceRegistry registry = FarmInstanceRegistry.get();
         Map<UUID, FarmInstance> farms = new LinkedHashMap<>();
-        for (var player : level.players()) {
-            FarmInstance farm = registry.getFarmForPlayer(player.getUUID());
+        for (UUID owner : com.stardew.craft.farm.FarmDailyProcessHelper.getOnlineFarmOwners(level)) {
+            FarmInstance farm = registry.getFarm(owner);
             if (farm != null) {
                 farms.putIfAbsent(farm.getOwnerUUID(), farm);
             }

@@ -23,7 +23,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -284,7 +283,9 @@ public class WildTreeSeedManager extends SavedData {
 						FarmDailyDecisions.rollWildOffset(random),
 						0,
 						FarmDailyDecisions.rollWildOffset(random));
-				if (tryPlaceSapling(level, target, def)) {
+				com.stardew.craft.farm.FarmInstance sourceFarm = farmAt(pos);
+				if ((sourceFarm == null || sourceFarm.contains(target))
+						&& tryPlaceSapling(level, target, def, sourceFarm)) {
 					TreeGrowthManager.get(level).addSapling(level, target);
 					setDirty();
 				}
@@ -351,12 +352,15 @@ public class WildTreeSeedManager extends SavedData {
         return WildTrees.isModernCompleteTree(level, rootPos, def);
     }
 
-	private static boolean tryPlaceSapling(ServerLevel level, BlockPos saplingPos, WildTrees.Def def) {
+	private static boolean tryPlaceSapling(ServerLevel level, BlockPos saplingPos, WildTrees.Def def,
+			@javax.annotation.Nullable com.stardew.craft.farm.FarmInstance farm) {
 		@SuppressWarnings("null")
 		BlockState at = level.getBlockState(saplingPos);
-		if (!at.canBeReplaced()) {
+		if (!at.isAir() || !at.getFluidState().isEmpty() || level.getBlockEntity(saplingPos) != null) {
 			return false;
 		}
+		if (farm != null && !com.stardew.craft.farm.FarmDebrisPlacementRules.canPlaceYoungTree(
+				level, farm, saplingPos)) return false;
 
 		BlockPos groundPos = saplingPos.below();
 		@SuppressWarnings("null")
@@ -373,12 +377,19 @@ public class WildTreeSeedManager extends SavedData {
 		return true;
 	}
 
+	@javax.annotation.Nullable
+	private static com.stardew.craft.farm.FarmInstance farmAt(BlockPos pos) {
+		com.stardew.craft.farm.FarmInstanceRegistry registry =
+				com.stardew.craft.farm.FarmInstanceRegistry.get();
+		java.util.UUID owner = registry.getOwnerAt(pos);
+		if (owner == null) return null;
+		com.stardew.craft.farm.FarmInstance farm = registry.getFarm(owner);
+		return farm != null && farm.contains(pos) ? farm : null;
+	}
+
 	@SuppressWarnings("null")
 	private static boolean isPlantableGround(BlockState state) {
-		if (state.getBlock() instanceof FarmBlock) {
-			return false;
-		}
-		return state.is(net.minecraft.tags.BlockTags.DIRT) || state.getBlock() instanceof net.minecraft.world.level.block.GrassBlock;
+		return com.stardew.craft.block.terrain.TerrainSoils.treeSeedGround(state);
 	}
 
 	private static float seedOnShakeChance(WildTrees.Def def) {

@@ -78,3 +78,11 @@ GitHub run `34826617201` on `615b98a85` failed at `compileNativeFurnitureModels`
 ### 0.6.1 — case-sensitive object catalog resource (2026-09-14)
 
 GitHub run `34827394644` on `2a3404789` passed build/check but failed ten GameTests in fish tanks, ponds, pet gifts, artifact probabilities and provider catalogs. The common cause was a tracked `npc/vanilla/data/Objects.json` while all seven readers request lowercase `objects.json`; the runner explicitly logged the missing fish-pond object resource. The macOS filesystem hid the mismatch, but Linux and JAR entries are case-sensitive. Rename the resource through an intermediate filename so Git records the case-only change. Add a portable test comparing each reader's resource path against exact directory-entry names and checking representative fish/pet gift records. Verify the built JAR contains only the lowercase entry; retain all ten gameplay assertions.
+
+### 0.6.1fix2 candidate — stale multi-part and soil fixtures (2026-09-17)
+
+The local tracked-only gate started 586 GameTests, then reported a missing Farm Computer model variant and crashed while reading a crop stage from air. Both failures were stale fixtures after production contracts changed: the Farm Computer now has explicit `main` and `extension` blockstate parts, while Stardew crops intentionally accept the mod's authored farmland rather than vanilla farmland. Query the Farm Computer's `facing=...,part=main` variant and plant chunk-boundary test crops on `stardewcraft:farmland`. Keep both tests enabled so model rotation, collision and deferred chunk-load synchronization remain covered.
+
+### 0.6.1fix2 candidate — stale terrain hierarchy fixture (2026-09-17)
+
+The second local tracked-only GameTest run completed all 586 tests but rejected `cliffConnectionsCoverEveryFaceAndFold` because its legacy material-rank array still expected sand immediately above cliff. The release adds hard soil between cliff and sand, and the new hard-soil suite already verifies that production hierarchy. Add hard soil to the older cliff fixture and keep the full face, fold, corner and inset-gap coverage intact.

@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "stardewcraft:farmland",
-    "stardewcraft:sandy_farmland"
+    "stardewcraft:sandy_farmland",
+    "stardewcraft:infertile_farmland"
   ]
 }

@@ -26,6 +26,7 @@ public class ClientPlayerDataCache {
     private static int baseMaxEnergy = 270;
     private static boolean exhausted = false;
     private static int money = 500;  // 默认500金币
+    private static int trashCanLevel = 0;
     private static int[] experience = new int[5];
     private static int[] skillLevels = new int[5];
     private static List<String> professions = new ArrayList<>();
@@ -104,6 +105,8 @@ public class ClientPlayerDataCache {
         maxEnergy = baseMaxEnergy + tempMaxEnergyBonus;
         exhausted = nbt.getBoolean("Exhausted");
         money = nbt.getInt("Money");
+        trashCanLevel = com.stardew.craft.inventory.TrashCanTier.clampLevel(
+                nbt.contains("TrashCanLevel") ? nbt.getInt("TrashCanLevel") : 0);
         maxMineFloorReached = nbt.contains("MaxMineFloorReached") ? Math.max(0, nbt.getInt("MaxMineFloorReached")) : 0;
         ticketPrizesClaimed = nbt.contains("TicketPrizesClaimed") ? Math.max(0, nbt.getInt("TicketPrizesClaimed")) : 0;
         specialOrderPrizeTickets = nbt.contains("SpecialOrderPrizeTickets") ? Math.max(0, nbt.getInt("SpecialOrderPrizeTickets")) : 0;
@@ -479,6 +482,10 @@ public class ClientPlayerDataCache {
         return new ArrayList<>(professions);
     }
 
+    public static int getTrashCanLevel() {
+        return trashCanLevel;
+    }
+
     public static boolean hasProfession(ProfessionType profession) {
         if (profession == null) {
             return false;
@@ -660,6 +667,7 @@ public class ClientPlayerDataCache {
         baseMaxEnergy = 270;
         exhausted = false;
         money = 0;
+        trashCanLevel = 0;
         experience = new int[5];
         skillLevels = new int[5];
         professions.clear();

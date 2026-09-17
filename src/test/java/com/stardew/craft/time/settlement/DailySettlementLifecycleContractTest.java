@@ -783,6 +783,9 @@ class DailySettlementLifecycleContractTest {
                         && method.getBody().toString().contains("shipping_bin_flush"))
                 .findFirst().orElseThrow().getBody().toString();
         assertTrue(create.contains("non_participant_cleanup"));
+        assertTrue(create.contains("MiniShippingBinBlockEntity.flushAllForOvernight()"),
+                "mini shipping inventory must join the pre-settlement shipping flush");
+        assertTrue(create.contains("ShippingBinBlockEntity.flushAllForOvernight()"));
 
         ParsedClass time = parse("src/main/java/com/stardew/craft/time/StardewTimeManager.java");
         String advance = time.method("advanceDayWithSleepTime", 1).getBody().toString();

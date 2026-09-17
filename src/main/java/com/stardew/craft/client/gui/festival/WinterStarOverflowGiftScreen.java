@@ -1,6 +1,7 @@
 package com.stardew.craft.client.gui.festival;
 
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
+import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.network.payload.CraftingMenuInventoryActionPayload;
 import com.stardew.craft.network.payload.WinterStarRecipientThanksClosedPayload;
@@ -19,6 +20,7 @@ public final class WinterStarOverflowGiftScreen extends Screen {
     private static final int SLOT = 36;
     private static final int GAP = 4;
     private final ItemStack reward;
+    private final TrashCanWidget.Controller trashCan = new TrashCanWidget.Controller();
     private int panelX, panelY, gridX, gridY, claimX, claimY;
 
     public WinterStarOverflowGiftScreen(String itemId, int count) {
@@ -66,13 +68,23 @@ public final class WinterStarOverflowGiftScreen extends Screen {
                 if (inside(mouseX, mouseY, x, y, SLOT, SLOT)) hovered = stack;
             }
         }
+        if (minecraft.player != null) {
+            trashCan.render(g, trashX(), trashY(), mouseX, mouseY);
+        }
         if (minecraft.player != null && !minecraft.player.containerMenu.getCarried().isEmpty()) {
             ItemStack carried = minecraft.player.containerMenu.getCarried();
             g.renderItem(carried, mouseX - 8, mouseY - 8); g.renderItemDecorations(font, carried, mouseX - 8, mouseY - 8);
         } else if (!hovered.isEmpty()) g.renderTooltip(font, hovered, mouseX, mouseY);
+        if (minecraft.player != null) {
+            trashCan.renderTooltip(g, font, minecraft.player.containerMenu, trashX(), trashY(), mouseX, mouseY);
+        }
     }
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (minecraft.player != null && trashCan.click(minecraft.player.containerMenu,
+                trashX(), trashY(), mouseX, mouseY, button)) {
+            return true;
+        }
         if (inside(mouseX, mouseY, claimX, claimY, 84, 34)) {
             PacketDistributor.sendToServer(new WinterStarRecipientThanksClosedPayload());
             return true;
@@ -93,7 +105,20 @@ public final class WinterStarOverflowGiftScreen extends Screen {
         return true;
     }
 
+    @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return minecraft.player != null && trashCan.deleteKey(minecraft.player.containerMenu, keyCode)
+                || super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
     @Override public boolean shouldCloseOnEsc() { return false; }
+    private int trashX() {
+        int panelW = 9 * SLOT + 8 * GAP + 64;
+        return trashCan.xBeside(panelX, panelW, width);
+    }
+    private int trashY() {
+        int panelH = 4 * SLOT + 3 * GAP + 154;
+        return panelY + panelH - 34;
+    }
     private static boolean inside(double x, double y, int rx, int ry, int rw, int rh) {
         return x >= rx && x < rx + rw && y >= ry && y < ry + rh;
     }

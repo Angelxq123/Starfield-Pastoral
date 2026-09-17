@@ -373,6 +373,13 @@ public class JadePlugin implements IWailaPlugin {
                 }
             }
 
+            if (com.stardew.craft.block.terrain.TerrainSoils.infertile(serverLevel.getBlockState(rootPos.below()))) {
+                int remaining = Math.max(0, totalDays - daysGrown);
+                int credit = gs == null ? 0 : gs.infertileProgress;
+                totalDays = (totalDays * 3 + 1) / 2;
+                daysGrown = totalDays - Math.max(0, (remaining * 3 - credit + 1) / 2);
+            }
+
             // Jade 显示“已生长的天数 / 总需天数”
             tag.putInt(NBT_TOTAL_DAYS, totalDays);
             tag.putInt(NBT_DAYS_GROWN, daysGrown);

@@ -49,7 +49,7 @@ public class TotemPoleBlockEntityRenderer implements BlockEntityRenderer<TotemPo
         ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
         RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
         RandomSource rand = RandomSource.create(0L);
-        renderer.tesselateBlock(
+        SpatialBlockModelRenderer.render(renderer,
                 level, model, state, be.getBlockPos(), poseStack,
                 buffer.getBuffer(renderType), true, rand, 0L, packedOverlay);
         poseStack.popPose();

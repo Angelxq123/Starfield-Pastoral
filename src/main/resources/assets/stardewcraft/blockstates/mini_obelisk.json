@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=north": {
+    "part=main,facing=north": {
       "model": "stardewcraft:block/utility/mini_obelisk"
     },
-    "facing=east": {
+    "part=extension,facing=north": {
+      "model": "stardewcraft:block/utility/mini_obelisk_extension"
+    },
+    "part=main,facing=east": {
       "model": "stardewcraft:block/utility/mini_obelisk",
       "y": 90
     },
-    "facing=south": {
+    "part=extension,facing=east": {
+      "model": "stardewcraft:block/utility/mini_obelisk_extension",
+      "y": 90
+    },
+    "part=main,facing=south": {
       "model": "stardewcraft:block/utility/mini_obelisk",
       "y": 180
     },
-    "facing=west": {
+    "part=extension,facing=south": {
+      "model": "stardewcraft:block/utility/mini_obelisk_extension",
+      "y": 180
+    },
+    "part=main,facing=west": {
       "model": "stardewcraft:block/utility/mini_obelisk",
+      "y": 270
+    },
+    "part=extension,facing=west": {
+      "model": "stardewcraft:block/utility/mini_obelisk_extension",
       "y": 270
     }
   }

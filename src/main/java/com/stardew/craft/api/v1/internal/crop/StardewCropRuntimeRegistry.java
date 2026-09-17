@@ -190,6 +190,14 @@ public final class StardewCropRuntimeRegistry {
             return StardewCropRuntimeAdapter.DailyResult.REMOVED;
         }
 
+        boolean poorSoil = addon.soilPositions().stream().anyMatch(soil ->
+                com.stardew.craft.block.terrain.TerrainSoils.infertile(level.getBlockState(soil)));
+        if (watered && !addon.mature()) {
+            var growth = CropGrowthManager.get(level).getOrCreateState(level, addon.root());
+            if (!growth.advanceOnSoil(poorSoil)) context = new StardewCropDailyContext(false, season,
+                    context.seasonsIgnored(), day, offlineCatchUp);
+            CropGrowthManager.get(level).setDirty();
+        }
         try {
             StardewCropRuntimeAdapter.DailyResult result =
                     registration.adapter().growOneDay(level, addon, context);

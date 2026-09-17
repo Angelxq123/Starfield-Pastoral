@@ -221,7 +221,7 @@ public final class GiantCropGrowthGameTests {
             var positions = new HashSet<BlockPos>();
             for (int z = 0; z < 3; z++) for (int x = 0; x < 3; x++) {
                 var pos = anchor.offset(x, 0, z); positions.add(pos);
-                level.setBlock(pos.below(), Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7), 18);
+                level.setBlock(pos.below(), com.stardew.craft.block.ModBlocks.FARMLAND.get().defaultBlockState().setValue(FarmBlock.MOISTURE, 7), 18);
                 level.setBlock(pos, cropBlock.defaultBlockState().setValue(com.stardew.craft.block.crop.StardewCropBlock.AGE, 3), 18);
                 StardewCropRuntime.track(level, pos);
             }
@@ -232,6 +232,12 @@ public final class GiantCropGrowthGameTests {
                 public boolean allowsOutsideFarm(StardewGiantCrops.Context c) { return c.anchor().equals(anchor); }
                 public List<StardewGiantCrops.Cell> plan(StardewGiantCrops.Context c, List<StardewCropState> crops) { return definition.handler().plan(c, crops); }
             }));
+            for (var pos : positions) level.setBlock(pos.below(),
+                    Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7), 18);
+            h.assertTrue(GiantCropGrowth.process(level, positions, positions, 100, false).grown() == 0,
+                    "Native giant grew on imported farmland: " + definition.id());
+            for (var pos : positions) level.setBlock(pos.below(),
+                    com.stardew.craft.block.ModBlocks.FARMLAND.get().defaultBlockState().setValue(FarmBlock.MOISTURE, 7), 18);
             h.assertTrue(GiantCropGrowth.process(level, positions, positions, 100, false).grown() == 1, "Native giant failed: " + definition.id());
             for (var pos : BlockPos.betweenClosed(anchor, anchor.offset(2, definition.height() - 1, 2)))
                 h.assertTrue(BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).equals(definition.id()), "Native giant lost an extension");

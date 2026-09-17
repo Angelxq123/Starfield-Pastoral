@@ -149,6 +149,8 @@ public final class ModClientSetup {
 		event.registerBlockEntityRenderer(ModBlockEntities.CASK.get(), CaskBlockEntityRenderer::new);
 				event.registerBlockEntityRenderer(ModBlockEntities.CHEESE_PRESS.get(), CheesePressBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.LOOM.get(), LoomBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.DECONSTRUCTOR.get(), com.stardew.craft.client.render.ReclamationMachineBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.WOOD_CHIPPER.get(), com.stardew.craft.client.render.ReclamationMachineBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.BEE_HOUSE.get(), BeeHouseBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.CRAB_POT.get(), CrabPotBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.WATER_LANTERN.get(), com.stardew.craft.client.render.WaterLanternBlockEntityRenderer::new);
@@ -178,6 +180,7 @@ public final class ModClientSetup {
         event.registerBlockEntityRenderer(ModBlockEntities.STORAGE_CHEST.get(), com.stardew.craft.client.render.StorageChestBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.MINE_CHEST.get(), com.stardew.craft.client.render.MineChestBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.STONE_CHEST.get(), StoneChestBlockEntityRenderer::new);
+		event.registerBlockEntityRenderer(ModBlockEntities.MINI_SHIPPING_BIN.get(), com.stardew.craft.client.render.MiniShippingBinRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.SHIPPING_BIN.get(), ShippingBinBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.TRASH_BIN.get(), TrashBinBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.HEATER.get(), HeaterBlockEntityRenderer::new);
@@ -229,6 +232,7 @@ public final class ModClientSetup {
 		event.register(ModMenuTypes.AQUARIUM.get(), com.stardew.craft.client.gui.AquariumScreen::new);
 		event.register(ModMenuTypes.STONE_CHEST.get(), StoneChestScreen::new);
 		event.register(ModMenuTypes.STONE_CHEST_RECOVERY.get(), StoneChestScreen::new);
+		event.register(ModMenuTypes.MINI_SHIPPING_BIN.get(), net.minecraft.client.gui.screens.inventory.ContainerScreen::new);
 		event.register(ModMenuTypes.SHIPPING_BIN.get(), ShippingBinScreen::new);
 		event.register(ModMenuTypes.SPECIAL_ORDER_DROPBOX.get(), com.stardew.craft.client.gui.specialorder.SpecialOrderDropBoxScreen::new);
 		event.register(ModMenuTypes.FAIR_GRANGE_DISPLAY.get(), com.stardew.craft.client.gui.festival.FairGrangeDisplayScreen::new);

@@ -64,7 +64,7 @@ public class PastureGrassBlock extends BushBlock {
             double factor = player instanceof ServerPlayer serverPlayer
                     ? BookPowerEffects.getGrassSpeedFactor(com.stardew.craft.player.PlayerDataManager.getPlayerData(serverPlayer))
                     : level.isClientSide ? BookPowerEffects.getClientGrassSpeedFactor() : BookPowerEffects.getGrassSpeedFactor(false);
-            entity.makeStuckInBlock(state, new Vec3(factor, 1.0D, factor));
+            if (factor < 1.0D) entity.makeStuckInBlock(state, new Vec3(factor, 1.0D, factor));
         }
         super.entityInside(state, level, pos, entity);
     }

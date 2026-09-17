@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/block",
+  "elements": [],
+  "textures": {
+    "particle": "stardewcraft:block/decor/special_orders/special_orders_board/spring_particle"
+  }
+}

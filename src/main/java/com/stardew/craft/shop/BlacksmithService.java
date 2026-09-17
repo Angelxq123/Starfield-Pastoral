@@ -9,12 +9,14 @@ import com.stardew.craft.item.tool.PanItem;
 import com.stardew.craft.item.tool.StardewAxeItem;
 import com.stardew.craft.item.tool.StardewPickaxeItem;
 import com.stardew.craft.item.tool.WateringCanItem;
+import com.stardew.craft.inventory.TrashCanTier;
 import com.stardew.craft.network.payload.OpenBlacksmithMenuPayload;
 import com.stardew.craft.network.payload.OpenNpcDialogueScreenPayload;
 import com.stardew.craft.network.payload.OpenShopScreenPayload;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewData;
 import com.stardew.craft.player.PlayerStardewDataAPI;
+import com.stardew.craft.player.PlayerDataEventHandler;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -90,6 +92,11 @@ public final class BlacksmithService {
      */
     private static InteractionResult handleToolPickup(ServerPlayer player, StardewNpcEntity clint,
                                                        PlayerStardewData data, String upgradedToolId) {
+        Optional<TrashCanTier> trashCanTier = TrashCanTier.fromUpgradeItemId(upgradedToolId);
+        if (trashCanTier.isPresent()) {
+            return handleTrashCanPickup(player, data, trashCanTier.get());
+        }
+
         // Check inventory space
         if (player.getInventory().getFreeSlot() == -1) {
             // SDV: Game1.DrawDialogue(n, "Data\\ExtraDialogue:Clint_NoInventorySpace")
@@ -124,6 +131,49 @@ public final class BlacksmithService {
         }
 
         return InteractionResult.SUCCESS;
+    }
+
+    private static InteractionResult handleTrashCanPickup(ServerPlayer player, PlayerStardewData data,
+                                                           TrashCanTier targetTier) {
+        if (!completeTrashCanUpgrade(player, data, targetTier)) {
+            sendDialogue(player, "stardewcraft.npc.clint.still_working", data);
+            return InteractionResult.SUCCESS;
+        }
+
+        com.stardew.craft.npc.runtime.NpcInteractionService.sendDialogue(player,
+                new OpenNpcDialogueScreenPayload("clint", "stardewcraft.npc.clint.tool_pickup", 0,
+                        targetTier.upgradeItemId(), false));
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Completes a ready trash-can upgrade without requiring or granting an inventory item. */
+    public static boolean completeTrashCanUpgrade(ServerPlayer player, PlayerStardewData data,
+                                                   TrashCanTier targetTier) {
+        int currentLevel = data.getTrashCanLevel();
+        if (!completeTrashCanUpgradeState(data, targetTier)) {
+            StardewCraft.LOGGER.error("Refusing incomplete or out-of-order trash can upgrade {} for player {} at level {}",
+                    targetTier.upgradeItemId(), player.getGameProfile().getName(), currentLevel);
+            return false;
+        }
+        PlayerDataManager.get().setDirty();
+        PlayerDataEventHandler.syncPlayerData(player, data);
+        return true;
+    }
+
+    /** Pure persisted-state transition used by the live pickup path and headless regression tests. */
+    public static boolean completeTrashCanUpgradeState(PlayerStardewData data, TrashCanTier targetTier) {
+        int currentLevel = data.getTrashCanLevel();
+        if (data.getDaysLeftForToolUpgrade() > 0 || currentLevel < targetTier.level() - 1
+                || !targetTier.upgradeItemId().equals(data.getToolBeingUpgraded())) {
+            return false;
+        }
+        if (currentLevel < targetTier.level()) {
+            data.setTrashCanLevel(targetTier.level());
+        }
+        data.setToolBeingUpgraded("");
+        data.setDaysLeftForToolUpgrade(0);
+        data.setToolUpgradeNotified(false);
+        return true;
     }
 
     /**
@@ -212,8 +262,16 @@ public final class BlacksmithService {
         // a separate upgrade path because there is no "starter" pan and
         // the id naming skips the "copper_" prefix on the base item.
         addPanUpgradeIfAvailable(items, player);
+        addTrashCanUpgradeIfAvailable(items, PlayerDataManager.getPlayerData(player));
 
         return items;
+    }
+
+    private static void addTrashCanUpgradeIfAvailable(List<ShopItemEntry> items, PlayerStardewData data) {
+        TrashCanTier.forLevel(data.getTrashCanLevel()).next().ifPresent(tier -> items.add(new ShopItemEntry(
+                tier.upgradeItemId(), "", "", tier.price(), 1, tier.barItemId(), tier.barCount(),
+                Set.of(), 1, 0, null, -1, 0, 1
+        )));
     }
 
     /**
@@ -360,17 +418,24 @@ public final class BlacksmithService {
         }
 
         ShopItemEntry entry = items.get(itemIndex);
-        String oldToolId = getOldToolId(entry.itemId());
-        if (oldToolId == null) {
-            sendPurchaseResult(player, false);
-            return;
-        }
-        Item oldTool = BuiltInRegistries.ITEM.get(
-            ResourceLocation.parse(oldToolId));
-        if (oldTool == null || oldTool == Items.AIR
-                || player.getInventory().countItem(oldTool) < 1) {
-            sendPurchaseResult(player, false);
-            return;
+        Optional<TrashCanTier> trashCanTier = TrashCanTier.fromUpgradeItemId(entry.itemId());
+        if (trashCanTier.isPresent()) {
+            if (data.getTrashCanLevel() != trashCanTier.get().level() - 1) {
+                sendPurchaseResult(player, false);
+                return;
+            }
+        } else {
+            String oldToolId = getOldToolId(entry.itemId());
+            if (oldToolId == null) {
+                sendPurchaseResult(player, false);
+                return;
+            }
+            Item oldTool = BuiltInRegistries.ITEM.get(ResourceLocation.parse(oldToolId));
+            if (oldTool == null || oldTool == Items.AIR
+                    || player.getInventory().countItem(oldTool) < 1) {
+                sendPurchaseResult(player, false);
+                return;
+            }
         }
 
         var resolvedCost = ShopCostService.resolve(
@@ -384,8 +449,16 @@ public final class BlacksmithService {
             return;
         }
 
-        // Process the upgrade (remove old tool, set upgrade state)
-        handleToolUpgradePurchase(player, entry);
+        // For the trash can, every remaining operation after payment is an
+        // unconditional state write. This keeps cost consumption and queue
+        // creation in one server-thread transaction with no post-payment
+        // validation that could strand the player without an upgrade order.
+        if (trashCanTier.isPresent()) {
+            beginUpgrade(player, data, entry.itemId());
+        } else {
+            // Process the upgrade (remove old tool, set upgrade state)
+            handleToolUpgradePurchase(player, entry);
+        }
 
         // Send purchase result first (updates client money display)
         int newMoney = com.stardew.craft.player.PlayerStardewDataAPI.getMoney(player);
@@ -422,6 +495,15 @@ public final class BlacksmithService {
 
         String upgradedItemId = entry.itemId();
 
+        Optional<TrashCanTier> trashCanTier = TrashCanTier.fromUpgradeItemId(upgradedItemId);
+        if (trashCanTier.isPresent()) {
+            if (data.getTrashCanLevel() != trashCanTier.get().level() - 1) {
+                return true;
+            }
+            beginUpgrade(player, data, upgradedItemId);
+            return true;
+        }
+
         // Determine which old tool to remove
         String oldToolId = getOldToolId(upgradedItemId);
         if (oldToolId == null) return true;
@@ -444,20 +526,22 @@ public final class BlacksmithService {
 
         // SDV: Game1.player.toolBeingUpgraded.Value = (Tool)getOne();
         // SDV: Game1.player.daysLeftForToolUpgrade.Value = 2;
-        data.setToolBeingUpgraded(upgradedItemId);
-        data.setDaysLeftForToolUpgrade(2);
-        data.setToolUpgradeNotified(false);
-        PlayerDataManager.get().setDirty();
-
-        // SDV: Game1.playSound("parry")
-        player.level().playSound(null, player.blockPosition(),
-            net.minecraft.sounds.SoundEvents.ANVIL_USE,
-            net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.0f);
+        beginUpgrade(player, data, upgradedItemId);
 
         // Note: dialogue is NOT sent here; caller (handleToolUpgradePurchaseFromShop) 
         // handles closing the shop and sending the dialogue after the purchase result.
 
         return true; // Handled — don't deliver the item to inventory
+    }
+
+    private static void beginUpgrade(ServerPlayer player, PlayerStardewData data, String upgradedItemId) {
+        data.setToolBeingUpgraded(upgradedItemId);
+        data.setDaysLeftForToolUpgrade(2);
+        data.setToolUpgradeNotified(false);
+        PlayerDataManager.get().setDirty();
+        player.level().playSound(null, player.blockPosition(),
+                net.minecraft.sounds.SoundEvents.ANVIL_USE,
+                net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.0f);
     }
 
     /**

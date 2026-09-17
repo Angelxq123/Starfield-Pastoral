@@ -164,6 +164,40 @@ public final class NpcTraversalGameTests {
         });
     }
 
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=180)
+    public static void pathfinderRoutesAroundClippedDiagonalCorner(GameTestHelper h) {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(2, 0, 3)));
+        npc.setOnGround(true);
+        level.setBlockAndUpdate(base.offset(2, 0, 2), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(base.offset(2, 1, 2), Blocks.STONE.defaultBlockState());
+        var target = Vec3.atBottomCenterOf(base.offset(6, 0, 2));
+
+        var path = npc.getNavigation().createPath(BlockPos.containing(target), 0);
+        h.assertTrue(path != null && path.canReach(), "Corner detour became unreachable");
+        for (int index = 1; index < path.getNodeCount(); index++) {
+            var previous = path.getNode(index - 1);
+            var current = path.getNode(index);
+            boolean clippedFirstDiagonal = previous.x == base.getX() + 2
+                    && previous.z == base.getZ() + 3
+                    && current.x == base.getX() + 3
+                    && current.z == base.getZ() + 2;
+            h.assertTrue(!clippedFirstDiagonal, "A* kept the body-clipping diagonal around the inner corner");
+        }
+
+        npc.getNavigation().moveTo(path, 1.0D);
+        h.onEachTick(() -> {
+            level.tickNonPassenger(npc);
+            h.assertTrue(Math.abs(npc.getY() - base.getY()) < 0.05D,
+                    "Corner detour climbed the obstacle: " + npc.position());
+            if (npc.position().distanceToSqr(target) < 0.25D) h.succeed();
+            if (npc.tickCount >= 170) h.fail("Corner detour stalled: " + npc.position());
+        });
+    }
+
     @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
     public static void stuckRecoveryReplacesCachedPathAndPenalizesFailedNode(GameTestHelper h) throws ReflectiveOperationException {
         var base=floor(h);var npc=new Npc(h);
@@ -614,5 +648,552 @@ public final class NpcTraversalGameTests {
                 h.succeed();
             }
         });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=80)
+    public static void overlappingNpcsPhysicallySeparate(GameTestHelper h) {
+        var base = floor(h);
+        var level = h.getLevel();
+        var first = new Npc(h);
+        var second = new Npc(h);
+        first.setNpcId("gus");
+        second.setNpcId("pam");
+        first.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        second.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        first.setPos(base.getX() + 3.45D, base.getY(), base.getZ() + 3.5D);
+        second.setPos(base.getX() + 3.55D, base.getY(), base.getZ() + 3.5D);
+        first.setOnGround(true);
+        second.setOnGround(true);
+        h.assertTrue(level.addFreshEntity(first) && level.addFreshEntity(second), "NPC collision fixture failed to spawn");
+        h.runAfterDelay(20, () -> {
+            try {
+                h.assertTrue(first.isPushable() && second.isPushable(), "Ordinary NPCs have collision disabled");
+                h.assertTrue(first.position().subtract(second.position()).horizontalDistance() >= 0.45D,
+                        "Overlapping NPCs stayed merged instead of separating: " + first.position() + " / " + second.position());
+            } finally {
+                first.discard();
+                second.discard();
+            }
+            h.succeed();
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
+    public static void occupiedOneTileDoorRemainsReachable(GameTestHelper h) {
+        var base = floor(h);
+        var level = h.getLevel();
+        for (int x = -1; x <= 10; x++) for (int z : new int[]{2, 4}) for (int y = 0; y < 3; y++) {
+            level.setBlockAndUpdate(base.offset(x, y, z), Blocks.STONE.defaultBlockState());
+        }
+        var mover = new Npc(h);
+        var doorwayNpc = new Npc(h);
+        mover.setNpcId("emily");
+        doorwayNpc.setNpcId("shane");
+        doorwayNpc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        mover.setPos(Vec3.atBottomCenterOf(base.offset(0, 0, 3)));
+        doorwayNpc.setPos(Vec3.atBottomCenterOf(base.offset(4, 0, 3)));
+        mover.setOnGround(true);
+        doorwayNpc.setOnGround(true);
+        try {
+            h.assertTrue(level.addFreshEntity(doorwayNpc), "Doorway NPC fixture failed to spawn");
+            var target = base.offset(8, 0, 3);
+            var path = mover.getNavigation().createPath(target, 0);
+            h.assertTrue(path != null && path.canReach(),
+                    "A passing NPC turned the only doorway into a permanent no-path result");
+            boolean usesDoor = false;
+            for (int i = 0; i < path.getNodeCount(); i++) {
+                usesDoor |= path.getNodePos(i).equals(base.offset(4, 0, 3));
+            }
+            h.assertTrue(usesDoor, "Reachable one-tile route did not cross its only doorway");
+        } finally {
+            doorwayNpc.discard();
+        }
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=220)
+    public static void persistedNpcWithoutGroundFlagStartsWalking(GameTestHelper h) {
+        var base = floor(h);
+        var npc = new Npc(h);
+        npc.setNpcId("willy");
+        npc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(0, 0, 3)));
+        npc.setOnGround(false);
+        var target = Vec3.atBottomCenterOf(base.offset(7, 0, 3));
+
+        boolean completedImmediately = NpcCentralMovementService.tickAuthoredWalkTarget(
+                h.getLevel(), npc, "ground_flag_regression", "target", target);
+        h.assertTrue(!completedImmediately, "Ground recovery skipped the walking route");
+        h.assertTrue(npc.onGround(), "A supported persisted NPC kept a stale false ground flag");
+        boolean[] pathStarted = {npc.getNavigation().getPath() != null};
+
+        h.onEachTick(() -> {
+            h.getLevel().tickNonPassenger(npc);
+            boolean done = NpcCentralMovementService.tickAuthoredWalkTarget(
+                    h.getLevel(), npc, "ground_flag_regression", "target", target);
+            pathStarted[0] |= npc.getNavigation().getPath() != null;
+            if (done) {
+                h.assertTrue(pathStarted[0], "Ground navigation never started after support recovery");
+                NpcCentralMovementService.resetAuthoredMovementPlan(npc.getNpcId(), "ground_flag_regression");
+                com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                        h.getLevel(), npc.getNpcId());
+                com.stardew.craft.npc.runtime.NpcExecutionCoordinator.cancel(npc);
+                h.succeed();
+            }
+            if (npc.tickCount >= 210) {
+                h.fail("Recovered NPC did not finish its route: " + npc.position() + " target=" + target);
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=220)
+    public static void activeLoadedPathRecoversStaleGroundFlag(GameTestHelper h) {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("marnie");
+        npc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(0, 0, 3)));
+        npc.setOnGround(true);
+        var target = Vec3.atBottomCenterOf(base.offset(8, 0, 3));
+        h.assertTrue(npc.getNavigation().moveTo(target.x, target.y, target.z, 1.0D),
+                "Active-path fixture could not start navigation");
+        npc.setOnGround(false);
+
+        boolean[] restored = {false};
+        h.onEachTick(() -> {
+            level.tickNonPassenger(npc);
+            boolean done = NpcCentralMovementService.tickAuthoredWalkTarget(
+                    level, npc, "active_ground_flag_regression", "target", target);
+            restored[0] |= npc.onGround();
+            if (done) {
+                h.assertTrue(restored[0], "Active loaded path never restored supported ground contact");
+                NpcCentralMovementService.resetAuthoredMovementPlan(
+                        npc.getNpcId(), "active_ground_flag_regression");
+                com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                        level, npc.getNpcId());
+                com.stardew.craft.npc.runtime.NpcExecutionCoordinator.cancel(npc);
+                h.succeed();
+            }
+            if (npc.tickCount >= 210) {
+                h.fail("Active path stayed frozen after restoring a supported NPC: " + npc.position());
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=600)
+    public static void crowdQueuesThroughSingleOpening(GameTestHelper h) {
+        var base = floor(h);
+        var level = h.getLevel();
+        for (int z = -1; z <= 7; z++) {
+            if (z == 3) continue;
+            for (int y = 0; y < 3; y++) {
+                level.setBlockAndUpdate(base.offset(4, y, z), Blocks.STONE.defaultBlockState());
+            }
+        }
+
+        String[] ids = {"gus", "pam", "shane", "emily"};
+        int[] startZ = {0, 2, 4, 6};
+        Npc[] npcs = new Npc[ids.length];
+        Vec3[] targets = new Vec3[ids.length];
+        boolean[] arrived = new boolean[ids.length];
+        for (int i = 0; i < ids.length; i++) {
+            Npc npc = new Npc(h);
+            npc.setNpcId(ids[i]);
+            npc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+            npc.setPos(Vec3.atBottomCenterOf(base.offset(i % 2, 0, startZ[i])));
+            npc.setOnGround(true);
+            targets[i] = Vec3.atBottomCenterOf(base.offset(8 + i % 2, 0, startZ[i]));
+            h.assertTrue(level.addFreshEntity(npc), "Crowd fixture failed to spawn " + ids[i]);
+            npcs[i] = npc;
+        }
+
+        h.onEachTick(() -> {
+            int completed = 0;
+            for (int i = 0; i < npcs.length; i++) {
+                if (!arrived[i]) {
+                    arrived[i] = NpcCentralMovementService.tickAuthoredWalkTarget(
+                            level, npcs[i], "crowd_regression_" + ids[i], "destination", targets[i]);
+                }
+                if (arrived[i]) completed++;
+            }
+            if (completed == npcs.length) {
+                try {
+                    for (int i = 0; i < npcs.length; i++) {
+                        h.assertTrue(npcs[i].position().distanceToSqr(targets[i]) < 0.4D,
+                                ids[i] + " stopped short after passing the crowd bottleneck");
+                        for (int j = i + 1; j < npcs.length; j++) {
+                            h.assertTrue(npcs[i].position().subtract(npcs[j].position()).horizontalDistance() >= 0.45D,
+                                    ids[i] + " and " + ids[j] + " remained merged at their destinations");
+                        }
+                    }
+                } finally {
+                    for (int i = 0; i < npcs.length; i++) {
+                        NpcCentralMovementService.resetAuthoredMovementPlan(
+                                ids[i], "crowd_regression_" + ids[i]);
+                        com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(level, ids[i]);
+                        com.stardew.craft.npc.runtime.NpcExecutionCoordinator.cancel(npcs[i]);
+                        npcs[i].discard();
+                    }
+                }
+                h.succeed();
+            }
+            if (npcs[0].tickCount >= 590) {
+                h.fail("NPC crowd never cleared the single opening: "
+                        + java.util.stream.IntStream.range(0, npcs.length)
+                        .mapToObj(i -> ids[i] + "=" + npcs[i].position() + "/" + arrived[i])
+                        .toList());
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=180)
+    public static void occupiedDestinationWaitsWithoutMergingThenResumes(GameTestHelper h) {
+        var base = floor(h);
+        var level = h.getLevel();
+        var occupant = new Npc(h);
+        var mover = new Npc(h);
+        occupant.setNpcId("robin");
+        mover.setNpcId("maru");
+        occupant.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        mover.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        occupant.setPos(target);
+        mover.setPos(Vec3.atBottomCenterOf(base.offset(5, 0, 3)));
+        occupant.setOnGround(true);
+        mover.setOnGround(true);
+        h.assertTrue(level.addFreshEntity(occupant) && level.addFreshEntity(mover),
+                "Occupied-destination fixture failed to spawn");
+
+        boolean[] released = {false};
+        h.onEachTick(() -> {
+            level.tickNonPassenger(mover);
+            boolean done = NpcCentralMovementService.tickAuthoredWalkTarget(
+                    level, mover, "destination_wait_regression", "shared_destination", target);
+            if (!released[0]) {
+                h.assertTrue(!done, "NPC claimed arrival inside an occupied destination");
+                h.assertTrue(mover.position().subtract(occupant.position()).horizontalDistance() >= 0.45D,
+                        "NPCs merged while one was waiting for the shared destination");
+                if (mover.tickCount >= 30) {
+                    occupant.discard();
+                    released[0] = true;
+                }
+                return;
+            }
+            if (done) {
+                try {
+                    h.assertTrue(mover.position().distanceToSqr(target) < 0.4D,
+                            "Waiting NPC stopped short after the destination became free");
+                } finally {
+                    NpcCentralMovementService.resetAuthoredMovementPlan(
+                            mover.getNpcId(), "destination_wait_regression");
+                    com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                            level, mover.getNpcId());
+                    com.stardew.craft.npc.runtime.NpcExecutionCoordinator.cancel(mover);
+                    mover.discard();
+                }
+                h.succeed();
+            }
+            if (mover.tickCount >= 170) {
+                h.fail("NPC did not resume after the shared destination became free: " + mover.position());
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=120)
+    public static void dailyScheduleSettlesBesidePersistentlyOccupiedDestination(GameTestHelper h)
+            throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var occupant = new Npc(h);
+        var mover = new Npc(h);
+        occupant.setNpcId("morris");
+        mover.setNpcId("joja_cashier");
+        occupant.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        mover.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        occupant.setPos(target);
+        mover.setPos(Vec3.atBottomCenterOf(base.offset(5, 0, 3)));
+        occupant.setOnGround(true);
+        mover.setOnGround(true);
+        h.assertTrue(level.addFreshEntity(occupant) && level.addFreshEntity(mover),
+                "Persistent occupied-destination fixture failed to spawn");
+
+        Object plan = plan(mover, new String[]{"walk"}, target);
+        var allowFallback = plan.getClass().getDeclaredField("allowNearestReachableFinal");
+        allowFallback.setAccessible(true);
+        allowFallback.setBoolean(plan, true);
+        var stepIndex = plan.getClass().getDeclaredField("currentStepIndex");
+        stepIndex.setAccessible(true);
+        var settled = plan.getClass().getDeclaredField("settledAtNearestReachable");
+        settled.setAccessible(true);
+
+        h.onEachTick(() -> {
+            try {
+                level.tickNonPassenger(mover);
+                execute(h, mover, plan);
+                if (stepIndex.getInt(plan) >= 1) {
+                    try {
+                        h.assertTrue(settled.getBoolean(plan),
+                                "Persistent destination conflict completed as an overlapping arrival");
+                        h.assertTrue(mover.position().subtract(occupant.position()).horizontalDistance() >= 0.45D,
+                                "Persistent destination conflict merged both NPCs");
+                        h.assertTrue(mover.position().subtract(target).horizontalDistance() <= 2.0D,
+                                "Waiting NPC settled too far from its schedule destination");
+                    } finally {
+                        occupant.discard();
+                        mover.discard();
+                    }
+                    h.succeed();
+                }
+                if (mover.tickCount >= 170) {
+                    h.fail("Persistent destination conflict left the daily NPC waiting forever: "
+                            + mover.position());
+                }
+            } catch (ReflectiveOperationException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=180)
+    public static void dailyScheduleSettlesAtNearestReachableFurnitureEdge(GameTestHelper h) throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("marnie");
+        npc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(1, 0, 3)));
+        npc.setOnGround(true);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        for (int y = 0; y < 3; y++) {
+            level.setBlockAndUpdate(base.offset(6, y, 3), Blocks.STONE.defaultBlockState());
+        }
+
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var allowFallback = plan.getClass().getDeclaredField("allowNearestReachableFinal");
+        allowFallback.setAccessible(true);
+        allowFallback.setBoolean(plan, true);
+        var stepIndex = plan.getClass().getDeclaredField("currentStepIndex");
+        stepIndex.setAccessible(true);
+        var settled = plan.getClass().getDeclaredField("settledAtNearestReachable");
+        settled.setAccessible(true);
+
+        h.onEachTick(() -> {
+            try {
+                level.tickNonPassenger(npc);
+                execute(h, npc, plan);
+                if (stepIndex.getInt(plan) >= 1) {
+                    h.assertTrue(settled.getBoolean(plan), "Blocked furniture target completed as exact arrival");
+                    double distance = npc.position().subtract(target).horizontalDistance();
+                    h.assertTrue(distance >= 0.5D && distance <= 1.5D,
+                            "NPC did not stop at the nearest safe furniture edge: " + npc.position());
+                    h.assertTrue(level.noBlockCollision(npc, npc.getBoundingBox()),
+                            "NPC settled inside the blocked furniture target");
+                    com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                            level, npc.getNpcId());
+                    h.succeed();
+                }
+                if (npc.tickCount >= 170) {
+                    var path = npc.getNavigation().getPath();
+                    h.fail("Daily target kept retrying an unreachable furniture centre: " + npc.position()
+                            + " target=" + target + " path=" + path
+                            + " done=" + (path == null || path.isDone())
+                            + " reachable=" + (path != null && path.canReach())
+                            + " distToTarget=" + (path == null ? -1 : path.getDistToTarget())
+                            + " end=" + (path == null ? null : path.getEndNode()));
+                }
+            } catch (ReflectiveOperationException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=240)
+    public static void dailyCounterWorkpointRoutesAroundCounterAndCenters(GameTestHelper h)
+            throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("pierre");
+        npc.addTag(com.stardew.craft.auction.AuctionService.AUCTION_HOST_TAG);
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(2, 0, 3)));
+        npc.setOnGround(true);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        // A counter blocks the direct line, but the authored workpoint behind it is
+        // clear, supported and reachable by walking around either end.
+        for (int z = 2; z <= 4; z++) {
+            for (int y = 0; y < 2; y++) {
+                level.setBlockAndUpdate(base.offset(5, y, z), Blocks.STONE.defaultBlockState());
+            }
+        }
+
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var allowFallback = plan.getClass().getDeclaredField("allowNearestReachableFinal");
+        allowFallback.setAccessible(true);
+        allowFallback.setBoolean(plan, true);
+        var stepIndex = plan.getClass().getDeclaredField("currentStepIndex");
+        stepIndex.setAccessible(true);
+        var settled = plan.getClass().getDeclaredField("settledAtNearestReachable");
+        settled.setAccessible(true);
+
+        h.onEachTick(() -> {
+            try {
+                level.tickNonPassenger(npc);
+                execute(h, npc, plan);
+                if (stepIndex.getInt(plan) >= 1) {
+                    h.assertTrue(!settled.getBoolean(plan),
+                            "Reachable counter workpoint was accepted from the customer side");
+                    h.assertTrue(npc.position().subtract(target).horizontalDistanceSqr() <= 0.0625D,
+                            "NPC stopped beside the counter instead of centering on its workpoint: "
+                                    + npc.position());
+                    com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                            level, npc.getNpcId());
+                    npc.discard();
+                    h.succeed();
+                }
+                if (npc.tickCount >= 230) {
+                    h.fail("NPC did not walk around the counter to its workpoint: " + npc.position());
+                }
+            } catch (ReflectiveOperationException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
+    public static void dailyFurnitureStillSettlesAfterNavigationDropsCompletedPath(GameTestHelper h)
+            throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("pierre");
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(5, 0, 3)));
+        npc.setOnGround(true);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        // Match a schedule marker whose body cell is air but whose exact centre cannot
+        // be approached on supported ground (for example, the far side of a counter).
+        level.setBlockAndUpdate(base.offset(6, -1, 3), Blocks.AIR.defaultBlockState());
+
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var allowFallback = plan.getClass().getDeclaredField("allowNearestReachableFinal");
+        allowFallback.setAccessible(true);
+        allowFallback.setBoolean(plan, true);
+        var localProgressTick = plan.getClass().getDeclaredField("localProgressTick");
+        localProgressTick.setAccessible(true);
+        localProgressTick.setLong(plan, level.getGameTime() - 101L);
+        var stepIndex = plan.getClass().getDeclaredField("currentStepIndex");
+        stepIndex.setAccessible(true);
+        var settled = plan.getClass().getDeclaredField("settledAtNearestReachable");
+        settled.setAccessible(true);
+
+        h.assertTrue(npc.getNavigation().getPath() == null,
+                "Fixture unexpectedly retained a navigation path");
+        execute(h, npc, plan);
+        h.assertTrue(stepIndex.getInt(plan) == 1 && settled.getBoolean(plan),
+                "Blocked furniture edge kept retrying after navigation discarded its completed path");
+        h.assertTrue(level.noBlockCollision(npc, npc.getBoundingBox()),
+                "NPC settled inside furniture after its path was discarded");
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
+    public static void portalLegRejectsIncompletePathInsteadOfEnteringDeadEnd(GameTestHelper h) throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("jas");
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(1, 0, 3)));
+        npc.setOnGround(true);
+        for (int z = -1; z <= 7; z++) {
+            for (int y = 0; y < 3; y++) {
+                level.setBlockAndUpdate(base.offset(4, y, z), Blocks.STONE.defaultBlockState());
+            }
+        }
+        Vec3 entrance = Vec3.atBottomCenterOf(base.offset(8, 0, 3));
+        Vec3 landing = Vec3.atBottomCenterOf(base.offset(9, 0, 3));
+        Object plan = plan(npc, new String[]{"walk", "warp"}, entrance, landing);
+        var moveTo = NpcCentralMovementService.class.getDeclaredMethod(
+                "moveTo", StardewNpcEntity.class, plan.getClass(), Vec3.class, double.class);
+        moveTo.setAccessible(true);
+
+        boolean started = (boolean) moveTo.invoke(null, npc, plan, entrance, 1.0D);
+        h.assertTrue(!started, "Unreachable portal leg accepted an incomplete vanilla path");
+        h.assertTrue(npc.getNavigation().isDone(), "Rejected partial portal path kept moving");
+        h.assertTrue(npc.position().distanceToSqr(Vec3.atBottomCenterOf(base.offset(1, 0, 3))) < 0.01D,
+                "Rejected partial portal path displaced the NPC into the dead end");
+        h.runAfterDelay(25, () -> {
+            npc.getNavigation().recomputePath();
+            h.assertTrue(npc.getNavigation().isDone(),
+                    "Delayed navigation recomputation resurrected a rejected partial path");
+            h.succeed();
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
+    public static void distantDailyTargetRejectsIncompletePath(GameTestHelper h) throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("leah");
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(1, 0, 3)));
+        npc.setOnGround(true);
+        for (int z = -1; z <= 7; z++) {
+            for (int y = 0; y < 3; y++) {
+                level.setBlockAndUpdate(base.offset(4, y, z), Blocks.STONE.defaultBlockState());
+            }
+        }
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(8, 0, 3));
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var allowFallback = plan.getClass().getDeclaredField("allowNearestReachableFinal");
+        allowFallback.setAccessible(true);
+        allowFallback.setBoolean(plan, true);
+        var moveTo = NpcCentralMovementService.class.getDeclaredMethod(
+                "moveTo", StardewNpcEntity.class, plan.getClass(), Vec3.class, double.class);
+        moveTo.setAccessible(true);
+
+        boolean started = (boolean) moveTo.invoke(null, npc, plan, target, 1.0D);
+        h.assertTrue(!started, "Distant daily target accepted a far incomplete path as furniture approach");
+        h.assertTrue(npc.getNavigation().isDone(), "Rejected distant daily partial path kept moving");
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
+    public static void verifiedPartialPathStitchesReachableContinuation(GameTestHelper h) throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("jas");
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(0, 0, 3)));
+        npc.setOnGround(true);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(10, 0, 3));
+        List<net.minecraft.world.level.pathfinder.Node> partialNodes = new java.util.ArrayList<>();
+        for (int x = 0; x <= 5; x++) {
+            partialNodes.add(new net.minecraft.world.level.pathfinder.Node(
+                    base.getX() + x, base.getY(), base.getZ() + 3));
+        }
+        var partial = new net.minecraft.world.level.pathfinder.Path(
+                partialNodes, BlockPos.containing(target), false);
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var begin = NpcCentralMovementService.class.getDeclaredMethod(
+                "beginStagedPartialPath", net.minecraft.server.level.ServerLevel.class,
+                StardewNpcEntity.class, plan.getClass(),
+                net.minecraft.world.level.pathfinder.Path.class, Vec3.class);
+        begin.setAccessible(true);
+        h.assertTrue((boolean) begin.invoke(null, level, npc, plan, partial, target),
+                "Useful partial route was not retained for staged verification");
+        var continuePath = NpcCentralMovementService.class.getDeclaredMethod(
+                "continueStagedPartialPath", net.minecraft.server.level.ServerLevel.class,
+                StardewNpcEntity.class, plan.getClass(), Vec3.class);
+        continuePath.setAccessible(true);
+        var combined = (net.minecraft.world.level.pathfinder.Path) continuePath.invoke(null, level, npc, plan, target);
+        h.assertTrue(combined != null && combined.canReach(),
+                "Reachable continuation was not stitched to the partial route");
+        h.assertTrue(combined.getNodeCount() > partial.getNodeCount(),
+                "Stitched route omitted its verified continuation");
+        h.assertTrue(combined.getEndNode() != null
+                        && combined.getEndNode().asBlockPos().closerThan(BlockPos.containing(target), 2.0D),
+                "Stitched route did not finish at the authored target");
+        h.succeed();
     }
 }

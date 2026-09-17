@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "moisture=0": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/dry"
+    },
+    "moisture=1": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    },
+    "moisture=2": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    },
+    "moisture=3": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    },
+    "moisture=4": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    },
+    "moisture=5": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    },
+    "moisture=6": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    },
+    "moisture=7": {
+      "model": "stardewcraft:block/terrain/hard_soil/spring/wet"
+    }
+  }
+}

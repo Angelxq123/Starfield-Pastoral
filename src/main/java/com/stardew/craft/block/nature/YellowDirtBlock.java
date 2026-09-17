@@ -2,7 +2,6 @@ package com.stardew.craft.block.nature;
 
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ItemAbility;
@@ -24,7 +23,9 @@ public class YellowDirtBlock extends Block {
     @Nullable
     public BlockState getToolModifiedState(BlockState state, UseOnContext context, ItemAbility itemAbility, boolean simulate) {
         if (itemAbility == ItemAbilities.HOE_TILL) {
-            return Blocks.FARMLAND.defaultBlockState();
+            return context.getClickedFace() != net.minecraft.core.Direction.DOWN
+                    && context.getLevel().getBlockState(context.getClickedPos().above()).isAir()
+                    ? com.stardew.craft.block.ModBlocks.FARMLAND.get().defaultBlockState() : null;
         }
         return super.getToolModifiedState(state, context, itemAbility, simulate);
     }

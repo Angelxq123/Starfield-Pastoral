@@ -39,20 +39,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class MiniObeliskBlock extends Block {
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes(
-            "stardewcraft:block/utility/mini_obelisk", Direction.NORTH);
-
+public class MiniObeliskBlock extends MapUtilityStaticBlock {
     public MiniObeliskBlock(Properties properties) {
-        super(properties);
+        super(properties, "stardewcraft:block/utility/mini_obelisk", true);
         // Missing facing in old saves resolves to the former fixed model orientation.
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        super.createBlockStateDefinition(builder);
     }
 
     @Override
@@ -72,23 +68,14 @@ public class MiniObeliskBlock extends Block {
 
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
-        return List.of(new ItemStack(ModBlocks.MINI_OBELISK.get()));
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
-    }
-
-    @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getShape(state, level, pos, context);
+        return state.getValue(PART) == Part.MAIN ? List.of(new ItemStack(ModBlocks.MINI_OBELISK.get())) : List.of();
     }
 
     @Override
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        BlockState placed = defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        BlockState placed = super.getStateForPlacement(context);
+        if (placed == null) return null;
         if (context.getLevel().isClientSide) {
             return placed;
         }
@@ -117,6 +104,7 @@ public class MiniObeliskBlock extends Block {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) return super.useItemOn(stack, state, level, pos, player, hand, hit);
         if (level.isClientSide) {
             return ItemInteractionResult.sidedSuccess(true);
         }
@@ -129,6 +117,7 @@ public class MiniObeliskBlock extends Block {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) return super.useWithoutItem(state, level, pos, player, hit);
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -187,7 +176,7 @@ public class MiniObeliskBlock extends Block {
             for (int x = min.getX(); x <= max.getX(); x++) {
                 for (int z = min.getZ(); z <= max.getZ(); z++) {
                     cursor.set(x, y, z);
-                    if (level.hasChunkAt(cursor) && level.getBlockState(cursor).is(ModBlocks.MINI_OBELISK.get())) {
+                    if (level.hasChunkAt(cursor) && level.getBlockState(cursor).is(ModBlocks.MINI_OBELISK.get()) && level.getBlockState(cursor).getValue(PART) == Part.MAIN) {
                         result.add(cursor.immutable());
                     }
                 }

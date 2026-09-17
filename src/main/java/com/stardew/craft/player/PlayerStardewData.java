@@ -272,6 +272,8 @@ public class PlayerStardewData {
     private String toolBeingUpgraded = "";   // item ID e.g. "stardewcraft:copper_axe", empty = none
     private int daysLeftForToolUpgrade;      // 0 = ready for pickup
     private boolean toolUpgradeNotified;     // true = already notified player this morning
+    // SDV parity: Farmer.trashCanLevel. This is a player capability, not an inventory item.
+    private int trashCanLevel;
 
     // ============ 晕倒/死亡系统 ============
     // 战斗死亡标志：次日 sleep() 后压体力到 2
@@ -793,6 +795,8 @@ public class PlayerStardewData {
         data.toolBeingUpgraded = tag.contains("ToolBeingUpgraded") ? tag.getString("ToolBeingUpgraded") : "";
         data.daysLeftForToolUpgrade = tag.contains("DaysLeftForToolUpgrade") ? tag.getInt("DaysLeftForToolUpgrade") : 0;
         data.toolUpgradeNotified = tag.getBoolean("ToolUpgradeNotified");
+        data.trashCanLevel = com.stardew.craft.inventory.TrashCanTier.clampLevel(
+                tag.contains("TrashCanLevel") ? tag.getInt("TrashCanLevel") : 0);
 
         // 巫师塔枢纽
         // 任务系统
@@ -1263,6 +1267,7 @@ public class PlayerStardewData {
         tag.putString("ToolBeingUpgraded", toolBeingUpgraded != null ? toolBeingUpgraded : "");
         tag.putInt("DaysLeftForToolUpgrade", daysLeftForToolUpgrade);
         tag.putBoolean("ToolUpgradeNotified", toolUpgradeNotified);
+        tag.putInt("TrashCanLevel", trashCanLevel);
 
         // 任务系统
         tag.put("QuestManager", questManager.save());
@@ -2925,6 +2930,11 @@ public class PlayerStardewData {
     public void setDaysLeftForToolUpgrade(int days) { this.daysLeftForToolUpgrade = days; markDirty(); }
     public boolean isToolUpgradeNotified() { return toolUpgradeNotified; }
     public void setToolUpgradeNotified(boolean notified) { this.toolUpgradeNotified = notified; markDirty(); }
+    public int getTrashCanLevel() { return trashCanLevel; }
+    public void setTrashCanLevel(int level) {
+        this.trashCanLevel = com.stardew.craft.inventory.TrashCanTier.clampLevel(level);
+        markDirty();
+    }
 
     // ──── First Join Day (Mail scheduling baseline) ────
     public int getFirstJoinDay() { return firstJoinDay; }

@@ -1,6 +1,9 @@
 package com.example.stardewaddon;
 
+import com.stardew.craft.api.v1.client.StardewClientConstructionProgress;
 import com.stardew.craft.api.v1.client.StardewClientDailyInfo;
+import com.stardew.craft.api.v1.client.StardewConstructionOrderSnapshot;
+import com.stardew.craft.api.v1.client.StardewConstructionProgressSnapshot;
 import com.stardew.craft.api.v1.client.StardewDailyInfoSnapshot;
 import com.stardew.craft.api.v1.client.StardewHudSnapshot;
 import com.stardew.craft.api.v1.client.StardewHudRenderEvent;
@@ -22,6 +25,13 @@ public final class ExampleDailyInfoHud {
         return StardewClientDailyInfo.current()
                 .flatMap(StardewDailyInfoSnapshot::queenOfSauce)
                 .filter(StardewQueenOfSauceSnapshot::canLearnRecipe);
+    }
+
+    /** Active Robin orders can be empty after sync and can contain multiple farm buildings. */
+    public static java.util.List<StardewConstructionOrderSnapshot> robinOrders() {
+        return StardewClientConstructionProgress.current()
+                .map(StardewConstructionProgressSnapshot::orders)
+                .orElseGet(java.util.List::of);
     }
 
     @SubscribeEvent

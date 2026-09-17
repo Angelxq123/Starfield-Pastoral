@@ -1,0 +1,24 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "stardewcraft:block/utility/worm_bin_particle"
+  },
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          1,
+          0,
+          1
+        ],
+        "to": [
+          15,
+          3,
+          16
+        ]
+      }
+    ]
+  }
+}

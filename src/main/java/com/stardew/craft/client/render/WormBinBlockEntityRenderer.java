@@ -1,5 +1,17 @@
 package com.stardew.craft.client.render;
 
+import net.minecraft.world.level.block.state.BlockState;
+
+import net.minecraft.world.level.Level;
+
+import net.minecraft.util.RandomSource;
+
+import net.minecraft.client.resources.model.BakedModel;
+
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.stardew.craft.StardewCraft;
@@ -19,20 +31,49 @@ public class WormBinBlockEntityRenderer implements BlockEntityRenderer<WormBinBl
     private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/bubble.png");
     private static final float PX = 1.0f / 32.0f;
 
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(WormBinBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(0.25, 1.25, 0.25);
+    }
+
     public WormBinBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @SuppressWarnings("null")
     @Override
     public void render(@SuppressWarnings("null") WormBinBlockEntity be, float partialTick, @SuppressWarnings("null") PoseStack poseStack, @SuppressWarnings("null") MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (be == null || !be.isReady()) {
-            return;
+        if (be == null) return;
+        boolean ready = be.isReady();
+        ItemStack product = be.getProduct();
+        BlockState state = be.getBlockState();
+        Level level = be.getLevel();
+        if (level != null) {
+            poseStack.pushPose();
+            if (be.isWorking() && !ready) {
+                UtilityWorkingAnimation.applyGroundedWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+            }
+
+            Minecraft mc = Minecraft.getInstance();
+            BakedModel model = mc.getBlockRenderer().getBlockModel(state);
+            ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
+            RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
+            RandomSource rand = RandomSource.create(0L);
+            SpatialBlockModelRenderer.render(renderer,
+                level,
+                model,
+                state,
+                be.getBlockPos(),
+                poseStack,
+                buffer.getBuffer(renderType),
+                true,
+                rand,
+                0L,
+                packedOverlay
+            );
+            poseStack.popPose();
         }
 
-        ItemStack product = be.getProduct();
-        if (product.isEmpty()) {
-            return;
-        }
+        if (!ready || product.isEmpty() || level == null) return;
 
         poseStack.pushPose();
         poseStack.translate(0.5f, BubbleYHelper.get(be.getBlockState(), be.getLevel(), be.getBlockPos()), 0.5f);

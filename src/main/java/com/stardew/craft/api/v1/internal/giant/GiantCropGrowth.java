@@ -46,6 +46,8 @@ public final class GiantCropGrowth {
         var roots = new HashMap<BlockPos, Root>();
         for (var pos : positions) {
             if (!level.hasChunkAt(pos)) continue;
+            if (level.getBlockState(pos).getBlock() instanceof StardewCropBlock
+                    && !com.stardew.craft.block.terrain.TerrainSoils.cropSupport(level.getBlockState(pos.below()))) continue;
             var crop = StardewCropRuntimeRegistry.inspect(level, pos);
             if (crop == null || crop.part() != StardewCropState.Part.ROOT || !crop.root().equals(pos)) continue;
             var produce = produce(level, pos, crop);

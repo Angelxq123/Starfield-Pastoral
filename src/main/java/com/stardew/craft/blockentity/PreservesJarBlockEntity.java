@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * Preserves jar block entity.
  */
 public class PreservesJarBlockEntity extends TimedProductionBlockEntity {
+    private boolean modelFootprintChecked;
 
 	private static final String TAG_INPUT = "input";
 	private static final String TAG_PRODUCT = "product";
@@ -44,6 +45,9 @@ public class PreservesJarBlockEntity extends TimedProductionBlockEntity {
 		if (level.isClientSide) {
 			return;
 		}
+        if (!be.modelFootprintChecked) {
+            be.modelFootprintChecked = com.stardew.craft.block.utility.MachineModelFootprint.repair(level, pos, state);
+        }
 		boolean newReady = be.refreshReady();
 		if (newReady != be.ready) {
 			be.ready = newReady;

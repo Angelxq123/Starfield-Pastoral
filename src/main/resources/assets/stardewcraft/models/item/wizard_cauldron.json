@@ -1,6 +1,7 @@
 {
-	"parent": "stardewcraft:decor/common/wizard_cauldron",
-	"textures": {
-		"particle": "stardewcraft:block/decor/common/wizard_cauldron"
-	}
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "stardewcraft:item/wizard_cauldron",
+    "particle": "stardewcraft:block/decor/common/wizard_cauldron_particle"
+  }
 }

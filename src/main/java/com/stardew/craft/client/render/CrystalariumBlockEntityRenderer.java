@@ -1,64 +1,73 @@
 package com.stardew.craft.client.render;
 
+import net.minecraft.util.RandomSource;
+
+import net.minecraft.client.resources.model.BakedModel;
+
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.block.utility.CrystalariumBlock;
 import com.stardew.craft.blockentity.CrystalariumBlockEntity;
-import com.stardew.craft.client.model.block.CrystalariumGeoModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import javax.annotation.Nonnull;
 
 @SuppressWarnings("null")
-public class CrystalariumBlockEntityRenderer extends StardewGeoBlockRenderer<CrystalariumBlockEntity> {
+public class CrystalariumBlockEntityRenderer implements net.minecraft.client.renderer.blockentity.BlockEntityRenderer<CrystalariumBlockEntity> {
     private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/bubble.png");
     private static final float PX = 1.0f / 32.0f;
 
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(CrystalariumBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(0.25, 1.25, 0.25);
+    }
+
     public CrystalariumBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
-        super(new CrystalariumGeoModel());
     }
 
     @Override
     public void render(CrystalariumBlockEntity be, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        BlockState state = be.getBlockState();
-        if (state.hasProperty(CrystalariumBlock.PART)
-            && state.getValue(CrystalariumBlock.PART) != CrystalariumBlock.Part.MAIN) {
-            return;
-        }
-
-        Level level = be.getLevel();
         boolean ready = be.isReady();
         ItemStack product = be.getProduct();
+        BlockState state = be.getBlockState();
+        Level level = be.getLevel();
+        if (level != null) {
+            poseStack.pushPose();
+            if (be.isWorking() && !ready) {
+                UtilityWorkingAnimation.applyGroundedWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+            }
 
-        // Apply working shake before geo render
-        poseStack.pushPose();
-        if (level != null && be.isWorking() && !ready) {
-            UtilityWorkingAnimation.applyKegWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+            Minecraft mc = Minecraft.getInstance();
+            BakedModel model = mc.getBlockRenderer().getBlockModel(state);
+            ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
+            RenderType renderType = RenderType.translucent();
+            RandomSource rand = RandomSource.create(0L);
+            SpatialBlockModelRenderer.render(renderer,
+                level,
+                model,
+                state,
+                be.getBlockPos(),
+                poseStack,
+                buffer.getBuffer(renderType),
+                true,
+                rand,
+                0L,
+                packedOverlay
+            );
+            poseStack.popPose();
         }
 
-        // Apply facing rotation manually
-        Direction facing = state.hasProperty(CrystalariumBlock.FACING)
-            ? state.getValue(CrystalariumBlock.FACING) : Direction.NORTH;
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot() + 180f));
-        poseStack.translate(-0.5D, 0.0D, -0.5D);
-
-        super.render(be, partialTick, poseStack, buffer, packedLight, packedOverlay);
-        poseStack.popPose();
-
-        // Bubble + product icon when ready
         if (!ready || product.isEmpty() || level == null) return;
 
         float bubbleY = BubbleYHelper.get(state, level, be.getBlockPos());
@@ -107,10 +116,6 @@ public class CrystalariumBlockEntityRenderer extends StardewGeoBlockRenderer<Cry
         poseStack.popPose();
     }
 
-    @Override
-    protected void rotateBlock(@Nonnull Direction facing, @Nonnull PoseStack poseStack) {
-        // Rotation handled in render()
-    }
 }
 
 

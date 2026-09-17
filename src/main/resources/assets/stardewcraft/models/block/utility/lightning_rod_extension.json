@@ -1,8 +1,23 @@
 {
-  "ambientocclusion": false,
-  "parent": "minecraft:block/block",
   "textures": {
     "particle": "stardewcraft:block/utility/lightning_rod_particle"
   },
-  "elements": []
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          4.5,
+          0,
+          4.5
+        ],
+        "to": [
+          11.5,
+          14.5,
+          11.5
+        ]
+      }
+    ]
+  }
 }

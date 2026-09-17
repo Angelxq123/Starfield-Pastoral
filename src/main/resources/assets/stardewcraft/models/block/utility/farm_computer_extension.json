@@ -1,0 +1,23 @@
+{
+  "textures": {
+    "particle": "stardewcraft:block/utility/farm_computer_particle"
+  },
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          0,
+          0,
+          1
+        ],
+        "to": [
+          16,
+          2,
+          15
+        ]
+      }
+    ]
+  }
+}

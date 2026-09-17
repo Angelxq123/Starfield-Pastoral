@@ -1,0 +1,23 @@
+{
+  "textures": {
+    "particle": "stardewcraft:block/utility/deluxe_worm_bin_particle"
+  },
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          1,
+          0,
+          1
+        ],
+        "to": [
+          15,
+          3,
+          16
+        ]
+      }
+    ]
+  }
+}

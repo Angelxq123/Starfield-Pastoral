@@ -1,12 +1,58 @@
 {
   "variants": {
-    "facing=south,working=false": { "model": "stardewcraft:block/utility/preserves_jar" },
-    "facing=west,working=false": { "model": "stardewcraft:block/utility/preserves_jar", "y": 90 },
-    "facing=north,working=false": { "model": "stardewcraft:block/utility/preserves_jar", "y": 180 },
-    "facing=east,working=false": { "model": "stardewcraft:block/utility/preserves_jar", "y": 270 },
-    "facing=south,working=true": { "model": "stardewcraft:block/utility/preserves_jar" },
-    "facing=west,working=true": { "model": "stardewcraft:block/utility/preserves_jar", "y": 90 },
-    "facing=north,working=true": { "model": "stardewcraft:block/utility/preserves_jar", "y": 180 },
-    "facing=east,working=true": { "model": "stardewcraft:block/utility/preserves_jar", "y": 270 }
+    "facing=north,part=main,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar",
+      "y": 180
+    },
+    "facing=north,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=north,part=main,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar",
+      "y": 180
+    },
+    "facing=north,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=east,part=main,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar",
+      "y": 270
+    },
+    "facing=east,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=east,part=main,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar",
+      "y": 270
+    },
+    "facing=east,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=south,part=main,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar"
+    },
+    "facing=south,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=south,part=main,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar"
+    },
+    "facing=south,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=west,part=main,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar",
+      "y": 90
+    },
+    "facing=west,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    },
+    "facing=west,part=main,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar",
+      "y": 90
+    },
+    "facing=west,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/preserves_jar_extension_empty"
+    }
   }
 }

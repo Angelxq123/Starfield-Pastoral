@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "stardewcraft:block/festival/luau_soup_pot_particle"
+  },
+  "elements": []
+}

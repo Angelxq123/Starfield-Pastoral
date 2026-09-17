@@ -62,13 +62,7 @@ final class DailySettlementReadyPublisher
 
             @Override
             public DailySettlementWorkUnit hooksWork(DailySettlementContext context) {
-                return DailySettlementWorkUnits.cursor("ready_player_hooks",
-                        context.valleyOnlinePlayerIds(), UUID::toString, playerId ->
-                                commitHooks.ready(new DailySettlementContext(
-                                        context.absoluteDay(), context.year(), context.season(), context.day(),
-                                        context.sleepMinute(), context.seasonChanged(), java.util.List.of(playerId),
-                                        Set.of(), java.util.List.of(), java.util.List.of(playerId),
-                                        java.util.List.of(playerId), context.previousWeather())), () -> {});
+                return commitHooks.createReadyWorkUnit(context);
             }
 
             @Override

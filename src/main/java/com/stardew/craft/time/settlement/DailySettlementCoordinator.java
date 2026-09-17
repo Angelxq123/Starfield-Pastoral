@@ -313,9 +313,7 @@ public final class DailySettlementCoordinator {
             }
             if ((phase == DailySettlementPhase.WORLD_BATCHES
                     || phase == DailySettlementPhase.COMMIT) && !playerResultsNotified) {
-                if (!notifyPlayerResults()) {
-                    continue;
-                }
+                notifyPlayerResults();
                 continue;
             }
             DailySettlementWorkUnit unit = advanceToWork();

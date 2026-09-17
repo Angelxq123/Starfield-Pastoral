@@ -109,6 +109,13 @@ final class DailySettlementCommitHooks {
                 context.valleyOnlinePlayerIds(), context.absoluteDay());
     }
 
+    DailySettlementWorkUnit createReadyWorkUnit(DailySettlementContext context) {
+        return DailySettlementWorkUnits.cursor(
+                "ready_player_hooks", context.valleyOnlinePlayerIds(), UUID::toString,
+                playerId -> operations.readyBookseller(List.of(playerId), context.absoluteDay()),
+                () -> {});
+    }
+
     interface Operations {
         void specialOrders(List<UUID> playerIds);
 

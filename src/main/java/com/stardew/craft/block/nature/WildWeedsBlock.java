@@ -29,9 +29,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * 星露谷“杂草/野草”地表物（对应原版 debris weeds）。
  *

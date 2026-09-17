@@ -107,19 +107,10 @@ public final class PlayerDailySettlementService {
                 context.absoluteDay(), payload.orElseThrow());
         pending.complete(playerId, prepared.payload());
         readyResults.put(playerId, prepared);
-        finishPreparedSettlement(context, playerId, false);
     }
 
     private void finishPreparedSettlement(
             DailySettlementContext context, UUID playerId) {
-        finishPreparedSettlement(context, playerId, true);
-    }
-
-    private void finishPreparedSettlement(
-            DailySettlementContext context, UUID playerId, boolean cleanup) {
-        if (!cleanup) {
-            return;
-        }
         Optional<PendingSettlement> progress = pending.find(playerId);
         if (progress.isEmpty()
                 || progress.orElseThrow().absoluteDay() != context.absoluteDay()

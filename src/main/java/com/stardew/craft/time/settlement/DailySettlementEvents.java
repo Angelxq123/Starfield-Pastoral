@@ -247,20 +247,9 @@ public final class DailySettlementEvents {
             DailySettlementPhase phase) {
         // World mutations have finished. New arrivals and successful ACKs must
         // not create fresh locks while the publication cursor is draining.
-        return phase != DailySettlementPhase.READY && phase != DailySettlementPhase.IDLE
-                && lockLateJoinForActiveDay(context, barrier, playerId);
-    }
-
-    static boolean hasPublishedWorldReady(
-            DailySettlementPhase phase, DailySettlementBarrier.ReadyResult ready) {
-        return ready != null
-                && (phase == DailySettlementPhase.READY || phase == DailySettlementPhase.IDLE);
-    }
-
-    static boolean lockLateJoinForActiveDay(
-            DailySettlementContext context,
-            DailySettlementBarrier barrier,
-            UUID playerId) {
+        if (phase == DailySettlementPhase.READY || phase == DailySettlementPhase.IDLE) {
+            return false;
+        }
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(barrier, "barrier");
         Objects.requireNonNull(playerId, "playerId");
@@ -269,6 +258,12 @@ public final class DailySettlementEvents {
         }
         barrier.lockAll(context.absoluteDay(), List.of(playerId));
         return true;
+    }
+
+    static boolean hasPublishedWorldReady(
+            DailySettlementPhase phase, DailySettlementBarrier.ReadyResult ready) {
+        return ready != null
+                && (phase == DailySettlementPhase.READY || phase == DailySettlementPhase.IDLE);
     }
 
     private static boolean isLocked(ServerPlayer player) {

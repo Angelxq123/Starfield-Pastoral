@@ -388,8 +388,8 @@ class DailySettlementLifecycleContractTest {
         assertTrue(invocationNames(production).contains("peekPayload"));
         assertTrue(invocationNames(finalize).indexOf("consumeShipping") >= 0);
         assertTrue(invocationNames(consume).contains("consumePayload"));
-        assertTrue(settle.getBody().toString().indexOf("readyResults.put")
-                < settle.getBody().toString().lastIndexOf("finishPreparedSettlement"));
+        assertFalse(invocationNames(settle).contains("finishPreparedSettlement"),
+                "preparation must leave cleanup to COMMIT or login recovery");
     }
 
     @Test
@@ -684,15 +684,15 @@ class DailySettlementLifecycleContractTest {
         barrier.lockAll(target.absoluteDay(), target.playerIds());
 
         assertTrue(DailySettlementEvents.lockLateJoinForActiveDay(
-                target, barrier, lateLogin));
+                target, barrier, lateLogin, DailySettlementPhase.WORLD_BATCHES));
 
         assertTrue(barrier.isLocked(lateLogin));
         assertEquals(target.absoluteDay(), barrier.lockedDay(lateLogin));
         assertFalse(target.playerIds().contains(lateLogin));
         assertFalse(DailySettlementEvents.lockLateJoinForActiveDay(
-                target, barrier, lateLogin));
+                target, barrier, lateLogin, DailySettlementPhase.WORLD_BATCHES));
         assertFalse(DailySettlementEvents.lockLateJoinForActiveDay(
-                target, barrier, participant));
+                target, barrier, participant, DailySettlementPhase.WORLD_BATCHES));
     }
 
     @Test

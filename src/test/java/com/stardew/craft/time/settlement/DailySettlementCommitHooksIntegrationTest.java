@@ -110,8 +110,12 @@ class DailySettlementCommitHooksIntegrationTest {
                     }
 
                     @Override
+                    public DailySettlementWorkUnit readyWork(DailySettlementContext target) {
+                        return hooks.createReadyWorkUnit(target);
+                    }
+
+                    @Override
                     public void ready(DailySettlementContext target) {
-                        hooks.ready(target);
                     }
                 });
 

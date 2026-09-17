@@ -6,13 +6,11 @@ import com.stardew.craft.tree.WildTrees;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -58,16 +56,10 @@ public class WildTreeSaplingBlock extends Block {
 	}
 
 	// ── 生存条件 ──────────────────────────────────────────────
-	// 必须种在合法的「土壤类」方块上：原版 dirt 标签内的所有方块
-	// （dirt/grass_block/podzol/coarse_dirt/mycelium/rooted_dirt/moss/mud/...）
-	// 加上模组耕地（FarmBlock）与黄土（YELLOW_DIRT）。
-	// 不能浮空、不能种水里、不能放在叶子/木板等任意方块上。
+	// 仅本模组的自然土壤与耕地；不得通过原版 dirt 标签放宽。
 
 	private static boolean isValidGround(BlockState ground) {
-		Block b = ground.getBlock();
-		if (b instanceof FarmBlock) return true;
-		if ((b == com.stardew.craft.block.ModBlocks.YELLOW_DIRT.get() || b == com.stardew.craft.block.ModBlocks.DIRT.get())) return true;
-		return ground.is(BlockTags.DIRT);
+		return com.stardew.craft.block.terrain.TerrainSoils.treeGround(ground);
 	}
 
 	@SuppressWarnings("null")

@@ -159,6 +159,23 @@
       "item": "recipe:stardewcraft:big_chest",
       "price": 5000,
       "stock": 1
+    },
+    {
+      "item": "stardewcraft:wood_chipper",
+      "price": 1000,
+      "seasons": [
+        3
+      ]
+    },
+    {
+      "item": "stardewcraft:wood_chipper",
+      "price": 1000,
+      "seasons": [
+        0,
+        1,
+        2
+      ],
+      "min_year": 2
     }
   ],
   "accepted_sell_types": [

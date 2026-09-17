@@ -22,8 +22,10 @@ public final class FarmFeed {
     }
     public static int capacity(MinecraftServer server, UUID farm) {
         var buildings=BuildingWorldData.get(server);
-        for(var silo:buildings.all()) if(silo.farmId().equals(farm) && silo.family().equals(UtilityBuildings.SILO)
-                && silo.mode()==BuildingRecord.Mode.SELF_BUILT) {
+        // Capacity is queried by hay collection and feeding, so it is also the last reliable
+        // recovery point for a completed prefab whose post-construction assessment was
+        // interrupted. Self-built and purchased silos must follow the same validity check.
+        for(var silo:buildings.all()) if(silo.farmId().equals(farm) && silo.family().equals(UtilityBuildings.SILO)) {
             var level=server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,silo.dimension()));
             if(level!=null)UtilityBuildings.refresh(level,silo);
         }

@@ -7,10 +7,14 @@ import com.stardew.craft.client.gui.common.StardewGuiViewport;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
+import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
+import com.stardew.craft.inventory.InventoryTrashPolicy;
+import com.stardew.craft.network.payload.CraftingMenuInventoryActionPayload;
 import com.stardew.craft.network.payload.GeodeCrackPayload;
 import com.stardew.craft.network.payload.GeodeClaimPayload;
 import com.stardew.craft.sound.ModSounds;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -192,6 +196,8 @@ public class GeodeMenuScreen extends Screen {
 
     // Server
     private boolean waitServer;
+    private float trashCanLidRotation;
+    private boolean trashCanLidSoundPlayed;
 
     private final Random rng = new Random();
 
@@ -232,6 +238,13 @@ public class GeodeMenuScreen extends Screen {
         okY = my0 + ui(OK_OY);
     }
 
+    private int trashCanX() { return mx0 + ui(SDV_W + 4); }
+    private int trashCanY() { return my0 + ui(SDV_H - 192 - 32 - BORDER - 104); }
+    private boolean trashCanContains(double mouseX, double mouseY) {
+        return mouseX >= trashCanX() && mouseX < trashCanX() + ui(64)
+                && mouseY >= trashCanY() && mouseY < trashCanY() + ui(104);
+    }
+
     // ── API for GeodeCrackResultPayload ──
     public void onCrackResult(String treasureItemId, String geodeType, int newMoney) {
         waitServer = false;
@@ -270,6 +283,11 @@ public class GeodeMenuScreen extends Screen {
         if (button != 0 && button != 1) return super.mouseClicked(mouseX, mouseY, button);
         int mx = (int) mouseX, my = (int) mouseY;
         if (waitServer) return true;
+
+        if (trashCanContains(mouseX, mouseY)) {
+            trashHeld();
+            return true;
+        }
 
         // OK button
         if (isIn(mx, my, okX, okY, okW, okH) && geodeAnimTimer <= 0 && held.isEmpty()) {
@@ -329,11 +347,43 @@ public class GeodeMenuScreen extends Screen {
     @Override
     public boolean keyPressed(int kc, int sc, int mod) {
         if (geodeAnimTimer > 0) return true;
+        if (kc == InputConstants.KEY_DELETE && !held.isEmpty()) {
+            trashHeld();
+            return true;
+        }
         if (kc == 256) {
             if (held.isEmpty() && !waitServer) onClose();
             return true;
         }
         return super.keyPressed(kc, sc, mod);
+    }
+
+    private void trashHeld() {
+        if (held.isEmpty() || heldSlot < 0) {
+            return;
+        }
+        if (!InventoryTrashPolicy.canTrash(held)) {
+            playSound(ModSounds.CANCEL.get());
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        ItemStack source = minecraft.player == null
+                ? ItemStack.EMPTY
+                : minecraft.player.getInventory().getItem(heldSlot);
+        if (source.isEmpty()) {
+            held = ItemStack.EMPTY;
+            heldSlot = -1;
+            playSound(ModSounds.CANCEL.get());
+            return;
+        }
+        boolean takeOne = held.getCount() == 1 && source.getCount() > 1;
+        int expectedItemId = BuiltInRegistries.ITEM.getId(held.getItem());
+        PacketDistributor.sendToServer(new CraftingMenuInventoryActionPayload(
+                CraftingMenuInventoryActionPayload.ACTION_TRASH_INVENTORY_SLOT,
+                heldSlot, takeOne, new int[]{expectedItemId, source.getCount()}));
+        held = ItemStack.EMPTY;
+        heldSlot = -1;
+        playSound(ModSounds.THROW_DOWN_ITEM.get());
     }
 
     @Override
@@ -579,6 +629,7 @@ public class GeodeMenuScreen extends Screen {
 
         // ═══ 6. OK button ═══
         drawOk(g, mouseX, mouseY);
+        drawTrashCan(g, mouseX, mouseY);
 
         // ═══ 7. Player inventory grid (9×4 inside the dialogue box) ═══
         drawInv(g, mouseX, mouseY, s4);
@@ -630,11 +681,33 @@ public class GeodeMenuScreen extends Screen {
         }
 
         // ═══ 12. Tooltip ═══
+        if (trashCanContains(mouseX, mouseY)) {
+            g.renderTooltip(font, TrashCanWidget.tooltip(held), java.util.Optional.empty(), mouseX, mouseY);
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
         if (hovSlot >= 0 && held.isEmpty() && mc.player != null) {
             ItemStack st = mc.player.getInventory().getItem(hovSlot);
             if (!st.isEmpty()) g.renderTooltip(font, st, mouseX, mouseY);
         }
+    }
+
+    private void drawTrashCan(GuiGraphics graphics, int mouseX, int mouseY) {
+        boolean hovered = trashCanContains(mouseX, mouseY);
+        if (hovered && !trashCanLidSoundPlayed) {
+            playSound(ModSounds.TRASHCANLID.get());
+            trashCanLidSoundPlayed = true;
+        } else if (!hovered) {
+            trashCanLidSoundPlayed = false;
+        }
+        float step = (float) Math.PI / 48.0f;
+        trashCanLidRotation = hovered
+                ? Math.min(trashCanLidRotation + step, (float) Math.PI / 2.0f)
+                : Math.max(trashCanLidRotation - step, 0.0f);
+        int x = trashCanX();
+        int y = trashCanY();
+        TrashCanWidget.render(graphics, x, y, s4(), x + ui(60), y + ui(40), s4(),
+                -16, -10, trashCanLidRotation);
     }
 
     // ── Draw item at SDV drawInMenu scale (16px × s4 = 64 SDV px) ──

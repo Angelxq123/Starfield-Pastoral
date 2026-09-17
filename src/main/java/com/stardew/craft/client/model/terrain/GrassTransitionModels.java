@@ -47,6 +47,7 @@ import net.neoforged.neoforge.client.model.data.ModelProperty;
 @EventBusSubscriber(modid = StardewCraft.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class GrassTransitionModels {
     private static final ModelProperty<Integer> CONNECTIONS = new ModelProperty<>();
+    private static final ModelProperty<Integer> SOIL_FAMILIES = new ModelProperty<>();
     private static final ModelProperty<Integer> FARMLAND_EDGES = new ModelProperty<>();
     private static final ModelProperty<Integer> TEXTURE_SET = new ModelProperty<>();
     private static final int[][] OFFSETS = {{0,-1},{1,0},{0,1},{-1,0},{1,-1},{1,1},{-1,1},{-1,-1}};
@@ -54,7 +55,7 @@ public final class GrassTransitionModels {
     private GrassTransitionModels() {}
 
     private static List<Block> terrainBlocks() {
-        return List.of(ModBlocks.GRASS_BLOCK.get(), ModBlocks.DIRT.get(), ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get(), ModBlocks.SAND.get(), ModBlocks.SANDY_FARMLAND.get());
+        return List.of(ModBlocks.GRASS_BLOCK.get(), ModBlocks.DIRT.get(), ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get(), ModBlocks.SAND.get(), ModBlocks.SANDY_FARMLAND.get(), ModBlocks.HARD_SOIL.get(), ModBlocks.INFERTILE_FARMLAND.get());
     }
 
     private static ModelResourceLocation standalone(String path) {
@@ -76,19 +77,20 @@ public final class GrassTransitionModels {
         return TerrainSoils.farmland(state) ? net.minecraft.world.level.block.FarmBlock.MOISTURE : TerrainVariants.property(state);
     }
 
-    private static ModelResourceLocation blendId(int season, boolean wet, int blend, boolean sandy) {
-        return standalone(TerrainSeasonTextures.farmlandDirectory(season, sandy) + "blends/"
+    private static ModelResourceLocation blendId(int season, boolean wet, int blend, int family) {
+        return standalone(TerrainSeasonTextures.farmlandDirectory(season, family) + "blends/"
                 + (wet ? "wet" : "dry") + "_" + (blend / 4) + "_" + (blend % 4));
     }
 
     @SubscribeEvent
     public static void registerOverlays(ModelEvent.RegisterAdditional event) {
         FertilizedSoilModels.register(event);
+        FarmlandFamilyModels.register(event);
         for (int season = 0; season < 4; season++) {
             for (int layer = 0; layer < 2; layer++) for (int mask = 1; mask < 256; mask++)
                 if (GrassConnectionMask.canonical(mask) == mask) event.register(overlayId(season, layer, mask));
             for (boolean wet : new boolean[]{false, true}) for (int blend = 0; blend < (wet ? 4 : 16); blend++)
-                for (boolean sandy : new boolean[]{false, true}) event.register(blendId(season, wet, blend, sandy));
+                for (int family = 0; family < 3; family++) event.register(blendId(season, wet, blend, family));
             if (season > 0) for (Block block : terrainBlocks())
                 for (BlockState state : block.getStateDefinition().getPossibleStates()) event.register(seasonalId(season, state));
         }
@@ -97,22 +99,23 @@ public final class GrassTransitionModels {
     @SubscribeEvent
     public static void wrapTargets(ModelEvent.ModifyBakingResult event) {
         Map<ModelResourceLocation, BakedModel> models = event.getModels();
-        TerrainFarmlandQuads[][][][] fertilizers = {FertilizedSoilModels.bake(models), FertilizedSoilModels.bakeSandy(models)};
+        TerrainFarmlandQuads[][][][] fertilizers = {FertilizedSoilModels.bake(models), FertilizedSoilModels.bakeSandy(models), FertilizedSoilModels.bakeInfertile(models)};
         ConnectedTopQuads connections = new ConnectedTopQuads();
         BakedModel[][][] overlays = new BakedModel[4][2][256];
-        TerrainFarmlandQuads[][][] farmland = new TerrainFarmlandQuads[2][4][2];
+        TerrainFarmlandQuads[][][] farmland = new TerrainFarmlandQuads[3][4][2];
         for (int season = 0; season < 4; season++) {
             for (int layer = 0; layer < 2; layer++) for (int mask = 1; mask < 256; mask++)
                 overlays[season][layer][mask] = Objects.requireNonNull(models.get(overlayId(season, layer, GrassConnectionMask.canonical(mask))));
-            for (int family = 0; family < 2; family++) for (int wet = 0; wet < 2; wet++) {
+            for (int family = 0; family < 3; family++) for (int wet = 0; wet < 2; wet++) {
                 BakedQuad[] quads = new BakedQuad[16];
                 for (int blend = 0; blend < (wet == 1 ? 4 : 16); blend++) {
-                    BakedModel model = Objects.requireNonNull(models.get(blendId(season, wet == 1, blend, family == 1)));
+                    BakedModel model = Objects.requireNonNull(models.get(blendId(season, wet == 1, blend, family)));
                     quads[blend] = model.getQuads(null, null, RandomSource.create(0)).getFirst();
                 }
                 farmland[family][season][wet] = new TerrainFarmlandQuads(quads, wet == 1);
             }
         }
+        FarmlandFamilyModels.bind(models, farmland, fertilizers);
         BakedModel[][][] recessedOverlays = new BakedModel[4][2][256];
         var recessedCache = new java.util.IdentityHashMap<BakedModel, BakedModel>();
         for (int season = 0; season < 4; season++) for (int layer = 0; layer < 2; layer++)
@@ -132,7 +135,7 @@ public final class GrassTransitionModels {
                     for (int season = 0; season < 4; season++) itemSurfaces[season][variant] = surfaces[season];
                 }
                 boolean isFarmland = TerrainSoils.farmland(state);
-                int family = TerrainSoils.sandy(state) ? 1 : 0;
+                int family = TerrainSoils.family(state);
                 boolean wet = isFarmland && state.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE) > 0;
                 models.put(id, new ConnectedTop(surfaces, isFarmland ? recessedOverlays : overlays,
                         isFarmland ? farmland[family] : null, isFarmland ? fertilizers[family] : null, wet, connections));
@@ -209,7 +212,7 @@ public final class GrassTransitionModels {
         public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data) {
             int set = TerrainSeasonTextures.currentTextureSet();
             ModelData base = surface(set).getModelData(level, pos, state, data);
-            int grass = 0, dark = 0, soil = 0, moisture = 0;
+            int grass = 0, dark = 0, soil = 0, moisture = 0, peers = 0;
             // GrassConnectionMask uses its original three ranks; farmland receives
             // both grass types like dirt, while its inward edges are handled separately.
             int rank = state.is(ModBlocks.DARK_GRASS_BLOCK.get()) ? 2 : state.is(ModBlocks.GRASS_BLOCK.get()) ? 1 : 0;
@@ -221,13 +224,18 @@ public final class GrassTransitionModels {
                     if (adjacent.is(ModBlocks.GRASS_BLOCK.get())) grass |= 1 << i;
                     else if (adjacent.is(ModBlocks.DARK_GRASS_BLOCK.get())) dark |= 1 << i;
                     else if (farmland != null && TerrainSoils.bare(adjacent)) soil |= 1 << i;
-                    else if (farmland != null && !wet && TerrainSoils.farmland(adjacent)
-                            && adjacent.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE) > 0) moisture |= 1 << i;
+                    else if (farmland != null && TerrainSoils.farmland(adjacent)) {
+                        boolean neighborWet = adjacent.getValue(net.minecraft.world.level.block.FarmBlock.MOISTURE) > 0;
+                        if (!wet && neighborWet) moisture |= 1 << i;
+                        else if (wet == neighborWet && TerrainSoils.family(state) != TerrainSoils.family(adjacent))
+                            peers |= 1 << (i + TerrainSoils.family(adjacent)*8);
+                    }
                 }
             }
             return base.derive().with(TEXTURE_SET, set)
                     .with(FertilizedSoilModels.FERTILIZER, farmland == null ? 0 : FertilizedSoilModels.index(pos))
                     .with(CONNECTIONS, GrassConnectionMask.connections(rank, grass, dark))
+                    .with(SOIL_FAMILIES, peers)
                     .with(FARMLAND_EDGES, GrassConnectionMask.canonical(soil) | (GrassConnectionMask.canonical(moisture) << 8)).build();
         }
 
@@ -250,13 +258,14 @@ public final class GrassTransitionModels {
                     || surface.getRenderTypes(state, random, data).contains(renderType);
             List<BakedQuad> base = baseLayer ? surface.getQuads(state, side, random, data, renderType) : List.of();
             Integer edges = data.get(FARMLAND_EDGES);
+            int peers = data.has(SOIL_FAMILIES) ? data.get(SOIL_FAMILIES) : 0;
             boolean topFace = farmland == null ? side == Direction.UP : side == null;
             Integer fertilizer = data.get(FertilizedSoilModels.FERTILIZER);
             boolean fertilized = fertilizers != null && fertilizer != null && fertilizer > 0;
-            if (baseLayer && topFace && farmland != null && (fertilized || (edges != null && edges != 0))) {
+            if (baseLayer && topFace && farmland != null && (fertilized || peers != 0 || (edges != null && edges != 0))) {
                 int connections = edges == null ? 0 : edges;
                 TerrainFarmlandQuads painter = fertilized ? fertilizers[set][fertilizer - 1][wet ? 1 : 0] : farmland[set][wet ? 1 : 0];
-                base = painter.get(connections & 255, connections >>> 8);
+                base = painter.get(connections & 255, connections >>> 8, peers);
             }
             int mask = mask(data);
             if (!baseLayer || !topFace || mask == 0) return base;

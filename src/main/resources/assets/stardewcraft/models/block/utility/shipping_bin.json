@@ -1,8 +1,6 @@
 {
-  "ambientocclusion": false,
-  "parent": "block/cube_all",
   "textures": {
-    "all": "stardewcraft:block/utility/shipping_bin",
-    "particle": "stardewcraft:block/utility/shipping_bin"
-  }
+    "particle": "stardewcraft:block/utility/shipping_bin_particle"
+  },
+  "elements": []
 }

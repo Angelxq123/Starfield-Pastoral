@@ -36,30 +36,27 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 @SuppressWarnings("null")
-public class ShippingBinBlock extends Block implements EntityBlock {
+public class ShippingBinBlock extends com.stardew.craft.block.decor.MapDecorStaticBlock implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
 
-    private static final VoxelShape CLOSED_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
-    
-    // Pixel-perfect box inner container (1 pixel thick walls, 1 pixel thick floor, 10 pixels total height without lid)
-    private static final VoxelShape BASE_FLOOR = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 1.0D, 16.0D);
-    private static final VoxelShape WALL_W = Block.box(0.0D, 1.0D, 0.0D, 1.0D, 10.0D, 16.0D);
-    private static final VoxelShape WALL_E = Block.box(15.0D, 1.0D, 0.0D, 16.0D, 10.0D, 16.0D);
-    private static final VoxelShape WALL_N = Block.box(1.0D, 1.0D, 0.0D, 15.0D, 10.0D, 1.0D);
-    private static final VoxelShape WALL_S = Block.box(1.0D, 1.0D, 15.0D, 15.0D, 10.0D, 16.0D);
-    private static final VoxelShape OPEN_SHAPE = Shapes.or(BASE_FLOOR, WALL_W, WALL_E, WALL_N, WALL_S);
+    private static final VoxelShape CLOSED_SHAPE = Block.box(0, 0, 0, 32, 16, 16);
+    private static final VoxelShape OPEN_SHAPE = Shapes.or(
+            Block.box(0, 0, 0, 32, 2, 16),
+            Block.box(0, 2, 0, 2, 14, 16), Block.box(30, 2, 0, 32, 14, 16),
+            Block.box(2, 2, 0, 30, 14, 2), Block.box(2, 2, 14, 30, 14, 16));
 
     public ShippingBinBlock(Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any()
+        super(properties, "stardewcraft:block/utility/shipping_bin", 0, 0, 0, 32, 16, 16);
+        registerDefaultState(defaultBlockState()
             .setValue(FACING, Direction.NORTH)
             .setValue(OPEN, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, OPEN);
+        super.createBlockStateDefinition(builder);
+        builder.add(OPEN);
     }
 
     @Override
@@ -69,37 +66,50 @@ public class ShippingBinBlock extends Block implements EntityBlock {
 
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
-        return List.of(new ItemStack(ModBlocks.SHIPPING_BIN.get()));
+        return state.getValue(PART) == Part.EXTENSION ? List.of() : List.of(new ItemStack(ModBlocks.SHIPPING_BIN.get()));
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(OPEN) ? OPEN_SHAPE : CLOSED_SHAPE;
+        BlockPos main = findMainPos(level, pos, state);
+        if (main == null) return Shapes.empty();
+        BlockState owner = level.getBlockState(main);
+        if (!owner.is(this)) return Shapes.empty();
+        VoxelShape canonical = owner.getValue(OPEN) ? OPEN_SHAPE : CLOSED_SHAPE;
+        if (level.getBlockEntity(main) instanceof ShippingBinBlockEntity bin && !bin.hasFullFootprint() && owner.getValue(OPEN)) {
+            canonical = Shapes.or(canonical, Block.box(14, 2, 0, 16, 14, 16));
+        }
+        VoxelShape shape = rotateShapeForFacing(canonical, owner.getValue(FACING));
+        BlockPos offset = pos.subtract(main);
+        // Keep collision local to each reserved cell.
+        return Shapes.join(shape.move(-offset.getX(), 0, -offset.getZ()), Shapes.block(), net.minecraft.world.phys.shapes.BooleanOp.AND);
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(OPEN) ? OPEN_SHAPE : CLOSED_SHAPE;
+        return getShape(state, level, pos, context);
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new ShippingBinBlockEntity(pos, state);
+        return state.getValue(PART) == Part.MAIN ? new ShippingBinBlockEntity(pos, state) : null;
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.SHIPPING_BIN.get()) {
+        if (state.getValue(PART) == Part.EXTENSION || type != ModBlockEntities.SHIPPING_BIN.get()) {
             return null;
         }
-        return (lvl, pos, st, be) -> ShippingBinBlockEntity.serverTick(lvl, pos, st, (ShippingBinBlockEntity) be);
+        return level.isClientSide
+                ? (lvl, pos, st, be) -> ((ShippingBinBlockEntity) be).tickLid()
+                : (lvl, pos, st, be) -> ShippingBinBlockEntity.serverTick(lvl, pos, st, (ShippingBinBlockEntity) be);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return super.getStateForPlacement(context);
     }
 
     @Override
@@ -118,6 +128,7 @@ public class ShippingBinBlock extends Block implements EntityBlock {
                                                BlockPos pos,
                                                Player player,
                                                BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) return super.useWithoutItem(state, level, pos, player, hit);
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -137,6 +148,14 @@ public class ShippingBinBlock extends Block implements EntityBlock {
         player.openMenu(shippingBin);
         level.playSound(null, pos, ModSounds.SHWIP.get(), SoundSource.BLOCKS, 0.7f, 1.0f);
         return InteractionResult.CONSUME;
+    }
+
+    public static net.minecraft.world.phys.AABB proximityArea(BlockPos pos, BlockState state) {
+        return rotateShapeForFacing(Block.box(-16, 0, -16, 48, 40, 32), state.getValue(FACING)).bounds().move(pos);
+    }
+
+    public static net.minecraft.world.phys.AABB intakeArea(BlockPos pos, BlockState state, boolean full) {
+        return rotateShapeForFacing(Block.box(2, 2, 2, full ? 30 : 14, 15, 14), state.getValue(FACING)).bounds().move(pos);
     }
 
     @Override

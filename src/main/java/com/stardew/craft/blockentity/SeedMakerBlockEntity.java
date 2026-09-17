@@ -34,9 +34,14 @@ public class SeedMakerBlockEntity extends TimedProductionBlockEntity implements 
         super(ModBlockEntities.SEED_MAKER.get(), pos, state);
     }
 
+    private boolean modelFootprintChecked;
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SeedMakerBlockEntity be) {
         if (level.isClientSide) {
             return;
+        }
+        if (!be.modelFootprintChecked) {
+            be.modelFootprintChecked = com.stardew.craft.block.utility.MachineModelFootprint.repair(level, pos, state);
         }
         boolean newReady = be.refreshReady();
         if (newReady != be.ready) {

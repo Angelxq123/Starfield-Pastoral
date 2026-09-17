@@ -2,7 +2,6 @@ package com.stardew.craft.tree.fruit;
 
 import com.stardew.craft.api.v1.agriculture.StardewTreeData;
 import com.stardew.craft.api.v1.internal.tree.StardewTreeRuntimeRegistry;
-import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.tree.WildTreeSaplingBlock;
 import com.stardew.craft.block.tree.fruit.FruitTreeBlock;
 import com.stardew.craft.block.tree.fruit.FruitTreeSaplingBlock;
@@ -10,10 +9,8 @@ import com.stardew.craft.farming.SeasonLocationRules;
 import com.stardew.craft.time.StardewTimeManager;
 import com.stardew.craft.tree.WildTrees;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class FruitTreeRules {
@@ -21,13 +18,7 @@ public final class FruitTreeRules {
     }
 
     public static boolean isValidGround(BlockState ground) {
-        if (ground.getBlock() instanceof FarmBlock) {
-            return true;
-        }
-        if ((ground.getBlock() == ModBlocks.YELLOW_DIRT.get() || ground.getBlock() == ModBlocks.DIRT.get())) {
-            return true;
-        }
-        return ground.is(BlockTags.DIRT);
+        return com.stardew.craft.block.terrain.TerrainSoils.treeGround(ground);
     }
 
     public static boolean canPlantSapling(LevelReader level, BlockPos lowerPos) {

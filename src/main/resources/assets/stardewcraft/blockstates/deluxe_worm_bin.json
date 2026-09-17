@@ -1,8 +1,34 @@
 {
   "variants": {
-    "facing=north": { "model": "stardewcraft:block/utility/deluxe_worm_bin" },
-    "facing=east": { "model": "stardewcraft:block/utility/deluxe_worm_bin", "y": 90 },
-    "facing=south": { "model": "stardewcraft:block/utility/deluxe_worm_bin", "y": 180 },
-    "facing=west": { "model": "stardewcraft:block/utility/deluxe_worm_bin", "y": 270 }
+    "facing=north,part=main": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin"
+    },
+    "facing=east,part=main": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin",
+      "y": 90
+    },
+    "facing=south,part=main": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin",
+      "y": 180
+    },
+    "facing=west,part=main": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin",
+      "y": 270
+    },
+    "facing=north,part=extension": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin_extension"
+    },
+    "facing=east,part=extension": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin_extension",
+      "y": 90
+    },
+    "facing=south,part=extension": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin_extension",
+      "y": 180
+    },
+    "facing=west,part=extension": {
+      "model": "stardewcraft:block/utility/deluxe_worm_bin_extension",
+      "y": 270
+    }
   }
 }

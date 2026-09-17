@@ -1,20 +1,64 @@
 {
   "variants": {
-    "facing=south,working=false,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine" },
-    "facing=west,working=false,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine", "y": 90 },
-    "facing=north,working=false,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine", "y": 180 },
-    "facing=east,working=false,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine", "y": 270 },
-    "facing=south,working=true,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine" },
-    "facing=west,working=true,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine", "y": 90 },
-    "facing=north,working=true,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine", "y": 180 },
-    "facing=east,working=true,part=main": { "model": "stardewcraft:block/utility/mayonnaise_machine", "y": 270 },
-    "facing=south,working=false,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=west,working=false,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=north,working=false,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=east,working=false,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=south,working=true,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=west,working=true,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=north,working=true,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" },
-    "facing=east,working=true,part=extension": { "model": "stardewcraft:block/utility/mayonnaise_machine_extension" }
+    "facing=south,part=main,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine"
+    },
+    "facing=south,part=main,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine"
+    },
+    "facing=west,part=main,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine",
+      "y": 90
+    },
+    "facing=west,part=main,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine",
+      "y": 90
+    },
+    "facing=north,part=main,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine",
+      "y": 180
+    },
+    "facing=north,part=main,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine",
+      "y": 180
+    },
+    "facing=east,part=main,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine",
+      "y": 270
+    },
+    "facing=east,part=main,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine",
+      "y": 270
+    },
+    "facing=south,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension"
+    },
+    "facing=south,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension"
+    },
+    "facing=west,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension",
+      "y": 90
+    },
+    "facing=west,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension",
+      "y": 90
+    },
+    "facing=north,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension",
+      "y": 180
+    },
+    "facing=north,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension",
+      "y": 180
+    },
+    "facing=east,part=extension,working=false": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension",
+      "y": 270
+    },
+    "facing=east,part=extension,working=true": {
+      "model": "stardewcraft:block/utility/mayonnaise_machine_extension",
+      "y": 270
+    }
   }
 }

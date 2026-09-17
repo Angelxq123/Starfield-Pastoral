@@ -71,8 +71,10 @@ public final class ShippingOwnershipGameTests {
         a.clicked(0, 0, ClickType.PICKUP, alice);
         helper.assertTrue(a.getCarried().isEmpty(), "cursor was not consumed after deposit");
         bob.getInventory().setItem(9, new ItemStack(ModItems.PARSNIP.get(), 4));
+        bob.getInventory().setItem(10, new ItemStack(ModItems.PARSNIP.get(), 6));
         b.quickMoveStack(bob, 1);
-        helper.assertTrue(bob.getInventory().getItem(9).isEmpty(), "shift deposit left duplicate inventory items");
+        helper.assertTrue(bob.getInventory().getItem(9).isEmpty() && bob.getInventory().getItem(10).getCount()==6,
+                "A single shift deposit changed an adjacent inventory slot");
         alice.getInventory().setItem(0, new ItemStack(ModItems.PARSNIP.get(), 2));
         a.clicked(0, 0, ClickType.SWAP, alice);
         helper.assertTrue(alice.getInventory().getItem(0).isEmpty(), "number-key deposit left duplicates");

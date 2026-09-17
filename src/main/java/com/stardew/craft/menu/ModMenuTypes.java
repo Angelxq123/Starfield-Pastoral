@@ -107,6 +107,11 @@ public class ModMenuTypes {
             () -> new MenuType<>(StoneChestMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     @SuppressWarnings("null")
+    public static final DeferredHolder<MenuType<?>, MenuType<net.minecraft.world.inventory.ChestMenu>> MINI_SHIPPING_BIN =
+        MENU_TYPES.register("mini_shipping_bin",
+            () -> new MenuType<>(MiniShippingBinMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    @SuppressWarnings("null")
     public static final DeferredHolder<MenuType<?>, MenuType<ShippingBinMenu>> SHIPPING_BIN =
         MENU_TYPES.register("shipping_bin",
             () -> new MenuType<>(ShippingBinMenu::new, FeatureFlags.DEFAULT_FLAGS));

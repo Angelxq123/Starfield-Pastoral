@@ -24,6 +24,12 @@ public class TerrainFarmlandBlock extends FarmBlock {
                 ? defaultBlockState() : TerrainSoils.substrate(defaultBlockState()).defaultBlockState();
     }
 
+    public static final class Infertile extends TerrainFarmlandBlock {
+        public static final MapCodec<FarmBlock> CODEC = simpleCodec(Infertile::new);
+        public Infertile(Properties properties) { super(properties); }
+        @Override public MapCodec<FarmBlock> codec() { return CODEC; }
+    }
+
     public static final class Sandy extends TerrainFarmlandBlock {
         public static final MapCodec<FarmBlock> CODEC = simpleCodec(Sandy::new);
         public Sandy(Properties properties) { super(properties); }

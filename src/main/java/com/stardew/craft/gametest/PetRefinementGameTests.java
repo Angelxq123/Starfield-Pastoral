@@ -164,6 +164,73 @@ public final class PetRefinementGameTests {
     }
 
     @GameTest(templateNamespace = "stardewcraft_pet_refinement", template = "empty", timeoutTicks = 200)
+    public static void bowlMoveDocumentUsesBuildingConfirmFlow(GameTestHelper h) throws Exception {
+        try (var fixture = new FarmLevel(h)) {
+            var level = fixture.level;
+            var registry = FarmInstanceRegistry.get(level.getServer()); var owner = UUID.randomUUID();
+            var farm = registry.createFarm(owner, "Bowl document move", "Bowl document move", FarmType.STANDARD);
+            farm.markInitialized();
+            var source = farm.getOrigin().offset(227, 5, 248); clear(level, source);
+            var target = source.east(6);
+            var player = FakePlayerFactory.get(level, new GameProfile(owner, "BowlDocumentMove"));
+            try (var online = onlineLookup(player)) {
+            player.getInventory().clearContent(); player.moveTo(Vec3.atBottomCenterOf(source.north(2)));
+            var block = ModBlocks.PET_BOWL_WOOD.get();
+            level.setBlock(source, block.defaultBlockState(), 3);
+            var before = PetBowlBuildings.ensure(level, source);
+            h.assertTrue(before != null && PetBowlBuildings.beginMove(player, source), "Could not begin bowl move");
+
+            int slot = -1;
+            for (int i = 0; i < player.getInventory().items.size(); i++) {
+                if (BuildingBlueprintItem.isMove(player.getInventory().items.get(i))) { slot = i; break; }
+            }
+            h.assertTrue(slot >= 0, "Move document was not delivered");
+            player.getInventory().selected = slot;
+            var document = player.getMainHandItem();
+            var item = (BuildingBlueprintItem) document.getItem();
+            player.moveTo(target.getX() + .5, target.getY() + 1, target.getZ() - .5);
+            player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES,
+                    new Vec3(target.getX() + .5, target.getY(), target.getZ() + .5));
+
+            item.use(level, player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            h.assertTrue(target.equals(BuildingBlueprintItem.pinned(document, level)),
+                    "First use did not pin the bowl at the selected site");
+            h.assertTrue(level.getBlockState(source).is(block) && level.isEmptyBlock(target) && document.getCount() == 1,
+                    "Preview click mutated the bowl before confirmation");
+
+            var interruptedCopy = document.copy(); var staleOnUse = document.copy();
+            var lastUse = BuildingBlueprintItem.class.getDeclaredField("LAST_USE"); lastUse.setAccessible(true);
+            ((java.util.Map<?, ?>) lastUse.get(null)).clear();
+            item.use(level, player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            var after = BuildingWorldData.get(level.getServer()).find(before.id());
+            h.assertTrue(level.isEmptyBlock(source) && level.getBlockState(target).is(block),
+                    "Confirmed bowl move left the source or missed the destination");
+            h.assertTrue(after != null && after.manager().equals(target) && after.revision() == before.revision() + 1,
+                    "Confirmed bowl move did not commit its building record");
+            PetHomes.prepare(level, farm);
+            var petData = PetWorldData.get(level.getServer());
+            h.assertTrue(level.isEmptyBlock(source) && level.getBlockState(target).is(block)
+                            && petData.bowl(source) == null && petData.bowl(target) != null
+                            && petData.bowls().stream().filter(bowl -> bowl.farm().equals(farm.getInstanceId())).count() == 1,
+                    "Pet preparation resurrected the moved bowl at its old site");
+            h.assertTrue(player.getInventory().items.stream().noneMatch(BuildingBlueprintItem::isMove)
+                            && !BuildingBlueprintItem.isMove(player.getOffhandItem()),
+                    "Confirmed bowl move left a reusable move document");
+            player.getInventory().setItem(slot, interruptedCopy);
+            item.inventoryTick(interruptedCopy, level, player, slot, true);
+            h.assertTrue(interruptedCopy.isEmpty() && player.getInventory().items.stream().noneMatch(BuildingBlueprintItem::isMove),
+                    "A committed move's stale document survived inventory recovery");
+            player.getInventory().setItem(slot, staleOnUse);
+            ((java.util.Map<?, ?>) lastUse.get(null)).clear();
+            item.use(level, player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            h.assertTrue(staleOnUse.isEmpty() && BuildingBlueprintItem.pinned(staleOnUse, level) == null,
+                    "A committed move's stale document pinned another ghost preview");
+            } finally { registry.deleteFarm(owner); }
+        }
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_pet_refinement", template = "empty", timeoutTicks = 200)
     public static void bowlsMoveWithWaterBindingFloorsAndJournalReplay(GameTestHelper h) throws Exception {
         try (var fixture = new FarmLevel(h)) {
         var level = fixture.level;

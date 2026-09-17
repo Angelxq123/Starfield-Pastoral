@@ -29,6 +29,7 @@
     "stardewcraft:fish_pond_bucket",
     "stardewcraft:wooden_chest",
     "stardewcraft:shipping_bin",
+    "stardewcraft:mini_shipping_bin",
     "stardewcraft:mine_barrel",
     "stardewcraft:mine_ladder",
     "stardewcraft:totem_pole_farm",
@@ -284,6 +285,9 @@
     "stardewcraft:big_chest",
     "stardewcraft:junimo_chest",
     "stardewcraft:teal_painted_timber",
-    "stardewcraft:blue_glass_door"
+    "stardewcraft:blue_glass_door",
+    "stardewcraft:deconstructor",
+    "stardewcraft:wood_chipper",
+    "stardewcraft:farm_twig"
   ]
 }

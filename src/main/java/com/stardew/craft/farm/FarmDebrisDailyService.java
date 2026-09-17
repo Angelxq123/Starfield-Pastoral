@@ -8,6 +8,7 @@ import com.stardew.craft.api.v1.internal.farm.StardewFarmDebrisPlacementRegistry
 import com.stardew.craft.api.v1.internal.farm.StardewFarmSnapshots;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.crop.StardewCropBlock;
+import com.stardew.craft.block.decor.FarmTwigBlock;
 import com.stardew.craft.block.nature.PastureGrassBlock;
 import com.stardew.craft.block.nature.WildWeedsBlock;
 import com.stardew.craft.time.StardewTimeManager;
@@ -24,12 +25,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
-/** Original-style daily weed, stone and existing fallen-log spreading for player farms. */
+/** Original-style daily weed, stone and twig spreading for active player farms. */
 @SuppressWarnings("null")
 public final class FarmDebrisDailyService {
     private FarmDebrisDailyService() {
@@ -40,12 +39,10 @@ public final class FarmDebrisDailyService {
         if (season == 3) {
             return;
         }
-        Set<UUID> processed = new HashSet<>();
         FarmInstanceRegistry registry = FarmInstanceRegistry.get();
-        for (var player : level.players()) {
-            FarmInstance farm = registry.getFarmForPlayer(player.getUUID());
-            if (farm == null || !farm.isInitialized() || !processed.add(farm.getOwnerUUID())
-                    || farm.hasActiveGoldClock()) {
+        for (UUID owner : FarmDailyProcessHelper.getOnlineFarmOwners(level)) {
+            FarmInstance farm = registry.getFarm(owner);
+            if (farm == null || !farm.isInitialized() || farm.hasActiveGoldClock()) {
                 continue;
             }
             spreadFromExistingDebris(level, farm,
@@ -171,12 +168,11 @@ public final class FarmDebrisDailyService {
                         .setValue(WildWeedsBlock.VARIANT, random.nextInt(3));
             } else {
                 // SDV chooses among two twig and two stone IDs half the time.
-                // Its twig outcomes are represented by existing horizontal logs.
                 if (!random.nextBoolean()) {
                     continue;
                 }
                 placed = switch (random.nextInt(4)) {
-                    case 0, 1 -> fallenLogState(random);
+                    case 0, 1 -> farmTwigState(random);
                     case 2 -> ModBlocks.MINE_STONE_343.get().defaultBlockState();
                     default -> ModBlocks.MINE_STONE_450.get().defaultBlockState();
                 };
@@ -225,13 +221,9 @@ public final class FarmDebrisDailyService {
         BlockPos max = farm.getFarmBoundsMax();
         int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
         int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
-        BlockPos top = findTopBlock(level, x, z, min.getY(), max.getY());
-        if (top == null || !isDiggableFarmGround(level.getBlockState(top).getBlock())
-                || (level.getBlockState(top).is(Blocks.FARMLAND) || com.stardew.craft.block.terrain.TerrainSoils.farmland(level.getBlockState(top)))) {
-            return null;
-        }
-        BlockPos place = top.above();
-        return level.getBlockState(place).isAir() ? place : null;
+        FarmDebrisPlacementRules.Surface surface =
+                FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+        return surface == null ? null : surface.place();
     }
 
     @Nullable
@@ -241,8 +233,7 @@ public final class FarmDebrisDailyService {
         }
         for (int y = near.getY() + 1; y >= near.getY() - 1; y--) {
             BlockPos place = new BlockPos(near.getX(), y, near.getZ());
-            BlockState ground = level.getBlockState(place.below());
-            if (isDiggableFarmGround(ground.getBlock())
+            if (FarmDebrisPlacementRules.canSpreadDebrisAt(level, farm, place)
                     && canDebrisReplace(level, place, level.getBlockState(place))) {
                 return place;
             }
@@ -268,13 +259,12 @@ public final class FarmDebrisDailyService {
         Block block = state.getBlock();
         return block instanceof WildWeedsBlock
                 || isFarmStone(block)
+                || block instanceof FarmTwigBlock
                 || isFarmLog(state);
     }
 
     private static boolean isDiggableFarmGround(Block block) {
-        return block == ModBlocks.DIRT.get() || block == ModBlocks.YELLOW_DIRT.get()
-                || block instanceof net.minecraft.world.level.block.GrassBlock
-                || block == Blocks.FARMLAND || block instanceof com.stardew.craft.block.terrain.TerrainFarmlandBlock;
+        return FarmDebrisPlacementRules.isNaturalFarmGround(block);
     }
 
     private static boolean canDebrisReplace(
@@ -282,6 +272,9 @@ public final class FarmDebrisDailyService {
             BlockPos position,
             BlockState state
     ) {
+        if (FarmDebrisPlacementRules.isPlayerFloor(state)) {
+            return false;
+        }
         Block block = state.getBlock();
         return state.isAir()
                 || block instanceof WildWeedsBlock
@@ -289,6 +282,7 @@ public final class FarmDebrisDailyService {
                 || block instanceof StardewCropBlock
                 || StardewCropRuntime.inspect(level, position) != null
                 || isFarmStone(block)
+                || block instanceof FarmTwigBlock
                 || isFarmLog(state);
     }
 
@@ -300,15 +294,17 @@ public final class FarmDebrisDailyService {
         }
     }
 
-    /** SDV 294/295 are mapped to the project's existing horizontal log, not a new twig block. */
-    private static BlockState fallenLogState(RandomSource random) {
-        return ModBlocks.OAK_LOG.get().defaultBlockState().setValue(
-                RotatedPillarBlock.AXIS, random.nextBoolean() ? Direction.Axis.X : Direction.Axis.Z);
+    /** SDV object IDs 294/295. */
+    private static BlockState farmTwigState(RandomSource random) {
+        Direction[] facings = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+        return ModBlocks.FARM_TWIG.get().defaultBlockState()
+                .setValue(FarmTwigBlock.VARIANT, random.nextInt(2))
+                .setValue(FarmTwigBlock.FACING, facings[random.nextInt(facings.length)]);
     }
 
     private static BlockState randomDebrisState(RandomSource random) {
         return switch (random.nextInt(4)) {
-            case 0, 1 -> fallenLogState(random);
+            case 0, 1 -> farmTwigState(random);
             case 2 -> ModBlocks.MINE_STONE_343.get().defaultBlockState();
             default -> ModBlocks.MINE_STONE_450.get().defaultBlockState();
         };

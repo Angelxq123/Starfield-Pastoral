@@ -9,8 +9,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Seed item. */
@@ -75,12 +73,7 @@ public class AmaranthSeedItem extends Item implements IStardewItem {
 
     @SuppressWarnings("deprecation")
     private boolean isFarmland(BlockState state) {
-        Block block = state.getBlock();
-        if (block instanceof FarmBlock) {
-            return true;
-        }
-        String blockId = block.builtInRegistryHolder().key().location().toString().toLowerCase();
-        return blockId.contains("farmland");
+        return com.stardew.craft.block.terrain.TerrainSoils.cropSupport(state);
     }
 }
 

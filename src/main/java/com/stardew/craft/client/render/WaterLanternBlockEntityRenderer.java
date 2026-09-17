@@ -44,7 +44,7 @@ public class WaterLanternBlockEntityRenderer implements BlockEntityRenderer<Wate
         BakedModel model = minecraft.getBlockRenderer().getBlockModel(state);
         ModelBlockRenderer renderer = minecraft.getBlockRenderer().getModelRenderer();
         RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
-        renderer.tesselateBlock(
+        SpatialBlockModelRenderer.render(renderer,
                 level,
                 model,
                 state,

@@ -15,7 +15,7 @@ import java.util.Set;
 /** Core addon-machine descriptor registry. Not part of the public compatibility surface. */
 public final class StardewMachineTypeRegistry {
     private static final Set<String> BUILTIN_PATHS = Set.of(
-            "charcoal_kiln", "cheese_press", "crystalarium", "dehydrator",
+            "charcoal_kiln", "cheese_press", "crystalarium", "dehydrator", "deconstructor", "wood_chipper",
             "fish_smoker", "furnace", "incubator", "keg", "loom",
             "mayonnaise_machine", "oil_maker", "preserves_jar", "seed_maker"
     );

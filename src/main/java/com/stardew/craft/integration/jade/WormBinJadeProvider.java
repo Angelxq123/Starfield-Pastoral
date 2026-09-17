@@ -38,11 +38,14 @@ public enum WormBinJadeProvider implements IBlockComponentProvider, IServerDataP
     @SuppressWarnings("null")
     @Override
     public void appendServerData(CompoundTag tag, BlockAccessor accessor) {
-        if (accessor.getBlockEntity() instanceof WormBinBlockEntity wormBin) {
+        var mainPos = com.stardew.craft.capability.UtilityAutomationCapabilities.resolveMainPos(
+                accessor.getLevel(), accessor.getPosition(), accessor.getBlockState());
+        var owner = accessor.getLevel().getBlockEntity(mainPos);
+        if (owner instanceof WormBinBlockEntity wormBin) {
             appendWormBinData(tag, wormBin);
             return;
         }
-        if (accessor.getBlockEntity() instanceof DeluxeWormBinBlockEntity wormBin) {
+        if (owner instanceof DeluxeWormBinBlockEntity wormBin) {
             appendDeluxeWormBinData(tag, wormBin);
         }
     }

@@ -27,6 +27,7 @@ import java.util.Optional;
  * 将作物加工为果酒/果汁/饮品
  */
 public class KegBlockEntity extends TimedProductionBlockEntity {
+    private boolean modelFootprintChecked;
 	private static final String TAG_INPUT = "input";
 	private static final String TAG_PRODUCT = "product";
 	private static final String TAG_READY_AT = "readyAtAbsMinute";
@@ -42,6 +43,9 @@ public class KegBlockEntity extends TimedProductionBlockEntity {
 		if (level.isClientSide) {
 			return;
 		}
+        if (!be.modelFootprintChecked) {
+            be.modelFootprintChecked = com.stardew.craft.block.utility.MachineModelFootprint.repair(level, pos, state);
+        }
 		boolean newReady = be.refreshReady();
 		if (newReady != be.ready) {
 			be.ready = newReady;

@@ -68,7 +68,7 @@ public class CrabPotBlockEntityRenderer implements BlockEntityRenderer<CrabPotBl
 			ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
 			RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
 			RandomSource rand = RandomSource.create(0L);
-			renderer.tesselateBlock(
+			SpatialBlockModelRenderer.render(renderer,
 				level,
 				model,
 				state,

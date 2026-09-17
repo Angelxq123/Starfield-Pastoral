@@ -41,7 +41,7 @@ public class PastureGrassGrowthManager extends SavedData {
             return;
         }
 
-        List<FarmInstance> farms = onlineFarms(level);
+        List<FarmInstance> farms = activeFarms(level);
         for (FarmInstance farm : farms) {
             spawnDailyGrass(level, farm);
         }
@@ -149,7 +149,7 @@ public class PastureGrassGrowthManager extends SavedData {
                             .setValue(PastureGrassBlock.VARIANT,
                                     random.nextInt(PastureGrassBlock.VISUAL_VARIANT_COUNT))
                             .setValue(PastureGrassBlock.CLUMPS, random.nextInt(2) + 1);
-                    if (isDiggableFarmGround(level.getBlockState(neighbor.below()).getBlock())
+                    if (canSpreadGrassAt(level, neighbor)
                             && spread.canSurvive(level, neighbor)) {
                         level.setBlock(neighbor, spread, Block.UPDATE_ALL);
                         if (knownPositions.add(neighbor.asLong())) {
@@ -177,29 +177,22 @@ public class PastureGrassGrowthManager extends SavedData {
         BlockPos max = farm.getFarmBoundsMax();
         int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
         int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
-        for (int y = max.getY(); y >= min.getY(); y--) {
-            BlockPos ground = new BlockPos(x, y, z);
-            if (!level.isLoaded(ground)) {
-                return null;
-            }
-            BlockState groundState = level.getBlockState(ground);
-            if (groundState.isAir()) {
-                continue;
-            }
-            BlockPos place = ground.above();
-            if (!isDiggableFarmGround(groundState.getBlock())
-                    || !farm.contains(ground)
-                    || !level.getBlockState(place).isAir()) {
-                return null;
-            }
-            return place;
-        }
-        return null;
+        com.stardew.craft.farm.FarmDebrisPlacementRules.Surface surface =
+                com.stardew.craft.farm.FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+        return surface == null ? null : surface.place();
     }
 
     private static boolean isDiggableFarmGround(Block block) {
-        return (block == ModBlocks.YELLOW_DIRT.get() || block == ModBlocks.DIRT.get())
-                || block instanceof net.minecraft.world.level.block.GrassBlock;
+        return com.stardew.craft.farm.FarmDebrisPlacementRules.isNaturalFarmGround(block);
+    }
+
+    private static boolean canSpreadGrassAt(ServerLevel level, BlockPos place) {
+        UUID owner = FarmInstanceRegistry.get().getOwnerAt(place);
+        FarmInstance farm = owner == null ? null : FarmInstanceRegistry.get().getFarm(owner);
+        return farm != null && farm.contains(place)
+                && com.stardew.craft.farm.FarmDebrisPlacementRules.isCompletelyOpen(level, place)
+                && com.stardew.craft.farm.FarmDebrisPlacementRules.isBareDebrisGround(
+                        level.getBlockState(place.below()));
     }
 
     private static void cleanupWinterGrass(ServerLevel level) {
@@ -210,13 +203,12 @@ public class PastureGrassGrowthManager extends SavedData {
         }
     }
 
-    private static List<FarmInstance> onlineFarms(ServerLevel level) {
+    private static List<FarmInstance> activeFarms(ServerLevel level) {
         FarmInstanceRegistry registry = FarmInstanceRegistry.get();
-        Set<UUID> seen = new HashSet<>();
         List<FarmInstance> farms = new ArrayList<>();
-        for (var player : level.players()) {
-            FarmInstance farm = registry.getFarmForPlayer(player.getUUID());
-            if (farm != null && farm.isInitialized() && seen.add(farm.getOwnerUUID())) {
+        for (UUID owner : com.stardew.craft.farm.FarmDailyProcessHelper.getOnlineFarmOwners(level)) {
+            FarmInstance farm = registry.getFarm(owner);
+            if (farm != null && farm.isInitialized()) {
                 farms.add(farm);
             }
         }
@@ -227,7 +219,7 @@ public class PastureGrassGrowthManager extends SavedData {
         Set<Long> scannedChunks = new HashSet<>();
         List<BlockPos> results = new ArrayList<>();
 
-        for (FarmInstance farm : onlineFarms(level)) {
+        for (FarmInstance farm : activeFarms(level)) {
             BlockPos min = farm.getFarmBoundsMin();
             BlockPos max = farm.getFarmBoundsMax();
             int minCX = min.getX() >> 4;

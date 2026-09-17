@@ -1,7 +1,6 @@
 package com.stardew.craft.block.utility;
 
 import com.stardew.craft.block.ModBlocks;
-import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.blockentity.LoomBlockEntity;
 import com.stardew.craft.blockentity.ModBlockEntities;
 import com.stardew.craft.blockentity.UtilityDropHelper;
@@ -14,26 +13,18 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -41,23 +32,21 @@ import java.util.List;
 /**
  * Loom - turns wool into cloth.
  */
-public class LoomBlock extends Block implements EntityBlock {
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+public class LoomBlock extends MapUtilityStaticBlock implements EntityBlock {
     public static final BooleanProperty READY = BooleanProperty.create("ready");
-
-    private static final VoxelShape[] SHAPES = ModelVoxelShapeCache.horizontalShapes("stardewcraft:block/utility/loom", Direction.NORTH);
 
     @SuppressWarnings("null")
     public LoomBlock(Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any()
+        super(properties, "stardewcraft:block/utility/loom");
+        registerDefaultState(defaultBlockState()
             .setValue(FACING, Direction.NORTH)
             .setValue(READY, false));
     }
 
     @Override
     protected void createBlockStateDefinition(@SuppressWarnings("null") StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, READY);
+        super.createBlockStateDefinition(builder);
+        builder.add(READY);
     }
 
     @Override
@@ -68,30 +57,21 @@ public class LoomBlock extends Block implements EntityBlock {
     @SuppressWarnings("null")
     @Override
     protected List<ItemStack> getDrops(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") LootParams.Builder params) {
+        if (state.getValue(PART) == Part.EXTENSION) return List.of();
         return List.of(new ItemStack(ModBlocks.LOOM.get()));
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    public VoxelShape getShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    public VoxelShape getCollisionShape(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockGetter level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") CollisionContext context) {
-        return SHAPES[ModelVoxelShapeCache.horizontalIndex(state.getValue(FACING))];
     }
 
     @Override
     @Nullable
     public BlockEntity newBlockEntity(@SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") BlockState state) {
+        if (state.getValue(PART) == Part.EXTENSION) return null;
         return new LoomBlockEntity(pos, state);
     }
 
     @Override
     @Nullable
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@SuppressWarnings("null") Level level, @SuppressWarnings("null") BlockState state, @SuppressWarnings("null") BlockEntityType<T> type) {
+        if (state.getValue(PART) == Part.EXTENSION) return null;
         if (level.isClientSide) {
             return null;
         }
@@ -103,25 +83,8 @@ public class LoomBlock extends Block implements EntityBlock {
 
     @SuppressWarnings("null")
     @Override
-    public BlockState getStateForPlacement(@SuppressWarnings("null") BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    public BlockState rotate(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
-    }
-
-    @SuppressWarnings("null")
-    @Override
-    public BlockState mirror(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Mirror mirror) {
-        return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
-    }
-
-    @SuppressWarnings("null")
-    @Override
     protected ItemInteractionResult useItemOn(@SuppressWarnings("null") ItemStack stack, @SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Level level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") Player player, @SuppressWarnings("null") InteractionHand hand, @SuppressWarnings("null") BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) return super.useItemOn(stack, state, level, pos, player, hand, hit);
         if (level.isClientSide) {
             return ItemInteractionResult.sidedSuccess(true);
         }
@@ -147,7 +110,7 @@ public class LoomBlock extends Block implements EntityBlock {
     @SuppressWarnings("null")
     @Override
     public void onRemove(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Level level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock()) && !isMoving) {
+        if (!state.is(newState.getBlock()) && !isMoving && state.getValue(PART) == Part.MAIN) {
             UtilityDropHelper.dropAutomationContents(level, pos);
         }
         super.onRemove(state, level, pos, newState, isMoving);
@@ -156,6 +119,7 @@ public class LoomBlock extends Block implements EntityBlock {
     @SuppressWarnings("null")
     @Override
     protected InteractionResult useWithoutItem(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") Level level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") Player player, @SuppressWarnings("null") BlockHitResult hit) {
+        if (state.getValue(PART) == Part.EXTENSION) return super.useWithoutItem(state, level, pos, player, hit);
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }

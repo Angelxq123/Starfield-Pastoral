@@ -9,7 +9,7 @@
     { "from": "town",              "to": "archaeologyhouse",  "via_outdoor": "museum_outdoor_door",     "via_indoor": "museum_indoor_entry",    "mode": "walk_warp" },
     { "from": "town",              "to": "haleyhouse",        "via_outdoor": "haleyhouse_outdoor_door", "via_indoor": "haleyhouse_indoor_entry","mode": "walk_warp" },
     { "from": "town",              "to": "joshhouse",         "via_outdoor": "joshhouse_outdoor_door",  "via_indoor": "joshhouse_indoor_entry", "mode": "walk_warp" },
-    { "from": "town",              "to": "trailer",           "via_outdoor": "",                       "via_indoor": "",                      "mode": "walk" },
+    { "from": "town",              "to": "trailer",           "via_outdoor": "trailer_outdoor_door",    "via_indoor": "trailer_indoor_entry",   "mode": "walk_warp" },
     { "from": "town",              "to": "samhouse",          "via_outdoor": "samhouse_outdoor_door",   "via_indoor": "samhouse_indoor_entry",  "mode": "walk_warp" },
     { "from": "town",              "to": "communitycenter",   "via_outdoor": "communitycenter_outer",  "via_indoor": "",                      "mode": "walk" },
     { "from": "town",              "to": "beach",             "via_outdoor": "",                       "via_indoor": "",                      "mode": "walk" },

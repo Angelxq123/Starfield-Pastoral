@@ -81,7 +81,7 @@ public class LightningRodBlock extends Block implements EntityBlock {
 
     @Override
     public RenderShape getRenderShape(@SuppressWarnings("null") BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @SuppressWarnings("null")

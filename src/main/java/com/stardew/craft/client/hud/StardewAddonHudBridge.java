@@ -44,8 +44,14 @@ public final class StardewAddonHudBridge {
     }
 
     @SubscribeEvent
-    public static void logout(ClientPlayerNetworkEvent.LoggingOut event) { StardewDailyInfoCache.clear(); }
+    public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
+        StardewDailyInfoCache.clear();
+        com.stardew.craft.api.v1.internal.client.StardewConstructionProgressCache.clear();
+    }
 
     @SubscribeEvent
-    public static void login(ClientPlayerNetworkEvent.LoggingIn event) { StardewDailyInfoCache.clear(); }
+    public static void login(ClientPlayerNetworkEvent.LoggingIn event) {
+        StardewDailyInfoCache.clear();
+        com.stardew.craft.api.v1.internal.client.StardewConstructionProgressCache.clear();
+    }
 }

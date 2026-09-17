@@ -13,6 +13,7 @@ atlas_path() {
         forge_menu) printf '%s\n' "$GUI_DIR/forge/forge_menu.png" ;;
         menu_tiles) printf '%s\n' "$GUI_DIR/animal_query/menu_tiles.png" ;;
         objects_2) printf '%s\n' "$ROOT_DIR/源文件/Content/TileSheets/Objects_2.png" ;;
+        tools) printf '%s\n' "$ROOT_DIR/源文件/Content/TileSheets/tools.png" ;;
         billboard) printf '%s\n' "$GUI_DIR/billboard.png" ;;
         animal_white_chicken) printf '%s\n' "$ROOT_DIR/源文件/Content/Animals/White Chicken.png" ;;
         animal_baby_white_chicken) printf '%s\n' "$ROOT_DIR/源文件/Content/Animals/BabyWhite Chicken.png" ;;

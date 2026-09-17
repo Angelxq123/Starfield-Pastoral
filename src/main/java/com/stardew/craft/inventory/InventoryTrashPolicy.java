@@ -2,6 +2,9 @@ package com.stardew.craft.inventory;
 
 import com.stardew.craft.api.v1.item.StardewItemDataApi;
 import com.stardew.craft.core.ModTags;
+import com.stardew.craft.item.tool.FishingRodItem;
+import com.stardew.craft.item.tool.PanItem;
+import com.stardew.craft.item.weapon.SlingshotItem;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
 
@@ -17,11 +20,17 @@ public final class InventoryTrashPolicy {
         if ("stardewcraft.type.quest".equals(StardewItemDataApi.getTypeKey(stack))) {
             return false;
         }
-        if (stack.is(ModTags.Items.PREVENT_LOSS_ON_DEATH)) {
+        if (stack.is(ModTags.Items.PREVENT_TRASHING)) {
             return false;
         }
-        // SDV protects ordinary farming tools and scythes. Fishing rods and weapons
-        // remain trashable, matching Item.canBeTrashed in the original game.
+        if (stack.getItem() instanceof FishingRodItem
+                || stack.getItem() instanceof PanItem
+                || stack.getItem() instanceof SlingshotItem) {
+            return true;
+        }
+        if ("stardewcraft.type.tool".equals(StardewItemDataApi.getTypeKey(stack))) {
+            return false;
+        }
         return !stack.is(ItemTags.AXES)
                 && !stack.is(ModTags.Items.PICKAXES)
                 && !stack.is(ModTags.Items.HOES)

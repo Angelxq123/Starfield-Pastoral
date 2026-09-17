@@ -57,6 +57,17 @@ public class PlayerDataEventHandler {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            // Replay servers such as Flashback may create a viewer ServerPlayer while only
+            // reconstructing the dimensions present in the recording. That player is not a
+            // persistent Stardew gameplay session, and the mining SavedData owner may not
+            // exist at all. Do not create or migrate durable player data for such viewers.
+            if (!hasRequiredPlayerDataLevels(player)) {
+                StardewCraft.LOGGER.debug(
+                        "Skipping Stardew player initialization for {} because the mining dimension is unavailable",
+                        player.getName().getString());
+                return;
+            }
+
             // Recover shop purchases that were paid for but not placed before disconnect/restart.
             com.stardew.craft.network.payload.ShopPickupPayload.deliverAllPending(player);
 
@@ -350,13 +361,17 @@ public class PlayerDataEventHandler {
                 }
             }
 
-            PlayerStardewData data = PlayerDataManager.getPlayerData(player);
-            if (data.isDirty()) {
+            PlayerStardewData data = PlayerDataManager.get().getData(player.getUUID());
+            if (data != null && data.isDirty()) {
                 data.markClean();
                 PlayerDataManager.get().setDirty();
                 StardewCraft.LOGGER.info("Player {} logged out, saved Stardew data", player.getName().getString());
             }
         }
+    }
+
+    private static boolean hasRequiredPlayerDataLevels(ServerPlayer player) {
+        return player.getServer().getLevel(ModMiningDimensions.STARDEW_MINING) != null;
     }
     
     /**

@@ -1,6 +1,6 @@
 {
-  "parent": "stardewcraft:decor/common/fridge",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "particle": "stardewcraft:block/decor/common/fridge"
+    "layer0": "stardewcraft:item/fridge"
   }
 }

@@ -89,6 +89,18 @@ public class GeoFestivalDecorBlock extends MapDecorStaticBlock implements Entity
     }
 
     @Override
+    @Nullable
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+            @Nonnull Level level, @Nonnull BlockState state,
+            @Nonnull net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        if (level.isClientSide || type != com.stardew.craft.blockentity.ModBlockEntities.LUAU_FESTIVAL_DECOR.get()
+                || !(this instanceof WizardCauldronBlock || this instanceof LuauGeoFestivalDecorBlock)) return null;
+        return (world, pos, blockState, entity) -> {
+            if (entity instanceof LuauFestivalDecorBlockEntity decor) decor.repairCauldronFootprint();
+        };
+    }
+
+    @Override
     public void initializeClient(@Nonnull Consumer<net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions> consumer) {
         consumer.accept(new net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions() {
             @Override

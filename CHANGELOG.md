@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.1fix2 - 2026-09-17
+
+### 更新日志（中文）
+
+**0.6.1fix2 · 农场系统、设施与兼容性修复**
+
+- 按《星露谷物语》的规则重建农场初始化与每日杂物刷新，加入农场树枝、杂草、石块、草、树种、树苗、成树和大型障碍物的分布与扩散；地板、道路、建筑和其他已占用地块不会再刷出杂物，黄金时钟、季节、下雨和春季额外刷新也会参与结算。
+- 完整接入可升级的背包垃圾桶。基础、铜、钢、金和铱等级分别返还 0%、15%、30%、45% 和 60% 的物品售价，升级、丢弃和退款均由服务端校验，并将垃圾桶操作接入相关物品栏界面。
+- 加入迷你出货箱及其库存、菜单、动画和所有权逻辑；修正普通出货箱的盖子动画、交互与多人状态同步。
+- 补齐分解机、木材削片机、迷你方尖碑和冰箱等设施，并更新熔炉、罐头瓶、织布机、油料制造机、种子生产器、虫饵盒等机器的模型、工作状态、朝向和配方表现。
+- 加入硬质土壤、贫瘠耕地、农场树枝和季节树叶，重制农田边缘、肥料状态、松树树冠连接以及多组四季地形和树木资源。
+- 补齐特别订单兑奖券的现场领取流程，加入特别订单板旁的兑奖券箱，并防止背包已满时丢失或重复领取；普通任务和特别订单完成时获得的兑奖券现在都有对应去向。
+- 修复建筑蓝图在服务器上的预览与移动数据同步、宠物碗搬迁后重复生成、建筑模板错误借用其他方块材质，以及 Flashback 回放玩家触发持久玩家数据校验的问题。
+- 修正 JEI 与箱子等容器界面的遮挡区域、槽位命中和 Shift 点击行为，并改进 NPC 在门口、家具、拥挤区域和跨区域路线上的寻路与落点处理。
+
+### Update Log (English)
+
+**0.6.1fix2 · Farm Systems, Facilities and Compatibility Fixes**
+
+- Rebuilds farm initialization and daily debris updates around Stardew Valley's rules, covering twigs, weeds, stones, grass, tree seeds, saplings, mature trees and large obstacles. Floors, paths, buildings and other occupied tiles are protected, while the Gold Clock, season, rain and spring additions participate in daily updates.
+- Completes the upgradeable backpack trash can. Basic, Copper, Steel, Gold and Iridium tiers reclaim 0%, 15%, 30%, 45% and 60% of an item's sell value. Upgrades, disposal and refunds are server validated, with trash controls added to the relevant inventory screens.
+- Adds the Mini-Shipping Bin with inventory, menu, animation and ownership support, and corrects the standard Shipping Bin's lid motion, interaction and multiplayer state synchronization.
+- Adds the Deconstructor, Wood Chipper, Mini-Obelisk and Fridge facilities, and updates models, working states, facing and recipe presentation for the Furnace, Preserves Jar, Loom, Oil Maker, Seed Maker, Worm Bins and related machines.
+- Adds hard soil, infertile farmland, farm twigs and seasonal leaves, with revised farmland edges, fertilizer states, connected pine canopies and seasonal terrain and tree assets.
+- Completes in-world collection for Special Order prize tickets, adds the ticket box beside the Special Orders Board, and prevents loss or duplicate claims when the inventory is full. Tickets earned from ordinary quests and Special Orders now both have their intended delivery path.
+- Fixes dedicated-server blueprint preview and move synchronization, pet-bowl duplication after relocation, incorrect material sampling in building templates, and persistent-player validation triggered by Flashback replay viewers.
+- Corrects JEI exclusion areas, container slot hit targets and Shift-click behavior, and improves NPC pathing and landing around doors, furniture, crowds and cross-area routes.
+
 ## 0.6.1fix1 - 2026-09-15
 
 ### 更新日志（中文）

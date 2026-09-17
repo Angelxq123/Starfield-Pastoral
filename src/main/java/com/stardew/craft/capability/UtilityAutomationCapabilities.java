@@ -70,6 +70,10 @@ public final class UtilityAutomationCapabilities {
             (be, ctx) -> be.getAutomationItemHandler());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModBlockEntities.OIL_MAKER.get(),
             (be, ctx) -> be.getAutomationItemHandler());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModBlockEntities.DECONSTRUCTOR.get(),
+            (be, ctx) -> be.getAutomationItemHandler());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModBlockEntities.WOOD_CHIPPER.get(),
+            (be, ctx) -> be.getAutomationItemHandler());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModBlockEntities.LOOM.get(),
             (be, ctx) -> be.getAutomationItemHandler());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModBlockEntities.BEE_HOUSE.get(),
@@ -111,6 +115,14 @@ public final class UtilityAutomationCapabilities {
 
         event.registerBlock(Capabilities.ItemHandler.BLOCK, UtilityAutomationCapabilities::getAutomationFromMultiblock,
             ModBlocks.BEE_HOUSE.get(),
+            ModBlocks.SEED_MAKER.get(),
+            ModBlocks.WORM_BIN.get(),
+            ModBlocks.DELUXE_WORM_BIN.get(),
+            ModBlocks.KEG.get(),
+            ModBlocks.PRESERVES_JAR.get(),
+            ModBlocks.LOOM.get(),
+            ModBlocks.DECONSTRUCTOR.get(),
+            ModBlocks.WOOD_CHIPPER.get(),
             ModBlocks.CHEESE_PRESS.get(),
             ModBlocks.DEHYDRATOR.get(),
             ModBlocks.BAIT_MAKER.get(),
@@ -132,7 +144,7 @@ public final class UtilityAutomationCapabilities {
     @Nullable
     @SuppressWarnings("null")
     private static IItemHandler getAutomationFromMultiblock(Level level, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, @Nullable Direction side) {
-        BlockPos mainPos = resolveMainPos(pos, state);
+        BlockPos mainPos = resolveMainPos(level, pos, state);
         BlockEntity main = level.getBlockEntity(mainPos);
         if (main instanceof UtilityAutomationAccess access) {
             return access.getAutomationItemHandler();
@@ -140,7 +152,11 @@ public final class UtilityAutomationCapabilities {
         return null;
     }
 
-    private static BlockPos resolveMainPos(BlockPos pos, BlockState state) {
+    public static BlockPos resolveMainPos(Level level, BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof com.stardew.craft.block.utility.MapUtilityStaticBlock block) {
+            BlockPos main = block.findMainPos(level, pos, state);
+            return main == null ? pos : main;
+        }
         if (state.getBlock() instanceof AbstractTwoBlockUtilityBlock<?>) {
             return AbstractTwoBlockUtilityBlock.getMainPos(pos, state);
         }
@@ -182,6 +198,10 @@ public final class UtilityAutomationCapabilities {
         }
         if (state.getBlock() instanceof SolarPanelBlock) {
             return SolarPanelBlock.getMainPos(pos, state);
+        }
+        if (state.getBlock() instanceof com.stardew.craft.block.utility.WormBinBlock) {
+            return state.getValue(com.stardew.craft.block.utility.WormBinBlock.PART)
+                    == com.stardew.craft.block.utility.WormBinBlock.Part.EXTENSION ? pos.below() : pos;
         }
         return pos;
     }

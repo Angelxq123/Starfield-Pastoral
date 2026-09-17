@@ -22,6 +22,58 @@ import java.util.List;
 @PrefixGameTestTemplate(false)
 public final class MineAssetThemeGameTests {
     @GameTest(templateNamespace = "stardewcraft_mine_assets", template = "ring_utilities", timeoutTicks = 100)
+    public static void blockedEntryNeverDropsFromAnyCell(GameTestHelper h) {
+        var level=h.getLevel();var pos=h.absolutePos(new BlockPos(8,3,8));
+        var block=ModBlocks.MINE_BLOCKED_ENTRY.get();var area=new AABB(pos).inflate(4);
+        for(var theme:MineBuildingTheme.values()) for(var facing:Direction.Plane.HORIZONTAL) {
+            for(int removal=1;removal<=6;removal++) {
+                int cellIndex=removal%6;
+                var state=block.defaultBlockState().setValue(MapDecorStaticBlock.FACING,facing)
+                        .setValue(MineBuildingTheme.PROPERTY,theme);
+                level.setBlock(pos,state,3);h.assertTrue(block.placeExtensions(level,pos,state),"Entry placement failed");
+                var cells=new java.util.ArrayList<BlockPos>();cells.add(pos);
+                for(int x=-2;x<=2;x++) for(int y=0;y<3;y++) for(int z=-2;z<=2;z++) {
+                    var cell=pos.offset(x,y,z);
+                    if(!cell.equals(pos)&&level.getBlockState(cell).is(block))cells.add(cell);
+                }
+                h.assertTrue(cells.size()==6,"Entry footprint changed");
+                // The normal loot path (MAIN), and the inherited extension removal fallback.
+                var target=cells.get(cellIndex);
+                if(cellIndex==0) level.destroyBlock(target,true);
+                else level.setBlock(target,Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_CLIENTS|Block.UPDATE_KNOWN_SHAPE|Block.UPDATE_SUPPRESS_DROPS);
+                h.assertTrue(level.getEntitiesOfClass(ItemEntity.class,area).stream()
+                        .noneMatch(e->e.getItem().is(block.asItem())),"Unbreakable entry dropped from cell "+cellIndex);
+                for(var cell:cells) h.assertTrue(!level.getBlockState(cell).is(block),"Removed entry left an orphan");
+            }
+        }
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_mine_assets", template = "ring_utilities", timeoutTicks = 100)
+    public static void blockedEntrySurvivesNeighborUpdates(GameTestHelper h) {
+        var level=h.getLevel();var pos=h.absolutePos(new BlockPos(8,3,8));var block=ModBlocks.MINE_BLOCKED_ENTRY.get();
+        var state=block.defaultBlockState();level.setBlock(pos,state,3);
+        h.assertTrue(block.placeExtensions(level,pos,state),"Entry placement failed");
+        for(int n=0;n<10;n++) {
+            level.setBlock(pos.below(),Blocks.STONE.defaultBlockState(),3);
+            level.removeBlock(pos.below(),false);
+            level.updateNeighborsAt(pos,Blocks.AIR);
+        }
+        h.runAtTickTime(4,()->{
+            int count=0;for(int x=0;x<2;x++)for(int y=0;y<3;y++) {
+                var cell=pos.offset(x,y,0);var current=level.getBlockState(cell);
+                if(current.is(block)) count++;
+                h.assertTrue(current.is(block)&&current.getDestroySpeed(level,cell)<0,"Neighbor update removed or weakened a cell");
+            }
+            h.assertTrue(count==6,"Incomplete entry");
+            h.assertTrue(level.getEntitiesOfClass(ItemEntity.class,new AABB(pos).inflate(4)).stream()
+                    .noneMatch(e->e.getItem().is(block.asItem())),"Neighbor update dropped entry");
+            h.succeed();
+        });
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_mine_assets", template = "ring_utilities", timeoutTicks = 100)
     public static void allArchitecturePartsKeepThePickedTheme(GameTestHelper h) {
         var level=h.getLevel(); var pos=h.absolutePos(new BlockPos(8,3,8));
         for (Block registered : List.of(ModBlocks.MINE_BLOCKED_ENTRY.get(), ModBlocks.ELEVATOR.get())) {

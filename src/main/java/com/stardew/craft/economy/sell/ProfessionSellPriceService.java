@@ -58,7 +58,7 @@ public final class ProfessionSellPriceService {
     public static SellQuote quoteItem(ServerPlayer player, ItemStack stack, SellSource source) {
         PlayerStardewData data = PlayerStardewDataAPI.getData(player);
         return quoteItemWithChecker(player, stack, source, SecretNote23Service.hasBearKnowledge(data),
-                profession -> hasProfession(player, profession));
+                false, profession -> hasProfession(player, profession));
     }
 
     public static SellQuote quoteItem(PlayerStardewData data, ItemStack stack, SellSource source) {
@@ -75,7 +75,7 @@ public final class ProfessionSellPriceService {
         }
 
         return quoteItemWithChecker(null, stack, source, false,
-            profession -> normalizedNames.contains(profession.getName().toLowerCase(Locale.ROOT)));
+            false, profession -> normalizedNames.contains(profession.getName().toLowerCase(Locale.ROOT)));
     }
 
     public static SellQuote quoteItemForProfessionNames(Set<String> professionNames, Set<String> mailFlags,
@@ -96,11 +96,29 @@ public final class ProfessionSellPriceService {
                 && mailFlags.contains(SecretNoteStoryFlags.BEAR_KNOWLEDGE))
                 || (specialItems != null && specialItems.contains(SecretNote23Service.SPECIAL_ITEM_ID));
         return quoteItemWithChecker(null, stack, source, hasBearKnowledge,
+                false, profession -> normalizedNames.contains(profession.getName().toLowerCase(Locale.ROOT)));
+    }
+
+    /** Client preview variant with the Price Catalogue book state supplied by the synced player cache. */
+    public static SellQuote quoteItemForProfessionNames(Set<String> professionNames, Set<String> mailFlags,
+                                                         Set<String> specialItems, boolean hasArtifactPriceBook,
+                                                         ItemStack stack, SellSource source) {
+        Set<String> normalizedNames = new HashSet<>();
+        for (String name : professionNames) {
+            if (name != null && !name.isBlank()) {
+                normalizedNames.add(name.toLowerCase(Locale.ROOT));
+            }
+        }
+        boolean hasBearKnowledge = (mailFlags != null
+                && mailFlags.contains(SecretNoteStoryFlags.BEAR_KNOWLEDGE))
+                || (specialItems != null && specialItems.contains(SecretNote23Service.SPECIAL_ITEM_ID));
+        return quoteItemWithChecker(null, stack, source, hasBearKnowledge, hasArtifactPriceBook,
                 profession -> normalizedNames.contains(profession.getName().toLowerCase(Locale.ROOT)));
     }
 
     private static SellQuote quoteItemWithChecker(ServerPlayer player, ItemStack stack, SellSource source,
-                                                   boolean hasBearKnowledge, ProfessionChecker checker) {
+                                                   boolean hasBearKnowledge, boolean hasArtifactPriceBook,
+                                                   ProfessionChecker checker) {
         String typeKey = StardewItemDataApi.getTypeKey(stack);
         int baseUnitPrice = StardewItemDataApi.getSellPrice(stack);
         if (typeKey.isBlank() || baseUnitPrice < 0) {
@@ -111,6 +129,9 @@ public final class ProfessionSellPriceService {
         if (player != null) {
             PlayerStardewData data = PlayerStardewDataAPI.getData(player);
             baseUnitPrice = BookPowerEffects.applyArtifactSellPrice(data, context.itemTypeKey(), baseUnitPrice);
+        } else if (hasArtifactPriceBook && ("stardewcraft.type.artifact".equals(typeKey)
+                || "stardewcraft.type.artifact_quality".equals(typeKey))) {
+            baseUnitPrice *= 3;
         }
         return quote(baseUnitPrice, stack.getCount(), context, stack, player, hasBearKnowledge, checker);
     }

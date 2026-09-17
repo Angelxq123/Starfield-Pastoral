@@ -117,7 +117,7 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
         }
 
         this.renderTooltip(graphics, mouseX, mouseY);
-        extraActions.tooltip(graphics, mouseX, mouseY);
+        extraActions.tooltip(graphics, this.font, mouseX, mouseY);
 
         if (isHoveringColorButton(mouseX, mouseY)) {
             graphics.renderTooltip(this.font, Component.translatable("stardewcraft.stone_chest.color_picker"), mouseX, mouseY);

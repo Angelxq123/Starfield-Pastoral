@@ -28,6 +28,11 @@ public class SeedMakerBlockEntityRenderer implements BlockEntityRenderer<SeedMak
     private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/bubble.png");
     private static final float PX = 1.0f / 32.0f;
 
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(SeedMakerBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(0.25, 1.25, 0.25);
+    }
+
     public SeedMakerBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -42,7 +47,7 @@ public class SeedMakerBlockEntityRenderer implements BlockEntityRenderer<SeedMak
         if (level != null) {
             poseStack.pushPose();
             if (be.isWorking() && !ready) {
-                UtilityWorkingAnimation.applyKegWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+                UtilityWorkingAnimation.applyGroundedWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
             }
 
             Minecraft mc = Minecraft.getInstance();
@@ -50,7 +55,7 @@ public class SeedMakerBlockEntityRenderer implements BlockEntityRenderer<SeedMak
             ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
             RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
             RandomSource rand = RandomSource.create(0L);
-            renderer.tesselateBlock(
+            SpatialBlockModelRenderer.render(renderer,
                 level,
                 model,
                 state,

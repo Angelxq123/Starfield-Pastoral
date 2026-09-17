@@ -65,6 +65,11 @@ public final class PetHomes {
     public static void prepare(ServerLevel level, FarmInstance farm) {
         var data = PetWorldData.get(level.getServer());
         if (!farm.isInitialized()) return;
+        // A saved bowl is already the farm's provisioned bowl, even when older data lacks the
+        // preparation receipt.  Regenerating the authored default here would resurrect the old
+        // bowl after a move (and would also duplicate any legacy or player-placed bowl).
+        if (!data.prepared(farm.getInstanceId()) && data.bowls().stream().anyMatch(bowl -> bowl.farm().equals(farm.getInstanceId())))
+            data.markPrepared(farm.getInstanceId());
         if (data.prepared(farm.getInstanceId())) { migrateFloor(level, farm); return; }
         var site = site(farm);
         if (!level.hasChunksAt(site.bowl().offset(-4, -3, -4), site.bowl().offset(4, 3, 4))) return;

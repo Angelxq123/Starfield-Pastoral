@@ -20,6 +20,7 @@ import com.stardew.craft.client.gui.StardewSettingsScreen;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.SdvTexture;
 import com.stardew.craft.client.gui.common.StardewRenderMapping;
+import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.client.gui.overnight.LevelUpMenuTextures;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.client.hud.StardewHudLayoutEditorScreen;
@@ -3386,16 +3387,9 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
         // Trash can tooltip
         if (trashCanContains(mouseX, mouseY)) {
             ItemStack carried = currentCarriedItem();
-            if (!carried.isEmpty()) {
-                List<Component> lines = new ArrayList<>();
-                lines.add(Component.translatable("stardewcraft.game_menu.crafting.trash_can").withStyle(ChatFormatting.WHITE));
-                lines.add(carried.getHoverName().copy().withStyle(ChatFormatting.GRAY));
-                graphics.renderTooltip(tooltipFont(), lines, java.util.Optional.empty(), mouseX, mouseY);
-                return;
-            }
-            graphics.renderTooltip(tooltipFont(),
-                    Component.translatable("stardewcraft.game_menu.crafting.trash_can"),
-                    mouseX, mouseY);
+            graphics.renderTooltip(tooltipFont(), TrashCanWidget.tooltip(carried),
+                    java.util.Optional.empty(), mouseX, mouseY);
+            return;
         }
     }
 
@@ -4393,17 +4387,11 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
             trashCanLidRotation = Math.max(trashCanLidRotation - step, 0.0f);
         }
 
-        CommonGuiTextures.drawGameMenuTrashBody(graphics, bodyX, bodyY, mapping.s4());
-
         float lidScale = mapping.s4();
         int lidDrawX = bodyX + ui(60);
         int lidDrawY = bodyY + ui(40);
-        graphics.pose().pushPose();
-        graphics.pose().translate(lidDrawX, lidDrawY, 0);
-        graphics.pose().mulPose(com.mojang.math.Axis.ZP.rotation(trashCanLidRotation));
-        graphics.pose().scale(lidScale, lidScale, 1.0f);
-        CommonGuiTextures.drawGameMenuTrashLidAtCurrentPose(graphics, -16, -10);
-        graphics.pose().popPose();
+        TrashCanWidget.render(graphics, bodyX, bodyY, mapping.s4(),
+                lidDrawX, lidDrawY, lidScale, -16, -10, trashCanLidRotation);
     }
 
     private void drawPlayerInventory(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -5007,14 +4995,8 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
 
         if (trashCanContains(mouseX, mouseY)) {
             ItemStack carried = currentCarriedItem();
-            if (!carried.isEmpty()) {
-                List<Component> lines = new ArrayList<>();
-                lines.add(Component.translatable("stardewcraft.game_menu.crafting.trash_can").withStyle(ChatFormatting.WHITE));
-                lines.add(carried.getHoverName().copy().withStyle(ChatFormatting.GRAY));
-                graphics.renderTooltip(tooltipFont(), lines, java.util.Optional.empty(), mouseX, mouseY);
-                return;
-            }
-            graphics.renderTooltip(tooltipFont(), Component.translatable("stardewcraft.game_menu.crafting.trash_can"), mouseX, mouseY);
+            graphics.renderTooltip(tooltipFont(), TrashCanWidget.tooltip(carried),
+                    java.util.Optional.empty(), mouseX, mouseY);
         }
     }
 

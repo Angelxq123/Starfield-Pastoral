@@ -4,14 +4,11 @@ import com.stardew.craft.item.IStardewItem;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
@@ -79,12 +76,7 @@ public class HotPepperSeedItem extends Item implements IStardewItem {
 
     @SuppressWarnings("null")
     private boolean isFarmland(BlockState state) {
-        @Nonnull Block block = state.getBlock();
-        if (block instanceof FarmBlock) {
-            return true;
-        }
-        String blockId = BuiltInRegistries.BLOCK.getKey(block).toString().toLowerCase();
-        return blockId.contains("farmland");
+        return com.stardew.craft.block.terrain.TerrainSoils.cropSupport(state);
     }
 }
 

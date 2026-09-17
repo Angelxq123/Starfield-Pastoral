@@ -3,6 +3,7 @@ package com.stardew.craft.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.model.OilMakerAnimation;
 import com.stardew.craft.blockentity.OilMakerBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -39,14 +40,19 @@ public class OilMakerBlockEntityRenderer implements BlockEntityRenderer<OilMaker
         if (level != null) {
             poseStack.pushPose();
             if (be.isWorking() && !ready) {
-                UtilityWorkingAnimation.applyKegWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+                float ticks = (level.getGameTime() % 1000) + partialTick;
+                float width = OilMakerAnimation.widthScale(ticks);
+                // Grounded, broad pulse from the source. Glass does not bounce off its base.
+                poseStack.translate(0.5, 0, 0.5);
+                poseStack.scale(width, OilMakerAnimation.heightScale(ticks), width);
+                poseStack.translate(-0.5, 0, -0.5);
             }
 
             Minecraft mc = Minecraft.getInstance();
             BakedModel model = mc.getBlockRenderer().getBlockModel(state);
             ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
             RandomSource rand = RandomSource.create(0L);
-            renderer.tesselateBlock(
+            SpatialBlockModelRenderer.render(renderer,
                     level,
                     model,
                     state,

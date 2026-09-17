@@ -1,6 +1,12 @@
 package com.stardew.craft.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.stardew.craft.block.ModBlocks;
+import net.minecraft.client.renderer.LightTexture;
+import software.bernie.geckolib.cache.object.GeoBone;
 import com.mojang.math.Axis;
 import com.stardew.craft.block.decor.MapDecorStaticBlock;
 import com.stardew.craft.blockentity.LuauFestivalDecorBlockEntity;
@@ -25,7 +31,7 @@ public class LuauFestivalDecorBlockEntityRenderer extends StardewGeoBlockRendere
     @Override
     public RenderType getRenderType(LuauFestivalDecorBlockEntity animatable, ResourceLocation texture,
                                     @Nullable MultiBufferSource bufferSource, float partialTick) {
-        return RenderType.entityCutoutNoCull(texture);
+        return isCauldron(animatable) ? RenderType.entityCutout(texture) : RenderType.entityCutoutNoCull(texture);
     }
 
     @Override
@@ -43,10 +49,56 @@ public class LuauFestivalDecorBlockEntityRenderer extends StardewGeoBlockRendere
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
+        // Newly exported pots use Blockbench NORTH (-Z); legacy festival models retain their orientation.
+        float angle = isCauldron(animatable) ? switch (facing) {
+            case EAST -> -90; case SOUTH -> 180; case WEST -> 90; default -> 0;
+        } : -facing.toYRot();
+        poseStack.mulPose(Axis.YP.rotationDegrees(angle));
         poseStack.translate(-0.5D, 0.0D, -0.5D);
         super.render(animatable, partialTick, poseStack, bufferSource, packedLight, packedOverlay);
         poseStack.popPose();
+    }
+
+    private static boolean isCauldron(LuauFestivalDecorBlockEntity entity) {
+        return entity.getBlockState().is(ModBlocks.LUAU_SOUP_POT.get())
+                || entity.getBlockState().is(ModBlocks.WIZARD_CAULDRON.get());
+    }
+
+    @Override
+    public void renderRecursively(PoseStack pose, LuauFestivalDecorBlockEntity entity, GeoBone bone,
+                                  RenderType type, MultiBufferSource source, VertexConsumer consumer,
+                                  boolean reRender, float partialTick, int light, int overlay, int color) {
+        if (isCauldron(entity)) {
+            // Steam is last in the exported hierarchy, culls its duplicate back face and never writes depth.
+            for (GeoBone parent = bone; parent != null; parent = parent.getParent()) {
+                if (parent.getName().equals("steam")) {
+                    type = SteamType.forTexture(getTextureLocation(entity));
+                    consumer = source.getBuffer(type);
+                    break;
+                }
+                if (parent.getName().equals("fire")) {
+                    light = LightTexture.FULL_BRIGHT;
+                    break;
+                }
+            }
+        }
+        super.renderRecursively(pose, entity, bone, type, source, consumer, reRender, partialTick, light, overlay, color);
+    }
+
+    private static final class SteamType extends RenderType {
+        private static final java.util.Map<ResourceLocation, RenderType> TYPES = new java.util.HashMap<>();
+        private SteamType() { super("cauldron_steam", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS,
+                16384, false, true, () -> {}, () -> {}); }
+        private static RenderType forTexture(ResourceLocation texture) {
+            return TYPES.computeIfAbsent(texture, key -> create("cauldron_steam", DefaultVertexFormat.NEW_ENTITY,
+                    VertexFormat.Mode.QUADS, 16384, false, true, CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setTextureState(new TextureStateShard(key, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
+                            .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY)
+                            .setWriteMaskState(COLOR_WRITE).setOutputState(ITEM_ENTITY_TARGET)
+                            .createCompositeState(false)));
+        }
     }
 
     @Override

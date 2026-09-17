@@ -255,9 +255,13 @@ public final class BuildingPlacementService {
         });
         if (data.finishPrefab(record.id()) != BuildingWorldData.Result.SUCCESS) throw new IllegalStateException("Could not finish construction order");
         var ready = data.find(record.id());
-        publishManager(level, ready);
+        // Persist a usable completed state before client publication. If publication throws,
+        // the order has already been consumed and otherwise leaves the building READY but
+        // permanently UNCHECKED after a reload.
         data.assessResidence(record.id(), ready.revision(), 1);
-        FishPondPrefabs.bind(level, data.find(record.id()));
+        ready = data.find(record.id());
+        publishManager(level, ready);
+        FishPondPrefabs.bind(level, ready);
         level.getEntitiesOfClass(RobinConstructionEntity.class, aabb(record.claim()), worker -> record.id().equals(worker.buildingId()))
                 .forEach(RobinConstructionEntity::discard);
     }

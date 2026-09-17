@@ -376,10 +376,13 @@ public final class LuauFestivalService {
     }
 
     public static boolean canInteractWithSoup(ServerPlayer player, BlockPos clickedPos) {
-        return player != null
-            && clickedPos != null
-            && isParticipant(player)
-            && SOUP_CAULDRON_ZONE.contains(Vec3.atCenterOf(clickedPos));
+        if (player == null || clickedPos == null || !isParticipant(player)) return false;
+        var state = player.level().getBlockState(clickedPos);
+        if (state.getBlock() instanceof com.stardew.craft.block.decor.LuauGeoFestivalDecorBlock pot) {
+            BlockPos main = pot.findMainPos(player.level(), clickedPos, state);
+            if (main != null) clickedPos = main;
+        }
+        return SOUP_CAULDRON_ZONE.contains(Vec3.atCenterOf(clickedPos));
     }
 
     public static boolean hasPendingSoupContribution(ServerPlayer player, InteractionHand hand) {

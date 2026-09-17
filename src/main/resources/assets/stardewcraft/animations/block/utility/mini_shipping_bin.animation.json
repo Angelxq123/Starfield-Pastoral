@@ -1,0 +1,45 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "OPEN": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.166667,
+      "bones": {
+        "lid": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.166667": [
+              -90,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "CLOSE": {
+      "loop": "hold_on_last_frame",
+      "animation_length": 0.166667,
+      "bones": {
+        "lid": {
+          "rotation": {
+            "0.0": [
+              -90,
+              0,
+              0
+            ],
+            "0.166667": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -418,6 +418,7 @@ public class StardewTimeManager extends SavedData {
 
             // 次日恢复：生命回满；能量按 SV 原版 dayupdate 规则恢复（疲惫则减半）。
             // SDV parity: 结算前先将所有出货箱 buffer 里剩余的物品记录到出货追踪器
+            com.stardew.craft.blockentity.MiniShippingBinBlockEntity.flushAllForOvernight();
             com.stardew.craft.blockentity.ShippingBinBlockEntity.flushAllForOvernight();
             com.stardew.craft.farm.FarmInstanceRegistry overnightFarmRegistry =
                 com.stardew.craft.farm.FarmInstanceRegistry.get();

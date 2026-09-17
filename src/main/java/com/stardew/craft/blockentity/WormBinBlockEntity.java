@@ -3,6 +3,7 @@ package com.stardew.craft.blockentity;
 import com.stardew.craft.production.MachineProductionData;
 import com.stardew.craft.api.v1.machine.StardewMachineCycleKind;
 import com.stardew.craft.api.v1.machine.StardewProductionPhase;
+import com.stardew.craft.block.utility.WormBinBlock;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -35,6 +36,7 @@ public class WormBinBlockEntity extends TimedProductionBlockEntity implements Bu
         if (level.isClientSide) {
             return;
         }
+        WormBinBlock.ensureExtension(level, pos, state);
         be.tickServer(level);
     }
 

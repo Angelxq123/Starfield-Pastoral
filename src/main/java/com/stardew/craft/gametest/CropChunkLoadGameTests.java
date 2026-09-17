@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -22,7 +21,7 @@ public final class CropChunkLoadGameTests {
     public static void unloadedAndReplacedChunksDoNotApplyOldRequests(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(3, 3, 3));
-        level.setBlock(pos.below(), Blocks.FARMLAND.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        level.setBlock(pos.below(), ModBlocks.FARMLAND.get().defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         level.setBlock(pos, ModBlocks.PARSNIP_CROP.get().defaultBlockState()
                 .setValue(StardewCropBlock.GROWTH_STAGE, 0), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         var manager = CropGrowthManager.get(level);
@@ -55,7 +54,7 @@ public final class CropChunkLoadGameTests {
         BlockPos west = new BlockPos((base.getX() & ~15) + 15, base.getY(), base.getZ());
         BlockPos east = west.east();
         for (BlockPos pos : new BlockPos[]{west, east}) {
-            level.setBlock(pos.below(), Blocks.FARMLAND.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            level.setBlock(pos.below(), ModBlocks.FARMLAND.get().defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             level.setBlock(pos, ModBlocks.PARSNIP_CROP.get().defaultBlockState()
                     .setValue(StardewCropBlock.GROWTH_STAGE, 0), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             var manager = CropGrowthManager.get(level);

@@ -713,7 +713,10 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean isPushable() {
-        return false;
+        String npcId = getNpcId();
+        return !"henchman".equals(npcId)
+                && !"bouncer".equals(npcId)
+                && super.isPushable();
     }
 
     @Override
@@ -737,6 +740,10 @@ public class StardewNpcEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void push(double x, double y, double z) {
-        // NPC cannot be displaced by player or entity collisions.
+        String npcId = getNpcId();
+        if ("henchman".equals(npcId) || "bouncer".equals(npcId)) {
+            return;
+        }
+        super.push(x, y, z);
     }
 }

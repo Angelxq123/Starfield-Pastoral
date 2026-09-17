@@ -30,6 +30,11 @@ public class FurnaceBlockEntityRenderer implements BlockEntityRenderer<FurnaceBl
     public FurnaceBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(FurnaceBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(2, 2, 2);
+    }
+
     @SuppressWarnings({ "null", "deprecation" })
     @Override
     public void render(@Nonnull FurnaceBlockEntity be, float partialTick, @Nonnull PoseStack poseStack, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
@@ -40,16 +45,13 @@ public class FurnaceBlockEntityRenderer implements BlockEntityRenderer<FurnaceBl
         Level level = be.getLevel();
         if (level != null) {
             poseStack.pushPose();
-            if (be.isWorking() && !ready) {
-                UtilityWorkingAnimation.applyKegWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
-            }
 
             Minecraft mc = Minecraft.getInstance();
             BakedModel model = mc.getBlockRenderer().getBlockModel(state);
             ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
             RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
             RandomSource rand = RandomSource.create(0L);
-            renderer.tesselateBlock(
+            SpatialBlockModelRenderer.render(renderer,
                 level,
                 model,
                 state,
@@ -68,7 +70,9 @@ public class FurnaceBlockEntityRenderer implements BlockEntityRenderer<FurnaceBl
             return;
         }
 
-        float bubbleY = BubbleYHelper.get(state, level, be.getBlockPos());
+        float bubbleY = 1.0f + BubbleYHelper.get(state.setValue(
+            com.stardew.craft.block.utility.FurnaceBlock.PART,
+            com.stardew.craft.block.utility.FurnaceBlock.Part.EXTENSION), level, be.getBlockPos().above());
 
         poseStack.pushPose();
         poseStack.translate(0.5f, bubbleY, 0.5f);

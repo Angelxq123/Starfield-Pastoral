@@ -58,6 +58,10 @@ public final class BuildingRuntimeEvents {
 
     @SubscribeEvent
     public static void managerUse(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event){
+        // Let the silo block consume held hay before the generic manager shortcut opens
+        // the ledger. Cancelling here made RuntimeSiloManagerBlock.useItemOn unreachable.
+        if (event.getItemStack().is(com.stardew.craft.item.ModItems.HAY.get())
+                && event.getLevel().getBlockState(event.getPos()).is(ModBlocks.SILO_MANAGER.get())) return;
         if(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player && event.getHand()==net.minecraft.world.InteractionHand.MAIN_HAND
                 && !(event.getItemStack().getItem() instanceof BuildingUpgradePermitItem) && !(event.getItemStack().getItem() instanceof BuildingBlueprintItem)
                 && BuildingManagerInteraction.open(player,event.getPos())){
@@ -89,7 +93,10 @@ public final class BuildingRuntimeEvents {
                     if (!level.hasChunksAt(record.claim().min(), record.claim().maxInclusive())) PROJECTED.remove(record.id());
                     else if (!PROJECTED.getOrDefault(record.id(), "").equals("ready:" + record.revision())) {
                         BuildingPlacementService.reconcileCompleted(level, record);
-                        PROJECTED.put(record.id(), "ready:" + record.revision());
+                        if (UtilityBuildings.supported(record.family())) {
+                            UtilityBuildings.refresh(level, data.find(record.id()));
+                        }
+                        PROJECTED.put(record.id(), "ready:" + data.find(record.id()).revision());
                     }
                 }
                 continue;

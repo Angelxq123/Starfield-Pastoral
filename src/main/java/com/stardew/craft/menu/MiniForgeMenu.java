@@ -22,6 +22,7 @@ import java.util.List;
 public class MiniForgeMenu extends AbstractContainerMenu {
     public static final int ACTION_FORGE = 0;
     public static final int ACTION_UNFORGE = 1;
+    public static final int ACTION_TRASH = 2;
 
     public static final int LEFT_SLOT = 0;
     public static final int RIGHT_SLOT = 1;
@@ -166,6 +167,9 @@ public class MiniForgeMenu extends AbstractContainerMenu {
         if (id == ACTION_UNFORGE && player instanceof ServerPlayer serverPlayer) {
             executeUnforge(serverPlayer);
             return true;
+        }
+        if (id == ACTION_TRASH && player instanceof ServerPlayer serverPlayer) {
+            return com.stardew.craft.inventory.TrashCanService.trashCarried(serverPlayer, this).success();
         }
         return false;
     }

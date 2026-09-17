@@ -39,7 +39,10 @@ public enum SeedMakerJadeProvider implements IBlockComponentProvider, IServerDat
     @SuppressWarnings("null")
     @Override
     public void appendServerData(CompoundTag tag, BlockAccessor accessor) {
-        if (!(accessor.getBlockEntity() instanceof SeedMakerBlockEntity seedMaker)) {
+        var mainPos = com.stardew.craft.capability.UtilityAutomationCapabilities.resolveMainPos(
+                accessor.getLevel(), accessor.getPosition(), accessor.getBlockState());
+        var owner = accessor.getLevel().getBlockEntity(mainPos);
+        if (!(owner instanceof SeedMakerBlockEntity seedMaker)) {
             return;
         }
 

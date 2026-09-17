@@ -130,8 +130,8 @@ public final class CommonGuiTextures {
     };
     private static final SdvTexture[] GAME_MENU_TABS = frames("game_menu_tab_", 10, 16, 16);
     private static final SdvTexture GAME_MENU_ORGANIZE = SdvTexture.full(common("game_menu_organize"), 16, 16);
-    private static final SdvTexture GAME_MENU_TRASH_BODY_0 = SdvTexture.full(common("game_menu_trash_body_0"), 18, 26);
-    private static final SdvTexture GAME_MENU_TRASH_LID_0 = SdvTexture.full(common("game_menu_trash_lid_0"), 18, 10);
+    private static final SdvTexture[] GAME_MENU_TRASH_BODIES = frames("game_menu_trash_body_", 5, 18, 26);
+    private static final SdvTexture[] GAME_MENU_TRASH_LIDS = frames("game_menu_trash_lid_", 5, 18, 10);
     private static final SdvTexture[] SKILL_ICONS = new SdvTexture[] {
         SdvTexture.full(common("skill_icon_farming"), 10, 10),
         SdvTexture.full(common("skill_icon_mining"), 10, 10),
@@ -613,11 +613,19 @@ public final class CommonGuiTextures {
     }
 
     public static void drawGameMenuTrashBody(GuiGraphics graphics, int x, int y, float scale) {
-        GAME_MENU_TRASH_BODY_0.drawPixelZoom(graphics, x, y, scale);
+        drawGameMenuTrashBody(graphics, x, y, scale, 0);
+    }
+
+    public static void drawGameMenuTrashBody(GuiGraphics graphics, int x, int y, float scale, int level) {
+        GAME_MENU_TRASH_BODIES[clampFrame(level, GAME_MENU_TRASH_BODIES.length)].drawPixelZoom(graphics, x, y, scale);
     }
 
     public static void drawGameMenuTrashLidAtCurrentPose(GuiGraphics graphics, int x, int y) {
-        GAME_MENU_TRASH_LID_0.drawAtCurrentPose(graphics, x, y);
+        drawGameMenuTrashLidAtCurrentPose(graphics, x, y, 0);
+    }
+
+    public static void drawGameMenuTrashLidAtCurrentPose(GuiGraphics graphics, int x, int y, int level) {
+        GAME_MENU_TRASH_LIDS[clampFrame(level, GAME_MENU_TRASH_LIDS.length)].drawAtCurrentPose(graphics, x, y);
     }
 
     public static void drawSkillIconTint(GuiGraphics graphics, int x, int y, int skillRow, float scale, float red, float green, float blue, float alpha) {

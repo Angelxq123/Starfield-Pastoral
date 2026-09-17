@@ -1,21 +1,37 @@
 package com.stardew.craft.gametest;
 
+import com.mojang.authlib.GameProfile;
 import com.google.gson.JsonParser;
 import com.stardew.craft.api.v1.client.StardewCalendarDate;
+import com.stardew.craft.api.v1.client.StardewClientConstructionProgress;
 import com.stardew.craft.api.v1.client.StardewClientDailyInfo;
+import com.stardew.craft.api.v1.client.StardewConstructionOrderSnapshot;
+import com.stardew.craft.api.v1.client.StardewConstructionProgressSnapshot;
 import com.stardew.craft.api.v1.client.StardewDailyInfoSnapshot;
 import com.stardew.craft.api.v1.client.StardewToolUpgradeSnapshot;
 import com.stardew.craft.api.v1.client.StardewQueenOfSauceSnapshot;
 import com.stardew.craft.block.tv.TVChannelData;
+import com.stardew.craft.api.v1.internal.client.StardewConstructionProgressCache;
 import com.stardew.craft.api.v1.internal.client.StardewDailyInfoCache;
+import com.stardew.craft.building.runtime.BuildingRecord;
+import com.stardew.craft.building.runtime.BuildingWorldData;
+import com.stardew.craft.building.runtime.PrefabDefinitions;
+import com.stardew.craft.event.BuildingConstructionProgressSyncEvents;
 import com.stardew.craft.event.DailyInfoSyncEvents;
+import com.stardew.craft.farm.FarmInstanceRegistry;
+import com.stardew.craft.farm.FarmType;
 import com.stardew.craft.network.DailyInfoSyncPayload;
+import com.stardew.craft.network.payload.BuildingConstructionProgressSyncPayload;
 import com.stardew.craft.player.PlayerStardewData;
 import io.netty.buffer.Unpooled;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Rotation;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import java.util.ArrayList;
@@ -71,6 +87,101 @@ public final class DailyInfoApiGameTests {
             }
         } finally { StardewDailyInfoCache.clear(); }
         h.assertTrue(StardewClientDailyInfo.current().isEmpty(), "Disconnected data leaked");
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_daily_info", template = "ring_utilities")
+    public static void constructionProgressIsPermissionScopedAndPacketSafe(GameTestHelper h) {
+        var level = h.getLevel();
+        var farms = FarmInstanceRegistry.get(level.getServer());
+        UUID owner = UUID.randomUUID();
+        UUID member = UUID.randomUUID();
+        UUID outsider = UUID.randomUUID();
+        var farm = farms.createFarm(owner, "RobinApiOwner", "Robin API", FarmType.STANDARD);
+        h.assertTrue(farms.addMember(owner, member), "Could not create construction API farm member");
+        var ownerPlayer = FakePlayerFactory.get(level, new GameProfile(owner, "RobinApiOwner"));
+        var memberPlayer = FakePlayerFactory.get(level, new GameProfile(member, "RobinApiMember"));
+        var outsiderPlayer = FakePlayerFactory.get(level, new GameProfile(outsider, "RobinApiOutsider"));
+        var data = BuildingWorldData.get(level.getServer());
+        var construction = buildingRecord(farm.getInstanceId(), farm.getSlotIndex(), PrefabDefinitions.COOP,
+                h.absolutePos(new BlockPos(4, 1, 4)), level.dimension().location());
+        var upgrade = buildingRecord(farm.getInstanceId(), farm.getSlotIndex(), PrefabDefinitions.BARN,
+                h.absolutePos(new BlockPos(48, 1, 48)), level.dimension().location());
+        try {
+            UUID upgradePermit = UUID.randomUUID();
+            data.recordPurchase(upgradePermit, farm.getInstanceId(), true, upgrade.family());
+            h.assertTrue(data.beginPrefab(upgrade, upgradePermit, 10) == BuildingWorldData.Result.SUCCESS,
+                    "Could not prepare upgrade order");
+            data.markScaffold(upgrade.id());
+            data.constructionDay(11, true);
+            data.constructionDay(12, true);
+            data.constructionDay(13, true);
+            h.assertTrue(data.finishPrefab(upgrade.id()) == BuildingWorldData.Result.SUCCESS,
+                    "Could not finish upgrade fixture building");
+            var ready = data.find(upgrade.id());
+            h.assertTrue(data.beginUpgrade(ready.id(), ready.revision(), 20) == BuildingWorldData.Result.SUCCESS,
+                    "Could not begin upgrade fixture");
+
+            UUID constructionPermit = UUID.randomUUID();
+            data.recordPurchase(constructionPermit, farm.getInstanceId(), true, construction.family());
+            h.assertTrue(data.beginPrefab(construction, constructionPermit, 20) == BuildingWorldData.Result.SUCCESS,
+                    "Could not begin construction fixture");
+            var constructing = data.find(construction.id());
+            h.assertTrue(data.rename(constructing.id(), constructing.revision(), "North Coop")
+                    == BuildingWorldData.Result.SUCCESS, "Could not name construction fixture");
+            data.constructionDay(21, false);
+
+            StardewConstructionProgressSnapshot ownerView =
+                    BuildingConstructionProgressSyncEvents.snapshotFor(data, ownerPlayer);
+            h.assertTrue(ownerView.totalOrderCount() == 2 && ownerView.orders().size() == 2
+                    && !ownerView.truncated(), "Owner did not receive both Robin orders");
+            var constructionView = ownerView.find(construction.id()).orElseThrow();
+            var upgradeView = ownerView.find(upgrade.id()).orElseThrow();
+            h.assertTrue(constructionView.workType() == StardewConstructionOrderSnapshot.WorkType.CONSTRUCTION
+                            && constructionView.targetTier() == 1
+                            && constructionView.remainingWorkDays() == 3
+                            && constructionView.displayName().getString().equals("North Coop"),
+                    "Construction snapshot lost type, tier, paused-day progress or custom name");
+            h.assertTrue(upgradeView.workType() == StardewConstructionOrderSnapshot.WorkType.UPGRADE
+                            && upgradeView.targetTier() == 2
+                            && upgradeView.remainingWorkDays() == 2,
+                    "Upgrade snapshot lost type, target tier or work days");
+            h.assertTrue(BuildingConstructionProgressSyncEvents.snapshotFor(data, memberPlayer)
+                    .orders().equals(ownerView.orders()), "Farm member did not receive manageable orders");
+            h.assertTrue(BuildingConstructionProgressSyncEvents.snapshotFor(data, outsiderPlayer)
+                    .orders().isEmpty(), "Outsider received private construction progress");
+
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            StardewConstructionProgressCache.clear();
+            try {
+                var payload = new BuildingConstructionProgressSyncPayload(ownerView);
+                BuildingConstructionProgressSyncPayload.STREAM_CODEC.encode(buffer, payload);
+                var decoded = BuildingConstructionProgressSyncPayload.STREAM_CODEC.decode(buffer).snapshot();
+                h.assertTrue(decoded.equals(ownerView) && buffer.readableBytes() == 0,
+                        "Construction packet lost snapshot fields");
+                StardewConstructionProgressCache.replace(decoded);
+                h.assertTrue(StardewClientConstructionProgress.current().orElseThrow().equals(ownerView),
+                        "Client construction cache did not replace atomically");
+                boolean immutable = false;
+                try {
+                    decoded.orders().clear();
+                } catch (UnsupportedOperationException expected) {
+                    immutable = true;
+                }
+                h.assertTrue(immutable, "Construction order list escaped mutable");
+                var truncated = new StardewConstructionProgressSnapshot(owner, 2,
+                        List.of(constructionView));
+                h.assertTrue(truncated.truncated(), "Bounded snapshot did not report truncation");
+            } finally {
+                buffer.release();
+                StardewConstructionProgressCache.clear();
+            }
+            h.assertTrue(StardewClientConstructionProgress.current().isEmpty(),
+                    "Construction cache leaked after disconnect clear");
+        } finally {
+            data.removeFarm(farm.getInstanceId());
+            farms.deleteFarm(owner);
+        }
         h.succeed();
     }
 
@@ -184,5 +295,26 @@ public final class DailyInfoApiGameTests {
                                                 Optional<StardewToolUpgradeSnapshot> tool) {
         return new StardewDailyInfoSnapshot(player, date, luck, "Storm", StardewDailyInfoSnapshot.BerrySeason.BLACKBERRY,
                 true, false, List.of(ResourceLocation.parse("stardewcraft:abigail")), tool);
+    }
+
+    private static BuildingRecord buildingRecord(
+            UUID farm,
+            int slot,
+            ResourceLocation family,
+            BlockPos anchor,
+            ResourceLocation dimension
+    ) {
+        var definition = PrefabDefinitions.get(family);
+        var tier = definition.tier(1);
+        return BuildingRecord.waiting(
+                farm,
+                slot,
+                family,
+                BuildingRecord.Mode.PREFAB,
+                dimension,
+                anchor,
+                PrefabDefinitions.world(tier.manager(), tier.anchor(), anchor, Rotation.NONE),
+                Direction.SOUTH,
+                PrefabDefinitions.transform(definition.reservation(), anchor, Rotation.NONE));
     }
 }

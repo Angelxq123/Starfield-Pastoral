@@ -81,6 +81,12 @@ public final class ModBlockEntities {
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FishSmokerBlockEntity>> FISH_SMOKER =
 			BLOCK_ENTITIES.register("fish_smoker", () -> BlockEntityType.Builder.of(FishSmokerBlockEntity::new, ModBlocks.FISH_SMOKER.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReclamationMachineBlockEntity>> DECONSTRUCTOR =
+            BLOCK_ENTITIES.register("deconstructor", () -> BlockEntityType.Builder.of(ReclamationMachineBlockEntity::new, ModBlocks.DECONSTRUCTOR.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReclamationMachineBlockEntity>> WOOD_CHIPPER =
+            BLOCK_ENTITIES.register("wood_chipper", () -> BlockEntityType.Builder.of(ReclamationMachineBlockEntity::new, ModBlocks.WOOD_CHIPPER.get()).build(null));
+
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RecyclingMachineBlockEntity>> RECYCLING_MACHINE =
 			BLOCK_ENTITIES.register("recycling_machine", () -> BlockEntityType.Builder.of(RecyclingMachineBlockEntity::new, ModBlocks.RECYCLING_MACHINE.get()).build(null));
@@ -282,6 +288,9 @@ public final class ModBlockEntities {
 					ModBlocks.OAK_WARDROBE.get()).build(null));
 
 	@SuppressWarnings("null")
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MiniShippingBinBlockEntity>> MINI_SHIPPING_BIN =
+			BLOCK_ENTITIES.register("mini_shipping_bin", () -> BlockEntityType.Builder.of(MiniShippingBinBlockEntity::new, ModBlocks.MINI_SHIPPING_BIN.get()).build(null));
+
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShippingBinBlockEntity>> SHIPPING_BIN =
 			BLOCK_ENTITIES.register("shipping_bin", () -> BlockEntityType.Builder.of(ShippingBinBlockEntity::new, ModBlocks.SHIPPING_BIN.get()).build(null));
 
@@ -325,7 +334,7 @@ public final class ModBlockEntities {
 	@SuppressWarnings("null")
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LuauFestivalDecorBlockEntity>> LUAU_FESTIVAL_DECOR =
 			BLOCK_ENTITIES.register("luau_festival_decor", () -> BlockEntityType.Builder.of(LuauFestivalDecorBlockEntity::new,
-					ModBlocks.LUAU_SOUP_POT.get(), ModBlocks.LUAU_TOTEM.get(), ModBlocks.WINTER_STAR_TREE.get(),
+					ModBlocks.LUAU_SOUP_POT.get(), ModBlocks.WIZARD_CAULDRON.get(), ModBlocks.LUAU_TOTEM.get(), ModBlocks.WINTER_STAR_TREE.get(),
 					ModBlocks.SQUID_FEST_PROMO_POSTER.get(), ModBlocks.SQUID_FEST_REQUIREMENT_POSTER.get()).build(null));
 
 	@SuppressWarnings("null")

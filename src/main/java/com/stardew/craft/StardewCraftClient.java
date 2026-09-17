@@ -83,6 +83,7 @@ public class StardewCraftClient {
         event.enqueueWork(() -> {
             ModRenderLayers.registerCutout(List.of(
                 ModBlocks.FRIENDSHIP_DOOR.get(),
+                ModBlocks.BEE_HOUSE.get(),
                 ModBlocks.WILD_WEEDS.get(),
                 ModBlocks.PASTURE_GRASS.get(),
                 ModBlocks.BLUE_PASTURE_GRASS.get(),
@@ -380,6 +381,9 @@ public class StardewCraftClient {
             ));
 
             ModRenderLayers.registerCutoutMipped(List.of(
+                ModBlocks.BLOSSOM_LEAVES.get(),
+                ModBlocks.FINE_LEAVES.get(),
+                ModBlocks.POINTED_LEAVES.get(),
                 ModBlocks.OAK_LEAVES.get(),
                 ModBlocks.OAK_LEAVES_QUESTION.get(),
                 ModBlocks.MAPLE_LEAVES.get(),
@@ -494,15 +498,15 @@ public class StardewCraftClient {
                 Blocks.MANGROVE_LEAVES,
                 Blocks.AZALEA_LEAVES,
                 Blocks.FLOWERING_AZALEA_LEAVES,
+                ModBlocks.SMALL_BUSH.get(),
+                ModBlocks.BERRY_BUSH.get());
+
+        event.register((state, level, pos, tintIndex) -> 0xFFFFFFFF,
                 ModBlocks.OAK_LEAVES.get(),
                 ModBlocks.OAK_LEAVES_QUESTION.get(),
                 ModBlocks.MAPLE_LEAVES.get(),
                 ModBlocks.PINE_LEAVES.get(),
                 ModBlocks.MAHOGANY_LEAVES.get(),
-                ModBlocks.SMALL_BUSH.get(),
-                ModBlocks.BERRY_BUSH.get());
-
-        event.register((state, level, pos, tintIndex) -> 0xFFFFFFFF,
                 ModBlocks.MYSTIC_TREE_LEAVES.get());
 
         event.register((state, level, pos, tintIndex) -> {

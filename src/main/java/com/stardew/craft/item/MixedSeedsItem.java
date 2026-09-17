@@ -11,8 +11,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -113,11 +111,6 @@ public class MixedSeedsItem extends Item implements IStardewItem {
 
 	@SuppressWarnings("null")
 	private static boolean isFarmland(BlockState state) {
-		Block block = state.getBlock();
-		if (block instanceof FarmBlock) {
-			return true;
-		}
-		String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString().toLowerCase();
-		return blockId.contains("farmland");
-	}
+        return com.stardew.craft.block.terrain.TerrainSoils.cropSupport(state);
+    }
 }

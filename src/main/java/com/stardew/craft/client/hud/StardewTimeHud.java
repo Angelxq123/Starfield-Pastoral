@@ -102,6 +102,7 @@ public class StardewTimeHud {
     }
 
     private static void refreshTerrainSeason(int season) {
+        com.stardew.craft.block.tree.StardewLeavesBlock.updateClientSeason(season);
         com.stardew.craft.block.decor.IceCreamStandBlock.updateClientSeason(season);
         com.stardew.craft.block.decor.PlazaDisplayBlock.updateClientSeason(season);
         if (com.stardew.craft.client.model.terrain.TerrainSeasonTextures.updateSeason(season)) {

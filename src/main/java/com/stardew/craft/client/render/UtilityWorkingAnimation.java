@@ -129,6 +129,20 @@ public final class UtilityWorkingAnimation {
 		poseStack.translate(-0.5f, -0.5f, -0.5f);
 	}
 
+    /** Small source-style pulse around the base, so the authored machine never floats. */
+    public static void applyGroundedWorkingPose(PoseStack poseStack, Level level, BlockPos pos, float partialTick) {
+        if (level == null) return;
+        applyGroundedWorkingPoseByTicks(poseStack, (level.getGameTime() % 1000) + partialTick);
+    }
+
+    public static void applyGroundedWorkingPoseByTicks(PoseStack poseStack, float ticks) {
+        float width = 1 + (com.stardew.craft.model.OilMakerAnimation.widthScale(ticks) - 1) * 0.16F;
+        float height = 1 + (com.stardew.craft.model.OilMakerAnimation.heightScale(ticks) - 1) * 0.16F;
+        poseStack.translate(0.5, 0, 0.5);
+        poseStack.scale(width, height, width);
+        poseStack.translate(-0.5, 0, -0.5);
+    }
+
 	private static float getCycleTime(Level level, BlockPos pos, float partialTick) {
 		long seed = pos.asLong();
 		float phase = ((seed * 0x9E3779B97F4A7C15L) >>> 40) / 4096.0f;

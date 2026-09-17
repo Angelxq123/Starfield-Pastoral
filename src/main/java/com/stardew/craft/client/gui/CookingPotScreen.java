@@ -4,6 +4,7 @@ import com.stardew.craft.api.v1.production.StardewCookingIngredient;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.CookingIngredientAvailabilityCache;
 import com.stardew.craft.client.font.StardewFonts;
+import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.cooking.service.VanillaCookingRecipeData;
 import com.stardew.craft.item.cooking.CookingDishItem;
 import com.stardew.craft.menu.CookingPotMenu;
@@ -13,6 +14,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -54,6 +56,7 @@ public class CookingPotScreen extends AbstractContainerScreen<CookingPotMenu> {
     private ItemStack hoverItem = ItemStack.EMPTY;
     private Component hoverText;
     private int mx, my, dragArea;
+    private final TrashCanWidget.Controller trashCan = new TrashCanWidget.Controller();
 
     public CookingPotScreen(CookingPotMenu menu, Inventory inventory, Component title) { super(menu, inventory, title); }
     private Component tr(String key, Object... args) { return Component.translatable("stardewcraft.cooking.ui." + key, args); }
@@ -320,6 +323,8 @@ public class CookingPotScreen extends AbstractContainerScreen<CookingPotMenu> {
         mx = mouseX; my = mouseY; hoverItem = ItemStack.EMPTY; hoverText = null;
         renderTransparentBackground(g);
         super.render(g, mouseX, mouseY, tick);
+        trashCan.render(g, trashX(), trashY(), mouseX, mouseY);
+        if (trashCan.renderTooltip(g, font, menu, trashX(), trashY(), mouseX, mouseY)) return;
         if (!hoverItem.isEmpty()) g.renderTooltip(minecraft.font, hoverItem, mouseX, mouseY);
         else if (hoverText != null) g.renderTooltip(font, font.split(hoverText, Math.min(240, width - 24)), mouseX, mouseY);
         else renderTooltip(g, mouseX, mouseY);
@@ -336,6 +341,7 @@ public class CookingPotScreen extends AbstractContainerScreen<CookingPotMenu> {
         return super.mouseScrolled(x, y, horizontal, vertical);
     }
     @Override public boolean mouseClicked(double x, double y, int button) {
+        if (trashCan.click(menu, trashX(), trashY(), x, y, button)) return true;
         if (button == 0) {
             if (catalogueVisible() && inside(x, y, page.listX() + page.listWidth() - 6, gridTop, 9, listBottom - gridTop)) dragArea = 1;
             else if (recipeVisible() && inside(x, y, page.detailX() + page.detailWidth() - 6, page.bodyTop(), 9, detailBottom - page.bodyTop())) dragArea = 2;
@@ -361,6 +367,7 @@ public class CookingPotScreen extends AbstractContainerScreen<CookingPotMenu> {
         return super.mouseReleased(x, y, button);
     }
     @Override public boolean keyPressed(int key, int scan, int mods) {
+        if ((search == null || !search.isFocused()) && trashCan.deleteKey(menu, key)) return true;
         if (key == 256 && !page.wide() && view != View.CATALOGUE) {
             view = view == View.INVENTORY ? beforeInventory : View.CATALOGUE; buildControls(); return true;
         }
@@ -372,6 +379,9 @@ public class CookingPotScreen extends AbstractContainerScreen<CookingPotMenu> {
         }
         return super.keyPressed(key, scan, mods);
     }
+    private int trashX() { return trashCan.xBeside(leftPos, imageWidth, width); }
+    private int trashY() { return topPos + imageHeight - 34; }
+    public List<Rect2i> jeiGuiExtraAreas() { return List.of(new Rect2i(trashX(), trashY(), 18, 34)); }
     private Button button(int x, int y, int w, int h, Component label, String icon, boolean primary, Runnable action) {
         Button button = new Button(x, y, w, h, label, b -> action.run(), supplier -> supplier.get()) {
             @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float tick) {

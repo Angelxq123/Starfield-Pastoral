@@ -1,8 +1,23 @@
 {
-  "ambientocclusion": false,
-  "parent": "minecraft:block/block",
   "textures": {
     "particle": "stardewcraft:block/utility/crystalarium_particle"
   },
-  "elements": []
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          1,
+          0,
+          2
+        ],
+        "to": [
+          15,
+          11,
+          14
+        ]
+      }
+    ]
+  }
 }

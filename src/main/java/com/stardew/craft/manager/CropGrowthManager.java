@@ -71,6 +71,17 @@ public class CropGrowthManager extends SavedData {
 
     public static class CropGrowthState {
         public int dayInPhase;
+        /** Thirds of one growth day; retained across phases, never advanced on dry days. */
+        public int infertileProgress;
+
+        public boolean advanceOnSoil(boolean infertile) {
+            if (!infertile) { infertileProgress = 0; return true; }
+            infertileProgress += 2;
+            if (infertileProgress < 3) return false;
+            infertileProgress -= 3;
+            return true;
+        }
+
         /**
          * 当前处于哪一个“星露谷 phase”（0-3）。
          * 注意：我们的方块 AGE 只是 0-3 的渲染阶段，其中 AGE=3 需要只在成熟时出现，
@@ -126,6 +137,7 @@ public class CropGrowthManager extends SavedData {
         }
         CropGrowthState state = getOrCreateState(level, pos);
         state.regrowing = regrowing;
+        state.infertileProgress = 0;
         state.dayInPhase = Math.max(0, dayInPhase);
         state.phase = Math.max(0, phase);
         setDirty();
@@ -500,6 +512,7 @@ public class CropGrowthManager extends SavedData {
             CropGrowthState state = cropStates.get(pos);
             if (state != null) {
                 posTag.putInt("DayInPhase", state.dayInPhase);
+                posTag.putInt("InfertileProgress", state.infertileProgress);
                 posTag.putInt("Phase", state.phase);
                 posTag.putBoolean("Regrowing", state.regrowing);
                 posTag.putBoolean("SourcePhases", state.sourcePhases);
@@ -542,6 +555,7 @@ public class CropGrowthManager extends SavedData {
                 boolean regrowing = posTag.contains("Regrowing", Tag.TAG_BYTE) && posTag.getBoolean("Regrowing");
                 UUID planterUuid = posTag.hasUUID("PlanterUuid") ? posTag.getUUID("PlanterUuid") : null;
                 CropGrowthState growth = new CropGrowthState(dayInPhase, phase, regrowing, planterUuid);
+                growth.infertileProgress = Math.clamp(posTag.getInt("InfertileProgress"), 0, 2);
                 growth.sourcePhases = posTag.getBoolean("SourcePhases");
                 growth.sourcePhaseVersion = posTag.getInt("SourcePhaseVersion");
                 growth.lastDailyDay = posTag.contains("LastDailyDay") ? posTag.getInt("LastDailyDay") : -1;

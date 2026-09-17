@@ -44,7 +44,7 @@ public final class FertilizedSoilModels {
     }
 
     static void register(ModelEvent.RegisterAdditional event) {
-        for (String season : SEASONS) { event.register(id(season)); event.register(id("sandy/" + season)); }
+        for (String season : SEASONS) { event.register(id(season)); event.register(id("sandy/" + season)); event.register(id("infertile/" + season)); }
         for (int wet = 0; wet < 2; wet++) for (FertilizerType type : FertilizerType.values()) {
             event.register(id(path("vanilla", type, wet)));
             event.register(id(path("pot", type, wet)));
@@ -70,6 +70,10 @@ public final class FertilizedSoilModels {
 
     static TerrainFarmlandQuads[][][] bakeSandy(Map<ModelResourceLocation, BakedModel> models) {
         return bakeFamily(models, "sandy/");
+    }
+
+    static TerrainFarmlandQuads[][][] bakeInfertile(Map<ModelResourceLocation, BakedModel> models) {
+        return bakeFamily(models, "infertile/");
     }
 
     private static TerrainFarmlandQuads[][][] bakeFamily(Map<ModelResourceLocation, BakedModel> models, String prefix) {

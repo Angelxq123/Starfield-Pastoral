@@ -3,6 +3,11 @@ package com.stardew.craft.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.stardew.craft.entity.FallenPrefabTreeEntity;
+import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.client.model.PineCanopyModels;
+import com.stardew.craft.tree.PineCanopyConnections;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -14,7 +19,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 public class FallenPrefabTreeRenderer extends EntityRenderer<FallenPrefabTreeEntity> {
 	public FallenPrefabTreeRenderer(EntityRendererProvider.Context context) {
@@ -47,6 +54,9 @@ public class FallenPrefabTreeRenderer extends EntityRenderer<FallenPrefabTreeEnt
 		poseStack.translate(-0.5F, 0.0F, -0.5F);
 
 		var blockRenderer = Minecraft.getInstance().getBlockRenderer();
+		// The standing blocks are already gone; retain neighbours from the falling prefab.
+		Map<BlockPos, BlockState> members = new HashMap<>();
+		for (var piece : entity.getPieces()) members.put(root.offset(piece.dx, piece.dy, piece.dz), piece.state);
 		for (FallenPrefabTreeEntity.Piece piece : entity.getPieces()) {
 			BlockState state = piece.state;
 			if (state.isAir()) {
@@ -59,7 +69,10 @@ public class FallenPrefabTreeRenderer extends EntityRenderer<FallenPrefabTreeEnt
 				BlockPos p = root.offset(piece.dx, piece.dy, piece.dz);
 				light = LevelRenderer.getLightColor(level, p);
 			}
-			blockRenderer.renderSingleBlock(state, poseStack, buffer, light, OverlayTexture.NO_OVERLAY);
+			ModelData data = state.is(ModBlocks.PINE_LEAVES.get()) ? ModelData.builder().with(PineCanopyModels.CANOPY,
+					PineCanopyConnections.inspect(p -> members.getOrDefault(p, Blocks.AIR.defaultBlockState()),
+							root.offset(piece.dx, piece.dy, piece.dz))).build() : ModelData.EMPTY;
+			blockRenderer.renderSingleBlock(state, poseStack, buffer, light, OverlayTexture.NO_OVERLAY, data, null);
 			poseStack.popPose();
 		}
 

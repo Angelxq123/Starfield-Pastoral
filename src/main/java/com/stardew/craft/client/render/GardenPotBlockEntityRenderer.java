@@ -45,7 +45,7 @@ public final class GardenPotBlockEntityRenderer
         var renderer = Minecraft.getInstance().getBlockRenderer();
         var model = com.stardew.craft.client.model.terrain.FertilizedSoilModels.gardenPot(
                 renderer.getBlockModel(state), state, fertilizer);
-        renderer.getModelRenderer().tesselateBlock(level, model, state, be.getBlockPos(), poseStack,
+        SpatialBlockModelRenderer.render(renderer.getModelRenderer(), level, model, state, be.getBlockPos(), poseStack,
                 buffer.getBuffer(net.minecraft.client.renderer.ItemBlockRenderTypes.getRenderType(state, false)),
                 true, net.minecraft.util.RandomSource.create(0), 0L, packedOverlay);
 

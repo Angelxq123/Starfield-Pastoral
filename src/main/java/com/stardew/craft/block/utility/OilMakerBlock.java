@@ -101,7 +101,7 @@ public class OilMakerBlock extends Block implements EntityBlock {
             return null;
         }
         if (level.isClientSide) {
-            return (lvl, pos, st, be) -> OilMakerBlockEntity.clientTick(lvl, pos, st, (OilMakerBlockEntity) be);
+            return null;
         }
         return (lvl, pos, st, be) -> OilMakerBlockEntity.serverTick(lvl, pos, st, (OilMakerBlockEntity) be);
     }

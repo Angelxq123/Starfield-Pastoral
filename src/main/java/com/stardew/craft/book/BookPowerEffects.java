@@ -1,9 +1,6 @@
 package com.stardew.craft.book;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.block.crop.StardewCropBlock;
-import com.stardew.craft.block.nature.PastureGrassBlock;
-import com.stardew.craft.block.nature.WildWeedsBlock;
 import com.stardew.craft.api.v1.item.StardewItemDataApi;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.artisan.PreserveType;
@@ -20,7 +17,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -60,10 +56,9 @@ public final class BookPowerEffects {
             StardewCraft.MODID, "book_horse_speed"
     );
     private static final double PLAYER_SPEED_STEP = 0.05D;
-    private static final double GRASS_PLAYER_SPEED_BONUS = 0.12D;
     private static final double HORSE_SPEED_BONUS = 0.052083333333333336D;
-    private static final double GRASS_SPEED_FACTOR = 0.900D;
-    private static final double GRASS_BOOK_SPEED_FACTOR = 1.030D;
+    private static final double GRASS_SPEED_FACTOR = 0.960D;
+    private static final double GRASS_BOOK_SPEED_FACTOR = 1.000D;
 
     private static final Map<UUID, Integer> LAST_HORSE_BY_PLAYER = new HashMap<>();
 
@@ -196,23 +191,9 @@ public final class BookPowerEffects {
             speedBonus += PLAYER_SPEED_STEP;
         }
         setModifier(player.getAttribute(Attributes.MOVEMENT_SPEED), PLAYER_SPEED_MODIFIER, speedBonus);
-        setModifier(player.getAttribute(Attributes.MOVEMENT_SPEED), GRASS_PLAYER_SPEED_MODIFIER,
-                hasPower(data, BOOK_GRASS) && isInGrassSpeedBlock(player) ? GRASS_PLAYER_SPEED_BONUS : 0.0D);
-    }
-
-    private static boolean isInGrassSpeedBlock(ServerPlayer player) {
-        BlockState feet = player.level().getBlockState(player.blockPosition());
-        if (isGrassSpeedBlock(feet)) {
-            return true;
-        }
-        BlockState below = player.level().getBlockState(player.blockPosition().below());
-        return isGrassSpeedBlock(below);
-    }
-
-    private static boolean isGrassSpeedBlock(BlockState state) {
-        return state.getBlock() instanceof PastureGrassBlock
-                || state.getBlock() instanceof WildWeedsBlock
-                || state.getBlock() instanceof StardewCropBlock;
+        // Older builds granted a second movement-speed modifier while the book was active.
+        // Clear that modifier so the book now removes vegetation drag without adding speed.
+        setModifier(player.getAttribute(Attributes.MOVEMENT_SPEED), GRASS_PLAYER_SPEED_MODIFIER, 0.0D);
     }
 
     private static boolean hasPower(PlayerStardewData data, String statKey) {

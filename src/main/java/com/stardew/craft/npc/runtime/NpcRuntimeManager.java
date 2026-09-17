@@ -7,6 +7,7 @@ import com.stardew.craft.npc.data.NpcDataRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings("null")
 public final class NpcRuntimeManager {
+    /** Opt-in hook for dedicated-server map audits; normal servers never set it. */
+    private static final boolean HEADLESS_SCHEDULE_TEST =
+            Boolean.getBoolean("stardewcraft.npcHeadlessScheduleTest");
     private static final Map<MinecraftServer, RuntimeSnapshot> SNAPSHOTS = new ConcurrentHashMap<>();
 
     private NpcRuntimeManager() {
@@ -56,7 +60,7 @@ public final class NpcRuntimeManager {
         }
         NpcSpawnManager.prepareServerContext(level);
 
-        boolean anyPlayerInStardew = false;
+        boolean anyPlayerInStardew = HEADLESS_SCHEDULE_TEST;
         boolean anyPlayerInMining = false;
         for (var player : server.getPlayerList().getPlayers()) {
             if (ModDimensions.STARDEW_VALLEY.equals(player.level().dimension())) {
@@ -111,12 +115,33 @@ public final class NpcRuntimeManager {
         }
         snapshot.residencyNanos=System.nanoTime()-stageStarted;
 
-        if (com.stardew.craft.time.StardewTimePauseService.isPaused(server)) {
+        if (!HEADLESS_SCHEDULE_TEST
+                && com.stardew.craft.time.StardewTimePauseService.isPaused(server)) {
             return;
+        }
+        if (HEADLESS_SCHEDULE_TEST) {
+            tickHeadlessNpcEntities(level);
         }
         stageStarted=System.nanoTime();
         NpcCentralMovementService.tick(level);
         snapshot.movementNanos=System.nanoTime()-stageStarted;
+    }
+
+    /**
+     * A dedicated server without players does not entity-tick the remote copied map.
+     * The opt-in audit harness advances its loaded NPCs once before the normal movement
+     * coordinator, allowing real schedule routes to be exercised without a game client.
+     */
+    private static void tickHeadlessNpcEntities(ServerLevel level) {
+        var actors = new ArrayList<com.stardew.craft.entity.npc.StardewNpcEntity>();
+        for (var entity : level.getAllEntities()) {
+            if (entity instanceof com.stardew.craft.entity.npc.StardewNpcEntity npc && npc.isAlive()) {
+                actors.add(npc);
+            }
+        }
+        for (var actor : actors) {
+            level.tickNonPassenger(actor);
+        }
     }
 
     /** World-entry adapters may request lifecycle refresh without introducing another movement tick. */

@@ -54,7 +54,7 @@ public final class TerrainFaceTransitionModels {
 
     private static List<Block> blocks() {
         return List.of(ModBlocks.CLIFF.get(), ModBlocks.DIRT.get(), ModBlocks.GRASS_BLOCK.get(),
-                ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get(), ModBlocks.SAND.get(), ModBlocks.SANDY_FARMLAND.get());
+                ModBlocks.DARK_GRASS_BLOCK.get(), ModBlocks.FARMLAND.get(), ModBlocks.SAND.get(), ModBlocks.SANDY_FARMLAND.get(), ModBlocks.HARD_SOIL.get(), ModBlocks.INFERTILE_FARMLAND.get());
     }
 
     private static ModelResourceLocation id(int season, BlockState state) {
@@ -115,7 +115,8 @@ public final class TerrainFaceTransitionModels {
                 var list=TerrainFaceConnections.collect(level,pos,state,face);
                 // Existing authored top masks and inset farmland finishing own coplanar top connections.
                 if (!cliff && face == Direction.UP) list=list.stream()
-                        .filter(c -> c.folded() || (state.is(ModBlocks.SAND.get()) && c.state().is(ModBlocks.DIRT.get())))
+                        .filter(c -> c.folded() || (state.is(ModBlocks.SAND.get()) && c.state().is(ModBlocks.DIRT.get()))
+                                || (state.is(ModBlocks.HARD_SOIL.get()) && TerrainSoils.bare(c.state())))
                         .toList();
                 connections.add(list);
             }

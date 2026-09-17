@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "part=main,facing=north,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper"
+    },
+    "part=main,facing=north,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_ready"
+    },
+    "part=extension,facing=north,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension"
+    },
+    "part=extension,facing=north,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension"
+    },
+    "part=main,facing=east,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper",
+      "y": 90
+    },
+    "part=main,facing=east,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_ready",
+      "y": 90
+    },
+    "part=extension,facing=east,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension",
+      "y": 90
+    },
+    "part=extension,facing=east,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension",
+      "y": 90
+    },
+    "part=main,facing=south,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper",
+      "y": 180
+    },
+    "part=main,facing=south,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_ready",
+      "y": 180
+    },
+    "part=extension,facing=south,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension",
+      "y": 180
+    },
+    "part=extension,facing=south,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension",
+      "y": 180
+    },
+    "part=main,facing=west,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper",
+      "y": 270
+    },
+    "part=main,facing=west,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_ready",
+      "y": 270
+    },
+    "part=extension,facing=west,ready=false": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension",
+      "y": 270
+    },
+    "part=extension,facing=west,ready=true": {
+      "model": "stardewcraft:block/utility/wood_chipper_extension",
+      "y": 270
+    }
+  }
+}

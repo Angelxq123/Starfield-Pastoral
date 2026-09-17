@@ -1,8 +1,24 @@
 {
-  "ambientocclusion": false,
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "stardewcraft:block/utility/furnace_particle"
   },
-  "elements": []
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          0,
+          0,
+          1
+        ],
+        "to": [
+          16,
+          16,
+          14
+        ]
+      }
+    ]
+  }
 }

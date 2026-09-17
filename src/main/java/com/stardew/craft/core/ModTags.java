@@ -82,6 +82,8 @@ public final class ModTags {
 		public static final TagKey<Item> WARDROBE_ACCEPTED = tag("wardrobe_accepted");
 		/** SDV prevent_loss_on_death 等价：标记这些物品在死亡时不可丢失 */
 		public static final TagKey<Item> PREVENT_LOSS_ON_DEATH = tag("prevent_loss_on_death");
+		/** Items which the player may not deliberately destroy through an inventory trash can. */
+		public static final TagKey<Item> PREVENT_TRASHING = tag("prevent_trashing");
 
 		@SuppressWarnings("null")
 		private static TagKey<Item> tag(String name) {

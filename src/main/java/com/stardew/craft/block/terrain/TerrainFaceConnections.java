@@ -51,11 +51,12 @@ public final class TerrainFaceConnections {
     }
 
     public static int rank(BlockState state) {
-        if (state.is(ModBlocks.DARK_GRASS_BLOCK.get())) return 6;
-        if (state.is(ModBlocks.GRASS_BLOCK.get())) return 5;
-        if (TerrainSoils.farmland(state)) return state.getValue(FarmBlock.MOISTURE) > 0 ? 4 : 3;
-        if (state.is(ModBlocks.DIRT.get())) return 2;
-        if (state.is(ModBlocks.SAND.get())) return 1;
+        if (state.is(ModBlocks.DARK_GRASS_BLOCK.get())) return 7;
+        if (state.is(ModBlocks.GRASS_BLOCK.get())) return 6;
+        if (TerrainSoils.farmland(state)) return state.getValue(FarmBlock.MOISTURE) > 0 ? 5 : 4;
+        if (state.is(ModBlocks.DIRT.get())) return 3;
+        if (state.is(ModBlocks.SAND.get())) return 2;
+        if (state.is(ModBlocks.HARD_SOIL.get())) return 1;
         return state.is(ModBlocks.CLIFF.get()) ? 0 : -1;
     }
 

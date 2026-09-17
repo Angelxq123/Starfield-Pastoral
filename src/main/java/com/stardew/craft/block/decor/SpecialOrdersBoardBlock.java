@@ -23,7 +23,13 @@ import javax.annotation.Nonnull;
 public class SpecialOrdersBoardBlock extends MapDecorStaticBlock {
 
     public SpecialOrdersBoardBlock(Properties properties, String modelId) {
-        super(properties, modelId);
+        super(properties, modelId, -15, 0, 5, 31, 32, 13);
+    }
+
+    protected SpecialOrdersBoardBlock(Properties properties, String modelId,
+                                      double minX, double minY, double minZ,
+                                      double maxX, double maxY, double maxZ) {
+        super(properties, modelId, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     @Override

@@ -48,7 +48,7 @@ public class AnvilBlockEntityRenderer implements BlockEntityRenderer<AnvilBlockE
             ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
             RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
             RandomSource rand = RandomSource.create(0L);
-            renderer.tesselateBlock(
+            SpatialBlockModelRenderer.render(renderer,
                     level,
                     model,
                     state,

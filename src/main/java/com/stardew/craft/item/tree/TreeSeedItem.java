@@ -4,13 +4,11 @@ import com.stardew.craft.item.SimpleStardewItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Supplier;
@@ -60,10 +58,6 @@ public class TreeSeedItem extends SimpleStardewItem {
 
 	@SuppressWarnings("null")
 	private static boolean isPlantableGround(BlockState state) {
-		// Stardew tree seeds cannot be planted on hoed tiles; treat MC farmland as disallowed.
-		if (state.getBlock() instanceof FarmBlock) {
-			return false;
-		}
-		return state.is(BlockTags.DIRT) || state.getBlock() instanceof net.minecraft.world.level.block.GrassBlock;
+		return com.stardew.craft.block.terrain.TerrainSoils.treeSeedGround(state);
 	}
 }

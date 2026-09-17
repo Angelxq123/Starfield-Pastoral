@@ -4,28 +4,28 @@
       "model": "stardewcraft:decor/festival/luau_soup_pot_proxy"
     },
     "facing=north,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/luau_festival_extension_empty"
+      "model": "stardewcraft:block/decor/extensions/luau_soup_pot_empty"
     },
     "facing=east,part=main": {
       "model": "stardewcraft:decor/festival/luau_soup_pot_proxy",
       "y": 90
     },
     "facing=east,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/luau_festival_extension_empty"
+      "model": "stardewcraft:block/decor/extensions/luau_soup_pot_empty"
     },
     "facing=south,part=main": {
       "model": "stardewcraft:decor/festival/luau_soup_pot_proxy",
       "y": 180
     },
     "facing=south,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/luau_festival_extension_empty"
+      "model": "stardewcraft:block/decor/extensions/luau_soup_pot_empty"
     },
     "facing=west,part=main": {
       "model": "stardewcraft:decor/festival/luau_soup_pot_proxy",
       "y": 270
     },
     "facing=west,part=extension": {
-      "model": "stardewcraft:block/decor/extensions/luau_festival_extension_empty"
+      "model": "stardewcraft:block/decor/extensions/luau_soup_pot_empty"
     }
   }
 }

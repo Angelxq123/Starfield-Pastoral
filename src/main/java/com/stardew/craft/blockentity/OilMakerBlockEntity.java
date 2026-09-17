@@ -4,6 +4,7 @@ import com.stardew.craft.item.artisan.ArtisanRecipeDataManager;
 import com.stardew.craft.time.StardewTimeManager;
 import com.stardew.craft.weather.ModParticles;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -24,6 +25,7 @@ import java.util.Optional;
  */
 public class OilMakerBlockEntity extends TimedProductionBlockEntity {
     private static final int EFFECTIVE_MINUTES_PER_DAY = 1260;
+    private long lastEffectMinuteBucket = Long.MIN_VALUE;
 
     private static final String TAG_INPUT = "input";
     private static final String TAG_PRODUCT = "product";
@@ -49,22 +51,27 @@ public class OilMakerBlockEntity extends TimedProductionBlockEntity {
             be.syncToClient();
         }
         be.updateWorkingState(level, pos, state);
+        if (level instanceof ServerLevel serverLevel) {
+            emitWorkingEffect(serverLevel, pos, be);
+        }
     }
 
     @SuppressWarnings("null")
-    public static void clientTick(Level level, BlockPos pos, BlockState state, OilMakerBlockEntity be) {
+    private static void emitWorkingEffect(ServerLevel level, BlockPos pos, OilMakerBlockEntity be) {
         if (!be.isWorking()) {
+            be.lastEffectMinuteBucket = Long.MIN_VALUE;
             return;
         }
-        if (level.random.nextInt(6) != 0) {
+        long bucket = getCurrentAbsMinute() / 10;
+        if (be.lastEffectMinuteBucket == bucket) {
             return;
         }
-        double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 0.3;
-        double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 0.3;
-        double y1 = pos.getY() + 1.15;
-        double y2 = pos.getY() + 1.05;
-        level.addParticle(ModParticles.OIL_BUBBLE.get(), x, y1, z, 0.0, 0.01, 0.0);
-        level.addParticle(ModParticles.OIL_BUBBLE.get(), x, y2, z, 0.0, 0.02, 0.0);
+        be.lastEffectMinuteBucket = bucket;
+        // The original checks 0.33 once per ten game minutes, not every few render ticks.
+        if (level.random.nextFloat() < 0.33F) {
+            level.sendParticles(ModParticles.OIL_BUBBLE.get(),
+                    pos.getX() + 0.5, pos.getY() + 2.0, pos.getZ() + 0.5, 0, 0, 0, 0, 0);
+        }
     }
 
 

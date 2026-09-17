@@ -2,7 +2,24 @@
   "ambientocclusion": false,
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "stardewcraft:block/utility/bee_house_full_particle"
+    "particle": "stardewcraft:block/utility/bee_house_particle"
   },
-  "elements": []
+  "elements": [],
+  "stardewcraft:collision": {
+    "mode": "custom",
+    "boxes": [
+      {
+        "from": [
+          0,
+          0,
+          0
+        ],
+        "to": [
+          16,
+          6,
+          16
+        ]
+      }
+    ]
+  }
 }

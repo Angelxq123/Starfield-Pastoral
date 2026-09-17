@@ -1,0 +1,66 @@
+{
+  "pivots": {
+    "machine_root": [
+      0,
+      0,
+      0
+    ]
+  },
+  "animations": {
+    "animation.deconstructor.idle": {
+      "length": 1,
+      "loop": true,
+      "bones": {
+        "machine_root": {
+          "position": {
+            "0": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "1": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      }
+    },
+    "animation.deconstructor.work": {
+      "length": 1.6,
+      "loop": true,
+      "bones": {
+        "machine_root": {
+          "scale": {
+            "0": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "0.4": [
+              1.025,
+              1.017,
+              1.025
+            ],
+            "0.8": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "1.2": [
+              1.025,
+              1.017,
+              1.025
+            ],
+            "1.6": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

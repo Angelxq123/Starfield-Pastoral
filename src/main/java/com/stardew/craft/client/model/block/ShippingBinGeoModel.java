@@ -25,4 +25,17 @@ public class ShippingBinGeoModel extends GeoModel<ShippingBinBlockEntity> {
     public ResourceLocation getAnimationResource(ShippingBinBlockEntity animatable) {
         return ANIMATION;
     }
+    @Override
+    public void setCustomAnimations(ShippingBinBlockEntity bin, long id,
+            software.bernie.geckolib.animation.AnimationState<ShippingBinBlockEntity> state) {
+        super.setCustomAnimations(bin, id, state);
+        // Old one-cell installations stay inside their existing cell if a neighbor blocks expansion.
+        boolean compact = !bin.hasFullFootprint();
+        getBone("root").ifPresent(bone -> {
+            bone.setScaleX(compact ? .5f : 1);
+            bone.setPosX(compact ? 4 : 0);
+        });
+        getBone("lid").ifPresent(bone -> bone.setRotX(bin.lidMotion.radians(state.getPartialTick())));
+    }
+
 }

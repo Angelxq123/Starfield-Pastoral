@@ -30,6 +30,11 @@ public class CheesePressBlockEntityRenderer implements BlockEntityRenderer<Chees
 	private static final ResourceLocation BUBBLE_TEX = ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/gui/bubble.png");
 	private static final float PX = 1.0f / 32.0f;
 
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(CheesePressBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(0.25, 1.25, 0.25);
+    }
+
 	public CheesePressBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
 	}
 
@@ -44,7 +49,7 @@ public class CheesePressBlockEntityRenderer implements BlockEntityRenderer<Chees
 		if (level != null) {
 			poseStack.pushPose();
 			if (be.isWorking() && !ready) {
-				applyKegWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
+				UtilityWorkingAnimation.applyGroundedWorkingPose(poseStack, level, be.getBlockPos(), partialTick);
 			}
 
 			Minecraft mc = Minecraft.getInstance();
@@ -52,7 +57,7 @@ public class CheesePressBlockEntityRenderer implements BlockEntityRenderer<Chees
 			ModelBlockRenderer renderer = mc.getBlockRenderer().getModelRenderer();
 			RenderType renderType = ItemBlockRenderTypes.getRenderType(state, false);
 			RandomSource rand = RandomSource.create(0L);
-			renderer.tesselateBlock(
+			SpatialBlockModelRenderer.render(renderer,
 				level,
 				model,
 				state,
@@ -117,77 +122,6 @@ public class CheesePressBlockEntityRenderer implements BlockEntityRenderer<Chees
 		poseStack.popPose();
 	}
 
-	private static void applyKegWorkingPose(PoseStack poseStack, Level level, net.minecraft.core.BlockPos pos, float partialTick) {
-		float time = getCycleTime(level, pos, partialTick);
 
-		Keyframe k0 = new Keyframe(0f, 1.05f, 1.45f, 1.05f, -0.10f);
-		Keyframe k1 = new Keyframe(8f, 1.35f, 1.05f, 1.35f, 0.05f);
-		Keyframe k2 = new Keyframe(15f, 1.20f, 1.20f, 1.20f, 0.00f);
-		Keyframe k3 = new Keyframe(23f, 1.25f, 1.15f, 1.25f, 0.02f);
-		Keyframe k4 = new Keyframe(30f, 1.05f, 1.45f, 1.05f, -0.10f);
 
-		Keyframe a;
-		Keyframe b;
-		if (time < k1.t) {
-			a = k0;
-			b = k1;
-		} else if (time < k2.t) {
-			a = k1;
-			b = k2;
-		} else if (time < k3.t) {
-			a = k2;
-			b = k3;
-		} else {
-			a = k3;
-			b = k4;
-		}
-
-		float t = (time - a.t) / (b.t - a.t);
-		float sx = lerp(t, a.sx, b.sx);
-		float sy = lerp(t, a.sy, b.sy);
-		float sz = lerp(t, a.sz, b.sz);
-		float y = lerp(t, a.y, b.y);
-
-		float baseScale = 1.2f;
-		sx /= baseScale;
-		sy /= baseScale;
-		sz /= baseScale;
-
-		float scaleAmp = 0.55f;
-		sx = 1.0f + (sx - 1.0f) * scaleAmp;
-		sy = 1.0f + (sy - 1.0f) * scaleAmp;
-		sz = 1.0f + (sz - 1.0f) * scaleAmp;
-		sx = clamp(sx, 0.95f, 1.05f);
-		sy = clamp(sy, 0.95f, 1.05f);
-		sz = clamp(sz, 0.95f, 1.05f);
-		y = clamp(y * 0.30f, 0.0f, 0.04f);
-
-		poseStack.translate(0.0f, y, 0.0f);
-		poseStack.translate(0.5f, 0.5f, 0.5f);
-		poseStack.scale(sx, sy, sz);
-		poseStack.translate(-0.5f, -0.5f, -0.5f);
-	}
-
-	private static float getCycleTime(Level level, net.minecraft.core.BlockPos pos, float partialTick) {
-		long seed = pos.asLong();
-		float phase = ((seed * 0x9E3779B97F4A7C15L) >>> 40) / 4096.0f;
-		float t = level.getGameTime() + partialTick + phase * 30.0f;
-		float mod = t % 30.0f;
-		return mod < 0 ? mod + 30.0f : mod;
-	}
-
-	private static float lerp(float t, float a, float b) {
-		return a + (b - a) * t;
-	}
-
-	private static float clamp(float v, float min, float max) {
-		return Math.max(min, Math.min(max, v));
-	}
-
-	private record Keyframe(float t, float sx, float sy, float sz, float y) {}
 }
-
-
-
-
-

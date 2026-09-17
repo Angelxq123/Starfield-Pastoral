@@ -7,6 +7,8 @@ import com.stardew.craft.api.v1.farm.StardewFarmInitializationSteps;
 import com.stardew.craft.api.v1.farm.StardewFarmLayoutMigrations;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.decor.MapDecorStaticBlock;
+import com.stardew.craft.block.decor.FarmTwigBlock;
+import com.stardew.craft.block.decor.ResourceClumpBlock;
 import com.stardew.craft.block.nature.PastureGrassBlock;
 import com.stardew.craft.block.nature.WildWeedsBlock;
 import com.stardew.craft.time.StardewTimeManager;
@@ -26,33 +28,47 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * 玩家个人农场实例的初始化器。
- * 放置 schematic → 设置生物群系 → 放置图腾柱 → 温室 → 概率化碎片 → 出口实体。
+ * 放置 schematic → 设置生物群系 → 放置图腾柱 → 温室 → 原版地图密度的碎片 → 出口实体。
  * <p>
- * 碎片生成规则（概率制，per-block）：
- *   自有泥土 (DIRT) 上: 树木 / 石头 / 杂草 / 牧草 / 树苗
- *   草方块 (GRASS_BLOCK) 上: 树木 / 牧草 / 杂草（无石头、无树苗）
- *   森林农场额外: 桃花心木树（草方块上，极低概率）
+ * 初始碎片密度来自原版各农场 TMX 的 Paths 层：13–15 杂草，16–17 石头，
+ * 18 树枝，19–21 大型障碍物，22 牧草，23 幼树。Minecraft 农场的地表几何不同，
+ * 所以保留每张地图的密度与树种比例，但在对应的自然裸地上重新分布。
  */
 @SuppressWarnings("null")
 public class FarmInstanceInitializer {
 
-    // ── 概率配置（千分比） ──
-    private static final int TREE_PROB = 19;     // 1.9%
-    private static final int STONE_PROB = 86;    // 8.6%（仅黄土）
-    private static final int WEED_PROB = 95;     // 9.5%
-    private static final int GRASS_PROB = 75;    // 7.5%
-    private static final int SAPLING_PROB = 4;   // 0.4%（仅黄土）
-    private static final int MAHOGANY_PROB = 3;  // 0.3%（仅森林农场，草方块）
-
     private static final int CLEAR_RADIUS = 5;
     private static final int TREE_MIN_DIST = 4;
-    private static final int SCAN_Y_MAX = 100;
-    private static final int SCAN_Y_MIN = -64;
+
+    private record InitialDebrisProfile(
+            int treePermille,
+            int stonePermille,
+            int weedPermille,
+            int twigPermille,
+            int grassPermille,
+            int saplingPermille,
+            int oakWeight,
+            int mapleWeight,
+            int pineWeight,
+            int largeLogs,
+            int largeBoulders,
+            int largeStumps
+    ) {
+        private static final InitialDebrisProfile STANDARD = new InitialDebrisProfile(
+                19, 83, 95, 28, 75, 4,
+                28, 29, 41,
+                6, 14, 19);
+        private static final InitialDebrisProfile FOREST = new InitialDebrisProfile(
+                9, 75, 49, 13, 28, 3,
+                11, 10, 28,
+                9, 9, 12);
+        private static final InitialDebrisProfile RIVERLAND = new InitialDebrisProfile(
+                8, 74, 44, 15, 38, 2,
+                9, 11, 23,
+                1, 7, 12);
+    }
 
     /**
      * 初始化指定玩家的农场实例。
@@ -81,7 +97,11 @@ public class FarmInstanceInitializer {
         preloadFarmChunks(level, farm);
 
         // 2. 放置 schematic（地形）
-        placeSchematic(level, farm);
+        if (!placeSchematic(level, farm)) return false;
+        if (farm.getFarmLayoutId().getNamespace().equals(StardewCraft.MODID)) {
+            int replaced = FarmSubsoil.replaceBuriedDirt(level, origin, origin.offset(layout.boundsMax()));
+            StardewCraft.LOGGER.info("[FARM_INIT] Replaced {} buried dirt blocks with hard soil", replaced);
+        }
 
         // 2.5 在 schematic 底面正下方铺一层基岩，防止掉出世界
         placeBedrockFloor(level, farm, layout);
@@ -124,7 +144,7 @@ public class FarmInstanceInitializer {
     //  Schematic 放置
     // ══════════════════════════════════════════
 
-    private static void placeSchematic(ServerLevel level, FarmInstance farm) {
+    private static boolean placeSchematic(ServerLevel level, FarmInstance farm) {
         ResourceLocation path = farm.getFarmLayout().schematic();
         BlockPos origin = farm.getOrigin();
         boolean result = com.stardew.craft.mining.StructureLoader.loadAndPlaceWithResult(level, path, origin);
@@ -133,6 +153,7 @@ public class FarmInstanceInitializer {
         } else {
             StardewCraft.LOGGER.info("[FARM_INIT] Placed schematic {} at {}", path, origin);
         }
+        return result;
     }
 
     /**
@@ -232,74 +253,46 @@ public class FarmInstanceInitializer {
         BlockPos boundsMax = farm.getFarmBoundsMax();
         BlockPos spawnPos = farm.getSpawnPoint();
         BlockPos greenhousePos = farm.getGreenhousePos();
-        boolean isForest = farm.getFarmLayoutId().equals(
-                StardewFarmLayoutRegistry.builtinId(FarmType.FOREST));
-
-        Block terrainDirt = ModBlocks.DIRT.get();
+        InitialDebrisProfile profile = initialDebrisProfile(farm);
         int season = StardewTimeManager.get().getCurrentSeason();
 
-        List<BlockPos> treeTrunks = new ArrayList<>();
-        int trees = 0, stones = 0, weeds = 0, grass = 0, saplings = 0, mahogany = 0;
+        int largeLogs = spawnInitialClumps(level, farm, ModBlocks.HOLLOW_LOG.get(),
+                profile.largeLogs(), random);
+        int largeBoulders = spawnInitialClumps(level, farm, ModBlocks.LARGE_BOULDER.get(),
+                profile.largeBoulders(), random);
+        int largeStumps = spawnInitialClumps(level, farm, ModBlocks.LARGE_STUMP.get(),
+                profile.largeStumps(), random);
+
+        int trees = 0, stones = 0, weeds = 0, twigs = 0, grass = 0, saplings = 0;
 
         for (int x = boundsMin.getX(); x <= boundsMax.getX(); x++) {
             for (int z = boundsMin.getZ(); z <= boundsMax.getZ(); z++) {
                 if (isNearProtected(x, z, spawnPos, greenhousePos)) continue;
 
-                // 从上往下扫描找表面
-                BlockPos placePos = null;
-                Block surfaceBlock = null;
-                for (int y = SCAN_Y_MAX; y >= SCAN_Y_MIN; y--) {
-                    BlockPos groundPos = new BlockPos(x, y, z);
-                    BlockState groundState = level.getBlockState(groundPos);
-                    if (groundState.isAir()) continue;
-                    Block ground = groundState.getBlock();
-                    if (ground == terrainDirt || ground instanceof net.minecraft.world.level.block.GrassBlock) {
-                        BlockPos above = groundPos.above();
-                        if (level.getBlockState(above).isAir() && level.canSeeSky(above)) {
-                            placePos = above;
-                            surfaceBlock = ground;
-                        }
-                    }
-                    break;
-                }
-                if (placePos == null) continue;
+                FarmDebrisPlacementRules.Surface surface =
+                        FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+                if (surface == null) continue;
 
-                boolean onGrass = (surfaceBlock instanceof net.minecraft.world.level.block.GrassBlock);
+                BlockPos placePos = surface.place();
+                boolean onGrass = surface.grass();
                 int roll = random.nextInt(1000);
                 int cumulative = 0;
 
-                // ── 树木（黄土+草方块都可生成） ──
-                cumulative += TREE_PROB;
+                // Paths 9/10/11: mature oak/maple/pine, using this layout's source ratio.
+                cumulative += profile.treePermille();
                 if (roll < cumulative) {
-                    if (!tooCloseToAny(placePos, treeTrunks, TREE_MIN_DIST)) {
-                        WildTrees.Def[] treeDefs = {WildTrees.OAK, WildTrees.MAPLE, WildTrees.PINE};
-                        int[] weights = {3, 3, 4};
-                        WildTrees.Def chosen = pickWeighted(random, treeDefs, weights);
+                    if (!hasNearbyInitialTree(level, placePos, TREE_MIN_DIST)) {
+                        WildTrees.Def chosen = pickInitialTree(random, profile);
                         if (com.stardew.craft.tree.prefab.PrefabTreeManager.tryPlaceRandomVariant(level, placePos, chosen)) {
-                            treeTrunks.add(placePos);
                             trees++;
                         }
                     }
                     continue;
                 }
 
-                // ── 森林农场桃花心木（仅草方块，极低概率） ──
-                if (isForest && onGrass) {
-                    cumulative += MAHOGANY_PROB;
-                    if (roll < cumulative) {
-                        if (!tooCloseToAny(placePos, treeTrunks, TREE_MIN_DIST)) {
-                            if (com.stardew.craft.tree.prefab.PrefabTreeManager.tryPlaceRandomVariant(level, placePos, WildTrees.MAHOGANY)) {
-                                treeTrunks.add(placePos);
-                                mahogany++;
-                            }
-                        }
-                        continue;
-                    }
-                }
-
-                // ── 石头（仅黄土） ──
+                // Paths 16/17: loose stones occur on the diggable dirt portion.
                 if (!onGrass) {
-                    cumulative += STONE_PROB;
+                    cumulative += profile.stonePermille();
                     if (roll < cumulative) {
                         Block[] stoneBlocks = {ModBlocks.MINE_STONE_343.get(), ModBlocks.MINE_STONE_450.get()};
                         level.setBlock(placePos, stoneBlocks[random.nextInt(stoneBlocks.length)].defaultBlockState(), 3);
@@ -308,8 +301,8 @@ public class FarmInstanceInitializer {
                     }
                 }
 
-                // ── 杂草（黄土+草方块） ──
-                cumulative += WEED_PROB;
+                // Paths 13/14/15: seasonal weeds.
+                cumulative += profile.weedPermille();
                 if (roll < cumulative) {
                     int variant = random.nextInt(3);
                     BlockState state = ModBlocks.WILD_WEEDS.get().defaultBlockState()
@@ -320,8 +313,16 @@ public class FarmInstanceInitializer {
                     continue;
                 }
 
-                // ── 牧草（黄土+草方块） ──
-                cumulative += GRASS_PROB;
+                // Path 18: the two original farm twig variants.
+                cumulative += profile.twigPermille();
+                if (roll < cumulative) {
+                    level.setBlock(placePos, initialTwigState(random), 3);
+                    twigs++;
+                    continue;
+                }
+
+                // Path 22: pasture grass.
+                cumulative += profile.grassPermille();
                 if (roll < cumulative) {
                     BlockState state = ModBlocks.PASTURE_GRASS.get().defaultBlockState()
                             .setValue(PastureGrassBlock.VARIANT,
@@ -331,35 +332,133 @@ public class FarmInstanceInitializer {
                     continue;
                 }
 
-                // ── 树苗（仅黄土） ──
+                // Path 23: a young oak/maple/pine on diggable dirt.
                 if (!onGrass) {
-                    cumulative += SAPLING_PROB;
+                    cumulative += profile.saplingPermille();
                     if (roll < cumulative) {
-                        WildTrees.Def[] treeDefs = {WildTrees.OAK, WildTrees.MAPLE, WildTrees.PINE};
-                        WildTrees.Def def = treeDefs[random.nextInt(treeDefs.length)];
+                        WildTrees.Def def = pickInitialTree(random, profile);
                         Block sapling = random.nextBoolean() ? def.sapling0().get() : def.sapling1().get();
-                        level.setBlock(placePos, sapling.defaultBlockState(), 3);
-                        saplings++;
+                        BlockState state = sapling.defaultBlockState();
+                        if (state.canSurvive(level, placePos)) {
+                            level.setBlock(placePos, state, 3);
+                            saplings++;
+                        }
                     }
                 }
             }
         }
 
-        StardewCraft.LOGGER.info("[FARM_INIT] Debris: trees={}, mahogany={}, stones={}, weeds={}, grass={}, saplings={}",
-                trees, mahogany, stones, weeds, grass, saplings);
+        StardewCraft.LOGGER.info(
+                "[FARM_INIT] Debris: trees={}, stones={}, weeds={}, twigs={}, grass={}, saplings={}, largeLogs={}, largeBoulders={}, largeStumps={}",
+                trees, stones, weeds, twigs, grass, saplings,
+                largeLogs, largeBoulders, largeStumps);
+    }
+
+    private static InitialDebrisProfile initialDebrisProfile(FarmInstance farm) {
+        if (farm.getFarmLayoutId().equals(
+                StardewFarmLayoutRegistry.builtinId(FarmType.FOREST))) {
+            return InitialDebrisProfile.FOREST;
+        }
+        if (farm.getFarmLayoutId().equals(
+                StardewFarmLayoutRegistry.builtinId(FarmType.RIVERLAND))) {
+            return InitialDebrisProfile.RIVERLAND;
+        }
+        return InitialDebrisProfile.STANDARD;
+    }
+
+    private static WildTrees.Def pickInitialTree(RandomSource random, InitialDebrisProfile profile) {
+        WildTrees.Def[] trees = {WildTrees.OAK, WildTrees.MAPLE, WildTrees.PINE};
+        int[] weights = {profile.oakWeight(), profile.mapleWeight(), profile.pineWeight()};
+        return pickWeighted(random, trees, weights);
+    }
+
+    private static BlockState initialTwigState(RandomSource random) {
+        Direction[] facings = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+        return ModBlocks.FARM_TWIG.get().defaultBlockState()
+                .setValue(FarmTwigBlock.VARIANT, random.nextInt(2))
+                .setValue(FarmTwigBlock.FACING, facings[random.nextInt(facings.length)]);
+    }
+
+    private static int spawnInitialClumps(ServerLevel level, FarmInstance farm, Block block,
+                                          int requested, RandomSource random) {
+        if (!(block instanceof ResourceClumpBlock clump) || requested <= 0) {
+            return 0;
+        }
+        BlockPos min = farm.getFarmBoundsMin();
+        BlockPos max = farm.getFarmBoundsMax();
+        int placed = 0;
+        int attempts = Math.max(64, requested * 80);
+        for (int attempt = 0; attempt < attempts && placed < requested; attempt++) {
+            int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
+            int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
+            if (isNearProtected(x, z, farm.getSpawnPoint(), farm.getGreenhousePos(), 2)) {
+                continue;
+            }
+            FarmDebrisPlacementRules.Surface surface =
+                    FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+            if (surface == null || !canPlaceInitialClump(level, farm, surface.place())) {
+                continue;
+            }
+            Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+            BlockState state = block.defaultBlockState()
+                    .setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)
+                    .setValue(MapDecorStaticBlock.FACING, facing);
+            if (!level.setBlock(surface.place(), state, Block.UPDATE_ALL)) {
+                continue;
+            }
+            if (!clump.placeExtensions(level, surface.place(), state)) {
+                level.removeBlock(surface.place(), false);
+                continue;
+            }
+            placed++;
+        }
+        return placed;
+    }
+
+    /** Resource clumps occupy a 3x3 footprint and two vertical cells. */
+    private static boolean canPlaceInitialClump(
+            ServerLevel level,
+            FarmInstance farm,
+            BlockPos main
+    ) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                BlockPos bottom = main.offset(dx, 0, dz);
+                BlockPos top = bottom.above();
+                if (!farm.contains(bottom) || !farm.contains(top)
+                        || !FarmDebrisPlacementRules.isCompletelyOpen(level, bottom)
+                        || !FarmDebrisPlacementRules.isCompletelyOpen(level, top)) {
+                    return false;
+                }
+                FarmDebrisPlacementRules.Surface surface =
+                        FarmDebrisPlacementRules.findBareSurface(
+                                level, farm, bottom.getX(), bottom.getZ());
+                if (surface == null || !surface.place().equals(bottom)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private static boolean isNearProtected(int x, int z, BlockPos spawn, BlockPos greenhouse) {
-        if (Math.abs(x - spawn.getX()) <= CLEAR_RADIUS && Math.abs(z - spawn.getZ()) <= CLEAR_RADIUS) return true;
-        if (x >= greenhouse.getX() - 2 && x <= greenhouse.getX() + 19
-                && z >= greenhouse.getZ() - 2 && z <= greenhouse.getZ() + 19) return true;
+        return isNearProtected(x, z, spawn, greenhouse, 0);
+    }
+
+    private static boolean isNearProtected(int x, int z, BlockPos spawn, BlockPos greenhouse, int margin) {
+        if (Math.abs(x - spawn.getX()) <= CLEAR_RADIUS + margin
+                && Math.abs(z - spawn.getZ()) <= CLEAR_RADIUS + margin) return true;
+        if (x >= greenhouse.getX() - 2 - margin && x <= greenhouse.getX() + 19 + margin
+                && z >= greenhouse.getZ() - 2 - margin && z <= greenhouse.getZ() + 19 + margin) return true;
         return false;
     }
 
-    private static boolean tooCloseToAny(BlockPos pos, List<BlockPos> existing, int minDist) {
-        for (BlockPos e : existing) {
-            if (Math.abs(pos.getX() - e.getX()) <= minDist && Math.abs(pos.getZ() - e.getZ()) <= minDist)
+    private static boolean hasNearbyInitialTree(ServerLevel level, BlockPos pos, int radius) {
+        for (BlockPos nearby : BlockPos.betweenClosed(
+                pos.offset(-radius, 0, -radius), pos.offset(radius, 1, radius))) {
+            if (WildTrees.findByAnyPart(level.getBlockState(nearby)) != null) {
                 return true;
+            }
         }
         return false;
     }

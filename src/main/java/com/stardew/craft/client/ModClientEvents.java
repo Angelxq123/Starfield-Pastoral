@@ -1407,6 +1407,8 @@ public class ModClientEvents {
         com.stardew.craft.client.ClientJeiCatalog.clear();
         com.stardew.craft.api.v1.internal.festival
                 .StardewFestivalClientSessionCache.clear();
+        com.stardew.craft.api.v1.internal.client
+                .StardewConstructionProgressCache.clear();
         com.stardew.craft.communitycenter.network.BundleClientData.INSTANCE.clear();
         com.stardew.craft.client.ClientContentRefreshHooks.onSyncedRegistriesChanged();
         com.stardew.craft.client.hud.StardewTimeHud.resetTimeSync();

@@ -1,31 +1,31 @@
 {
   "variants": {
     "part=main,facing=north": {
-      "model": "stardewcraft:decor/special_orders_board"
-    },
-    "part=main,facing=east": {
-      "model": "stardewcraft:decor/special_orders_board",
-      "y": 90
-    },
-    "part=main,facing=south": {
-      "model": "stardewcraft:decor/special_orders_board",
-      "y": 180
-    },
-    "part=main,facing=west": {
-      "model": "stardewcraft:decor/special_orders_board",
-      "y": 270
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/spring"
     },
     "part=extension,facing=north": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/empty"
+    },
+    "part=main,facing=east": {
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/spring",
+      "y": 90
     },
     "part=extension,facing=east": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/empty"
+    },
+    "part=main,facing=south": {
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/spring",
+      "y": 180
     },
     "part=extension,facing=south": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/empty"
+    },
+    "part=main,facing=west": {
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/spring",
+      "y": 270
     },
     "part=extension,facing=west": {
-      "model": "stardewcraft:block/decor/extensions/furniture_extension_empty"
+      "model": "stardewcraft:block/decor/special_orders/special_orders_board/empty"
     }
   }
 }

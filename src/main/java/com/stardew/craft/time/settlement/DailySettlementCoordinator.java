@@ -33,6 +33,8 @@ public final class DailySettlementCoordinator {
     private int readyFailureCount;
     private boolean readyNotified;
     private boolean playerResultsNotified;
+    private DailySettlementWorkUnit playerPublication;
+    private DailySettlementWorkUnit readyPublication;
 
     public DailySettlementCoordinator(
             BudgetedWorkRunner runner,
@@ -91,10 +93,20 @@ public final class DailySettlementCoordinator {
         SettlementPlan createdPlan;
         try {
             planFactory.build(newContext, builder);
+            // Personal results can reach clients before world work completes, but
+            // preparing/persisting/sending them consumes the same tick budget.
+            playerPublication = listener.playerResultsWork(newContext);
+            if (playerPublication != null) {
+                builder.addPlayer(playerPublication);
+            }
+            readyPublication = listener.readyWork(newContext);
             createdPlan = builder.freeze();
         } catch (RuntimeException | Error failure) {
             builder.seal();
             closeUnits(builder.registeredUnits(), failure);
+            if (readyPublication != null) {
+                closeUnits(List.of(readyPublication), failure);
+            }
             metrics.abort();
             resetToIdle();
             throw failure;
@@ -104,6 +116,9 @@ public final class DailySettlementCoordinator {
             planFactory.prepareStart(newContext);
         } catch (RuntimeException | Error failure) {
             closeUnits(builder.registeredUnits(), failure);
+            if (readyPublication != null) {
+                closeUnits(List.of(readyPublication), failure);
+            }
             try {
                 planFactory.cleanup();
             } catch (RuntimeException | Error cleanupFailure) {
@@ -135,46 +150,55 @@ public final class DailySettlementCoordinator {
         }
         long tickStartedAt = metrics.beginTick();
         long tickWorkNanos = 0L;
+        boolean completed = false;
         try {
             tickWorkNanos = tickActive();
+            if (phase == DailySettlementPhase.READY
+                    && (readyPublication == null || readyPublication.isComplete())) {
+                long started = System.nanoTime();
+                completed = notifyReady();
+                tickWorkNanos += Math.max(0L, System.nanoTime() - started);
+            }
         } finally {
             metrics.endTick(tickStartedAt, tickWorkNanos);
         }
-        if (phase == DailySettlementPhase.READY) {
-            if (notifyReady()) {
-                if (metrics.readySummary() == null) {
-                    metrics.completeReady();
-                }
-                resetToIdle();
+        if (completed) {
+            if (metrics.readySummary() == null) {
+                metrics.completeReady();
             }
+            listener.publicationComplete(context);
+            resetToIdle();
         }
     }
 
     private long tickActive() {
-        if (phase == DailySettlementPhase.READY) {
-            return 0L;
-        }
-
         long tickBudget = -1L;
         int tickItemLimit = -1;
         long elapsedNanos = 0L;
         int processedItems = 0;
 
-        while (phase != DailySettlementPhase.IDLE
-                && phase != DailySettlementPhase.READY) {
+        while (phase != DailySettlementPhase.IDLE) {
             if ((phase == DailySettlementPhase.WORLD_BATCHES
                     || phase == DailySettlementPhase.COMMIT)
                     && !playerResultsNotified) {
-                if (!notifyPlayerResults()) {
+                boolean published = notifyPlayerResults();
+                if (!published) {
                     break;
                 }
                 continue;
             }
-            DailySettlementWorkUnit unit = advanceToWork();
+            DailySettlementWorkUnit unit = phase == DailySettlementPhase.READY
+                    ? readyPublication : advanceToWork();
+            if (unit == null && phase == DailySettlementPhase.READY) {
+                unit = readyPublication;
+            }
             if (unit == null) {
                 break;
             }
             if (unit.isComplete()) {
+                if (unit == readyPublication) {
+                    break;
+                }
                 completeCurrentUnit(unit);
                 continue;
             }
@@ -221,7 +245,11 @@ public final class DailySettlementCoordinator {
             processedItems += result.processedItems();
             resetFailuresAfterProgress(guardedUnit);
             if (result.complete()) {
-                completeCurrentUnit(unit, budgetSubsystemName);
+                if (unit == readyPublication) {
+                    safeClose(unit, budgetSubsystemName);
+                } else {
+                    completeCurrentUnit(unit, budgetSubsystemName);
+                }
             }
             if (result.overshootNanos() > 0L) {
                 metrics.recordOvershoot(budgetSubsystemName, result.overshootNanos());
@@ -262,15 +290,29 @@ public final class DailySettlementCoordinator {
             }
             attempts++;
             if (phase == DailySettlementPhase.READY) {
+                if (readyPublication != null && !readyPublication.isComplete()) {
+                    try {
+                        new GuardedWorkUnit(readyPublication, context, metrics, false).runNext();
+                        consecutiveFailures = 0;
+                    } catch (Exception failure) {
+                        handleItemFailure(readyPublication);
+                    }
+                    continue;
+                }
+                if (readyPublication != null) {
+                    safeClose(readyPublication);
+                }
                 if (notifyReady()) {
                     if (metrics.readySummary() == null) {
                         metrics.completeReady();
                     }
+                    listener.publicationComplete(context);
                     resetToIdle();
                 }
                 continue;
             }
-            if (phase == DailySettlementPhase.COMMIT && !playerResultsNotified) {
+            if ((phase == DailySettlementPhase.WORLD_BATCHES
+                    || phase == DailySettlementPhase.COMMIT) && !playerResultsNotified) {
                 if (!notifyPlayerResults()) {
                     continue;
                 }
@@ -359,7 +401,9 @@ public final class DailySettlementCoordinator {
         String subsystemName = unit.subsystemName();
         int maxRetries = unit.maxRetries();
         int attempt = consecutiveFailures + 1;
-        boolean permanent = attempt > maxRetries;
+        // Skipping a publication item would strand its client behind the barrier.
+        boolean permanent = unit != playerPublication && unit != readyPublication
+                && attempt > maxRetries;
         consecutiveFailures = attempt;
         metrics.recordRetry(subsystemName, itemIdentity, permanent);
         safeItemFailure(unitName, itemIdentity, attempt, permanent);
@@ -422,6 +466,9 @@ public final class DailySettlementCoordinator {
     }
 
     private boolean notifyReady() {
+        if (readyPublication != null && !readyPublication.isComplete()) {
+            return false;
+        }
         if (readyNotified) {
             return true;
         }
@@ -521,10 +568,15 @@ public final class DailySettlementCoordinator {
         readyFailureCount = 0;
         readyNotified = false;
         playerResultsNotified = false;
+        playerPublication = null;
+        readyPublication = null;
         closedUnits.clear();
     }
 
     private void abortActiveSettlement() {
+        if (readyPublication != null) {
+            safeClose(readyPublication);
+        }
         if (plan != null) {
             for (DailySettlementWorkUnit unit : plan.prepare()) {
                 safeClose(unit);
@@ -745,6 +797,17 @@ public final class DailySettlementCoordinator {
         void phaseChanged(DailySettlementContext context, DailySettlementPhase phase);
 
         default void playerResultsReady(DailySettlementContext context) {
+        }
+
+        default DailySettlementWorkUnit playerResultsWork(DailySettlementContext context) {
+            return null;
+        }
+
+        default DailySettlementWorkUnit readyWork(DailySettlementContext context) {
+            return null;
+        }
+
+        default void publicationComplete(DailySettlementContext context) {
         }
 
         void itemFailure(

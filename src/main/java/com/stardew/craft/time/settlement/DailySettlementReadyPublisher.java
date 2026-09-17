@@ -26,8 +26,10 @@ final class DailySettlementReadyPublisher
     private final Set<UUID> worldReadySent = new java.util.HashSet<>();
     private final Set<UUID> woken = new java.util.HashSet<>();
     private int retainedDay = -1;
-    private boolean hooksPrepared;
-    private boolean deliveryPrepared;
+    private final Set<UUID> deliveryPrepared = new java.util.HashSet<>();
+    private final Set<UUID> preparedOffline = new java.util.HashSet<>();
+    private DailySettlementWorkUnit earlyWork;
+    private DailySettlementWorkUnit finalWork;
     private boolean barrierPublished;
 
     DailySettlementReadyPublisher(
@@ -59,9 +61,27 @@ final class DailySettlementReadyPublisher
             }
 
             @Override
+            public DailySettlementWorkUnit hooksWork(DailySettlementContext context) {
+                return DailySettlementWorkUnits.cursor("ready_player_hooks",
+                        context.valleyOnlinePlayerIds(), UUID::toString, playerId ->
+                                commitHooks.ready(new DailySettlementContext(
+                                        context.absoluteDay(), context.year(), context.season(), context.day(),
+                                        context.sleepMinute(), context.seasonChanged(), java.util.List.of(playerId),
+                                        Set.of(), java.util.List.of(), java.util.List.of(playerId),
+                                        java.util.List.of(playerId), context.previousWeather())), () -> {});
+            }
+
+            @Override
             public DailySettlementBarrier.ReadyResult prepareResult(
                     DailySettlementContext context, UUID playerId) {
                 return players.prepareResult(context, playerId);
+            }
+
+            @Override
+            public DailySettlementBarrier.ReadyResult prepareFinalResult(
+                    DailySettlementContext context, UUID playerId) {
+                // A participant may have returned after the COMMIT cleanup cursor.
+                return players.readyResultOrCreate(context, playerId);
             }
 
             @Override
@@ -151,11 +171,82 @@ final class DailySettlementReadyPublisher
 
     @Override
     public void playerResultsReady(DailySettlementContext context) {
+        runRemaining(playerResultsWork(context));
+    }
+
+    @Override
+    public DailySettlementWorkUnit playerResultsWork(DailySettlementContext context) {
         beginDay(context.absoluteDay());
+        if (earlyWork == null) {
+            earlyWork = DailySettlementWorkUnits.deferred("player_result_publication", () ->
+                    playerResultsCursor(context, "player_result_publication", true));
+        }
+        return earlyWork;
+    }
+
+    @Override
+    public DailySettlementWorkUnit readyWork(DailySettlementContext context) {
+        beginDay(context.absoluteDay());
+        if (finalWork == null) {
+            finalWork = DailySettlementWorkUnits.sequence("ready_publication", java.util.List.of(
+                    DailySettlementWorkUnits.deferred("ready_result_preparation", () ->
+                            playerResultsCursor(context, "ready_result_preparation", false)),
+                    DailySettlementWorkUnits.deferred("ready_hooks", () -> operations.hooksWork(context)),
+                    DailySettlementWorkUnits.atomic("ready_barrier", () -> publishBarrier(context), () -> {}),
+                    readyDeliveryWork(context)), () -> {});
+        }
+        return finalWork;
+    }
+
+    private DailySettlementWorkUnit readyDeliveryWork(DailySettlementContext context) {
+        return new DailySettlementWorkUnit() {
+            private final Set<UUID> visited = new java.util.HashSet<>();
+            private final java.util.ArrayDeque<UUID> queued = new java.util.ArrayDeque<>();
+
+            private void refresh() {
+                if (queued.isEmpty()) {
+                    // READY now spans ticks; include locks created by intervening logins.
+                    for (UUID id : orderedLockedPlayers(context)) {
+                        if (!visited.contains(id)
+                                || (preparedOffline.contains(id) && operations.isOnline(id))) {
+                            queued.addLast(id);
+                        }
+                    }
+                }
+            }
+
+            public String name() { return "ready_delivery"; }
+            public String currentItemIdentity() {
+                refresh();
+                return queued.isEmpty() ? name() : queued.peekFirst().toString();
+            }
+            public boolean isComplete() {
+                refresh();
+                return queued.isEmpty();
+            }
+            public void runNext() {
+                refresh();
+                UUID id = queued.getFirst();
+                deliverReady(context, id);
+                visited.add(id);
+                queued.removeFirst();
+            }
+            public void skipFailedItem() {
+                throw new IllegalStateException("READY delivery must be retried");
+            }
+        };
+    }
+
+    private DailySettlementWorkUnit playerResultsCursor(
+            DailySettlementContext context, String name, boolean early) {
         Set<UUID> participants = Set.copyOf(context.playerIds());
-        Set<UUID> lockedPlayers = orderedLockedPlayers(context);
-        prepareResults(context, participants, lockedPlayers);
-        deliverPlayerResults(context, lockedPlayers);
+        return DailySettlementWorkUnits.cursor(name, orderedLockedPlayers(context), UUID::toString,
+                playerId -> {
+                    prepareResult(context, participants, playerId, !early);
+                    if (early) {
+                        deliverPlayerResult(playerId);
+                    }
+                }, () -> {});
     }
 
     @Override
@@ -169,18 +260,10 @@ final class DailySettlementReadyPublisher
 
     @Override
     public void ready(DailySettlementContext context) {
-        beginDay(context.absoluteDay());
-        if (!hooksPrepared) {
-            operations.prepareHooks(context);
-            hooksPrepared = true;
-        }
-        Set<UUID> participants = Set.copyOf(context.playerIds());
-        Set<UUID> lockedPlayers = orderedLockedPlayers(context);
-        prepareResults(context, participants, lockedPlayers);
-        if (!deliveryPrepared) {
-            operations.prepareDelivery(context, Map.copyOf(retainedResults));
-            deliveryPrepared = true;
-        }
+        runRemaining(readyWork(context));
+    }
+
+    private void publishBarrier(DailySettlementContext context) {
         if (!barrierPublished) {
             if (!barrier.publishReadyAll(context.absoluteDay(), retainedResults)) {
                 throw new IllegalStateException(
@@ -189,61 +272,94 @@ final class DailySettlementReadyPublisher
             }
             barrierPublished = true;
         }
-        deliverPlayerResults(context, lockedPlayers);
-        for (UUID playerId : lockedPlayers) {
-            if (!barrier.isLocked(playerId)) {
-                if (sent.contains(playerId) && !woken.contains(playerId)
-                        && operations.isOnline(playerId)) {
-                    operations.wake(playerId);
-                    woken.add(playerId);
-                }
-                sent.add(playerId);
-                continue;
-            }
-            if (!operations.isOnline(playerId)) {
-                continue;
-            }
-            if (!worldReadySent.contains(playerId)) {
-                operations.worldReady(playerId, context.absoluteDay());
-                worldReadySent.add(playerId);
-            }
-            if (!woken.contains(playerId)) {
+    }
+
+    private void deliverReady(DailySettlementContext context, UUID playerId) {
+        if (!barrier.isLocked(playerId)) {
+            if (sent.contains(playerId) && !woken.contains(playerId)
+                    && operations.isOnline(playerId)) {
                 operations.wake(playerId);
                 woken.add(playerId);
             }
+            return;
         }
+        if (!retainedResults.containsKey(playerId)
+                || (preparedOffline.contains(playerId) && operations.isOnline(playerId))) {
+            prepareResult(context, Set.copyOf(context.playerIds()), playerId, true);
+            DailySettlementBarrier.ReadyResult refreshed = retainedResults.get(playerId);
+            boolean published = barrier.readyResult(playerId, context.absoluteDay()) == null
+                    ? barrier.publishReady(playerId, refreshed)
+                    : barrier.replaceReady(playerId, refreshed);
+            if (!published) {
+                throw new IllegalStateException("Unable to publish late settlement lock " + playerId);
+            }
+        }
+        deliverPlayerResult(playerId);
+        if (!operations.isOnline(playerId)) {
+            preparedOffline.add(playerId);
+            return;
+        }
+        if (!worldReadySent.contains(playerId)) {
+            operations.worldReady(playerId, context.absoluteDay());
+            worldReadySent.add(playerId);
+        }
+        if (!woken.contains(playerId)) {
+            operations.wake(playerId);
+            woken.add(playerId);
+        }
+    }
+
+    @Override
+    public void publicationComplete(DailySettlementContext context) {
         if (metrics != null) {
             DailySettlementMetrics.ReadySummary summary = metrics.completeReady();
             metrics.publishReady(summary);
         }
     }
 
-    private void prepareResults(
+    private void prepareResult(
             DailySettlementContext context,
             Set<UUID> participants,
-            Set<UUID> lockedPlayers) {
-        for (UUID playerId : lockedPlayers) {
-            retainedResults.computeIfAbsent(playerId, ignored ->
-                    participants.contains(playerId)
-                            ? operations.prepareResult(context, playerId)
-                            : DailySettlementBarrier.ReadyResult.barrierOnly(
-                                    context.absoluteDay()));
+            UUID playerId,
+            boolean finalizing) {
+        if (preparedOffline.contains(playerId) && operations.isOnline(playerId)) {
+            retainedResults.remove(playerId);
+            deliveryPrepared.remove(playerId);
+            preparedOffline.remove(playerId);
         }
-        if (!deliveryPrepared) {
-            operations.prepareDelivery(context, Map.copyOf(retainedResults));
-            deliveryPrepared = true;
+        retainedResults.computeIfAbsent(playerId, ignored ->
+                participants.contains(playerId)
+                        ? (finalizing ? operations.prepareFinalResult(context, playerId)
+                                : operations.prepareResult(context, playerId))
+                        : DailySettlementBarrier.ReadyResult.barrierOnly(
+                                context.absoluteDay()));
+        if (!operations.isOnline(playerId)) {
+            preparedOffline.add(playerId);
+        }
+        if (!deliveryPrepared.contains(playerId)) {
+            operations.prepareDelivery(context, Map.of(playerId, retainedResults.get(playerId)));
+            deliveryPrepared.add(playerId);
         }
     }
 
-    private void deliverPlayerResults(
-            DailySettlementContext context, Set<UUID> lockedPlayers) {
-        for (UUID playerId : lockedPlayers) {
-            if (!barrier.isLocked(playerId) || !operations.isOnline(playerId)
-                    || sent.contains(playerId)) {
-                continue;
+    private void deliverPlayerResult(UUID playerId) {
+        if (!barrier.isLocked(playerId) || !operations.isOnline(playerId)
+                || sent.contains(playerId)) {
+            return;
+        }
+        operations.send(playerId, retainedResults.get(playerId).payload());
+        sent.add(playerId);
+    }
+
+    private static void runRemaining(DailySettlementWorkUnit work) {
+        try {
+            while (!work.isComplete()) {
+                work.runNext();
             }
-            operations.send(playerId, retainedResults.get(playerId).payload());
-            sent.add(playerId);
+        } catch (RuntimeException | Error failure) {
+            throw failure;
+        } catch (Exception failure) {
+            throw new IllegalStateException("Unable to publish settlement", failure);
         }
     }
 
@@ -270,13 +386,19 @@ final class DailySettlementReadyPublisher
         sent.clear();
         worldReadySent.clear();
         woken.clear();
-        hooksPrepared = false;
-        deliveryPrepared = false;
+        deliveryPrepared.clear();
+        preparedOffline.clear();
+        earlyWork = null;
+        finalWork = null;
         barrierPublished = false;
     }
 
     interface Operations {
         void prepareHooks(DailySettlementContext context);
+
+        default DailySettlementWorkUnit hooksWork(DailySettlementContext context) {
+            return DailySettlementWorkUnits.atomic("ready_hooks", () -> prepareHooks(context), () -> {});
+        }
 
         default void prepareDelivery(
                 DailySettlementContext context,
@@ -285,6 +407,11 @@ final class DailySettlementReadyPublisher
 
         DailySettlementBarrier.ReadyResult prepareResult(
                 DailySettlementContext context, UUID playerId);
+
+        default DailySettlementBarrier.ReadyResult prepareFinalResult(
+                DailySettlementContext context, UUID playerId) {
+            return prepareResult(context, playerId);
+        }
 
         boolean isOnline(UUID playerId);
 

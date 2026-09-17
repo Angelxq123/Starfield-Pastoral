@@ -27,6 +27,7 @@ final class FarmEntryTeleportQueue<L, P> {
     private final int maxChecksPerTick;
     private final Map<UUID, Pending<L, P>> pendingByPlayer = new HashMap<>();
     private final ArrayDeque<UUID> order = new ArrayDeque<>();
+    private long tick;
 
     FarmEntryTeleportQueue(Backend<L, P> backend, int maxChecksPerTick) {
         this.backend = Objects.requireNonNull(backend, "backend");
@@ -51,19 +52,22 @@ final class FarmEntryTeleportQueue<L, P> {
         boolean owned = backend.acquire(level, centerChunk);
         pendingByPlayer.put(
                 playerId,
-                new Pending<>(level, player, immutableTarget, centerChunk, owned));
+                new Pending<>(level, player, immutableTarget, centerChunk, owned, tick));
         order.addLast(playerId);
     }
 
     synchronized void tick() {
+        tick++;
+        long started = System.nanoTime();
         int checks = Math.min(maxChecksPerTick, order.size());
         for (int index = 0; index < checks; index++) {
+            if (index > 0 && System.nanoTime() - started >= 2_000_000L) break;
             UUID playerId = order.removeFirst();
             Pending<L, P> pending = pendingByPlayer.get(playerId);
             if (pending == null) {
                 continue;
             }
-            if (!backend.isValid(playerId, pending.level, pending.player)) {
+            if (tick - pending.started >= 200 || !backend.isValid(playerId, pending.level, pending.player)) {
                 pendingByPlayer.remove(playerId);
                 release(pending);
                 continue;
@@ -121,13 +125,15 @@ final class FarmEntryTeleportQueue<L, P> {
         private final BlockPos target;
         private final ChunkPos centerChunk;
         private final boolean owned;
+        private final long started;
 
-        private Pending(L level, P player, BlockPos target, ChunkPos centerChunk, boolean owned) {
+        private Pending(L level, P player, BlockPos target, ChunkPos centerChunk, boolean owned, long started) {
             this.level = level;
             this.player = player;
             this.target = target;
             this.centerChunk = centerChunk;
             this.owned = owned;
+            this.started = started;
         }
     }
 }

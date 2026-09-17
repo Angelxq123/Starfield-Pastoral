@@ -88,6 +88,7 @@ class WizardTowerEntryPerformanceContractTest {
                 "src/main/java/com/stardew/craft/interior/CrossDimensionTeleporter.java");
 
         assertFalse(source.contains(".getChunk("));
+        assertFalse(source.contains(".setChunkForced("), "forceload synchronously calls getChunk before queueing");
     }
 
     @Test
@@ -103,22 +104,16 @@ class WizardTowerEntryPerformanceContractTest {
         String source = source(
                 "src/main/java/com/stardew/craft/interior/CrossDimensionTeleporter.java");
 
-        org.junit.jupiter.api.Assertions.assertTrue(source.contains("PENDING_WIZARD_RETURNS"));
-        org.junit.jupiter.api.Assertions.assertTrue(source.contains("processPendingWizardReturns"));
-        org.junit.jupiter.api.Assertions.assertTrue(source.contains("Queued {}'s overworld return"));
+        org.junit.jupiter.api.Assertions.assertTrue(source.contains("WIZARD_TRANSITIONS"));
+        org.junit.jupiter.api.Assertions.assertTrue(source.contains("WIZARD_TRANSITIONS.tick("));
+        org.junit.jupiter.api.Assertions.assertTrue(source.contains("new ChunkPos(returnPos)"));
     }
 
     @Test
-    void wizardInteriorUsesAPlayerScopedChunkTrackingRadius() throws IOException {
-        String source = source(
-                "src/main/java/com/stardew/craft/interior/CrossDimensionTeleporter.java");
-
-        org.junit.jupiter.api.Assertions.assertTrue(
-                source.contains("WIZARD_INTERIOR_VIEW_DISTANCE = 2"));
-        org.junit.jupiter.api.Assertions.assertTrue(
-                source.contains("applyWizardInteriorChunkTrackingView"));
-        org.junit.jupiter.api.Assertions.assertTrue(
-                source.contains("restoreDefaultChunkTrackingView"));
+    void wizardTravelNeverForgesTheAlreadySentChunkView() throws IOException {
+        String source = source("src/main/java/com/stardew/craft/interior/CrossDimensionTeleporter.java");
+        assertFalse(source.contains("setChunkTrackingView("),
+                "Only ChunkMap may update sent tracking state and emit its matching packets");
     }
 
     @Test

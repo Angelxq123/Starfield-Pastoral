@@ -26,9 +26,15 @@ public final class ModTeleport {
         if (player.level() != target) {
             CrossDimensionTeleporter.markSkipAutoTeleport(player.getUUID());
         }
-        player.teleportTo(target, x, y, z, yaw, pitch);
-        com.stardew.craft.event.PlayerLocationStateGuardEvents.reconcileLocationState(player, true);
-        com.stardew.craft.server.performance.ServerStallDiagnostics.teleportReturned(player.server);
+        try {
+            player.teleportTo(target, x, y, z, yaw, pitch);
+            com.stardew.craft.event.PlayerLocationStateGuardEvents.reconcileLocationState(player, true);
+        } finally {
+            // Dimension events consume this synchronously. A cancelled transfer or
+            // travel elsewhere must not poison the next vanilla valley entry.
+            CrossDimensionTeleporter.consumeSkipAutoTeleport(player.getUUID());
+            com.stardew.craft.server.performance.ServerStallDiagnostics.teleportReturned(player.server);
+        }
     }
 
     public static void to(ServerPlayer player, ServerLevel target, BlockPos pos,

@@ -165,14 +165,19 @@ class FarmOccupancyIntegrationContractTest {
     @Test
     void modTeleportInvokesLocationGuardAfterTeleportWithoutDuplicateOccupancyCall() throws IOException {
         MethodTree teleport = parseMethod(MOD_TELEPORT_SOURCE, "ModTeleport", "to", 7);
-        BlockTree body = teleport.getBody();
+        TryTree guarded = teleport.getBody().getStatements().stream()
+                .filter(TryTree.class::isInstance).map(TryTree.class::cast)
+                .findFirst().orElseThrow();
+        BlockTree body = guarded.getBlock();
         int teleportIndex = directInvocationIndex(
                 body, "player", "teleportTo", "target", "x", "y", "z", "yaw", "pitch");
         int guardIndex = directInvocationIndex(body,
                 "com.stardew.craft.event.PlayerLocationStateGuardEvents",
                 "reconcileLocationState", "player", "true");
 
-        assertTrue(teleportIndex >= 0, "teleportTo must remain a direct statement");
+        assertTrue(teleportIndex >= 0, "teleportTo must remain inside the cleanup guard");
+        assertTrue(hasDirectInvocation(guarded.getFinallyBlock(),
+                "CrossDimensionTeleporter", "consumeSkipAutoTeleport", "player.getUUID()"));
         assertTrue(guardIndex > teleportIndex,
                 "location state guard must reconcile after teleportTo");
         assertFalse(hasDirectInvocation(body,

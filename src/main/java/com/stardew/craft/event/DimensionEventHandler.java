@@ -70,10 +70,7 @@ public class DimensionEventHandler {
             new FarmEntryTeleportQueue<>(new FarmEntryTeleportQueue.Backend<>() {
                 @Override
                 public boolean acquire(ServerLevel level, ChunkPos chunk) {
-                    if (level.getForcedChunks().contains(chunk.toLong())) {
-                        return false;
-                    }
-                    return level.setChunkForced(chunk.x, chunk.z, true);
+                    return com.stardew.craft.warp.TeleportChunkTickets.acquire(level, chunk);
                 }
 
                 @Override
@@ -108,7 +105,7 @@ public class DimensionEventHandler {
 
                 @Override
                 public void release(ServerLevel level, ChunkPos chunk) {
-                    level.setChunkForced(chunk.x, chunk.z, false);
+                    com.stardew.craft.warp.TeleportChunkTickets.release(level, chunk);
                 }
             }, 8);
 
@@ -134,7 +131,7 @@ public class DimensionEventHandler {
         var server = stardewLevel.getServer();
         var pending = collectAllPendingPassOutPlayers(server);
         if (!pending.isEmpty()) {
-            schedulePassOutAdvance(stardewLevel, sleepMinute, reason, pending);
+            schedulePassOutAdvance(stardewLevel, sleepMinute, reason, pending, false);
             return;
         }
         SleepVoteTracker.clearVotes();
@@ -229,7 +226,7 @@ public class DimensionEventHandler {
                         stardewLevel,
                         sleepMinute,
                         "pass_out_stamina_all_ready",
-                        SleepVoteTracker.getVotedPlayerSnapshot());
+                        SleepVoteTracker.getVotedPlayerSnapshot(), false);
                 return;
             }
             com.stardew.craft.time.ServerRealTickTaskScheduler.schedule(
@@ -260,7 +257,7 @@ public class DimensionEventHandler {
                     stardewLevel,
                     SleepVoteTracker.getLatestSleepMinute(),
                     "pass_out_stamina",
-                    SleepVoteTracker.getVotedPlayerSnapshot());
+                    SleepVoteTracker.getVotedPlayerSnapshot(), sleepMinute >= 1560);
         }
     }
 
@@ -287,6 +284,9 @@ public class DimensionEventHandler {
         }
         // 多人投票：只有所有 Stardew 维度玩家都投票后才推进
         if (SleepVoteTracker.castVote(player, sleepMinute)) {
+            if (passOutAdvanceScheduled) {
+                return true;
+            }
             int effectiveSleepMinute = SleepVoteTracker.getLatestSleepMinute();
             java.util.Set<java.util.UUID> votedPlayers = SleepVoteTracker.getVotedPlayerSnapshot();
             java.util.Set<java.util.UUID> pendingPassOutPlayers = collectPendingPassOutPlayers(player.server, votedPlayers);
@@ -299,7 +299,7 @@ public class DimensionEventHandler {
                         stardewLevel,
                         effectiveSleepMinute,
                         "sleep_confirm_after_pass_out",
-                        votedPlayers);
+                        votedPlayers, false);
                 return true;
             }
             SleepVoteTracker.clearVotes();
@@ -319,7 +319,8 @@ public class DimensionEventHandler {
             ServerLevel stardewLevel,
             int sleepMinute,
             String reason,
-            java.util.Set<java.util.UUID> votedPlayers
+            java.util.Set<java.util.UUID> votedPlayers,
+            boolean forced
     ) {
         if (passOutAdvanceScheduled) {
             return;
@@ -343,6 +344,23 @@ public class DimensionEventHandler {
                 reason, pendingPassOutPlayers.size(), delay);
         com.stardew.craft.time.ServerRealTickTaskScheduler.schedule(server, delay, () -> {
             try {
+                if (!forced && !SleepVoteTracker.hasReachedThreshold(server)) {
+                    // The barrier has not started: a revoked vote or a new farmer
+                    // can still cancel this advance. Finish only the collapse.
+                    int settlementDay = StardewTimeManager.get().getAbsoluteDay() + 1;
+                    for (java.util.UUID playerId : pendingPassOutPlayers) {
+                        ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                        if (player != null && SleepVoteTracker.isInStardewDimension(player)
+                                && com.stardew.craft.player.PassOutService
+                                .hasPendingPassOutResult(playerId)) {
+                            com.stardew.craft.player.PassOutService.teleportToFarmSpawn(player);
+                            PacketDistributor.sendToPlayer(player,
+                                    new com.stardew.craft.network.overnight
+                                            .OvernightCollapseReturnToBedPayload(settlementDay));
+                        }
+                    }
+                    return;
+                }
                 SleepVoteTracker.clearVotes();
                 advanceToNextMorning(stardewLevel, sleepMinute, reason);
             } finally {
@@ -624,6 +642,7 @@ public class DimensionEventHandler {
 
         DailySettlementEvents.onPlayerEnteredSettlementDimension(
                 (ServerPlayer) event.getEntity());
+        SleepVoteTracker.onPlayerDimensionChanged((ServerPlayer) event.getEntity());
     }
     
     /**
@@ -771,7 +790,7 @@ public class DimensionEventHandler {
                     serverLevel,
                     stardewMinutes,
                     "pass_out_2am",
-                    transitionPlayers);
+                    transitionPlayers, true);
         }
         
         // 每秒（20 ticks）同步UI时间+虚拟天空时间到客户端（仅发给星露谷维度玩家）

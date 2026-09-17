@@ -256,7 +256,7 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
                 case "non_participant_cleanup" -> createNonParticipantCleanupWorkUnit(
                         context, playerId -> cleanupNonParticipant(context, playerId));
                 case "daily_process_scope" -> createDailyProcessScope(context);
-                case "festival_season_prep" -> atomic(name, () -> festivalAndSeason(context));
+                case "festival_season_prep" -> DailySettlementWorkUnits.deferred(name, () -> festivalAndSeason(context));
                 case "npc_friendship_daily" ->
                         com.stardew.craft.npc.runtime.NpcFriendshipDailyService
                                 .createDailyWorkUnit(
@@ -442,16 +442,19 @@ public final class DailySettlementPlanFactory implements DailySettlementCoordina
             return true;
         }
 
-        private void festivalAndSeason(DailySettlementContext context) {
+        private DailySettlementWorkUnit festivalAndSeason(DailySettlementContext context) {
             ServerLevel level = level();
-            com.stardew.craft.festival.FestivalService.onNewDay(level);
+            List<DailySettlementWorkUnit> work = new ArrayList<>();
+            work.add(atomic("festival_new_day", () -> com.stardew.craft.festival.FestivalService.onNewDay(level)));
             if (context.seasonChanged()) {
-                com.stardew.craft.farm.PublicAreaBlockTracker.get().restoreAll(level);
-                com.stardew.craft.block.nature.WildWeedsBlock.refreshLoadedWeedsForSeason(
-                        level, context.season());
-                com.stardew.craft.manager.JunimoGreenhouseRuneManager.get(level)
-                        .removeExpiredRunes(level, context.season());
+                work.add(com.stardew.craft.farm.PublicAreaBlockTracker.get().createRestorationWorkUnit(level));
+                // Snapshot after restoration, so chunks loaded by restoration participate too.
+                work.add(DailySettlementWorkUnits.deferred("season_weeds", () ->
+                        com.stardew.craft.block.nature.WildWeedsBlock.createSeasonRefreshWorkUnit(level, context.season())));
+                work.add(atomic("expired_runes", () -> com.stardew.craft.manager.JunimoGreenhouseRuneManager
+                        .get(level).removeExpiredRunes(level, context.season())));
             }
+            return DailySettlementWorkUnits.sequence("festival_season_prep", work, () -> {});
         }
 
         private DailySettlementWorkUnit createWeatherAndNpcWorkUnit(

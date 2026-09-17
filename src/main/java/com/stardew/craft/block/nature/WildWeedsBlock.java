@@ -166,54 +166,54 @@ public class WildWeedsBlock extends Block implements EntityBlock {
 	 * - season 状态切到当前季节
 	 * - variant 在该季节内随机
 	 */
-	@SuppressWarnings("null")
-	public static void refreshLoadedWeedsForSeason(ServerLevel level, int season) {
-		if (level == null || level.dimension() != ModDimensions.STARDEW_VALLEY) {
-			return;
-		}
+    public static void refreshLoadedWeedsForSeason(ServerLevel level, int season) {
+        com.stardew.craft.time.settlement.DailySettlementWorkUnits.drain(
+                createSeasonRefreshWorkUnit(level, season));
+    }
 
-		int normalizedSeason = clampSeason(season);
-		Set<Long> visitedChunks = new HashSet<>();
-		for (var player : level.players()) {
-			int centerChunkX = player.blockPosition().getX() >> 4;
-			int centerChunkZ = player.blockPosition().getZ() >> 4;
-			int radius = 10;
-
-			for (int cx = centerChunkX - radius; cx <= centerChunkX + radius; cx++) {
-				for (int cz = centerChunkZ - radius; cz <= centerChunkZ + radius; cz++) {
-					long chunkKey = ((long) cx << 32) ^ (cz & 0xFFFFFFFFL);
-					if (!visitedChunks.add(chunkKey) || !level.hasChunk(cx, cz)) {
-						continue;
-					}
-
-					for (int lx = 0; lx < 16; lx++) {
-						for (int lz = 0; lz < 16; lz++) {
-							int worldX = (cx << 4) + lx;
-							int worldZ = (cz << 4) + lz;
-							int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ);
-
-							int minY = Math.max(level.getMinBuildHeight(), surfaceY - 2);
-							int maxY = Math.min(level.getMaxBuildHeight() - 1, surfaceY + 2);
-							for (int y = minY; y <= maxY; y++) {
-								BlockPos pos = new BlockPos(worldX, y, worldZ);
-								BlockState state = level.getBlockState(pos);
-								if (!(state.getBlock() instanceof WildWeedsBlock)) {
-									continue;
-								}
-
-								int currentSeason = state.getValue(SEASON);
-								if (currentSeason == normalizedSeason) {
-									continue;
-								}
-
-								level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+    /** One surface row per item; never loads a chunk to refresh its appearance. */
+    public static com.stardew.craft.time.settlement.DailySettlementWorkUnit createSeasonRefreshWorkUnit(
+            ServerLevel level, int season) {
+        java.util.Set<net.minecraft.world.level.ChunkPos> unique = new java.util.LinkedHashSet<>();
+        if (level != null && level.dimension() == ModDimensions.STARDEW_VALLEY) {
+            for (var player : java.util.List.copyOf(level.players())) {
+                int cx = player.blockPosition().getX() >> 4, cz = player.blockPosition().getZ() >> 4;
+                for (int x = cx - 10; x <= cx + 10; x++)
+                    for (int z = cz - 10; z <= cz + 10; z++)
+                        if (level.getChunkSource().getChunkNow(x, z) != null)
+                            unique.add(new net.minecraft.world.level.ChunkPos(x, z));
+            }
+        }
+        var chunks = java.util.List.copyOf(unique);
+        int normalizedSeason = clampSeason(season);
+        return new com.stardew.craft.time.settlement.DailySettlementWorkUnit() {
+            int chunkIndex, row;
+            public String name() { return "season_weeds"; }
+            public String currentItemIdentity() { return chunkIndex + ":" + row; }
+            public boolean isComplete() { return chunkIndex >= chunks.size(); }
+            public void runNext() {
+                var chunk = chunks.get(chunkIndex);
+                if (level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
+                    chunkIndex++; row = 0; return;
+                }
+                int worldX = (chunk.x << 4) + row;
+                for (int z = 0; z < 16; z++) {
+                    int worldZ = (chunk.z << 4) + z;
+                    int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ);
+                    int minY = Math.max(level.getMinBuildHeight(), surfaceY - 2);
+                    int maxY = Math.min(level.getMaxBuildHeight() - 1, surfaceY + 2);
+                    for (int y = minY; y <= maxY; y++) {
+                        BlockPos pos = new BlockPos(worldX, y, worldZ);
+                        BlockState state = level.getBlockState(pos);
+                        if (state.getBlock() instanceof WildWeedsBlock && state.getValue(SEASON) != normalizedSeason)
+                            level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
+                    }
+                }
+                skipFailedItem();
+            }
+            public void skipFailedItem() { if (++row == 16) { row = 0; chunkIndex++; } }
+        };
+    }
 
 	@SuppressWarnings("null")
 	private static void spawnWeedDrops(ServerLevel level, BlockPos pos, RandomSource random, Player player) {

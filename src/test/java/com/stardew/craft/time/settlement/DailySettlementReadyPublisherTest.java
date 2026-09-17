@@ -19,6 +19,69 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DailySettlementReadyPublisherTest {
 
     @Test
+    void publicationAndWorldReadyRespectTheSharedPlayerBudget() {
+        List<UUID> ids = List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+        DailySettlementContext context = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, ids, Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(226, ids);
+        List<UUID> prepared = new ArrayList<>();
+        List<UUID> sent = new ArrayList<>();
+        List<UUID> notified = new ArrayList<>();
+        List<Integer> persistedBatchSizes = new ArrayList<>();
+        long[] clock = {0L};
+        com.stardew.craft.server.performance.DailySettlementMetrics metrics =
+                new com.stardew.craft.server.performance.DailySettlementMetrics(() -> clock[0], () -> 0L);
+        DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(barrier,
+                new DailySettlementReadyPublisher.Operations() {
+                    public void prepareHooks(DailySettlementContext target) {}
+                    public DailySettlementBarrier.ReadyResult prepareResult(
+                            DailySettlementContext target, UUID playerId) {
+                        prepared.add(playerId);
+                        clock[0] += 20L;
+                        return ready(226);
+                    }
+                    public void prepareDelivery(DailySettlementContext target,
+                            Map<UUID, DailySettlementBarrier.ReadyResult> results) {
+                        persistedBatchSizes.add(results.size());
+                        clock[0] += 20L;
+                    }
+                    public boolean isOnline(UUID id) { return true; }
+                    public void send(UUID id, OvernightSettlementPayload payload) {
+                        sent.add(id);
+                        clock[0] += 20L;
+                    }
+                    public void worldReady(UUID id, int day) {
+                        assertEquals(3, sent.size(), "all early results precede global READY");
+                        assertNotNull(barrier.readyResult(id, day));
+                        notified.add(id);
+                        clock[0] += 100L;
+                    }
+                    public void wake(UUID id) {}
+                }, metrics);
+        DailySettlementCoordinator coordinator = new DailySettlementCoordinator(
+                new BudgetedWorkRunner(() -> clock[0]), () -> 70L, () -> 1,
+                (target, builder) -> {}, publisher, metrics, () -> true);
+        coordinator.start(context);
+        for (int tick = 0; coordinator.isActive() && tick < 30; tick++) {
+            int beforePrepared = prepared.size();
+            int beforeSent = sent.size();
+            int beforeNotified = notified.size();
+            coordinator.tick();
+            assertTrue(prepared.size() - beforePrepared <= 1);
+            assertTrue(sent.size() - beforeSent <= 1);
+            assertTrue(notified.size() - beforeNotified <= 1);
+        }
+        assertFalse(coordinator.isActive());
+        assertEquals(ids, prepared);
+        assertEquals(ids, sent);
+        assertEquals(ids, notified);
+        assertTrue(persistedBatchSizes.stream().allMatch(size -> size == 1));
+        assertTrue(metrics.readySummary().maxPerTickWorkNanos() >= 100L,
+                "the final READY delivery belongs to tick work metrics");
+    }
+
+    @Test
     void partialSendAckAndWakeFailureRetryWithoutRebuildingSettlements() {
         UUID playerA = UUID.randomUUID();
         UUID playerB = UUID.randomUUID();
@@ -54,7 +117,8 @@ class DailySettlementReadyPublisherTest {
                             DailySettlementContext target,
                             Map<UUID, DailySettlementBarrier.ReadyResult> results) {
                         deliveryCalls[0]++;
-                        assertEquals(Set.of(playerA, playerB), results.keySet());
+                        assertEquals(1, results.size());
+                        assertTrue(Set.of(playerA, playerB).containsAll(results.keySet()));
                     }
 
                     @Override
@@ -65,8 +129,12 @@ class DailySettlementReadyPublisherTest {
                     @Override
                     public void send(
                             UUID playerId, OvernightSettlementPayload payload) {
-                        assertEquals(1, deliveryCalls[0]);
+                        assertTrue(deliveryCalls[0] >= 1);
                         sends.merge(playerId, 1, Integer::sum);
+                    }
+
+                    @Override
+                    public void worldReady(UUID playerId, int absoluteDay) {
                         if (playerId.equals(playerA)) {
                             assertTrue(barrier.acknowledge(
                                     playerA, context.absoluteDay()));
@@ -101,11 +169,108 @@ class DailySettlementReadyPublisherTest {
         assertEquals(Map.of(playerA, 1, playerB, 1), sends);
         assertEquals(Map.of(playerA, 1, playerB, 2), wakes);
         assertEquals(1, hookCalls[0]);
-        assertEquals(1, deliveryCalls[0]);
+        assertEquals(2, deliveryCalls[0]);
         assertTrue(barrier.acknowledge(playerB, context.absoluteDay()));
         pending.remove(playerB);
         assertTrue(pending.isEmpty());
         assertFalse(barrier.isLocked(playerB));
+    }
+
+    @Test
+    void lateLockAfterBarrierPublicationReceivesItsOwnReadyResult() throws Exception {
+        UUID participant = UUID.randomUUID();
+        UUID lateLogin = UUID.randomUUID();
+        DailySettlementContext context = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(participant), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(226, List.of(participant));
+        Map<UUID, OvernightSettlementPayload> sent = new HashMap<>();
+        DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(barrier,
+                new DailySettlementReadyPublisher.Operations() {
+                    public void prepareHooks(DailySettlementContext target) {}
+                    public DailySettlementBarrier.ReadyResult prepareResult(DailySettlementContext target, UUID id) {
+                        return ready(226);
+                    }
+                    public boolean isOnline(UUID id) { return true; }
+                    public void send(UUID id, OvernightSettlementPayload payload) { sent.put(id, payload); }
+                    public void wake(UUID id) {}
+                });
+        DailySettlementWorkUnit work = publisher.readyWork(context);
+        while (barrier.readyResult(participant, 226) == null) {
+            work.runNext();
+        }
+        barrier.lockAll(226, List.of(lateLogin));
+        while (!work.isComplete()) {
+            work.runNext();
+        }
+        assertNotNull(barrier.readyResult(lateLogin, 226));
+        assertFalse(sent.get(lateLogin).personalSettlement());
+    }
+
+    @Test
+    void offlineReconnectAcknowledgedBeforeDeliveryDoesNotRecreateSettlement() throws Exception {
+        UUID id = UUID.randomUUID();
+        DailySettlementContext context = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(id), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(226, List.of(id));
+        boolean[] online = {false};
+        int[] preparations = {0};
+        DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(barrier,
+                new DailySettlementReadyPublisher.Operations() {
+                    public void prepareHooks(DailySettlementContext target) {}
+                    public DailySettlementBarrier.ReadyResult prepareResult(DailySettlementContext target, UUID playerId) {
+                        preparations[0]++;
+                        return ready(226);
+                    }
+                    public boolean isOnline(UUID playerId) { return online[0]; }
+                    public void send(UUID playerId, OvernightSettlementPayload payload) {}
+                    public void wake(UUID playerId) {}
+                });
+        DailySettlementWorkUnit work = publisher.readyWork(context);
+        while (barrier.readyResult(id, 226) == null) work.runNext();
+        assertFalse(work.isComplete()); // Capture the delivery before the login/ACK tick.
+        online[0] = true;
+        assertTrue(barrier.replaceReady(id, ready(226)));
+        assertTrue(barrier.acknowledge(id, 226));
+        while (!work.isComplete()) work.runNext();
+        assertEquals(1, preparations[0], "ACK must not recreate the completed personal settlement");
+        assertFalse(barrier.isLocked(id));
+    }
+
+    @Test
+    void offlineResultIsRefreshedWhenPlayerReturnsDuringReadyDelivery() throws Exception {
+        UUID id = UUID.randomUUID();
+        DailySettlementContext context = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(id), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(226, List.of(id));
+        boolean[] online = {false};
+        int[] preparations = {0};
+        List<OvernightSettlementPayload> sent = new ArrayList<>();
+        DailySettlementReadyPublisher publisher = new DailySettlementReadyPublisher(barrier,
+                new DailySettlementReadyPublisher.Operations() {
+                    public void prepareHooks(DailySettlementContext target) {}
+                    public DailySettlementBarrier.ReadyResult prepareResult(DailySettlementContext target, UUID playerId) {
+                        preparations[0]++;
+                        return ready(226);
+                    }
+                    public boolean isOnline(UUID playerId) { return online[0]; }
+                    public void send(UUID playerId, OvernightSettlementPayload payload) { sent.add(payload); }
+                    public void wake(UUID playerId) {}
+                });
+        DailySettlementWorkUnit work = publisher.readyWork(context);
+        while (barrier.readyResult(id, 226) == null) {
+            work.runNext();
+        }
+        OvernightSettlementPayload offline = barrier.readyResult(id, 226).payload();
+        online[0] = true;
+        while (!work.isComplete()) {
+            work.runNext();
+        }
+        assertEquals(2, preparations[0]);
+        assertTrue(offline != sent.getFirst(), "an offline placeholder must not be sent after login");
+        assertTrue(sent.getFirst() == barrier.readyResult(id, 226).payload());
     }
 
     @Test

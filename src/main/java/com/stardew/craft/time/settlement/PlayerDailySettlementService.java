@@ -121,7 +121,12 @@ public final class PlayerDailySettlementService {
             return;
         }
         Optional<PendingSettlement> progress = pending.find(playerId);
-        if (progress.isEmpty()) {
+        if (progress.isEmpty()
+                || progress.orElseThrow().absoluteDay() != context.absoluteDay()
+                || progress.orElseThrow().stage() < MASTERY_STAGE
+                || progress.orElseThrow().completedPayload()
+                        .filter(payload -> payload.absoluteDay() == context.absoluteDay())
+                        .isEmpty()) {
             return;
         }
         backend.finalizeSettlement(
@@ -311,9 +316,9 @@ public final class PlayerDailySettlementService {
             readyResults.put(playerId, completed);
             return completed;
         }
-        DailySettlementBarrier.ReadyResult fallback = pendingReadyResult(context);
-        readyResults.put(playerId, fallback);
-        return fallback;
+        // An offline placeholder is not a completed personal result. Keep it out of
+        // the completion cache so login recovery always resumes the saved stages.
+        return pendingReadyResult(context);
     }
 
     DailySettlementBarrier.ReadyResult readyResultOrCreate(
@@ -352,7 +357,8 @@ public final class PlayerDailySettlementService {
         DailySettlementContext context = scheduled.orElseThrow().context(playerId);
         DailySettlementBarrier.ReadyResult result = readyResult(
                 playerId, context.absoluteDay());
-        if (result == null || scheduled.orElseThrow().stage() < MASTERY_STAGE) {
+        if (result == null || scheduled.orElseThrow().stage() < MASTERY_STAGE
+                || scheduled.orElseThrow().completedPayload().isEmpty()) {
             Optional<OvernightSettlementPayload> payload = settleIfOnline(context, playerId);
             if (payload.isEmpty()) {
                 return Optional.empty();

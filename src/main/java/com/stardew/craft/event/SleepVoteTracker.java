@@ -20,7 +20,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * <p>
  * 单人时行为不变：一人投票即推进。
  * 多人时需要达到 gamerule stardewSleepingPercentage 设定的比例才推进。
- * AFK 玩家（超过 stardewAfkTimeout 秒无操作）不计入分母。
+ * 未投票的 AFK 玩家不计入分母；有效投票者始终同时计入分子与分母。
  */
 public final class SleepVoteTracker {
 
@@ -36,6 +36,7 @@ public final class SleepVoteTracker {
 
     /** 睡眠等待时能量回复的 tick 计数器 */
     private static int sleepRegenTickCounter = 0;
+    private static boolean eligibilityDirty;
 
     /**
      * 获取当前所有已投票玩家的 UUID 快照（用于在 clearVotes 之前保存状态）。
@@ -64,6 +65,10 @@ public final class SleepVoteTracker {
      * 标记玩家为活跃状态。应在玩家移动、交互、破坏/放置方块时调用。
      */
     public static void markActive(ServerPlayer player) {
+        int timeout = player.server.getGameRules().getInt(ModGameRules.RULE_STARDEW_AFK_TIMEOUT);
+        if (!lastActivityTime.containsKey(player.getUUID()) || isAfk(player, timeout)) {
+            eligibilityDirty = true;
+        }
         lastActivityTime.put(player.getUUID(), System.currentTimeMillis());
     }
 
@@ -181,6 +186,8 @@ public final class SleepVoteTracker {
         votes.clear();
         passOutVotes.clear();
         passOutStartedAtTick.clear();
+        eligibilityDirty = false;
+        sleepRegenTickCounter = 0;
     }
 
     /**
@@ -210,6 +217,7 @@ public final class SleepVoteTracker {
         int votedAfter = countCurrentVotes(server);
         int sleepPct = server.getGameRules().getInt(ModGameRules.RULE_STARDEW_SLEEPING_PERCENTAGE);
         int required = computeRequired(activeAfter, sleepPct);
+        broadcastVoteProgress(server, votedAfter, required);
         return votedAfter >= required;
     }
 
@@ -258,7 +266,7 @@ public final class SleepVoteTracker {
      */
     private static int computeRequired(int activeCount, int sleepPercentage) {
         if (sleepPercentage <= 0) return 1;
-        if (sleepPercentage >= 100) return activeCount;
+        if (sleepPercentage >= 100) return Math.max(1, activeCount);
         return Math.max(1, (int) Math.ceil(activeCount * sleepPercentage / 100.0));
     }
 
@@ -286,7 +294,8 @@ public final class SleepVoteTracker {
     private static int countActiveStardewPlayers(MinecraftServer server, int afkTimeoutSeconds) {
         int count = 0;
         for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-            if (isInStardewDimension(sp) && !isAfk(sp, afkTimeoutSeconds)) count++;
+            if (isInStardewDimension(sp)
+                    && (votes.containsKey(sp.getUUID()) || !isAfk(sp, afkTimeoutSeconds))) count++;
         }
         return count;
     }
@@ -294,7 +303,8 @@ public final class SleepVoteTracker {
     private static int countActiveStardewPlayersExcluding(MinecraftServer server, int afkTimeoutSeconds, UUID exclude) {
         int count = 0;
         for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-            if (!sp.getUUID().equals(exclude) && isInStardewDimension(sp) && !isAfk(sp, afkTimeoutSeconds)) count++;
+            if (!sp.getUUID().equals(exclude) && isInStardewDimension(sp)
+                    && (votes.containsKey(sp.getUUID()) || !isAfk(sp, afkTimeoutSeconds))) count++;
         }
         return count;
     }
@@ -309,11 +319,47 @@ public final class SleepVoteTracker {
         return count;
     }
 
-    private static boolean hasReachedThreshold(MinecraftServer server) {
+    public static boolean hasReachedThreshold(MinecraftServer server) {
         int afkTimeout = server.getGameRules().getInt(ModGameRules.RULE_STARDEW_AFK_TIMEOUT);
         int activeCount = countActiveStardewPlayers(server, afkTimeout);
         int sleepPct = server.getGameRules().getInt(ModGameRules.RULE_STARDEW_SLEEPING_PERCENTAGE);
         return countCurrentVotes(server) >= computeRequired(activeCount, sleepPct);
+    }
+
+    public static void onPlayerDimensionChanged(ServerPlayer player) {
+        if (!isInStardewDimension(player)) {
+            UUID playerId = player.getUUID();
+            votes.remove(playerId);
+            passOutVotes.remove(playerId);
+            passOutStartedAtTick.remove(playerId);
+            SleepInteractionHandler.consumePendingBedPos(player);
+        }
+        recheckEligibility(player.server);
+    }
+
+    /** Real-tick fallback also catches AFK deadlines, login and gamerule changes. */
+    private static void recheckEligibility(MinecraftServer server) {
+        eligibilityDirty = false;
+        if (votes.isEmpty()) return;
+        var services = com.stardew.craft.time.settlement.DailySettlementServices.find(server);
+        if (services != null && services.coordinator().isActive()) return;
+        votes.keySet().removeIf(playerId -> {
+            ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+            return player == null || !isInStardewDimension(player);
+        });
+        passOutVotes.retainAll(votes.keySet());
+        passOutStartedAtTick.keySet().retainAll(votes.keySet());
+        int timeout = server.getGameRules().getInt(ModGameRules.RULE_STARDEW_AFK_TIMEOUT);
+        int percentage = server.getGameRules().getInt(ModGameRules.RULE_STARDEW_SLEEPING_PERCENTAGE);
+        int required = computeRequired(countActiveStardewPlayers(server, timeout), percentage);
+        int votedCount = countCurrentVotes(server);
+        broadcastVoteProgress(server, votedCount, required);
+        if (votedCount >= required) {
+            var level = server.getLevel(ModDimensions.STARDEW_VALLEY);
+            if (level != null) {
+                DimensionEventHandler.triggerAdvance(level, getLatestSleepMinute(), "sleep_vote_eligibility");
+            }
+        }
     }
 
     /**
@@ -325,6 +371,9 @@ public final class SleepVoteTracker {
             return;
         }
         sleepRegenTickCounter++;
+        if (eligibilityDirty || sleepRegenTickCounter >= 20) {
+            recheckEligibility(server);
+        }
         if (sleepRegenTickCounter < 20) return;
         sleepRegenTickCounter = 0;
         for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
@@ -335,12 +384,15 @@ public final class SleepVoteTracker {
     }
 
     /**
-     * 广播睡眠投票进度给所有星露谷维度玩家。
+     * 发送睡眠等待进度给已确认的睡眠投票者，避免覆盖其他人的确认框。
      */
     private static void broadcastVoteProgress(MinecraftServer server, int votedCount, int requiredCount) {
         SleepVoteUpdatePayload payload = new SleepVoteUpdatePayload(votedCount, requiredCount);
         for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-            if (isInStardewDimension(sp)) {
+            // This packet opens the waiting UI. Being in a bed is not consent:
+            // unconfirmed occupants must keep their confirmation dialog.
+            if (isInStardewDimension(sp) && votes.containsKey(sp.getUUID())
+                    && !passOutVotes.contains(sp.getUUID())) {
                 PacketDistributor.sendToPlayer(sp, payload);
             }
         }

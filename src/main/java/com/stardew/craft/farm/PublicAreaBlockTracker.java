@@ -69,6 +69,46 @@ public class PublicAreaBlockTracker extends SavedData {
         setDirty();
     }
 
+    /** Restores one position at a time, yielding while its transient ticket loads. */
+    public com.stardew.craft.time.settlement.DailySettlementWorkUnit createRestorationWorkUnit(ServerLevel level) {
+        var entries = new java.util.ArrayList<>(removedBlocks.entrySet().stream()
+                .map(e -> Map.entry(e.getKey().immutable(), e.getValue())).toList());
+        entries.sort(java.util.Comparator.comparingLong(e -> new net.minecraft.world.level.ChunkPos(e.getKey()).toLong()));
+        return new com.stardew.craft.time.settlement.DailySettlementWorkUnit() {
+            int index, requestedAt;
+            net.minecraft.world.level.ChunkPos held;
+            public String name() { return "season_public_restore"; }
+            public String currentItemIdentity() { return isComplete() ? name() : entries.get(index).getKey().toShortString(); }
+            public boolean isComplete() { return index >= entries.size(); }
+            public void runNext() {
+                var entry = entries.get(index);
+                BlockPos pos = entry.getKey();
+                var chunk = new net.minecraft.world.level.ChunkPos(pos);
+                if (!chunk.equals(held)) {
+                    close();
+                    com.stardew.craft.warp.TeleportChunkTickets.acquire(level, chunk);
+                    held = chunk;
+                    requestedAt = level.getServer().getTickCount();
+                }
+                if (level.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
+                    // Keep the durable removal for a later restoration attempt.
+                    if (level.getServer().getTickCount() - requestedAt >= 200) skipFailedItem();
+                    return;
+                }
+                if (level.getBlockState(pos).isAir()) level.setBlock(pos, entry.getValue(), Block.UPDATE_ALL);
+                if (removedBlocks.remove(pos, entry.getValue())) setDirty();
+                index++;
+            }
+            public void skipFailedItem() { index++; close(); }
+            public void close() {
+                if (held != null) {
+                    com.stardew.craft.warp.TeleportChunkTickets.release(level, held);
+                    held = null;
+                }
+            }
+        };
+    }
+
     // ── NBT ──
 
     @Override

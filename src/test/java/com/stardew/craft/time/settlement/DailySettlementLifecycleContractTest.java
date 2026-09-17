@@ -290,7 +290,7 @@ class DailySettlementLifecycleContractTest {
                 "advanceDayWithSleepTime"));
         assertTrue(invocationNames(dimension.method("requestPassOutAdvance", 1))
                 .contains("schedulePassOutAdvance"));
-        assertTrue(invocationNames(dimension.method("schedulePassOutAdvance", 4))
+        assertTrue(invocationNames(dimension.method("schedulePassOutAdvance", 5))
                 .contains("advanceToNextMorning"));
         assertTrue(invocationNames(dimension.method("requestSleepAdvance", 3))
                 .contains("advanceToNextMorning"));
@@ -453,6 +453,48 @@ class DailySettlementLifecycleContractTest {
     }
 
     @Test
+    void offlineParticipantSurvivesCommitAndRecoversExactlyOnce() throws Exception {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        Map<UUID, PlayerStardewData> data = new HashMap<>();
+        data.put(playerId, unsettledPlayer(playerId));
+        AtomicInteger cleanups = new AtomicInteger();
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(data) {
+            @Override
+            public void finalizeSettlement(DailySettlementContext context, UUID id,
+                    PlayerDailySettlementService.PendingSettlement progress,
+                    Consumer<PlayerDailySettlementService.PendingSettlement> checkpoint) {
+                cleanups.incrementAndGet();
+            }
+        };
+        PlayerDailySettlementService service = new PlayerDailySettlementService(backend,
+                new PlayerDailySettlementService.PlayerDataPendingStore(data::get, () -> {}));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(target.absoluteDay(), target.playerIds());
+        service.settlePlayer(target, playerId);
+        DailySettlementBarrier.ReadyResult offline = service.prepareResult(target, playerId);
+        service.createFinalizationWorkUnit(target).runNext();
+
+        assertEquals(0, cleanups.get(), "COMMIT must not consume an incomplete player's ledgers");
+        assertEquals(0, service.pendingSettlement(playerId).orElseThrow().stage());
+        assertTrue(barrier.publishReady(playerId, offline));
+        assertFalse(service.hasCompletedReady(playerId, target.absoluteDay()));
+        backend.online = true;
+        service.onLogin(playerId, barrier);
+        service.onLogin(playerId, barrier);
+        assertEquals(1, backend.settlementCalls);
+        assertEquals(620, data.get(playerId).getMoney());
+        assertEquals(5, data.get(playerId).getRawSkillLevel(SkillType.FARMING));
+        assertEquals(data.get(playerId).getMaxEnergy(), data.get(playerId).getEnergy());
+        assertTrue(service.hasCompletedReady(playerId, target.absoluteDay()));
+        assertTrue(barrier.readyResult(playerId, target.absoluteDay()).canAcknowledge(true));
+        assertTrue(service.acknowledgeReady(playerId, target.absoluteDay()));
+        assertTrue(barrier.acknowledge(playerId, target.absoluteDay()));
+        assertFalse(barrier.isLocked(playerId));
+    }
+
+    @Test
     void reconnectBeforeReadyPublicationCompletesOnceWithoutPublishingEarly() {
         UUID playerId = UUID.randomUUID();
         DailySettlementContext target = new DailySettlementContext(
@@ -607,6 +649,29 @@ class DailySettlementLifecycleContractTest {
                 target.valleyOnlinePlayerIds());
         assertFalse(target.allOnlinePlayerIds().contains(lateValleyLogin.id()));
         assertFalse(target.valleyOnlinePlayerIds().contains(lateValleyLogin.id()));
+    }
+
+    @Test
+    void readyPhaseDoesNotRelockAnAcknowledgedLateJoiner() {
+        UUID id = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(), Set.of());
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(226, List.of(id));
+        assertTrue(barrier.publishReady(id, DailySettlementBarrier.ReadyResult.barrierOnly(226)));
+        assertTrue(barrier.acknowledge(id, 226));
+        assertFalse(DailySettlementEvents.lockLateJoinForActiveDay(
+                target, barrier, id, DailySettlementPhase.READY));
+        assertFalse(barrier.isLocked(id));
+    }
+
+    @Test
+    void reconnectWorldReadyRequiresBothWorldCommitAndPublishedPlayerResult() {
+        var ready = DailySettlementBarrier.ReadyResult.barrierOnly(226);
+        assertFalse(DailySettlementEvents.hasPublishedWorldReady(DailySettlementPhase.COMMIT, ready));
+        assertFalse(DailySettlementEvents.hasPublishedWorldReady(DailySettlementPhase.READY, null));
+        assertTrue(DailySettlementEvents.hasPublishedWorldReady(DailySettlementPhase.READY, ready));
+        assertTrue(DailySettlementEvents.hasPublishedWorldReady(DailySettlementPhase.IDLE, ready));
     }
 
     @Test
@@ -962,6 +1027,28 @@ class DailySettlementLifecycleContractTest {
                 "src/main/java/com/stardew/craft/time/settlement/DailySettlementServices.java");
         assertTrue(invocationNames(services.method("getForPlayer", 1))
                 .contains("restorePlayerBarrier"));
+    }
+
+    @Test
+    void reconnectDuringWorldWorkRecoversPreparedPayloadWithoutFinalizing() {
+        UUID playerId = UUID.randomUUID();
+        DailySettlementContext target = new DailySettlementContext(
+                226, 3, 0, 2, 1560, false, List.of(playerId), Set.of());
+        Map<UUID, PlayerStardewData> data = new HashMap<>();
+        data.put(playerId, unsettledPlayer(playerId));
+        RecordingSettlementBackend backend = new RecordingSettlementBackend(data);
+        backend.online = true;
+        PlayerDailySettlementService service = new PlayerDailySettlementService(
+                backend, new PlayerDailySettlementService.PlayerDataPendingStore(data::get, () -> {}));
+        DailySettlementBarrier barrier = new DailySettlementBarrier();
+        barrier.lockAll(226, List.of(playerId));
+        service.settlePlayer(target, playerId);
+        var prepared = service.readyResult(playerId, 226);
+        assertSame(prepared, DailySettlementEvents.resumePlayerSettlement(
+                service, barrier, playerId, true).orElse(null));
+        assertFalse(service.hasCompletedReady(playerId, 226), "login must leave cleanup to COMMIT");
+        assertNull(barrier.readyResult(playerId, 226), "login must not publish the barrier early");
+        assertEquals(1, backend.settlementCalls);
     }
 
     @Test
@@ -1324,8 +1411,8 @@ class DailySettlementLifecycleContractTest {
         assertTrue(body.lastIndexOf("ready.payload()")
                         < body.lastIndexOf(worldReady),
                 "live-service recovery must send the retained result before WORLD_READY");
-        assertTrue(body.contains("!services.coordinator().isActive()"),
-                "an active coordinator must retain ownership until global settlement completes");
+        assertTrue(body.contains("hasPublishedWorldReady"),
+                "reconnect must also restore WORLD_READY during budgeted READY delivery");
     }
 
     @Test

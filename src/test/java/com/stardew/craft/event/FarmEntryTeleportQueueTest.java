@@ -17,6 +17,18 @@ class FarmEntryTeleportQueueTest {
     private static final BlockPos TARGET = new BlockPos(160, 70, -80);
 
     @Test
+    void permanentlyColdChunkExpiresWithoutLeakingItsTicket() {
+        RecordingBackend backend = new RecordingBackend();
+        var queue = new FarmEntryTeleportQueue<TestLevel, TestPlayer>(backend, 8);
+        TestPlayer player = new TestPlayer();
+        queue.enqueue(player.id, new TestLevel("valley"), player, TARGET);
+        for (int i = 0; i < 201; i++) queue.tick();
+        assertEquals(0, queue.pendingCount());
+        assertEquals(List.of(new ChunkPos(TARGET)), backend.released);
+        assertEquals(List.of(), backend.teleported);
+    }
+
+    @Test
     void waitsForCenterChunkWithoutSynchronouslyLoadingOuterChunks() {
         RecordingBackend backend = new RecordingBackend();
         FarmEntryTeleportQueue<TestLevel, TestPlayer> queue =

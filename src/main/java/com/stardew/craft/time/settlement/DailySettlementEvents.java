@@ -129,7 +129,7 @@ public final class DailySettlementEvents {
                 PacketDistributor.sendToPlayer(
                         player, new OvernightBarrierPayload(absoluteDay, true));
                 PacketDistributor.sendToPlayer(player, recovered.payload());
-                if (!services.coordinator().isActive()) {
+                if (hasPublishedWorldReady(services.coordinator().phase(), recovered)) {
                     PacketDistributor.sendToPlayer(
                             player, new OvernightWorldReadyPayload(absoluteDay));
                 }
@@ -144,7 +144,10 @@ public final class DailySettlementEvents {
             }
             return;
         }
-        boolean coordinatorOwns = services.coordinator().context()
+        int retainedDay = services.barrier().lockedDay(player.getUUID());
+        boolean published = hasPublishedWorldReady(services.coordinator().phase(),
+                services.barrier().readyResult(player.getUUID(), retainedDay));
+        boolean coordinatorOwns = !published && services.coordinator().context()
                 .map(context -> context.playerIds().contains(player.getUUID()))
                 .orElse(false);
         Optional<DailySettlementBarrier.ReadyResult> recovered = resumePlayerSettlement(
@@ -153,7 +156,8 @@ public final class DailySettlementEvents {
             DailySettlementServices.Services activeServices = services;
             activeServices.coordinator().context().ifPresent(active ->
                     lockLateJoinForActiveDay(
-                            active, activeServices.barrier(), player.getUUID()));
+                            active, activeServices.barrier(), player.getUUID(),
+                            activeServices.coordinator().phase()));
         }
         services.accessGuard().reconnectAnchor(player);
         int absoluteDay = services.barrier().lockedDay(player.getUUID());
@@ -164,6 +168,10 @@ public final class DailySettlementEvents {
                 player, new OvernightBarrierPayload(absoluteDay, true));
         DailySettlementBarrier.ReadyResult ready =
                 services.barrier().readyResult(player.getUUID(), absoluteDay);
+        boolean worldReady = hasPublishedWorldReady(services.coordinator().phase(), ready);
+        if (ready == null) {
+            ready = recovered.orElse(null);
+        }
         if (ready != null) {
             StardewCraft.LOGGER.info(
                     "[OVERNIGHT_SERVER] Recovered settlement on login player={} day={} personal={} shipped={} levels={}",
@@ -172,7 +180,7 @@ public final class DailySettlementEvents {
                     ready.payload().shippedItems().size(),
                     ready.payload().levelUps().size());
             PacketDistributor.sendToPlayer(player, ready.payload());
-            if (!services.coordinator().isActive()) {
+            if (worldReady) {
                 PacketDistributor.sendToPlayer(
                         player, new OvernightWorldReadyPayload(absoluteDay));
             }
@@ -200,7 +208,7 @@ public final class DailySettlementEvents {
         }
         services.coordinator().context().ifPresent(active -> {
             if (!lockLateJoinForActiveDay(
-                    active, services.barrier(), player.getUUID())) {
+                    active, services.barrier(), player.getUUID(), services.coordinator().phase())) {
                 return;
             }
             services.accessGuard().reconnectAnchor(player);
@@ -217,7 +225,7 @@ public final class DailySettlementEvents {
         }
         services.coordinator().context().ifPresent(active -> {
             if (!lockLateJoinForActiveDay(
-                    active, services.barrier(), player.getUUID())) {
+                    active, services.barrier(), player.getUUID(), services.coordinator().phase())) {
                 return;
             }
             services.accessGuard().reconnectAnchor(player);
@@ -230,6 +238,23 @@ public final class DailySettlementEvents {
             com.stardew.craft.farm.OfflineFarmCatchUp.catchUp(
                     stardewLevel, player.getUUID());
         }
+    }
+
+    static boolean lockLateJoinForActiveDay(
+            DailySettlementContext context,
+            DailySettlementBarrier barrier,
+            UUID playerId,
+            DailySettlementPhase phase) {
+        // World mutations have finished. New arrivals and successful ACKs must
+        // not create fresh locks while the publication cursor is draining.
+        return phase != DailySettlementPhase.READY && phase != DailySettlementPhase.IDLE
+                && lockLateJoinForActiveDay(context, barrier, playerId);
+    }
+
+    static boolean hasPublishedWorldReady(
+            DailySettlementPhase phase, DailySettlementBarrier.ReadyResult ready) {
+        return ready != null
+                && (phase == DailySettlementPhase.READY || phase == DailySettlementPhase.IDLE);
     }
 
     static boolean lockLateJoinForActiveDay(
@@ -286,7 +311,9 @@ public final class DailySettlementEvents {
             UUID playerId,
             boolean coordinatorOwns) {
         if (coordinatorOwns) {
-            return Optional.empty();
+            // Resend a prepared payload to the new connection, but leave cleanup
+            // and barrier publication to the coordinator's remaining work.
+            return Optional.ofNullable(players.readyResult(playerId, barrier.lockedDay(playerId)));
         }
         return players.onLogin(playerId, barrier);
     }

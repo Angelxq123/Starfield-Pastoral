@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
@@ -24,19 +23,18 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 主世界巫师塔结构后处理：
  * 1. 玩家首次接近时，一次性将结构周围暴露泥土转为草方块
  * 2. 在入口放置交互实体（传送门触发器）
  *
- * 所有操作在 PlayerTickEvent 中完成（而非 ChunkLoad），
- * 确保所有相关区块都已加载，避免级联加载导致卡死。
+ * 玩家事件只去重排队；服务端每 tick 按时间和方块数预算扫描已加载区块。
  */
 @EventBusSubscriber(modid = StardewCraft.MODID)
 @SuppressWarnings("null")
@@ -51,10 +49,9 @@ public final class WizardTowerStructureHandler {
     private static final String MARKER_TAG = "sdv_portal_marker:wizard_tower_overworld";
     private static final String TARGET_TAG = "sdv_portal_target:wizard_tower_overworld_enter";
 
-    /** 已完成地形融合的结构（按包围盒中心 key），避免重复处理 */
-    private static final Set<Long> processedTerrainKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    /** 已放置传送方块的结构 key */
-    private static final Set<Long> portalPlacedKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<Long> portalPlacedKeys = new java.util.HashSet<>();
+    private static final Map<Long, TowerWork> pending = new java.util.HashMap<>();
+    private static final java.util.ArrayDeque<Long> order = new java.util.ArrayDeque<>();
 
     // 每 100 tick（~5 秒）检测一次
     private static final int CHECK_INTERVAL = 100;
@@ -67,7 +64,8 @@ public final class WizardTowerStructureHandler {
      */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        processedTerrainKeys.clear();
+        pending.clear();
+        order.clear();
         portalPlacedKeys.clear();
     }
 
@@ -85,100 +83,84 @@ public final class WizardTowerStructureHandler {
 
         BoundingBox bb = start.getBoundingBox();
 
-        // ── 地形融合（仅首次） ──
-        long terrainKey = packBBKey(bb);
-        if (processedTerrainKeys.add(terrainKey)) {
-            convertExposedDirtToGrass(level, bb);
+        long key = packBBKey(bb);
+        if (portalPlacedKeys.contains(key)) return;
+        TowerWork work = pending.get(key);
+        if (work == null) {
+            work = new TowerWork(level, bb);
+            pending.put(key, work);
+            order.addLast(key);
         }
-
-        // ── 传送方块放置（仅一次） ──
-        long portalKey = packBBKey(bb);
-        if (portalPlacedKeys.contains(portalKey)) return;
-
-        // 检查是否已有传送方块（老存档恢复后）
-        if (hasPortalBlockInBounds(level, bb)) {
-            portalPlacedKeys.add(portalKey);
-            return;
-        }
-
-        BlockPos doorPos = findLowestDarkOakDoor(level, bb);
-        if (doorPos == null) {
-            StardewCraft.LOGGER.warn("[WIZARD_STRUCT] No dark oak door found in structure at {}", bb.getCenter());
-            return;
-        }
-
-        InteriorSubspaceManager.placePortalTriggerArea(
-            level, doorPos, PORTAL_HEIGHT, 1, 1,
-            MARKER_TAG, TARGET_TAG
-        );
-        portalPlacedKeys.add(portalKey);
-        StardewCraft.LOGGER.info("[WIZARD_STRUCT] Placed portal trigger blocks at door pos {}", doorPos);
+        work.lastSeen = level.getServer().getTickCount();
     }
 
-    // ====================== 地形融合 ======================
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        pending.clear(); order.clear(); portalPlacedKeys.clear();
+    }
 
-    /**
-     * 将结构区域（外扩 3 格）内暴露泥土转为草方块。
-     * 仅处理已加载区块内的方块，跳过未加载区域（不触发加载）。
-     */
-    private static void convertExposedDirtToGrass(ServerLevel level, BoundingBox bb) {
-        int converted = 0;
-        for (int x = bb.minX() - 3; x <= bb.maxX() + 3; x++) {
-            for (int z = bb.minZ() - 3; z <= bb.maxZ() + 3; z++) {
-                if (!level.isLoaded(new BlockPos(x, 0, z))) continue;
-                for (int y = bb.maxY(); y >= bb.minY() - 2; y--) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (state.is(Blocks.DIRT)) {
-                        BlockState above = level.getBlockState(pos.above());
-                        if (above.isAir() || !above.canOcclude()) {
-                            level.setBlock(pos, Blocks.GRASS_BLOCK.defaultBlockState(), 2);
-                            converted++;
-                        }
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        long started = System.nanoTime();
+        for (int reads = 0; reads < 1024 && !order.isEmpty()
+                && System.nanoTime() - started < 2_000_000L; reads++) {
+            long key = order.removeFirst();
+            TowerWork work = pending.get(key);
+            if (event.getServer().getTickCount() - work.lastSeen > 200) {
+                pending.remove(key);
+                continue;
+            }
+            try {
+                work.scan.step(pos -> work.level.getChunkSource()
+                        .getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null, work::visit);
+                if (work.scan.isComplete()) {
+                    BlockPos target = work.portal != null ? work.portal : work.door;
+                    if (target == null) {
+                        pending.remove(key);
+                        StardewCraft.LOGGER.warn("[WIZARD_STRUCT] No entrance at {}", work.bounds.getCenter());
+                        continue;
+                    }
+                    if (work.level.getChunkSource().getChunkNow(target.getX() >> 4, target.getZ() >> 4) != null) {
+                        if (work.portal == null) InteriorSubspaceManager.placePortalTriggerArea(
+                                work.level, target, PORTAL_HEIGHT, 1, 1, MARKER_TAG, TARGET_TAG);
+                        pending.remove(key);
+                        portalPlacedKeys.add(key);
+                        continue;
                     }
                 }
+                order.addLast(key);
+            } catch (RuntimeException failure) {
+                pending.remove(key);
+                StardewCraft.LOGGER.error("[WIZARD_STRUCT] Deferred entrance scan failed", failure);
             }
-        }
-        if (converted > 0) {
-            StardewCraft.LOGGER.info("[WIZARD_STRUCT] Converted {} exposed dirt → grass around structure", converted);
         }
     }
 
-    // ====================== 工具方法 ======================
-
-    private static boolean hasPortalBlockInBounds(ServerLevel level, BoundingBox bb) {
-        for (int x = bb.minX(); x <= bb.maxX(); x++) {
-            for (int z = bb.minZ(); z <= bb.maxZ(); z++) {
-                for (int y = bb.minY(); y <= bb.maxY(); y++) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    if (level.getBlockState(pos).is(ModBlocks.PORTAL_TRIGGER.get())) {
-                        return true;
-                    }
-                }
-            }
+    private static final class TowerWork {
+        final ServerLevel level;
+        final BoundingBox bounds;
+        final LoadedColumnScan scan;
+        BlockPos portal, door;
+        int lastSeen;
+        TowerWork(ServerLevel level, BoundingBox bounds) {
+            this.level = level;
+            this.bounds = bounds;
+            scan = new LoadedColumnScan(bounds.minX() - 3, bounds.maxX() + 3,
+                    Math.max(level.getMinBuildHeight(), bounds.minY() - 2),
+                    Math.min(level.getMaxBuildHeight() - 2, bounds.maxY()),
+                    bounds.minZ() - 3, bounds.maxZ() + 3);
         }
-        return false;
-    }
-
-    private static BlockPos findLowestDarkOakDoor(ServerLevel level, BoundingBox bb) {
-        BlockPos lowestDoor = null;
-        int lowestY = Integer.MAX_VALUE;
-
-        for (int x = bb.minX(); x <= bb.maxX(); x++) {
-            for (int z = bb.minZ(); z <= bb.maxZ(); z++) {
-                for (int y = bb.minY(); y <= bb.maxY(); y++) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    BlockState state = level.getBlockState(pos);
-                    if (state.is(Blocks.DARK_OAK_DOOR)
-                        && state.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER
-                        && y < lowestY) {
-                        lowestY = y;
-                        lowestDoor = pos;
-                    }
-                }
+        void visit(BlockPos pos) {
+            BlockState state = level.getBlockState(pos);
+            if (state.is(Blocks.DIRT)) {
+                BlockState above = level.getBlockState(pos.above());
+                if (above.isAir() || !above.canOcclude()) level.setBlock(pos, Blocks.GRASS_BLOCK.defaultBlockState(), 2);
             }
+            if (!bounds.isInside(pos)) return;
+            if (state.is(ModBlocks.PORTAL_TRIGGER.get())) portal = pos;
+            if (state.is(Blocks.DARK_OAK_DOOR) && state.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER
+                    && (door == null || pos.getY() < door.getY())) door = pos;
         }
-        return lowestDoor;
     }
 
     private static StructureStart findNearbyWizardTower(ServerLevel level, BlockPos playerPos) {
@@ -186,7 +168,7 @@ public final class WizardTowerStructureHandler {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 ChunkPos cp = new ChunkPos(center.x + dx, center.z + dz);
-                ChunkAccess chunk = level.getChunk(cp.x, cp.z, ChunkStatus.STRUCTURE_STARTS, false);
+                ChunkAccess chunk = level.getChunkSource().getChunkNow(cp.x, cp.z);
                 if (chunk == null) continue;
                 Map<Structure, StructureStart> starts = chunk.getAllStarts();
                 for (Map.Entry<Structure, StructureStart> entry : starts.entrySet()) {

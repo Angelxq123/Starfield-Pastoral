@@ -17,7 +17,10 @@ public abstract class FarmFolioScreen extends Screen {
     public static final int INK = 0xFF623E2A,
             MUTED = 0xFF805D3C,
             LIGHT = 0xFFFFF0C7,
-            RED = 0xFF813B2B;
+            RED = 0xFF813B2B,
+            CANVAS_INK = 0xFFFFF0C7,
+            CANVAS_MUTED = 0xFFFFE4B3,
+            CANVAS_RED = 0xFFFFE4DC;
     protected final Screen parent;
     protected int x, y, w, h, mouseX, mouseY;
     private Component hover;

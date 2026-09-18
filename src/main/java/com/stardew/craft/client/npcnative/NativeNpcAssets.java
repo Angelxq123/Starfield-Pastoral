@@ -174,6 +174,8 @@ public final class NativeNpcAssets implements ResourceManagerReloadListener {
                 || !Double.isFinite(p.durationMax()) || !Float.isFinite(p.groundOffset())
                 || !(p.walkStride()>0 && p.walkStride()<4))
             throw new IllegalArgumentException("Invalid motion profile");
+        if (p.gait()!=null && (!Double.isFinite(p.gait().previewSpeed()) || p.gait().previewSpeed()<=0))
+            throw new IllegalArgumentException("Invalid authored walk speed");
         var look=p.lookLimits();
         if(look!=null && !(Float.isFinite(look.yaw()) && Float.isFinite(look.pitch())
                 && look.yaw()>0 && look.yaw()<=48 && look.pitch()>0 && look.pitch()<=18))

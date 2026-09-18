@@ -52,6 +52,12 @@ public final class MonsterExtraLoot {
         if (tags.contains("sd_mob_ghost") && random.nextDouble() < .095 && player != null
                 && SpecialOrderManager.hasActiveIncompleteOrder(player.serverLevel(), "Wizard")
                 && !SpecialOrderManager.hasSpecialDropFlag(player, "ectoplasmDrop")) result.add(new ItemStack(ModItems.ECTOPLASM.get()));
+        if (monster instanceof com.stardew.craft.entity.monster.MineRockGolemEntity golem && golem.isFarmGolem()) {
+            var time = StardewTimeManager.get();
+            double luck = player == null ? 0 : ArtifactDropService.averageDailyLuck(player);
+            for (var drop : FarmGolemRules.extraDrops(golem.isIridium(), time.getCurrentSeason(), time.getCurrentDay(), luck, random))
+                add(result, drop.id(), drop.count());
+        }
         String held = monster.getPersistentData().getString("StardewMonsterHeldLoot");
         if (!held.isBlank()) add(result, held, 1);
         return result;

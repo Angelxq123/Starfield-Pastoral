@@ -63,6 +63,12 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
                 discardMoveDocument(player, stack);
                 return;
             }
+            BuildingWorldData moveData = BuildingWorldData.peek(player.server);
+            if (isMove(stack) && draft(stack).getBoolean("LiftedMove") && moveData != null
+                    && moveData.moveLift(draft(stack).getUUID("MoveBuilding")) == null) {
+                discardMoveDocument(player, stack);
+                return;
+            }
             if (!selected && player.getOffhandItem() != stack) return;
             var before = draft(stack); var tag = before.copy();
             if (!tag.contains("DraftFacing")) tag.putString("DraftFacing",player.getDirection().getOpposite().getName());
@@ -111,7 +117,7 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         var stack=player.getItemInHand(hand);
         if (!(stack.getItem() instanceof BuildingBlueprintItem)) return;
         var drafts=BuildingDrafts.get(player.server);drafts.apply(stack);
-        if(endMove && isMove(stack)) { drafts.consume(stack);stack.shrink(1); }
+        if(endMove && isMove(stack)) { BuildingMoveSession.restoreHeld(player,stack);drafts.consume(stack);stack.shrink(1); }
         else {
             var tag=draft(stack);tag.remove("DraftAnchor");tag.remove("DraftDimension");
             stack.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));drafts.write(stack);
@@ -129,7 +135,7 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
             var local = UtilityBuildings.moveBounds(record,BlockPos.ZERO,Direction.SOUTH);
             tag.putLong("MoveMin",local.min().asLong());tag.putLong("MoveMax",local.maxExclusive().asLong());
         }
-        tag.putBoolean("MoveSelf", record.mode() == BuildingRecord.Mode.SELF_BUILT); tag.putInt("MoveTier", record.tier()); tag.putString("MoveFacing", record.facing().getName()); stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        tag.putBoolean("MoveSelf", record.mode() == BuildingRecord.Mode.SELF_BUILT); tag.putBoolean("LiftedMove",true); tag.putInt("MoveTier", record.tier()); tag.putString("MoveFacing", record.facing().getName()); stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
     public static BuildingRecord moving(net.minecraft.server.level.ServerLevel level, ItemStack stack) {
         var tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
@@ -139,6 +145,7 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
     }
     public static boolean isMove(ItemStack stack) { return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().hasUUID("MoveBuilding"); }
     private static void discardMoveDocument(ServerPlayer player, ItemStack stack) {
+        BuildingMoveSession.restoreHeld(player,stack);
         BuildingDrafts.get(player.server).consume(stack);
         stack.shrink(1);
         player.getInventory().setChanged();
@@ -218,8 +225,16 @@ public final class BuildingBlueprintItem extends com.stardew.craft.item.SimpleSt
         } else placed = BuildingPlacementService.placePrefab(serverPlayer, anchor, facing(stack), permit(stack), family);
         if (placed) {
             if (movedId != null) consumeMoveDocuments(serverPlayer, movedId);
-            else { BuildingDrafts.get(serverPlayer.server).consume(stack); stack.shrink(1); player.getInventory().setChanged(); }
+            else consumePlacedBlueprint(serverPlayer, stack);
         }
         return placed ? InteractionResult.CONSUME : InteractionResult.FAIL;
+    }
+
+    /** Construction has started server-side; consume the document in every game mode. */
+    private static void consumePlacedBlueprint(ServerPlayer player, ItemStack stack) {
+        BuildingDrafts.get(player.server).consume(stack);
+        stack.shrink(1);
+        player.getInventory().setChanged();
+        player.containerMenu.broadcastChanges();
     }
 }

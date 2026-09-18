@@ -6,6 +6,8 @@ import com.stardew.craft.block.decor.FarmTwigBlock;
 import com.stardew.craft.enchantment.StardewEnchantments;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.player.PlayerDataManager;
+import com.stardew.craft.player.ForagingProfessionRules;
+import com.stardew.craft.player.ProfessionType;
 import com.stardew.craft.player.SkillType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -40,6 +42,21 @@ public final class FarmTwigGameTests {
             try { action.run(); }
             finally { if (previous == null) levels.remove(key); else levels.put(key, previous); }
         } catch (ReflectiveOperationException e) { throw new IllegalStateException(e); }
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_farm_twig", template = "ring_utilities")
+    public static void gathererMatchesSourceGroundForageChance(GameTestHelper h) {
+        var player = FakePlayerFactory.get(h.getLevel(), new GameProfile(UUID.randomUUID(), "Gatherer rules"));
+        var data = PlayerDataManager.getPlayerData(player);
+        h.assertTrue(ForagingProfessionRules.applyGatherer(player, 3, 0.0D) == 3,
+                "A player without Gatherer received its bonus");
+        data.addProfession(ProfessionType.GATHERER);
+        h.assertTrue(ForagingProfessionRules.applyGatherer(player, 1, 0.199999D) == 2,
+                "Gatherer did not double a single ground forage");
+        h.assertTrue(ForagingProfessionRules.applyGatherer(player, 3, 0.20D) == 3,
+                "Gatherer accepted a roll outside its 20% chance");
+        player.discard();
+        h.succeed();
     }
 
     @GameTest(templateNamespace = "stardewcraft_farm_twig", template = "ring_utilities")

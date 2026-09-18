@@ -252,6 +252,7 @@ public class StardewTimeManager extends SavedData {
                 com.stardew.craft.festival.FestivalService.onTimeChanged(server);
                 com.stardew.craft.auction.AuctionService.onTimeChanged(server);
                 com.stardew.craft.mining.OrdinaryMineEncounters.performTenMinuteUpdate(server);
+                com.stardew.craft.farm.WildernessFarmMonsterService.performTenMinuteUpdate(server);
             }
         }
 
@@ -347,9 +348,10 @@ public class StardewTimeManager extends SavedData {
             if (stardewLevel != null) {
                 com.stardew.craft.festival.FestivalService.onNewDay(stardewLevel);
                 if (seasonChanged) {
-                    // 先恢复公共区域被砍的杂草，再刷新季节外观
+                    // 公共区域和已加载农场的杂草都切换到当前季节外观。
                     com.stardew.craft.farm.PublicAreaBlockTracker.get().restoreAll(stardewLevel);
-                    com.stardew.craft.block.nature.WildWeedsBlock.refreshLoadedWeedsForSeason(stardewLevel, currentSeason);
+                    com.stardew.craft.block.nature.WildWeedsBlock
+                            .refreshLoadedPublicWeedsForSeason(stardewLevel, currentSeason);
                     com.stardew.craft.manager.JunimoGreenhouseRuneManager.get(stardewLevel).removeExpiredRunes(stardewLevel, currentSeason);
                 }
 
@@ -368,6 +370,9 @@ public class StardewTimeManager extends SavedData {
                     runWorldDailyStep("tea_bushes", () -> com.stardew.craft.manager.TeaBushManager.get(stardewLevel).growDaily(stardewLevel));
                     runWorldDailyStep("wild_tree_seeds", () -> com.stardew.craft.manager.WildTreeSeedManager.get(stardewLevel).onNewDay(stardewLevel, absDay));
                     runWorldDailyStep("farm_debris", () -> com.stardew.craft.farm.FarmDebrisDailyService.onNewDay(stardewLevel));
+                    runWorldDailyStep("farm_ore", () -> com.stardew.craft.farm.FarmOreDailyService.onNewDay(stardewLevel));
+                    runWorldDailyStep("farm_hardwood_sites", () -> com.stardew.craft.farm.ForestFarmDailyService.onNewDay(stardewLevel));
+                    runWorldDailyStep("beach_farm_spawns", () -> com.stardew.craft.farm.BeachFarmDailyService.onNewDay(stardewLevel));
                     runWorldDailyStep("sprinklers", () -> com.stardew.craft.manager.SprinklerManager.get(stardewLevel).waterDaily(stardewLevel));
                     runWorldDailyStep("pasture_grass", () -> com.stardew.craft.manager.PastureGrassGrowthManager.get(stardewLevel).growDaily(stardewLevel));
                     runWorldDailyStep("livestock", () -> com.stardew.craft.animal.runtime.LivestockService.onNewDay(stardewLevel, timeWentToSleepMinutes));

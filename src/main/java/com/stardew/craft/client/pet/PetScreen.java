@@ -38,7 +38,7 @@ public final class PetScreen extends FarmFolioScreen implements com.stardew.craf
     public static void receive(CompoundTag offer) {
         var mc = Minecraft.getInstance();
         if (offer.hasUUID("Reply") && (!(mc.screen instanceof PetScreen previous) || !previous.pending || !previous.offer.getUUID("Nonce").equals(offer.getUUID("Reply")))) return;
-        if (offer.getString("Kind").equals("bowl_done")) { mc.setScreen(null); return; }
+        if (offer.getString("Kind").equals("bowl_done") || offer.getString("Kind").equals("adopt_done")) { mc.setScreen(null); return; }
         if (offer.getString("Kind").equals("initial_done")) { deferredInitial = null; mc.setScreen(null); return; }
         if (offer.getString("Kind").equals("initial") && !offer.hasUUID("Reply") && mc.screen != null) { deferredInitial = offer; return; }
         if (offer.getString("Kind").equals("initial")) deferredInitial = null;
@@ -140,16 +140,16 @@ public final class PetScreen extends FarmFolioScreen implements com.stardew.craf
     }
     private void paintBowl(GuiGraphics g) {
         item(g, bowlItem(), x + 54, y + 78, 5);
-        if (confirmingBowlRemoval) { paragraph(g, tr("bowl_demolish_confirm"), x + 208, y + 64, w - 228, y + h - 64, INK); return; }
+        if (confirmingBowlRemoval) { paragraph(g, tr("bowl_demolish_confirm"), x + 208, y + 64, w - 228, y + h - 64, CANVAS_INK); return; }
         var pos = BlockPos.of(offer.getLong("BowlPosition"));
         var bowl = bowls.stream().filter(row -> row.getLong("Position") == pos.asLong()).findFirst().orElse(new CompoundTag());
-        label(g, tr(bowl.getBoolean("Full") ? "bowl_watered" : "bowl_empty"), x + 208, y + 58, w - 228, INK);
+        label(g, tr(bowl.getBoolean("Full") ? "bowl_watered" : "bowl_empty"), x + 208, y + 58, w - 228, CANVAS_INK);
         var occupant = bowl.hasUUID("Pet") ? pets.stream().filter(row -> row.getUUID("Id").equals(bowl.getUUID("Pet"))).findFirst().orElse(null) : null;
         if (occupant != null) {
             image(g, icon(PetVariant.fromSaved(occupant.getString("Variant"))), 16, 16, x + 208, y + 90, 32, 32, false);
-            label(g, Component.literal(occupant.getString("Name")), x + 250, y + 100, w - 270, INK);
-        } else label(g, tr("bowl_unassigned"), x + 208, y + 100, w - 228, MUTED);
-        label(g, tr("bowl_position", pos.getX(), pos.getY(), pos.getZ()), x + 208, y + 140, w - 228, MUTED);
+            label(g, Component.literal(occupant.getString("Name")), x + 250, y + 100, w - 270, CANVAS_INK);
+        } else label(g, tr("bowl_unassigned"), x + 208, y + 100, w - 228, CANVAS_MUTED);
+        label(g, tr("bowl_position", pos.getX(), pos.getY(), pos.getZ()), x + 208, y + 140, w - 228, CANVAS_MUTED);
     }
     private void adoption() {
         int width = (w - 44) / 4;
@@ -158,8 +158,7 @@ public final class PetScreen extends FarmFolioScreen implements com.stardew.craf
         for (int i = 0; i < window.entries().size(); i++) {
             var variant = window.entries().get(i);
             int px = x + 16 + i % 4 * (width + 4), py = y + 66 + i / 4 * 72;
-            boolean allowed = !pending && (initial() || offer.getBoolean("Unlocked") && offer.getInt("Money") >= variant.price()
-                    && bowls.stream().anyMatch(b -> !b.hasUUID("Pet")));
+            boolean allowed = !pending && (initial() || offer.getBoolean("Unlocked") && offer.getInt("Money") >= variant.price());
             var tile = tile(variant.label(), px, py, width, 68,
                     () -> minecraft.setScreen(new FarmRenameScreen(this, tr("name"), "", 24, tr("name_required"), name -> send(initial() ? "initial" : "adopt", PetActionPayload.selection(variant.id(), name), BlockPos.ZERO))), (g, b) -> {
                         box(g, allowed ? "packet" : "tab", px, py, width, 68);
@@ -168,7 +167,7 @@ public final class PetScreen extends FarmFolioScreen implements com.stardew.craf
                         if (!initial()) money(g, variant.price(), px + 8, py + 43, offer.getInt("Money") >= variant.price() ? INK : RED);
                     });
             tile.active = allowed;
-            if (!allowed && !initial()) disabledReason(tile, tr(!offer.getBoolean("Unlocked") ? "locked" : bowls.stream().noneMatch(b -> !b.hasUUID("Pet")) ? "need_bowl" : "money_required"));
+            if (!allowed && !initial()) disabledReason(tile, tr(!offer.getBoolean("Unlocked") ? "locked" : "money_required"));
         }
         if (pages > 1) {
             arrow(false, x + w - 84, y + h - 36, page > 0 && !pending, () -> { page--; init(); });
@@ -177,24 +176,24 @@ public final class PetScreen extends FarmFolioScreen implements com.stardew.craf
     }
     @Override protected void paint(GuiGraphics g) {
         if (offer.getString("Kind").equals("bowl")) { paintBowl(g); return; }
-        if (initial()) { label(g, tr("initial_hint"), x + 18, y + 36, w - 36, INK); return; }
-        if (offer.getString("Kind").equals("bowls")) { paragraph(g, tr("bowl_cost"), x + 20, y + 42, w - 40, y + 80, MUTED); return; }
+        if (initial()) { label(g, tr("initial_hint"), x + 18, y + 36, w - 36, CANVAS_INK); return; }
+        if (offer.getString("Kind").equals("bowls")) { paragraph(g, tr("bowl_cost"), x + 20, y + 42, w - 40, y + 80, CANVAS_MUTED); return; }
         if (offer.getString("Kind").equals("adopt")) {
-            label(g, tr(!offer.getBoolean("Unlocked") ? "locked" : bowls.stream().noneMatch(b -> !b.hasUUID("Pet")) ? "need_bowl" : "adoption_hint"), x + 18, y + 36, w - 36, INK); return;
+            label(g, tr(!offer.getBoolean("Unlocked") ? "locked" : bowls.stream().noneMatch(b -> !b.hasUUID("Pet")) ? "adoption_no_bowl_hint" : "adoption_hint"), x + 18, y + 36, w - 36, CANVAS_INK); return;
         }
         var pet = pet();
-        if (pet == null) { paragraph(g, tr("no_pets"), x + 210, y + 50, w - 228, y + 200, MUTED); return; }
+        if (pet == null) { paragraph(g, tr("no_pets"), x + 210, y + 50, w - 228, y + 200, CANVAS_MUTED); return; }
         if (offer.getString("Kind").equals("remove")) {
             PetVariant.find(pet.getString("Variant")).ifPresent(v -> image(g, icon(v), 16, 16, x + 26, y + 72, 80, 80, false));
-            paragraph(g, tr("remove_question", pet.getString("Name")), x + 130, y + 66, w - 152, y + h - 60, INK); return;
+            paragraph(g, tr("remove_question", pet.getString("Name")), x + 130, y + 66, w - 152, y + h - 60, CANVAS_INK); return;
         }
-        label(g, Component.literal(pet.getString("Name")), x + 212, y + 48, w - 232, INK);
-        if (!pet.getBoolean("Available")) { paragraph(g, tr("unavailable"), x + 212, y + 82, w - 232, y + 190, MUTED); return; }
-        if (choosingBowl) { label(g, tr("choose_bowl"), x + 212, y + 66, w - 232, MUTED); return; }
-        label(g, tr("friendship", pet.getInt("Friendship")), x + 212, y + 82, w - 232, INK);
-        label(g, tr(pet.getBoolean("Petted") ? "petted" : "not_petted"), x + 212, y + 112, w - 232, MUTED);
-        if (pet.contains("Bowl")) { var pos = BlockPos.of(pet.getLong("Bowl")); label(g, tr("bowl_position", pos.getX(), pos.getY(), pos.getZ()), x + 212, y + 142, w - 232, MUTED); }
-        else label(g, tr("no_bowl"), x + 212, y + 142, w - 232, RED);
-        if (pet.contains("Position")) { var pos = BlockPos.of(pet.getLong("Position")); label(g, tr("position", pos.getX(), pos.getY(), pos.getZ()), x + 212, y + 170, w - 232, MUTED); }
+        label(g, Component.literal(pet.getString("Name")), x + 212, y + 48, w - 232, CANVAS_INK);
+        if (!pet.getBoolean("Available")) { paragraph(g, tr("unavailable"), x + 212, y + 82, w - 232, y + 190, CANVAS_MUTED); return; }
+        if (choosingBowl) { label(g, tr("choose_bowl"), x + 212, y + 66, w - 232, CANVAS_MUTED); return; }
+        label(g, tr("friendship", pet.getInt("Friendship")), x + 212, y + 82, w - 232, CANVAS_INK);
+        label(g, tr(pet.getBoolean("Petted") ? "petted" : "not_petted"), x + 212, y + 112, w - 232, CANVAS_MUTED);
+        if (pet.contains("Bowl")) { var pos = BlockPos.of(pet.getLong("Bowl")); label(g, tr("bowl_position", pos.getX(), pos.getY(), pos.getZ()), x + 212, y + 142, w - 232, CANVAS_MUTED); }
+        else label(g, tr("no_bowl"), x + 212, y + 142, w - 232, CANVAS_RED);
+        if (pet.contains("Position")) { var pos = BlockPos.of(pet.getLong("Position")); label(g, tr("position", pos.getX(), pos.getY(), pos.getZ()), x + 212, y + 170, w - 232, CANVAS_MUTED); }
     }
 }

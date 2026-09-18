@@ -80,12 +80,54 @@ public record StardewFarmLayout(
             BlockPos teleportOffset,
             float yaw,
             BlockPos exitMin,
-            BlockPos exitMax
+            BlockPos exitMax,
+            BlockPos barrierMin,
+            BlockPos barrierMax
     ) {
+        /**
+         * Source-compatible constructor for older addons and layout data. The
+         * fallback keeps the historical one-block-deep wall behind the portal.
+         */
+        public Entry(
+                BlockPos teleportOffset,
+                float yaw,
+                BlockPos exitMin,
+                BlockPos exitMax
+        ) {
+            this(
+                    teleportOffset,
+                    yaw,
+                    exitMin,
+                    exitMax,
+                    defaultBarrierPos(
+                            teleportOffset, exitMin, exitMax, exitMin),
+                    defaultBarrierPos(
+                            teleportOffset, exitMin, exitMax, exitMax));
+        }
+
         public Entry {
             teleportOffset = immutable(teleportOffset, "teleportOffset");
             exitMin = immutable(exitMin, "exitMin");
             exitMax = immutable(exitMax, "exitMax");
+            barrierMin = immutable(barrierMin, "barrierMin");
+            barrierMax = immutable(barrierMax, "barrierMax");
+        }
+
+        private static BlockPos defaultBarrierPos(
+                BlockPos teleportOffset,
+                BlockPos exitMin,
+                BlockPos exitMax,
+                BlockPos value
+        ) {
+            double centerX = (exitMin.getX() + exitMax.getX()) / 2.0;
+            double centerZ = (exitMin.getZ() + exitMax.getZ()) / 2.0;
+            double deltaX = centerX - teleportOffset.getX();
+            double deltaZ = centerZ - teleportOffset.getZ();
+            int offsetX = Math.abs(deltaX) >= Math.abs(deltaZ)
+                    ? Integer.signum((int) Math.signum(deltaX)) : 0;
+            int offsetZ = Math.abs(deltaZ) > Math.abs(deltaX)
+                    ? Integer.signum((int) Math.signum(deltaZ)) : 0;
+            return value.offset(offsetX, 0, offsetZ);
         }
     }
 

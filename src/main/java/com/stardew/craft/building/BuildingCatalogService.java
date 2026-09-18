@@ -34,6 +34,12 @@ public final class BuildingCatalogService {
             return false;
         }
         long revision = BuildingBlueprintRegistry.revision();
+        var farm = com.stardew.craft.farm.FarmInstanceRegistry.get(player.server)
+                .getFarmForPlayer(player.getUUID());
+        boolean robinBusy = builder.equals(com.stardew.craft.api.v1.building.StardewBuildingBuilders.ROBIN)
+                && farm != null
+                && com.stardew.craft.building.runtime.BuildingWorldData.get(player.server)
+                        .hasActiveConstruction(farm.getInstanceId());
         LinkedHashSet<ResourceLocation> ids = new LinkedHashSet<>();
         List<CarpenterBlueprint> clientBlueprints = available.stream()
                 .map(blueprint -> {
@@ -55,7 +61,8 @@ public final class BuildingCatalogService {
                         builder.toString(),
                         PlayerStardewDataAPI.getMoney(player),
                         clientBlueprints,
-                        revision));
+                        revision,
+                        robinBusy));
         return true;
     }
 

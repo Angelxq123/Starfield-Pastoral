@@ -13,8 +13,13 @@ public final class BuildingMovePreview {
     private BuildingMovePreview(){}
     public static void clear(){sent.clear();}
     public static void send(ServerPlayer player,BuildingRecord record){
+        var lift=BuildingWorldData.get(player.server).moveLift(record.id());
+        var tag=lift==null?capture(player,record):lift.preview().copy();
+        if(!tag.equals(sent.get(player.getUUID()))){sent.put(player.getUUID(),tag.copy());PacketDistributor.sendToPlayer(player,new com.stardew.craft.network.payload.BuildingTemplatePreviewPayload(tag));}
+    }
+    public static CompoundTag capture(ServerPlayer player,BuildingRecord record){
         var level=player.serverLevel(); var bounds=BuildingTransfer.contentBounds(record);
-        if(!level.hasChunksAt(bounds.min(),bounds.maxInclusive()))return;
+        if(!level.hasChunksAt(bounds.min(),bounds.maxInclusive()))throw new IllegalStateException("Move preview source is not loaded");
         var inverse=PrefabDefinitions.inverse(PrefabDefinitions.rotation(record.facing()));
         boolean centered=record.mode()==BuildingRecord.Mode.SELF_BUILT;
         var tag=new CompoundTag();tag.putString("Family",record.family().toString());tag.putInt("Tier",record.tier());tag.putUUID("Moving",record.id());tag.putBoolean("Centered",centered);
@@ -43,6 +48,6 @@ public final class BuildingMovePreview {
                 BlockPos.of(tag.getLong("ManagerRelative")),net.minecraft.core.Direction.SOUTH,reservation,BuildingRecord.Phase.READY,record.tier(),record.residence(),record.revision()+1,record.displayName());
         tag.put("Decorations",BuildingTransferExtras.capture(level,record,canonical).getList("Decorations",10));
         tag.put("Blocks",blocks);
-        if(!tag.equals(sent.get(player.getUUID()))){sent.put(player.getUUID(),tag.copy());PacketDistributor.sendToPlayer(player,new com.stardew.craft.network.payload.BuildingTemplatePreviewPayload(tag));}
+        return tag;
     }
 }

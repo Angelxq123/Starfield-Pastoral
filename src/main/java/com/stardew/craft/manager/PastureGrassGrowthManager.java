@@ -37,11 +37,11 @@ public class PastureGrassGrowthManager extends SavedData {
     public void growDaily(ServerLevel level) {
         int season = StardewTimeManager.get().getCurrentSeason();
         if (season == 3) {
-            cleanupWinterGrass(level);
             return;
         }
 
         List<FarmInstance> farms = activeFarms(level);
+        growExistingGrassForDay(level);
         for (FarmInstance farm : farms) {
             spawnDailyGrass(level, farm);
         }
@@ -64,7 +64,7 @@ public class PastureGrassGrowthManager extends SavedData {
     /** Farm.spawnWeeds(false), including its farm-only early-return roll. */
     private static void spawnDailyGrass(ServerLevel level, FarmInstance farm) {
         RandomSource random = level.getRandom();
-        int numberOfNewWeeds = random.nextInt(5) + 1;
+        int numberOfNewWeeds = rollDailyGrassAttempts(random);
         if (StardewTimeManager.get().getCurrentSeason() == 0
                 && StardewTimeManager.get().getCurrentDay() == 1) {
             numberOfNewWeeds *= 15;
@@ -91,10 +91,38 @@ public class PastureGrassGrowthManager extends SavedData {
                 }
 
                 if (place != null) {
-                    placeGrass(level, place, random.nextInt(2) + 1, random);
+                    placeGrass(level, farm, place, random.nextInt(2) + 1, random, 0.10D);
                 }
             }
         }
+    }
+
+    /** LocationData Farm_Standard: MinDailyWeeds=5, MaxDailyWeeds=11. */
+    private static int rollDailyGrassAttempts(RandomSource random) {
+        return random.nextInt(7) + 5;
+    }
+
+    /** Grass.dayUpdate: every non-winter partial grass tile gains 1-3 clumps. */
+    private static void growExistingGrassForDay(ServerLevel level) {
+        RandomSource random = level.getRandom();
+        for (BlockPos pos : collectNearbyPastureGrass(level)) {
+            if (!level.isLoaded(pos)) {
+                continue;
+            }
+            BlockState grass = level.getBlockState(pos);
+            if (!(grass.getBlock() instanceof PastureGrassBlock)) {
+                continue;
+            }
+            int clumps = grass.getValue(PastureGrassBlock.CLUMPS);
+            if (clumps < 4) {
+                level.setBlock(pos, grass.setValue(PastureGrassBlock.CLUMPS,
+                        growClumpCountForDay(clumps, random)), Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    private static int growClumpCountForDay(int clumps, RandomSource random) {
+        return clumps >= 4 ? clumps : Math.min(4, clumps + random.nextInt(3) + 1);
     }
 
     /** HandleGrassGrowth's fifteen one-shot random placements on spring 1. */
@@ -103,7 +131,7 @@ public class PastureGrassGrowthManager extends SavedData {
         for (int i = 0; i < 15; i++) {
             BlockPos place = findRandomGrassPlace(level, farm, random);
             if (place != null) {
-                placeGrass(level, place, 4, random);
+                placeGrass(level, farm, place, 4, random, 0.20D);
             }
         }
     }
@@ -161,8 +189,14 @@ public class PastureGrassGrowthManager extends SavedData {
         }
     }
 
-    private static void placeGrass(ServerLevel level, BlockPos pos, int clumps, RandomSource random) {
-        BlockState grass = ModBlocks.PASTURE_GRASS.get().defaultBlockState()
+    private static void placeGrass(ServerLevel level, FarmInstance farm, BlockPos pos,
+            int clumps, RandomSource random, double meadowlandsBlueChance) {
+        boolean meadowlands = farm.getFarmLayoutId().equals(
+                com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+                        .builtinId(com.stardew.craft.farm.FarmType.MEADOWLANDS));
+        Block grassBlock = meadowlands && random.nextDouble() < meadowlandsBlueChance
+                ? ModBlocks.BLUE_PASTURE_GRASS.get() : ModBlocks.PASTURE_GRASS.get();
+        BlockState grass = grassBlock.defaultBlockState()
                 .setValue(PastureGrassBlock.VARIANT,
                         random.nextInt(PastureGrassBlock.VISUAL_VARIANT_COUNT))
                 .setValue(PastureGrassBlock.CLUMPS, clumps);
@@ -178,7 +212,8 @@ public class PastureGrassGrowthManager extends SavedData {
         int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
         int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
         com.stardew.craft.farm.FarmDebrisPlacementRules.Surface surface =
-                com.stardew.craft.farm.FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+                com.stardew.craft.farm.FarmDebrisPlacementRules.findBareFarmableSurface(
+                        level, farm, x, z);
         return surface == null ? null : surface.place();
     }
 
@@ -191,16 +226,8 @@ public class PastureGrassGrowthManager extends SavedData {
         FarmInstance farm = owner == null ? null : FarmInstanceRegistry.get().getFarm(owner);
         return farm != null && farm.contains(place)
                 && com.stardew.craft.farm.FarmDebrisPlacementRules.isCompletelyOpen(level, place)
-                && com.stardew.craft.farm.FarmDebrisPlacementRules.isBareDebrisGround(
-                        level.getBlockState(place.below()));
-    }
-
-    private static void cleanupWinterGrass(ServerLevel level) {
-        for (BlockPos pos : collectNearbyPastureGrass(level)) {
-            if (level.isLoaded(pos) && level.getBlockState(pos).getBlock() instanceof PastureGrassBlock) {
-                level.removeBlock(pos, false);
-            }
-        }
+                && com.stardew.craft.farm.FarmDebrisPlacementRules.isBareFarmableGround(
+                        farm, level.getBlockState(place.below()));
     }
 
     private static List<FarmInstance> activeFarms(ServerLevel level) {

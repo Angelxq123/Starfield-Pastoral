@@ -47,7 +47,8 @@ public final class FishPondPrefabs {
             var pos=entry.getKey();var current=level.getBlockState(pos);
             if(vacated.contains(pos))continue;
             if(pos.getY()>anchor.getY()) {
-                if(!current.isAir() || floors.at(pos)!=null)return new BuildingPlacementService.SpaceIssue("air",pos);
+                if(!BuildingPlacementService.isClearAirVolume(level, pos, floors))
+                    return new BuildingPlacementService.SpaceIssue("air",pos);
             } else if(level.getBlockEntity(pos)!=null || floors.at(pos)!=null || current.getDestroySpeed(level,pos)<0
                     || BuildingProtection.protects(level,pos)) {
                 return new BuildingPlacementService.SpaceIssue("ground_contents",pos);

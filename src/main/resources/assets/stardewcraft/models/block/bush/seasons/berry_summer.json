@@ -1,0 +1,8 @@
+{
+  "parent": "stardewcraft:block/bush/berry_bush",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "1": "stardewcraft:block/bush/seasons/berry_summer",
+    "particle": "stardewcraft:block/bush/seasons/summer_particle"
+  }
+}

@@ -406,27 +406,23 @@ public final class ForageSpawnService {
      *
      * <p>Items per season (equal 25% weight each):
      * <ul>
-     *   <li>Spring: Wild Horseradish, Daffodil, Leek, Dandelion</li>
-     *   <li>Summer: Spice Berry, Sweet Pea, Fiddlehead Fern, Common Mushroom</li>
-     *   <li>Fall: Wild Plum, Hazelnut, Blackberry, Chanterelle</li>
+     *   <li>Spring: Wild Horseradish, Dandelion, Leek, Morel</li>
+     *   <li>Summer: Spice Berry, Grape, Sweet Pea, Common Mushroom</li>
+     *   <li>Fall: Chanterelle, Red Mushroom, Purple Mushroom, Common Mushroom</li>
      *   <li>Winter: no spawning</li>
      * </ul>
      */
     private static final List<List<DeferredBlock<Block>>> FOREST_FARM_FORAGE = List.of(
             // Spring
-            List.of(ModBlocks.FORAGE_WILD_HORSERADISH, ModBlocks.FORAGE_DAFFODIL,
-                    ModBlocks.FORAGE_LEEK, ModBlocks.FORAGE_DANDELION),
+            List.of(ModBlocks.FORAGE_WILD_HORSERADISH, ModBlocks.FORAGE_DANDELION,
+                    ModBlocks.FORAGE_LEEK, ModBlocks.FORAGE_MOREL),
             // Summer
-            List.of(ModBlocks.FORAGE_SPICE_BERRY, ModBlocks.FORAGE_SWEET_PEA,
-                    ModBlocks.FORAGE_FIDDLEHEAD_FERN, ModBlocks.FORAGE_COMMON_MUSHROOM),
+            List.of(ModBlocks.FORAGE_SPICE_BERRY, ModBlocks.FORAGE_GRAPE,
+                    ModBlocks.FORAGE_SWEET_PEA, ModBlocks.FORAGE_COMMON_MUSHROOM),
             // Fall
-            List.of(ModBlocks.FORAGE_WILD_PLUM, ModBlocks.FORAGE_HAZELNUT,
-                    ModBlocks.FORAGE_BLACKBERRY, ModBlocks.FORAGE_CHANTERELLE)
+            List.of(ModBlocks.FORAGE_CHANTERELLE, ModBlocks.FORAGE_RED_MUSHROOM,
+                    ModBlocks.FORAGE_PURPLE_MUSHROOM, ModBlocks.FORAGE_COMMON_MUSHROOM)
     );
-
-    private static final int FOREST_FARM_MIN_SPAWN = 1;
-    private static final int FOREST_FARM_MAX_SPAWN = 4;
-    private static final int FOREST_FARM_MAX_AT_ONCE = 6;
 
     /**
      * Spawns seasonal forage on all forest-type farms (public area + each player's farm instance).
@@ -444,7 +440,11 @@ public final class ForageSpawnService {
         for (com.stardew.craft.farm.FarmInstance farm : registry.getAllFarms()) {
             com.stardew.craft.api.v1.farm.StardewFarmLayout layout =
                     farm.getFarmLayout();
-            if (layout == null || layout.forageZoneMin() == null || layout.forageZoneMax() == null) continue;
+            if (!farm.getFarmLayoutId().equals(
+                    com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+                            .builtinId(com.stardew.craft.farm.FarmType.FOREST))
+                    || layout == null || layout.forageZoneMin() == null
+                    || layout.forageZoneMax() == null) continue;
 
             BlockPos origin = farm.getOrigin();
             BlockPos zoneMin = origin.offset(layout.forageZoneMin());
@@ -455,46 +455,54 @@ public final class ForageSpawnService {
             int minZ = Math.min(zoneMin.getZ(), zoneMax.getZ());
             int maxZ = Math.max(zoneMin.getZ(), zoneMax.getZ());
 
-            // Count existing forage in zone
-            int existing = countForageInRect(level, minX, minZ, maxX, maxZ);
-            if (existing >= FOREST_FARM_MAX_AT_ONCE) continue;
-
             RandomSource random = level.getRandom();
-            int toSpawn = FOREST_FARM_MIN_SPAWN + random.nextInt(
-                    FOREST_FARM_MAX_SPAWN - FOREST_FARM_MIN_SPAWN + 1);
-            toSpawn = Math.min(toSpawn, FOREST_FARM_MAX_AT_ONCE - existing);
-
             int spawned = 0;
-            for (int i = 0; i < toSpawn; i++) {
-                for (int attempt = 0; attempt < 30; attempt++) {
-                    int x = minX + random.nextInt(maxX - minX + 1);
-                    int z = minZ + random.nextInt(maxZ - minZ + 1);
-                    if (!level.hasChunk(x >> 4, z >> 4)) continue;
+            int safety = 0;
+            while (random.nextDouble() < 0.75D && safety++ < 64) {
+                // Farm.DayUpdate chooses the dedicated x<18 forest strip half
+                // the time.  Otherwise it samples the complete farm and accepts
+                // every Back-layer Grass tile.  On the enlarged authored map the
+                // layout forage rectangle is that playable projection; its first
+                // ~40 blocks are the scaled west strip.
+                boolean westStrip = random.nextBoolean();
+                int westMax = Math.min(maxX, minX + 39);
+                int x = westStrip
+                        ? minX + random.nextInt(westMax - minX + 1)
+                        : minX + random.nextInt(maxX - minX + 1);
+                int z = minZ + random.nextInt(maxZ - minZ + 1);
+                if (!level.hasChunk(x >> 4, z >> 4)) continue;
 
-                    int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                    BlockPos surfacePos = new BlockPos(x, surfaceY, z);
-                    BlockState surfaceState = level.getBlockState(surfacePos);
-                    if (isReplaceablePlant(surfaceState)) {
-                        surfacePos = surfacePos.below();
-                        surfaceState = level.getBlockState(surfacePos);
-                    }
-                    BlockPos placePos = surfacePos.above();
-
-                    if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) continue;
-                    if (!canPlaceForage(level, surfacePos, placePos, SurfaceType.NATURAL)) continue;
-
-                    // Equal probability among 4 items
-                    DeferredBlock<Block> chosen = possibleForage.get(random.nextInt(possibleForage.size()));
-
-                    BlockState existingState = level.getBlockState(placePos);
-                    if (!existingState.isAir() && isReplaceablePlant(existingState)) {
-                        level.destroyBlock(placePos, false);
-                    }
-
-                    level.setBlock(placePos, chosen.get().defaultBlockState(), Block.UPDATE_ALL);
-                    spawned++;
-                    break;
+                int surfaceY = level.getHeight(
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                BlockPos surfacePos = new BlockPos(x, surfaceY, z);
+                BlockState surfaceState = level.getBlockState(surfacePos);
+                if (isReplaceablePlant(surfaceState)) {
+                    surfacePos = surfacePos.below();
+                    surfaceState = level.getBlockState(surfacePos);
                 }
+                BlockPos placePos = surfacePos.above();
+                if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) continue;
+
+                com.stardew.craft.farm.FarmDebrisPlacementRules.GroundKind ground =
+                        com.stardew.craft.farm.FarmDebrisPlacementRules.groundKind(surfaceState);
+                if (!westStrip
+                        && ground != com.stardew.craft.farm.FarmDebrisPlacementRules.GroundKind.GRASS
+                        && ground != com.stardew.craft.farm.FarmDebrisPlacementRules.GroundKind.DARK_GRASS) {
+                    continue;
+                }
+                if (!com.stardew.craft.farm.FarmDebrisPlacementRules.isNaturalFarmGround(surfaceState)
+                        || !canPlaceForage(level, surfacePos, placePos, SurfaceType.NATURAL)) {
+                    continue;
+                }
+
+                DeferredBlock<Block> chosen = possibleForage.get(
+                        random.nextInt(possibleForage.size()));
+                BlockState existingState = level.getBlockState(placePos);
+                if (!existingState.isAir() && isReplaceablePlant(existingState)) {
+                    level.destroyBlock(placePos, false);
+                }
+                level.setBlock(placePos, chosen.get().defaultBlockState(), Block.UPDATE_ALL);
+                spawned++;
             }
             totalSpawned += spawned;
             StardewCraft.LOGGER.info("[ForageSpawn] Forest farm ({}): spawned {} forage in zone",
@@ -506,14 +514,4 @@ public final class ForageSpawnService {
         }
     }
 
-    private static int countForageInRect(ServerLevel level, int minX, int minZ, int maxX, int maxZ) {
-        int count = 0;
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                count += countForageAtColumn(level, x, z);
-            }
-        }
-        return count;
-    }
 }

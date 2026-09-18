@@ -1639,9 +1639,11 @@ public final class InteriorSubspaceManager {
             if (!farm.isInitialized()) continue;
             if (!ghMgr.isRepairedForPlayer(farm.getOwnerUUID())) continue;
 
-            // 温室入口位置 = 农场温室位置 + (8,0,0)（CW90 旋转后的门口偏移）
-            BlockPos ghPos = farm.getGreenhousePos();
-            BlockPos portalPos = ghPos.offset(8, 0, 0);
+            var building = com.stardew.craft.greenhouse.GreenhouseBuildings
+                    .findForFarm(level, farm.getInstanceId());
+            BlockPos portalPos = building == null
+                    ? farm.getGreenhousePos().offset(8, 0, 0)
+                    : com.stardew.craft.greenhouse.GreenhouseBuildings.portal(building);
             spawnGreenhouseOutdoorPortalAt(level, portalPos);
             ghPortals++;
         }
@@ -1747,6 +1749,7 @@ public final class InteriorSubspaceManager {
                                                String markerTag,
                                                String targetTag,
                                                boolean solidOnly) {
+        if (TownDoorSystem.replacesLegacy(level.dimension(), targetTag)) return;
         // ── 注册到自修复注册表 ──
         PORTAL_REGISTRY.put(portalKey(level.dimension(), basePos),
                 new PortalPlacement(level.dimension(), basePos, heightBlocks, xBlocks, zBlocks, markerTag, targetTag, solidOnly));
@@ -1833,6 +1836,15 @@ public final class InteriorSubspaceManager {
             "sdv_portal_target:greenhouse_enter"
         );
         StardewCraft.LOGGER.info("[INTERIOR] Greenhouse outdoor portal placed at {}", pos);
+    }
+
+    /** Remove both the trigger blocks and their self-repair registration before a greenhouse moves. */
+    public static void removeGreenhouseOutdoorPortalAt(ServerLevel level, BlockPos pos) {
+        PORTAL_REGISTRY.remove(portalKey(level.dimension(), pos));
+        var pending = PENDING_PORTALS.get(level);
+        if (pending != null) pending.remove(portalKey(level.dimension(), pos));
+        InteriorPortalTickets.release(level, pos);
+        for (int dy = 0; dy < 2; dy++) removePortalTriggerIfPresent(level, pos.above(dy));
     }
 
     /**

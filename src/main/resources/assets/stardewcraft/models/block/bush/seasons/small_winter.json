@@ -1,0 +1,8 @@
+{
+  "parent": "stardewcraft:block/bush/small_bush",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "5": "stardewcraft:block/bush/seasons/small_winter",
+    "particle": "stardewcraft:block/bush/seasons/winter_particle"
+  }
+}

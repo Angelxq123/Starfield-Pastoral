@@ -66,7 +66,7 @@ public final class FishSplashTicker {
 		//    A key gets one generation attempt per 10-min tick regardless of player count.
 		Map<String, ServerPlayer> attemptByKey = new HashMap<>();
 		for (ServerPlayer p : players) {
-			if (WaterFeatureSpawnRules.isBlockedSpawnArea(stardew, p.blockPosition())) continue;
+			if (WaterFeatureSpawnRules.isBlockedFishSplashArea(stardew, p.blockPosition())) continue;
 			Holder<Biome> bh = stardew.getBiome(p.blockPosition());
 			List<String> keys = FishingDataManager.resolveVanillaAlignedLocationKeysStatic(
 				stardew, bh, p.blockPosition());
@@ -109,7 +109,7 @@ public final class FishSplashTicker {
 	private static void expireExpiredEntries(ServerLevel stardew, FishSplashState state, int nowMin, Random r) {
 		Set<String> toRemove = new HashSet<>();
 		for (Map.Entry<String, FishSplashState.Entry> e : state.view().entrySet()) {
-			if (WaterFeatureSpawnRules.isBlockedSpawnArea(stardew, e.getValue().pos())) {
+			if (WaterFeatureSpawnRules.isBlockedFishSplashArea(stardew, e.getValue().pos())) {
 				toRemove.add(e.getKey());
 				continue;
 			}
@@ -147,7 +147,7 @@ public final class FishSplashTicker {
 				break;
 			}
 			if (surface == null) continue;
-			if (!WaterFeatureSpawnRules.canSpawnAt(level, surface)) continue;
+			if (WaterFeatureSpawnRules.isBlockedFishSplashArea(level, surface)) continue;
 
 			// Biome key must match.
 			Holder<Biome> bh = level.getBiome(surface);

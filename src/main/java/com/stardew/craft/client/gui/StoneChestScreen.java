@@ -164,7 +164,7 @@ public class StoneChestScreen extends AbstractContainerScreen<StoneChestMenu> {
 
     @Override
     public boolean keyPressed(int key, int scan, int modifiers) {
-        return wheel.key(key) || super.keyPressed(key, scan, modifiers);
+        return wheel.key(key) || extraActions.keyPressed(key) || super.keyPressed(key, scan, modifiers);
     }
 
     @Override

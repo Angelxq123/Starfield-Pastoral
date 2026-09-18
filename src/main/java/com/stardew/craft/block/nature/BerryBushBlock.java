@@ -269,6 +269,8 @@ public class BerryBushBlock extends Block implements EntityBlock {
         if (item == null) {
             return;
         }
+        // Bush.cs: berry quantity is 1 + ForagingLevel / 4. Gatherer (13) is not
+        // consulted for bush berries; Botanist (16) still controls their quality.
         int count = 1 + PlayerStardewDataAPI.getSkillLevel(player, SkillType.FORAGING) / 4;
         ItemStack stack = new ItemStack(item, count);
         QualityHelper.setQuality(stack, PlayerStardewDataAPI.hasProfession(player, ProfessionType.BOTANIST)

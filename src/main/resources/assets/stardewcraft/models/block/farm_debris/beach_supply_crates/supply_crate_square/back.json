@@ -1,0 +1,87 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "0": "stardewcraft:block/farm_debris/beach_supply_crates/supply_crate_square",
+    "particle": "stardewcraft:block/farm_debris/beach_supply_crates/supply_crate_square_particle"
+  },
+  "elements": [
+    {
+      "name": "back",
+      "from": [
+        2,
+        1,
+        12
+      ],
+      "to": [
+        14,
+        11,
+        13
+      ],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [
+          8,
+          3.5,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1.75,
+            1.5,
+            3.25,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5,
+            1.5,
+            5.125,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.375,
+            1.5,
+            4.875,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            5.25,
+            1.5,
+            5.375,
+            2.75
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            5.5,
+            1.5,
+            7,
+            1.625
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            7.125,
+            1.5,
+            8.625,
+            1.625
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

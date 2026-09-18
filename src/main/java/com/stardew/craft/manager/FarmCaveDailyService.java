@@ -67,13 +67,15 @@ public final class FarmCaveDailyService {
     public static void onNewDay(ServerLevel level) {
         FarmInstanceRegistry reg = FarmInstanceRegistry.get();
         RandomSource rng = level.getRandom();
-        java.util.Set<UUID> processedOwners = new java.util.HashSet<>();
+        java.util.Set<UUID> online=level.getServer().getPlayerList().getPlayers().stream()
+                .map(ServerPlayer::getUUID).collect(java.util.stream.Collectors.toSet());
+        java.util.Set<UUID> processedFarms = new java.util.HashSet<>();
 
         var time=com.stardew.craft.time.StardewTimeManager.get();
         int day=(time.getCurrentYear()-1)*112+time.getCurrentSeason()*28+time.getCurrentDay();
-        for(ServerPlayer sp:level.getServer().getPlayerList().getPlayers()) {
-            UUID owner=reg.getOwnerForPlayer(sp.getUUID());if(owner==null || !processedOwners.add(owner))continue;
-            FarmInstance farm=reg.getFarm(owner);if(farm==null)continue;
+        for(FarmInstance farm:reg.getAllFarms()) {
+            if(!farm.isInitialized() || farm.getAllFarmers().stream().noneMatch(online::contains)
+                    || !processedFarms.add(farm.getInstanceId()))continue;
             UUID id=farm.getInstanceId();
             com.stardew.craft.interior.FarmCaveRuntime.daily(level,farm,day,()-> {
                 FarmInstance current=com.stardew.craft.interior.FarmCaveRuntime.farm(id);if(current==null)return;

@@ -3,6 +3,8 @@ package com.stardew.craft.block.nature;
 import com.stardew.craft.book.BookPowerEffects;
 import com.stardew.craft.blockentity.WildWeedsBlockEntity;
 import com.stardew.craft.core.ModDimensions;
+import com.stardew.craft.farm.FarmInstance;
+import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.secretnote.SecretNoteService;
@@ -24,6 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.Vec3;
@@ -96,18 +99,6 @@ public class WildWeedsBlock extends Block implements EntityBlock {
 		return defaultBlockState().setValue(SEASON, season).setValue(VARIANT, variant);
 	}
 
-	@SuppressWarnings("null")
-	@Override
-	protected void randomTick(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") ServerLevel level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") RandomSource random) {
-		if (level.dimension() != ModDimensions.STARDEW_VALLEY) {
-			return;
-		}
-		int expectedSeason = clampSeason(StardewTimeManager.get().getCurrentSeason());
-		if (state.getValue(SEASON) != expectedSeason) {
-			level.setBlock(pos, state.setValue(SEASON, expectedSeason), 3);
-		}
-	}
-
 	@Override
 	@SuppressWarnings("null")
 	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
@@ -161,13 +152,13 @@ public class WildWeedsBlock extends Block implements EntityBlock {
 	}
 
 	/**
-	 * 换季当天主动刷新已加载区域内的杂草外观：
-	 * - 方块保持同一个 wild_weeds
-	 * - season 状态切到当前季节
-	 * - variant 在该季节内随机
+	 * Refresh the seasonal appearance of loaded weeds in public areas and
+	 * registered farm areas. The weed's variant is intentionally preserved:
+	 * changing SEASON selects the corresponding spring/summer/fall/winter
+	 * model without replacing the individual weed.
 	 */
 	@SuppressWarnings("null")
-	public static void refreshLoadedWeedsForSeason(ServerLevel level, int season) {
+	public static void refreshLoadedPublicWeedsForSeason(ServerLevel level, int season) {
 		if (level == null || level.dimension() != ModDimensions.STARDEW_VALLEY) {
 			return;
 		}
@@ -185,31 +176,69 @@ public class WildWeedsBlock extends Block implements EntityBlock {
 					if (!visitedChunks.add(chunkKey) || !level.hasChunk(cx, cz)) {
 						continue;
 					}
+					refreshChunkWeedsForSeason(level, level.getChunk(cx, cz), normalizedSeason);
+				}
+			}
+		}
 
-					for (int lx = 0; lx < 16; lx++) {
-						for (int lz = 0; lz < 16; lz++) {
-							int worldX = (cx << 4) + lx;
-							int worldZ = (cz << 4) + lz;
-							int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ);
-
-							int minY = Math.max(level.getMinBuildHeight(), surfaceY - 2);
-							int maxY = Math.min(level.getMaxBuildHeight() - 1, surfaceY + 2);
-							for (int y = minY; y <= maxY; y++) {
-								BlockPos pos = new BlockPos(worldX, y, worldZ);
-								BlockState state = level.getBlockState(pos);
-								if (!(state.getBlock() instanceof WildWeedsBlock)) {
-									continue;
-								}
-
-								int currentSeason = state.getValue(SEASON);
-								if (currentSeason == normalizedSeason) {
-									continue;
-								}
-
-								level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
-							}
-						}
+		// Farms are often far outside the player's current view. Only touch chunks
+		// that are already loaded so a season transition never forces a large farm
+		// region into memory just to update its weed models.
+		FarmInstanceRegistry registry = FarmInstanceRegistry.get(level.getServer());
+		for (FarmInstance farm : registry.getAllFarms()) {
+			BlockPos min = farm.getFarmBoundsMin();
+			BlockPos max = farm.getFarmBoundsMax();
+			int minChunkX = min.getX() >> 4;
+			int maxChunkX = max.getX() >> 4;
+			int minChunkZ = min.getZ() >> 4;
+			int maxChunkZ = max.getZ() >> 4;
+			for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+				for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+					long chunkKey = ((long) cx << 32) ^ (cz & 0xFFFFFFFFL);
+					if (!visitedChunks.add(chunkKey) || !level.hasChunk(cx, cz)) {
+						continue;
 					}
+					refreshChunkWeedsForSeason(level, level.getChunk(cx, cz), normalizedSeason);
+				}
+			}
+		}
+	}
+
+	/** Refresh one already-loaded chunk without forcing chunk loads or changing variants. */
+	@SuppressWarnings("null")
+	public static void refreshChunkWeedsForSeason(ServerLevel level, LevelChunk chunk, int season) {
+		if (level == null || chunk == null) {
+			return;
+		}
+		int normalizedSeason = clampSeason(season);
+		// Normal placements have a WildWeedsBlockEntity, so handle those first.
+		// The surface pass below remains as a compatibility fallback for old
+		// schematic/world data whose block entity was not saved.
+		for (BlockPos pos : chunk.getBlockEntities().keySet()) {
+			BlockState state = level.getBlockState(pos);
+			if (state.getBlock() instanceof WildWeedsBlock
+					&& state.getValue(SEASON) != normalizedSeason) {
+				level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
+			}
+		}
+		int minX = chunk.getPos().getMinBlockX();
+		int minZ = chunk.getPos().getMinBlockZ();
+		for (int lx = 0; lx < 16; lx++) {
+			for (int lz = 0; lz < 16; lz++) {
+				int worldX = minX + lx;
+				int worldZ = minZ + lz;
+				int surfaceY = level.getHeight(
+						Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ);
+				int minY = Math.max(level.getMinBuildHeight(), surfaceY - 2);
+				int maxY = Math.min(level.getMaxBuildHeight() - 1, surfaceY + 2);
+				for (int y = minY; y <= maxY; y++) {
+					BlockPos pos = new BlockPos(worldX, y, worldZ);
+					BlockState state = level.getBlockState(pos);
+					if (!(state.getBlock() instanceof WildWeedsBlock)
+							|| state.getValue(SEASON) == normalizedSeason) {
+						continue;
+					}
+					level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
 				}
 			}
 		}

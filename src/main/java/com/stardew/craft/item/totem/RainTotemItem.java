@@ -33,6 +33,11 @@ public class RainTotemItem extends Item implements IStardewItem {
         return "stardewcraft.type.magic";
     }
 
+    @Override
+    public int getSellPrice(ItemStack stack) {
+        return 20;
+    }
+
     @SuppressWarnings("null")
     @Override
     @Nonnull

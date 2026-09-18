@@ -72,7 +72,7 @@ public final class FarmRenameScreen extends FarmFolioScreen {
     @Override
     protected void paint(GuiGraphics g) {
         icon(g, "pencil", x + 20, y + 55, 16);
-        paragraph(g, hint, x + 48, y + 92, w - 64, y + h - 44, MUTED);
+        paragraph(g, hint, x + 48, y + 92, w - 64, y + h - 44, CANVAS_MUTED);
     }
 
     @Override

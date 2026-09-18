@@ -453,6 +453,11 @@ public class ModBlocks {
                 return PLACED_COOKING_FOODS.get(itemId);
         }
 
+        public static final DeferredBlock<com.stardew.craft.block.decor.SupplyCrateBlock> SUPPLY_CRATE = BLOCKS.register("supply_crate",
+                () -> new com.stardew.craft.block.decor.SupplyCrateBlock(Block.Properties.of().mapColor(MapColor.WOOD)
+                        .strength(0.5F).sound(SoundType.WOOD).noOcclusion().noLootTable()
+                        .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)));
+
         // 自然/杂草
         @SuppressWarnings("null")
         public static final DeferredBlock<com.stardew.craft.block.decor.FarmTwigBlock> FARM_TWIG = BLOCKS.register("farm_twig",
@@ -467,8 +472,7 @@ public class ModBlocks {
                                         .sound(net.minecraft.world.level.block.SoundType.GRASS)
                                         .noCollission()
                                         .noOcclusion()
-                                        .instabreak()
-                                        .randomTicks()));
+                                        .instabreak()));
 
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> PASTURE_GRASS = BLOCKS.register("pasture_grass",
@@ -478,8 +482,7 @@ public class ModBlocks {
                                         .sound(net.minecraft.world.level.block.SoundType.GRASS)
                                         .noCollission()
                                         .noOcclusion()
-                                        .instabreak()
-                                        .randomTicks()));
+                                        .instabreak()));
 
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> BLUE_PASTURE_GRASS = BLOCKS.register("blue_pasture_grass",
@@ -489,8 +492,7 @@ public class ModBlocks {
                                         .sound(net.minecraft.world.level.block.SoundType.GRASS)
                                         .noCollission()
                                         .noOcclusion()
-                                        .instabreak()
-                                        .randomTicks()));
+                                        .instabreak()));
 
         public static final DeferredBlock<Block> SMALL_BUSH = BLOCKS.register("small_bush",
                         () -> new com.stardew.craft.block.nature.SmallBushBlock(Block.Properties.of()
@@ -1529,16 +1531,24 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
         public static final DeferredBlock<Block> FINE_LEAVES = decorativeLeaves("fine_leaves");
         public static final DeferredBlock<Block> POINTED_LEAVES = decorativeLeaves("pointed_leaves");
 
+        private static DeferredBlock<Block> forestCanopyLeaves(String name) {
+                return BLOCKS.register(name, () -> new com.stardew.craft.block.tree.StardewLeavesBlock(
+                                Block.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.OAK_LEAVES).dynamicShape(), true));
+        }
+
+        public static final DeferredBlock<Block> FOREST_LEAVES = forestCanopyLeaves("forest_leaves");
+        public static final DeferredBlock<Block> BROADLEAF_LEAVES = forestCanopyLeaves("broadleaf_leaves");
+
         public static final DeferredBlock<Block> OAK_ROOT = newTreeRoot("oak");
         public static final DeferredBlock<Block> OAK_LOG = newTreeLog("oak");
         public static final DeferredBlock<Block> OAK_LEAVES = newTreeLeaves("oak");
         public static final DeferredBlock<Block> OAK_LEAVES_QUESTION = BLOCKS.register("oak_leaves_question",
-                        () -> new Block(Block.Properties.of()
+                        () -> new com.stardew.craft.block.tree.StardewLeavesBlock(Block.Properties.of()
                                         .mapColor(net.minecraft.world.level.material.MapColor.PLANT)
                                         .sound(net.minecraft.world.level.block.SoundType.GRASS)
                                         .strength(0.2F)
                                         .noCollission()
-                                        .noOcclusion()));
+                                        .noOcclusion().dynamicShape(), true));
         public static final DeferredBlock<Block> OAK_BRANCH = newTreeBranch("oak");
 
         public static final DeferredBlock<Block> MAPLE_ROOT = newTreeRoot("maple");
@@ -2365,6 +2375,14 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK)));
 
         @SuppressWarnings("null")
+        public static final DeferredBlock<Block> GREENHOUSE_MANAGER = BLOCKS.register("greenhouse_manager",
+                        () -> new com.stardew.craft.block.utility.GreenhouseManagerBlock(Block.Properties.of()
+                                        .mapColor(net.minecraft.world.level.material.MapColor.WOOD)
+                                        .sound(net.minecraft.world.level.block.SoundType.WOOD)
+                                        .strength(1.5F, 3600000.0F)
+                                        .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK)));
+
+        @SuppressWarnings("null")
         public static final DeferredBlock<Block> TRASH_BIN = BLOCKS.register("trash_bin",
                         () -> new com.stardew.craft.block.utility.TrashBinBlock(Block.Properties.of()
                                         .mapColor(net.minecraft.world.level.material.MapColor.METAL)
@@ -3076,7 +3094,7 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .sound(net.minecraft.world.level.block.SoundType.WOOD)
                                         .noOcclusion()
                                         .strength(1.0F, 1.0F), "stardewcraft:decor/common/supermarket_shelf_1",
-                                        0, 0, -16, 16, 25, 32));
+                                        0, 0, -16, 16, 25, 32, true));
         @SuppressWarnings("null")
         public static final DeferredBlock<Block> SUPERMARKET_SHELF_2 = BLOCKS.register("supermarket_shelf_2",
                         () -> new com.stardew.craft.block.decor.MapDecorStaticBlock(Block.Properties.of()
@@ -3084,7 +3102,7 @@ public static final DeferredBlock<Block> DEAD_CROP = BLOCKS.register("dead_crop"
                                         .sound(net.minecraft.world.level.block.SoundType.WOOD)
                                         .noOcclusion()
                                         .strength(1.0F, 1.0F), "stardewcraft:decor/common/supermarket_shelf_2",
-                                        0, 0, -16, 16, 25, 32));
+                                        0, 0, -16, 16, 25, 32, true));
 
         // Joja 超市相关：快递盒、购物篮、购物车和冰柜各自独立。
         @SuppressWarnings("null")

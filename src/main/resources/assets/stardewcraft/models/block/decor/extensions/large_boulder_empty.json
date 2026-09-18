@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "stardewcraft:block/decor/resource_clump/large_boulder_particle"
+  },
+  "elements": []
+}

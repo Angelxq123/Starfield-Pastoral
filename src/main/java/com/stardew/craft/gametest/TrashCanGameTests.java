@@ -38,6 +38,19 @@ public final class TrashCanGameTests {
     }
 
     @GameTest(templateNamespace = "stardewcraft_daily_info", template = "ring_utilities")
+    public static void allRegisteredItemsExposeStardewMetadata(GameTestHelper helper) {
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        for (var holder : ModItems.ITEMS.getEntries()) {
+            var item = holder.get();
+            if (StardewItemDataApi.resolve(new ItemStack(item)).isEmpty()) {
+                missing.add(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).toString());
+            }
+        }
+        helper.assertTrue(missing.isEmpty(), "registered items without Stardew metadata: " + missing);
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_daily_info", template = "ring_utilities")
     public static void tiersAndSaveDataMatchOriginal(GameTestHelper helper) {
         int[] prices = {0, 1_000, 2_500, 5_000, 12_500};
         int[] percents = {0, 15, 30, 45, 60};
@@ -95,6 +108,20 @@ public final class TrashCanGameTests {
 
     @GameTest(templateNamespace = "stardewcraft_daily_info", template = "ring_utilities")
     public static void rulesAndRefundFormulaStaySeparated(GameTestHelper helper) {
+        helper.assertValueEqual(StardewItemDataApi.getSellPrice(
+                        new ItemStack(ModItems.VANILLA_CATEGORY_ITEMS.get("salmonberry").get())),
+                5, "salmonberry price differs from the original object data");
+        for (var totem : java.util.List.of(
+                ModItems.WARP_TOTEM_FARM.get(),
+                ModItems.WARP_TOTEM_MOUNTAIN.get(),
+                ModItems.WARP_TOTEM_BEACH.get(),
+                ModItems.WARP_TOTEM_DESERT.get(),
+                ModItems.RAIN_TOTEM.get(),
+                ModItems.TREASURE_TOTEM.get())) {
+            helper.assertValueEqual(StardewItemDataApi.getSellPrice(new ItemStack(totem)),
+                    20, "totem price differs from the original object data");
+        }
+
         ItemStack parsnips = new ItemStack(ModItems.PARSNIP.get(), 10);
         int unitPrice = StardewItemDataApi.getSellPrice(parsnips);
         helper.assertTrue(InventoryTrashPolicy.canTrash(parsnips), "ordinary object could not be trashed");

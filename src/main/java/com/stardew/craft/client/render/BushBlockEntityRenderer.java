@@ -5,7 +5,6 @@ import com.stardew.craft.block.nature.BerryBushBlock;
 import com.stardew.craft.blockentity.BushBlockEntity;
 import com.stardew.craft.client.hud.StardewTimeHud;
 import com.stardew.craft.time.StardewTimeManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -40,7 +39,7 @@ public class BushBlockEntityRenderer implements BlockEntityRenderer<BushBlockEnt
             renderState = state.setValue(BerryBushBlock.BERRY, currentBerry(be));
         }
 
-        renderBlockModel(be, renderState, poseStack, bufferSource, packedLight, packedOverlay);
+        renderBlockModel(renderState, poseStack, bufferSource, packedLight, packedOverlay);
     }
 
     @Override
@@ -73,18 +72,13 @@ public class BushBlockEntityRenderer implements BlockEntityRenderer<BushBlockEnt
             : BerryBushBlock.BerryKind.NONE;
     }
 
-    private void renderBlockModel(BushBlockEntity be,
-                                  BlockState renderState,
+    private void renderBlockModel(BlockState renderState,
                                   PoseStack poseStack,
                                   MultiBufferSource bufferSource,
                                   int packedLight,
                                   int packedOverlay) {
         ModelData modelData = ModelData.EMPTY;
         BakedModel model = blockRenderer.getBlockModel(renderState);
-        int color = Minecraft.getInstance().getBlockColors().getColor(renderState, be.getLevel(), be.getBlockPos(), 0);
-        float red = (float) (color >> 16 & 0xFF) / 255.0F;
-        float green = (float) (color >> 8 & 0xFF) / 255.0F;
-        float blue = (float) (color & 0xFF) / 255.0F;
 
         for (RenderType renderType : model.getRenderTypes(renderState, RandomSource.create(42L), modelData)) {
             blockRenderer.getModelRenderer().renderModel(
@@ -92,9 +86,9 @@ public class BushBlockEntityRenderer implements BlockEntityRenderer<BushBlockEnt
                 bufferSource.getBuffer(RenderTypeHelper.getEntityRenderType(renderType, false)),
                 renderState,
                 model,
-                red,
-                green,
-                blue,
+                1.0F,
+                1.0F,
+                1.0F,
                 packedLight,
                 packedOverlay,
                 modelData,

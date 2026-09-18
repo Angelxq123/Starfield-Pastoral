@@ -1,15 +1,19 @@
 package com.stardew.craft.mining;
 
+import com.stardew.craft.StardewCraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * 全局矿井数据管理器 - 保存所有玩家的矿井进度
@@ -17,6 +21,15 @@ import java.util.UUID;
 public class MiningDataManager extends SavedData {
     
     private static final String DATA_NAME = "stardew_mining_data";
+
+    /**
+     * Replay/partial servers such as Flashback do not necessarily construct the mining
+     * dimension which normally owns this SavedData. Keep their projected player state
+     * isolated in memory so generic player ticks can safely query mine progress without
+     * writing replay data into an unrelated dimension.
+     */
+    private static final Map<MinecraftServer, MiningDataManager> TRANSIENT_SERVERS =
+            Collections.synchronizedMap(new WeakHashMap<>());
     
     private final Map<UUID, MiningPlayerData> playerDataMap = new HashMap<>();
     
@@ -66,9 +79,16 @@ public class MiningDataManager extends SavedData {
      */
     @SuppressWarnings("null")
     private static MiningDataManager get(ServerPlayer player) {
-        return player.getServer()
-            .getLevel(com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING)
-            .getDataStorage()
+        MinecraftServer server = player.getServer();
+        ServerLevel miningLevel = server.getLevel(com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING);
+        if (miningLevel == null) {
+            return TRANSIENT_SERVERS.computeIfAbsent(server, ignored -> {
+                StardewCraft.LOGGER.debug(
+                        "Using transient mining data because the mining dimension is unavailable");
+                return new MiningDataManager();
+            });
+        }
+        return miningLevel.getDataStorage()
             .computeIfAbsent(
                 new SavedData.Factory<>(
                     MiningDataManager::new,

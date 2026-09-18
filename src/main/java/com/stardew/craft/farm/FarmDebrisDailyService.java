@@ -104,7 +104,8 @@ public final class FarmDebrisDailyService {
                                 StardewFarmDebrisPlacements.Stage.YOUNG_TREE,
                                 random
                         ));
-                if (sapling.canSurvive(level, target)) {
+                if (FarmDebrisPlacementRules.canPlaceYoungTree(level, farm, target)
+                        && sapling.canSurvive(level, target)) {
                     level.setBlock(target, sapling, 3);
                     continue;
                 }
@@ -222,7 +223,7 @@ public final class FarmDebrisDailyService {
         int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
         int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
         FarmDebrisPlacementRules.Surface surface =
-                FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+                FarmDebrisPlacementRules.findBareFarmableSurface(level, farm, x, z);
         return surface == null ? null : surface.place();
     }
 

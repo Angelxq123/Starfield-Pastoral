@@ -5,6 +5,7 @@ import com.stardew.craft.api.v1.mining.StardewMineMonsterProfiles;
 import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.entity.ModEntities;
 import com.stardew.craft.entity.monster.GreenSlimeEntity;
+import com.stardew.craft.entity.monster.MineBugEntity;
 import com.stardew.craft.mining.*;
 import com.stardew.craft.monster.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,7 +25,7 @@ import java.util.function.Consumer;
 @EventBusSubscriber(modid=StardewCraft.MODID)
 @SuppressWarnings("null")
 public final class MineMonsterSpawnHandler {
-    private static final List<String> IDS=List.of("green_slime","frost_jelly","sludge","bat","frost_bat","lava_bat","iridium_bat","rock_crab","lava_crab","iridium_crab","bug","armored_bug","mummy","pepper_rex","serpent","big_slime","grub","fly","duggy","dust_sprite","ghost","carbon_ghost","skeleton","rock_golem","metal_head","shadow_brute","shadow_shaman","squid_kid");
+    private static final List<String> IDS=List.of("green_slime","frost_jelly","sludge","bat","frost_bat","lava_bat","iridium_bat","rock_crab","lava_crab","iridium_crab","bug","armored_bug","mummy","pepper_rex","serpent","big_slime","grub","fly","duggy","dust_sprite","ghost","carbon_ghost","skeleton","rock_golem","wilderness_golem","iridium_golem","metal_head","shadow_brute","shadow_shaman","squid_kid");
     private static final Set<String> prismaticSlimeFloors=java.util.concurrent.ConcurrentHashMap.newKeySet();
     private static boolean profilesRegistered;
     private MineMonsterSpawnHandler() {}
@@ -54,7 +55,7 @@ public final class MineMonsterSpawnHandler {
             case "iridium_bat"->Set.of("sd_mob_bat","sd_tier_4");
             case "rock_crab","lava_crab","iridium_crab"->Set.of("sd_mob_crab");
             case "bug"->Set.of("sd_mob_bug");case "armored_bug"->Set.of("sd_mob_bug","sd_mob_armored_bug");
-            case "squid_kid"->Set.of("sd_mob_squid_kid");case "shadow_shaman"->Set.of("sd_mob_shadow_shaman");case "shadow_brute"->Set.of("sd_mob_shadow_brute");case "metal_head"->Set.of("sd_mob_metal_head");case "rock_golem"->Set.of("sd_mob_rock_golem");case "skeleton"->Set.of("sd_mob_skeleton");case "ghost"->Set.of("sd_mob_ghost");case "carbon_ghost"->Set.of("sd_mob_ghost","sd_mob_carbon_ghost");case "dust_sprite"->Set.of("sd_mob_dust_sprite");case "duggy"->Set.of("sd_mob_duggy");case "grub"->Set.of("sd_mob_grub");case "fly"->Set.of("sd_mob_fly");
+            case "squid_kid"->Set.of("sd_mob_squid_kid");case "shadow_shaman"->Set.of("sd_mob_shadow_shaman");case "shadow_brute"->Set.of("sd_mob_shadow_brute");case "metal_head"->Set.of("sd_mob_metal_head");case "rock_golem"->Set.of("sd_mob_rock_golem");case "wilderness_golem"->Set.of("sd_mob_wilderness_golem");case "iridium_golem"->Set.of("sd_mob_iridium_golem");case "skeleton"->Set.of("sd_mob_skeleton");case "ghost"->Set.of("sd_mob_ghost");case "carbon_ghost"->Set.of("sd_mob_ghost","sd_mob_carbon_ghost");case "dust_sprite"->Set.of("sd_mob_dust_sprite");case "duggy"->Set.of("sd_mob_duggy");case "grub"->Set.of("sd_mob_grub");case "fly"->Set.of("sd_mob_fly");
             default->Set.of();
         };
     }
@@ -64,7 +65,7 @@ public final class MineMonsterSpawnHandler {
             case "green_slime"->ModEntities.GREEN_SLIME.get();case "frost_jelly"->ModEntities.FROST_JELLY.get();case "sludge"->ModEntities.SLUDGE.get();
             case "bat"->ModEntities.BAT.get();case "frost_bat"->ModEntities.FROST_BAT.get();case "lava_bat"->ModEntities.LAVA_BAT.get();case "iridium_bat"->ModEntities.IRIDIUM_BAT.get();
             case "rock_crab"->ModEntities.ROCK_CRAB.get();case "lava_crab"->ModEntities.LAVA_CRAB.get();case "iridium_crab"->ModEntities.IRIDIUM_CRAB.get();case "bug"->ModEntities.BUG.get();case "armored_bug"->ModEntities.ARMORED_BUG.get();
-            case "grub"->ModEntities.GRUB.get();case "fly"->ModEntities.FLY.get();case "duggy"->ModEntities.DUGGY.get();case "dust_sprite"->ModEntities.DUST_SPIRIT.get();case "squid_kid"->ModEntities.SQUID_KID.get();case "shadow_shaman"->ModEntities.SHADOW_SHAMAN.get();case "shadow_brute"->ModEntities.SHADOW_BRUTE.get();case "metal_head"->ModEntities.METAL_HEAD.get();case "rock_golem"->ModEntities.ROCK_GOLEM.get();case "skeleton"->ModEntities.SKELETON.get();case "ghost"->ModEntities.GHOST.get();case "carbon_ghost"->ModEntities.CARBON_GHOST.get();default->null;
+            case "grub"->ModEntities.GRUB.get();case "fly"->ModEntities.FLY.get();case "duggy"->ModEntities.DUGGY.get();case "dust_sprite"->ModEntities.DUST_SPIRIT.get();case "squid_kid"->ModEntities.SQUID_KID.get();case "shadow_shaman"->ModEntities.SHADOW_SHAMAN.get();case "shadow_brute"->ModEntities.SHADOW_BRUTE.get();case "metal_head"->ModEntities.METAL_HEAD.get();case "rock_golem"->ModEntities.ROCK_GOLEM.get();case "wilderness_golem"->ModEntities.WILDERNESS_GOLEM.get();case "iridium_golem"->ModEntities.IRIDIUM_GOLEM.get();case "skeleton"->ModEntities.SKELETON.get();case "ghost"->ModEntities.GHOST.get();case "carbon_ghost"->ModEntities.CARBON_GHOST.get();default->null;
         };
     }
     public static Mob spawnConfiguredMonster(ServerLevel level,String id,Vec3 position,float yaw,int floor) {
@@ -76,6 +77,9 @@ public final class MineMonsterSpawnHandler {
         return spawnConfiguredMonster(level,id,position,yaw,MonsterSpawnContext.capture(level,MonsterSpawnContext.Source.WORLD,floor),configure);
     }
     public static Mob spawnConfiguredMonster(ServerLevel level,String id,Vec3 position,float yaw,MonsterSpawnContext context,Consumer<Mob> configure) {
+        return spawnConfiguredMonster(level,id,position,yaw,context,configure,m->{});
+    }
+    public static Mob spawnConfiguredMonster(ServerLevel level,String id,Vec3 position,float yaw,MonsterSpawnContext context,Consumer<Mob> configure,Consumer<Mob> beforeInitialize) {
         if(level==null||id==null||position==null||context==null)return null;
         id=switch(id.toLowerCase(Locale.ROOT)){case "slime"->"green_slime";case "crab"->"rock_crab";default->id.toLowerCase(Locale.ROOT);};
         // Original area 121 selects Armored Bug in the Bug constructor.
@@ -91,9 +95,13 @@ public final class MineMonsterSpawnHandler {
                 case "iridium_bat"->Math.max(171,context.floor());case "sludge"->Math.max(80,context.floor());default->context.floor();};
             context=new MonsterSpawnContext(context.source(),floor,context.bottomReached(),null);
         }
+        if(beforeInitialize!=null)beforeInitialize.accept(mob);
         mob.initialize(context);
         if(mob instanceof GreenSlimeEntity)tryMakePrismaticSlime(mob,context.floor());
         if(configure!=null)configure.accept(mob);
+        // Bugs resolve their 1.3-block patrol hull after the complete floor population is
+        // installed; every other physical species must be clear before insertion.
+        if(!(mob instanceof MineBugEntity)&&!MonsterSpawnPlacement.ensureClear(mob))return null;
         mob.setCustomName(null);
         return MonsterFactory.add(level,mob)?mob:null;
     }

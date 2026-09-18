@@ -204,6 +204,7 @@ public class PlayerDataEventHandler {
             if (player.serverLevel().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
                 com.stardew.craft.farm.FarmChunkManager.get().reconcilePlayerOccupancy(player);
                 com.stardew.craft.event.DimensionEventHandler.scheduleDeferredInit(player.serverLevel());
+                repairLoadedFarmLighting(player);
             }
 
             // 多人农场：离线追赶——批量推进离线期间的作物/树苗生长
@@ -248,6 +249,33 @@ public class PlayerDataEventHandler {
 
             com.stardew.craft.quest.StardewQuestEvents.fireDayStarted(player, absDay);
         }
+    }
+
+    /** Repairs an old black farm in place when its player logs back into it. */
+    private static void repairLoadedFarmLighting(ServerPlayer player) {
+        com.stardew.craft.farm.FarmInstanceRegistry registry =
+                com.stardew.craft.farm.FarmInstanceRegistry.get();
+        java.util.UUID owner = registry.getOwnerAt(player.blockPosition());
+        com.stardew.craft.farm.FarmInstance farm = owner == null
+                ? null : registry.getFarm(owner);
+        if (farm == null || !farm.isInitialized()
+                || !com.stardew.craft.farm.FarmInstanceInitializer
+                        .needsLightingRebuild(farm)
+                || !com.stardew.craft.farm.FarmInstanceInitializer
+                        .tryBeginPreparation(farm)) {
+            return;
+        }
+
+        player.displayClientMessage(Component.translatable(
+                "stardewcraft.farm.loading.subtitle"), false);
+        com.stardew.craft.farm.FarmInstanceInitializer
+                .prepareFarmForTeleport(player.serverLevel(), farm)
+                .thenAcceptAsync(ready -> {
+                    if (!ready && !player.isRemoved()) {
+                        player.sendSystemMessage(Component.translatable(
+                                "stardewcraft.farm.loading.failed"));
+                    }
+                }, player.server);
     }
 
     private static void handlePregenRelocationIfNeeded(ServerPlayer player, PlayerStardewData data) {
@@ -813,6 +841,14 @@ public class PlayerDataEventHandler {
             return;
         }
 
+        // Flashback and other replay/partial servers may project a ServerPlayer into a
+        // recorded Stardew dimension without constructing the mining dimension. Such a
+        // viewer is not a persistent gameplay session; skip mutations, payloads and
+        // attribute projection just as the login handler skips durable initialization.
+        if (!hasRequiredPlayerDataLevels(player)) {
+            return;
+        }
+
         com.stardew.craft.combat.CombatTrackerCleanup.tickTransientFrames(
                 player.level().getGameTime()
         );
@@ -1060,6 +1096,9 @@ public class PlayerDataEventHandler {
      */
     @SuppressWarnings("null")
     public static void syncPlayerData(ServerPlayer player, PlayerStardewData data) {
+        if (!hasRequiredPlayerDataLevels(player)) {
+            return;
+        }
         data.setMoney(com.stardew.craft.money.SharedMoneyService.getMoney(player));
         PlayerDataSyncPacket packet = PlayerDataSyncPacket.fromPlayerData(data);
         // Inject farm name into sync NBT so client can resolve %farm placeholder
@@ -1127,6 +1166,9 @@ public class PlayerDataEventHandler {
      * persistence marker remains set until PlayerDataManager schedules a save.
      */
     public static void syncPlayerVitals(ServerPlayer player, PlayerStardewData data) {
+        if (!hasRequiredPlayerDataLevels(player)) {
+            return;
+        }
         PacketDistributor.sendToPlayer(
                 player,
                 new com.stardew.craft.network.payload.PlayerVitalsSyncPayload(

@@ -33,6 +33,10 @@ public final class StardewItemDisplayStacks {
         if (isHiddenBaseItem(item)) {
             return List.of();
         }
+        if (item == ModItems.SUPPLY_CRATE.get()) {
+            return java.util.stream.IntStream.range(0, 3)
+                    .mapToObj(com.stardew.craft.block.ModBlocks.SUPPLY_CRATE.get()::variantStack).toList();
+        }
         if (item instanceof net.minecraft.world.item.BlockItem blockItem
                 && blockItem.getBlock() instanceof com.stardew.craft.block.decor.NaturalPlantBlock plant
                 && plant.kind().variants > 1) {

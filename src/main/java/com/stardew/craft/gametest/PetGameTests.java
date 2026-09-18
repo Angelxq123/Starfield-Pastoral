@@ -13,6 +13,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -110,6 +111,43 @@ public final class PetGameTests {
         }
         var pos = h.absolutePos(new BlockPos(1, 2, 1)); levelBowl(h, pos); h.succeed();
     }
+
+    @GameTest(templateNamespace = "stardewcraft_pets", template = "empty")
+    public static void petGiftChanceAndPoolRequireFullFriendship(GameTestHelper h) {
+        var level = h.getLevel(); var clock = StardewTimeManager.get(); int originalDay = clock.getCurrentDay();
+        var pet = new PetRecord(UUID.randomUUID(), UUID.randomUUID(), PetVariant.DOG0, "Scout", 1);
+        var entity = ModEntities.PET.get().create(level); entity.setUUID(pet.id); entity.refresh(pet);
+        entity.moveTo(h.absolutePos(new BlockPos(1, 2, 1)), 0.0F, 0.0F); level.addFreshEntity(entity);
+        try {
+            clock.setCurrentDay(8); int day = clock.getAbsoluteDay();
+            for (int attempt = 0; attempt < 1000; attempt++) {
+                if (com.stardew.craft.util.StardewDeterministicRandom.create(day, level.getSeed() / 2, attempt, 71928, pet.id.hashCode()).nextDouble() < .2) {
+                    pet.timesPet = attempt; break;
+                }
+            }
+            pet.friendship = 999; PetGifts.give(FakePlayerFactory.get(level, new GameProfile(UUID.randomUUID(), "GiftTester")), entity, pet);
+            h.assertTrue(level.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(4)).isEmpty(), "Pet gifted before full friendship");
+            pet.friendship = 1000; PetGifts.give(FakePlayerFactory.get(level, new GameProfile(UUID.randomUUID(), "GiftTester2")), entity, pet);
+            var gifts = level.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(4));
+            h.assertTrue(gifts.size() == 1 && !gifts.getFirst().getItem().isEmpty(), "Full-friendship pet gift did not spawn exactly one item stack");
+            gifts.forEach(ItemEntity::discard); h.succeed();
+        } finally { clock.setCurrentDay(originalDay); entity.discard(); }
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_pets", template = "empty")
+    public static void butterflyPowderUsesStardewObjectMetadata(GameTestHelper h) {
+        var stack = new net.minecraft.world.item.ItemStack(com.stardew.craft.item.ModItems.BUTTERFLY_POWDER.get());
+        var metadata = com.stardew.craft.api.v1.item.StardewItemDataApi.resolve(stack).orElse(null);
+        h.assertTrue(metadata != null, "Butterfly Powder is not registered as a Stardew item");
+        h.assertTrue(metadata.category().equals(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("stardewcraft", "misc")),
+                "Butterfly Powder lost its original Basic/category-0 mapping");
+        h.assertTrue(metadata.baseSellPrice() == 0
+                        && com.stardew.craft.api.v1.item.StardewItemDataApi.getSellPrice(stack) == -1
+                        && metadata.edibility() == -300,
+                "Butterfly Powder price or edibility differs from the original object data");
+        h.assertTrue(stack.getMaxStackSize() == 999, "Butterfly Powder lost its original stackability");
+        h.succeed();
+    }
     private static void levelBowl(GameTestHelper h, BlockPos pos) {
         var level = h.getLevel(); level.setBlock(pos.below(), ModBlocks.GRASS_BLOCK.get().defaultBlockState(), 3);
         level.setBlock(pos, ModBlocks.PET_BOWL_WOOD.get().defaultBlockState(), 3);
@@ -130,15 +168,21 @@ public final class PetGameTests {
             player.getInventory().clearContent();
             com.stardew.craft.player.PlayerStardewDataAPI.setMoney(player, 100000);
             data.markLoved(farm.getInstanceId());
-            var bowl = farm.getOrigin().offset(4, 4, 4);
-            data.bowl(new PetWorldData.Bowl(farm.getInstanceId(), bowl, "wood", -1));
+            com.stardew.craft.player.PlayerDataManager.getPlayerData(player).addMailFlag(PetManagement.ADOPTION_MAIL);
             PetManagement.openShop(player); var nonce = nonce(player);
             var purchase = new PetActionPayload(nonce, new UUID(0, 0), "adopt", PetActionPayload.selection("stardewcraft:dog2", "豆包"), BlockPos.ZERO);
             PetManagement.submit(player, purchase); PetManagement.submit(player, purchase);
             var pets = data.forFarm(farm.getInstanceId());
             h.assertTrue(pets.size() == 1 && com.stardew.craft.player.PlayerStardewDataAPI.getMoney(player) == 60000, "Purchase replay spent money or created another pet");
             var pet = pets.getFirst();
-            h.assertTrue(pet.variant == PetVariant.DOG2 && pet.name.equals("豆包") && bowl.equals(pet.bowl), "Adoption lost breed/name/bowl");
+            h.assertTrue(pet.variant == PetVariant.DOG2 && pet.name.equals("豆包") && pet.bowl == null, "No-bowl adoption was blocked or assigned a nonexistent bowl");
+            var bowl = farm.getOrigin().offset(4, 4, 4);
+            data.bowl(new PetWorldData.Bowl(farm.getInstanceId(), bowl, "wood", -1));
+            PetManagement.openShop(player); nonce = nonce(player);
+            PetManagement.submit(player, new PetActionPayload(nonce, new UUID(0, 0), "adopt", PetActionPayload.selection("stardewcraft:cat0", "Miso"), BlockPos.ZERO));
+            pets = data.forFarm(farm.getInstanceId());
+            h.assertTrue(pets.size() == 2 && pets.stream().anyMatch(candidate -> candidate.name.equals("Miso") && bowl.equals(candidate.bowl))
+                    && com.stardew.craft.player.PlayerStardewDataAPI.getMoney(player) == 20000, "Free bowl was not assigned to the next adopted pet");
             PetManagement.open(other, pet.id);
             PetManagement.submit(other, new PetActionPayload(nonce(other), pet.id, "rename", "Intruder", BlockPos.ZERO));
             h.assertTrue(pet.name.equals("豆包"), "Foreign farm member renamed a pet");
@@ -152,10 +196,32 @@ public final class PetGameTests {
             PetManagement.openBowls(player); nonce = nonce(player);
             var buyBowl = new PetActionPayload(nonce, new UUID(0, 0), "buy_bowl", "stone", BlockPos.ZERO);
             PetManagement.submit(player, buyBowl); PetManagement.submit(player, buyBowl);
-            h.assertTrue(com.stardew.craft.player.PlayerStardewDataAPI.getMoney(player) == 55000
+            h.assertTrue(com.stardew.craft.player.PlayerStardewDataAPI.getMoney(player) == 15000
                     && player.getInventory().countItem(com.stardew.craft.item.ModItems.PET_BOWL_STONE.get()) == 1
                     && player.getInventory().countItem(wood.getItem()) == 0, "Bowl purchase did not charge exactly 5000 and 25 hardwood once");
         } finally { registry.deleteFarm(owner); registry.deleteFarm(outsider); PetManagement.clear(); }
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_pets", template = "empty")
+    public static void marnieAdoptionRequiresDeliveredLetterOrSourceFallback(GameTestHelper h) {
+        var level = h.getLevel(); var registry = FarmInstanceRegistry.get(level.getServer()); var owner = UUID.randomUUID();
+        var farm = registry.createFarm(owner, "Adoption mail", "Adoption mail", FarmType.STANDARD);
+        var player = FakePlayerFactory.get(level, new GameProfile(owner, "AdoptionMail"));
+        var pets = PetWorldData.get(level.getServer());
+        try {
+            var pet = new PetRecord(UUID.randomUUID(), farm.getInstanceId(), PetVariant.CAT0, "Miso", 1);
+            pets.put(pet); pets.markLoved(farm.getInstanceId());
+            PetManagement.scheduleAdoptionMail(level.getServer(), farm);
+            var playerData = com.stardew.craft.player.PlayerDataManager.getPlayerData(player);
+            h.assertTrue(playerData.getMailForTomorrow().contains(PetManagement.ADOPTION_MAIL), "Full-love farm did not queue Marnie's adoption letter");
+            h.assertTrue(!PetManagement.unlocked(player), "Queued but unread adoption letter unlocked Marnie's shop early");
+            playerData.addMailFlag(PetManagement.ADOPTION_MAIL);
+            h.assertTrue(PetManagement.unlocked(player), "Read adoption letter did not unlock Marnie's shop");
+            playerData.removeMailFlag(PetManagement.ADOPTION_MAIL);
+            playerData.addMailFlag(PetManagement.REJECTED_ADOPTION_FLAG);
+            h.assertTrue(PetManagement.unlocked(player), "Rejecting the initial pet did not preserve the source-game unlock fallback");
+        } finally { registry.deleteFarm(owner); }
         h.succeed();
     }
 

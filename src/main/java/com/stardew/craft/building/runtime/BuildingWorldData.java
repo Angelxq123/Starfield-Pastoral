@@ -47,8 +47,37 @@ public final class BuildingWorldData extends SavedData {
         if (candidate.phase() != BuildingRecord.Phase.MISSING && conflicting(candidate.dimension(), candidate.claim()) != null) return Result.OVERLAP;
         insert(candidate); legacyImports.put(sourceId, candidate.id()); setDirty(); return Result.SUCCESS;
     }
+
+    /** Migration only: registers an already completed prefab without creating a Robin order. */
+    public synchronized Result importCompletedPrefab(String sourceId, BuildingRecord candidate) {
+        if (legacyImports.containsKey(sourceId)) return Result.SUCCESS;
+        if (candidate.mode() != BuildingRecord.Mode.PREFAB
+                || candidate.phase() != BuildingRecord.Phase.READY
+                || candidate.residence() != BuildingRecord.Residence.VALID) {
+            return Result.INVALID_STATE;
+        }
+        for (var existing : buildings.values()) {
+            if (existing.farmId().equals(candidate.farmId())
+                    && existing.family().equals(candidate.family())
+                    && existing.anchor().equals(candidate.anchor())
+                    && existing.phase() != BuildingRecord.Phase.MISSING) {
+                legacyImports.put(sourceId, existing.id());
+                setDirty();
+                return Result.SUCCESS;
+            }
+        }
+        if (buildings.containsKey(candidate.id())) return Result.DUPLICATE_ID;
+        if (conflicting(candidate.dimension(), candidate.claim()) != null) return Result.OVERLAP;
+        insert(candidate);
+        legacyImports.put(sourceId, candidate.id());
+        setDirty();
+        return Result.SUCCESS;
+    }
     private final Map<UUID, BuildingTransfer> transfers = new HashMap<>();
     public synchronized BuildingTransfer transfer(UUID id) { return transfers.get(id); }
+    private final Map<UUID, BuildingMoveLift> moveLifts = new HashMap<>();
+    public synchronized BuildingMoveLift moveLift(UUID id) { return moveLifts.get(id); }
+    public synchronized List<BuildingMoveLift> moveLifts() { return List.copyOf(moveLifts.values()); }
     private final Map<UUID, ConstructionOrder> orders = new HashMap<>();
     private final Map<UUID, UUID> permits = new HashMap<>();
     private final Set<Integer> pausedDays = new java.util.HashSet<>();
@@ -140,8 +169,19 @@ public final class BuildingWorldData extends SavedData {
 
     public synchronized ConstructionOrder order(UUID buildingId) { return orders.get(buildingId); }
 
+    /** Returns whether Robin already has unfinished work on this farm. */
+    public synchronized boolean hasActiveConstruction(UUID farmId) {
+        if (farmId == null) return false;
+        return buildings.values().stream().anyMatch(record ->
+                farmId.equals(record.farmId())
+                        && orders.containsKey(record.id())
+                        && (record.phase() == BuildingRecord.Phase.CONSTRUCTING
+                            || record.phase() == BuildingRecord.Phase.UPGRADING));
+    }
+
     public synchronized Result beginPrefab(BuildingRecord record, UUID permit, int absoluteDay) {
         if (record.mode() != BuildingRecord.Mode.PREFAB || !permits(permit, record.farmId(), record.family())) return Result.INVALID_STATE;
+        if (hasActiveConstruction(record.farmId())) return Result.INVALID_STATE;
         ConstructionOrder order = new ConstructionOrder(3, absoluteDay, false);
         Result result = register(record);
         if (result != Result.SUCCESS) return result;
@@ -154,7 +194,8 @@ public final class BuildingWorldData extends SavedData {
 
     public synchronized Result beginUpgrade(UUID id, long revision, int absoluteDay) {
         var record = buildings.get(id);
-        if (record == null || transfers.containsKey(id) || orders.containsKey(id)) return Result.INVALID_STATE;
+        if (record == null || transfers.containsKey(id) || moveLifts.containsKey(id) || orders.containsKey(id)) return Result.INVALID_STATE;
+        if (hasActiveConstruction(record.farmId())) return Result.INVALID_STATE;
         if (record.tier() >= PrefabDefinitions.maxTier(record.family())) return Result.INVALID_STATE;
         var order = new ConstructionOrder(PrefabDefinitions.get(record.family()).tier(record.tier() + 1).upgrade().days(), absoluteDay, false);
         Result result = advance(id, revision, BuildingRecord.Action.START_UPGRADE);
@@ -166,11 +207,47 @@ public final class BuildingWorldData extends SavedData {
     }
     public synchronized Result beginTransfer(BuildingTransfer transfer) {
         var before = buildings.get(transfer.before().id());
-        if (before == null || !before.equals(transfer.before()) || transfers.containsKey(before.id())) return Result.STALE_REVISION;
+        if (before == null || !before.equals(transfer.before()) || transfers.containsKey(before.id())
+                || moveLifts.containsKey(before.id())) return Result.STALE_REVISION;
         if (before.phase() != BuildingRecord.Phase.READY && before.phase() != BuildingRecord.Phase.UPGRADING) return Result.INVALID_STATE;
         if (before.phase() == BuildingRecord.Phase.UPGRADING && (orders.get(before.id()) == null || orders.get(before.id()).remainingDays() != 0)) return Result.INVALID_STATE;
         if (conflicting(before.dimension(), transfer.after().claim(), before.id()) != null) return Result.OVERLAP;
         transfers.put(before.id(), transfer); setDirty(); return Result.SUCCESS;
+    }
+
+    public synchronized Result beginMoveLift(BuildingMoveLift lift) {
+        var before = buildings.get(lift.snapshot().before().id());
+        if (before == null || !before.equals(lift.snapshot().before())
+                || transfers.containsKey(before.id()) || moveLifts.containsKey(before.id())) {
+            return Result.STALE_REVISION;
+        }
+        moveLifts.put(before.id(), lift);
+        setDirty();
+        return Result.SUCCESS;
+    }
+
+    public synchronized Result promoteMoveLift(UUID id, UUID owner, BuildingTransfer transfer) {
+        BuildingMoveLift lift = moveLifts.get(id);
+        BuildingRecord before = buildings.get(id);
+        if (lift == null || !lift.owner().equals(owner) || before == null
+                || !before.equals(transfer.before()) || transfers.containsKey(id)) {
+            return Result.STALE_REVISION;
+        }
+        if (conflicting(before.dimension(), transfer.after().claim(), before.id()) != null) {
+            return Result.OVERLAP;
+        }
+        transfers.put(id, transfer);
+        moveLifts.remove(id);
+        setDirty();
+        return Result.SUCCESS;
+    }
+
+    public synchronized BuildingMoveLift finishMoveLift(UUID id, UUID owner, UUID document) {
+        BuildingMoveLift lift = moveLifts.get(id);
+        if (lift == null || !lift.owner().equals(owner) || !lift.document().equals(document)) return null;
+        moveLifts.remove(id);
+        setDirty();
+        return lift;
     }
     public synchronized void finishTransfer(UUID id) {
         BuildingTransfer transfer = transfers.get(id);
@@ -304,7 +381,7 @@ public final class BuildingWorldData extends SavedData {
 
     private void remove(UUID id) {
         BuildingRecord record = buildings.remove(id);
-        orders.remove(id); transfers.remove(id);
+        orders.remove(id); transfers.remove(id); moveLifts.remove(id);
         if (record.phase() == BuildingRecord.Phase.MISSING) return;
         Map<UUID, BuildingBounds> bucket = claims.get(record.dimension());
         bucket.remove(id);
@@ -347,6 +424,8 @@ public final class BuildingWorldData extends SavedData {
         tag.put("Orders", orderTags);
         ListTag transferTags = new ListTag(); transfers.values().forEach(value -> transferTags.add(value.save()));
         tag.put("Transfers", transferTags);
+        ListTag liftTags = new ListTag(); moveLifts.values().forEach(value -> liftTags.add(value.save()));
+        tag.put("MoveLifts", liftTags);
         ListTag permitTags = new ListTag();
         permits.forEach((id, farm) -> { CompoundTag value = new CompoundTag(); value.putUUID("Id", id); value.putUUID("Farm", farm); value.putString("Family", permitFamilies.get(id).toString()); value.putInt("TargetTier", permitTiers.getOrDefault(id, 0)); permitTags.add(value); });
         tag.put("Permits", permitTags);
@@ -389,6 +468,14 @@ public final class BuildingWorldData extends SavedData {
             if (!transfer.before().equals(data.find(transfer.before().id()))
                     || data.conflicting(transfer.after().dimension(), transfer.after().claim(), transfer.before().id()) != null) throw new IllegalArgumentException("Invalid saved transfer");
             data.transfers.put(transfer.before().id(), transfer);
+        }
+        for (var entry : tag.getList("MoveLifts", Tag.TAG_COMPOUND)) {
+            BuildingMoveLift lift = BuildingMoveLift.load((CompoundTag) entry, registries);
+            UUID id = lift.snapshot().before().id();
+            if (!lift.snapshot().before().equals(data.find(id)) || data.transfers.containsKey(id)
+                    || data.moveLifts.put(id, lift) != null) {
+                throw new IllegalArgumentException("Invalid saved building move lift");
+            }
         }
         for (var entry : tag.getList("Permits", Tag.TAG_COMPOUND)) {
             CompoundTag value = (CompoundTag) entry;

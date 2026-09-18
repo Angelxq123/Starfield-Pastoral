@@ -1,0 +1,8 @@
+{
+  "parent": "stardewcraft:block/bush/berry_bush_blackberry",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "2": "stardewcraft:block/bush/seasons/blackberry_fall",
+    "particle": "stardewcraft:block/bush/seasons/fall_particle"
+  }
+}

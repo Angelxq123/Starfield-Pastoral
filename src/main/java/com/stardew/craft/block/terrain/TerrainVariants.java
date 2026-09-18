@@ -2,6 +2,7 @@ package com.stardew.craft.block.terrain;
 
 import javax.annotation.Nullable;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BlockItemStateProperties;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -49,12 +50,23 @@ public final class TerrainVariants {
                 TerrainVariantWeights.cliff(context.getLevel().getRandom().nextInt(1000)));
         if (property == SAND) return state.setValue(property, context.getLevel().getRandom().nextInt(4));
         if (property == ASPHALT) return state.setValue(property, context.getLevel().getRandom().nextInt(3));
+        if (property == GRASS || property == DIRT) {
+            return randomGroundVariant(state, context.getLevel().getRandom());
+        }
         int roll = context.getLevel().getRandom().nextInt(100);
         if (state.is(com.stardew.craft.block.ModBlocks.PLAZA_RED_BRICKS.get()))
             return state.setValue(property, TerrainVariantWeights.redPaving(roll));
+        return state.setValue(property, TerrainVariantWeights.paving(roll));
+    }
+
+    /** Re-rolls grass or dirt with exactly the same weights as ordinary item placement. */
+    public static BlockState randomGroundVariant(BlockState state, RandomSource random) {
+        IntegerProperty property = property(state);
+        if (property != GRASS && property != DIRT) return state;
+        int roll = random.nextInt(100);
         return state.setValue(property, property == GRASS
-                ? TerrainVariantWeights.grass(roll) : property == PAVING
-                ? TerrainVariantWeights.paving(roll) : TerrainVariantWeights.dirt(roll));
+                ? TerrainVariantWeights.grass(roll)
+                : TerrainVariantWeights.dirt(roll));
     }
 
     public static ItemStack fixedCopy(ItemStack original, BlockState state) {

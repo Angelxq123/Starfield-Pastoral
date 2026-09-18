@@ -114,19 +114,9 @@ public class PastureGrassBlock extends BushBlock {
     @SuppressWarnings("null")
     @Override
     protected void randomTick(@SuppressWarnings("null") BlockState state, @SuppressWarnings("null") ServerLevel level, @SuppressWarnings("null") BlockPos pos, @SuppressWarnings("null") RandomSource random) {
-        // 仅在 Stardew Valley 维度内生效（冬季消失 + 扩散），其他维度完全不处理。
-        if (level.dimension() != ModDimensions.STARDEW_VALLEY) {
-            return;
-        }
-        // 冬季在 SDV 维度内自动消失（与 SDV 一致）
-        if (StardewTimeManager.get().getCurrentSeason() == 3) {
-            level.removeBlock(pos, false);
-            return;
-        }
-
-        // SDV grows grass once during the new-day settlement. Doing it again
-        // through Minecraft random ticks doubled growth and made its rate depend
-        // on loaded chunks, so non-winter random ticks deliberately do nothing.
+        // Standard-farm grass survives winter and all growth is settled once per
+        // Stardew day. Minecraft random ticks deliberately do nothing so chunk
+        // loading and randomTickSpeed cannot change the simulation rate.
     }
 
     @SuppressWarnings("null")

@@ -10,6 +10,9 @@ import com.stardew.craft.core.ModTags;
 import com.stardew.craft.enchantment.StardewEnchantments;
 import com.stardew.craft.festival.FestivalService;
 import com.stardew.craft.festival.desert.DesertFestivalService;
+import com.stardew.craft.farm.FarmInstanceRegistry;
+import com.stardew.craft.farm.FarmType;
+import com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry;
 import com.stardew.craft.item.SpecificBaitItem;
 import com.stardew.craft.player.PlayerStardewData;
 import com.stardew.craft.player.PlayerStardewDataAPI;
@@ -57,6 +60,7 @@ public final class FishingDataManager {
 			"stardewcraft:soggy_newspaper",
 			"stardewcraft:broken_cd",
 			"stardewcraft:broken_glasses",
+			"stardewcraft:ancient_doll",
 			"stardewcraft:joja_cola"
 	);
 
@@ -200,12 +204,11 @@ public final class FishingDataManager {
 				&& fri.getTier() == com.stardew.craft.item.tool.FishingRodItem.RodTier.TRAINING_ROD;
 		boolean usingGoodBait = isUsingGoodBait(rodStack);
 		String baitTargetFishId = getTargetedBaitFishId(rodStack);
-		Holder<Biome> biomeHolder = queryLocation == null ? level.getBiome(bobberPos)
-                : level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getHolderOrThrow(
-                        net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME,
-                                ResourceLocation.parse("stardewcraft:" + (queryLocation.equals("Mountain") ? "mountain_lake" : "forest_river"))));
+		Holder<Biome> worldBiomeHolder = queryLocation == null
+				? level.getBiome(bobberPos)
+				: biomeForLocationPool(level, queryLocation);
 		Optional<FishSelection> mineCatch = queryLocation != null ? Optional.empty() : trySelectVanillaMineCatch(
-				biomeHolder, isTrainingRod, fishingLevel, effectiveDepth,
+				worldBiomeHolder, isTrainingRod, fishingLevel, effectiveDepth,
 				luckBuffLevel, hasCuriosityLure, baitTargetFishId, random);
 		if (mineCatch.isPresent()) {
 			return mineCatch;
@@ -213,16 +216,74 @@ public final class FishingDataManager {
 		boolean fairFishingGame = queryLocation == null && com.stardew.craft.festival.fair.FairFishingGameService.isFishingGameActive(player);
 		boolean iceFishingContest = queryLocation == null && com.stardew.craft.festival.FestivalOfIceService.isFishingContestActive(player);
 		boolean festivalFishingGame = fairFishingGame || iceFishingContest;
+		if (queryLocation == null && !festivalFishingGame
+				&& isFourCornersFishingRegion(level, bobberPos)
+				&& playerData.hasMailFlag("cursed_doll")
+				&& !playerData.hasMailFlag("eric's_prank_1")
+				&& random.nextDouble() < 0.50D) {
+			return createSelectionForItem("stardewcraft:ancient_doll", true);
+		}
+		Optional<ForestFarmFishingRoll> forestFarmRoll = queryLocation == null && !festivalFishingGame
+				? resolveForestFarmFishingRoll(level, bobberPos, random)
+				: Optional.empty();
+		if (forestFarmRoll.orElse(null) == ForestFarmFishingRoll.WOODSKIP) {
+			return createSelectionForItem("stardewcraft:woodskip", false);
+		}
+		if (forestFarmRoll.orElse(null) == ForestFarmFishingRoll.JUNK) {
+			return Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
+		}
+		Optional<BeachFarmFishingRoll> beachFarmRoll = queryLocation == null && !festivalFishingGame
+				&& forestFarmRoll.isEmpty() ? resolveBeachFarmFishingRoll(level, bobberPos, random) : Optional.empty();
+		if (beachFarmRoll.orElse(null) == BeachFarmFishingRoll.SEAWEED) {
+			return createSelectionForItem("stardewcraft:seaweed", true);
+		}
+		if (beachFarmRoll.orElse(null) == BeachFarmFishingRoll.BEACH_FORAGE) {
+			String[] keys = {"723", "393", "719", "718"};
+			ItemStack stack = com.stardew.craft.data.VanillaObjectCatalog.stackFor(
+					com.stardew.craft.data.VanillaObjectCatalog.entryByKey(keys[random.nextInt(keys.length)]));
+			return Optional.of(new FishSelection(stack, 0, 0, 0, 0, true));
+		}
+		if (beachFarmRoll.orElse(null) == BeachFarmFishingRoll.JUNK) {
+			return Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
+		}
+		Optional<SpecialFarmFishingRoll> specialFarmRoll = queryLocation == null
+				&& !festivalFishingGame && forestFarmRoll.isEmpty() && beachFarmRoll.isEmpty()
+				? resolveSpecialFarmFishingRoll(level, bobberPos, random)
+				: Optional.empty();
+		if (specialFarmRoll.orElse(null) == SpecialFarmFishingRoll.JUNK) {
+			return Optional.of(new FishSelection(getRandomJunk(random), 0, 0, 0, 0, true));
+		}
+		Optional<String> riverlandFarmPool = queryLocation == null && !festivalFishingGame
+				&& forestFarmRoll.isEmpty() && beachFarmRoll.isEmpty() && specialFarmRoll.isEmpty()
+				? resolveRiverlandFarmFishingPool(level, bobberPos, random)
+				: Optional.empty();
+		Optional<String> farmLocationPool = forestFarmRoll.isPresent()
+				? Optional.of("Forest")
+				: beachFarmRoll.isPresent()
+						? Optional.of("Beach")
+						: specialFarmRoll.map(roll -> roll == SpecialFarmFishingRoll.FOREST ? "Forest" : "Mountain")
+								.or(() -> riverlandFarmPool);
+		List<String> regularLocationKeys = queryLocation != null || festivalFishingGame
+				? List.of()
+				: farmLocationPool
+						.map(List::of)
+						.orElseGet(() -> resolveVanillaAlignedLocationKeys(
+								level, worldBiomeHolder, bobberPos));
+		// LOCATION_FISH on a farm changes the logical fishing location, not the
+		// world's physical biome. The representative biome supplies that logical
+		// context to hooks and conditions without rewriting world chunks. Explicit
+		// biome and FishAreaId filters are skipped below for this farm-wide pool.
+		Holder<Biome> biomeHolder = farmLocationPool
+				.map(pool -> biomeForLocationPool(level, pool))
+				.orElse(worldBiomeHolder);
 		List<String> lookupKeys = queryLocation != null ? List.of(queryLocation) : resolveFishingLookupKeys(
 				fairFishingGame,
 				iceFishingContest,
-				festivalFishingGame
-						? List.of()
-						: resolveVanillaAlignedLocationKeys(level, level.getBiome(bobberPos), bobberPos));
+				regularLocationKeys);
 		boolean nightMarketFishing = com.stardew.craft.festival.nightmarket.NightMarketSubmarineService
 				.isInsideSubmarineBounds(bobberPos)
-				|| hasBiomeTag(biomeHolder, "stardewcraft:is_night_market");
-		boolean poolOnly = queryLocation == null && (festivalFishingGame || nightMarketFishing || useDesertFestivalPoolOnly(biomeHolder));
+				|| hasBiomeTag(worldBiomeHolder, "stardewcraft:is_night_market");
+		boolean poolOnly = queryLocation == null && (festivalFishingGame || nightMarketFishing || useDesertFestivalPoolOnly(worldBiomeHolder));
 
 		// 获取当前环境条件
 		boolean isRaining = com.stardew.craft.weather.WeatherManager.isRaining(level);
@@ -232,6 +293,7 @@ public final class FishingDataManager {
 		String currentSeason = getCurrentSeason(level);
 
 		String fishAreaId = festivalFishingGame ? null : resolveVanillaFishAreaId(biomeHolder);
+		boolean farmWideLocationPool = farmLocationPool.isPresent();
 		List<CandidateRule> candidates = collectCandidatesByKeys(lookupKeys, poolOnly);
 		if (iceFishingContest) {
 			candidates = new ArrayList<>(candidates.stream()
@@ -273,7 +335,8 @@ public final class FishingDataManager {
 		for (int pass = 0; pass < 2 && chosen == null; pass++) {
 			for (CandidateRule candidate : ordered) {
 				SpawnFishRule rule = candidate.rule();
-				if ((queryLocation != null || candidate.inherited()) && !rule.canBeInherited()) {
+				if ((queryLocation != null || farmLocationPool.isPresent() || candidate.inherited())
+						&& !rule.canBeInherited()) {
 					continue;
 				}
 				if (!RULE_ELIGIBILITY_HOOK.allow(player, level, bobberPos, biomeHolder, rule)) {
@@ -289,7 +352,7 @@ public final class FishingDataManager {
 				if (rule.requireMagicBait() && !usingMagicBait) {
 					continue;
 				}
-				if (rule.fishAreaId() != null && !rule.fishAreaId().isBlank()) {
+				if (!farmWideLocationPool && rule.fishAreaId() != null && !rule.fishAreaId().isBlank()) {
 					if (fishAreaId == null || !rule.fishAreaId().equalsIgnoreCase(fishAreaId)) {
 						continue;
 					}
@@ -297,7 +360,7 @@ public final class FishingDataManager {
 				if (!rule.matchesBasic(fishingLevel, effectiveDepth)) {
 					continue;
 				}
-				if (!rule.matchesBiome(biomeHolder)) {
+				if (!farmWideLocationPool && !rule.matchesBiome(biomeHolder)) {
 					continue;
 				}
 				if (!usingMagicBait && !rule.ignoreFishDataRequirements()) {
@@ -643,6 +706,141 @@ public final class FishingDataManager {
 						resolveCoreLocationKeys(level, biomeHolder, position));
 	}
 
+	/**
+	 * Riverland Farm's Data/Locations rule delegates each cast to Forest 30% of
+	 * the time and Town otherwise. Keep the roll at location-pool resolution so
+	 * the inherited pool still applies its own season, time and weather rules.
+	 */
+	public static Optional<String> resolveRiverlandFarmFishingPool(
+			ServerLevel level,
+			BlockPos position,
+			RandomSource random) {
+		UUID owner = FarmInstanceRegistry.get(level.getServer()).getOwnerAt(position);
+		if (owner == null) return Optional.empty();
+		var farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+		if (farm == null || !farm.contains(position)
+				|| !farm.getFarmLayoutId().equals(
+						com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+								.builtinId(FarmType.RIVERLAND))) {
+			return Optional.empty();
+		}
+		return Optional.of(random.nextDouble() < 0.3D ? "Forest" : "Town");
+	}
+
+	public enum ForestFarmFishingRoll {
+		WOODSKIP,
+		FOREST,
+		JUNK
+	}
+
+	public enum SpecialFarmFishingRoll {
+		FOREST,
+		MOUNTAIN,
+		JUNK
+	}
+
+	public enum BeachFarmFishingRoll {
+		SEAWEED,
+		BEACH_FORAGE,
+		BEACH,
+		JUNK
+	}
+
+	/** Forest Farm: 5% Woodskip, 45% Forest river fish, otherwise trash. */
+	public static Optional<ForestFarmFishingRoll> resolveForestFarmFishingRoll(
+			ServerLevel level,
+			BlockPos position,
+			RandomSource random) {
+		UUID owner = FarmInstanceRegistry.get(level.getServer()).getOwnerAt(position);
+		if (owner == null) return Optional.empty();
+		var farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+		if (farm == null || !farm.contains(position)
+				|| !farm.getFarmLayoutId().equals(
+						com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+								.builtinId(FarmType.FOREST))) {
+			return Optional.empty();
+		}
+		double roll = random.nextDouble();
+		if (roll < 0.05D) return Optional.of(ForestFarmFishingRoll.WOODSKIP);
+		if (roll < 0.50D) return Optional.of(ForestFarmFishingRoll.FOREST);
+		return Optional.of(ForestFarmFishingRoll.JUNK);
+	}
+
+	/** Beach Farm: every cast inside the farm follows the source's sequential
+	 * 15% seaweed, 6% beach forage, 66% Beach-pool rules. */
+	public static Optional<BeachFarmFishingRoll> resolveBeachFarmFishingRoll(
+			ServerLevel level, BlockPos bobberPosition, RandomSource random) {
+		UUID owner = FarmInstanceRegistry.get(level.getServer()).getOwnerAt(bobberPosition);
+		if (owner == null) return Optional.empty();
+		var farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+		if (farm == null || !farm.contains(bobberPosition)
+				|| !farm.getFarmLayoutId().equals(
+						StardewFarmLayoutRegistry.builtinId(FarmType.BEACH))) return Optional.empty();
+		if (random.nextDouble() < 0.15D) return Optional.of(BeachFarmFishingRoll.SEAWEED);
+		if (random.nextDouble() < 0.06D) return Optional.of(BeachFarmFishingRoll.BEACH_FORAGE);
+		if (random.nextDouble() < 0.66D) return Optional.of(BeachFarmFishingRoll.BEACH);
+		return Optional.of(BeachFarmFishingRoll.JUNK);
+	}
+
+	/** Hilltop 50% Forest, Wilderness 35% Mountain, Four Corners 50% Forest,
+	 * and Meadowlands 40% Forest. Every water block inside a matching farm uses
+	 * the farm-wide rule; custom farm maps do not maintain brittle pond masks. */
+	public static Optional<SpecialFarmFishingRoll> resolveSpecialFarmFishingRoll(
+			ServerLevel level,
+			BlockPos position,
+			RandomSource random) {
+		return resolveSpecialFarmFishingRoll(level, position, position, random);
+	}
+
+	public static Optional<SpecialFarmFishingRoll> resolveSpecialFarmFishingRoll(
+			ServerLevel level,
+			BlockPos fisherPosition,
+			BlockPos bobberPosition,
+			RandomSource random) {
+		UUID owner = FarmInstanceRegistry.get(level.getServer()).getOwnerAt(bobberPosition);
+		if (owner == null) return Optional.empty();
+		var farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+		if (farm == null || !farm.contains(bobberPosition)) return Optional.empty();
+		ResourceLocation layoutId = farm.getFarmLayoutId();
+		if (layoutId.equals(com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+				.builtinId(FarmType.HILLTOP))) {
+			return Optional.of(random.nextDouble() < 0.50D
+					? SpecialFarmFishingRoll.FOREST : SpecialFarmFishingRoll.JUNK);
+		}
+		if (layoutId.equals(com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+				.builtinId(FarmType.WILDERNESS))) {
+			return Optional.of(random.nextDouble() < 0.35D
+					? SpecialFarmFishingRoll.MOUNTAIN : SpecialFarmFishingRoll.JUNK);
+		}
+		if (layoutId.equals(com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+				.builtinId(FarmType.FOUR_CORNERS))) {
+			return Optional.of(random.nextDouble() < 0.50D
+					? SpecialFarmFishingRoll.FOREST : SpecialFarmFishingRoll.JUNK);
+		}
+		if (layoutId.equals(com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+				.builtinId(FarmType.MEADOWLANDS))) {
+			return Optional.of(random.nextDouble() < 0.40D
+					? SpecialFarmFishingRoll.FOREST : SpecialFarmFishingRoll.JUNK);
+		}
+		return Optional.empty();
+	}
+
+	public static boolean isFourCornersFishingRegion(ServerLevel level, BlockPos fisherPosition) {
+		UUID owner = FarmInstanceRegistry.get(level.getServer()).getOwnerAt(fisherPosition);
+		if (owner == null) return false;
+		var farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+		return farm != null && isFourCornersFishingRegion(farm, fisherPosition);
+	}
+
+	private static boolean isFourCornersFishingRegion(
+			com.stardew.craft.farm.FarmInstance farm,
+			BlockPos fisherPosition) {
+		return farm.contains(fisherPosition)
+				&& farm.getFarmLayoutId().equals(
+				com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+						.builtinId(FarmType.FOUR_CORNERS));
+	}
+
 	private static List<String> resolveCoreLocationKeys(
 			ServerLevel level,
 			Holder<Biome> biomeHolder,
@@ -719,6 +917,25 @@ public final class FishingDataManager {
 	private static boolean hasBiomeId(Holder<Biome> biomeHolder, String biomeId) {
 		ResourceLocation expected = ResourceLocation.parse(biomeId);
 		return biomeHolder.unwrapKey().map(key -> key.location().equals(expected)).orElse(false);
+	}
+
+	/**
+	 * Representative environment for an inherited location pool. Farm fishing
+	 * is farm-wide, so this holder is used only while evaluating the delegated
+	 * pool's hooks and location conditions; it never changes world biome data.
+	 */
+	private static Holder<Biome> biomeForLocationPool(ServerLevel level, String locationKey) {
+		String biomePath = switch (locationKey) {
+			case "Beach" -> "beach_ocean";
+			case "Mountain" -> "mountain_lake";
+			case "Town" -> "pelican_town_river";
+			case "Forest" -> "forest_river";
+			default -> "stardew_default";
+		};
+		return level.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(
+				net.minecraft.resources.ResourceKey.create(
+						Registries.BIOME,
+						ResourceLocation.fromNamespaceAndPath("stardewcraft", biomePath)));
 	}
 
 	private String resolveVanillaFishAreaId(Holder<Biome> biomeHolder) {

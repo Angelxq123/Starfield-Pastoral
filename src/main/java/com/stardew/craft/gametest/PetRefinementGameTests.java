@@ -119,7 +119,7 @@ public final class PetRefinementGameTests {
         try (var fixture = new FarmLevel(h)) {
             var level = fixture.level; var registry = FarmInstanceRegistry.get(level.getServer()); var owner = UUID.randomUUID();
             var farm = registry.createFarm(owner, "Water", "Water", FarmType.STANDARD);
-            var pos = farm.getOrigin().offset(227, 5, 248); clear(level, pos);
+            var pos = farm.getOrigin().offset(183, 25, 77); clear(level, pos);
             var player = FakePlayerFactory.get(level, new GameProfile(owner, "BowlWater"));
             player.moveTo(Vec3.atBottomCenterOf(pos.north(2))); player.getAbilities().instabuild = false;
             try {
@@ -170,7 +170,7 @@ public final class PetRefinementGameTests {
             var registry = FarmInstanceRegistry.get(level.getServer()); var owner = UUID.randomUUID();
             var farm = registry.createFarm(owner, "Bowl document move", "Bowl document move", FarmType.STANDARD);
             farm.markInitialized();
-            var source = farm.getOrigin().offset(227, 5, 248); clear(level, source);
+            var source = farm.getOrigin().offset(183, 25, 77); clear(level, source);
             var target = source.east(6);
             var player = FakePlayerFactory.get(level, new GameProfile(owner, "BowlDocumentMove"));
             try (var online = onlineLookup(player)) {
@@ -236,7 +236,7 @@ public final class PetRefinementGameTests {
         var level = fixture.level;
         var registry = FarmInstanceRegistry.get(level.getServer()); var owner = UUID.randomUUID();
         var farm = registry.createFarm(owner, "Bowl move", "Bowl move", FarmType.STANDARD);
-        var source = farm.getOrigin().offset(227, 5, 248); clear(level, source);
+        var source = farm.getOrigin().offset(183, 25, 77); clear(level, source);
         var player = FakePlayerFactory.get(level, new GameProfile(owner, "BowlMove"));
         var data = PetWorldData.get(level.getServer()); var buildings = BuildingWorldData.get(level.getServer());
         try (var online = onlineLookup(player)) {
@@ -301,7 +301,7 @@ public final class PetRefinementGameTests {
         for (int kind = 0; kind < 3; kind++) {
             boolean legacy = kind != 0;
             var owner = UUID.randomUUID(); var farm = registry.createFarm(owner, "Pad", "Pad", FarmType.STANDARD);
-            var source = farm.getOrigin().offset(227, 5, 248); clear(level, source); farm.markInitialized();
+            var source = farm.getOrigin().offset(183, 25, 77); clear(level, source); farm.markInitialized();
             var data = PetWorldData.get(level.getServer()); var floors = SurfaceFloorData.get(level);
             try {
                 if (legacy) {

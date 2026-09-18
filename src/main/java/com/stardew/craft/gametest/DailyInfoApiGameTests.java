@@ -105,23 +105,7 @@ public final class DailyInfoApiGameTests {
         var data = BuildingWorldData.get(level.getServer());
         var construction = buildingRecord(farm.getInstanceId(), farm.getSlotIndex(), PrefabDefinitions.COOP,
                 h.absolutePos(new BlockPos(4, 1, 4)), level.dimension().location());
-        var upgrade = buildingRecord(farm.getInstanceId(), farm.getSlotIndex(), PrefabDefinitions.BARN,
-                h.absolutePos(new BlockPos(48, 1, 48)), level.dimension().location());
         try {
-            UUID upgradePermit = UUID.randomUUID();
-            data.recordPurchase(upgradePermit, farm.getInstanceId(), true, upgrade.family());
-            h.assertTrue(data.beginPrefab(upgrade, upgradePermit, 10) == BuildingWorldData.Result.SUCCESS,
-                    "Could not prepare upgrade order");
-            data.markScaffold(upgrade.id());
-            data.constructionDay(11, true);
-            data.constructionDay(12, true);
-            data.constructionDay(13, true);
-            h.assertTrue(data.finishPrefab(upgrade.id()) == BuildingWorldData.Result.SUCCESS,
-                    "Could not finish upgrade fixture building");
-            var ready = data.find(upgrade.id());
-            h.assertTrue(data.beginUpgrade(ready.id(), ready.revision(), 20) == BuildingWorldData.Result.SUCCESS,
-                    "Could not begin upgrade fixture");
-
             UUID constructionPermit = UUID.randomUUID();
             data.recordPurchase(constructionPermit, farm.getInstanceId(), true, construction.family());
             h.assertTrue(data.beginPrefab(construction, constructionPermit, 20) == BuildingWorldData.Result.SUCCESS,
@@ -129,19 +113,32 @@ public final class DailyInfoApiGameTests {
             var constructing = data.find(construction.id());
             h.assertTrue(data.rename(constructing.id(), constructing.revision(), "North Coop")
                     == BuildingWorldData.Result.SUCCESS, "Could not name construction fixture");
+            data.markScaffold(construction.id());
             data.constructionDay(21, false);
 
-            StardewConstructionProgressSnapshot ownerView =
+            StardewConstructionProgressSnapshot constructionOwnerView =
                     BuildingConstructionProgressSyncEvents.snapshotFor(data, ownerPlayer);
-            h.assertTrue(ownerView.totalOrderCount() == 2 && ownerView.orders().size() == 2
-                    && !ownerView.truncated(), "Owner did not receive both Robin orders");
-            var constructionView = ownerView.find(construction.id()).orElseThrow();
-            var upgradeView = ownerView.find(upgrade.id()).orElseThrow();
+            h.assertTrue(constructionOwnerView.totalOrderCount() == 1
+                    && constructionOwnerView.orders().size() == 1
+                    && !constructionOwnerView.truncated(), "Owner did not receive the active Robin order");
+            var constructionView = constructionOwnerView.find(construction.id()).orElseThrow();
             h.assertTrue(constructionView.workType() == StardewConstructionOrderSnapshot.WorkType.CONSTRUCTION
                             && constructionView.targetTier() == 1
                             && constructionView.remainingWorkDays() == 3
                             && constructionView.displayName().getString().equals("North Coop"),
                     "Construction snapshot lost type, tier, paused-day progress or custom name");
+
+            data.constructionDay(22, true);
+            data.constructionDay(23, true);
+            data.constructionDay(24, true);
+            h.assertTrue(data.finishPrefab(construction.id()) == BuildingWorldData.Result.SUCCESS,
+                    "Could not finish construction fixture building");
+            var ready = data.find(construction.id());
+            h.assertTrue(data.beginUpgrade(ready.id(), ready.revision(), 25) == BuildingWorldData.Result.SUCCESS,
+                    "Could not begin upgrade fixture");
+            StardewConstructionProgressSnapshot ownerView =
+                    BuildingConstructionProgressSyncEvents.snapshotFor(data, ownerPlayer);
+            var upgradeView = ownerView.find(construction.id()).orElseThrow();
             h.assertTrue(upgradeView.workType() == StardewConstructionOrderSnapshot.WorkType.UPGRADE
                             && upgradeView.targetTier() == 2
                             && upgradeView.remainingWorkDays() == 2,

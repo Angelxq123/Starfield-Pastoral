@@ -55,7 +55,7 @@ public final class MarnieService {
 
     public static void openMenu(ServerPlayer player) {
         OPEN_MENUS.put(player, player.serverLevel().getServer().getTickCount() + 6000L);
-        PacketDistributor.sendToPlayer(player, new OpenMarnieMenuPayload());
+        PacketDistributor.sendToPlayer(player, new OpenMarnieMenuPayload(com.stardew.craft.pet.PetManagement.unlocked(player)));
     }
 
     /**
@@ -68,7 +68,11 @@ public final class MarnieService {
         switch (choice) {
             case 0 -> openSupplies(player);
             case 1 -> openAnimalPurchase(player);
-            case 3 -> com.stardew.craft.pet.PetManagement.openShop(player);
+            case 3 -> {
+                if (com.stardew.craft.pet.PetManagement.unlocked(player)) {
+                    com.stardew.craft.pet.PetManagement.openShop(player);
+                }
+            }
             // 2 = Leave, do nothing
         }
     }

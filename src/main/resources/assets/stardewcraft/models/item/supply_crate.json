@@ -1,0 +1,17 @@
+{
+  "parent": "stardewcraft:block/farm_debris/beach_supply_crates/supply_crate_blue",
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "stardewcraft:item/supply_crate_1"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "stardewcraft:item/supply_crate_2"
+    }
+  ]
+}

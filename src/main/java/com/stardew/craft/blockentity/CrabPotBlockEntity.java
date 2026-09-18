@@ -127,9 +127,23 @@ public class CrabPotBlockEntity extends BlockEntity implements UtilityAutomation
 		@SuppressWarnings("null")
 		Holder<Biome> biome = level.getBiome(pos);
 		boolean isOceanBiome = isOceanBiome(biome);
+		boolean beachFarmPond = false;
+		if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+			var farms = com.stardew.craft.farm.FarmInstanceRegistry.get(serverLevel.getServer());
+			var owner = farms.getOwnerAt(pos);
+			var farm = owner == null ? null : farms.getFarm(owner);
+			if (farm != null && farm.contains(pos) && farm.getFarmLayoutId().equals(
+					com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+							.builtinId(com.stardew.craft.farm.FarmType.BEACH))) {
+				BlockPos local = pos.subtract(farm.getOrigin());
+				beachFarmPond = local.getX() >= 115 && local.getX() <= 181
+						&& local.getZ() >= 34 && local.getZ() <= 79;
+				isOceanBiome = !beachFarmPond;
+			}
+		}
 
-		// 垃圾概率：默认20% (后续接入本项目 FishArea/地点数据驱动)
-		double junkChance = hasMariner ? 0.0 : 0.2;
+		// Beach Farm's freshwater pond has the source's exceptional 45% junk rate.
+		double junkChance = hasMariner ? 0.0 : beachFarmPond ? 0.45 : 0.2;
 
 		// 读取鱼饵ID判断效果
 		@SuppressWarnings("null")

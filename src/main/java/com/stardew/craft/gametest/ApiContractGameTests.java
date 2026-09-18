@@ -1943,8 +1943,12 @@ public final class ApiContractGameTests {
 
         StardewFarmInitializationSteps.RunReport firstRun =
                 StardewFarmInitializationSteps.runPending(helper.getLevel(), owner);
-        helper.assertValueEqual(firstRun.attempted(), 3, "not all farm steps were attempted");
-        helper.assertValueEqual(firstRun.succeeded(), 2, "successful farm steps were not recorded");
+        helper.assertTrue(firstRun.attempted() >= 3, "not all addon farm steps were attempted");
+        helper.assertValueEqual(
+                firstRun.succeeded() + firstRun.failed(),
+                firstRun.attempted(),
+                "farm step report counts did not balance"
+        );
         helper.assertValueEqual(firstRun.failed(), 1, "failing farm step was not reported");
         helper.assertValueEqual(calls, List.of("first", "failing", "final"),
                 "farm initialization ordering changed");

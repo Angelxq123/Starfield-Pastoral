@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "stardewcraft:item/crops/mixed_flower_seeds",
+    "particle": "stardewcraft:item/crops/mixed_flower_seeds"
+  }
+}

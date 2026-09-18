@@ -25,8 +25,10 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import com.stardew.craft.entity.npc.StardewNpcEntity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -82,6 +84,13 @@ public class MapDecorStaticBlock extends Block {
 
     private final String modelId;
     private final boolean boxCollision;
+    /**
+     * Map props may be solid for players while remaining traversable to the
+     * schedule walker.  Stardew's map collision treats counters and display
+     * furniture as visual props for NPC routing; the NPC must be able to reach
+     * an authored standing tile behind them without changing player collision.
+     */
+    private final boolean npcPassable;
     /** Optional custom shape in model pixels; null means load the model profile. */
     private final VoxelShape presetShape;
     private volatile Set<CellOffset> localOccupiedOffsets;
@@ -95,6 +104,7 @@ public class MapDecorStaticBlock extends Block {
         super(properties.dynamicShape());
         this.modelId = modelId;
         this.boxCollision = boxCollision;
+        this.npcPassable = boxCollision;
         this.presetShape = null;
         registerDefaultState(stateDefinition.any().setValue(PART, Part.MAIN).setValue(FACING, Direction.NORTH));
     }
@@ -107,9 +117,22 @@ public class MapDecorStaticBlock extends Block {
     public MapDecorStaticBlock(Properties properties, String modelId,
                                double minX, double minY, double minZ,
                                double maxX, double maxY, double maxZ) {
+        this(properties, modelId, minX, minY, minZ, maxX, maxY, maxZ, false);
+    }
+
+    /**
+     * Constructor for a multi-cell map prop with an NPC-only pass-through
+     * collision policy.  The authored shape remains the player collision and
+     * outline shape; only EntityCollisionContext for Stardew NPCs is cleared.
+     */
+    public MapDecorStaticBlock(Properties properties, String modelId,
+                               double minX, double minY, double minZ,
+                               double maxX, double maxY, double maxZ,
+                               boolean npcPassable) {
         super(properties.dynamicShape());
         this.modelId = modelId;
         this.boxCollision = true;
+        this.npcPassable = npcPassable;
         this.presetShape = Block.box(minX, minY, minZ, maxX, maxY, maxZ);
         registerDefaultState(stateDefinition.any().setValue(PART, Part.MAIN).setValue(FACING, Direction.NORTH));
     }
@@ -142,6 +165,10 @@ public class MapDecorStaticBlock extends Block {
 
     @Override
     public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
+        if (npcPassable && context instanceof EntityCollisionContext entityContext
+                && entityContext.getEntity() instanceof StardewNpcEntity) {
+            return Shapes.empty();
+        }
         return getShape(state, level, pos, context);
     }
 

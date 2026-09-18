@@ -9,16 +9,12 @@ import java.util.List;
 
 public final class ChestMenuActions {
     public static final int FILL_STACKS = 10;
-    public static final int TRASH = 11;
     private ChestMenuActions() {}
     public static boolean handle(AbstractContainerMenu menu, Container chest, int capacity, Player player, int action) {
         if (player.level().isClientSide) return false;
         if (action == FILL_STACKS) {
             if (!menu.getCarried().isEmpty()) return false;
             fillStacks(chest, capacity, player.getInventory());
-        } else if (action == TRASH) {
-            if (!(player instanceof net.minecraft.server.level.ServerPlayer serverPlayer)
-                    || !TrashCanService.trashCarried(serverPlayer, menu).success()) return false;
         } else return false;
         chest.setChanged();
         player.getInventory().setChanged();

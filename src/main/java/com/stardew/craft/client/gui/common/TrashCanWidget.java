@@ -29,7 +29,34 @@ import java.util.Set;
 /** Shared rendering and reclaim preview for every carried-item trash-can control. */
 @OnlyIn(Dist.CLIENT)
 public final class TrashCanWidget {
+    private static final int NATIVE_WIDTH = 18;
+    private static final int NATIVE_BODY_HEIGHT = 26;
+    private static final int NATIVE_LID_PIVOT_X = 15;
+    private static final int NATIVE_LID_PIVOT_Y = 10;
+    private static final float MAX_LID_ROTATION = (float) Math.PI / 2.0F;
+    private static final float LID_ROTATION_STEP = (float) Math.PI / 48.0F;
+
     private TrashCanWidget() {
+    }
+
+    /**
+     * Placement-only data for the original trash-can control. Animation, tier art,
+     * sound, tooltip and trash behavior stay in {@link Controller}.
+     */
+    public record Layout(int bodyX, int bodyY, float scale,
+                         int hitX, int hitY, int hitWidth, int hitHeight) {
+        public static Layout compact(int x, int y) {
+            return new Layout(x, y + 8, 1.0F, x, y, NATIVE_WIDTH, NATIVE_BODY_HEIGHT + 8);
+        }
+
+        public static Layout original(int bodyX, int bodyY, float scale, int hitWidth, int hitHeight) {
+            return new Layout(bodyX, bodyY, scale, bodyX, bodyY, hitWidth, hitHeight);
+        }
+
+        public boolean contains(double mouseX, double mouseY) {
+            return mouseX >= hitX && mouseX < hitX + hitWidth
+                    && mouseY >= hitY && mouseY < hitY + hitHeight;
+        }
     }
 
     public static void render(GuiGraphics graphics, int bodyX, int bodyY, float bodyScale,
@@ -73,46 +100,58 @@ public final class TrashCanWidget {
         return lines;
     }
 
-    /** Reusable small control for container-style screens. */
+    /** Shared original-game trash-can control used by inventory and container screens. */
     public static final class Controller {
         private float lidRotation;
-        private long lastFrame;
-        private boolean wasHovered;
 
         public int xBeside(int panelX, int panelWidth, int screenWidth) {
             int right = panelX + panelWidth + 4;
-            if (right + 18 <= screenWidth) {
+            if (right + NATIVE_WIDTH <= screenWidth) {
                 return right;
             }
             int left = panelX - 22;
             if (left >= 0) {
                 return left;
             }
-            return Math.max(0, Math.min(screenWidth - 18, panelX + panelWidth - 22));
+            return Math.max(0, Math.min(screenWidth - NATIVE_WIDTH, panelX + panelWidth - 22));
         }
 
         public boolean contains(int x, int y, double mouseX, double mouseY) {
-            return mouseX >= x && mouseX < x + 18 && mouseY >= y && mouseY < y + 34;
+            return contains(Layout.compact(x, y), mouseX, mouseY);
+        }
+
+        public boolean contains(Layout layout, double mouseX, double mouseY) {
+            return layout.contains(mouseX, mouseY);
         }
 
         public void render(GuiGraphics graphics, int x, int y, double mouseX, double mouseY) {
-            boolean hovered = contains(x, y, mouseX, mouseY);
+            render(graphics, Layout.compact(x, y), mouseX, mouseY);
+        }
+
+        public void render(GuiGraphics graphics, Layout layout, double mouseX, double mouseY) {
+            boolean hovered = contains(layout, mouseX, mouseY);
             Minecraft client = Minecraft.getInstance();
-            if (hovered && !wasHovered) {
+            if (hovered && lidRotation <= 0.0F) {
                 client.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.TRASHCANLID.get(), 1.0f));
             }
-            wasHovered = hovered;
-            long now = net.minecraft.Util.getMillis();
-            float delta = lastFrame == 0L ? 1.0f : Math.min(1.0f, (now - lastFrame) / 90.0f);
-            lastFrame = now;
-            lidRotation += ((hovered ? -0.45f : 0.0f) - lidRotation) * delta;
-            TrashCanWidget.render(graphics, x, y + 8, 1.0f, x + 2, y + 8, 1.0f,
-                    -2, -8, lidRotation);
+            lidRotation = hovered
+                    ? Math.min(lidRotation + LID_ROTATION_STEP, MAX_LID_ROTATION)
+                    : Math.max(lidRotation - LID_ROTATION_STEP, 0.0F);
+
+            int pivotX = layout.bodyX() + Math.round(NATIVE_LID_PIVOT_X * layout.scale());
+            int pivotY = layout.bodyY() + Math.round(NATIVE_LID_PIVOT_Y * layout.scale());
+            TrashCanWidget.render(graphics, layout.bodyX(), layout.bodyY(), layout.scale(),
+                    pivotX, pivotY, layout.scale(), -16, -10, lidRotation);
         }
 
         public boolean click(AbstractContainerMenu menu, int x, int y,
                              double mouseX, double mouseY, int button) {
-            if (button != 0 || !contains(x, y, mouseX, mouseY)) {
+            return click(menu, Layout.compact(x, y), mouseX, mouseY, button);
+        }
+
+        public boolean click(AbstractContainerMenu menu, Layout layout,
+                             double mouseX, double mouseY, int button) {
+            if (button != 0 || !contains(layout, mouseX, mouseY)) {
                 return false;
             }
             trashCarried(menu);
@@ -129,7 +168,12 @@ public final class TrashCanWidget {
 
         public boolean renderTooltip(GuiGraphics graphics, Font font, AbstractContainerMenu menu, int x, int y,
                                      int mouseX, int mouseY) {
-            if (!contains(x, y, mouseX, mouseY)) {
+            return renderTooltip(graphics, font, menu, Layout.compact(x, y), mouseX, mouseY);
+        }
+
+        public boolean renderTooltip(GuiGraphics graphics, Font font, AbstractContainerMenu menu, Layout layout,
+                                     int mouseX, int mouseY) {
+            if (!contains(layout, mouseX, mouseY)) {
                 return false;
             }
             graphics.renderTooltip(font, TrashCanWidget.tooltip(menu.getCarried()),

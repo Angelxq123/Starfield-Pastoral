@@ -75,6 +75,11 @@ public class TeleportTotemItem extends Item implements IStardewItem {
         return "stardewcraft.type.magic";
     }
 
+    @Override
+    public int getSellPrice(ItemStack stack) {
+        return 20;
+    }
+
     /* ---------- 绑定 ---------- */
 
     /** 将此图腾绑定到指定图腾柱 */

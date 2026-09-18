@@ -83,15 +83,17 @@ public final class TerrainWorldUpgradeGameTests {
 
     @GameTest(templateNamespace = StardewCraft.MODID, template = "ring_utilities")
     public static void schematicPasteVariesUnspecifiedTerrainAndKeepsExplicitZero(GameTestHelper helper) throws Exception {
-        var method = com.stardew.craft.mining.StructureLoader.class.getDeclaredMethod("placeSchematicBlocks",
-                net.minecraft.server.level.ServerLevel.class, BlockPos.class, int.class, int.class, int.class,
-                BlockState[].class, int[].class, boolean[].class, boolean.class);
+        var method = java.util.Arrays.stream(com.stardew.craft.mining.StructureLoader.class.getDeclaredMethods())
+                .filter(candidate -> candidate.getName().equals("placeSchematicBlocks"))
+                .findFirst()
+                .orElseThrow();
         method.setAccessible(true);
         BlockState[] palette = {ModBlocks.GRASS_BLOCK.get().defaultBlockState(), ModBlocks.DIRT.get().defaultBlockState()};
         int[] indices = new int[256];
         for (int i = 0; i < indices.length; i++) indices[i] = i % 2;
         var origin = helper.absolutePos(new BlockPos(1, 1, 1));
-        method.invoke(null, helper.getLevel(), origin, 16, 1, 16, palette, indices, new boolean[]{true, false}, false);
+        method.invoke(null, helper.getLevel(), origin, 16, 1, 16, palette, indices,
+                new boolean[]{true, false}, new boolean[]{true, true}, false, null);
         int decorated = 0;
         for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
             var state = helper.getLevel().getBlockState(origin.offset(x,0,z));

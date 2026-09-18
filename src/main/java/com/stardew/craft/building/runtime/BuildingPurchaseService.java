@@ -32,13 +32,17 @@ public final class BuildingPurchaseService {
         if (FishPondPrefabs.isPond(familyId)) { purchase(player, revision, false, requestId, familyId); return; }
         var family = PrefabDefinitions.get(familyId);
         var blueprint = BuildingBlueprintRegistry.find(familyId).orElseThrow().definition();
+        var farm = FarmInstanceRegistry.get(player.serverLevel().getServer()).getFarmForPlayer(player.getUUID());
+        boolean robinBusy = farm != null && BuildingWorldData.get(player.serverLevel().getServer())
+                .hasActiveConstruction(farm.getInstanceId());
         var materials = net.minecraft.network.chat.Component.empty();
         for (var material : blueprint.materials()) {
             if (!materials.getString().isEmpty()) materials.append("\n");
             materials.append(material.count() + " × ").append(BuiltInRegistries.ITEM.get(material.item()).getDescription());
         }
         PacketDistributor.sendToPlayer(player, new OpenBuildingRoutesPayload(PlayerStardewDataAPI.getMoney(player),
-                family.managerPrice(), family.selfRadius() * 2 + 1, family.selfHeight(), blueprint.money(), materials, revision, familyId, requestId));
+                family.managerPrice(), family.selfRadius() * 2 + 1, family.selfHeight(), blueprint.money(), materials,
+                revision, familyId, requestId, robinBusy));
     }
     public static void purchase(ServerPlayer player, long revision, boolean self, UUID requestId, net.minecraft.resources.ResourceLocation familyId) {
         if (self && FishPondPrefabs.isPond(familyId)) { fail(player,requestId,"building.stardewcraft.prefab_only"); return; }
@@ -47,6 +51,10 @@ public final class BuildingPurchaseService {
         if(!self)try{PrefabDefinitions.validateAssets(player.serverLevel(),familyId);}catch(RuntimeException invalid){fail(player, requestId,"gui.stardewcraft.farm_ui.prefab_unavailable");return;}
         var farm = FarmInstanceRegistry.get(player.serverLevel().getServer()).getFarmForPlayer(player.getUUID());
         if (farm == null) { BuildingPlacementService.message(player, "farm"); result(player, requestId, false, ""); return; }
+        if (!self && data.hasActiveConstruction(farm.getInstanceId())) {
+            fail(player, requestId, "building.stardewcraft.robin_busy");
+            return;
+        }
         var definition = BuildingBlueprintRegistry.find(familyId).orElseThrow().definition();
         int price = self ? PrefabDefinitions.get(familyId).managerPrice() : definition.money();
         if (PlayerStardewDataAPI.getMoney(player) < price) { fail(player, requestId, "livestock.stardewcraft.money"); return; }
@@ -66,6 +74,10 @@ public final class BuildingPurchaseService {
         var farm = FarmInstanceRegistry.get(player.serverLevel().getServer()).getFarmForPlayer(player.getUUID());
         var data = BuildingWorldData.get(player.serverLevel().getServer());
         if (farm == null || !item.availableFor(player)) { fail(player, requestId, "building.stardewcraft.work_stale"); return; }
+        if (data.hasActiveConstruction(farm.getInstanceId())) {
+            fail(player, requestId, "building.stardewcraft.robin_busy");
+            return;
+        }
         if (data.hasUpgradePermit(farm.getInstanceId(), item.family(), item.targetTier())) {
             BuildingPlacementService.message(player, "upgrade_owned"); result(player, requestId, false, ""); return;
         }

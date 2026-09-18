@@ -22,12 +22,14 @@ public class CarpenterMenuScreen extends FarmFolioScreen {
     private String requestedBlueprint = "";
     private Button purchase;
     private java.util.UUID pendingRequest;
+    private final boolean robinBusy;
     public void awaitingPurchase(java.util.UUID request) { pending=true; pendingRequest=request; }
 
     public CarpenterMenuScreen(OpenCarpenterMenuPayload payload) {
         super(ui("catalog"), null);
         builder=payload.builder();blueprints=payload.blueprints();playerMoney=payload.playerMoney();
         catalogRevision=payload.catalogRevision();
+        robinBusy=payload.robinBusy();
     }
     private List<CarpenterBlueprint> entries() { return blueprints.stream().filter(b->b.isUpgrade()==upgrades).toList(); }
     public void resumeChoices() { pending=false;awaitingRoutes=false; }
@@ -83,10 +85,15 @@ public class CarpenterMenuScreen extends FarmFolioScreen {
     private void updatePurchase() {
         if(purchase==null || entries().isEmpty())return;
         var bp=entries().get(selected);
-        purchase.active=!pending && (bp.presentation().getBoolean("ChooseRoute")
+        // A route-capable entry may still be self-built; every direct Robin route
+        // (including upgrades and pond prefabs) must wait for the current order.
+        boolean blocked = robinBusy && (upgrades || !bp.presentation().getBoolean("ChooseRoute"));
+        purchase.active=!pending && !blocked && (bp.presentation().getBoolean("ChooseRoute")
                 || playerMoney>=bp.cost() && FarmMaterialCosts.available(bp.materials()));
-        disabledReason(purchase,pending?ui("requesting"):Component.translatable(playerMoney<bp.cost()
-                ?"livestock.stardewcraft.money":"stardewcraft.workbench.need_materials"));
+        disabledReason(purchase,pending?ui("requesting"):blocked
+                ? Component.translatable("building.stardewcraft.robin_busy")
+                : Component.translatable(playerMoney<bp.cost()
+                        ?"livestock.stardewcraft.money":"stardewcraft.workbench.need_materials"));
     }
     @Override public void tick() { updatePurchase(); }
     @Override protected void paint(GuiGraphics g) {

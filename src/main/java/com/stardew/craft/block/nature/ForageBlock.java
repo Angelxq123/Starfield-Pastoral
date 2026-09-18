@@ -5,6 +5,7 @@ import com.stardew.craft.item.quality.QualityHelper;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.player.ProfessionType;
 import com.stardew.craft.player.SkillType;
+import com.stardew.craft.player.ForagingProfessionRules;
 import com.stardew.craft.time.StardewTimeManager;
 import com.stardew.craft.block.shape.ModelVoxelShapeCache;
 import com.stardew.craft.block.utility.GardenPotBlock;
@@ -182,20 +183,16 @@ public class ForageBlock extends BushBlock {
         int quality = determineQuality(player, level.getRandom());
         QualityHelper.setQuality(drop, quality);
 
-        // ---- Drop the item ----
-        popResource(level, pos, drop);
-
-        // ---- Gatherer profession: 20% chance double harvest ----
-        if (PlayerStardewDataAPI.hasProfession(player, ProfessionType.GATHERER)) {
-            if (level.getRandom().nextFloat() < 0.2f) {
-                ItemStack bonus = dropSupplier.get();
-                QualityHelper.setQuality(bonus, quality);
-                popResource(level, pos, bonus);
-            }
+        int harvestCount = ForagingProfessionRules.applyGatherer(
+                player, 1, level.getRandom().nextDouble());
+        for (int i = 0; i < harvestCount; i++) {
+            ItemStack harvested = i == 0 ? drop : dropSupplier.get();
+            QualityHelper.setQuality(harvested, quality);
+            popResource(level, pos, harvested);
         }
 
         // ---- Foraging XP ----
-        PlayerStardewDataAPI.addExperience(player, SkillType.FORAGING, FORAGE_XP);
+        PlayerStardewDataAPI.addExperience(player, SkillType.FORAGING, FORAGE_XP * harvestCount);
     }
 
     /**

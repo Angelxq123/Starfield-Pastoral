@@ -28,7 +28,7 @@ import org.joml.Vector3f;
 @SuppressWarnings({"null", "removal"})
 @EventBusSubscriber(modid = StardewCraft.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class NativeRockGolemRenderer extends EntityRenderer<MineRockGolemEntity> {
-    private static final String[] VARIANTS = {"rock_golem"};
+    private static final String[] VARIANTS = {"rock_golem", "wilderness_golem", "iridium_golem"};
     private static volatile java.util.Map<String, NativeNpcModel> loaded = java.util.Map.of();
     private NativeNpcModel posedModel;
     private final java.util.Map<MineRockGolemEntity,NativeRockGolemPlayback> motions=new java.util.WeakHashMap<>();
@@ -37,6 +37,8 @@ public final class NativeRockGolemRenderer extends EntityRenderer<MineRockGolemE
     public NativeRockGolemRenderer(EntityRendererProvider.Context context) { super(context); shadowRadius = .28F; }
     @SubscribeEvent public static void register(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.ROCK_GOLEM.get(), NativeRockGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.WILDERNESS_GOLEM.get(), NativeRockGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.IRIDIUM_GOLEM.get(), NativeRockGolemRenderer::new);
     }
     @SubscribeEvent public static void reload(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener((ResourceManagerReloadListener) NativeRockGolemRenderer::load);
@@ -97,13 +99,13 @@ public final class NativeRockGolemRenderer extends EntityRenderer<MineRockGolemE
     private static ResourceLocation texture(String variant) {
         return ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "textures/entity/monster_native/" + variant + ".png");
     }
-    @Override public ResourceLocation getTextureLocation(MineRockGolemEntity entity) { return texture("rock_golem"); }
+    @Override public ResourceLocation getTextureLocation(MineRockGolemEntity entity) { return texture(entity.visualVariant()); }
     @Override public void render(MineRockGolemEntity entity, float yaw, float partialTick, PoseStack stack,
                                  MultiBufferSource buffers, int light) {
-        var model = loaded.get("rock_golem");
+        var model = loaded.get(entity.visualVariant());
         if (model == null || entity.isInvisible() || entity.deathTime+partialTick>=16) return;
         if (posedModel != model) { posedModel=model;motions.clear(); }
-        var motion=motions.computeIfAbsent(entity,e->new NativeRockGolemPlayback(model));
+        var motion=motions.computeIfAbsent(entity,e->new NativeRockGolemPlayback(model,entity.isFarmGolem()));
         motion.sample((entity.level().getGameTime()+(double)partialTick)/20.,entity.moving(),entity.phase(),entity.riseProgress(partialTick),
                 entity.hitTime(partialTick),entity.deathTime>0?(entity.deathTime+partialTick)/20.:0);
         shadowRadius=entity.phase()==2?.28F:0;
@@ -116,6 +118,7 @@ public final class NativeRockGolemRenderer extends EntityRenderer<MineRockGolemE
         var consumer=buffers.getBuffer(RenderType.entityCutout(getTextureLocation(entity)));
         for(var quad:model.quads()){
             if(quad.sourcePart().startsWith("eyes_")&&(entity.phase()==0||entity.riseProgress(partialTick)<.25))continue;
+            if(entity.isFarmGolem() && entity.phase()!=2 && quad.sourcePart().endsWith("_outline"))continue;
             normal.set(quad.normal());matrices[quad.bone()].normal(normalMatrix).transform(normal).normalize();
             for(var v:quad.vertices()){
                 matrices[quad.bone()].transformPosition(vertex.set(v[0],v[1],v[2]));

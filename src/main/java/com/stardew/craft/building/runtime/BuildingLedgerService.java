@@ -21,6 +21,7 @@ public final class BuildingLedgerService {
         var data = BuildingWorldData.get(player.server); var level = player.serverLevel();
         BuildingResidence.Assessment scan = null;
         boolean silo = UtilityBuildings.supported(record.family());
+        boolean greenhouse = com.stardew.craft.greenhouse.GreenhouseBuildings.isGreenhouse(record.family());
         if (silo) { UtilityBuildings.refresh(level,record); record=data.find(record.id()); }
         else if (record.mode() == BuildingRecord.Mode.SELF_BUILT) { scan = BuildingResidence.refresh(level, record); record = data.find(record.id()); }
         var session = new Session(UUID.randomUUID(), record.id(), record.revision(), player.server.getTickCount() + 6000L); sessions.put(player.getUUID(), session);
@@ -61,9 +62,10 @@ public final class BuildingLedgerService {
             row.putBoolean("Petted",animal.care().petted() || animal.care().autoPetted()); row.putInt("Fullness",animal.care().fullness()); rows.add(row);
         }
         tag.put("Animals",rows); tag.putInt("Capacity",record.phase()==BuildingRecord.Phase.WAITING || record.phase()==BuildingRecord.Phase.CONSTRUCTING ? 0 : LivestockHomes.capacity(level,record));
+        tag.putBoolean("GreenhouseOnly", greenhouse);
         tag.putBoolean("CanMove",record.phase()==BuildingRecord.Phase.READY);
-        tag.putBoolean("CanDemolish",record.phase()==BuildingRecord.Phase.READY || record.phase()==BuildingRecord.Phase.WAITING);
-        tag.putBoolean("CanUpgrade",record.mode()==BuildingRecord.Mode.PREFAB && record.phase()==BuildingRecord.Phase.READY && (record.phase()==BuildingRecord.Phase.WAITING || record.tier()<PrefabDefinitions.maxTier(record.family())));
+        tag.putBoolean("CanDemolish",!greenhouse && (record.phase()==BuildingRecord.Phase.READY || record.phase()==BuildingRecord.Phase.WAITING));
+        tag.putBoolean("CanUpgrade",!greenhouse && record.mode()==BuildingRecord.Mode.PREFAB && record.phase()==BuildingRecord.Phase.READY && (record.phase()==BuildingRecord.Phase.WAITING || record.tier()<PrefabDefinitions.maxTier(record.family())));
         tag.putBoolean("Outdoors",livestock.outdoorsAllowed(record.id()));
         PacketDistributor.sendToPlayer(player,new BuildingLedgerPayload(tag));
     }
@@ -78,9 +80,13 @@ public final class BuildingLedgerService {
         var data=BuildingWorldData.get(player.server); var record=data.find(session.building);
         if(record==null || !record.dimension().equals(player.serverLevel().dimension().location()) || player.distanceToSqr(record.manager().getX()+.5,record.manager().getY()+.5,record.manager().getZ()+.5)>64
                 || !BuildingService.canManage(player,record) || !player.serverLevel().getBlockState(record.manager()).is(PrefabDefinitions.managerBlock(record.family()))) { BuildingPlacementService.message(player,"permission"); close(player,token); return; }
-        if(record.revision()!=session.revision || data.transfer(record.id())!=null || BuildingRemovalJournal.get(player.server).contains(record.id())) { BuildingPlacementService.message(player,"work_stale"); open(player,record,token); return; }
+        if(record.revision()!=session.revision || data.transfer(record.id())!=null || data.moveLift(record.id())!=null || BuildingRemovalJournal.get(player.server).contains(record.id())) { BuildingPlacementService.message(player,"work_stale"); open(player,record,token); return; }
         sessions.remove(player.getUUID());
         boolean ready=record.phase()==BuildingRecord.Phase.READY;
+        boolean greenhouse=com.stardew.craft.greenhouse.GreenhouseBuildings.isGreenhouse(record.family());
+        if(greenhouse && !action.equals("move") && !action.equals("refresh")) {
+            BuildingPlacementService.message(player,"greenhouse_move_only");open(player,record,token);return;
+        }
         switch(action) {
             case "rename" -> { if(name.isBlank() || data.rename(record.id(),record.revision(),name)!=BuildingWorldData.Result.SUCCESS) BuildingPlacementService.message(player,"name_invalid"); }
             case "accept" -> {
@@ -113,7 +119,9 @@ public final class BuildingLedgerService {
                 if(!ready) break;
                 var stack=new ItemStack(PrefabDefinitions.blueprintItem(record.family())); BuildingBlueprintItem.bindMove(stack,record);
                 var plan=BuildingPurchasePlan.prepare(player.getInventory(),stack,List.of());
-                if(plan==null) BuildingPlacementService.message(player,"purchase_space"); else { plan.apply(player.getInventory()); BuildingPlacementService.message(player,"move_hint"); close(player,token); return; }
+                if(plan==null) BuildingPlacementService.message(player,"purchase_space");
+                else if(!BuildingMoveSession.begin(player,stack,record)) BuildingPlacementService.message(player,"work_stale");
+                else { plan.apply(player.getInventory()); BuildingPlacementService.message(player,"move_hint"); close(player,token); return; }
             }
             case "demolish" -> { if(ready || record.phase()==BuildingRecord.Phase.WAITING) { if(BuildingDemolition.perform(player,record)) { close(player,token); return; } } }
             default -> { BuildingPlacementService.message(player,"work_stale"); }

@@ -79,6 +79,7 @@ public final class PrefabDefinitions {
         var block = cell.state().getBlock();
         return block == net.minecraft.world.level.block.Blocks.GRASS_BLOCK
                 || block == net.minecraft.world.level.block.Blocks.DIRT
+                || block instanceof com.stardew.craft.block.nature.YellowDirtBlock
                 || block instanceof com.stardew.craft.block.terrain.TerrainGrassBlock
                 || block instanceof com.stardew.craft.block.terrain.TerrainDirtBlock;
     }

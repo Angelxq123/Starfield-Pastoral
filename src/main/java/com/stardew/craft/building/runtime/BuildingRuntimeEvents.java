@@ -27,6 +27,7 @@ public final class BuildingRuntimeEvents {
 
     @SubscribeEvent public static void logout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         BuildingPreviewService.forget(event.getEntity().getUUID());
+        if(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)BuildingMoveSession.restoreOwner(player);
     }
 
     public static void onNewDay(ServerLevel level) {
@@ -40,7 +41,7 @@ public final class BuildingRuntimeEvents {
 
     @SubscribeEvent public static void tick(ServerTickEvent.Post event) {
         for(var level:event.getServer().getAllLevels()) RisingConstruction.tick(level);
-        if(event.getServer().getTickCount()%20==0) BuildingRemovalJournal.get(event.getServer()).recover(event.getServer());
+        if(event.getServer().getTickCount()%20==0) {BuildingRemovalJournal.get(event.getServer()).recover(event.getServer());BuildingMoveSession.recoverAbandoned(event.getServer());}
         if(event.getServer().getTickCount()%20==0) for(var player:event.getServer().getPlayerList().getPlayers()) BuildingDrafts.get(event.getServer()).synchronize(player);
         if (event.getServer().getTickCount() % 100 != 0) return;
         ServerLevel level = event.getServer().getLevel(ModDimensions.STARDEW_VALLEY);
@@ -73,6 +74,7 @@ public final class BuildingRuntimeEvents {
         var data = BuildingWorldData.get(level.getServer());
         for (var record : data.all()) {
             if (!record.dimension().equals(level.dimension().location()) || !UtilityBuildings.managed(record.family()) || !UtilityBuildings.supported(record.family())&&!PrefabDefinitions.available(record)) continue;
+            if(data.moveLift(record.id())!=null){PROJECTED.remove(record.id());continue;}
             var transfer = data.transfer(record.id());
             if (transfer != null) {
                 for (var bounds : java.util.List.of(transfer.before().claim(), transfer.after().claim())) {

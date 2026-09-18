@@ -546,6 +546,13 @@ public class FarmInstance {
         if (layoutSnapshot == null) {
             layoutSnapshot = StardewFarmLayouts.find(farmLayoutId).orElse(null);
         }
+        if (layoutSnapshot == null
+                && farmLayoutId.getNamespace().equals(com.stardew.craft.StardewCraft.MODID)) {
+            FarmType legacyType = FarmType.fromId(farmLayoutId.getPath());
+            if (legacyType.getId().equals(farmLayoutId.getPath())) {
+                layoutSnapshot = StardewFarmLayoutRegistry.builtinSnapshot(legacyType);
+            }
+        }
 
         int layoutVersion = tag.contains("FarmLayoutVersion", Tag.TAG_INT)
                 ? Math.max(1, tag.getInt("FarmLayoutVersion")) : 1;
@@ -754,15 +761,25 @@ public class FarmInstance {
         tag.putFloat("Yaw", entry.yaw());
         putPos(tag, "ExitMin", entry.exitMin());
         putPos(tag, "ExitMax", entry.exitMax());
+        putPos(tag, "BarrierMin", entry.barrierMin());
+        putPos(tag, "BarrierMax", entry.barrierMax());
         return tag;
     }
 
     private static StardewFarmLayout.Entry loadEntry(CompoundTag tag) {
+        BlockPos teleport = getPos(tag, "Teleport");
+        float yaw = tag.getFloat("Yaw");
+        BlockPos exitMin = getPos(tag, "ExitMin");
+        BlockPos exitMax = getPos(tag, "ExitMax");
+        if (tag.contains("BarrierMin", Tag.TAG_COMPOUND)
+                && tag.contains("BarrierMax", Tag.TAG_COMPOUND)) {
+            return new StardewFarmLayout.Entry(
+                    teleport, yaw, exitMin, exitMax,
+                    getPos(tag, "BarrierMin"),
+                    getPos(tag, "BarrierMax"));
+        }
         return new StardewFarmLayout.Entry(
-                getPos(tag, "Teleport"),
-                tag.getFloat("Yaw"),
-                getPos(tag, "ExitMin"),
-                getPos(tag, "ExitMax"));
+                teleport, yaw, exitMin, exitMax);
     }
 
     private static void putRegion(

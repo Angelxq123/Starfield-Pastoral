@@ -44,10 +44,12 @@ public final class BuildingRoutesScreen extends FarmFolioScreen implements com.s
     }
     private void updateButtons() {
         selfButton.active=!pending && money>=offer.managerPrice();
-        prefabButton.active=!pending && PrefabDefinitions.supported(offer.family())
+        prefabButton.active=!pending && !offer.robinBusy() && PrefabDefinitions.supported(offer.family())
                 && money>=offer.prefabPrice() && FarmMaterialCosts.available(materials);
         disabledReason(selfButton,pending?ui("requesting"):Component.translatable("livestock.stardewcraft.money"));
-        disabledReason(prefabButton,pending?ui("requesting"):Component.translatable(!PrefabDefinitions.supported(offer.family())
+        disabledReason(prefabButton,pending?ui("requesting"):offer.robinBusy()
+                ? Component.translatable("building.stardewcraft.robin_busy")
+                : Component.translatable(!PrefabDefinitions.supported(offer.family())
                 ?"gui.stardewcraft.farm_ui.prefab_unavailable":money<offer.prefabPrice()?"livestock.stardewcraft.money":"stardewcraft.workbench.need_materials"));
     }
     @Override public void tick() { updateButtons(); }

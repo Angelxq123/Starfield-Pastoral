@@ -14,6 +14,10 @@ public final class BuildingManagerItem extends StardewBlockItem {
     }
     @Override public InteractionResult place(BlockPlaceContext context) {
         if (!(context.getPlayer() instanceof ServerPlayer player)) return super.place(context);
+        if (com.stardew.craft.greenhouse.GreenhouseBuildings.isGreenhouse(family)) {
+            BuildingPlacementService.message(player,"greenhouse_not_built");
+            return InteractionResult.FAIL;
+        }
         if (FishPondPrefabs.isPond(family)) { BuildingPlacementService.message(player,"prefab_only"); return InteractionResult.FAIL; }
         var pos = context.getClickedPos();
         var facing = context.getHorizontalDirection().getOpposite();

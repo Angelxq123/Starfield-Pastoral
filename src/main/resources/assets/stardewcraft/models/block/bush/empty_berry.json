@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "stardewcraft:block/bush/2"
+    "particle": "stardewcraft:block/bush/seasons/spring_particle"
   },
   "elements": []
 }

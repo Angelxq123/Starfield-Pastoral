@@ -19,13 +19,13 @@ import com.stardew.craft.player.SkillType;
 import com.stardew.craft.player.StardewCraftingRecipeData;
 import com.stardew.craft.player.UnlockSourceData;
 import com.stardew.craft.sound.ModSounds;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -174,6 +174,8 @@ public class LevelUpMenuScreen extends Screen implements StardewGuiContentSize {
         int guiHeight = getMenuHeightPx();
         int xPos = this.width / 2 - guiWidth / 2;
         int yPos = this.height / 2 - guiHeight / 2;
+        Font dialogueFont = StardewFonts.dialogue();
+        Font smallFont = StardewFonts.small();
         // Stardew updates these particles during the 250 ms input delay even
         // though it does not draw the menu yet.
         updateLittleStars(xPos, yPos, guiWidth);
@@ -195,19 +197,25 @@ public class LevelUpMenuScreen extends Screen implements StardewGuiContentSize {
             drawSkillIcon(graphics, currentSkill, xPos + px(SPACE_SIDE + BORDER_WIDTH), yPos + px(SPACE_TOP + 16));
             drawSkillIcon(graphics, currentSkill, xPos + guiWidth - px(SPACE_SIDE + BORDER_WIDTH + 64), yPos + px(SPACE_TOP + 16));
 
-            Component title = StardewFonts.title(Component.translatable(
-                    "stardewcraft.levelup.title.level_skill", currentLevel, getSkillName(currentSkill)));
-            GuiText.drawCenteredClamped(graphics, this.font, title, xPos + guiWidth / 2,
-                yPos + px(SPACE_TOP + 16), guiWidth - px(240), 0x3A2A1A, false);
+            int partitionY = yPos + px(192);
+            int titleY = yPos + px(SPACE_TOP - 8);
+            int chooseY = Math.min(
+                    partitionY - StardewFonts.lineHeight(smallFont),
+                    titleY + StardewFonts.lineHeight(dialogueFont) + px(8));
+
+            Component title = Component.translatable(
+                    "stardewcraft.levelup.title.level_skill", currentLevel, getSkillName(currentSkill));
+            GuiText.drawCenteredClamped(graphics, dialogueFont, title, xPos + guiWidth / 2,
+                titleY, guiWidth - px(240), 0x3A2A1A, false);
 
             Component chooseText = Component.translatable("stardewcraft.levelup.choose_profession");
-            GuiText.drawCenteredClamped(graphics, this.font, chooseText, xPos + guiWidth / 2,
-                yPos + px(SPACE_TOP + 64), guiWidth - px(160), 0x3A2A1A, false);
+            GuiText.drawCenteredClamped(graphics, smallFont, chooseText, xPos + guiWidth / 2,
+                chooseY, guiWidth - px(160), 0x3A2A1A, false);
 
             // IClickableMenu.drawHorizontalPartition + drawVerticalIntersectingPartition
             int partitionUnit = px(64);
-            StardewGuiUtil.drawHorizontalPartition(graphics, xPos, yPos + px(192), guiWidth, partitionUnit);
-            StardewGuiUtil.drawVerticalIntersectingPartition(graphics, xPos + guiWidth / 2 - px(32), yPos + px(192), yPos, guiHeight, partitionUnit);
+            StardewGuiUtil.drawHorizontalPartition(graphics, xPos, partitionY, guiWidth, partitionUnit);
+            StardewGuiUtil.drawVerticalIntersectingPartition(graphics, xPos + guiWidth / 2 - px(32), partitionY, yPos, guiHeight, partitionUnit);
 
             int[] professions = getProfessionPair(currentSkill, currentLevel);
             Component leftName = getProfessionName(professions[0]);
@@ -224,27 +232,29 @@ public class LevelUpMenuScreen extends Screen implements StardewGuiContentSize {
             int textY = yPos + px(SPACE_TOP + 160);
             int lineY = yPos + px(SPACE_TOP + 128 + 8 + 64 * 2);
 
-            graphics.drawString(this.font, GuiText.ellipsize(this.font, leftName, guiWidth / 2 - px(96)),
+            graphics.drawString(dialogueFont, GuiText.ellipsize(dialogueFont, leftName, guiWidth / 2 - px(96)),
                 leftX, textY, leftColor, false);
             LevelUpMenuTextures.drawProfession(graphics, xPos + px(SPACE_SIDE) + guiWidth / 2 - px(112), yPos + px(SPACE_TOP + 144), professions[0], s4());
-            drawWrappedText(graphics, getProfessionDesc(professions[0]), leftX + px(-4), lineY, guiWidth / 2 - px(64), leftColor, px(16));
+            GuiText.drawWrapped(graphics, smallFont, getProfessionDesc(professions[0]),
+                    leftX + px(-4), lineY, guiWidth / 2 - px(64), leftColor, false, 0);
 
-            graphics.drawString(this.font, GuiText.ellipsize(this.font, rightName, guiWidth / 2 - px(96)),
+            graphics.drawString(dialogueFont, GuiText.ellipsize(dialogueFont, rightName, guiWidth / 2 - px(96)),
                 rightX, textY, rightColor, false);
             LevelUpMenuTextures.drawProfession(graphics, xPos + px(SPACE_SIDE) + guiWidth - px(128), yPos + px(SPACE_TOP + 144), professions[1], s4());
-            drawWrappedText(graphics, getProfessionDesc(professions[1]), rightX + px(-4), lineY, guiWidth / 2 - px(48), rightColor, px(16));
+            GuiText.drawWrapped(graphics, smallFont, getProfessionDesc(professions[1]),
+                    rightX + px(-4), lineY, guiWidth / 2 - px(48), rightColor, false, 0);
         } else {
             drawSkillIcon(graphics, currentSkill, xPos + px(SPACE_SIDE + BORDER_WIDTH), yPos + px(SPACE_TOP + 16));
             drawSkillIcon(graphics, currentSkill, xPos + guiWidth - px(SPACE_SIDE + BORDER_WIDTH + 64), yPos + px(SPACE_TOP + 16));
 
-            Component title = StardewFonts.title(Component.translatable(
-                    "stardewcraft.levelup.title.level_skill", currentLevel, getSkillName(currentSkill)));
-            GuiText.drawCenteredClamped(graphics, this.font, title, xPos + guiWidth / 2,
+            Component title = Component.translatable(
+                    "stardewcraft.levelup.title.level_skill", currentLevel, getSkillName(currentSkill));
+            GuiText.drawCenteredClamped(graphics, dialogueFont, title, xPos + guiWidth / 2,
                 yPos + px(SPACE_TOP + 16), guiWidth - px(240), 0x3A2A1A, false);
 
             int lineY = yPos + px(SPACE_TOP + 80);
             for (Component info : extraInfoForLevel) {
-                GuiText.drawCenteredClamped(graphics, this.font, info, xPos + guiWidth / 2,
+                GuiText.drawCenteredClamped(graphics, smallFont, info, xPos + guiWidth / 2,
                     lineY, guiWidth - px(160), 0x3A2A1A, false);
                 lineY += px(48);
             }
@@ -256,11 +266,11 @@ public class LevelUpMenuScreen extends Screen implements StardewGuiContentSize {
                         ? "stardewcraft.levelup.recipe_type.cooking"
                         : "stardewcraft.levelup.recipe_type.crafting"),
                     entry.displayName());
-                Component shown = GuiText.ellipsize(this.font, message, guiWidth - px(240));
-                int textWidth = this.font.width(shown);
+                Component shown = GuiText.ellipsize(smallFont, message, guiWidth - px(240));
+                int textWidth = smallFont.width(shown);
                 int textX = xPos + guiWidth / 2 - textWidth / 2 - px(64);
                 int textY = lineY + px(entry.bigCraftable() ? 38 : 12);
-                graphics.drawString(this.font, shown, textX, textY, 0x3A2A1A, false);
+                graphics.drawString(smallFont, shown, textX, textY, 0x3A2A1A, false);
                 if (!entry.icon().isEmpty()) {
                     CommonGuiTextures.drawItem(graphics, entry.icon(),
                         xPos + guiWidth / 2 + textWidth / 2 - px(48),
@@ -537,15 +547,6 @@ public class LevelUpMenuScreen extends Screen implements StardewGuiContentSize {
             if (p.length() > 1) sb.append(p.substring(1));
         }
         return sb.toString();
-    }
-
-    private void drawWrappedText(GuiGraphics graphics, Component text, int x, int y, int maxWidth, int color, int lineStep) {
-        List<FormattedCharSequence> lines = this.font.split(text, Math.max(1, maxWidth));
-        int lineY = y;
-        for (FormattedCharSequence line : lines) {
-            graphics.drawString(this.font, line, x, lineY, color, false);
-            lineY += lineStep;
-        }
     }
 
     private static class LittleStar {

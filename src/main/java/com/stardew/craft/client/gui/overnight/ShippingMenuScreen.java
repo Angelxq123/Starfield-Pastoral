@@ -2,13 +2,16 @@ package com.stardew.craft.client.gui.overnight;
 
 import com.stardew.craft.client.gui.common.StardewGuiViewport;
 
+import com.stardew.craft.client.font.StardewFonts;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
 import com.stardew.craft.client.gui.common.GuiText;
+import com.stardew.craft.client.gui.common.SdvFontAdapter;
 import com.stardew.craft.client.sound.StardewMusicManager;
 import com.stardew.craft.network.overnight.ClientOvernightHandler;
 import com.stardew.craft.network.overnight.OvernightSettlementPayload;
 import com.stardew.craft.sound.ModSounds;
 import com.stardew.craft.weather.ClientWeatherCache;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -536,11 +539,18 @@ public class ShippingMenuScreen extends Screen {
     }
 
     private void drawDatePlaque(GuiGraphics graphics, Component text, int y) {
-        Component shown = GuiText.ellipsize(this.font, text, Math.max(1, this.width - px(160)));
-        int textWidth = this.font.width(shown);
+        var dateFont = StardewFonts.spriteText();
+        float textScale = SdvFontAdapter.scale(dateFont,
+                Minecraft.getInstance().getLanguageManager().getSelected(), guiScale(),
+                SdvFontAdapter.Style.SPRITE_TEXT);
+        int availableWidth = Math.max(1, this.width - px(160));
+        Component shown = GuiText.ellipsize(dateFont, text,
+                Math.max(1, Math.round(availableWidth / textScale)));
+        int textWidth = SdvFontAdapter.width(dateFont, shown, textScale, SdvFontAdapter.Style.SPRITE_TEXT);
         int textX = this.width / 2 - textWidth / 2;
         CommonGuiTextures.drawScrollBanner(graphics, textX, y - px(12), textWidth, s4());
-        graphics.drawString(this.font, shown, textX, y, 0xFF5B5045, false);
+        SdvFontAdapter.draw(graphics, dateFont, shown, textX, y, textScale, 0xFFFFFFFF,
+                SdvFontAdapter.Style.SPRITE_TEXT);
     }
 
     private void drawSaveStatus(GuiGraphics graphics) {

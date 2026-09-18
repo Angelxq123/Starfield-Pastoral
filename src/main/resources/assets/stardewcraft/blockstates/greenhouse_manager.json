@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "stardewcraft:block/greenhouse_manager" },
+    "facing=east": { "model": "stardewcraft:block/greenhouse_manager", "y": 90 },
+    "facing=south": { "model": "stardewcraft:block/greenhouse_manager", "y": 180 },
+    "facing=west": { "model": "stardewcraft:block/greenhouse_manager", "y": 270 }
+  }
+}

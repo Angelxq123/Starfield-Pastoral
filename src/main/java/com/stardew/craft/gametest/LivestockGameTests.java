@@ -7,6 +7,7 @@ import com.stardew.craft.building.runtime.*;
 import com.stardew.craft.farm.*;
 import com.stardew.craft.item.ModItems;
 import com.stardew.craft.item.quality.QualityHelper;
+import com.stardew.craft.network.payload.RequestAnimalOverviewPayload;
 import com.stardew.craft.player.*;
 import com.stardew.craft.time.StardewTimeManager;
 import net.minecraft.core.BlockPos;
@@ -229,6 +230,48 @@ public final class LivestockGameTests {
         var id = UUID.randomUUID();
         var animal = new LivestockRecord(id, id, id, id, "Goat", 12, 9, LivestockCare.purchased()).species(LivestockSpecies.GOAT).produce("large_goat_milk").cracker(true).reproduction(false);
         h.assertTrue(LivestockRecord.load(animal.save()).equals(animal), "Species/held produce/cracker/reproduction lost on reload"); h.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void animalOverviewReadsCurrentFarmLedgerForOwnerAndMembers(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        var farms = FarmInstanceRegistry.get(server);
+        UUID owner = UUID.randomUUID(), member = UUID.randomUUID(), outsider = UUID.randomUUID();
+        var farm = farms.createFarm(owner, "OverviewOwner", "Overview", FarmType.STANDARD);
+        var otherFarm = farms.createFarm(outsider, "OtherOwner", "Other", FarmType.STANDARD);
+        h.assertTrue(farms.addMember(owner, member), "Overview fixture could not add farm member");
+        var data = LivestockWorldData.get(server);
+        UUID home = UUID.randomUUID();
+        try {
+            data.put(new LivestockRecord(UUID.randomUUID(), owner, farm.getInstanceId(), home,
+                    "Bessie", 700, 1,
+                    new LivestockCare(5, 1, 650, 255, 255, 0, 0, true, false))
+                    .species(LivestockSpecies.BROWN_COW).cracker(true));
+            data.put(new LivestockRecord(UUID.randomUUID(), owner, farm.getInstanceId(), home,
+                    "Calf", 702, 1, LivestockCare.purchased())
+                    .species(LivestockSpecies.WHITE_COW));
+            data.put(new LivestockRecord(UUID.randomUUID(), outsider, otherFarm.getInstanceId(), UUID.randomUUID(),
+                    "Hidden", 704, 1, LivestockCare.purchased()));
+
+            ServerPlayer viewer = FakePlayerFactory.get(h.getLevel(), new GameProfile(member, "OverviewMember"));
+            var rows = RequestAnimalOverviewPayload.entriesFor(viewer);
+            h.assertTrue(rows.size() == 2, "Animal overview omitted farm animals or exposed another farm");
+            var brown = rows.stream().filter(row -> row.animalId() == 700).findFirst().orElseThrow();
+            h.assertTrue(brown.animalTypeId().equals("brown_cow")
+                            && brown.customName().equals("Bessie")
+                            && brown.friendship() == 650
+                            && brown.petStatus() == 2
+                            && brown.receivedAnimalCracker()
+                            && brown.textureId().endsWith("animal_page_sprite_brown_cow.png"),
+                    "Current brown-cow state was not represented in the overview");
+            var white = rows.stream().filter(row -> row.animalId() == 702).findFirst().orElseThrow();
+            h.assertTrue(white.animalTypeId().equals("white_cow")
+                            && white.textureId().endsWith("animal_page_sprite_cow_baby.png"),
+                    "White-cow identity did not map to the existing V-menu sprite");
+        } finally {
+            farms.deleteFarm(owner);
+            farms.deleteFarm(outsider);
+        }
+        h.succeed();
     }
     @GameTest(template = "construction_site", timeoutTicks = 200)
     public static void incubationChecksHomeAndCapacityAndConsumesReceiptOnce(GameTestHelper h) {

@@ -10,31 +10,93 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class StardewLeavesBlock extends LeavesBlock {
+	public static final BooleanProperty DORMANT = BooleanProperty.create("dormant");
 	private static final int FAST_DECAY_DELAY = 3;
 	private static volatile int clientSeason = -1;
 
 	public StardewLeavesBlock(Properties properties) {
+		this(properties, false);
+	}
+
+	public StardewLeavesBlock(Properties properties, boolean persistent) {
 		super(properties);
+		registerDefaultState(defaultBlockState().setValue(DORMANT, false).setValue(PERSISTENT, persistent));
 	}
 
 	public static void updateClientSeason(int season) {
 		clientSeason = season;
 	}
 
-	/** Dormancy is visual/physical only: never delete a prefab's saved leaves. */
+	/** Stored in the state so chunk render snapshots and lighting workers see the same value. */
 	public static boolean dormant(BlockState state, BlockGetter getter) {
-		if (!(getter instanceof Level level) || !level.dimension().equals(ModDimensions.STARDEW_VALLEY)) return false;
+		// Pointed leaves used to be saved with dormant=true by older winter builds.
+		// They now have a winter texture and must remain renderable even before the
+		// chunk refresh has rewritten that legacy state.
+		return state.hasProperty(DORMANT) && state.getValue(DORMANT) && losesLeavesInWinter(state);
+	}
+
+	public static boolean losesLeavesInWinter(BlockState state) {
+		return state.is(ModBlocks.OAK_LEAVES.get()) || state.is(ModBlocks.OAK_LEAVES_QUESTION.get()) || state.is(ModBlocks.MAPLE_LEAVES.get())
+				|| state.is(ModBlocks.MAHOGANY_LEAVES.get());
+	}
+
+	public static BlockState seasonalState(BlockState state, Level level) {
+		if (!state.hasProperty(DORMANT)) return state;
 		int season = level instanceof ServerLevel ? StardewTimeManager.get().getCurrentSeason() : clientSeason;
-		return season == 3 && (state.is(ModBlocks.OAK_LEAVES.get())
-				|| state.is(ModBlocks.MAPLE_LEAVES.get()) || state.is(ModBlocks.MAHOGANY_LEAVES.get())
-				|| state.is(ModBlocks.POINTED_LEAVES.get()));
+		boolean hidden = level.dimension().equals(ModDimensions.STARDEW_VALLEY)
+				&& season == 3 && losesLeavesInWinter(state);
+		return state.setValue(DORMANT, hidden);
+	}
+
+	@Override
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
+		builder.add(DORMANT);
+	}
+
+	@Override
+	public BlockState getStateForPlacement(BlockPlaceContext context) {
+		return seasonalState(super.getStateForPlacement(context), context.getLevel());
+	}
+
+	@Override
+	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean moved) {
+		super.onPlace(state, level, pos, oldState, moved);
+		if (!level.isClientSide) {
+			BlockState updated = seasonalState(state, level);
+			if (updated != state) level.setBlock(pos, updated, Block.UPDATE_CLIENTS);
+		}
+	}
+
+	@Override
+	public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+		return dormant(state, level) ? 0 : super.getLightBlock(state, level, pos);
+	}
+
+	@Override
+	public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+		return dormant(state, level) ? state.getFluidState().isEmpty() : super.propagatesSkylightDown(state, level, pos);
+	}
+
+	@Override
+	public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+		return dormant(state, level) ? 1.0F : super.getShadeBrightness(state, level, pos);
+	}
+
+	@Override
+	public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+		return dormant(state, level) ? Shapes.empty() : super.getOcclusionShape(state, level, pos);
 	}
 
 	@Override

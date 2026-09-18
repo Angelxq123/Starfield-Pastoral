@@ -183,6 +183,36 @@ public record BuildingTransfer(BuildingRecord before, BuildingRecord after, List
         });
     }
 
+    /** Hide the captured source without changing its durable building record. */
+    public void lift(ServerLevel level) {
+        BuildingProtection.transfer(() -> {
+            BuildingTransferExtras.clear(level, extras);
+            for (BlockPos pos : removed) {
+                level.removeBlockEntity(pos);
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE
+                                | Block.UPDATE_SUPPRESS_DROPS);
+            }
+        });
+    }
+
+    /** Restore a lifted source exactly, including air cells that may have filled while hidden. */
+    public void restoreLift(ServerLevel level) {
+        BuildingProtection.transfer(() -> {
+            var retained = before.mode() == BuildingRecord.Mode.PREFAB
+                    ? PrefabDefinitions.retainedGround(level, before) : java.util.Set.<BlockPos>of();
+            var bounds = contentBounds(before);
+            for (BlockPos pos : BlockPos.betweenClosed(bounds.min(), bounds.maxInclusive())) {
+                if (retained.contains(pos)) continue;
+                level.removeBlockEntity(pos);
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE
+                                | Block.UPDATE_SUPPRESS_DROPS);
+            }
+        });
+        project(level);
+    }
+
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag(); tag.put("Before", before.save()); tag.put("After", after.save());
         ListTag list = new ListTag();

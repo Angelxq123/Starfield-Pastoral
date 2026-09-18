@@ -14,7 +14,12 @@ import java.util.List;
 public final class BuildingDemolition {
     private BuildingDemolition() {}
     public static boolean perform(ServerPlayer player, BuildingRecord record) {
+        if (com.stardew.craft.greenhouse.GreenhouseBuildings.isGreenhouse(record.family())) {
+            BuildingPlacementService.message(player, "greenhouse_move_only");
+            return false;
+        }
         var level=player.serverLevel(); var data=BuildingWorldData.get(player.server); var animals=LivestockWorldData.get(player.server);
+        if(data.moveLift(record.id())!=null){BuildingPlacementService.message(player,"work_stale");return false;}
         if (FishPondPrefabs.isPond(record.family()) && com.stardew.craft.fishpond.data.FishPondWorldData.get(level)
                 .findPondByManagerAnyOwner(level.dimension().location().toString(),record.manager())
                 .map(pond -> pond.currentPopulation()>0 || pond.outputCount()>0).orElse(false)) {

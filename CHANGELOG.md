@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.2 - 2026-09-19
+
+### 更新日志（中文）
+
+**0.6.2 · 农场大更新与沉浸式室内外传送**
+
+- 重建农场初始化与生态填充，补齐标准、河流、森林、山顶、四角、荒野、海滩和草原等布局的地表、边界与可玩区域；源地图只作为生态统计参考，实际摆放会根据 Minecraft 地表、建筑和已占用空间重新生成。
+- 加入农场每日生态流程：树木、树苗、灌木、牧草、杂草、树枝、石块、矿点和大型障碍物按区域与季节生成，避免道路、地板、建筑和玩家已有布置被覆盖；旧农场支持渐进式补齐，不重置玩家的农场建设。
+- 接入海滩补给箱、森林和荒野农场的专属生态服务，并补充农场报告、预制结构和温室蓝图；温室会按旧档状态修复或迁移，保留已有室内内容。
+- 补齐荒野农场专属魔像及铱质变体，按玩家战斗等级计算属性、战利品和生成距离；同时保护模组方块不被流动液体冲毁。
+- 完善季节树叶、牧草、灌木和农场地表的独立材质选择，修复冬季常青树叶被错误隐藏以及树冠、雪层和地表光照异常的问题。
+- 实装城镇门的沉浸式室内外传送：玩家靠近对应门时才准备门体和区块，门的开合、进出方向、NPC 使用和客户端状态保持同步；跨室内空间、农场、温室和城镇时保留安全落点、方向与传送冷却，失败时不会把玩家送入无效位置。
+- 加入门口视角、第三人称、视锥、遮挡和着色器衔接修复，使穿门过程保持连续的画面与碰撞表现，并兼容 Sodium/Iris 的渲染路径。
+- 新增农场补给、温室和生态相关的 GameTest 与运行时检查；清理本地源码契约测试入口，发布验证只保留实际行为测试和兼容性检查。
+
+### Update Log (English)
+
+**0.6.2 · Farm Overhaul and Immersive Indoor/Outdoor Travel**
+
+- Rebuilds farm initialization and ecological painting for the Standard, Riverland, Forest, Hill-top, Four Corners, Wilderness, Beach and Meadowlands layouts. Source maps now guide regional ecology rates while Minecraft terrain, buildings and occupied space determine the actual placement.
+- Adds the daily farm ecology pass for trees, saplings, bushes, pasture, weeds, twigs, stones, ore nodes and large obstacles. Roads, floors, buildings and existing player work are protected, and older farms are filled in progressively without resetting their construction.
+- Connects Beach supply crates and the Forest and Wilderness farm services, and ships the farm reports, prefabs and greenhouse blueprints used by the new layouts. Greenhouses repair or migrate according to the existing save state while preserving interior contents.
+- Adds the Wilderness Farm golem and its Iridium variant, with combat-level scaling, source-aligned loot and off-screen spawn distances, and protects mod blocks from being washed away by flowing fluids.
+- Completes independent seasonal selection for leaves, pasture, bushes and farm surfaces, including the winter evergreen fix and corrections for canopy, snow-layer and terrain lighting.
+- Ships immersive town-door travel. Door pairs prepare only when relevant chunks and players are nearby, while opening, traversal direction, NPC use and client state stay synchronized. Farm, greenhouse, town and other interior transitions keep a safe landing, facing and cooldown, and refuse unsafe destinations.
+- Adds camera, third-person, frustum, occlusion and shader handoff fixes so crossing a doorway stays visually continuous and remains compatible with Sodium and Iris rendering paths.
+- Adds farm, supply-crate, greenhouse and ecology GameTests and runtime checks, and removes the local source-contract test entry points from release verification in favor of behavior and compatibility coverage.
+
 ## 0.6.1fix2 - 2026-09-17
 
 ### 更新日志（中文）

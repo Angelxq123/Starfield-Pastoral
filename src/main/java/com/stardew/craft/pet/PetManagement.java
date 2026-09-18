@@ -3,6 +3,8 @@ package com.stardew.craft.pet;
 import com.stardew.craft.core.ModDimensions;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.item.ModItems;
+import com.stardew.craft.mail.MailService;
+import com.stardew.craft.player.PlayerDataManager;
 import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.time.StardewTimeManager;
 import java.util.*;
@@ -16,6 +18,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Purpose-bound, expiring single-use requests; all prices, ownership and bowl assignments stay server-side. */
 public final class PetManagement {
+    public static final String ADOPTION_MAIL = "MarniePetAdoption";
+    public static final String REJECTED_ADOPTION_FLAG = "MarniePetRejectedAdoption";
     private record Session(UUID nonce, UUID farm, String kind, UUID removal, long expires, BlockPos bowl, long revision) {}
     private static final Map<UUID, Session> sessions = new HashMap<>();
     private PetManagement() {}
@@ -24,8 +28,25 @@ public final class PetManagement {
     public static boolean unlocked(ServerPlayer player) {
         var farm = FarmInstanceRegistry.get().getFarmForPlayer(player.getUUID());
         if (farm == null) return false;
-        var data = PetWorldData.get(player.server);
-        return data.loved(farm.getInstanceId()) || StardewTimeManager.get().getCurrentYear() >= 2 && data.forFarm(farm.getInstanceId()).isEmpty();
+        var pets = PetWorldData.get(player.server);
+        var playerData = PlayerDataManager.getPlayerData(player);
+        return playerData.hasMailFlag(ADOPTION_MAIL)
+                || playerData.hasMailFlag(REJECTED_ADOPTION_FLAG)
+                || StardewTimeManager.get().getCurrentYear() >= 2
+                && pets.forFarm(farm.getInstanceId()).isEmpty();
+    }
+    public static void scheduleAdoptionMail(net.minecraft.server.MinecraftServer server,
+                                            com.stardew.craft.farm.FarmInstance farm) {
+        if (farm == null || !PetWorldData.get(server).loved(farm.getInstanceId())) return;
+        for (UUID farmerId : farm.getAllFarmers()) {
+            var data = PlayerDataManager.getPlayerData(farmerId);
+            if (data.hasMailFlag(ADOPTION_MAIL)
+                    || data.getMailbox().contains(ADOPTION_MAIL)
+                    || data.getMailForTomorrow().contains(ADOPTION_MAIL)) continue;
+            var online = server.getPlayerList().getPlayer(farmerId);
+            if (online != null) MailService.addMailForTomorrow(online, ADOPTION_MAIL);
+            else data.addMailForTomorrow(ADOPTION_MAIL);
+        }
     }
     public static void open(ServerPlayer player, UUID selected) { show(player, "manage", selected, null); }
     public static void openBowl(ServerPlayer player, BlockPos bowl) {
@@ -80,6 +101,11 @@ public final class PetManagement {
         if (session.kind().equals("initial")) {
             if (PetInitialAdoption.needed(player)) show(player, "initial", null, request.nonce());
             else { var done = new CompoundTag(); done.putString("Kind", "initial_done"); done.putUUID("Reply", request.nonce()); PacketDistributor.sendToPlayer(player, new PetScreenPayload(done)); }
+            return;
+        }
+        if (session.kind().equals("adopt") && result.isEmpty()) {
+            var done = new CompoundTag(); done.putString("Kind", "adopt_done"); done.putUUID("Reply", request.nonce());
+            PacketDistributor.sendToPlayer(player, new PetScreenPayload(done));
             return;
         }
         if (session.kind().equals("remove") && result.isEmpty()) return;
@@ -141,10 +167,12 @@ public final class PetManagement {
             PetVariant variant = PetVariant.find(choice.variant()).filter(PetVariant::adoptable).orElse(null); String name = choice.name();
             if (variant == null || name.isBlank()) return "name_required";
             var free = data.bowls().stream().filter(b -> b.farm().equals(session.farm()) && data.occupant(b.position()) == null).findFirst().orElse(null);
-            if (free == null) return "need_bowl";
             if (!PlayerStardewDataAPI.removeMoney(player, variant.price())) return "money_required";
-            var pet = new PetRecord(session.nonce(), session.farm(), variant, name, StardewTimeManager.get().getAbsoluteDay()); pet.bowl = free.position(); data.put(pet);
+            var pet = new PetRecord(session.nonce(), session.farm(), variant, name, StardewTimeManager.get().getAbsoluteDay());
+            if (free != null) pet.bowl = free.position();
+            data.put(pet);
             var level = player.server.getLevel(ModDimensions.STARDEW_VALLEY); if (level != null) PetService.project(level);
+            PetService.message(player, "adopted", name);
             return "";
         }
         var pet = data.find(request.pet());
@@ -160,7 +188,7 @@ public final class PetManagement {
             data.remove(pet.id); player.getMainHandItem().shrink(1);
             if (!hat.isEmpty() && !player.getInventory().add(hat)) player.drop(hat, false);
             var entity = player.serverLevel().getEntity(pet.id); if (entity != null) entity.discard();
-            player.serverLevel().sendParticles(ParticleTypes.HAPPY_VILLAGER, pet.position.x, pet.position.y + .5, pet.position.z, 12, .5, .4, .5, .01);
+            player.serverLevel().sendParticles(ParticleTypes.END_ROD, pet.position.x, pet.position.y + .5, pet.position.z, 6, .5, .4, .5, .01);
             player.serverLevel().sendParticles(ParticleTypes.CLOUD, pet.position.x, pet.position.y + .2, pet.position.z, 8, .25, .2, .25, .02);
             PetButterflies.spawn(player.serverLevel(), pet.position);
             PetService.message(player, "goodbye", pet.name); return "";

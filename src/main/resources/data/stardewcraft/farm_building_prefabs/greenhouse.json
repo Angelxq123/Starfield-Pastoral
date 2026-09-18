@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "family": "greenhouse",
+  "authored_front": "south",
+  "anchor_convention": "northwest corner vertex, embedded floor layer",
+  "reservation_bounds_from_anchor": {
+    "min": [
+      0,
+      0,
+      0
+    ],
+    "max_exclusive": [
+      15,
+      11,
+      13
+    ]
+  },
+  "tiers": [
+    {
+      "tier": 1,
+      "structure": "stardewcraft:farm_buildings/greenhouse",
+      "size": [
+        15,
+        11,
+        13
+      ],
+      "anchor": [
+        0,
+        0,
+        0
+      ],
+      "bounds_from_anchor": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max_exclusive": [
+          15,
+          11,
+          13
+        ]
+      },
+      "manager": {
+        "position": [
+          12,
+          1,
+          11
+        ],
+        "facing": "south"
+      },
+      "animal_spawn": [
+        7,
+        1,
+        12
+      ]
+    }
+  ]
+}

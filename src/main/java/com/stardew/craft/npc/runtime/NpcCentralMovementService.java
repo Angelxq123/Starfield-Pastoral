@@ -6,6 +6,7 @@ import com.stardew.craft.entity.npc.StardewNpcEntity;
 import com.stardew.craft.entity.npc.NpcPathNavigation;
 import com.stardew.craft.interior.InteriorRegionRegistry;
 import com.stardew.craft.interior.InteriorSubspaceManager;
+import com.stardew.craft.interior.door.TownDoorRuntime;
 import com.stardew.craft.npc.data.NpcCapabilityProfile;
 import com.stardew.craft.npc.data.NpcDataRegistry;
 import net.minecraft.core.BlockPos;
@@ -54,6 +55,8 @@ public final class NpcCentralMovementService {
     /** How many consecutive moveTo() failures before surfacing a throttled path warning. */
     private static final int NAV_FAIL_REPATH_THRESHOLD = 3;
     private static final double DOOR_OPEN_PROBE_REACH_SQR = 4.0D;
+    private static final double TOWN_DOOR_PRELOAD_DISTANCE_SQR = 64.0D;
+    private static final double TOWN_DOOR_OPEN_DISTANCE_SQR = 9.0D;
     // Entrances retain the shipped approach range; work/activity destinations require exact standing.
     private static final double PORTAL_APPROACH_RADIUS = 2.0D;
     private static final int MOVE_STATUS_LOG_INTERVAL_TICKS = 100;
@@ -661,7 +664,11 @@ public final class NpcCentralMovementService {
             expanded.addAll(route.destinationSteps);
         }
         NpcRoutePlan plan = new NpcRoutePlan(signature, npc.getUUID(), expanded, gameTime);
-        plan.allowNearestReachableFinal = true;
+        // A schedule point is a contract position.  Only a point explicitly bound
+        // to furniture has a valid "stand beside the support" completion rule; an
+        // ordinary authored tile must never be completed from the customer side of
+        // a counter just because A* returned its nearest cell.
+        plan.allowNearestReachableFinal = allowsNearestReachableFinal(expanded);
         plan.progressCheckX = npc.getX();
         plan.progressCheckZ = npc.getZ();
         plan.routeStatus = routeStatus;
@@ -699,6 +706,12 @@ public final class NpcCentralMovementService {
         }
 
         return plan;
+    }
+
+    private static boolean allowsNearestReachableFinal(List<NpcRoutePlanner.NpcRouteStep> steps) {
+        if (steps == null || steps.isEmpty()) return false;
+        var point = NpcSupportTarget.point(steps.getLast().pointId);
+        return point != null && point.has("furniture");
     }
 
     private static String fmt(Vec3 v) {
@@ -772,8 +785,16 @@ public final class NpcCentralMovementService {
         // ── WALK steps: delegate to vanilla GroundPathNavigation ──
         boolean finalStep = plan.currentStepIndex == plan.steps.size() - 1;
         boolean portalApproach = !finalStep && plan.steps.get(plan.currentStepIndex + 1).mode == NpcRoutePlanner.RouteStepMode.WARP;
-        NpcChunkForceManager.ensureRouteTargetChunkForced(level, npc.getNpcId(), target);
+        double portalDistanceSqr = target.subtract(npc.position()).horizontalDistanceSqr();
+        boolean preloadPortalDestination = portalApproach
+                && portalDistanceSqr <= TOWN_DOOR_PRELOAD_DISTANCE_SQR
+                && Math.abs(target.y - npc.getY()) <= 4.0D;
+        Vec3 chunkTarget = preloadPortalDestination ? plan.steps.get(plan.currentStepIndex + 1).target : target;
+        NpcChunkForceManager.ensureRouteTargetChunkForced(level, npc.getNpcId(), chunkTarget);
         NpcChunkForceManager.ensureRouteCorridorChunksForced(level, npc.getNpcId(), npc.position(), target);
+        if (preloadPortalDestination && portalDistanceSqr <= TOWN_DOOR_OPEN_DISTANCE_SQR) {
+            TownDoorRuntime.openForNpc(level, BlockPos.containing(target));
+        }
 
         // Authored movement controllers enter through this executor directly, without
         // the daily-schedule preflight above. Keep the same supported-ground repair here
@@ -1128,15 +1149,31 @@ public final class NpcCentralMovementService {
         boolean started = npc.getNavigation().moveTo(target.x,target.y,target.z,speed);
         var path = npc.getNavigation().getPath();
         boolean nearbyDailyEndpoint = false;
+        boolean finalStep = plan.currentStepIndex == plan.steps.size() - 1;
+        boolean targetStandingCellUnavailable = npc.level() instanceof ServerLevel serverLevel
+                && !hasUsableStandingCellAt(serverLevel, npc, target);
         if (started && path != null && path.getEndNode() != null
                 && plan.allowNearestReachableFinal
-                && plan.currentStepIndex == plan.steps.size() - 1
+                && finalStep
                 && npc.level() instanceof ServerLevel serverLevel
-                && !hasUsableStandingCellAt(serverLevel, npc, target)) {
+                && targetStandingCellUnavailable) {
             Vec3 endpoint = path.getEntityPosAtNode(npc, path.getNodeCount() - 1);
             nearbyDailyEndpoint = endpoint.subtract(target).horizontalDistanceSqr()
                     <= BLOCKED_FINAL_APPROACH_DISTANCE_SQR
                     && Math.abs(endpoint.y - target.y) <= BLOCKED_FINAL_VERTICAL_TOLERANCE;
+        }
+        // PathFinder may mark a path as reachable even when its last node is the
+        // nearest cell beside a blocked authored tile.  Ordinary schedule points
+        // require the actual endpoint; otherwise the executor would stop outside a
+        // counter and report success before executePlanTick can recover it.
+        if (started && path != null && path.getEndNode() != null && finalStep
+                && targetStandingCellUnavailable && !plan.allowNearestReachableFinal) {
+            Vec3 endpoint = path.getEntityPosAtNode(npc, path.getNodeCount() - 1);
+            if (endpoint.subtract(target).horizontalDistanceSqr() > 0.25D) {
+                npc.getNavigation().stop();
+                plan.debugRepathReason = "partial_final_endpoint_rejected";
+                return false;
+            }
         }
         if (started && path != null && !path.canReach() && !nearbyDailyEndpoint) {
             if (npc.level() instanceof ServerLevel serverLevel
@@ -1597,6 +1634,8 @@ public final class NpcCentralMovementService {
         if (state.getBlock() == Blocks.IRON_DOOR) {
             return;
         }
+
+        if (TownDoorRuntime.openForNpc(level, lowerPos)) return;
 
         if (!state.hasProperty(DoorBlock.OPEN) || state.getValue(DoorBlock.OPEN)) {
             return;

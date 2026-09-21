@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "stardewcraft:block/farm_debris/beach_supply_crates/supply_crate_blue"
+    },
+    "variant=1": {
+      "model": "stardewcraft:block/farm_debris/beach_supply_crates/supply_crate_square"
+    },
+    "variant=2": {
+      "model": "stardewcraft:block/farm_debris/beach_supply_crates/supply_crate_angled"
+    }
+  }
+}

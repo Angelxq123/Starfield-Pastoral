@@ -51,6 +51,11 @@
     "background": 0
   },
   {
+    "id": "MarniePetAdoption",
+    "text": "stardewcraft.mail.MarniePetAdoption",
+    "background": 0
+  },
+  {
     "id": "linusTip",
     "text": "stardewcraft.mail.linusTip",
     "background": 0

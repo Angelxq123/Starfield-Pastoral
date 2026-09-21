@@ -1,0 +1,40 @@
+{
+  "built": {
+    "size": [
+      15,
+      11,
+      13
+    ],
+    "manager": [
+      12,
+      1,
+      11
+    ],
+    "removed_runtime_fields": {}
+  },
+  "ruins": {
+    "size": [
+      15,
+      10,
+      13
+    ],
+    "manager": [
+      12,
+      1,
+      11
+    ],
+    "removed_runtime_fields": {}
+  },
+  "legacy_repaired": {
+    "size": [
+      15,
+      9,
+      17
+    ],
+    "removed_runtime_fields": {}
+  },
+  "interior_replacement": {
+    "stardewcraft:yellow_dirt": "minecraft:dirt"
+  },
+  "verification": "native NBT and packaged schematic round-trips"
+}

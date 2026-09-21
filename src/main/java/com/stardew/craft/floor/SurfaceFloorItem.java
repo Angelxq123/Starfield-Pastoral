@@ -37,6 +37,8 @@ public final class SurfaceFloorItem extends Item implements IStardewItem {
 
     @Override public String getItemTypeKey() { return "stardewcraft.type.building"; }
 
+    @Override public int getSellPrice(ItemStack stack) { return 1; }
+
     public static boolean supports(Level level, BlockPos pos, BlockState state) {
         return state.getFluidState().isEmpty() && !state.isAir() && state.canOcclude()
                 && Block.isFaceFull(state.getCollisionShape(level, pos), Direction.UP);

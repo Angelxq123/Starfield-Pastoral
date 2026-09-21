@@ -31,7 +31,6 @@ import com.stardew.craft.api.v1.secretnote.StardewSecretNoteDefinition;
 import com.stardew.craft.data.VanillaObjectCatalog;
 import com.stardew.craft.item.SecretNoteItem;
 import com.stardew.craft.item.misc.StardropItem;
-import com.stardew.craft.inventory.InventoryTrashPolicy;
 import com.stardew.craft.leaderboard.LeaderboardMetric;
 import com.stardew.craft.leaderboard.LeaderboardPeriod;
 import com.stardew.craft.item.ModItems;
@@ -46,7 +45,6 @@ import com.stardew.craft.network.payload.RequestNpcFriendshipOverviewPayload;
 import com.stardew.craft.network.payload.RequestAnimalOverviewPayload;
 import com.stardew.craft.network.payload.RequestLeaderboardPayload;
 import com.stardew.craft.network.payload.CraftingMenuCraftSubmitPayload;
-import com.stardew.craft.network.payload.CraftingMenuInventoryActionPayload;
 import com.stardew.craft.network.payload.InventoryOrganizePayload;
 import com.stardew.craft.network.payload.OpenSeenMailPayload;
 import com.stardew.craft.player.RecipeCatalogData;
@@ -288,8 +286,7 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
     private int hoveredCraftingIndex = -1;
     private float upButtonScale = 1.0f;
     private float downButtonScale = 1.0f;
-    private float trashCanLidRotation;
-    private boolean trashCanLidSoundPlayed;
+    private final TrashCanWidget.Controller trashCan = new TrashCanWidget.Controller();
     private int socialScroll;
     private boolean socialScrolling;
     private int animalScroll;
@@ -4370,28 +4367,7 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
     }
 
     private void drawTrashCan(GuiGraphics graphics, int mouseX, int mouseY) {
-        int bodyX = trashCanX();
-        int bodyY = trashCanY();
-        boolean hovered = trashCanContains(mouseX, mouseY);
-        if (hovered && !trashCanLidSoundPlayed) {
-            playUiSound(ModSounds.TRASHCANLID.get(), 1.0f, 1.0f);
-            trashCanLidSoundPlayed = true;
-        }
-        if (!hovered) {
-            trashCanLidSoundPlayed = false;
-        }
-        float step = (float) Math.PI / 48.0f;
-        if (hovered) {
-            trashCanLidRotation = Math.min(trashCanLidRotation + step, (float) Math.PI / 2.0f);
-        } else {
-            trashCanLidRotation = Math.max(trashCanLidRotation - step, 0.0f);
-        }
-
-        float lidScale = mapping.s4();
-        int lidDrawX = bodyX + ui(60);
-        int lidDrawY = bodyY + ui(40);
-        TrashCanWidget.render(graphics, bodyX, bodyY, mapping.s4(),
-                lidDrawX, lidDrawY, lidScale, -16, -10, trashCanLidRotation);
+        trashCan.render(graphics, trashCanLayout(), mouseX, mouseY);
     }
 
     private void drawPlayerInventory(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -4559,11 +4535,12 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
     }
 
     private boolean trashCanContains(double mouseX, double mouseY) {
-        int x = trashCanX();
-        int y = trashCanY();
-        int w = ui(64);
-        int h = ui(104);
-        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+        return trashCan.contains(trashCanLayout(), mouseX, mouseY);
+    }
+
+    private TrashCanWidget.Layout trashCanLayout() {
+        return TrashCanWidget.Layout.original(
+                trashCanX(), trashCanY(), mapping.s4(), ui(64), ui(104));
     }
 
     private int trashCanX() {
@@ -4706,10 +4683,6 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
         }
         String recipeId = craftingRecipeIds.get(recipeIndex);
         PacketDistributor.sendToServer(new CraftingMenuCraftSubmitPayload(recipeId, requestedCount));
-    }
-
-    private void submitTrashCarriedRequest() {
-        PacketDistributor.sendToServer(new CraftingMenuInventoryActionPayload(CraftingMenuInventoryActionPayload.ACTION_TRASH_CARRIED, -1, false));
     }
 
     private void submitOrganizeInventoryRequest() {
@@ -5315,13 +5288,7 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
                 }
                 // Trash can click
                 if (trashCanContains(mouseX, mouseY) && hasCarriedItem()) {
-                    if (InventoryTrashPolicy.canTrash(currentCarriedItem())) {
-                        submitTrashCarriedRequest();
-                        playUiSound(ModSounds.THROW_DOWN_ITEM.get(), 1.0f, 1.0f);
-                    } else {
-                        playUiSound(ModSounds.CANCEL.get(), 1.0f, 1.0f);
-                    }
-                    return true;
+                    return trashCan.click(menu, trashCanLayout(), mouseX, mouseY, button);
                 }
             }
 
@@ -5342,13 +5309,7 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
             }
 
             if (currentTab == 4 && trashCanContains(mouseX, mouseY) && hasCarriedItem()) {
-                if (InventoryTrashPolicy.canTrash(currentCarriedItem())) {
-                    submitTrashCarriedRequest();
-                    playUiSound(ModSounds.THROW_DOWN_ITEM.get(), 1.0f, 1.0f);
-                } else {
-                    playUiSound(ModSounds.CANCEL.get(), 1.0f, 1.0f);
-                }
-                return true;
+                return trashCan.click(menu, trashCanLayout(), mouseX, mouseY, button);
             }
 
             int gridIndex = craftingGridIndexAt(mouseX, mouseY, ui(4));
@@ -5642,13 +5603,7 @@ public class StardewGameMenuScreen extends AbstractContainerScreen<StardewGameMe
         }
 
         if (keyCode == InputConstants.KEY_DELETE && (currentTab == 0 || currentTab == 4) && hasCarriedItem()) {
-            if (InventoryTrashPolicy.canTrash(currentCarriedItem())) {
-                submitTrashCarriedRequest();
-                playUiSound(ModSounds.THROW_DOWN_ITEM.get(), 1.0f, 1.0f);
-            } else {
-                playUiSound(ModSounds.CANCEL.get(), 1.0f, 1.0f);
-            }
-            return true;
+            return trashCan.deleteKey(menu, keyCode);
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }

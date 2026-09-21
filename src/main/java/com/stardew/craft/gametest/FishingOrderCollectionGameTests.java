@@ -5,7 +5,9 @@ import com.stardew.craft.Config;
 import com.stardew.craft.core.ModMiningDimensions;
 import com.stardew.craft.fishing.server.FishingSession;
 import com.stardew.craft.fishing.server.FishingSessionManager;
+import com.stardew.craft.fishing.server.FishingCatchProgress;
 import com.stardew.craft.item.ModItems;
+import com.stardew.craft.player.PlayerStardewDataAPI;
 import com.stardew.craft.specialorder.SpecialOrderDefinitions;
 import com.stardew.craft.specialorder.SpecialOrderInstance;
 import com.stardew.craft.specialorder.SpecialOrderWorldData;
@@ -31,6 +33,29 @@ import java.util.UUID;
 @GameTestHolder("stardewcraft_fishing_rules")
 @PrefixGameTestTemplate(false)
 public final class FishingOrderCollectionGameTests {
+    @GameTest(templateNamespace = "stardewcraft_fishing_rules", template = "ring_utilities")
+    public static void crabPotAndMiscCatchesUnlockFishingCollection(GameTestHelper helper) {
+        var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "Collection catch test"));
+        Item[] catches = {
+                ModItems.LOBSTER.get(), ModItems.CRAYFISH.get(), ModItems.CRAB.get(), ModItems.COCKLE.get(),
+                ModItems.MUSSEL.get(), ModItems.SHRIMP.get(), ModItems.SNAIL.get(), ModItems.PERIWINKLE.get(),
+                ModItems.OYSTER.get(), ModItems.CLAM.get(), ModItems.SEAWEED.get(), ModItems.GREEN_ALGAE.get(),
+                ModItems.WHITE_ALGAE.get(), ModItems.SEA_JELLY.get(), ModItems.RIVER_JELLY.get(), ModItems.CAVE_JELLY.get()
+        };
+        for (Item item : catches) {
+            ItemStack stack = new ItemStack(item);
+            var source = com.stardew.craft.data.VanillaObjectCatalog.resolve(stack);
+            helper.assertTrue(source != null && source.collectionTab() == 1,
+                    "Catch is missing from the source fishing collection: " + item);
+            FishingCatchProgress.record(player, stack, 1);
+            String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).toString();
+            helper.assertTrue(PlayerStardewDataAPI.getFishCatchCount(player, id) == 1,
+                    "Catch did not unlock its collection entry: " + id);
+        }
+        player.discard();
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = "stardewcraft_fishing_rules", template = "ring_utilities")
     public static void linusCountsCaughtTrashWithEitherMinigameSetting(GameTestHelper helper) throws Exception {
         try (Fixture fixture = new Fixture(helper)) {

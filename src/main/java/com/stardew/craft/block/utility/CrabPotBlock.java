@@ -188,8 +188,14 @@ public class CrabPotBlock extends Block implements EntityBlock, SimpleWaterlogge
 		if (crabPot.isReady()) {
 			ItemStack product = crabPot.getProduct();
 			if (!product.isEmpty()) {
+				ItemStack caught = product.copy();
 				if (player.addItem(product)) {
 					crabPot.clearProduct();
+					if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+							&& caught.is(com.stardew.craft.core.ModTags.Items.ALL_FISHING_CATCHES)) {
+						com.stardew.craft.fishing.server.FishingCatchProgress.record(
+								serverPlayer, caught, caught.getCount());
+					}
 					// 收获后：ready 变 false，同时如果没有饵就不工作
 					@SuppressWarnings("null")
 					BlockState newState = level.getBlockState(pos);

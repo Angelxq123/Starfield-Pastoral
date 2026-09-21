@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 
@@ -49,6 +50,27 @@ public final class StructureLoader {
             ResourceLocation structureId,
             BlockPos pos
     ) {
+        return loadAndPlaceResource(level, structureId, pos, false);
+    }
+
+    /**
+     * Farm-only bulk path. It avoids per-block client notifications while no
+     * player is present. Authored schematic block states are kept unchanged.
+     */
+    public static boolean loadAndPlaceFarmSchematicWithResult(
+            ServerLevel level,
+            ResourceLocation structureId,
+            BlockPos pos
+    ) {
+        return loadAndPlaceResource(level, structureId, pos, true);
+    }
+
+    private static boolean loadAndPlaceResource(
+            ServerLevel level,
+            ResourceLocation structureId,
+            BlockPos pos,
+            boolean farmBulk
+    ) {
         ResourceLocation resourceId =
                 ResourceLocation.fromNamespaceAndPath(
                         structureId.getNamespace(),
@@ -61,7 +83,8 @@ public final class StructureLoader {
                         level, stream,
                         "data/" + resourceId.getNamespace()
                                 + "/" + resourceId.getPath(),
-                        pos);
+                        pos,
+                        farmBulk);
             } catch (Exception exception) {
                 StardewCraft.LOGGER.error(
                         "Failed to open structure resource {}: {}",
@@ -73,11 +96,14 @@ public final class StructureLoader {
         }
         // Compatibility fallback for callers whose resource was historically
         // exposed only through the mod class path.
-        return loadAndPlaceWithResult(
-                level,
+        if (farmBulk) {
+            StardewCraft.LOGGER.error(
+                    "Farm schematic resource not found: {}", resourceId);
+            return false;
+        }
+        return loadAndPlaceWithResult(level,
                 "data/" + structureId.getNamespace()
-                        + "/structures/" + structureId.getPath(),
-                pos);
+                        + "/structures/" + structureId.getPath(), pos);
     }
 
     @SuppressWarnings("null")
@@ -89,7 +115,7 @@ public final class StructureLoader {
                 return false;
             }
             return loadAndPlaceFromStream(
-                    level, stream, structurePath, pos);
+                    level, stream, structurePath, pos, false);
         } catch (Exception e) {
             StardewCraft.LOGGER.error("Failed to load/place structure {}: {}", structurePath, e.getMessage(), e);
             return false;
@@ -100,12 +126,13 @@ public final class StructureLoader {
             ServerLevel level,
             InputStream stream,
             String structurePath,
-            BlockPos pos
+            BlockPos pos,
+            boolean farmBulk
     ) {
         if (structurePath.toLowerCase(Locale.ROOT)
                 .endsWith(".schem")) {
             return loadAndPlaceSchematic(
-                    level, stream, structurePath, pos);
+                    level, stream, structurePath, pos, farmBulk);
         }
         try {
             CompoundTag nbt = NbtIo.readCompressed(
@@ -160,7 +187,7 @@ public final class StructureLoader {
             }
 
             return loadAndPlaceSchematic(
-                    level, stream, structurePath, origin);
+                    level, stream, structurePath, origin, false);
         } catch (Exception e) {
             StardewCraft.LOGGER.error("Failed to load/place schematic {}: {}", structurePath, e.getMessage(), e);
             return false;
@@ -171,7 +198,8 @@ public final class StructureLoader {
             ServerLevel level,
             InputStream stream,
             String structurePath,
-            BlockPos origin
+            BlockPos origin,
+            boolean farmBulk
     ) {
         try {
             CompoundTag root = NbtIo.readCompressed(stream, NbtAccounter.unlimitedHeap());
@@ -211,6 +239,7 @@ public final class StructureLoader {
             int paletteMax = Math.max(1, schematic.getInt("PaletteMax"));
             BlockState[] paletteStates = new BlockState[Math.max(paletteMax, paletteTag.size()) + 1];
             boolean[] variedTerrain = new boolean[paletteStates.length];
+            boolean[] fullBlocks = new boolean[paletteStates.length];
             for (String stateString : paletteTag.getAllKeys()) {
                 int paletteId = paletteTag.getInt(stateString);
                 if (paletteId < 0 || paletteId >= paletteStates.length) {
@@ -218,6 +247,8 @@ public final class StructureLoader {
                 }
                 paletteStates[paletteId] = parseBlockState(stateString);
                 variedTerrain[paletteId] = !stateString.contains("variant=");
+                fullBlocks[paletteId] = isFullSchematicBlock(
+                        paletteStates[paletteId]);
             }
 
             int expected = width * height * length;
@@ -228,7 +259,13 @@ public final class StructureLoader {
             }
 
             ensureChunksLoaded(level, origin, width, length);
-            placeSchematicBlocks(level, origin, width, height, length, paletteStates, blockIndices, variedTerrain, false);
+            LoadedChunkGrid chunkGrid = farmBulk
+                    ? loadedChunkGrid(level, origin, width, length)
+                    : null;
+            placeSchematicBlocks(
+                    level, origin, width, height, length, paletteStates,
+                    blockIndices, variedTerrain, fullBlocks, false,
+                    chunkGrid);
 
             applySchematicBlockEntities(level, origin, root, schematic, width, height, length);
 
@@ -415,7 +452,9 @@ public final class StructureLoader {
                                              BlockState[] paletteStates,
                                              int[] blockIndices,
                                              boolean[] variedTerrain,
-                                             boolean rotateClockwise90) {
+                                             boolean[] fullBlocks,
+                                             boolean rotateClockwise90,
+                                             LoadedChunkGrid chunkGrid) {
         for (int pass = 0; pass < 2; pass++) {
             boolean placeFullBlocks = pass == 0;
             int index = 0;
@@ -430,7 +469,7 @@ public final class StructureLoader {
                         if (state == null) {
                             continue;
                         }
-                        if (isFullSchematicBlock(state) != placeFullBlocks) {
+                        if (fullBlocks[paletteIndex] != placeFullBlocks) {
                             continue;
                         }
 
@@ -441,14 +480,28 @@ public final class StructureLoader {
                         } else {
                             target = origin.offset(x, y, z);
                         }
-                        if (variedTerrain[paletteIndex]) state = com.stardew.craft.block.terrain.TerrainWorldUpgrade
-                                .varied(state, level.getSeed(), target);
-                        level.setBlock(target, state, SCHEMATIC_BULK_FLAGS);
+                        // Preserve air-clearing semantics for recycled farm slots,
+                        // but avoid millions of no-op air writes in fresh void slots.
+                        if (state.isAir() && level.isEmptyBlock(target)) {
+                            continue;
+                        }
+                        if (variedTerrain[paletteIndex]) {
+                            state = com.stardew.craft.block.terrain.TerrainWorldUpgrade
+                                    .varied(state, level.getSeed(), target);
+                        }
+                        if (chunkGrid != null) {
+                            chunkGrid.chunkAt(target).setBlockState(
+                                    target, state, false);
+                        } else {
+                            level.setBlock(
+                                    target, state, SCHEMATIC_BULK_FLAGS);
+                        }
                     }
                 }
             }
         }
-        updateSchematicShapes(level, origin, width, height, length, paletteStates, blockIndices, rotateClockwise90);
+        updateSchematicShapes(level, origin, width, height, length,
+                paletteStates, blockIndices, fullBlocks, rotateClockwise90);
     }
 
     private static boolean isFullSchematicBlock(BlockState state) {
@@ -463,6 +516,7 @@ public final class StructureLoader {
                                               int length,
                                               BlockState[] paletteStates,
                                               int[] blockIndices,
+                                              boolean[] fullBlocks,
                                               boolean rotateClockwise90) {
         int index = 0;
         for (int y = 0; y < height; y++) {
@@ -473,7 +527,8 @@ public final class StructureLoader {
                         continue;
                     }
                     BlockState schematicState = paletteStates[paletteIndex];
-                    if (schematicState == null || schematicState.isAir() || isFullSchematicBlock(schematicState)) {
+                    if (schematicState == null || schematicState.isAir()
+                            || fullBlocks[paletteIndex]) {
                         continue;
                     }
 
@@ -539,19 +594,7 @@ public final class StructureLoader {
             BlockPos worldPos = origin.offset(rx, ry, rz);
             BlockState state = level.getBlockState(worldPos);
 
-            CompoundTag normalized = raw.copy();
-            if (!normalized.contains("id", Tag.TAG_STRING) && normalized.contains("Id", Tag.TAG_STRING)) {
-                normalized.putString("id", normalized.getString("Id"));
-            }
-            if (!normalized.contains("x", Tag.TAG_INT)) {
-                normalized.putInt("x", worldPos.getX());
-            }
-            if (!normalized.contains("y", Tag.TAG_INT)) {
-                normalized.putInt("y", worldPos.getY());
-            }
-            if (!normalized.contains("z", Tag.TAG_INT)) {
-                normalized.putInt("z", worldPos.getZ());
-            }
+            CompoundTag normalized = normalizeSchematicBlockEntity(raw, worldPos);
 
             if (!normalized.contains("id", Tag.TAG_STRING)) {
                 continue;
@@ -568,6 +611,26 @@ public final class StructureLoader {
         }
 
         StardewCraft.LOGGER.info("Restored {} schematic block entities at {}", restored, origin);
+    }
+
+    private static CompoundTag normalizeSchematicBlockEntity(
+            CompoundTag raw, BlockPos worldPos) {
+        // Sponge v3 stores the actual block-entity payload under Data, with
+        // Id/Pos beside it.  Older schematics commonly keep the payload flat.
+        CompoundTag normalized = raw.contains("Data", Tag.TAG_COMPOUND)
+                ? raw.getCompound("Data").copy()
+                : raw.copy();
+        if (!normalized.contains("id", Tag.TAG_STRING)) {
+            if (raw.contains("Id", Tag.TAG_STRING)) {
+                normalized.putString("id", raw.getString("Id"));
+            } else if (raw.contains("id", Tag.TAG_STRING)) {
+                normalized.putString("id", raw.getString("id"));
+            }
+        }
+        normalized.putInt("x", worldPos.getX());
+        normalized.putInt("y", worldPos.getY());
+        normalized.putInt("z", worldPos.getZ());
+        return normalized;
     }
 
     private static ListTag findBlockEntityList(CompoundTag root, CompoundTag schematic) {
@@ -615,6 +678,42 @@ public final class StructureLoader {
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
                 level.getChunk(chunkX, chunkZ);
             }
+        }
+    }
+
+    private static LoadedChunkGrid loadedChunkGrid(
+            ServerLevel level,
+            BlockPos origin,
+            int width,
+            int length
+    ) {
+        int minChunkX = origin.getX() >> 4;
+        int minChunkZ = origin.getZ() >> 4;
+        int maxChunkX = (origin.getX() + width - 1) >> 4;
+        int maxChunkZ = (origin.getZ() + length - 1) >> 4;
+        int chunksWide = maxChunkX - minChunkX + 1;
+        LevelChunk[] chunks = new LevelChunk[
+                chunksWide * (maxChunkZ - minChunkZ + 1)];
+        for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+            for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+                chunks[(chunkZ - minChunkZ) * chunksWide
+                        + chunkX - minChunkX] = level.getChunk(
+                                chunkX, chunkZ);
+            }
+        }
+        return new LoadedChunkGrid(
+                minChunkX, minChunkZ, chunksWide, chunks);
+    }
+
+    private record LoadedChunkGrid(
+            int minChunkX,
+            int minChunkZ,
+            int chunksWide,
+            LevelChunk[] chunks
+    ) {
+        private LevelChunk chunkAt(BlockPos pos) {
+            return chunks[((pos.getZ() >> 4) - minChunkZ) * chunksWide
+                    + (pos.getX() >> 4) - minChunkX];
         }
     }
 
@@ -670,11 +769,14 @@ public final class StructureLoader {
             int paletteMax = Math.max(1, schematic.getInt("PaletteMax"));
             BlockState[] paletteStates = new BlockState[Math.max(paletteMax, paletteTag.size()) + 1];
             boolean[] variedTerrain = new boolean[paletteStates.length];
+            boolean[] fullBlocks = new boolean[paletteStates.length];
             for (String stateString : paletteTag.getAllKeys()) {
                 int paletteId = paletteTag.getInt(stateString);
                 if (paletteId >= 0 && paletteId < paletteStates.length) {
                     paletteStates[paletteId] = parseBlockState(stateString);
                     variedTerrain[paletteId] = !stateString.contains("variant=");
+                    fullBlocks[paletteId] = isFullSchematicBlock(
+                            paletteStates[paletteId]);
                 }
             }
 
@@ -688,7 +790,8 @@ public final class StructureLoader {
             // 旋转后占地：宽=length, 深=width
             ensureChunksLoaded(level, origin, length, width);
 
-            placeSchematicBlocks(level, origin, width, height, length, paletteStates, blockIndices, variedTerrain, true);
+            placeSchematicBlocks(level, origin, width, height, length, paletteStates,
+                    blockIndices, variedTerrain, fullBlocks, true, null);
 
             applySchematicBlockEntitiesCW90(level, origin, root, schematic, width, height, length);
 
@@ -765,13 +868,7 @@ public final class StructureLoader {
             BlockPos worldPos = origin.offset(newRx, ry, newRz);
             BlockState state = level.getBlockState(worldPos);
 
-            CompoundTag normalized = raw.copy();
-            if (!normalized.contains("id", Tag.TAG_STRING) && normalized.contains("Id", Tag.TAG_STRING)) {
-                normalized.putString("id", normalized.getString("Id"));
-            }
-            normalized.putInt("x", worldPos.getX());
-            normalized.putInt("y", worldPos.getY());
-            normalized.putInt("z", worldPos.getZ());
+            CompoundTag normalized = normalizeSchematicBlockEntity(raw, worldPos);
 
             if (!normalized.contains("id", Tag.TAG_STRING)) continue;
 

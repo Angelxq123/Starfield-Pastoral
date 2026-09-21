@@ -2,7 +2,11 @@ package com.stardew.craft.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.mining.MiningDataManager;
 import com.stardew.craft.network.ClientContentSyncService;
+import com.stardew.craft.player.PlayerDataEventHandler;
+import com.stardew.craft.player.PlayerDataManager;
+import com.stardew.craft.player.PlayerStardewData;
 import io.netty.buffer.Unpooled;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -19,6 +23,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.network.connection.ConnectionType;
@@ -31,6 +36,34 @@ import java.util.UUID;
 @GameTestHolder("stardewcraft_login")
 @PrefixGameTestTemplate(false)
 public final class DedicatedLoginGameTests {
+    @GameTest(templateNamespace = "stardewcraft_login", template = "ring_utilities")
+    public static void partialReplayServerUsesTransientMiningDataAndSkipsPlayerTick(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var server = level.getServer();
+        helper.assertTrue(server.getLevel(com.stardew.craft.core.ModMiningDimensions.STARDEW_MINING) == null,
+                "Replay fixture unexpectedly has the mining dimension");
+        var player = new ServerPlayer(server, level,
+                new GameProfile(UUID.randomUUID(), "ReplayViewerProbe"), ClientInformation.createDefault());
+        try {
+            var mining = MiningDataManager.getPlayerData(player);
+            mining.setCurrentFloor(37);
+            helper.assertTrue(MiningDataManager.getPlayerData(player) == mining
+                            && MiningDataManager.getPlayerData(player).getMaxFloorReached() == 37,
+                    "Transient mining state is not stable for the replay server");
+            helper.assertTrue(PlayerDataManager.get().getData(player.getUUID()) == null,
+                    "Replay fixture started with persistent Stardew player data");
+            var projected = new PlayerStardewData(player.getUUID());
+            PlayerDataEventHandler.syncPlayerData(player, projected);
+            PlayerDataEventHandler.syncPlayerVitals(player, projected);
+            PlayerDataEventHandler.onPlayerTick(new PlayerTickEvent.Post(player));
+            helper.assertTrue(PlayerDataManager.get().getData(player.getUUID()) == null,
+                    "Replay player tick created persistent Stardew player data");
+        } finally {
+            player.discard();
+        }
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = "stardewcraft_login", template = "ring_utilities", timeoutTicks = 200)
     public static void coldPortalPlacementDoesNotLoadChunksInline(GameTestHelper helper) {
         var level = helper.getLevel();

@@ -62,8 +62,8 @@ public final class LivestockProductEntity extends Entity {
         var bonus = stack.copy(); player.getInventory().add(stack);
         data.collect(egg.id());
         int count = egg.count();
-        if (truffle && com.stardew.craft.player.PlayerStardewDataAPI.hasProfession(serverPlayer, com.stardew.craft.player.ProfessionType.GATHERER)
-                && random.nextDouble() < .2 && LivestockProducts.fits(serverPlayer, bonus)) { player.getInventory().add(bonus); count++; }
+        if (truffle && com.stardew.craft.player.ForagingProfessionRules.hasGathererBonus(serverPlayer, random.nextDouble())
+                && LivestockProducts.fits(serverPlayer, bonus)) { player.getInventory().add(bonus); count++; }
         com.stardew.craft.player.PlayerStardewDataAPI.addExperience(serverPlayer, truffle ? com.stardew.craft.player.SkillType.FORAGING : com.stardew.craft.player.SkillType.FARMING, truffle ? 7 * count : 5 * count);
         if (!truffle) com.stardew.craft.player.PlayerStardewDataAPI.recordAnimalProductsCollected(serverPlayer.getUUID(), count);
         level().playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.ITEM_PICKUP,

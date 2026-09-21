@@ -114,6 +114,10 @@ public class InteriorPortalInteractionEvents {
      * @param targetId 传送目标 ID（如 "pierre_house_enter", "farm_exit_south" 等）
      */
     public static void handlePortalInteraction(ServerPlayer player, String targetId) {
+        if (com.stardew.craft.interior.TownDoorSystem.replacesLegacy(player.level().dimension(), targetId)) {
+            com.stardew.craft.interior.door.TownDoorRuntime.handleLegacyInteraction(player, targetId);
+            return;
+        }
         net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim = player.serverLevel().dimension();
         boolean inStardew = ModDimensions.STARDEW_VALLEY.equals(dim);
         boolean inOverworld = net.minecraft.world.level.Level.OVERWORLD.equals(dim);
@@ -564,12 +568,19 @@ public class InteriorPortalInteractionEvents {
 
     public static void markInteriorEnter(ServerPlayer player) {
         player.getPersistentData().putBoolean(PLAYER_FLAG_INTERIOR, true);
-        player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, -1, 0, false, false, false));
+        removeLegacyInteriorNightVision(player);
     }
 
     public static void clearInteriorState(ServerPlayer player) {
         player.getPersistentData().putBoolean(PLAYER_FLAG_INTERIOR, false);
-        player.removeEffect(MobEffects.NIGHT_VISION);
+        removeLegacyInteriorNightVision(player);
+    }
+
+    private static void removeLegacyInteriorNightVision(ServerPlayer player) {
+        MobEffectInstance nightVision = player.getEffect(MobEffects.NIGHT_VISION);
+        if (nightVision != null && nightVision.getDuration() == -1 && nightVision.getAmplifier() == 0) {
+            player.removeEffect(MobEffects.NIGHT_VISION);
+        }
     }
 
     public static boolean isPlayerInInteriorSpace(ServerPlayer player) {
@@ -585,12 +596,8 @@ public class InteriorPortalInteractionEvents {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!event.getEntity().level().isClientSide && event.getEntity() instanceof ServerPlayer player) {
             tickPendingPortalTransition(player);
-            if (player.tickCount % 40 == 0) {
-                if (isPlayerInInteriorSpace(player)) {
-                    if (!player.hasEffect(MobEffects.NIGHT_VISION)) {
-                        player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, -1, 0, false, false, false));
-                    }
-                }
+            if (player.tickCount % 40 == 0 && isPlayerInInteriorSpace(player)) {
+                removeLegacyInteriorNightVision(player);
             }
         }
     }
@@ -988,7 +995,7 @@ public class InteriorPortalInteractionEvents {
 
         player.teleportTo(player.serverLevel(),
             exitPos.getX() + 0.5D, exitPos.getY(), exitPos.getZ() + 0.5D,
-            -90.0F, 0.0F);
+            com.stardew.craft.greenhouse.GreenhouseManager.getExitYawForPlayer(player), 0.0F);
         com.stardew.craft.manager.FertilizerManager.get(player.serverLevel()).syncAllFertilizersToPlayer(player);
         player.getPersistentData().putLong(PLAYER_LAST_PORTAL_TICK, now);
         applyInteriorFlag(player, InteriorPortalRegistry.PortalMode.EXIT);

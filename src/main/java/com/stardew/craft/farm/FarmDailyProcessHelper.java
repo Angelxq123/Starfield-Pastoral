@@ -300,11 +300,13 @@ public final class FarmDailyProcessHelper {
             return Set.copyOf(cachedActiveFarmOwners);
         }
         Set<UUID> owners = new HashSet<>();
-        for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
-            UUID ownerUUID = FarmInstanceRegistry.get().getOwnerForPlayer(player.getUUID());
-            if (ownerUUID != null) {
-                owners.add(ownerUUID);
-            }
+        Set<UUID> online = level.getServer().getPlayerList().getPlayers().stream()
+                .map(ServerPlayer::getUUID).collect(java.util.stream.Collectors.toSet());
+        FarmInstanceRegistry registry = FarmInstanceRegistry.get();
+        for (FarmInstance farm : registry.getAllFarms()) {
+            if (farm.getAllFarmers().stream().noneMatch(online::contains)) continue;
+            UUID key = registry.getRegistryKey(farm);
+            if (key != null) owners.add(key);
         }
         return owners;
     }

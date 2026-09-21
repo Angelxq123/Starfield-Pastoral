@@ -86,3 +86,11 @@ The local tracked-only gate started 586 GameTests, then reported a missing Farm 
 ### 0.6.1fix2 candidate — stale terrain hierarchy fixture (2026-09-17)
 
 The second local tracked-only GameTest run completed all 586 tests but rejected `cliffConnectionsCoverEveryFaceAndFold` because its legacy material-rank array still expected sand immediately above cliff. The release adds hard soil between cliff and sand, and the new hard-soil suite already verifies that production hierarchy. Add hard soil to the older cliff fixture and keep the full face, fold, corner and inset-gap coverage intact.
+
+### 0.6.2 candidate — shell Java runtime discovery (2026-09-19)
+
+The first local tracked-only `build check` attempt stopped before Gradle configuration because the non-login release shell resolved macOS `/usr/bin/java` without a configured runtime. A Java 21 JDK was already installed in Gradle's managed JDK directory; exporting that JDK as `JAVA_HOME` made the exact candidate complete `build check`. This was a local release-shell setup failure, not a source or CI runner failure. Keep the clean-checkout gate, and explicitly select Java 21 when reproducing the workflow outside GitHub Actions.
+
+### 0.6.2 candidate — stale GameTest assumptions after farm and construction changes (2026-09-19)
+
+The first local tracked-only GameTest run completed all 628 tests but reported three required failures. One addon API fixture counted only its three registered initialization steps even though seven maintained core farm steps now run through the same public registry. The construction progress fixture tried to keep construction and an upgrade active on one farm after Robin work became intentionally serialized. The terrain paste fixture reflected an obsolete private method signature after the bulk placement path added full-block ordering and a preloaded chunk grid. Update the tests to assert addon call order and balanced reports alongside core steps, exercise construction and upgrade snapshots sequentially, and invoke the current placement contract. The next run exposed one further fixture omission: the sequential construction had not marked its scaffold ready before completion, so restore that required lifecycle step. Keep all three behavior tests enabled.

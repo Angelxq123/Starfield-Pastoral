@@ -110,14 +110,20 @@ public final class NativeSamRenderer<T extends Mob> extends EntityRenderer<T> {
         double time = (entity.tickCount + (double) partialTick) / 20;
         pose.reset();
         pose.apply("animation."+npcId+".idle", time + clock.idleOffset());
-        // Real NPCs cross the larger map faster, with the same animation cadence.
-        // Cutscene actors retain their separately authored movement and animation timing.
+        // Routine NPC travel can be scaled without feeding that displacement back into the clip clock.
+        // Cutscene actors retain distance-driven timing because their movement is explicitly authored.
         double travelScale=entity instanceof StardewNpcEntity ? NpcMotionProfile.TRAVEL_SPEED_MULTIPLIER : 1;
-        var walkClock=walkClocks.computeIfAbsent(entity,e->new NativeWalkClock(model.profile().walkStride()*travelScale));
+        var walkClock=walkClocks.computeIfAbsent(entity,e->{
+            var gait=model.profile().gait();
+            return e instanceof StardewNpcEntity && gait!=null
+                    ? new NativeWalkClock(model.profile().walkStride(),gait.previewSpeed()/model.profile().walkStride())
+                    : new NativeWalkClock(model.profile().walkStride());
+        });
+        boolean walking=entity instanceof EventActorEntity actor ? actor.isWalking()
+                : entity instanceof StardewNpcEntity npc && npc.isWalking();
         var walk=walkClock.sample(time,Mth.lerp(partialTick,entity.xo,entity.getX()),
                 Mth.lerp(partialTick,entity.zo,entity.getZ()),
-                entity instanceof EventActorEntity actor ? actor.isWalking()
-                        : entity.onGround() && !entity.isInWaterOrBubble() && !entity.isPassenger() && entity.isAlive());
+                walking && entity.onGround() && !entity.isInWaterOrBubble() && !entity.isPassenger() && entity.isAlive());
         boolean wheelchair="george".equals(npcId);
         if (!wheelchair) pose.blend("animation."+npcId+".walk",walk.phase(),walk.weight());
         double chairTurn=0,chairAttentionWeight=0;

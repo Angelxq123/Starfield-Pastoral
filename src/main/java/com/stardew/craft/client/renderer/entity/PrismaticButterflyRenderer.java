@@ -2,6 +2,7 @@ package com.stardew.craft.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.entity.mastery.PrismaticButterflyEntity;
 import net.minecraft.client.Minecraft;
@@ -23,6 +24,10 @@ public class PrismaticButterflyRenderer extends EntityRenderer<PrismaticButterfl
         StardewCraft.MODID,
         "textures/gui/cursors_1_6.png"
     );
+    private static final ResourceLocation POWDER_TEXTURE = ResourceLocation.fromNamespaceAndPath(
+        StardewCraft.MODID,
+        "textures/entity/pet/butterfly_powder_effect.png"
+    );
     private static final int TEXTURE_WIDTH = 320;
     private static final int TEXTURE_HEIGHT = 640;
     private static final int CURSORS_SIZE = 512;
@@ -43,6 +48,12 @@ public class PrismaticButterflyRenderer extends EntityRenderer<PrismaticButterfl
                        PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         Minecraft mc = Minecraft.getInstance();
         if (!entity.isVisualOnly() && (mc.player == null || !entity.isOwnedBy(mc.player.getUUID()))) {
+            return;
+        }
+
+        if (entity.isPowderVisual()) {
+            renderPowderVisual(entity, partialTick, poseStack, buffer, mc);
+            super.render(entity, entityYaw, partialTick, poseStack, buffer, 0xF000F0);
             return;
         }
 
@@ -81,6 +92,21 @@ public class PrismaticButterflyRenderer extends EntityRenderer<PrismaticButterfl
 
         poseStack.popPose();
         super.render(entity, entityYaw, partialTick, poseStack, buffer, 0xF000F0);
+    }
+
+    private static void renderPowderVisual(PrismaticButterflyEntity entity, float partialTick,
+                                           PoseStack poseStack, MultiBufferSource buffer, Minecraft mc) {
+        float life = Mth.clamp((entity.tickCount + partialTick) / entity.visualLifetimeTicks(), 0.0F, 1.0F);
+        float size = 0.44F + life * 0.12F;
+        int alpha = (int) (191.0F * (1.0F - life));
+        poseStack.pushPose();
+        poseStack.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+        poseStack.mulPose(Axis.ZP.rotationDegrees((entity.getId() * 47.0F + entity.tickCount * 2.0F) % 360.0F));
+        Matrix4f pose = poseStack.last().pose();
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityTranslucent(POWDER_TEXTURE));
+        quad(consumer, pose, -size / 2.0F, -size / 2.0F, size / 2.0F, size / 2.0F,
+                0.0F, 0.0F, 1.0F, 1.0F, 255, 255, 255, alpha);
+        poseStack.popPose();
     }
 
     private static void renderSparkles(PrismaticButterflyEntity entity, float partialTick, PoseStack poseStack, MultiBufferSource buffer) {

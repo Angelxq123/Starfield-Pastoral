@@ -28,6 +28,8 @@ public final class FishingArmorVisibility {
 
     // GeckoLib bypasses HumanoidArmorLayer.renderArmorPiece; use its cancellable render event too.
     @SubscribeEvent public static void geoArmor(GeoRenderEvent.Armor.Pre event) {
-        if(shouldHide(event.getEntity(),event.getItemStack()))event.setCanceled(true);
+        if(event.getEntity() instanceof AbstractClientPlayer player
+                &&FishingPresentationClient.worldOwned(player)
+                &&shouldHide(player,event.getItemStack()))event.setCanceled(true);
     }
 }

@@ -62,6 +62,7 @@ public final class FarmCaveRuntimeGameTests {
             .thenExecute(()-> {
                 h.assertTrue(daily.get()==1,"Daily callback skipped or duplicated");
                 h.assertTrue(level.getBlockEntity(origin.offset(FarmCaveLayout.EXIT)) instanceof PortalTriggerBlockEntity be && be.getTargetId().equals("farm_cave_exit"),"Missing exit portal target");
+                h.assertTrue(!level.getBlockState(origin.offset(FarmCaveLayout.SPAWN).above()).is(ModBlocks.MINE_LAMP.get()),"Arrival lamp was not removed");
                 var box=(MushroomBoxBlockEntity)level.getBlockEntity(origin.offset(FarmCaveLayout.BOXES.getFirst()));
                 h.assertTrue(box!=null && box.isReady() && box.getProduct().is(Items.DIAMOND),"Ready mushroom output lost in migration");
                 boolean chest=false;

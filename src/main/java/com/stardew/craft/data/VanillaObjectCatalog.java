@@ -246,6 +246,7 @@ public final class VanillaObjectCatalog {
 
     private static Map<String, String> aliases() {
         Map<String, String> aliases = new LinkedHashMap<>();
+        aliases.put("bomb_item", "287");
         aliases.put("autumn_s_bounty", "235");
         aliases.put("wine", "348");
         aliases.put("juice", "350");

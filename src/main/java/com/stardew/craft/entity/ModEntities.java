@@ -74,6 +74,17 @@ public final class ModEntities {
                     .sized(com.stardew.craft.entity.monster.MineRockGolemEntity.WIDTH, com.stardew.craft.entity.monster.MineRockGolemEntity.HEIGHT)
                     .clientTrackingRange(8).updateInterval(1).build("rock_golem"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.stardew.craft.entity.monster.MineRockGolemEntity>> WILDERNESS_GOLEM = ENTITY_TYPES.register(
+            "wilderness_golem", () -> EntityType.Builder.<com.stardew.craft.entity.monster.MineRockGolemEntity>of(
+                    (type, level) -> new com.stardew.craft.entity.monster.MineRockGolemEntity(type, level, com.stardew.craft.entity.monster.MineRockGolemEntity.Variant.WILDERNESS), MobCategory.MONSTER)
+                    .sized(com.stardew.craft.entity.monster.MineRockGolemEntity.WIDTH, com.stardew.craft.entity.monster.MineRockGolemEntity.FARM_HEIGHT)
+                    .clientTrackingRange(8).updateInterval(1).build("wilderness_golem"));
+    public static final DeferredHolder<EntityType<?>, EntityType<com.stardew.craft.entity.monster.MineRockGolemEntity>> IRIDIUM_GOLEM = ENTITY_TYPES.register(
+            "iridium_golem", () -> EntityType.Builder.<com.stardew.craft.entity.monster.MineRockGolemEntity>of(
+                    (type, level) -> new com.stardew.craft.entity.monster.MineRockGolemEntity(type, level, com.stardew.craft.entity.monster.MineRockGolemEntity.Variant.IRIDIUM), MobCategory.MONSTER)
+                    .sized(com.stardew.craft.entity.monster.MineRockGolemEntity.WIDTH, com.stardew.craft.entity.monster.MineRockGolemEntity.FARM_HEIGHT)
+                    .clientTrackingRange(8).updateInterval(1).build("iridium_golem"));
+
     public static final DeferredHolder<EntityType<?>, EntityType<com.stardew.craft.entity.monster.MineSkeletonEntity>> SKELETON = ENTITY_TYPES.register(
             "skeleton", () -> EntityType.Builder.<com.stardew.craft.entity.monster.MineSkeletonEntity>of(
                     com.stardew.craft.entity.monster.MineSkeletonEntity::new, MobCategory.MONSTER)
@@ -417,7 +428,8 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<com.stardew.craft.building.runtime.RobinConstructionEntity>> ROBIN_CONSTRUCTION = ENTITY_TYPES.register(
             "robin_construction", () -> EntityType.Builder.<com.stardew.craft.building.runtime.RobinConstructionEntity>of(
                     com.stardew.craft.building.runtime.RobinConstructionEntity::new, MobCategory.MISC)
-                    .sized(0.6f, 1.9f).clientTrackingRange(8).updateInterval(20).build("robin_construction"));
+                    // Keep the stationary worker's facing and animation smooth on clients.
+                    .sized(0.6f, 1.9f).clientTrackingRange(8).updateInterval(1).build("robin_construction"));
 
 	public static final DeferredHolder<EntityType<?>, EntityType<StardewNpcEntity>> STARDEW_NPC = ENTITY_TYPES.register(
 			"stardew_npc",
@@ -566,6 +578,8 @@ public final class ModEntities {
         event.put(SHADOW_BRUTE.get(), com.stardew.craft.entity.monster.MineShadowBruteEntity.createAttributes().build());
         event.put(METAL_HEAD.get(), com.stardew.craft.entity.monster.MineMetalHeadEntity.createAttributes().build());
         event.put(ROCK_GOLEM.get(), com.stardew.craft.entity.monster.MineRockGolemEntity.createAttributes().build());
+        event.put(WILDERNESS_GOLEM.get(), com.stardew.craft.entity.monster.MineRockGolemEntity.createAttributes().build());
+        event.put(IRIDIUM_GOLEM.get(), com.stardew.craft.entity.monster.MineRockGolemEntity.createAttributes().build());
         event.put(SKELETON.get(), com.stardew.craft.entity.monster.MineSkeletonEntity.createAttributes().build());
         event.put(GHOST.get(), com.stardew.craft.entity.monster.MineGhostEntity.createAttributes().build());
         event.put(CARBON_GHOST.get(), com.stardew.craft.entity.monster.MineGhostEntity.createAttributes().build());

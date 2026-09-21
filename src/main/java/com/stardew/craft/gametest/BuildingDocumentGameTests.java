@@ -1,6 +1,8 @@
 package com.stardew.craft.gametest;
 
 import com.stardew.craft.building.runtime.*;
+import com.stardew.craft.block.ModBlocks;
+import com.stardew.craft.greenhouse.GreenhouseBuildings;
 import com.stardew.craft.item.ModItems;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -157,12 +159,71 @@ public final class BuildingDocumentGameTests {
     }
     @GameTest(templateNamespace="stardewcraft_buildings",template="empty")
     public static void allBuildingDocumentsParticipateInStardewItemMetadata(GameTestHelper h) {
-        for(var holder:java.util.List.of(ModItems.COOP_BLUEPRINT,ModItems.BARN_BLUEPRINT,ModItems.SILO_BLUEPRINT,ModItems.FISH_POND_BLUEPRINT,
+        for(var holder:java.util.List.of(ModItems.COOP_BLUEPRINT,ModItems.BARN_BLUEPRINT,ModItems.SILO_BLUEPRINT,ModItems.FISH_POND_BLUEPRINT,ModItems.GREENHOUSE_BLUEPRINT,
                 ModItems.COOP_UPGRADE_2_PERMIT,ModItems.COOP_UPGRADE_3_PERMIT,ModItems.BARN_UPGRADE_2_PERMIT,ModItems.BARN_UPGRADE_3_PERMIT)) {
             var item=holder.get();h.assertTrue(item instanceof com.stardew.craft.item.IStardewItem,"Document has no Stardew metadata");
             var metadata=(com.stardew.craft.item.IStardewItem)item;
             h.assertTrue(metadata.getItemTypeKey().equals("stardewcraft.type.building") && metadata.getSellPrice(new ItemStack(item))==-1,"Paid document has incorrect category/resale metadata");
         }h.succeed();
+    }
+
+    @GameTest(templateNamespace="stardewcraft_buildings",template="empty")
+    public static void greenhousePrefabKeepsItsEmbeddedFoundationAndManager(GameTestHelper h) {
+        var family=PrefabDefinitions.get(GreenhouseBuildings.FAMILY);var tier=family.tier(1);
+        var template=PrefabDefinitions.template(h.getLevel(),tier);
+        GreenhouseBuildings.validateAssets(h.getLevel());
+        h.assertTrue(family.tiers().size()==1,"Greenhouse unexpectedly gained an upgrade tier");
+        h.assertTrue(tier.size().equals(new BlockPos(15,11,13)) && tier.manager().equals(new BlockPos(12,1,11)),
+                "Greenhouse template dimensions or manager marker drifted");
+        h.assertTrue(template.retainedGround().size()==52 && template.retainedGround().stream().allMatch(pos->pos.getY()==0),
+                "Greenhouse no longer retains its embedded Y=0 soil foundation");
+        h.assertTrue(template.cells().stream().anyMatch(cell->cell.pos().equals(tier.manager())
+                        && cell.state().is(ModBlocks.GREENHOUSE_MANAGER.get())),
+                "Greenhouse manager marker was not imported as the manager block");
+        var before=new BuildingRecord(UUID.randomUUID(),UUID.randomUUID(),0,GreenhouseBuildings.FAMILY,
+                BuildingRecord.Mode.PREFAB,h.getLevel().dimension().location(),BlockPos.ZERO,tier.manager(),Direction.SOUTH,
+                family.reservation(),BuildingRecord.Phase.READY,1,BuildingRecord.Residence.VALID,0,"");
+        var movedAnchor=new BlockPos(40,0,40);var movedRotation=PrefabDefinitions.rotation(Direction.WEST);
+        var after=new BuildingRecord(before.id(),before.farmId(),0,before.family(),before.mode(),before.dimension(),
+                movedAnchor,PrefabDefinitions.world(tier.manager(),tier.anchor(),movedAnchor,movedRotation),Direction.WEST,
+                PrefabDefinitions.transform(family.reservation(),movedAnchor,movedRotation),
+                BuildingRecord.Phase.READY,1,BuildingRecord.Residence.VALID,1,"");
+        h.assertTrue(BuildingTransfer.destination(before,after,GreenhouseBuildings.portal(before))
+                        .equals(GreenhouseBuildings.portal(after)),
+                "A rotated greenhouse move separates its portal from the registered entrance");
+        h.assertTrue(GreenhouseBuildings.portal(before).equals(new BlockPos(7,1,11))
+                        && GreenhouseBuildings.exit(before).equals(new BlockPos(7,1,12)),
+                "Greenhouse entrance trigger is not in the authored door or its exit is inside the wall");
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="stardewcraft_buildings",template="empty")
+    public static void liftedMoveSnapshotHidesAndExactlyRestoresTheBuilding(GameTestHelper h) {
+        var level=h.getLevel();var anchor=h.absolutePos(new BlockPos(4,3,4));
+        var claim=new BuildingBounds(anchor.offset(-1,0,-1),anchor.offset(2,3,2));
+        var record=new BuildingRecord(UUID.randomUUID(),UUID.randomUUID(),0,UtilityBuildings.SILO,
+                BuildingRecord.Mode.SELF_BUILT,level.dimension().location(),anchor,anchor,Direction.SOUTH,
+                claim,BuildingRecord.Phase.READY,1,BuildingRecord.Residence.VALID,0,"");
+        level.setBlock(anchor,ModBlocks.SILO_MANAGER.get().defaultBlockState(),3);
+        var barrel=anchor.east();level.setBlock(barrel,Blocks.BARREL.defaultBlockState(),3);
+        ((net.minecraft.world.Container)level.getBlockEntity(barrel)).setItem(0,new ItemStack(Items.DIAMOND,3));
+        var snapshot=BuildingTransfer.move(level,record,record.anchor(),record.facing());
+        var lift=new BuildingMoveLift(UUID.randomUUID(),UUID.randomUUID(),snapshot,new CompoundTag());
+        var restored=BuildingMoveLift.load(lift.save(),level.registryAccess());
+        restored.snapshot().lift(level);
+        h.assertTrue(level.getBlockState(anchor).isAir() && level.getBlockState(barrel).isAir(),
+                "Move preview left the original building visible");
+        var originalAir=anchor.above().west();level.setBlock(originalAir,Blocks.STONE.defaultBlockState(),3);
+        restored.snapshot().restoreLift(level);
+        h.assertTrue(level.getBlockState(anchor).is(ModBlocks.SILO_MANAGER.get())
+                        && level.getBlockState(barrel).is(Blocks.BARREL),
+                "Cancelling a move did not restore the original blocks");
+        h.assertTrue(((net.minecraft.world.Container)level.getBlockEntity(barrel)).getItem(0).is(Items.DIAMOND)
+                        && ((net.minecraft.world.Container)level.getBlockEntity(barrel)).getItem(0).getCount()==3,
+                "Cancelling a move lost block entity contents");
+        h.assertTrue(level.getBlockState(originalAir).isAir(),
+                "Cancelling a move did not restore the original air volume");
+        h.succeed();
     }
 
     @GameTest(templateNamespace="stardewcraft_buildings",template="empty")

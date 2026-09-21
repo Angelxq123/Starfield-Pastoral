@@ -46,6 +46,12 @@ public final class StardewCraftMixinPlugin implements IMixinConfigPlugin {
             LoadingModList modList = LoadingModList.get();
             return modList != null && modList.getModFileById("sodium") != null;
         }
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.TownDoorSodium")) {
+            return hasRendererVersion("sodium", "0.6.13");
+        }
+        if (mixinClassName.startsWith("com.stardew.craft.mixin.TownDoorIris")) {
+            return hasRendererVersion("iris", "1.8.12");
+        }
         // These hooks target renderer internals, not a stable public RGB-light API.
         // Unknown versions retain normal block light instead of risking a startup failure.
         if (mixinClassName.startsWith("com.stardew.craft.mixin.SodiumColoredLight")) {

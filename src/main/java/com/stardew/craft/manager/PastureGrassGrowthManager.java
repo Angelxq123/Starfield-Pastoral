@@ -116,7 +116,7 @@ public class PastureGrassGrowthManager extends SavedData {
             RandomSource countRandom = DailySettlementRandom.forId(
                     level.getSeed(), context.absoluteDay(), "pasture_grass_spawn_count",
                     ownerId.getMostSignificantBits() ^ ownerId.getLeastSignificantBits());
-            int dailyAttempts = countRandom.nextInt(5) + 1;
+            int dailyAttempts = rollDailyGrassAttempts(countRandom);
             if (context.season() == 0 && context.day() == 1) {
                 dailyAttempts *= 15;
             }
@@ -152,7 +152,7 @@ public class PastureGrassGrowthManager extends SavedData {
                 BlockPos place = findRandomGrassPlace(
                         level, task.farm, column.getX(), column.getZ());
                 if (place != null) {
-                    placeGrass(level, place, 4, random);
+                    placeGrass(level, task.farm, place, 4, random, 0.20D);
                 }
             }
             return;
@@ -173,7 +173,7 @@ public class PastureGrassGrowthManager extends SavedData {
                     continue;
                 }
                 if (grass && place != null) {
-                    placeGrass(level, place, random.nextInt(2) + 1, random);
+                    placeGrass(level, task.farm, place, random.nextInt(2) + 1, random, 0.10D);
                 }
             }
         }
@@ -207,7 +207,7 @@ public class PastureGrassGrowthManager extends SavedData {
             }
             int clumps = grass.getValue(PastureGrassBlock.CLUMPS);
             if (clumps < 4) {
-                int grown = Math.min(4, clumps + random.nextInt(3));
+                int grown = growClumpCountForDay(clumps, random);
                 if (grown != clumps) {
                     level.setBlock(pos,
                             grass.setValue(PastureGrassBlock.CLUMPS, grown), Block.UPDATE_ALL);
@@ -235,9 +235,25 @@ public class PastureGrassGrowthManager extends SavedData {
         }
     }
 
+    /** LocationData Farm_Standard: MinDailyWeeds=5, MaxDailyWeeds=11. */
+    private static int rollDailyGrassAttempts(RandomSource random) {
+        return random.nextInt(7) + 5;
+    }
+
+    /** Grass.dayUpdate: every partial tile gains 1-3 clumps, capped at four. */
+    private static int growClumpCountForDay(int clumps, RandomSource random) {
+        return clumps >= 4 ? clumps : Math.min(4, clumps + random.nextInt(3) + 1);
+    }
+
     private static void placeGrass(
-            ServerLevel level, BlockPos pos, int clumps, RandomSource random) {
-        BlockState grass = ModBlocks.PASTURE_GRASS.get().defaultBlockState()
+            ServerLevel level, FarmInstance farm, BlockPos pos, int clumps,
+            RandomSource random, double meadowlandsBlueChance) {
+        boolean meadowlands = farm.getFarmLayoutId().equals(
+                com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+                        .builtinId(com.stardew.craft.farm.FarmType.MEADOWLANDS));
+        Block grassBlock = meadowlands && random.nextDouble() < meadowlandsBlueChance
+                ? ModBlocks.BLUE_PASTURE_GRASS.get() : ModBlocks.PASTURE_GRASS.get();
+        BlockState grass = grassBlock.defaultBlockState()
                 .setValue(PastureGrassBlock.VARIANT,
                         random.nextInt(PastureGrassBlock.VISUAL_VARIANT_COUNT))
                 .setValue(PastureGrassBlock.CLUMPS, clumps);
@@ -252,7 +268,7 @@ public class PastureGrassGrowthManager extends SavedData {
         BlockPos min = farm.getFarmBoundsMin();
         BlockPos max = farm.getFarmBoundsMax();
         com.stardew.craft.farm.FarmDebrisPlacementRules.Surface surface =
-                com.stardew.craft.farm.FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
+                com.stardew.craft.farm.FarmDebrisPlacementRules.findBareFarmableSurface(level, farm, x, z);
         return surface == null ? null : surface.place();
     }
 
@@ -273,8 +289,8 @@ public class PastureGrassGrowthManager extends SavedData {
         FarmInstance farm = owner == null ? null : FarmInstanceRegistry.get().getFarm(owner);
         return farm != null && farm.contains(place)
                 && com.stardew.craft.farm.FarmDebrisPlacementRules.isCompletelyOpen(level, place)
-                && com.stardew.craft.farm.FarmDebrisPlacementRules.isBareDebrisGround(
-                        level.getBlockState(place.below()));
+                && com.stardew.craft.farm.FarmDebrisPlacementRules.isBareFarmableGround(
+                        farm, level.getBlockState(place.below()));
     }
 
     private static List<PastureScanTask> createPastureScanTasks(List<FarmInstance> farms) {

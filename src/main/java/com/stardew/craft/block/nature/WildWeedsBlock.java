@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.Vec3;
@@ -168,6 +169,11 @@ public class WildWeedsBlock extends Block implements EntityBlock {
                 createSeasonRefreshWorkUnit(level, season));
     }
 
+    /** Compatibility entry point used by the day rollover and season event hooks. */
+    public static void refreshLoadedPublicWeedsForSeason(ServerLevel level, int season) {
+        refreshLoadedWeedsForSeason(level, season);
+    }
+
     /** One surface row per item; never loads a chunk to refresh its appearance. */
     public static com.stardew.craft.time.settlement.DailySettlementWorkUnit createSeasonRefreshWorkUnit(
             ServerLevel level, int season) {
@@ -179,6 +185,20 @@ public class WildWeedsBlock extends Block implements EntityBlock {
                     for (int z = cz - 10; z <= cz + 10; z++)
                         if (level.getChunkSource().getChunkNow(x, z) != null)
                             unique.add(new net.minecraft.world.level.ChunkPos(x, z));
+            }
+            // Farm instances may be outside every player's view. Include only
+            // chunks already resident so a season rollover never forces loads.
+            for (var farm : com.stardew.craft.farm.FarmInstanceRegistry
+                    .get(level.getServer()).getAllFarms()) {
+                var min = farm.getFarmBoundsMin();
+                var max = farm.getFarmBoundsMax();
+                for (int x = min.getX() >> 4; x <= max.getX() >> 4; x++) {
+                    for (int z = min.getZ() >> 4; z <= max.getZ() >> 4; z++) {
+                        if (level.getChunkSource().getChunkNow(x, z) != null) {
+                            unique.add(new net.minecraft.world.level.ChunkPos(x, z));
+                        }
+                    }
+                }
             }
         }
         var chunks = java.util.List.copyOf(unique);
@@ -210,6 +230,41 @@ public class WildWeedsBlock extends Block implements EntityBlock {
             }
             public void skipFailedItem() { if (++row == 16) { row = 0; chunkIndex++; } }
         };
+    }
+
+    /** Refresh one already-loaded chunk without forcing a chunk load. */
+    @SuppressWarnings("null")
+    public static void refreshChunkWeedsForSeason(ServerLevel level, LevelChunk chunk, int season) {
+        if (level == null || chunk == null || level.dimension() != ModDimensions.STARDEW_VALLEY) {
+            return;
+        }
+        int normalizedSeason = clampSeason(season);
+        for (BlockPos pos : chunk.getBlockEntities().keySet()) {
+            BlockState state = level.getBlockState(pos);
+            if (state.getBlock() instanceof WildWeedsBlock
+                    && state.getValue(SEASON) != normalizedSeason) {
+                level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
+            }
+        }
+        int minX = chunk.getPos().getMinBlockX();
+        int minZ = chunk.getPos().getMinBlockZ();
+        for (int lx = 0; lx < 16; lx++) {
+            for (int lz = 0; lz < 16; lz++) {
+                int x = minX + lx;
+                int z = minZ + lz;
+                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                int minY = Math.max(level.getMinBuildHeight(), surfaceY - 2);
+                int maxY = Math.min(level.getMaxBuildHeight() - 1, surfaceY + 2);
+                for (int y = minY; y <= maxY; y++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+                    if (state.getBlock() instanceof WildWeedsBlock
+                            && state.getValue(SEASON) != normalizedSeason) {
+                        level.setBlock(pos, state.setValue(SEASON, normalizedSeason), 3);
+                    }
+                }
+            }
+        }
     }
 
 	@SuppressWarnings("null")

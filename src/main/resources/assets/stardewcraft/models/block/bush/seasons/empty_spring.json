@@ -1,0 +1,6 @@
+{
+  "parent": "stardewcraft:block/bush/empty_berry",
+  "textures": {
+    "particle": "stardewcraft:block/bush/seasons/spring_particle"
+  }
+}

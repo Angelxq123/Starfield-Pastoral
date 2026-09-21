@@ -28,6 +28,11 @@ public final class PrefabGroundGameTests {
             for (var pos : BlockPos.betweenClosed(claim.min(), claim.maxInclusive()))
                 level.setBlock(pos, (pos.getY() == anchor.getY() ? ModBlocks.GRASS_BLOCK.get() : Blocks.AIR).defaultBlockState(), 3);
             h.assertTrue(BuildingPlacementService.checkSpace(level, claim) == null, "Embedded grass floor rejected: " + rotation);
+            var passableCover = claim.min().above();
+            level.setBlock(passableCover, ModBlocks.PASTURE_GRASS.get().defaultBlockState(), 3);
+            h.assertTrue(BuildingPlacementService.checkSpace(level, claim) == null,
+                    "Passable pasture cover rejected: " + rotation);
+            level.removeBlock(passableCover, false);
             var obstacle = claim.min().above();
             level.setBlock(obstacle, Blocks.STONE.defaultBlockState(), 3);
             var issue = BuildingPlacementService.checkSpace(level, claim);

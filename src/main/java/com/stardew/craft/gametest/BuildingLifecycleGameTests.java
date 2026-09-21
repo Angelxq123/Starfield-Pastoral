@@ -52,6 +52,31 @@ public final class BuildingLifecycleGameTests {
         h.assertTrue(loaded.find(record.id()).tier() == 1 && loaded.find(record.id()).phase() == BuildingRecord.Phase.UPGRADING && loaded.order(record.id()).remainingDays() == 1, "Upgrade lost old tier or progress on reload");
         h.succeed();
     }
+
+    @GameTest(templateNamespace = "stardewcraft_buildings", template = "empty")
+    public static void robinAllowsOnlyOneOrderPerFarm(GameTestHelper h) {
+        var data = new BuildingWorldData();
+        UUID farm = UUID.randomUUID();
+        var first = record(farm, 0, PrefabDefinitions.COOP, new BlockPos(0, 64, 0), h.getLevel().dimension().location());
+        var second = record(farm, 0, PrefabDefinitions.BARN, new BlockPos(32, 64, 0), h.getLevel().dimension().location());
+        UUID firstPermit = UUID.randomUUID();
+        UUID secondPermit = UUID.randomUUID();
+        data.recordPurchase(firstPermit, farm, true, first.family());
+        data.recordPurchase(secondPermit, farm, true, second.family());
+        h.assertTrue(data.beginPrefab(first, firstPermit, 10) == BuildingWorldData.Result.SUCCESS,
+                "First Robin order was rejected");
+        h.assertTrue(data.hasActiveConstruction(farm), "Started order was not marked active");
+        h.assertTrue(data.beginPrefab(second, secondPermit, 10) == BuildingWorldData.Result.INVALID_STATE,
+                "Robin accepted two simultaneous orders on one farm");
+
+        UUID otherFarm = UUID.randomUUID();
+        var other = record(otherFarm, 0, PrefabDefinitions.BARN, new BlockPos(32, 64, 32), h.getLevel().dimension().location());
+        UUID otherPermit = UUID.randomUUID();
+        data.recordPurchase(otherPermit, otherFarm, true, other.family());
+        h.assertTrue(data.beginPrefab(other, otherPermit, 10) == BuildingWorldData.Result.SUCCESS,
+                "Robin lock leaked between farms");
+        h.succeed();
+    }
     @GameTest(templateNamespace = "stardewcraft_buildings", template = "construction_site")
     public static void bothFamiliesUpgradeTwiceAndMoveTheirInventories(GameTestHelper h) {
         for (var family : java.util.List.of(PrefabDefinitions.COOP, PrefabDefinitions.BARN)) {

@@ -147,7 +147,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 @SuppressWarnings("null")
 public class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(StardewCraft.MODID);
-    public static final DeferredItem<Item> BUTTERFLY_POWDER = ITEMS.register("butterfly_powder", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> BUTTERFLY_POWDER = ITEMS.register("butterfly_powder",
+            () -> new ButterflyPowderItem(new Item.Properties().stacksTo(999)));
     public static final DeferredItem<Item> PET_BOWL_WOOD = ITEMS.register("pet_bowl_wood", () -> new StardewBlockItem(ModBlocks.PET_BOWL_WOOD.get(), "stardewcraft.type.utility", -1, new Item.Properties()));
     public static final DeferredItem<Item> PET_BOWL_STONE = ITEMS.register("pet_bowl_stone", () -> new StardewBlockItem(ModBlocks.PET_BOWL_STONE.get(), "stardewcraft.type.utility", -1, new Item.Properties()));
     public static final DeferredItem<Item> PET_BOWL_HAY = ITEMS.register("pet_bowl_hay", () -> new StardewBlockItem(ModBlocks.PET_BOWL_HAY.get(), "stardewcraft.type.utility", -1, new Item.Properties()));
@@ -404,6 +405,9 @@ public class ModItems {
 
         // 閲庤崏鏂瑰潡鐗╁搧锛氫富鍏ュ彛浣跨敤缁熶竴 wild_weeds銆?
         // 鏃?seasonal id 淇濈暀涓哄吋瀹瑰埆鍚嶏紙閬垮厤宸叉湁瀛樻。/鐗╁搧涓㈠け锛夈€?
+        public static final DeferredItem<Item> SUPPLY_CRATE = ITEMS.register("supply_crate",
+                () -> new WaterLanternItem(ModBlocks.SUPPLY_CRATE.get(), "stardewcraft.type.natural_aquatic", -1,
+                        new Item.Properties().stacksTo(999)));
         public static final DeferredItem<Item> FARM_TWIG = blockItem("farm_twig", ModBlocks.FARM_TWIG, "stardewcraft.type.natural_grass");
         public static final DeferredItem<Item> WILD_WEEDS = blockItem("wild_weeds", ModBlocks.WILD_WEEDS, "stardewcraft.type.natural_grass");
 
@@ -821,6 +825,8 @@ public class ModItems {
         public static final DeferredItem<Item> BLOSSOM_LEAVES = blockItem("blossom_leaves", ModBlocks.BLOSSOM_LEAVES, "stardewcraft.type.natural_grass");
         public static final DeferredItem<Item> FINE_LEAVES = blockItem("fine_leaves", ModBlocks.FINE_LEAVES, "stardewcraft.type.natural_grass");
         public static final DeferredItem<Item> POINTED_LEAVES = blockItem("pointed_leaves", ModBlocks.POINTED_LEAVES, "stardewcraft.type.natural_grass");
+        public static final DeferredItem<Item> FOREST_LEAVES = blockItem("forest_leaves", ModBlocks.FOREST_LEAVES, "stardewcraft.type.natural_grass");
+        public static final DeferredItem<Item> BROADLEAF_LEAVES = blockItem("broadleaf_leaves", ModBlocks.BROADLEAF_LEAVES, "stardewcraft.type.natural_grass");
         public static final DeferredItem<Item> OAK_LEAVES_QUESTION = blockItem("oak_leaves_question", ModBlocks.OAK_LEAVES_QUESTION);
         public static final DeferredItem<Item> OAK_BRANCH = blockItem("oak_branch", ModBlocks.OAK_BRANCH);
 
@@ -903,7 +909,7 @@ public class ModItems {
         public static final DeferredItem<Item> MINI_FORGE = ITEMS.register("mini_forge",
                 () -> new StardewBlockItem(ModBlocks.MINI_FORGE.get(), "stardewcraft.type.utility", -1, "item.stardewcraft.mini_forge.desc", new Item.Properties().stacksTo(1)));
         public static final DeferredItem<Item> TREASURE_TOTEM = ITEMS.register("treasure_totem",
-                () -> new com.stardew.craft.item.mastery.TreasureTotemItem("stardewcraft.type.magic", -1, new Item.Properties().stacksTo(999)));
+                () -> new com.stardew.craft.item.mastery.TreasureTotemItem("stardewcraft.type.magic", 20, new Item.Properties().stacksTo(999)));
 
         public static final DeferredItem<Item> LIGHTNING_ROD = ITEMS.register("lightning_rod",
                         () -> new StardewBlockItem(ModBlocks.LIGHTNING_ROD.get(), "stardewcraft.type.utility", -1, new Item.Properties().stacksTo(999)));
@@ -1023,6 +1029,8 @@ public class ModItems {
                         () -> new com.stardew.craft.building.runtime.BuildingBlueprintItem(com.stardew.craft.building.runtime.UtilityBuildings.SILO, new Item.Properties()));
         public static final DeferredItem<Item> FISH_POND_BLUEPRINT = ITEMS.register("fish_pond_blueprint",
                         () -> new com.stardew.craft.building.runtime.BuildingBlueprintItem(com.stardew.craft.building.runtime.FishPondPrefabs.FAMILY, new Item.Properties()));
+        public static final DeferredItem<Item> GREENHOUSE_BLUEPRINT = ITEMS.register("greenhouse_blueprint",
+                        () -> new com.stardew.craft.building.runtime.BuildingBlueprintItem(com.stardew.craft.greenhouse.GreenhouseBuildings.FAMILY, new Item.Properties()));
         public static final DeferredItem<Item> COOP_UPGRADE_2_PERMIT = ITEMS.register("coop_upgrade_2_permit",
                         () -> new com.stardew.craft.building.runtime.BuildingUpgradePermitItem(com.stardew.craft.building.runtime.PrefabDefinitions.COOP, 2, new Item.Properties()));
         public static final DeferredItem<Item> COOP_UPGRADE_3_PERMIT = ITEMS.register("coop_upgrade_3_permit",
@@ -1036,6 +1044,9 @@ public class ModItems {
 
         public static final DeferredItem<Item> FISH_POND_MANAGER = ITEMS.register("fish_pond_manager",
                         () -> new com.stardew.craft.building.runtime.BuildingManagerItem(com.stardew.craft.building.runtime.FishPondPrefabs.FAMILY, new Item.Properties().stacksTo(999)));
+
+        public static final DeferredItem<Item> GREENHOUSE_MANAGER = ITEMS.register("greenhouse_manager",
+                        () -> new com.stardew.craft.building.runtime.BuildingManagerItem(com.stardew.craft.greenhouse.GreenhouseBuildings.FAMILY, new Item.Properties().stacksTo(1)));
 
         public static final DeferredItem<Item> BARN_BLUEPRINT = ITEMS.register("barn_blueprint",
                         () -> new com.stardew.craft.building.runtime.BuildingBlueprintItem(com.stardew.craft.building.runtime.PrefabDefinitions.BARN, new Item.Properties()));
@@ -2311,6 +2322,9 @@ public class ModItems {
 
     public static final DeferredItem<Item> MIXED_SEEDS = ITEMS.register("mixed_seeds",
                         () -> new MixedSeedsItem(new Item.Properties().stacksTo(999)));
+
+    public static final DeferredItem<Item> MIXED_FLOWER_SEEDS = ITEMS.register("mixed_flower_seeds",
+                        () -> new MixedFlowerSeedsItem(new Item.Properties().stacksTo(999)));
 
         // SDV Wild Seeds (seasonal forage seeds) — IDs 495-498
         // SDV: Spring Seeds sell=35, Summer=55, Fall=45, Winter=30

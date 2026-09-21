@@ -12,17 +12,18 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import java.util.List;
 
 /**
- * Server → Client: show Marnie's question dialog (Supplies / Purchase Animals / Leave).
+ * Server → Client: show Marnie's question dialog. Pet adoption is only listed
+ * after the source-game unlock condition has been met.
  */
 @SuppressWarnings("null")
-public record OpenMarnieMenuPayload() implements CustomPacketPayload {
+public record OpenMarnieMenuPayload(boolean canAdoptPets) implements CustomPacketPayload {
 
     public static final Type<OpenMarnieMenuPayload> TYPE =
         new Type<>(ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "open_marnie_menu"));
 
     public static final StreamCodec<FriendlyByteBuf, OpenMarnieMenuPayload> STREAM_CODEC = StreamCodec.of(
-        (buf, payload) -> {},
-        buf -> new OpenMarnieMenuPayload()
+        (buf, payload) -> buf.writeBoolean(payload.canAdoptPets()),
+        buf -> new OpenMarnieMenuPayload(buf.readBoolean())
     );
 
     @Override
@@ -39,19 +40,20 @@ public record OpenMarnieMenuPayload() implements CustomPacketPayload {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player == null) return;
 
+        java.util.ArrayList<Component> choices = new java.util.ArrayList<>();
+        choices.add(Component.translatable("stardewcraft.npc.marnie.menu.supplies"));
+        choices.add(Component.translatable("stardewcraft.npc.marnie.menu.purchase"));
+        if (payload.canAdoptPets()) choices.add(Component.translatable("pet.stardewcraft.adopt"));
+        choices.add(Component.translatable("stardewcraft.npc.marnie.menu.leave"));
+        int adoptionChoice = payload.canAdoptPets() ? 2 : -1;
+
         mc.setScreen(com.stardew.craft.client.gui.common.StardewConfirmDialogScreen.createQuestionDialog(
             com.stardew.craft.client.gui.common.StardewQuestionDialogSpec.of(
                 Component.translatable("stardewcraft.npc.marnie.menu.question"),
-                List.of(
-                    Component.translatable("stardewcraft.npc.marnie.menu.supplies"),
-                    Component.translatable("stardewcraft.npc.marnie.menu.purchase"),
-                    Component.translatable("pet.stardewcraft.adopt"),
-                    Component.translatable("stardewcraft.npc.marnie.menu.leave")
-                ),
+                List.copyOf(choices),
                 index -> {
-                    if (index < 3) {
-                        PacketDistributor.sendToServer(new MarnieMenuChoicePayload(index == 2 ? 3 : index));
-                    }
+                    if (index == 0 || index == 1) PacketDistributor.sendToServer(new MarnieMenuChoicePayload(index));
+                    else if (index == adoptionChoice) PacketDistributor.sendToServer(new MarnieMenuChoicePayload(3));
                 },
                 -1
             )

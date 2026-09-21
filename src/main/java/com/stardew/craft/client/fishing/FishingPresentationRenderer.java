@@ -25,7 +25,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import java.util.List;
 
-/** One world-space pose and one tackle for both cameras. Hand meshes use the player's live skin. */
+/** First-person fishing rig. Hand meshes use the player's live skin. */
 @EventBusSubscriber(modid=StardewCraft.MODID,value=Dist.CLIENT)
 public final class FishingPresentationRenderer {
     @SubscribeEvent public static void hand(RenderHandEvent event) {
@@ -35,7 +35,7 @@ public final class FishingPresentationRenderer {
     @SubscribeEvent public static void world(RenderLevelStageEvent event) {
         if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_ENTITIES)return;
         var mc=Minecraft.getInstance();if(mc.level==null)return;float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        // Third-person actors are drawn by their PlayerRenderer layer, once and in the body's coordinates.
+        // The world player renderer stays vanilla; this pass only replaces the local first-person hands.
         if(event.getCamera().getEntity() instanceof AbstractClientPlayer player&&FishingPresentationClient.firstPerson(player)) {
             var s=FishingPresentationClient.state(player);if(s==null)return;s.sample();
             var actor=FishingPresentationClient.actorTransform(player,partial);var pose=event.getPoseStack();pose.pushPose();

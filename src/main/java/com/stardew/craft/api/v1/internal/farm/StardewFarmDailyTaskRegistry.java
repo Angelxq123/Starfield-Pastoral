@@ -38,13 +38,12 @@ public final class StardewFarmDailyTaskRegistry {
             int dayOfSeason
     ) {
         FarmInstanceRegistry farmRegistry = FarmInstanceRegistry.get(level.getServer());
-        Set<UUID> processedOwners = new HashSet<>();
-        for (var player : level.getServer().getPlayerList().getPlayers()) {
-            FarmInstance farm = farmRegistry.getFarmForPlayer(player.getUUID());
-            if (farm == null || !farm.isInitialized()
-                    || !processedOwners.add(farm.getOwnerUUID())) {
-                continue;
-            }
+        Set<UUID> online = level.getServer().getPlayerList().getPlayers().stream()
+                .map(player -> player.getUUID()).collect(java.util.stream.Collectors.toSet());
+        Set<UUID> processedFarms = new HashSet<>();
+        for (FarmInstance farm : farmRegistry.getAllFarms()) {
+            if (!farm.isInitialized() || farm.getAllFarmers().stream().noneMatch(online::contains)
+                    || !processedFarms.add(farm.getInstanceId())) continue;
             run(new StardewFarmDailyTasks.Context(
                     level,
                     StardewFarmSnapshots.from(farm),

@@ -34,12 +34,18 @@ public class FarmInstanceRegistry extends SavedData {
 
     private static final String DATA_NAME = "stardew_farm_instances";
 
-    /** 玩家UUID → 农场实例 */
+    /** 注册键 → 农场实例。普通农场的键是主人 UUID，调试附加农场使用隔离的代理 UUID。 */
     private final Map<UUID, FarmInstance> instances = new HashMap<>();
     /** 槽位序号 → 玩家UUID（用于反查） */
     private final Map<Integer, UUID> slotToOwner = new HashMap<>();
     /** 成员UUID → 农场主人UUID（反查索引，不含 owner 自己） */
     private final Map<UUID, UUID> memberToOwner = new HashMap<>();
+    /** 调试附加农场注册键 → 实际控制玩家。 */
+    private final Map<UUID, UUID> debugFarmControllers = new LinkedHashMap<>();
+    /** 玩家 → 当前选中的农场注册键；未设置时仍按原有主农场规则解析。 */
+    private final Map<UUID, UUID> selectedFarmByPlayer = new HashMap<>();
+    /** 可跨重启恢复的调试农场删除任务，按实例 ID 标记。 */
+    private final Set<UUID> pendingDebugFarmDeletions = new HashSet<>();
     /** 下一个可分配的槽位序号 */
     private int nextSlotIndex = 0;
 
@@ -69,11 +75,34 @@ public class FarmInstanceRegistry extends SavedData {
         return instances.get(playerUUID);
     }
 
+    /** 按稳定实例 ID 精确查找，不会受玩家当前选择影响。 */
+    @Nullable
+    public FarmInstance getFarmByInstanceId(UUID instanceId) {
+        if (instanceId == null) return null;
+        for (FarmInstance farm : instances.values()) {
+            if (instanceId.equals(farm.getInstanceId())) return farm;
+        }
+        return null;
+    }
+
+    /** 返回实例在注册表中的内部键，供坐标、权限和删除流程精确定位。 */
+    @Nullable
+    public UUID getRegistryKey(FarmInstance farm) {
+        if (farm == null) return null;
+        for (var entry : instances.entrySet()) {
+            if (entry.getValue() == farm
+                    || entry.getValue().getInstanceId().equals(farm.getInstanceId())) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
     /**
      * 玩家是否已有农场（作为 owner 或 member）。
      */
     public boolean hasFarm(UUID playerUUID) {
-        return instances.containsKey(playerUUID) || memberToOwner.containsKey(playerUUID);
+        return getFarmForPlayer(playerUUID) != null;
     }
 
     /**
@@ -81,10 +110,19 @@ public class FarmInstanceRegistry extends SavedData {
      */
     @Nullable
     public FarmInstance getFarmForPlayer(UUID playerUUID) {
+        UUID selectedKey = selectedFarmByPlayer.get(playerUUID);
+        FarmInstance selected = selectedKey == null ? null : instances.get(selectedKey);
+        if (selected != null && selected.isFarmer(playerUUID)) return selected;
         FarmInstance own = instances.get(playerUUID);
         if (own != null) return own;
         UUID ownerUUID = memberToOwner.get(playerUUID);
-        return ownerUUID != null ? instances.get(ownerUUID) : null;
+        if (ownerUUID != null) return instances.get(ownerUUID);
+        return debugFarmControllers.entrySet().stream()
+                .filter(entry -> entry.getValue().equals(playerUUID))
+                .map(entry -> instances.get(entry.getKey()))
+                .filter(Objects::nonNull)
+                .min(Comparator.comparingInt(FarmInstance::getSlotIndex))
+                .orElse(null);
     }
 
     /**
@@ -92,8 +130,58 @@ public class FarmInstanceRegistry extends SavedData {
      */
     @Nullable
     public UUID getOwnerForPlayer(UUID playerUUID) {
-        if (instances.containsKey(playerUUID)) return playerUUID;
-        return memberToOwner.get(playerUUID);
+        FarmInstance farm = getFarmForPlayer(playerUUID);
+        return getRegistryKey(farm);
+    }
+
+    /** 玩家可通过调试流程选择其主农场或名下任一附加农场。 */
+    public boolean selectFarm(UUID playerUUID, UUID instanceId) {
+        FarmInstance farm = getFarmByInstanceId(instanceId);
+        UUID key = getRegistryKey(farm);
+        if (farm == null || key == null || !farm.isFarmer(playerUUID)) return false;
+        selectedFarmByPlayer.put(playerUUID, key);
+        setDirty();
+        return true;
+    }
+
+    public List<FarmInstance> getFarmsForPlayer(UUID playerUUID) {
+        return instances.values().stream()
+                .filter(farm -> farm.isFarmer(playerUUID))
+                .sorted(Comparator.comparingInt(FarmInstance::getSlotIndex))
+                .toList();
+    }
+
+    public List<FarmInstance> getDebugFarms(UUID controller) {
+        return debugFarmControllers.entrySet().stream()
+                .filter(entry -> entry.getValue().equals(controller))
+                .map(entry -> instances.get(entry.getKey()))
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparingInt(FarmInstance::getSlotIndex))
+                .toList();
+    }
+
+    public boolean isDebugFarm(UUID instanceId, UUID controller) {
+        FarmInstance farm = getFarmByInstanceId(instanceId);
+        UUID key = getRegistryKey(farm);
+        return key != null && controller.equals(debugFarmControllers.get(key));
+    }
+
+    @Nullable
+    public UUID getDebugFarmController(UUID instanceId) {
+        FarmInstance farm = getFarmByInstanceId(instanceId);
+        UUID key = getRegistryKey(farm);
+        return key == null ? null : debugFarmControllers.get(key);
+    }
+
+    public boolean beginDebugFarmDeletion(UUID controller, UUID instanceId) {
+        if (!isDebugFarm(instanceId, controller)
+                || !pendingDebugFarmDeletions.add(instanceId)) return false;
+        setDirty();
+        return true;
+    }
+
+    public Set<UUID> getPendingDebugFarmDeletions() {
+        return Set.copyOf(pendingDebugFarmDeletions);
     }
 
     /**
@@ -156,7 +244,9 @@ public class FarmInstanceRegistry extends SavedData {
      */
     private void rebuildMemberIndex() {
         memberToOwner.clear();
-        for (FarmInstance farm : instances.values()) {
+        for (var entry : instances.entrySet()) {
+            if (debugFarmControllers.containsKey(entry.getKey())) continue;
+            FarmInstance farm = entry.getValue();
             for (UUID member : farm.getMembers()) {
                 memberToOwner.put(member, farm.getOwnerUUID());
             }
@@ -232,7 +322,10 @@ public class FarmInstanceRegistry extends SavedData {
         StardewFarmLifecycleRegistry.beforeDelete(context);
         if(server!=null) {
             var caveLevel=server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
-            if(caveLevel!=null)com.stardew.craft.interior.FarmCaveData.get(caveLevel).allocate(caveLevel,farm);
+            if(caveLevel!=null)com.stardew.craft.interior.FarmCaveRuntime.retire(
+                    caveLevel,farm.getInstanceId());
+            com.stardew.craft.world.event.WorldEventSavedData.get(server)
+                    .remove(farm.getInstanceId());
         }
 
         if (server != null) {
@@ -245,6 +338,9 @@ public class FarmInstanceRegistry extends SavedData {
         }
 
         instances.remove(playerUUID);
+        pendingDebugFarmDeletions.remove(farm.getInstanceId());
+        debugFarmControllers.remove(playerUUID);
+        selectedFarmByPlayer.entrySet().removeIf(entry -> entry.getValue().equals(playerUUID));
         slotToOwner.remove(farm.getSlotIndex());
         recycledSlots.add(farm.getSlotIndex());
         // 清除所有成员的 memberToOwner 映射
@@ -255,6 +351,37 @@ public class FarmInstanceRegistry extends SavedData {
         StardewCraft.LOGGER.info("[FARM_REGISTRY] Deleted farm for {} (slot={})", playerUUID, farm.getSlotIndex());
         StardewFarmLifecycleRegistry.afterDelete(context);
         return farm;
+    }
+
+    /** 创建一个由玩家控制、但拥有独立注册身份的调试农场。 */
+    public FarmInstance createDebugFarm(
+            UUID controller,
+            String playerName,
+            String farmName,
+            FarmType farmType
+    ) {
+        UUID registryKey;
+        do {
+            registryKey = UUID.randomUUID();
+        } while (instances.containsKey(registryKey));
+        FarmInstance farm = createFarm(registryKey, playerName, farmName, farmType);
+        if (!farm.addMember(controller, Integer.MAX_VALUE)) {
+            deleteFarm(registryKey);
+            throw new IllegalStateException("Could not attach debug farm controller");
+        }
+        debugFarmControllers.put(registryKey, controller);
+        selectedFarmByPlayer.put(controller, registryKey);
+        setDirty();
+        return farm;
+    }
+
+    /** 删除前校验实际控制者，防止通过猜测实例 ID 删除别人的农场。 */
+    @Nullable
+    public FarmInstance deleteDebugFarm(UUID controller, UUID instanceId) {
+        FarmInstance farm = getFarmByInstanceId(instanceId);
+        UUID key = getRegistryKey(farm);
+        if (key == null || !controller.equals(debugFarmControllers.get(key))) return null;
+        return deleteFarm(key);
     }
 
     /**
@@ -466,6 +593,31 @@ public class FarmInstanceRegistry extends SavedData {
         int[] recycledArr = recycledSlots.stream().mapToInt(Integer::intValue).toArray();
         tag.putIntArray("RecycledSlots", recycledArr);
 
+        ListTag debugFarms = new ListTag();
+        debugFarmControllers.forEach((key, controller) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("Key", key);
+            entry.putUUID("Controller", controller);
+            debugFarms.add(entry);
+        });
+        tag.put("DebugFarms", debugFarms);
+
+        ListTag selections = new ListTag();
+        selectedFarmByPlayer.forEach((player, key) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("Player", player);
+            entry.putUUID("Key", key);
+            selections.add(entry);
+        });
+        tag.put("SelectedFarms", selections);
+        ListTag pendingDeletions = new ListTag();
+        pendingDebugFarmDeletions.forEach(instanceId -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("InstanceId", instanceId);
+            pendingDeletions.add(entry);
+        });
+        tag.put("PendingDebugDeletions", pendingDeletions);
+
         ListTag list = new ListTag();
         for (FarmInstance instance : instances.values()) {
             list.add(instance.save());
@@ -494,6 +646,30 @@ public class FarmInstanceRegistry extends SavedData {
             }
             registry.instances.put(instance.getOwnerUUID(), instance);
             registry.slotToOwner.put(instance.getSlotIndex(), instance.getOwnerUUID());
+        }
+
+        for (Tag raw : tag.getList("DebugFarms", Tag.TAG_COMPOUND)) {
+            CompoundTag entry = (CompoundTag) raw;
+            if (entry.hasUUID("Key") && entry.hasUUID("Controller")
+                    && registry.instances.containsKey(entry.getUUID("Key"))) {
+                registry.debugFarmControllers.put(
+                        entry.getUUID("Key"), entry.getUUID("Controller"));
+            }
+        }
+        for (Tag raw : tag.getList("SelectedFarms", Tag.TAG_COMPOUND)) {
+            CompoundTag entry = (CompoundTag) raw;
+            if (entry.hasUUID("Player") && entry.hasUUID("Key")
+                    && registry.instances.containsKey(entry.getUUID("Key"))) {
+                registry.selectedFarmByPlayer.put(
+                        entry.getUUID("Player"), entry.getUUID("Key"));
+            }
+        }
+        for (Tag raw : tag.getList("PendingDebugDeletions", Tag.TAG_COMPOUND)) {
+            CompoundTag entry = (CompoundTag) raw;
+            if (entry.hasUUID("InstanceId")
+                    && registry.getFarmByInstanceId(entry.getUUID("InstanceId")) != null) {
+                registry.pendingDebugFarmDeletions.add(entry.getUUID("InstanceId"));
+            }
         }
 
         StardewCraft.LOGGER.info("[FARM_REGISTRY] Loaded {} farm instances, nextSlot={}",

@@ -17,63 +17,168 @@ import java.util.List;
 public enum FarmType {
     STANDARD("standard", true, layout(
             0,
-            337, 23, 382,
-            new BlockPos(229, 5, 257), 90.0f,
-            new BlockPos(236, 5, 137), new BlockPos(265, 5, 200),
-            entry(new BlockPos(266, 5, 174), 90.0f,
-                    new BlockPos(267, 5, 171), new BlockPos(267, 7, 177)),
-            entry(new BlockPos(38, 5, 174), -90.0f,
-                    new BlockPos(37, 5, 172), new BlockPos(37, 7, 177)),
-            entry(new BlockPos(225, 5, 298), 180.0f,
-                    new BlockPos(217, 5, 300), new BlockPos(239, 7, 300)),
+            288, 81, 272,
+            new BlockPos(199, 25, 94), 180.0f,
+            new BlockPos(101, 24, 81), new BlockPos(175, 25, 71),
+            entry(new BlockPos(142, 25, 37), 0.0f,
+                    new BlockPos(141, 25, 36), new BlockPos(143, 27, 36),
+                    new BlockPos(0, 0, 35), new BlockPos(287, 80, 35)),
+            entry(new BlockPos(144, 25, 236), 180.0f,
+                    new BlockPos(143, 25, 237), new BlockPos(145, 27, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 80, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 94), new BlockPos(251, 27, 96),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 80, 271)),
             null, null, null,
-            region(new BlockPos(254, 5, 127), new BlockPos(254, 7, 131)),
-            region(new BlockPos(253, 5, 127), new BlockPos(253, 7, 131)),
+            region(new BlockPos(128, 25, 70), new BlockPos(130, 27, 70)),
+            region(new BlockPos(128, 25, 71), new BlockPos(130, 26, 71)),
             null,
-            new BlockPos(251, 5, 129), -90.0f
+            new BlockPos(129, 25, 72), 0.0f
     )),
 
-    RIVERLAND("riverland", false, layout(
+    RIVERLAND("riverland", true, layout(
             0,
-            230, 70, 253,
-            new BlockPos(162, 10, 202), 90.0f,
-            new BlockPos(172, 10, 88), new BlockPos(206, 10, 115),
-            entry(new BlockPos(210, 10, 129), 90.0f,
-                    new BlockPos(211, 10, 127), new BlockPos(211, 12, 131)),
-            entry(new BlockPos(4, 10, 153), -90.0f,
-                    new BlockPos(2, 10, 149), new BlockPos(2, 12, 156)),
-            entry(new BlockPos(166, 10, 248), 180.0f,
-                    new BlockPos(163, 10, 249), new BlockPos(169, 12, 249)),
+            288, 81, 272,
+            new BlockPos(199, 25, 93), 180.0f,
+            new BlockPos(101, 24, 81), new BlockPos(221, 25, 81),
+            entry(new BlockPos(141, 25, 38), 0.0f,
+                    new BlockPos(139, 25, 37), new BlockPos(143, 27, 37),
+                    new BlockPos(0, 0, 36), new BlockPos(287, 80, 36)),
+            entry(new BlockPos(145, 25, 236), 180.0f,
+                    new BlockPos(143, 25, 237), new BlockPos(147, 27, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 80, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 93), new BlockPos(251, 27, 97),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 80, 271)),
             "pelican_town_river", null, null,
+            region(new BlockPos(118, 25, 77), new BlockPos(120, 27, 77)),
+            region(new BlockPos(118, 25, 78), new BlockPos(120, 26, 78)),
             null,
-            region(new BlockPos(213, 10, 108), new BlockPos(213, 12, 111)),
-            null,
-            new BlockPos(211, 10, 110), -90.0f
+            new BlockPos(119, 25, 79), 0.0f
     )),
 
     FOREST("forest", true, layout(
             0,
-            309, 23, 335,
-            new BlockPos(228, 3, 260), 90.0f,
-            new BlockPos(247, 3, 122), new BlockPos(268, 3, 187),
-            entry(new BlockPos(279, 3, 172), 90.0f,
-                    new BlockPos(280, 3, 167), new BlockPos(280, 5, 177)),
-            entry(new BlockPos(39, 3, 174), -90.0f,
-                    new BlockPos(38, 3, 169), new BlockPos(38, 5, 178)),
-            entry(new BlockPos(227, 3, 313), 180.0f,
-                    new BlockPos(222, 3, 315), new BlockPos(235, 5, 315)),
-            "secret_woods_pond",
-            new BlockPos(48, 3, 43), new BlockPos(206, 7, 98),
-            region(new BlockPos(283, 3, 119), new BlockPos(283, 6, 126)),
-            region(new BlockPos(282, 3, 119), new BlockPos(282, 6, 126)),
-            region(new BlockPos(279, 3, 119), new BlockPos(282, 6, 126)),
-            new BlockPos(279, 3, 123), -90.0f
+            288, 81, 272,
+            new BlockPos(199, 25, 93), 180.0f,
+            new BlockPos(101, 24, 81), new BlockPos(218, 25, 74),
+            entry(new BlockPos(142, 25, 38), 0.0f,
+                    new BlockPos(140, 25, 37), new BlockPos(144, 27, 37),
+                    new BlockPos(0, 0, 36), new BlockPos(287, 80, 36)),
+            entry(new BlockPos(144, 25, 236), 180.0f,
+                    new BlockPos(142, 25, 237), new BlockPos(146, 27, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 80, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 93), new BlockPos(251, 27, 97),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 80, 271)),
+            null,
+            new BlockPos(65, 24, 72), new BlockPos(216, 28, 202),
+            region(new BlockPos(124, 25, 72), new BlockPos(126, 27, 72)),
+            region(new BlockPos(124, 25, 73), new BlockPos(126, 26, 73)),
+            null,
+            new BlockPos(125, 25, 74), 0.0f
     )),
 
-    HILLTOP("hilltop", false, null),
-    WILDERNESS("wilderness", false, null),
-    FOUR_CORNERS("four_corners", false, null),
-    BEACH("beach", false, null);
+    HILLTOP("hilltop", true, layout(
+            0,
+            288, 83, 272,
+            new BlockPos(199, 25, 93), 180.0f,
+            new BlockPos(101, 24, 81), new BlockPos(163, 25, 77),
+            entry(new BlockPos(142, 25, 38), 0.0f,
+                    new BlockPos(139, 25, 37), new BlockPos(145, 27, 37),
+                    new BlockPos(0, 0, 36), new BlockPos(287, 82, 36)),
+            entry(new BlockPos(144, 21, 236), 180.0f,
+                    new BlockPos(143, 21, 237), new BlockPos(146, 23, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 82, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 94), new BlockPos(251, 27, 96),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 82, 271)),
+            null, null, null,
+            region(new BlockPos(129, 25, 72), new BlockPos(131, 27, 72)),
+            region(new BlockPos(129, 25, 73), new BlockPos(131, 26, 73)),
+            null,
+            new BlockPos(130, 25, 74), 0.0f
+    )),
+    WILDERNESS("wilderness", true, layout(
+            0,
+            288, 81, 272,
+            new BlockPos(199, 25, 93), 180.0f,
+            new BlockPos(101, 24, 81), new BlockPos(175, 25, 70),
+            entry(new BlockPos(142, 25, 38), 0.0f,
+                    new BlockPos(140, 25, 37), new BlockPos(144, 27, 37),
+                    new BlockPos(0, 0, 36), new BlockPos(287, 80, 36)),
+            entry(new BlockPos(144, 25, 236), 180.0f,
+                    new BlockPos(143, 25, 237), new BlockPos(145, 27, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 80, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 94), new BlockPos(251, 27, 96),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 80, 271)),
+            null, null, null,
+            region(new BlockPos(126, 25, 72), new BlockPos(128, 27, 72)),
+            region(new BlockPos(126, 25, 73), new BlockPos(128, 26, 73)),
+            null,
+            new BlockPos(127, 25, 74), 0.0f
+    )),
+    FOUR_CORNERS("four_corners", true, layout(
+            0,
+            288, 81, 272,
+            new BlockPos(199, 25, 93), 180.0f,
+            new BlockPos(132, 24, 110), new BlockPos(150, 25, 140),
+            entry(new BlockPos(142, 25, 38), 0.0f,
+                    new BlockPos(141, 25, 37), new BlockPos(143, 27, 37),
+                    new BlockPos(0, 0, 36), new BlockPos(287, 80, 36)),
+            entry(new BlockPos(144, 29, 236), 180.0f,
+                    new BlockPos(143, 29, 237), new BlockPos(145, 31, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 80, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 94), new BlockPos(251, 27, 96),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 80, 271)),
+            null, null, null,
+            region(new BlockPos(122, 25, 134), new BlockPos(124, 27, 134)),
+            region(new BlockPos(122, 25, 139), new BlockPos(124, 26, 139)),
+            null,
+            new BlockPos(123, 25, 140), 0.0f
+    )),
+    BEACH("beach", true, layout(
+            0,
+            288, 78, 272,
+            new BlockPos(154, 25, 99), 180.0f,
+            new BlockPos(72, 24, 85), new BlockPos(183, 25, 111),
+            entry(new BlockPos(148, 25, 34), 0.0f,
+                    new BlockPos(146, 25, 33), new BlockPos(150, 27, 33),
+                    new BlockPos(0, 0, 32), new BlockPos(287, 77, 32)),
+            entry(new BlockPos(181, 25, 236), 180.0f,
+                    new BlockPos(180, 25, 237), new BlockPos(182, 27, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 77, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 92), new BlockPos(251, 27, 98),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 77, 271)),
+            null, null, null,
+            region(new BlockPos(107, 25, 85), new BlockPos(109, 27, 85)),
+            region(new BlockPos(107, 25, 86), new BlockPos(109, 26, 86)),
+            null,
+            new BlockPos(108, 25, 87), 0.0f
+    )),
+    MEADOWLANDS("meadowlands", true, layout(
+            0,
+            288, 81, 272,
+            new BlockPos(199, 25, 93), 180.0f,
+            new BlockPos(118, 24, 103), new BlockPos(175, 25, 77),
+            entry(new BlockPos(164, 25, 38), 0.0f,
+                    new BlockPos(162, 25, 37), new BlockPos(167, 27, 37),
+                    new BlockPos(0, 0, 36), new BlockPos(287, 80, 36)),
+            entry(new BlockPos(144, 25, 236), 180.0f,
+                    new BlockPos(142, 25, 237), new BlockPos(146, 27, 237),
+                    new BlockPos(0, 0, 238), new BlockPos(287, 80, 238)),
+            entry(new BlockPos(250, 25, 95), 90.0f,
+                    new BlockPos(251, 25, 93), new BlockPos(251, 27, 97),
+                    new BlockPos(252, 0, 0), new BlockPos(252, 80, 271)),
+            null, null, null,
+            region(new BlockPos(206, 25, 171), new BlockPos(208, 27, 171)),
+            region(new BlockPos(206, 25, 172), new BlockPos(208, 26, 172)),
+            null,
+            new BlockPos(207, 25, 173), 0.0f
+    ));
 
     // ══════════════════════════════════════════
     //  数据结构
@@ -82,8 +187,21 @@ public enum FarmType {
     /** 单个入口/出口的布局数据 */
     public record EntryData(
             BlockPos teleportOffset, float yaw,
-            BlockPos exitMin, BlockPos exitMax
-    ) {}
+            BlockPos exitMin, BlockPos exitMax,
+            BlockPos barrierMin, BlockPos barrierMax
+    ) {
+        public EntryData(
+                BlockPos teleportOffset, float yaw,
+                BlockPos exitMin, BlockPos exitMax
+        ) {
+            this(
+                    teleportOffset, yaw, exitMin, exitMax,
+                    new com.stardew.craft.api.v1.farm.StardewFarmLayout.Entry(
+                            teleportOffset, yaw, exitMin, exitMax).barrierMin(),
+                    new com.stardew.craft.api.v1.farm.StardewFarmLayout.Entry(
+                            teleportOffset, yaw, exitMin, exitMax).barrierMax());
+        }
+    }
 
     /** 立方体区域规范（相对 farm origin），用于农场洞穴的墙/传送区/清空区。min/max 均包含。 */
     public record CaveRegion(BlockPos min, BlockPos max) {}
@@ -164,6 +282,15 @@ public enum FarmType {
 
     private static EntryData entry(BlockPos tp, float yaw, BlockPos exitMin, BlockPos exitMax) {
         return new EntryData(tp, yaw, exitMin, exitMax);
+    }
+
+    private static EntryData entry(
+            BlockPos tp, float yaw,
+            BlockPos exitMin, BlockPos exitMax,
+            BlockPos barrierMin, BlockPos barrierMax
+    ) {
+        return new EntryData(
+                tp, yaw, exitMin, exitMax, barrierMin, barrierMax);
     }
 
     private static FarmLayout layout(int originY, int w, int h, int l,

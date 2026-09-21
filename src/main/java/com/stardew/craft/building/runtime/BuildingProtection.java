@@ -52,6 +52,7 @@ public final class BuildingProtection {
             }
         }
         if(record != null && (data.transfer(id)!=null || BuildingRemovalJournal.get(level.getServer()).contains(id)))return true;
+        if(record != null && com.stardew.craft.greenhouse.GreenhouseBuildings.protectsWholeClaim(record)) return true;
         if (record != null && com.stardew.craft.pet.PetBowlBuildings.isBowl(record.family())) return pos.equals(record.manager());
         if (record == null || record.mode() != BuildingRecord.Mode.PREFAB) return false;
         if (data.transfer(id) != null || !PrefabDefinitions.available(record)) return true;

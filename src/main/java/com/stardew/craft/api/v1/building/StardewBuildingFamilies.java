@@ -48,6 +48,7 @@ public final class StardewBuildingFamilies {
             case "coop" -> new Binding(ModBlocks.COOP_MANAGER,ModItems.COOP_BLUEPRINT,Map.of(2,ModItems.COOP_UPGRADE_2_PERMIT,3,ModItems.COOP_UPGRADE_3_PERMIT),Map.of());
             case "barn" -> new Binding(ModBlocks.BARN_MANAGER,ModItems.BARN_BLUEPRINT,Map.of(2,ModItems.BARN_UPGRADE_2_PERMIT,3,ModItems.BARN_UPGRADE_3_PERMIT),Map.of());
             case "fish_pond" -> new Binding(ModBlocks.FISH_POND_MANAGER,ModItems.FISH_POND_BLUEPRINT,Map.of(),Map.of());
+            case "greenhouse" -> new Binding(ModBlocks.GREENHOUSE_MANAGER,ModItems.GREENHOUSE_BLUEPRINT,Map.of(),Map.of());
             case "silo" -> new Binding(ModBlocks.SILO_MANAGER,ModItems.SILO_BLUEPRINT,Map.of(),Map.of());
             case "pet_bowl_wood" -> new Binding(ModBlocks.PET_BOWL_WOOD,ModItems.PET_BOWL_WOOD_MOVE,Map.of(),Map.of());
             case "pet_bowl_stone" -> new Binding(ModBlocks.PET_BOWL_STONE,ModItems.PET_BOWL_STONE_MOVE,Map.of(),Map.of());

@@ -81,6 +81,22 @@ public final class SurfaceFloorData extends SavedData {
         setDirty(); sync(level, pos, cover);
     }
 
+    /** Removes virtual floor covers during an authoritative region deletion without spawning drops. */
+    public void removeRegion(BlockPos min, BlockPos max) {
+        boolean changed = false;
+        for (var chunkEntry : new ArrayList<>(chunks.entrySet())) {
+            var covers = chunkEntry.getValue();
+            changed |= covers.keySet().removeIf(key -> {
+                BlockPos pos = BlockPos.of(key);
+                return pos.getX() >= min.getX() && pos.getX() <= max.getX()
+                        && pos.getY() >= min.getY() && pos.getY() <= max.getY()
+                        && pos.getZ() >= min.getZ() && pos.getZ() <= max.getZ();
+            });
+            if (covers.isEmpty()) chunks.remove(chunkEntry.getKey());
+        }
+        if (changed) setDirty();
+    }
+
     private void sync(ServerLevel level, BlockPos pos, Cover cover) {
         PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(pos),
                 new SurfaceFloorPacket(level.dimension().location(), new ChunkPos(pos).toLong(), false,

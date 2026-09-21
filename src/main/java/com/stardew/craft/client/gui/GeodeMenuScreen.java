@@ -7,6 +7,7 @@ import com.stardew.craft.client.gui.common.StardewGuiViewport;
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.client.ClientPlayerDataCache;
 import com.stardew.craft.client.gui.common.CommonGuiTextures;
+import com.stardew.craft.client.gui.common.SdvFontAdapter;
 import com.stardew.craft.client.gui.common.TrashCanWidget;
 import com.stardew.craft.client.gui.overnight.StardewGuiUtil;
 import com.stardew.craft.inventory.InventoryTrashPolicy;
@@ -16,6 +17,7 @@ import com.stardew.craft.network.payload.GeodeClaimPayload;
 import com.stardew.craft.sound.ModSounds;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -119,6 +121,8 @@ public class GeodeMenuScreen extends Screen {
     // ── Description text at (xPos + 618, yPos + 104) ──
     private static final int DESC_OX = VPART_OX + 42;          // 618
     private static final int DESC_OY = BORDER + SP_TOP - 32;   // 104
+    private static final int DESC_W = 224;
+    private static final int DESC_BOTTOM_PADDING = 24;
 
     private static final int GEODE_COST = 25;
 
@@ -196,8 +200,7 @@ public class GeodeMenuScreen extends Screen {
 
     // Server
     private boolean waitServer;
-    private float trashCanLidRotation;
-    private boolean trashCanLidSoundPlayed;
+    private final TrashCanWidget.Controller trashCan = new TrashCanWidget.Controller();
 
     private final Random rng = new Random();
 
@@ -241,8 +244,11 @@ public class GeodeMenuScreen extends Screen {
     private int trashCanX() { return mx0 + ui(SDV_W + 4); }
     private int trashCanY() { return my0 + ui(SDV_H - 192 - 32 - BORDER - 104); }
     private boolean trashCanContains(double mouseX, double mouseY) {
-        return mouseX >= trashCanX() && mouseX < trashCanX() + ui(64)
-                && mouseY >= trashCanY() && mouseY < trashCanY() + ui(104);
+        return trashCan.contains(trashCanLayout(), mouseX, mouseY);
+    }
+    private TrashCanWidget.Layout trashCanLayout() {
+        return TrashCanWidget.Layout.original(
+                trashCanX(), trashCanY(), s4(), ui(64), ui(104));
     }
 
     // ── API for GeodeCrackResultPayload ──
@@ -693,21 +699,7 @@ public class GeodeMenuScreen extends Screen {
     }
 
     private void drawTrashCan(GuiGraphics graphics, int mouseX, int mouseY) {
-        boolean hovered = trashCanContains(mouseX, mouseY);
-        if (hovered && !trashCanLidSoundPlayed) {
-            playSound(ModSounds.TRASHCANLID.get());
-            trashCanLidSoundPlayed = true;
-        } else if (!hovered) {
-            trashCanLidSoundPlayed = false;
-        }
-        float step = (float) Math.PI / 48.0f;
-        trashCanLidRotation = hovered
-                ? Math.min(trashCanLidRotation + step, (float) Math.PI / 2.0f)
-                : Math.max(trashCanLidRotation - step, 0.0f);
-        int x = trashCanX();
-        int y = trashCanY();
-        TrashCanWidget.render(graphics, x, y, s4(), x + ui(60), y + ui(40), s4(),
-                -16, -10, trashCanLidRotation);
+        trashCan.render(graphics, trashCanLayout(), mouseX, mouseY);
     }
 
     // ── Draw item at SDV drawInMenu scale (16px × s4 = 64 SDV px) ──
@@ -719,21 +711,38 @@ public class GeodeMenuScreen extends Screen {
     // SDV: (xPos+618, yPos+104), Game1.textColor * 0.75f, wrapped to 224px
     private void drawDesc(GuiGraphics g) {
         if (alertTimer > 0) return;
-        String t = descText.isEmpty()
+        Component text = Component.literal(descText.isEmpty()
             ? (ClientPlayerDataCache.getMoney() < GEODE_COST
                 ? Component.translatable("stardewcraft.geode.not_enough_money").getString()
                 : Component.translatable("stardewcraft.geode.description").getString())
-            : descText;
+            : descText);
         int wg = (wiggleTimer > 0) ? (rng.nextInt(5) - 2) : 0;
         int tx = mx0 + ui(DESC_OX) + wg;
         int ty = my0 + ui(DESC_OY) + wg;
-        // SDV wraps to max_width=224 SDV px → ui(224)
-        // Use font.split() for proper CJK/Chinese character-level line breaking
-        int mw = ui(224);
-        List<FormattedCharSequence> lines = font.split(Component.literal(t), mw);
+
+        Font descriptionFont = StardewFonts.dialogue();
+        int maxWidth = ui(DESC_W);
+        int maxHeight = ui(HPART_OY - DESC_OY - DESC_BOTTOM_PADDING);
+        float textScale = 3.0F / gs;
+        List<FormattedCharSequence> lines;
+        int lineStep;
+        int textHeight;
+        do {
+            int wrapWidth = Math.max(1, (int) Math.floor(maxWidth / textScale));
+            lines = descriptionFont.split(text, wrapWidth);
+            int glyphHeight = Math.max(1,
+                    Math.round(StardewFonts.lineHeight(descriptionFont) * textScale));
+            lineStep = glyphHeight + ui(8);
+            textHeight = lines.isEmpty() ? 0 : glyphHeight + (lines.size() - 1) * lineStep;
+            if (textHeight <= maxHeight || textScale <= 0.5F) {
+                break;
+            }
+            textScale = Math.max(0.5F, textScale - 0.05F);
+        } while (true);
+
         for (FormattedCharSequence line : lines) {
-            g.drawString(font, line, tx, ty, 0xBF5C2B00, false);
-            ty += StardewFonts.lineHeight(font) + 2;
+            SdvFontAdapter.draw(g, descriptionFont, line, tx, ty, textScale, 0xBF5C2B00);
+            ty += lineStep;
         }
     }
 
@@ -845,6 +854,7 @@ public class GeodeMenuScreen extends Screen {
         int sz  = slotSzGui;
         int gap = ui(SLOT_GAP);
         hovSlot = -1;
+        List<InventoryDecoration> decorations = new ArrayList<>();
 
         for (int row = 0; row < INV_ROWS; row++) {
             for (int col = 0; col < INV_COLS; col++) {
@@ -878,11 +888,22 @@ public class GeodeMenuScreen extends Screen {
                     int ix = sx + (sz - CommonGuiTextures.itemSize(s4)) / 2;
                     int iy = sy + (sz - CommonGuiTextures.itemSize(s4)) / 2;
                     if (!highlight) g.setColor(0.62f, 0.62f, 0.62f, 1f);
-                    CommonGuiTextures.drawItemWithDecorations(g, font, stack, ix, iy, s4);
+                    CommonGuiTextures.drawItem(g, stack, ix, iy, s4);
                     if (!highlight) g.setColor(1f, 1f, 1f, 1f);
+                    decorations.add(new InventoryDecoration(stack, ix, iy));
                 }
             }
         }
+
+        // Counts can extend into the next slot at larger reading scales. Paint every
+        // decoration after every item so a later icon cannot cover an earlier count.
+        for (InventoryDecoration decoration : decorations) {
+            CommonGuiTextures.drawItemDecorations(
+                    g, font, decoration.stack(), decoration.x(), decoration.y(), s4);
+        }
+    }
+
+    private record InventoryDecoration(ItemStack stack, int x, int y) {
     }
 
     // ── Helpers ──

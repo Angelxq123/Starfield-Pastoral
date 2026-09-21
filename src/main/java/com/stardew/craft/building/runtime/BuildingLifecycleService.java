@@ -43,8 +43,11 @@ public final class BuildingLifecycleService {
         if (action.equals("move")) {
             ItemStack blueprint = new ItemStack(PrefabDefinitions.blueprintItem(family));
             BuildingBlueprintItem.bindMove(blueprint, record);
-            if (!player.getInventory().add(blueprint)) player.drop(blueprint, false);
-            BuildingPlacementService.message(player, "move_hint"); sendWork(player, listData(player, family, catalog), requestId); return;
+            var plan=BuildingPurchasePlan.prepare(player.getInventory(),blueprint,java.util.List.of());
+            if(plan==null){BuildingPlacementService.message(player,"purchase_space");return;}
+            if(!BuildingMoveSession.begin(player,blueprint,record)){BuildingPlacementService.message(player,"work_stale");return;}
+            plan.apply(player.getInventory());
+            BuildingPlacementService.message(player, "move_hint");sendWork(player,listData(player,family,catalog),requestId);return;
         }
         if (record.tier() >= PrefabDefinitions.maxTier(record.family())) {
             BuildingPlacementService.message(player, "work_stale"); sendWork(player, listData(player, family, catalog), requestId); return;
@@ -137,10 +140,14 @@ public final class BuildingLifecycleService {
         if (!probe.valid()) { BuildingPlacementService.message(player, probe.issue()); return false; }
         if (!level.hasChunksAt(record.claim().min(), record.claim().maxInclusive())) { BuildingPlacementService.message(player, "unloaded"); return false; }
         if (anchor.equals(record.anchor()) && facing == record.facing()) return false;
+        var lift=data.moveLift(record.id());
+        if(lift!=null && !lift.owner().equals(player.getUUID()))return false;
+        if(lift!=null)BuildingMoveSession.restoreForAttempt(level,lift);
         BuildingTransfer transfer;
         try {transfer=BuildingTransfer.move(level,record,anchor,facing);}
-        catch(BuildingTransfer.Collision collision){com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,net.minecraft.network.chat.Component.translatable("building.stardewcraft.work_collision",collision.pos.getX(),collision.pos.getY(),collision.pos.getZ()));return false;}
-        if (data.beginTransfer(transfer) != BuildingWorldData.Result.SUCCESS) return false;
+        catch(BuildingTransfer.Collision collision){if(lift!=null)BuildingMoveSession.hideAfterFailedAttempt(level,lift);com.stardew.craft.network.GlobalHudMessagePayload.sendTo(player,net.minecraft.network.chat.Component.translatable("building.stardewcraft.work_collision",collision.pos.getX(),collision.pos.getY(),collision.pos.getZ()));return false;}
+        var result=lift==null?data.beginTransfer(transfer):data.promoteMoveLift(record.id(),player.getUUID(),transfer);
+        if(result!=BuildingWorldData.Result.SUCCESS){if(lift!=null)BuildingMoveSession.hideAfterFailedAttempt(level,lift);return false;}
         level.getServer().overworld().getDataStorage().save();
         completeTransfer(level, transfer); return true;
     }
@@ -151,6 +158,9 @@ public final class BuildingLifecycleService {
         }
         var after = transfer.after();
         RisingConstruction.clear(level,after.id());
+        boolean greenhouse=com.stardew.craft.greenhouse.GreenhouseBuildings.isGreenhouse(after.family());
+        if(greenhouse)com.stardew.craft.interior.InteriorSubspaceManager.removeGreenhouseOutdoorPortalAt(
+                level,com.stardew.craft.greenhouse.GreenhouseBuildings.portal(transfer.before()));
         transfer.project(level);
         if (FishPondPrefabs.isPond(after.family())) {
             var ponds = com.stardew.craft.fishpond.data.FishPondWorldData.get(level);
@@ -166,6 +176,7 @@ public final class BuildingLifecycleService {
         level.getChunkSource().save(true);
         BuildingWorldData.get(level.getServer()).finishTransfer(after.id());
         BuildingPlacementService.publishManager(level, after);
+        if(greenhouse)com.stardew.craft.greenhouse.GreenhouseBuildings.ensurePortal(level,after);
         level.getServer().overworld().getDataStorage().save();
         level.getEntitiesOfClass(RobinConstructionEntity.class, BuildingPlacementService.aabb(transfer.before().claim()), worker -> after.id().equals(worker.buildingId())).forEach(RobinConstructionEntity::discard);
     }

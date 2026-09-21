@@ -1061,6 +1061,92 @@ public final class NpcTraversalGameTests {
         });
     }
 
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=100)
+    public static void ordinarySchedulePointRejectsNearestBlockedCell(GameTestHelper h)
+            throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("pierre");
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(1, 0, 3)));
+        npc.setOnGround(true);
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        for (int y = 0; y < 3; y++) {
+            level.setBlockAndUpdate(base.offset(6, y, 3), Blocks.STONE.defaultBlockState());
+        }
+
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var stepIndex = plan.getClass().getDeclaredField("currentStepIndex");
+        stepIndex.setAccessible(true);
+        var settled = plan.getClass().getDeclaredField("settledAtNearestReachable");
+        settled.setAccessible(true);
+
+        h.onEachTick(() -> {
+            try {
+                level.tickNonPassenger(npc);
+                execute(h, npc, plan);
+                h.assertTrue(stepIndex.getInt(plan) == 0 && !settled.getBoolean(plan),
+                        "An ordinary schedule tile was completed from its nearest blocked cell");
+                if (npc.tickCount >= 40) {
+                    com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                            level, npc.getNpcId());
+                    npc.discard();
+                    h.succeed();
+                }
+            } catch (ReflectiveOperationException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities", timeoutTicks=240)
+    public static void npcPassesNpcPassableShopFrontDecorToAuthoredWorkpoint(GameTestHelper h)
+            throws ReflectiveOperationException {
+        var base = floor(h);
+        var level = h.getLevel();
+        var npc = new Npc(h);
+        npc.setNpcId("pierre");
+        npc.setPos(Vec3.atBottomCenterOf(base.offset(2, 0, 3)));
+        npc.setOnGround(true);
+        var counter = com.stardew.craft.block.ModBlocks.SUPERMARKET_SHELF_2.get()
+                .defaultBlockState()
+                .setValue(com.stardew.craft.block.decor.MapDecorStaticBlock.FACING,
+                        net.minecraft.core.Direction.EAST);
+        for (int z = 2; z <= 4; z++) {
+            level.setBlockAndUpdate(base.offset(5, 0, z), counter);
+        }
+        Vec3 target = Vec3.atBottomCenterOf(base.offset(6, 0, 3));
+        Object plan = plan(npc, new String[]{"walk"}, target);
+        var stepIndex = plan.getClass().getDeclaredField("currentStepIndex");
+        stepIndex.setAccessible(true);
+        var settled = plan.getClass().getDeclaredField("settledAtNearestReachable");
+        settled.setAccessible(true);
+
+        h.onEachTick(() -> {
+            try {
+                level.tickNonPassenger(npc);
+                execute(h, npc, plan);
+                if (stepIndex.getInt(plan) >= 1) {
+                    h.assertTrue(!settled.getBoolean(plan),
+                            "NPC shop-front pass-through used nearest-reachable completion");
+                    h.assertTrue(npc.position().subtract(target).horizontalDistanceSqr() <= 0.0625D,
+                            "NPC did not reach the authored workpoint through shop-front decor: "
+                                    + npc.position());
+                    com.stardew.craft.npc.runtime.NpcChunkForceManager.releaseNpcForcedChunks(
+                            level, npc.getNpcId());
+                    npc.discard();
+                    h.succeed();
+                }
+                if (npc.tickCount >= 230) {
+                    h.fail("NPC did not reach the authored workpoint through shop-front decor: "
+                            + npc.position());
+                }
+            } catch (ReflectiveOperationException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
     @GameTest(templateNamespace="stardewcraft_npc_runtime", template="ring_utilities")
     public static void dailyFurnitureStillSettlesAfterNavigationDropsCompletedPath(GameTestHelper h)
             throws ReflectiveOperationException {

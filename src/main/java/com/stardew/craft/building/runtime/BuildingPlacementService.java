@@ -91,6 +91,15 @@ public final class BuildingPlacementService {
     }
 
     public record SpaceIssue(String issue, BlockPos pos) {}
+    /** Whether a block in the future building volume is passable empty cover. */
+    static boolean isClearAirVolume(ServerLevel level, BlockPos pos,
+                                    com.stardew.craft.floor.SurfaceFloorData floors) {
+        var state = level.getBlockState(pos);
+        return level.getBlockEntity(pos) == null
+                && state.getCollisionShape(level, pos).isEmpty()
+                && floors.at(pos) == null;
+    }
+
     public static SpaceIssue checkSpace(ServerLevel level, BuildingBounds claim) { return checkSpace(level, claim, null); }
     public static SpaceIssue checkSpace(ServerLevel level, BuildingBounds claim, BuildingBounds vacated) {
         return checkSpace(level,claim,vacated,true);
@@ -119,7 +128,11 @@ public final class BuildingPlacementService {
         if (airMin.getY() < claim.maxExclusive().getY()) {
             for (BlockPos pos : BlockPos.betweenClosed(airMin, claim.maxInclusive())) {
                 if (vacated != null && vacated.contains(pos)) continue;
-                if (!level.getBlockState(pos).isAir() || floors.at(pos) != null)
+                // The farm ecology can leave passable ground cover (for example
+                // pasture grass) in the reserved volume. It is not an obstacle
+                // in SDV's placement rules; solid debris, containers and floor
+                // covers still are.
+                if (!isClearAirVolume(level, pos, floors))
                     return new SpaceIssue("air", pos.immutable());
             }
         }
@@ -132,6 +145,7 @@ public final class BuildingPlacementService {
         if (!probe.valid()) { message(player, probe.issue()); return false; }
         var data = BuildingWorldData.get(level.getServer());
         if (permit == null || !data.permits(permit, probe.farm().getInstanceId(), familyId)) { message(player, "permit"); return false; }
+        if (data.hasActiveConstruction(probe.farm().getInstanceId())) { message(player, "robin_busy"); return false; }
         // Resolve every template block before consuming the blueprint or claiming space.
         try {
             for (var tier : PrefabDefinitions.get(familyId).tiers()) PrefabDefinitions.template(level, tier);
@@ -276,6 +290,43 @@ public final class BuildingPlacementService {
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(level,
                 new net.minecraft.world.level.ChunkPos(pos),
                 new com.stardew.craft.network.payload.BuildingManagerReadyPayload(level.dimension().location(), pos, state));
+    }
+
+    /** Projects every authored cell of an already completed prefab. This is the
+     * same block/BE projection used by Robin's completion path, without an
+     * artificial construction order. Retained terrain in the template floor is
+     * deliberately left untouched. */
+    public static void projectCompletedPrefab(ServerLevel level, BuildingRecord record) {
+        if (record.mode() != BuildingRecord.Mode.PREFAB
+                || record.phase() != BuildingRecord.Phase.READY) {
+            throw new IllegalArgumentException("Building is not a completed prefab");
+        }
+        var tier = PrefabDefinitions.get(record.family()).tier(record.tier());
+        var template = PrefabDefinitions.template(level, tier);
+        var rotation = PrefabDefinitions.rotation(record.facing());
+        BuildingProtection.transfer(() -> {
+            for (var cell : template.cells()) {
+                BlockPos pos = PrefabDefinitions.world(
+                        cell.pos(), tier.anchor(), record.anchor(), rotation);
+                BlockState state = cell.state().rotate(rotation);
+                level.setBlock(pos, state, Block.UPDATE_CLIENTS
+                        | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
+                if (cell.blockEntity() != null && level.getBlockEntity(pos) != null) {
+                    var tag = cell.blockEntity().copy();
+                    tag.putInt("x", pos.getX());
+                    tag.putInt("y", pos.getY());
+                    tag.putInt("z", pos.getZ());
+                    level.getBlockEntity(pos).loadWithComponents(tag, level.registryAccess());
+                    level.getBlockEntity(pos).setChanged();
+                }
+            }
+            for (var cell : template.cells()) {
+                BlockPos pos = PrefabDefinitions.world(
+                        cell.pos(), tier.anchor(), record.anchor(), rotation);
+                level.updateNeighborsAt(pos, level.getBlockState(pos).getBlock());
+            }
+        });
+        publishManager(level, record);
     }
 
     /** Repair a completed projection after loading older chunk data; existing inventories stay intact. */

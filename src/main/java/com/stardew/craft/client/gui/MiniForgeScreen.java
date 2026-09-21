@@ -98,8 +98,7 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
     private boolean pendingUnforge;
     private boolean pendingPrismaticForge;
     private boolean playedOpenSound;
-    private float trashCanLidRotation;
-    private boolean trashCanLidSoundPlayed;
+    private final TrashCanWidget.Controller trashCan = new TrashCanWidget.Controller();
     private final List<ForgeSprite> tempSprites = new ArrayList<>();
 
     public MiniForgeScreen(MiniForgeMenu menu, Inventory playerInventory, Component title) {
@@ -248,26 +247,16 @@ public class MiniForgeScreen extends AbstractContainerScreen<MiniForgeMenu> {
     }
 
     private boolean trashCanContains(double mouseX, double mouseY) {
-        return mouseX >= trashCanX() && mouseX < trashCanX() + ui(64)
-                && mouseY >= trashCanY() && mouseY < trashCanY() + ui(104);
+        return trashCan.contains(trashCanLayout(), mouseX, mouseY);
+    }
+
+    private TrashCanWidget.Layout trashCanLayout() {
+        return TrashCanWidget.Layout.original(
+                trashCanX(), trashCanY(), s4(), ui(64), ui(104));
     }
 
     private void drawTrashCan(GuiGraphics graphics, int mouseX, int mouseY) {
-        boolean hovered = trashCanContains(mouseX, mouseY);
-        if (hovered && !trashCanLidSoundPlayed) {
-            playSound(ModSounds.TRASHCANLID.get());
-            trashCanLidSoundPlayed = true;
-        } else if (!hovered) {
-            trashCanLidSoundPlayed = false;
-        }
-        float step = (float) Math.PI / 48.0f;
-        trashCanLidRotation = hovered
-                ? Math.min(trashCanLidRotation + step, (float) Math.PI / 2.0f)
-                : Math.max(trashCanLidRotation - step, 0.0f);
-        int x = trashCanX();
-        int y = trashCanY();
-        TrashCanWidget.render(graphics, x, y, s4(), x + ui(60), y + ui(40), s4(),
-                -16, -10, trashCanLidRotation);
+        trashCan.render(graphics, trashCanLayout(), mouseX, mouseY);
     }
 
     private void drawPartitions(GuiGraphics guiGraphics) {

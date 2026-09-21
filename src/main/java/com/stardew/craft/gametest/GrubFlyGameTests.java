@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 
@@ -15,6 +16,19 @@ import net.neoforged.neoforge.gametest.*;
 @PrefixGameTestTemplate(false)
 @SuppressWarnings("null")
 public final class GrubFlyGameTests {
+    @GameTest(templateNamespace="stardewcraft_monster_space",template="flight_room",timeoutTicks=25)
+    public static void physicalSpawnMovesGrubOutOfSolidWall(GameTestHelper h){
+        for(int x=1;x<15;x++)for(int z=1;z<15;z++)for(int y=0;y<5;y++)
+            h.setBlock(new BlockPos(x,y,z),y==0?Blocks.STONE:Blocks.AIR);
+        for(int y=1;y<4;y++)h.setBlock(new BlockPos(8,y,8),Blocks.STONE);
+        var requested=Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(8,1,8)));
+        var grub=(MineGrubEntity)MineMonsterSpawnHandler.spawnConfiguredMonster(h.getLevel(),"grub",requested,0,20);
+        h.assertTrue(grub!=null,"A nearby valid spawn was not found");
+        h.assertTrue(grub.position().distanceToSqr(requested)>0,"Grub stayed embedded in the requested wall");
+        h.assertTrue(h.getLevel().noCollision(grub,grub.getBoundingBox()),"Relocated grub still intersects terrain");
+        grub.discard();h.succeed();
+    }
+
     @GameTest(templateNamespace="stardewcraft_bug",template="ring_utilities",timeoutTicks=230)
     public static void metamorphosisIsNotADeathAndPupaRejectsDamage(GameTestHelper h){
         var level=h.getLevel();var at=Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(8,2,8)));

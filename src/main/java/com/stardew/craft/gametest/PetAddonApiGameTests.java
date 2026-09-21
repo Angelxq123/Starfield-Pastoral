@@ -84,7 +84,9 @@ public final class PetAddonApiGameTests {
                         && offers.getFirst().getUUID("Selected").equals(pet.id), "Addon did not inherit petting and direct management");
                 entity.discard();
 
-                data.markLoved(farm.getInstanceId()); PlayerStardewDataAPI.setMoney(owner, 1000);
+                data.markLoved(farm.getInstanceId());
+                com.stardew.craft.player.PlayerDataManager.getPlayerData(owner).addMailFlag(PetManagement.ADOPTION_MAIL);
+                PlayerStardewDataAPI.setMoney(owner, 1000);
                 data.bowl(new PetWorldData.Bowl(farm.getInstanceId(), farm.getOrigin().offset(3, 4, 3), "wood", -1));
                 offers.clear(); PetManagement.openShop(owner);
                 PetManagement.submit(owner, new PetActionPayload(offers.getLast().getUUID("Nonce"), new UUID(0, 0), "adopt", PetActionPayload.selection(first.id(), "Blocked"), BlockPos.ZERO));

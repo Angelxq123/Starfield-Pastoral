@@ -19,7 +19,8 @@ public record OpenCarpenterMenuPayload(
     String builder,
     int playerMoney,
     List<CarpenterBlueprint> blueprints,
-    long catalogRevision
+    long catalogRevision,
+    boolean robinBusy
 ) implements CustomPacketPayload {
 
     public static final Type<OpenCarpenterMenuPayload> TYPE =
@@ -75,7 +76,7 @@ public record OpenCarpenterMenuPayload(
                         buffer.readInt(),
                         BLUEPRINT_CODEC.apply(ByteBufCodecs.list())
                                 .decode(buffer),
-                        buffer.readVarLong());
+                        buffer.readVarLong(), buffer.readBoolean());
             }
 
             @Override
@@ -89,6 +90,7 @@ public record OpenCarpenterMenuPayload(
                 BLUEPRINT_CODEC.apply(ByteBufCodecs.list())
                         .encode(buffer, payload.blueprints());
                 buffer.writeVarLong(payload.catalogRevision());
+                buffer.writeBoolean(payload.robinBusy());
             }
         };
 
@@ -98,7 +100,16 @@ public record OpenCarpenterMenuPayload(
             int playerMoney,
             List<CarpenterBlueprint> blueprints
     ) {
-        this(builder, playerMoney, blueprints, -1L);
+        this(builder, playerMoney, blueprints, -1L, false);
+    }
+
+    public OpenCarpenterMenuPayload(
+            String builder,
+            int playerMoney,
+            List<CarpenterBlueprint> blueprints,
+            long catalogRevision
+    ) {
+        this(builder, playerMoney, blueprints, catalogRevision, false);
     }
 
     @Override

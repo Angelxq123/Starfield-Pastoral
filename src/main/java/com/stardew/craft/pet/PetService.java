@@ -42,7 +42,12 @@ public final class PetService {
         if (!variantId.isEmpty() && (variant == null || cleaned.isBlank())) return false;
         var data = PetWorldData.get(player.server);
         if (!data.chooseInitial(farm.getInstanceId())) return false;
-        if (variant == null) return true;
+        if (variant == null) {
+            var playerData = com.stardew.craft.player.PlayerDataManager.getPlayerData(player);
+            playerData.addMailFlag(PetManagement.REJECTED_ADOPTION_FLAG);
+            com.stardew.craft.player.PlayerDataEventHandler.syncPlayerData(player, playerData);
+            return true;
+        }
         var pet = new PetRecord(UUID.randomUUID(), farm.getInstanceId(), variant, cleaned, StardewTimeManager.get().getAbsoluteDay());
         if (farm.isInitialized() && player.level().dimension() == ModDimensions.STARDEW_VALLEY && farm.contains(player.blockPosition())) {
             var near = PetHomes.near(player.serverLevel(), farm, player.blockPosition().relative(player.getDirection().getOpposite(), 2), variant, 3);
@@ -64,6 +69,8 @@ public final class PetService {
         var server = event.getServer(); if (server.getTickCount() % 100 != 0) return;
         var level = server.getLevel(ModDimensions.STARDEW_VALLEY); if (level == null) return;
         farms.clear(); for (var farm : FarmInstanceRegistry.get().getAllFarms()) farms.put(farm.getInstanceId(), farm);
+        var petData = PetWorldData.get(server);
+        for (var farm : farms.values()) if (petData.loved(farm.getInstanceId())) PetManagement.scheduleAdoptionMail(server, farm);
         for (var farm : farms.values()) PetHomes.prepare(level, farm);
         onNewDay(level); updateBowls(level); project(level);
     }
@@ -78,7 +85,10 @@ public final class PetService {
             else if (bowl.wateredDay() >= pet.settledDay && bowl.wateredDay() < day) pet.friendship(6);
             pet.settledDay = day;
             pet.petted.entrySet().removeIf(entry -> entry.getValue() < day - 1);
-            if (pet.friendship == 1000) data.markLoved(pet.farm);
+            if (pet.friendship == 1000 && !data.loved(pet.farm)) {
+                data.markLoved(pet.farm);
+                PetManagement.scheduleAdoptionMail(level.getServer(), farm(pet.farm));
+            }
             data.setDirty();
         }
     }
@@ -171,7 +181,11 @@ public final class PetService {
         if (pet.careDay != day) {
             pet.careDay = day; pet.friendship(12);
             PetGifts.give(player, entity, pet); pet.timesPet++;
-            if (pet.friendship == 1000 && !data.loved(pet.farm)) { data.markLoved(pet.farm); message(player, "loves_you", pet.name); }
+            if (pet.friendship == 1000 && !data.loved(pet.farm)) {
+                data.markLoved(pet.farm);
+                PetManagement.scheduleAdoptionMail(player.server, farm(pet.farm));
+                message(player, "loves_you", pet.name);
+            }
         }
         data.setDirty(); entity.feedback.content(); entity.feedback.emote(20);
     }

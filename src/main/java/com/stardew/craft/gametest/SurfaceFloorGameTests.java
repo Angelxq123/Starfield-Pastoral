@@ -2,6 +2,8 @@ package com.stardew.craft.gametest;
 
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import com.stardew.craft.api.v1.item.StardewItemDataApi;
+import com.stardew.craft.command.GroundVariantDebugCommand;
 import com.stardew.craft.floor.*;
 import com.stardew.craft.item.catalog.StardewCatalogTab;
 import com.stardew.craft.item.catalog.StardewItemCatalog;
@@ -40,6 +42,50 @@ public final class SurfaceFloorGameTests {
     }
 
     @GameTest(templateNamespace = "stardewcraft_surface_floor", template = "ring_utilities")
+    public static void groundVariantDebugRepairOnlyRerollsEligibleTerrain(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var start = helper.absolutePos(new BlockPos(1, 1, 1));
+        for (int z = 0; z < 8; z++) for (int x = 0; x < 8; x++) {
+            var state = (x + z) % 2 == 0
+                    ? com.stardew.craft.block.ModBlocks.GRASS_BLOCK.get().defaultBlockState()
+                    : com.stardew.craft.block.ModBlocks.DIRT.get().defaultBlockState();
+            level.setBlock(start.offset(x, 0, z), state, 3);
+        }
+        var end = start.offset(7, 0, 7);
+        var darkGrassPos = start.above();
+        var vanillaDirtPos = start.above(2);
+        level.setBlock(darkGrassPos, com.stardew.craft.block.ModBlocks.DARK_GRASS_BLOCK.get().defaultBlockState(), 3);
+        level.setBlock(vanillaDirtPos, Blocks.DIRT.defaultBlockState(), 3);
+
+        var job = new GroundVariantDebugCommand.BatchJob(start, end);
+        var random = net.minecraft.util.RandomSource.create(42L);
+        helper.assertValueEqual(job.processBatch(level, random, 5), 5,
+                "debug repair ignored its per-tick block budget");
+        helper.assertTrue(!job.isComplete(), "debug repair completed an oversized job in its first batch");
+        while (!job.isComplete()) job.processBatch(level, random, 5);
+        var result = job.result();
+        helper.assertValueEqual(result.matched(), 64L, "debug repair matched non-varied terrain");
+        helper.assertTrue(result.changed() > 0, "debug repair did not change any pre-existing variants");
+        helper.assertValueEqual(result.skippedUnloaded(), 0L, "loaded test positions were skipped");
+        long variedGrass = 0L;
+        long variedDirt = 0L;
+        for (int z = 0; z < 8; z++) for (int x = 0; x < 8; x++) {
+            var state = level.getBlockState(start.offset(x, 0, z));
+            if (state.is(com.stardew.craft.block.ModBlocks.GRASS_BLOCK.get())
+                    && state.getValue(com.stardew.craft.block.terrain.TerrainVariants.GRASS) != 0) variedGrass++;
+            if (state.is(com.stardew.craft.block.ModBlocks.DIRT.get())
+                    && state.getValue(com.stardew.craft.block.terrain.TerrainVariants.DIRT) != 0) variedDirt++;
+        }
+        helper.assertTrue(variedGrass > 0, "debug repair did not create a visible grass variant");
+        helper.assertTrue(variedDirt > 0, "debug repair did not create a visible dirt variant");
+        helper.assertTrue(level.getBlockState(darkGrassPos).is(com.stardew.craft.block.ModBlocks.DARK_GRASS_BLOCK.get()),
+                "debug repair changed dark grass");
+        helper.assertTrue(level.getBlockState(vanillaDirtPos).is(Blocks.DIRT),
+                "debug repair changed vanilla dirt");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = "stardewcraft_surface_floor", template = "ring_utilities")
     public static void allMaterialsPlaceWithoutReplacingTerrainOrFurniture(GameTestHelper helper) {
         var level = helper.getLevel(); var player = player(helper);
         var pos = helper.absolutePos(new BlockPos(5, 1, 5));
@@ -56,6 +102,8 @@ public final class SurfaceFloorGameTests {
             helper.assertTrue(level.getBlockState(pos) == ground && level.getBlockState(pos.above()) == furniture
                     && level.getBlockEntity(pos.above()) == chest, "Changed host, furniture or block entity");
             helper.assertTrue(ground.isCollisionShapeFullBlock(level, pos), "Host collision changed");
+            helper.assertValueEqual(StardewItemDataApi.getSellPrice(stack), 1,
+                    "Floor item lost its original 1g base price: " + type);
             ((SurfaceFloorItem) type.item()).onItemUseFirst(stack, context);
             helper.assertTrue(stack.getCount() == 1, "Duplicate placement consumed another item");
             helper.assertTrue(StardewItemCatalog.tabForItem(type.item()) == StardewCatalogTab.BUILDING, "Not in building catalog");

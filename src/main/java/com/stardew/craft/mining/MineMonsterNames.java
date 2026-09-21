@@ -31,6 +31,8 @@ public final class MineMonsterNames {
             "carbon_ghost",
             "skeleton",
             "rock_golem",
+            "wilderness_golem",
+            "iridium_golem",
             "metal_head",
             "shadow_brute",
             "shadow_shaman",

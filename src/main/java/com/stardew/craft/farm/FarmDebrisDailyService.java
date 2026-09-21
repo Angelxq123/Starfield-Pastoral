@@ -119,7 +119,8 @@ public final class FarmDebrisDailyService {
                                 sapling,
                                 StardewFarmDebrisPlacements.Stage.YOUNG_TREE,
                                 random));
-                if (sapling.canSurvive(level, target)) {
+                if (FarmDebrisPlacementRules.canPlaceYoungTree(level, farm, target)
+                        && sapling.canSurvive(level, target)) {
                     level.setBlock(target, sapling, 3);
                     return;
                 }

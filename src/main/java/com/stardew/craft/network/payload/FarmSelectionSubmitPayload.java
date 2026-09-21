@@ -168,8 +168,17 @@ public record FarmSelectionSubmitPayload(
             if (registry.hasFarm(player.getUUID())) {
                 StardewCraft.LOGGER.warn("[FARM_SELECT] {} already has a farm, skipping creation",
                         player.getName().getString());
-                // 已有农场，直接传送
-                CrossDimensionTeleporter.wizardInteriorToStardewOutdoor(player);
+                FarmInstance existing = registry.getFarmForPlayer(
+                        player.getUUID());
+                ServerLevel stardewLevel = player.server.getLevel(
+                        com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
+                if (existing != null && !existing.isInitialized()
+                        && stardewLevel != null) {
+                    prepareAndTeleport(player, stardewLevel, existing);
+                } else {
+                    CrossDimensionTeleporter.wizardInteriorToStardewOutdoor(
+                            player);
+                }
                 return;
             }
 
@@ -238,29 +247,63 @@ public record FarmSelectionSubmitPayload(
             // 获取星露谷维度并初始化农场（分帧异步放置 schematic，减少卡顿）
             ServerLevel stardewLevel = player.server.getLevel(com.stardew.craft.core.ModDimensions.STARDEW_VALLEY);
             if (stardewLevel != null && farm != null) {
-                // 发送"正在准备农场"标题给玩家
-                player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(
-                        net.minecraft.network.chat.Component.translatable("stardewcraft.farm.loading.title")));
-                player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(
-                        net.minecraft.network.chat.Component.translatable("stardewcraft.farm.loading.subtitle")));
-                player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(
-                        10, 200, 20)); // fadeIn=0.5s, stay=10s, fadeOut=1s
-
-                // 真正跨 tick 执行初始化，让标题包先在当前 tick 结束时发到客户端。
-                final FarmInstance farmRef = farm;
-                var server = stardewLevel.getServer();
-                server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 2, () -> {
-                    com.stardew.craft.farm.FarmInstanceInitializer.initializeFarm(stardewLevel, farmRef);
-                    // 再跨一个 tick 清除标题并传送，保证客户端至少渲染一帧完成状态。
-                    server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> {
-                        player.connection.send(new net.minecraft.network.protocol.game.ClientboundClearTitlesPacket(true));
-                        CrossDimensionTeleporter.wizardInteriorToStardewOutdoorAfterFarmInitialization(player);
-                    }));
-                }));
+                prepareAndTeleport(player, stardewLevel, farm);
             } else {
                 CrossDimensionTeleporter.wizardInteriorToStardewOutdoor(player);
             }
         });
+    }
+
+    private static void prepareAndTeleport(
+            ServerPlayer player,
+            ServerLevel stardewLevel,
+            FarmInstance farm
+    ) {
+        if (!com.stardew.craft.farm.FarmInstanceInitializer
+                .tryBeginPreparation(farm)) {
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable(
+                            "stardewcraft.farm.loading.subtitle"),
+                    false);
+            return;
+        }
+        player.connection.send(
+                new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(
+                        net.minecraft.network.chat.Component.translatable(
+                                "stardewcraft.farm.loading.title")));
+        player.connection.send(
+                new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(
+                        net.minecraft.network.chat.Component.translatable(
+                                "stardewcraft.farm.loading.subtitle")));
+        player.connection.send(
+                new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(
+                        10, 1200, 20));
+
+        // Let the title reach the client first. Teleport is released only after
+        // terrain placement and all queued farm-lighting work have completed.
+        final java.util.UUID playerId = player.getUUID();
+        var server = stardewLevel.getServer();
+        server.tell(new net.minecraft.server.TickTask(
+                server.getTickCount() + 2,
+                () -> com.stardew.craft.farm.FarmInstanceInitializer
+                        .prepareFarmForTeleport(stardewLevel, farm)
+                        .thenAcceptAsync(ready -> {
+                            ServerPlayer current = server.getPlayerList()
+                                    .getPlayer(playerId);
+                            if (current == null) return;
+                            current.connection.send(
+                                    new net.minecraft.network.protocol.game.ClientboundClearTitlesPacket(
+                                            true));
+                            if (!ready) {
+                                current.sendSystemMessage(
+                                        net.minecraft.network.chat.Component.translatable(
+                                                "stardewcraft.farm.loading.failed"));
+                                return;
+                            }
+                            CrossDimensionTeleporter
+                                    .wizardInteriorToStardewOutdoorAfterFarmInitialization(
+                                            current);
+                        }, server)));
     }
 
     private static ResourceLocation normalizeLayoutId(String rawId) {

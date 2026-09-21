@@ -384,6 +384,8 @@ public class StardewCraftClient {
                 ModBlocks.BLOSSOM_LEAVES.get(),
                 ModBlocks.FINE_LEAVES.get(),
                 ModBlocks.POINTED_LEAVES.get(),
+                ModBlocks.FOREST_LEAVES.get(),
+                ModBlocks.BROADLEAF_LEAVES.get(),
                 ModBlocks.OAK_LEAVES.get(),
                 ModBlocks.OAK_LEAVES_QUESTION.get(),
                 ModBlocks.MAPLE_LEAVES.get(),
@@ -497,11 +499,11 @@ public class StardewCraftClient {
                 Blocks.DARK_OAK_LEAVES,
                 Blocks.MANGROVE_LEAVES,
                 Blocks.AZALEA_LEAVES,
-                Blocks.FLOWERING_AZALEA_LEAVES,
-                ModBlocks.SMALL_BUSH.get(),
-                ModBlocks.BERRY_BUSH.get());
+                Blocks.FLOWERING_AZALEA_LEAVES);
 
         event.register((state, level, pos, tintIndex) -> 0xFFFFFFFF,
+                ModBlocks.SMALL_BUSH.get(),
+                ModBlocks.BERRY_BUSH.get(),
                 ModBlocks.OAK_LEAVES.get(),
                 ModBlocks.OAK_LEAVES_QUESTION.get(),
                 ModBlocks.MAPLE_LEAVES.get(),

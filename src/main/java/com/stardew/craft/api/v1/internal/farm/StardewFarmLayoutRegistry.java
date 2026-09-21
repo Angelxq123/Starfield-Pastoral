@@ -27,9 +27,17 @@ public final class StardewFarmLayoutRegistry {
             new DataSnapshot(Map.of(), 0L);
 
     static {
-        for (FarmType type : FarmType.values()) {
-            registerBuiltin(fromBuiltin(type), 1000 - type.ordinal());
-        }
+        // Farm-map migration is being rolled out one layout at a time. Keep the
+        // dormant enum definitions for old save snapshots, and only advertise
+        // layouts whose authored maps have completed the import audit.
+        registerBuiltin(fromBuiltin(FarmType.STANDARD), 1000);
+        registerBuiltin(fromBuiltin(FarmType.RIVERLAND), 990);
+        registerBuiltin(fromBuiltin(FarmType.FOREST), 980);
+        registerBuiltin(fromBuiltin(FarmType.HILLTOP), 970);
+        registerBuiltin(fromBuiltin(FarmType.WILDERNESS), 960);
+        registerBuiltin(fromBuiltin(FarmType.FOUR_CORNERS), 2, 950);
+        registerBuiltin(fromBuiltin(FarmType.BEACH), 940);
+        registerBuiltin(fromBuiltin(FarmType.MEADOWLANDS), 930);
     }
 
     private StardewFarmLayoutRegistry() {
@@ -51,9 +59,17 @@ public final class StardewFarmLayoutRegistry {
             StardewFarmLayout layout,
             int priority
     ) {
+        registerBuiltin(layout, 1, priority);
+    }
+
+    private static synchronized void registerBuiltin(
+            StardewFarmLayout layout,
+            int version,
+            int priority
+    ) {
         registerChecked(
                 new StardewFarmLayoutRegistration(
-                        layout, 1, List.of(),
+                        layout, version, List.of(),
                         projectLegacyAttachments(layout)),
                 priority);
     }
@@ -188,6 +204,11 @@ public final class StardewFarmLayoutRegistry {
                 StardewCraft.MODID, type.getId());
     }
 
+    /** Geometry fallback for legacy saves; does not register or advertise the layout. */
+    public static StardewFarmLayout builtinSnapshot(FarmType type) {
+        return fromBuiltin(type);
+    }
+
     public static List<StardewFarmLayoutAttachment> projectLegacyAttachments(
             StardewFarmLayout layout
     ) {
@@ -278,7 +299,9 @@ public final class StardewFarmLayoutRegistry {
                 entry.teleportOffset(),
                 entry.yaw(),
                 entry.exitMin(),
-                entry.exitMax());
+                entry.exitMax(),
+                entry.barrierMin(),
+                entry.barrierMax());
     }
 
     private static StardewFarmLayout.Region region(

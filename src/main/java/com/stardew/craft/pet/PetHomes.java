@@ -17,15 +17,30 @@ public final class PetHomes {
     private static Site site(FarmInstance farm) {
         if (farm.getFarmLayoutId().getNamespace().equals("stardewcraft")) {
             Site local = switch (farm.getFarmLayoutId().getPath()) {
-                case "standard" -> new Site(new BlockPos(227, 5, 248), new BlockPos(243, 6, 260), "wood", SurfaceFloorType.WOOD);
-                case "forest" -> new Site(new BlockPos(230, 3, 269), new BlockPos(244, 3, 265), "hay", SurfaceFloorType.STRAW);
-                case "riverland" -> new Site(new BlockPos(163, 10, 210), new BlockPos(177, 11, 206), "stone", SurfaceFloorType.STONE);
+                case "standard" -> standardSite(farm);
+                case "forest" -> new Site(new BlockPos(178, 25, 70), new BlockPos(199, 25, 93), "hay", SurfaceFloorType.STRAW);
+                case "riverland" -> new Site(new BlockPos(182, 25, 83), new BlockPos(199, 25, 93), "stone", SurfaceFloorType.STONE);
+                case "hilltop" -> new Site(new BlockPos(178, 25, 78), new BlockPos(199, 25, 93), "stone", SurfaceFloorType.STONE);
+                case "wilderness" -> new Site(new BlockPos(177, 25, 70), new BlockPos(199, 25, 93), "wood", SurfaceFloorType.WOOD);
+                case "four_corners" -> new Site(new BlockPos(155, 25, 142), new BlockPos(199, 25, 93), "wood", SurfaceFloorType.WOOD);
+                case "beach" -> new Site(new BlockPos(178, 25, 102), new BlockPos(154, 25, 99), "wood", SurfaceFloorType.WOOD);
+                case "meadowlands" -> new Site(new BlockPos(221, 25, 79), new BlockPos(199, 25, 93), "wood", SurfaceFloorType.WOOD);
                 default -> null;
             };
             if (local != null) return new Site(farm.getOrigin().offset(local.bowl()), farm.getOrigin().offset(local.home()), local.style(), local.floor());
         }
         return new Site(farm.getSpawnPoint().offset(3, 0, 3), farm.getSpawnPoint(), "wood", SurfaceFloorType.WOOD);
     }
+    private static Site standardSite(FarmInstance farm) {
+        // Creation-time layout snapshots keep pre-migration farms on their old
+        // authored pet site until that farm is explicitly migrated.
+        return farm.getFarmLayout().width() == 288
+                ? new Site(new BlockPos(183, 25, 77), new BlockPos(199, 25, 94),
+                        "wood", SurfaceFloorType.WOOD)
+                : new Site(new BlockPos(227, 5, 248), new BlockPos(243, 6, 260),
+                        "wood", SurfaceFloorType.WOOD);
+    }
+    public static BlockPos authoredBowl(FarmInstance farm) { return site(farm).bowl(); }
     public static BlockPos home(FarmInstance farm) { return site(farm).home(); }
 
     public static Vec3 rest(ServerLevel level, FarmInstance farm, PetRecord pet, net.minecraft.util.RandomSource random) {

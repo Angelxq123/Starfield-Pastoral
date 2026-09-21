@@ -92,7 +92,12 @@ public final class MineGrubEntity extends StardewMonsterEntity {
     }
     @Override public boolean hurt(DamageSource source,float amount){
         if(source.is(DamageTypes.GENERIC_KILL)||source.is(DamageTypes.FELL_OUT_OF_WORLD))return super.hurt(source,amount);
-        if(lifecycle.phase()==GrubLifecycle.PUPA){if(!level().isClientSide){playSound(ModSounds.MONSTER_SLIME_HIT.get(),1,1);playSound(ModSounds.CRAFTING.get(),1,1);}return false;}
+        if(lifecycle.phase()==GrubLifecycle.PUPA){
+            // Source feedback belongs to an actual attack on the invulnerable pupa. Minecraft's
+            // suffocation probe is an environmental placement check and must not loop hit sounds.
+            if(!source.is(DamageTypes.IN_WALL)&&!level().isClientSide){playSound(ModSounds.MONSTER_SLIME_HIT.get(),1,1);playSound(ModSounds.CRAFTING.get(),1,1);}
+            return false;
+        }
         float hp=getHealth();boolean result=super.hurt(source,amount);if(!level().isClientSide&&getHealth()<hp)entityData.set(HIT,level().getGameTime());return result;
     }
     @Override public void knockback(double strength,double x,double z){super.knockback(strength,x,z);var v=getDeltaMovement();double factor=lifecycle.phase()==GrubLifecycle.PUPA?.5:1;

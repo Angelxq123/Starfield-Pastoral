@@ -1,10 +1,11 @@
 package com.stardew.craft.network.payload;
 
 import com.stardew.craft.StardewCraft;
-import com.stardew.craft.animal.data.AnimalWorldData;
 import com.stardew.craft.animal.model.FarmAnimalDefinition;
 import com.stardew.craft.animal.model.FarmAnimalDefinitions;
-import com.stardew.craft.animal.model.FarmAnimalRecord;
+import com.stardew.craft.animal.runtime.LivestockRecord;
+import com.stardew.craft.animal.runtime.LivestockService;
+import com.stardew.craft.animal.runtime.LivestockWorldData;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -28,7 +29,7 @@ public record RequestAnimalOverviewPayload() implements CustomPacketPayload {
 
     private static final java.util.Set<String> BUILTIN_ANIMAL_TYPES = java.util.Set.of(
             "white_chicken", "brown_chicken", "blue_chicken", "void_chicken",
-            "golden_chicken", "duck", "rabbit", "dinosaur", "cow", "brown_cow",
+            "golden_chicken", "duck", "rabbit", "dinosaur", "white_cow", "brown_cow",
             "goat", "sheep", "pig", "ostrich");
 
     @Override
@@ -45,28 +46,39 @@ public record RequestAnimalOverviewPayload() implements CustomPacketPayload {
     }
 
     public static void sendOverviewTo(ServerPlayer player) {
-        AnimalWorldData data = AnimalWorldData.get(player.serverLevel());
-        FarmInstanceRegistry farms = FarmInstanceRegistry.get();
+        PacketDistributor.sendToPlayer(player, new SyncAnimalOverviewPayload(entriesFor(player)));
+    }
+
+    /** Builds the V-menu snapshot from the authoritative post-migration livestock ledger. */
+    public static List<SyncAnimalOverviewPayload.Entry> entriesFor(ServerPlayer player) {
+        var server = player.serverLevel().getServer();
+        LivestockService.recover(server);
+        var farm = FarmInstanceRegistry.get(server).getFarmForPlayer(player.getUUID());
+        if (farm == null) {
+            return List.of();
+        }
+
         List<SyncAnimalOverviewPayload.Entry> rows = new ArrayList<>();
-        for (FarmAnimalRecord animal : data.getAnimals()) {
-            if (!farms.canOperateBuilding(player.getUUID(), animal.ownerPlayerUuid())) {
+        for (LivestockRecord animal : LivestockWorldData.get(server).all()) {
+            if (!farm.getInstanceId().equals(animal.farm())) {
                 continue;
             }
-            FarmAnimalDefinition definition = FarmAnimalDefinitions.find(animal.animalTypeId());
-            String sourceType = definition == null ? animal.animalTypeId() : definition.sourceKey();
+            String animalTypeId = animal.species().id();
+            FarmAnimalDefinition definition = animal.species().definition();
+            String sourceType = definition == null ? animalTypeId : definition.sourceKey();
             String baseType = sourceBaseType(sourceType);
             Visual visual = resolveVisual(animal, definition);
-            int petStatus = animal.wasPetToday() ? 2 : animal.wasAutoPetToday() ? 1 : 0;
+            int petStatus = animal.care().petted() ? 2 : animal.care().autoPetted() ? 1 : 0;
             rows.add(new SyncAnimalOverviewPayload.Entry(
-                    animal.animalId(),
-                    animal.animalTypeId(),
-                    animal.customName() == null ? "" : animal.customName(),
-                    FarmAnimalDefinitions.displayNameKeyFor(animal.animalTypeId()),
+                    animal.randomId(),
+                    animalTypeId,
+                    animal.name() == null ? "" : animal.name(),
+                    FarmAnimalDefinitions.displayNameKeyFor(animal.species().definitionId()),
                     baseType,
                     sourceType,
-                    animal.friendship(),
+                    animal.care().friendship(),
                     petStatus,
-                    animal.hasEatenAnimalCracker(),
+                    animal.cracker(),
                     visual.textureId(),
                     visual.width(),
                     visual.height()
@@ -77,7 +89,7 @@ public record RequestAnimalOverviewPayload() implements CustomPacketPayload {
                 .thenComparing(SyncAnimalOverviewPayload.Entry::sourceType, String.CASE_INSENSITIVE_ORDER)
                 .thenComparing(Comparator.comparingInt(SyncAnimalOverviewPayload.Entry::friendship).reversed())
                 .thenComparingLong(SyncAnimalOverviewPayload.Entry::animalId));
-        PacketDistributor.sendToPlayer(player, new SyncAnimalOverviewPayload(rows));
+        return List.copyOf(rows);
     }
 
     private static String sourceBaseType(String sourceType) {
@@ -86,14 +98,16 @@ public record RequestAnimalOverviewPayload() implements CustomPacketPayload {
         return parts.length > 1 ? parts[1] : normalized;
     }
 
-    private static Visual resolveVisual(FarmAnimalRecord animal, FarmAnimalDefinition definition) {
+    private static Visual resolveVisual(LivestockRecord animal, FarmAnimalDefinition definition) {
         if (definition == null) {
             return Visual.EMPTY;
         }
+        String animalTypeId = animal.species().id();
         if (StardewCraft.MODID.equals(definition.dataId().getNamespace())
-                && BUILTIN_ANIMAL_TYPES.contains(animal.animalTypeId())) {
-            boolean baby = animal.isBaby() && !"dinosaur".equals(animal.animalTypeId());
-            String spriteName = animal.animalTypeId() + (baby ? "_baby" : "");
+                && BUILTIN_ANIMAL_TYPES.contains(animalTypeId)) {
+            boolean baby = animal.baby() && !"dinosaur".equals(animalTypeId);
+            String spriteName = ("white_cow".equals(animalTypeId) ? "cow" : animalTypeId)
+                    + (baby ? "_baby" : "");
             ResourceLocation sprite = ResourceLocation.fromNamespaceAndPath(
                     StardewCraft.MODID,
                     "textures/gui/common/animal_page_sprite_" + spriteName + ".png");

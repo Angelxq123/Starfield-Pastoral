@@ -96,7 +96,8 @@ public final class FishingPresentationClient {
         }
     }
     public static boolean eligible(AbstractClientPlayer p){return FishingRigAssets.rig!=null&&p.isAlive()&&!p.isSpectator()&&!p.isInvisible()&&p.getMainHandItem().getItem() instanceof FishingRodItem&&p.getOffhandItem().isEmpty();}
-    public static boolean worldOwned(AbstractClientPlayer p){return FishingWorldRenderScope.owns(p.getUUID())&&eligible(p);}
+    /** Keep every world-rendered player on Minecraft's native model and held-item animation. */
+    public static boolean worldOwned(AbstractClientPlayer p){return FishingWorldRenderScope.owns(p.getUUID())&&firstPerson(p)&&eligible(p);}
     public static State state(AbstractClientPlayer p){if(!eligible(p))return null;var state=STATES.computeIfAbsent(p.getUUID(),k->new State());state.lookPitch=p.getViewXRot(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));return state;}
     public static void clear(){STATES.clear();level=Minecraft.getInstance().level;}
     public static void cancelLocal(){var p=Minecraft.getInstance().player;if(p!=null)STATES.remove(p.getUUID());FishingMinigameHud.cancel();}

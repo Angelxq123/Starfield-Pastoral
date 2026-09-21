@@ -43,6 +43,7 @@ tmp_models/
 /*.mjs
 /*.txt
 docs/*
+!docs/beach-supply-crates.md
 !docs/grass-top-transitions.md
 !docs/terrain-map-replacement.json
 !docs/artifact-spots-research.md
@@ -115,6 +116,12 @@ replay_pid*.log
 scripts/*
 !scripts/import_block_model.py
 !scripts/import_farm_building_prefabs.py
+!scripts/import_greenhouse_prefabs.py
+!scripts/import_standard_farm.py
+!scripts/import_riverland_farm.py
+!scripts/import_forest_farm.py
+!scripts/import_remaining_farms.py
+!scripts/generate_farm_ecology_templates.py
 !scripts/check_model_atlas.py
 !scripts/setup_valley_pregen.ps1
 !scripts/extract_ui_atlas_slices.sh

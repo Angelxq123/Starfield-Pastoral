@@ -223,6 +223,10 @@ public final class ModBlockEntities {
 			BLOCK_ENTITIES.register("park_fountain", () -> BlockEntityType.Builder.of(ParkFountainBlockEntity::new,
 					ModBlocks.PARK_FOUNTAIN.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SupplyCrateBlockEntity>> SUPPLY_CRATE =
+            BLOCK_ENTITIES.register("supply_crate", () -> BlockEntityType.Builder.of(SupplyCrateBlockEntity::new,
+                    ModBlocks.SUPPLY_CRATE.get()).build(null));
+
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FloatingPlantBlockEntity>> FLOATING_PLANT =
 			BLOCK_ENTITIES.register("floating_plant", () -> BlockEntityType.Builder.of(FloatingPlantBlockEntity::new,
 					ModBlocks.NATURAL_DECOR.get("floating_leaf").get(), ModBlocks.NATURAL_DECOR.get("water_lily").get()).build(null));

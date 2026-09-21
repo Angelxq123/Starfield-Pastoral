@@ -175,6 +175,8 @@ public class PlayerDataEventHandler {
             if (player.serverLevel().dimension() == com.stardew.craft.core.ModDimensions.STARDEW_VALLEY) {
                 com.stardew.craft.farm.FarmChunkManager.get()
                         .reconcilePlayerOccupancy(player);
+                com.stardew.craft.event.DimensionEventHandler.scheduleDeferredInit(player.serverLevel());
+                repairLoadedFarmLighting(player);
             }
 
             // 多人农场：离线追赶——批量推进离线期间的作物/树苗生长
@@ -219,6 +221,26 @@ public class PlayerDataEventHandler {
 
             com.stardew.craft.quest.StardewQuestEvents.fireDayStarted(player, absDay);
         }
+    }
+
+    /** Repairs an old farm whose lighting pre-generation was interrupted before logout. */
+    private static void repairLoadedFarmLighting(ServerPlayer player) {
+        com.stardew.craft.farm.FarmInstanceRegistry registry =
+                com.stardew.craft.farm.FarmInstanceRegistry.get();
+        java.util.UUID owner = registry.getOwnerAt(player.blockPosition());
+        com.stardew.craft.farm.FarmInstance farm = owner == null ? null : registry.getFarm(owner);
+        if (farm == null || !farm.isInitialized()
+                || !com.stardew.craft.farm.FarmInstanceInitializer.needsLightingRebuild(farm)
+                || !com.stardew.craft.farm.FarmInstanceInitializer.tryBeginPreparation(farm)) {
+            return;
+        }
+        player.displayClientMessage(Component.translatable("stardewcraft.farm.loading.subtitle"), false);
+        com.stardew.craft.farm.FarmInstanceInitializer.prepareFarmForTeleport(
+                player.serverLevel(), farm).thenAcceptAsync(ready -> {
+            if (!ready && !player.isRemoved()) {
+                player.sendSystemMessage(Component.translatable("stardewcraft.farm.loading.failed"));
+            }
+        }, player.server);
     }
 
     private static void handlePregenRelocationIfNeeded(ServerPlayer player, PlayerStardewData data) {
@@ -1040,6 +1062,9 @@ public class PlayerDataEventHandler {
     @SuppressWarnings("null")
     public static void syncPlayerData(ServerPlayer player, PlayerStardewData data) {
         ServerPerformanceRecorder.increment(PerformanceCounter.PLAYER_FULL_SYNC_REQUESTS, 1L);
+        if (!hasRequiredPlayerDataLevels(player)) {
+            return;
+        }
         data.setMoney(com.stardew.craft.money.SharedMoneyService.getMoney(player));
         PlayerDataSyncPacket packet = PlayerDataSyncPacket.fromPlayerData(data);
         // Inject farm name into sync NBT so client can resolve %farm placeholder

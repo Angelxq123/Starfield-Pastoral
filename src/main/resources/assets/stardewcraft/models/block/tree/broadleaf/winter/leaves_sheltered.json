@@ -1,0 +1,7 @@
+{
+  "parent": "stardewcraft:block/tree/broadleaf/winter/leaves",
+  "textures": {
+    "top": "stardewcraft:block/tree/forest_canopy/layered_winter",
+    "side": "stardewcraft:block/tree/forest_canopy/layered_winter"
+  }
+}

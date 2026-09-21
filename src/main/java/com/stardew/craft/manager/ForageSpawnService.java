@@ -525,6 +525,11 @@ public final class ForageSpawnService {
         List<ForestFarmDailyEntry> farmSnapshot = new ArrayList<>();
         for (com.stardew.craft.farm.FarmInstance farm
                 : com.stardew.craft.farm.FarmInstanceRegistry.get().getAllFarms()) {
+            if (!farm.getFarmLayoutId().equals(
+                    com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry
+                            .builtinId(com.stardew.craft.farm.FarmType.FOREST))) {
+                continue;
+            }
             com.stardew.craft.api.v1.farm.StardewFarmLayout layout = farm.getFarmLayout();
             if (layout == null || layout.forageZoneMin() == null || layout.forageZoneMax() == null) continue;
             BlockPos zoneMin = farm.getOrigin().offset(layout.forageZoneMin());
@@ -645,7 +650,11 @@ public final class ForageSpawnService {
             ForestFarmDailyEntry farm,
             List<DeferredBlock<Block>> possibleForage,
             RandomSource random) {
-        int x = farm.minX() + random.nextInt(farm.maxX() - farm.minX() + 1);
+        boolean westStrip = random.nextBoolean();
+        int westMax = Math.min(farm.maxX(), farm.minX() + 39);
+        int x = westStrip
+                ? farm.minX() + random.nextInt(westMax - farm.minX() + 1)
+                : farm.minX() + random.nextInt(farm.maxX() - farm.minX() + 1);
         int z = farm.minZ() + random.nextInt(farm.maxZ() - farm.minZ() + 1);
         if (!PublicAreaDailyWorkUnits.isChunkLoadedNow(level, x, z)) return false;
         int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
@@ -657,6 +666,13 @@ public final class ForageSpawnService {
         }
         BlockPos placePos = surfacePos.above();
         if (surfaceState.isAir() || surfaceState.getFluidState().isSource()) return false;
+        com.stardew.craft.farm.FarmDebrisPlacementRules.GroundKind ground =
+                com.stardew.craft.farm.FarmDebrisPlacementRules.groundKind(surfaceState);
+        if (!westStrip
+                && ground != com.stardew.craft.farm.FarmDebrisPlacementRules.GroundKind.GRASS
+                && ground != com.stardew.craft.farm.FarmDebrisPlacementRules.GroundKind.DARK_GRASS) {
+            return false;
+        }
         if (!canPlaceForage(level, surfacePos, placePos, SurfaceType.NATURAL)) return false;
         DeferredBlock<Block> chosen = possibleForage.get(random.nextInt(possibleForage.size()));
         BlockState existingState = level.getBlockState(placePos);

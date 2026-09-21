@@ -75,6 +75,7 @@ public final class BuildingLedgerScreen extends FarmFolioScreen implements com.s
 
     private boolean pond() { return com.stardew.craft.building.runtime.FishPondPrefabs.isPond(building.family()); }
     private boolean silo() { return com.stardew.craft.building.runtime.UtilityBuildings.supported(building.family()); }
+    private boolean greenhouse() { return data.getBoolean("GreenhouseOnly"); }
 
     private boolean self() {
         return building.mode() == BuildingRecord.Mode.SELF_BUILT;
@@ -87,17 +88,24 @@ public final class BuildingLedgerScreen extends FarmFolioScreen implements com.s
 
     @Override
     protected int preferredWidth() {
-        return working() ? 466 : 548;
+        return working() || greenhouse() ? 466 : 548;
     }
 
     @Override
     protected int preferredHeight() {
-        return working() ? 281 : 340;
+        return working() || greenhouse() ? 281 : 340;
     }
 
     @Override
     protected void layout() {
         button(Component.translatable("gui.back"), x + 16, y + h - 34, 86, 24, this::onClose);
+        if (greenhouse()) {
+            int width = Math.min(190, w - 64);
+            button(tr("move_building"), x + (w - width) / 2, y + h - 78, width, 30,
+                            "button", "move", () -> send("move"))
+                    .active = !pending && data.getBoolean("CanMove");
+            return;
+        }
         button(
                                 tr("rename"),
                                 x + w - 86,
@@ -322,6 +330,15 @@ public final class BuildingLedgerScreen extends FarmFolioScreen implements com.s
 
     @Override
     protected void paint(GuiGraphics g) {
+        if (greenhouse()) {
+            paper(g, x + 16, y + 42, w - 32, h - 96);
+            item(g, new ItemStack(com.stardew.craft.item.ModItems.GREENHOUSE_BLUEPRINT.get()),
+                    x + 32, y + 62, 3);
+            label(g, building.title(), x + 92, y + 65, w - 124, INK);
+            paragraph(g, tr("greenhouse_move_only"), x + 92, y + 91,
+                    w - 124, y + h - 90, MUTED);
+            return;
+        }
         if (working()) {
             paper(g, x + 16, y + 42, w - 32, h - 130);
             int art = Math.min(126, w / 3);

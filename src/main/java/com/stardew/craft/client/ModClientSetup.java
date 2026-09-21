@@ -101,6 +101,7 @@ public final class ModClientSetup {
 		event.registerBlockEntityRenderer(ModBlockEntities.PLAYGROUND.get(), com.stardew.craft.client.render.PlaygroundBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.DOUBLE_SWING.get(), com.stardew.craft.client.render.DoubleSwingBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.PARK_FOUNTAIN.get(), com.stardew.craft.client.render.ParkFountainBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.SUPPLY_CRATE.get(), com.stardew.craft.client.render.SupplyCrateBlockEntityRenderer::new);
 		event.registerBlockEntityRenderer(ModBlockEntities.FLOATING_PLANT.get(), com.stardew.craft.client.render.FloatingPlantBlockEntityRenderer::new);
 		event.registerEntityRenderer(ModEntities.MEOWMERE_PROJECTILE.get(), MeowmereProjectileRenderer::new);
 		event.registerEntityRenderer(ModEntities.TIDE_ANCHOR_PROJECTILE.get(), TideAnchorProjectileRenderer::new);

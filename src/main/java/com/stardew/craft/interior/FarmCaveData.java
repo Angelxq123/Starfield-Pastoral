@@ -38,6 +38,10 @@ public final class FarmCaveData extends SavedData {
     }
     public Entry find(UUID id) { return entries.get(id); }
     public Collection<Entry> entries() { return Collections.unmodifiableCollection(entries.values()); }
+    public BlockPos remove(UUID id) {
+        Entry removed=entries.remove(id);if(removed==null)return null;
+        byOrigin.remove(removed.origin);setDirty();return removed.origin;
+    }
     public Entry allocate(ServerLevel level,FarmInstance farm) {
         Entry existing=entries.get(farm.getInstanceId());if(existing!=null)return existing;
         var legacy=PlayerInteriorAllocator.get(level);

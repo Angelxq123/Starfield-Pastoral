@@ -44,6 +44,10 @@ public final class LostAndFoundData extends SavedData {
         }
     }
 
+    public void removeFarm(UUID farmId) {
+        if (returnsByFarm.remove(farmId) != null) setDirty();
+    }
+
     Map<UUID, TeamReturns> allReturns() {
         return returnsByFarm;
     }

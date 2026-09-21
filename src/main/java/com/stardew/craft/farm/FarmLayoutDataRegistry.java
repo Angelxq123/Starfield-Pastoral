@@ -386,14 +386,32 @@ public final class FarmLayoutDataRegistry {
     ) {
         JsonObject entry = readObject(raw, path);
         rejectUnknownFields(entry, path,
-                Set.of("teleport", "yaw", "exit_min", "exit_max"));
-        return new StardewFarmLayout.Entry(
-                readPos(entry.get("teleport"), path + ".teleport"),
-                entry.has("yaw")
-                        ? readFloat(entry.get("yaw"), path + ".yaw")
-                        : 0.0F,
-                readPos(entry.get("exit_min"), path + ".exit_min"),
-                readPos(entry.get("exit_max"), path + ".exit_max"));
+                Set.of("teleport", "yaw", "exit_min", "exit_max",
+                        "barrier_min", "barrier_max"));
+        BlockPos teleport = readPos(
+                entry.get("teleport"), path + ".teleport");
+        float yaw = entry.has("yaw")
+                ? readFloat(entry.get("yaw"), path + ".yaw")
+                : 0.0F;
+        BlockPos exitMin = readPos(
+                entry.get("exit_min"), path + ".exit_min");
+        BlockPos exitMax = readPos(
+                entry.get("exit_max"), path + ".exit_max");
+        boolean hasBarrierMin = entry.has("barrier_min");
+        boolean hasBarrierMax = entry.has("barrier_max");
+        if (hasBarrierMin != hasBarrierMax) {
+            throw new IllegalArgumentException(
+                    path + " must define both barrier_min and barrier_max");
+        }
+        return hasBarrierMin
+                ? new StardewFarmLayout.Entry(
+                        teleport, yaw, exitMin, exitMax,
+                        readPos(entry.get("barrier_min"),
+                                path + ".barrier_min"),
+                        readPos(entry.get("barrier_max"),
+                                path + ".barrier_max"))
+                : new StardewFarmLayout.Entry(
+                        teleport, yaw, exitMin, exitMax);
     }
 
     private static StardewFarmLayout.Region readRegion(

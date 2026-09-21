@@ -1,6 +1,8 @@
 package com.stardew.craft.interior;
 
 import com.stardew.craft.StardewCraft;
+import com.stardew.craft.api.v1.farm.StardewFarmLayout;
+import com.stardew.craft.api.v1.internal.farm.StardewFarmLayoutRegistry;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.blockentity.PortalTriggerBlockEntity;
 import com.stardew.craft.core.FarmAreaResolver;
@@ -87,6 +89,20 @@ public final class FarmCaveRuntime {
     private static Map<BlockPos,BlockState> architecture() {
         if(architecture==null)architecture=read("cave");return architecture;
     }
+    /**
+     * Old farm saves keep a layout snapshot.  That snapshot predates the cave
+     * exit field in some worlds, so portal travel must prefer the current
+     * registered layout whenever its authored farm dimensions still match.
+     */
+    private static StardewFarmLayout layoutFor(FarmInstance farm) {
+        StardewFarmLayout saved=farm.getFarmLayout();
+        if(saved==null)return StardewFarmLayoutRegistry.find(farm.getFarmLayoutId()).orElse(null);
+        return StardewFarmLayoutRegistry.find(farm.getFarmLayoutId())
+                .filter(current -> current.width()==saved.width()
+                        && current.height()==saved.height()
+                        && current.length()==saved.length())
+                .orElse(saved);
+    }
     public static FarmInstance farm(UUID id) {
         for(FarmInstance f:FarmInstanceRegistry.get().getAllFarms())if(f.getInstanceId().equals(id))return f;
         return null;
@@ -100,6 +116,20 @@ public final class FarmCaveRuntime {
     public static boolean installed(ServerLevel level,FarmInstance farm) {
         var e=FarmCaveData.get(level).find(farm.getInstanceId());return e!=null && e.installed();
     }
+    /** Cancels all runtime work for a deleted farm and removes its private cave volume. */
+    public static void retire(ServerLevel level,UUID farmId) {
+        Map<UUID,Job> jobs=JOBS.get(level);Job job=jobs==null?null:jobs.remove(farmId);
+        if(job!=null)job.lease.close();if(jobs!=null && jobs.isEmpty())JOBS.remove(level);
+        for(var entry:new ArrayList<>(TRAVEL.entrySet()))if(entry.getValue().farmId.equals(farmId)) {
+            entry.getValue().close();TRAVEL.remove(entry.getKey());
+        }
+        BlockPos origin=FarmCaveData.get(level).remove(farmId);if(origin==null)return;
+        for(BlockPos pos:BlockPos.betweenClosed(origin,
+                origin.offset(FarmCaveLayout.WIDTH-1,FarmCaveLayout.HEIGHT-1,FarmCaveLayout.LENGTH-1))) {
+            if(!level.getBlockState(pos).isAir())level.setBlock(pos,Blocks.AIR.defaultBlockState(),
+                    Block.UPDATE_CLIENTS|Block.UPDATE_KNOWN_SHAPE|Block.UPDATE_SUPPRESS_DROPS);
+        }
+    }
     /** Request only: never synchronously wait for a cold chunk. */
     public static void request(ServerLevel level,FarmInstance farm) {
         if(!level.dimension().equals(ModDimensions.STARDEW_VALLEY))return;
@@ -108,7 +138,8 @@ public final class FarmCaveRuntime {
         Job previous=jobs.get(e.farmId);
         if(previous!=null && previous.failed && level.getGameTime()-previous.start>20)jobs.remove(e.farmId);
         else if(previous!=null && previous.release>=0 && (!safe(level,e.origin.offset(FarmCaveLayout.SPAWN))
-                || !exitReady(level,e.origin) || !e.appliedChoice.equals(farm.getCaveChoice().name()))) {
+                || spawnLampPresent(level,e.origin) || !exitReady(level,e.origin)
+                || !e.appliedChoice.equals(farm.getCaveChoice().name()))) {
             previous.built=-1;previous.release=-1;
         }
         jobs.computeIfAbsent(e.farmId,id->new Job(level,e));
@@ -147,6 +178,16 @@ public final class FarmCaveRuntime {
         for(int y=0;y<2;y++)if(!(level.getBlockEntity(base.above(y)) instanceof PortalTriggerBlockEntity be)
                 || !"farm_cave_exit".equals(be.getTargetId()))return false;
         return true;
+    }
+    private static boolean spawnLampPresent(ServerLevel level,BlockPos origin) {
+        BlockPos lamp=origin.offset(FarmCaveLayout.SPAWN).above();
+        return level.getChunkSource().getChunkNow(lamp.getX()>>4,lamp.getZ()>>4)!=null
+                && level.getBlockState(lamp).is(ModBlocks.MINE_LAMP.get());
+    }
+    private static void removeSpawnLamp(ServerLevel level,BlockPos origin) {
+        BlockPos lamp=origin.offset(FarmCaveLayout.SPAWN).above();
+        if(level.getBlockState(lamp).is(ModBlocks.MINE_LAMP.get()))
+            level.removeBlock(lamp,false);
     }
     private static void exitPortal(ServerLevel level,BlockPos origin) {
         for(int y=0;y<2;y++) {
@@ -258,6 +299,10 @@ public final class FarmCaveRuntime {
                 BlockPos p=e.origin.offset(b.getKey());if(level.getBlockState(p).isAir())level.setBlock(p,b.getValue(),Block.UPDATE_CLIENTS);
             }
         }
+        // The authored template used to place a lamp directly above the
+        // arrival tile.  Keep old installed caves compatible by removing it
+        // during every normal cave repair/request as well as from new caves.
+        removeSpawnLamp(level,e.origin);
         exitPortal(level,e.origin);facilities(level,farm);
         if(!safe(level,e.origin.offset(FarmCaveLayout.SPAWN)))throw new IllegalStateException("Unsafe cave arrival at "+e.origin);
         job.built=level.getGameTime();
@@ -275,7 +320,9 @@ public final class FarmCaveRuntime {
         FarmInstance farm=FarmAreaResolver.getFarmAt(player.blockPosition());
         if(farm==null){message(player,"stardewcraft.farm.not_found");return;}
         // Only the cave mouth of the farm the player is physically visiting selects the target.
-        var door=farm.getFarmLayout().cavePortalWall();
+        var layout=layoutFor(farm);
+        if(layout==null)return;
+        var door=layout.cavePortalWall();
         if(door==null)return;
         BlockPos min=farm.getOrigin().offset(door.min()),max=farm.getOrigin().offset(door.max());
         if(!new AABB(Vec3.atLowerCornerOf(min),Vec3.atLowerCornerOf(max.offset(1,1,1))).inflate(3).contains(player.position()))return;
@@ -310,13 +357,20 @@ public final class FarmCaveRuntime {
             if(rescue)begin(player,farm,false,true);else message(player,"stardewcraft.farm.no_access");return;
         }
         BlockPos target;
+        StardewFarmLayout layout=layoutFor(farm);
+        if(layout==null){message(player,"stardewcraft.farm.not_found");return;}
         if(entering) {request(player.serverLevel(),farm);target=origin(player.serverLevel(),farm).offset(FarmCaveLayout.SPAWN);}
         else {
-            BlockPos exit=farm.getFarmLayout().caveExitSpawn();if(exit==null){message(player,"stardewcraft.farm.not_found");return;}
+            // A few pre-cave snapshots have no CaveExit field.  The current
+            // registry repairs that case; the south farm entrance is a final
+            // safe fallback for custom layouts that never authored one.
+            BlockPos exit=layout.caveExitSpawn();
+            if(exit==null)exit=layout.entrySouth().teleportOffset();
             target=farm.getOrigin().offset(exit);
         }
         player.closeContainer();player.stopUsingItem();
-        TRAVEL.put(player.getUUID(),new Transit(player,farm.getInstanceId(),entering,target,entering?180: farm.getFarmLayout().caveExitYaw(),rescue));
+        float yaw=entering?180:layout.caveExitSpawn()!=null?layout.caveExitYaw():layout.entrySouth().yaw();
+        TRAVEL.put(player.getUUID(),new Transit(player,farm.getInstanceId(),entering,target,yaw,rescue));
     }
     private static void message(ServerPlayer p,String key) { p.displayClientMessage(Component.translatable(key),true); }
     @SubscribeEvent public static void tick(LevelTickEvent.Post event) {

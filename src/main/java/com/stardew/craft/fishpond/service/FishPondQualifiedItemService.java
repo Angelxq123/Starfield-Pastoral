@@ -175,6 +175,10 @@ public final class FishPondQualifiedItemService {
         overrides.put("689", "stardewcraft:warp_totem_mountain");
         overrides.put("709", "stardewcraft:wood_hard");
         overrides.put("766", "stardewcraft:slime_item");
+        overrides.put("PowdermelonSeeds", "stardewcraft:powder_melon_seeds");
+        for (int skill = 0; skill < 5; skill++) {
+            overrides.put("SkillBook_" + skill, "stardewcraft:skill_book_" + skill);
+        }
         return overrides;
     }
 

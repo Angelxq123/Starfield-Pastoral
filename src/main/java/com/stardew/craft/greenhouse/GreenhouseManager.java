@@ -76,6 +76,8 @@ public class GreenhouseManager extends SavedData {
     private final Map<UUID, Boolean> repairedByOwner = new HashMap<>();
     /** 每玩家温室放置状态 */
     private final Map<UUID, Boolean> ruinsPlacedByOwner = new HashMap<>();
+    /** 每个农场已完成的温室外观/建筑迁移版本。 */
+    private final Map<UUID, Integer> exteriorVersionByOwner = new HashMap<>();
 
     public GreenhouseManager() {}
 
@@ -100,69 +102,23 @@ public class GreenhouseManager extends SavedData {
      * 确保某个玩家的农场温室已放置。在农场初始化时调用。
      */
     public void ensurePlacedForPlayer(ServerLevel farmLevel, UUID ownerUUID) {
-        if (Boolean.TRUE.equals(ruinsPlacedByOwner.get(ownerUUID))) return;
-
-        com.stardew.craft.farm.FarmInstance farm =
-                com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(ownerUUID);
-        if (farm == null) return;
-
-        BlockPos farmGreenhouse = farm.getGreenhousePos();
-
-        // 预加载区块
-        int minCX = farmGreenhouse.getX() >> 4;
-        int maxCX = (farmGreenhouse.getX() + 30) >> 4;
-        int minCZ = farmGreenhouse.getZ() >> 4;
-        int maxCZ = (farmGreenhouse.getZ() + 30) >> 4;
-        for (int cx = minCX; cx <= maxCX; cx++) {
-            for (int cz = minCZ; cz <= maxCZ; cz++) {
-                farmLevel.getChunk(cx, cz);
-            }
-        }
-
-        // 检查 CC Pantry 是否已完成（对该玩家）
-        var ccData = com.stardew.craft.communitycenter.state.CommunityCenterSavedData.get();
-        if (ccData.isAreaComplete(ownerUUID, 0)) {
-            StardewCraft.LOGGER.info("[GREENHOUSE] Placing repaired greenhouse for {} at {}",
-                    ownerUUID, farmGreenhouse);
-            com.stardew.craft.mining.StructureLoader.loadAndPlaceCW90(farmLevel,
-                    REPAIRED_STRUCTURE_PATH, farmGreenhouse);
-            repairedByOwner.put(ownerUUID, true);
-            // 生成室外入口交互实体（CW90后门偏移 (8,0,0)）
-            BlockPos portalPos = farmGreenhouse.offset(8, 0, 0);
-            com.stardew.craft.interior.InteriorSubspaceManager.spawnGreenhouseOutdoorPortalAt(farmLevel, portalPos);
-        } else {
-            StardewCraft.LOGGER.info("[GREENHOUSE] Placing greenhouse ruins for {} at {}",
-                    ownerUUID, farmGreenhouse);
-            com.stardew.craft.mining.StructureLoader.loadAndPlaceCW90(farmLevel,
-                    RUINS_STRUCTURE_PATH, farmGreenhouse);
-        }
-
-        ruinsPlacedByOwner.put(ownerUUID, true);
-        setDirty();
+        GreenhouseBuildings.ensurePlaced(farmLevel, ownerUUID);
     }
 
     /**
      * CC Pantry 完成后修复某个玩家的温室。
      */
     public void repairForPlayer(ServerLevel farmLevel, UUID ownerUUID) {
-        if (Boolean.TRUE.equals(repairedByOwner.get(ownerUUID))) return;
-
-        com.stardew.craft.farm.FarmInstance farm =
-                com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(ownerUUID);
+        var farm = com.stardew.craft.farm.FarmInstanceRegistry.get().getFarm(ownerUUID);
         if (farm == null) return;
-
-        BlockPos farmGreenhouse = farm.getGreenhousePos();
-        com.stardew.craft.mining.StructureLoader.loadAndPlaceCW90(farmLevel,
-                REPAIRED_STRUCTURE_PATH, farmGreenhouse);
-
-        // 生成室外入口交互实体（CW90后门偏移 (8,0,0)）
-        BlockPos portalPos = farmGreenhouse.offset(8, 0, 0);
-        com.stardew.craft.interior.InteriorSubspaceManager.spawnGreenhouseOutdoorPortalAt(farmLevel, portalPos);
-
+        if (Boolean.TRUE.equals(repairedByOwner.get(ownerUUID))
+                && GreenhouseBuildings.findForFarm(farmLevel,
+                        farm.getInstanceId()) != null) return;
+        GreenhouseBuildings.repair(farmLevel, ownerUUID);
         repairedByOwner.put(ownerUUID, true);
+        ruinsPlacedByOwner.put(ownerUUID, true);
         setDirty();
-        StardewCraft.LOGGER.info("[GREENHOUSE] Greenhouse repaired for player {} at {}",
-                ownerUUID, farmGreenhouse);
+        StardewCraft.LOGGER.info("[GREENHOUSE] Greenhouse repaired for player {}", ownerUUID);
     }
 
     public boolean isRepairedForPlayer(UUID ownerUUID) {
@@ -175,6 +131,23 @@ public class GreenhouseManager extends SavedData {
         }
         repairedByOwner.remove(ownerUUID);
         ruinsPlacedByOwner.remove(ownerUUID);
+        exteriorVersionByOwner.remove(ownerUUID);
+        setDirty();
+    }
+
+    public int exteriorVersion(UUID ownerUUID) {
+        return exteriorVersionByOwner.getOrDefault(ownerUUID, 0);
+    }
+
+    public boolean hasLegacyExterior(UUID ownerUUID) {
+        return Boolean.TRUE.equals(ruinsPlacedByOwner.get(ownerUUID))
+                || Boolean.TRUE.equals(repairedByOwner.get(ownerUUID));
+    }
+
+    public void markExteriorCurrent(UUID ownerUUID, boolean repairedState) {
+        exteriorVersionByOwner.put(ownerUUID, 1);
+        ruinsPlacedByOwner.put(ownerUUID, true);
+        if (repairedState) repairedByOwner.put(ownerUUID, true);
         setDirty();
     }
 
@@ -280,10 +253,20 @@ public class GreenhouseManager extends SavedData {
         com.stardew.craft.farm.FarmInstance farm =
             com.stardew.craft.farm.FarmInstanceRegistry.get().getFarmForPlayer(player.getUUID());
         if (farm != null) {
-            // 农场温室门口（CW90后门偏移 (8,0,0)）
+            var record = GreenhouseBuildings.findForFarm(player.serverLevel(), farm.getInstanceId());
+            if (record != null) return GreenhouseBuildings.exit(record);
+            // 尚未执行新外观迁移的老存档兼容位置。
             return farm.getGreenhousePos().offset(8, 0, 0);
         }
         return null;
+    }
+
+    public static float getExitYawForPlayer(net.minecraft.server.level.ServerPlayer player) {
+        var farm = com.stardew.craft.farm.FarmInstanceRegistry.get()
+                .getFarmForPlayer(player.getUUID());
+        if (farm == null) return -90.0F;
+        var record = GreenhouseBuildings.findForFarm(player.serverLevel(), farm.getInstanceId());
+        return record == null ? -90.0F : record.facing().toYRot();
     }
 
     /**
@@ -301,7 +284,9 @@ public class GreenhouseManager extends SavedData {
                 com.stardew.craft.farm.FarmInstanceRegistry.get();
         for (com.stardew.craft.farm.FarmInstance farm : registry.getAllFarms()) {
             BlockPos ghPos = farm.getGreenhousePos();
-            if (isInGreenhouseExteriorRange(pos, ghPos)) return true;
+            if ((!(level instanceof ServerLevel server)
+                    || GreenhouseBuildings.findForFarm(server, farm.getInstanceId()) == null)
+                    && isInGreenhouseExteriorRange(pos, ghPos)) return true;
         }
         return false;
     }
@@ -352,6 +337,11 @@ public class GreenhouseManager extends SavedData {
         }
         tag.put("RuinsPlacedByOwner", ruinsTag);
 
+        CompoundTag exteriorVersions = new CompoundTag();
+        exteriorVersionByOwner.forEach((owner, version) ->
+                exteriorVersions.putInt(owner.toString(), version));
+        tag.put("ExteriorVersionByOwner", exteriorVersions);
+
         return tag;
     }
 
@@ -373,6 +363,14 @@ public class GreenhouseManager extends SavedData {
             for (String key : ruinsTag.getAllKeys()) {
                 try {
                     mgr.ruinsPlacedByOwner.put(UUID.fromString(key), ruinsTag.getBoolean(key));
+                } catch (IllegalArgumentException ignored) {}
+            }
+        }
+        if (tag.contains("ExteriorVersionByOwner")) {
+            CompoundTag versions = tag.getCompound("ExteriorVersionByOwner");
+            for (String key : versions.getAllKeys()) {
+                try {
+                    mgr.exteriorVersionByOwner.put(UUID.fromString(key), versions.getInt(key));
                 } catch (IllegalArgumentException ignored) {}
             }
         }

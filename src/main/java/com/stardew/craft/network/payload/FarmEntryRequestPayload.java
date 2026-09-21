@@ -2,6 +2,7 @@ package com.stardew.craft.network.payload;
 
 import com.stardew.craft.StardewCraft;
 import com.stardew.craft.farm.FarmInstance;
+import com.stardew.craft.farm.FarmInstanceInitializer;
 import com.stardew.craft.farm.FarmInstanceRegistry;
 import com.stardew.craft.farm.FarmPermissionManager;
 import com.stardew.craft.warp.ModTeleport;
@@ -74,33 +75,67 @@ public record FarmEntryRequestPayload(
                 player.displayClientMessage(Component.translatable("stardewcraft.farm.not_found"), true);
                 return;
             }
-            // 根据入口方向路由
-            BlockPos targetPos;
-            float yaw;
-            switch (payload.entryTag) {
-                case "farm_entry_east" -> {
-                    targetPos = farm.getEastEntryPos();
-                    yaw = farm.getEastEntryYaw();
+            if (FarmInstanceInitializer.needsLightingRebuild(farm)) {
+                if (!FarmInstanceInitializer.tryBeginPreparation(farm)) {
+                    player.displayClientMessage(Component.translatable(
+                            "stardewcraft.farm.loading.subtitle"), false);
+                    return;
                 }
-                case "farm_entry_west" -> {
-                    targetPos = farm.getWestEntryPos();
-                    yaw = farm.getWestEntryYaw();
-                }
-                default -> {
-                    targetPos = farm.getSouthEntryPos();
-                    yaw = farm.getSouthEntryYaw();
-                }
+                player.displayClientMessage(Component.translatable(
+                        "stardewcraft.farm.loading.subtitle"), false);
+                UUID playerId = player.getUUID();
+                FarmInstanceInitializer.prepareFarmForTeleport(
+                        stardewLevel, farm).thenAcceptAsync(ready -> {
+                    ServerPlayer current = player.server.getPlayerList()
+                            .getPlayer(playerId);
+                    if (current == null) return;
+                    if (!ready) {
+                        current.sendSystemMessage(Component.translatable(
+                                "stardewcraft.farm.loading.failed"));
+                        return;
+                    }
+                    enterFarm(current, stardewLevel, farm,
+                            payload.entryTag);
+                }, player.server);
+                return;
             }
 
-            ModTeleport.to(player, stardewLevel,
-                    targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5,
-                    yaw, 0.0F);
-
-            // 首次进入农场：给予新手工具（成员加入后首次进入也适用）
-            com.stardew.craft.interior.CrossDimensionTeleporter.giveStarterToolsIfNeeded(player);
-
-            StardewCraft.LOGGER.info("[FARM_ENTRY] {} entered {}'s farm via {}",
-                    player.getName().getString(), farm.getOwnerName(), payload.entryTag);
+            enterFarm(player, stardewLevel, farm, payload.entryTag);
         });
+    }
+
+    private static void enterFarm(
+            ServerPlayer player,
+            ServerLevel stardewLevel,
+            FarmInstance farm,
+            String entryTag
+    ) {
+        // 根据入口方向路由
+        BlockPos targetPos;
+        float yaw;
+        switch (entryTag) {
+            case "farm_entry_east" -> {
+                targetPos = farm.getEastEntryPos();
+                yaw = farm.getEastEntryYaw();
+            }
+            case "farm_entry_west" -> {
+                targetPos = farm.getWestEntryPos();
+                yaw = farm.getWestEntryYaw();
+            }
+            default -> {
+                targetPos = farm.getSouthEntryPos();
+                yaw = farm.getSouthEntryYaw();
+            }
+        }
+
+        ModTeleport.to(player, stardewLevel,
+                targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5,
+                yaw, 0.0F);
+
+        // 首次进入农场：给予新手工具（成员加入后首次进入也适用）
+        com.stardew.craft.interior.CrossDimensionTeleporter.giveStarterToolsIfNeeded(player);
+
+        StardewCraft.LOGGER.info("[FARM_ENTRY] {} entered {}'s farm via {}",
+                player.getName().getString(), farm.getOwnerName(), entryTag);
     }
 }

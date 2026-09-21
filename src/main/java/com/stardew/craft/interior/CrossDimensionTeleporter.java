@@ -273,6 +273,52 @@ public final class CrossDimensionTeleporter {
                 player.getName().getString());
             return;
         }
+        if (!farm.isInitialized()
+                || com.stardew.craft.farm.FarmInstanceInitializer
+                        .isPreparing(farm)) {
+            player.displayClientMessage(
+                    Component.translatable(
+                            "stardewcraft.farm.loading.subtitle"),
+                    false);
+            StardewCraft.LOGGER.info(
+                    "[WIZARD] Delayed farm teleport for {} because farm preparation is still running",
+                    player.getName().getString());
+            return;
+        }
+        if (com.stardew.craft.farm.FarmInstanceInitializer
+                .needsLightingRebuild(farm)) {
+            if (!com.stardew.craft.farm.FarmInstanceInitializer
+                    .tryBeginPreparation(farm)) {
+                player.displayClientMessage(
+                        Component.translatable(
+                                "stardewcraft.farm.loading.subtitle"),
+                        false);
+                return;
+            }
+            player.displayClientMessage(
+                    Component.translatable(
+                            "stardewcraft.farm.loading.subtitle"),
+                    false);
+            final UUID playerId = player.getUUID();
+            com.stardew.craft.farm.FarmInstanceInitializer
+                    .prepareFarmForTeleport(stardewLevel, farm)
+                    .thenAcceptAsync(ready -> {
+                        ServerPlayer current = player.server
+                                .getPlayerList().getPlayer(playerId);
+                        if (current == null) return;
+                        if (!ready) {
+                            current.sendSystemMessage(
+                                    Component.translatable(
+                                            "stardewcraft.farm.loading.failed"));
+                            return;
+                        }
+                        wizardInteriorToStardewOutdoor(
+                                current,
+                                giveStarterItemsInInventory,
+                                true);
+                    }, player.server);
+            return;
+        }
 
         BlockPos spawnTarget = farm.getSpawnPoint();
         StardewCraft.LOGGER.info("[WIZARD] {} teleporting to personal farm spawn at {}",

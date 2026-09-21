@@ -21,7 +21,7 @@ public class FishingArmorLayerMixin {
     @Inject(method="renderArmorPiece(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFF)V",at=@At("HEAD"),cancellable=true)
     private void fishing$armorOwner(PoseStack pose,MultiBufferSource buffers,LivingEntity entity,EquipmentSlot slot,int light,HumanoidModel<?> model,float a,float b,float c,float d,float e,float f,CallbackInfo ci) {
         fishing$arms=entity instanceof AbstractClientPlayer p&&FishingPresentationClient.worldOwned(p);
-        if(FishingArmorVisibility.shouldHide(entity,entity.getItemBySlot(slot)))ci.cancel();
+        if(fishing$arms&&FishingArmorVisibility.shouldHide(entity,entity.getItemBySlot(slot)))ci.cancel();
     }
     @Inject(method="setPartVisibility",at=@At("RETURN"))
     private void fishing$weightedArmor(HumanoidModel<?> model,EquipmentSlot slot,CallbackInfo ci){if(fishing$arms)model.rightArm.visible=model.leftArm.visible=false;}

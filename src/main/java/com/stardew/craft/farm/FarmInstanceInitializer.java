@@ -7,73 +7,111 @@ import com.stardew.craft.api.v1.farm.StardewFarmInitializationSteps;
 import com.stardew.craft.api.v1.farm.StardewFarmLayoutMigrations;
 import com.stardew.craft.block.ModBlocks;
 import com.stardew.craft.block.decor.MapDecorStaticBlock;
-import com.stardew.craft.block.decor.FarmTwigBlock;
-import com.stardew.craft.block.decor.ResourceClumpBlock;
-import com.stardew.craft.block.nature.PastureGrassBlock;
-import com.stardew.craft.block.nature.WildWeedsBlock;
-import com.stardew.craft.time.StardewTimeManager;
-import com.stardew.craft.tree.WildTrees;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.levelgen.Heightmap;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 玩家个人农场实例的初始化器。
  * 放置 schematic → 设置生物群系 → 放置图腾柱 → 温室 → 原版地图密度的碎片 → 出口实体。
  * <p>
- * 初始碎片密度来自原版各农场 TMX 的 Paths 层：13–15 杂草，16–17 石头，
- * 18 树枝，19–21 大型障碍物，22 牧草，23 幼树。Minecraft 农场的地表几何不同，
- * 所以保留每张地图的密度与树种比例，但在对应的自然裸地上重新分布。
+ * 初始生态以原版每张农场 TMX 的 Paths 层作为统计样本：按粗粒度区域提取树种、
+ * 杂物和牧草的密度及构成，再根据 Minecraft 地图中该区域实际存在的泥土、草地、
+ * 深色草地与沙地重新计算数量并生成不规则生态簇。不会逐格放大原版点阵。
  */
 @SuppressWarnings("null")
 public class FarmInstanceInitializer {
 
     private static final int CLEAR_RADIUS = 5;
-    private static final int TREE_MIN_DIST = 4;
+    private static final int EXIT_CURTAIN_HEIGHT = 6;
+    private static final Set<UUID> PREPARING_FARMS =
+            ConcurrentHashMap.newKeySet();
+    private static final ResourceLocation TOTEM_ORIENTATION_STEP =
+            ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "farm_totem_south");
+    private static final ResourceLocation TOTEM_BUSHES_STEP =
+            ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "farm_totem_bushes");
+    private static final ResourceLocation PATHS_ECOLOGY_STEP =
+            ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "farm_paths_ecology");
+    private static final int PATHS_ECOLOGY_VERSION = 4;
+    private static final ResourceLocation WILDERNESS_BOWL_SITE_STEP =
+            ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "wilderness_bowl_site_west");
+    private static final ResourceLocation EXIT_PROTECTION_STEP =
+            ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "farm_exit_protection");
+    private static final ResourceLocation LIGHTING_REBUILD_STEP =
+            ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID, "farm_lighting_rebuild");
+    private static final int LIGHTING_REBUILD_VERSION = 1;
+    private static final Set<Heightmap.Types> FARM_HEIGHTMAPS = EnumSet.of(
+            Heightmap.Types.MOTION_BLOCKING,
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            Heightmap.Types.OCEAN_FLOOR,
+            Heightmap.Types.WORLD_SURFACE);
+    private static boolean bootstrapped;
 
-    private record InitialDebrisProfile(
-            int treePermille,
-            int stonePermille,
-            int weedPermille,
-            int twigPermille,
-            int grassPermille,
-            int saplingPermille,
-            int oakWeight,
-            int mapleWeight,
-            int pineWeight,
-            int largeLogs,
-            int largeBoulders,
-            int largeStumps
-    ) {
-        private static final InitialDebrisProfile STANDARD = new InitialDebrisProfile(
-                19, 83, 95, 28, 75, 4,
-                28, 29, 41,
-                6, 14, 19);
-        private static final InitialDebrisProfile FOREST = new InitialDebrisProfile(
-                9, 75, 49, 13, 28, 3,
-                11, 10, 28,
-                9, 9, 12);
-        private static final InitialDebrisProfile RIVERLAND = new InitialDebrisProfile(
-                8, 74, 44, 15, 38, 2,
-                9, 11, 23,
-                1, 7, 12);
+    /** Registers retryable repairs which must also apply to already initialized farms. */
+    public static void bootstrap() {
+        if (bootstrapped) return;
+        bootstrapped = true;
+        StardewFarmInitializationSteps.register(
+                TOTEM_ORIENTATION_STEP, 1, 110,
+                StardewFarmInitializationSteps.FailurePolicy.CONTINUE,
+                context -> ensureFarmTotemFacesSouth(
+                        context.level(), context.farm().ownerUuid()));
+        StardewFarmInitializationSteps.register(
+                TOTEM_BUSHES_STEP, 1, 109,
+                StardewFarmInitializationSteps.FailurePolicy.CONTINUE,
+                context -> ensureFarmTotemBushes(
+                        context.level(), context.farm().ownerUuid()));
+        StardewFarmInitializationSteps.register(
+                PATHS_ECOLOGY_STEP, PATHS_ECOLOGY_VERSION, 108,
+                StardewFarmInitializationSteps.FailurePolicy.CONTINUE,
+                context -> ensureFarmPathsEcology(
+                        context.level(), context.farm().ownerUuid()));
+        StardewFarmInitializationSteps.register(
+                WILDERNESS_BOWL_SITE_STEP, 1, 107,
+                StardewFarmInitializationSteps.FailurePolicy.CONTINUE,
+                context -> ensureWildernessPetBowlSite(
+                        context.level(), context.farm().ownerUuid()));
+        StardewFarmInitializationSteps.register(
+                EXIT_PROTECTION_STEP, 1, 105,
+                StardewFarmInitializationSteps.FailurePolicy.CONTINUE,
+                context -> ensureExitProtection(
+                        context.level(), context.farm().ownerUuid()));
+        StardewFarmLayoutMigrations.register(
+                StardewFarmLayoutRegistry.builtinId(FarmType.FOUR_CORNERS),
+                2,
+                StardewFarmLayoutMigrations.FailurePolicy.STOP,
+                StardewFarmLayoutMigrations.SnapshotPolicy.ADOPT_CURRENT_REGISTRATION,
+                FarmInstanceInitializer::migrateFourCornersSouthExit);
     }
 
     /**
      * 初始化指定玩家的农场实例。
      */
     public static boolean initializeFarm(ServerLevel level, FarmInstance farm) {
+        long startedAt = System.nanoTime();
         if (farm.isInitialized()) {
             StardewCraft.LOGGER.warn("[FARM_INIT] Farm for {} already initialized", farm.getOwnerName());
             StardewFarmLayoutMigrations.runPending(level, farm.getOwnerUUID());
@@ -93,15 +131,8 @@ public class FarmInstanceInitializer {
         StardewCraft.LOGGER.info("[FARM_INIT] Initializing {} farm for {} at origin {}",
                 farm.getFarmLayoutId(), farm.getOwnerName(), origin);
 
-        // 1. 预加载区块
-        preloadFarmChunks(level, farm);
-
-        // 2. 放置 schematic（地形）
+        // 1. 批量放置 schematic（内部会一次性加载所需区块）
         if (!placeSchematic(level, farm)) return false;
-        if (farm.getFarmLayoutId().getNamespace().equals(StardewCraft.MODID)) {
-            int replaced = FarmSubsoil.replaceBuriedDirt(level, origin, origin.offset(layout.boundsMax()));
-            StardewCraft.LOGGER.info("[FARM_INIT] Replaced {} buried dirt blocks with hard soil", replaced);
-        }
 
         // 2.5 在 schematic 底面正下方铺一层基岩，防止掉出世界
         placeBedrockFloor(level, farm, layout);
@@ -111,14 +142,16 @@ public class FarmInstanceInitializer {
             setFarmBiome(level, farm, layout.biomeId());
         }
 
-        // 4. 放置农场图腾柱（朝西）
+        // 4. 放置农场图腾柱（朝南）
         placeFarmTotemPole(level, farm);
 
-        // 5. 放置温室（门口朝西，CW90 旋转）
+        // 5. 放置温室（门口朝南）
         com.stardew.craft.greenhouse.GreenhouseManager.get(level).ensurePlacedForPlayer(level, farm.getOwnerUUID());
 
-        // 6. 概率化生成自然碎片
-        spawnNaturalDebris(level, farm);
+        // 6. 按原版各区域的 Paths 统计规律，在实际地表上生成不规则生态簇。
+        FarmInitialEcology.populate(level, farm, false);
+        farm.markInitializationStepComplete(PATHS_ECOLOGY_STEP, PATHS_ECOLOGY_VERSION);
+        FarmOreDailyService.seedNewFarm(level, farm);
 
         // 7. 放置 3 个出口交互实体
         spawnExitPortals(level, farm, layout);
@@ -136,8 +169,194 @@ public class FarmInstanceInitializer {
         FarmInstanceRegistry.get().setDirty();
         StardewFarmLayoutMigrations.runPending(level, farm.getOwnerUUID());
         StardewFarmInitializationSteps.runPending(level, farm.getOwnerUUID());
-        StardewCraft.LOGGER.info("[FARM_INIT] Farm initialization complete for {}", farm.getOwnerName());
+        StardewCraft.LOGGER.info(
+                "[FARM_INIT] Farm initialization complete for {} in {} ms; lighting stabilization pending",
+                farm.getOwnerName(),
+                (System.nanoTime() - startedAt) / 1_000_000L);
         return true;
+    }
+
+    /**
+     * Builds a farm and completes only after every farm chunk has finished its
+     * queued sky/block-light work. Callers must wait for this future before
+     * moving a player to the farm.
+     */
+    public static CompletableFuture<Boolean> prepareFarmForTeleport(
+            ServerLevel level,
+            FarmInstance farm
+    ) {
+        PREPARING_FARMS.add(farm.getOwnerUUID());
+        final boolean initialized;
+        try {
+            initialized = initializeFarm(level, farm);
+        } catch (RuntimeException exception) {
+            PREPARING_FARMS.remove(farm.getOwnerUUID());
+            StardewCraft.LOGGER.error(
+                    "[FARM_INIT] Farm preparation crashed for {}",
+                    farm.getOwnerName(), exception);
+            return CompletableFuture.completedFuture(false);
+        }
+        if (!initialized) {
+            PREPARING_FARMS.remove(farm.getOwnerUUID());
+            return CompletableFuture.completedFuture(false);
+        }
+
+        CompletableFuture<Void> lightingReady = needsLightingRebuild(farm)
+                ? rebuildFarmLighting(level, farm)
+                : waitForPendingFarmLighting(level, farm);
+        return lightingReady
+                .thenComposeAsync(ignored -> waitOneServerTick(
+                        level.getServer()), level.getServer())
+                .handleAsync((ignored, failure) -> {
+                    PREPARING_FARMS.remove(farm.getOwnerUUID());
+                    if (failure != null) {
+                        StardewCraft.LOGGER.error(
+                                "[FARM_INIT] Lighting stabilization failed for {}",
+                                farm.getOwnerName(), failure);
+                        return false;
+                    }
+                    farm.markInitializationStepComplete(
+                            LIGHTING_REBUILD_STEP,
+                            LIGHTING_REBUILD_VERSION);
+                    FarmInstanceRegistry.get().setDirty();
+                    StardewCraft.LOGGER.info(
+                            "[FARM_INIT] Farm and lighting ready for {}",
+                            farm.getOwnerName());
+                    return true;
+                }, level.getServer());
+    }
+
+    public static boolean isPreparing(FarmInstance farm) {
+        return farm != null && PREPARING_FARMS.contains(
+                farm.getOwnerUUID());
+    }
+
+    public static boolean tryBeginPreparation(FarmInstance farm) {
+        return farm != null && PREPARING_FARMS.add(
+                farm.getOwnerUUID());
+    }
+
+    public static boolean needsLightingRebuild(FarmInstance farm) {
+        return farm != null && farm.getInitializationStepVersion(
+                LIGHTING_REBUILD_STEP) < LIGHTING_REBUILD_VERSION;
+    }
+
+    /**
+     * Rebuilds the data which a normal chunk-generation LIGHT step would have
+     * produced. Farm schematics are written into already-generated void chunks,
+     * so merely waiting for queued block checks is not enough: their sky-source
+     * columns can still describe the old empty chunk and yield an all-black map.
+     */
+    private static CompletableFuture<Void> rebuildFarmLighting(
+            ServerLevel level,
+            FarmInstance farm
+    ) {
+        var engine = level.getChunkSource().getLightEngine();
+        BlockPos min = farm.getFarmBoundsMin();
+        BlockPos max = farm.getFarmBoundsMax();
+        Set<ChunkPos> positions = FarmChunkManager.chunkPositionsForBounds(
+                min, max);
+        TemporaryChunkLeaseTracker.Lease lease =
+                FarmChunkManager.get().acquireTemporaryChunks(
+                        level, positions);
+        try {
+            ArrayList<LevelChunk> chunks = new ArrayList<>(positions.size());
+            for (ChunkPos position : positions) {
+                LevelChunk chunk = level.getChunk(position.x, position.z);
+                // Bulk map placement updates blocks in a previously lit void
+                // chunk. Re-prime both occlusion inputs before propagating sky
+                // and block sources through the new terrain.
+                Heightmap.primeHeightmaps(chunk, FARM_HEIGHTMAPS);
+                chunk.initializeLightSources();
+                chunk.setLightCorrect(false);
+                chunks.add(chunk);
+            }
+
+            long startedAt = System.nanoTime();
+            ArrayList<CompletableFuture<?>> relight = new ArrayList<>(
+                    chunks.size());
+            for (LevelChunk chunk : chunks) {
+                relight.add(engine.lightChunk(chunk, false));
+            }
+            engine.tryScheduleUpdate();
+            return CompletableFuture.allOf(
+                            relight.toArray(CompletableFuture[]::new))
+                    .thenComposeAsync(ignored -> waitForPendingChunks(
+                            level, chunks), level.getServer())
+                    .thenRunAsync(() -> {
+                        resendLightingToTrackingPlayers(level, chunks);
+                        StardewCraft.LOGGER.info(
+                                "[FARM_INIT] Rebuilt lighting for {} chunks of {} in {} ms",
+                                chunks.size(), farm.getOwnerName(),
+                                (System.nanoTime() - startedAt) / 1_000_000L);
+                    }, level.getServer())
+                    .whenCompleteAsync(
+                            (ignored, failure) -> lease.close(),
+                            level.getServer());
+        } catch (RuntimeException exception) {
+            lease.close();
+            return CompletableFuture.failedFuture(exception);
+        }
+    }
+
+    private static CompletableFuture<Void> waitForPendingFarmLighting(
+            ServerLevel level,
+            FarmInstance farm
+    ) {
+        BlockPos min = farm.getFarmBoundsMin();
+        BlockPos max = farm.getFarmBoundsMax();
+        ArrayList<LevelChunk> chunks = new ArrayList<>();
+        for (int chunkX = min.getX() >> 4;
+             chunkX <= max.getX() >> 4; chunkX++) {
+            for (int chunkZ = min.getZ() >> 4;
+                 chunkZ <= max.getZ() >> 4; chunkZ++) {
+                chunks.add(level.getChunk(chunkX, chunkZ));
+            }
+        }
+        return waitForPendingChunks(level, chunks);
+    }
+
+    private static CompletableFuture<Void> waitForPendingChunks(
+            ServerLevel level,
+            List<LevelChunk> chunks
+    ) {
+        var engine = level.getChunkSource().getLightEngine();
+        ArrayList<CompletableFuture<?>> pending = new ArrayList<>(
+                chunks.size());
+        for (LevelChunk chunk : chunks) {
+            ChunkPos position = chunk.getPos();
+            pending.add(engine.waitForPendingTasks(
+                    position.x, position.z));
+        }
+        engine.tryScheduleUpdate();
+        return CompletableFuture.allOf(
+                pending.toArray(CompletableFuture[]::new));
+    }
+
+    private static void resendLightingToTrackingPlayers(
+            ServerLevel level,
+            List<LevelChunk> chunks
+    ) {
+        var engine = level.getChunkSource().getLightEngine();
+        var chunkMap = level.getChunkSource().chunkMap;
+        for (LevelChunk chunk : chunks) {
+            var packet = new net.minecraft.network.protocol.game.ClientboundLightUpdatePacket(
+                    chunk.getPos(), engine, null, null);
+            for (var player : chunkMap.getPlayers(
+                    chunk.getPos(), false)) {
+                player.connection.send(packet);
+            }
+        }
+    }
+
+    private static CompletableFuture<Void> waitOneServerTick(
+            net.minecraft.server.MinecraftServer server
+    ) {
+        CompletableFuture<Void> ready = new CompletableFuture<>();
+        server.tell(new net.minecraft.server.TickTask(
+                server.getTickCount() + 1,
+                () -> ready.complete(null)));
+        return ready;
     }
 
     // ══════════════════════════════════════════
@@ -147,7 +366,9 @@ public class FarmInstanceInitializer {
     private static boolean placeSchematic(ServerLevel level, FarmInstance farm) {
         ResourceLocation path = farm.getFarmLayout().schematic();
         BlockPos origin = farm.getOrigin();
-        boolean result = com.stardew.craft.mining.StructureLoader.loadAndPlaceWithResult(level, path, origin);
+        boolean result = com.stardew.craft.mining.StructureLoader
+                .loadAndPlaceFarmSchematicWithResult(
+                level, path, origin);
         if (!result) {
             StardewCraft.LOGGER.error("[FARM_INIT] Failed to place schematic {} at {}", path, origin);
         } else {
@@ -173,9 +394,23 @@ public class FarmInstanceInitializer {
         int endZ = startZ + layout.length();
         net.minecraft.world.level.block.state.BlockState bedrock = net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState();
 
-        for (int x = startX; x < endX; x++) {
-            for (int z = startZ; z < endZ; z++) {
-                level.setBlock(new BlockPos(x, bedrockY, z), bedrock, 2);
+        int minChunkX = startX >> 4;
+        int maxChunkX = (endX - 1) >> 4;
+        int minChunkZ = startZ >> 4;
+        int maxChunkZ = (endZ - 1) >> 4;
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                LevelChunk chunk = level.getChunk(chunkX, chunkZ);
+                int chunkStartX = Math.max(startX, chunkX << 4);
+                int chunkEndX = Math.min(endX, (chunkX + 1) << 4);
+                int chunkStartZ = Math.max(startZ, chunkZ << 4);
+                int chunkEndZ = Math.min(endZ, (chunkZ + 1) << 4);
+                for (int x = chunkStartX; x < chunkEndX; x++) {
+                    for (int z = chunkStartZ; z < chunkEndZ; z++) {
+                        BlockPos pos = new BlockPos(x, bedrockY, z);
+                        chunk.setBlockState(pos, bedrock, false);
+                    }
+                }
             }
         }
         StardewCraft.LOGGER.info("[FARM_INIT] Bedrock floor placed at Y={} ({} x {} blocks)",
@@ -243,240 +478,49 @@ public class FarmInstanceInitializer {
         StardewCraft.LOGGER.info("[FARM_INIT] Set biome {} for {} chunks", biomeId, modified);
     }
 
-    // ══════════════════════════════════════════
-    //  自然碎片
-    // ══════════════════════════════════════════
-
-    private static void spawnNaturalDebris(ServerLevel level, FarmInstance farm) {
-        RandomSource random = level.getRandom();
-        BlockPos boundsMin = farm.getFarmBoundsMin();
-        BlockPos boundsMax = farm.getFarmBoundsMax();
-        BlockPos spawnPos = farm.getSpawnPoint();
-        BlockPos greenhousePos = farm.getGreenhousePos();
-        InitialDebrisProfile profile = initialDebrisProfile(farm);
-        int season = StardewTimeManager.get().getCurrentSeason();
-
-        int largeLogs = spawnInitialClumps(level, farm, ModBlocks.HOLLOW_LOG.get(),
-                profile.largeLogs(), random);
-        int largeBoulders = spawnInitialClumps(level, farm, ModBlocks.LARGE_BOULDER.get(),
-                profile.largeBoulders(), random);
-        int largeStumps = spawnInitialClumps(level, farm, ModBlocks.LARGE_STUMP.get(),
-                profile.largeStumps(), random);
-
-        int trees = 0, stones = 0, weeds = 0, twigs = 0, grass = 0, saplings = 0;
-
-        for (int x = boundsMin.getX(); x <= boundsMax.getX(); x++) {
-            for (int z = boundsMin.getZ(); z <= boundsMax.getZ(); z++) {
-                if (isNearProtected(x, z, spawnPos, greenhousePos)) continue;
-
-                FarmDebrisPlacementRules.Surface surface =
-                        FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
-                if (surface == null) continue;
-
-                BlockPos placePos = surface.place();
-                boolean onGrass = surface.grass();
-                int roll = random.nextInt(1000);
-                int cumulative = 0;
-
-                // Paths 9/10/11: mature oak/maple/pine, using this layout's source ratio.
-                cumulative += profile.treePermille();
-                if (roll < cumulative) {
-                    if (!hasNearbyInitialTree(level, placePos, TREE_MIN_DIST)) {
-                        WildTrees.Def chosen = pickInitialTree(random, profile);
-                        if (com.stardew.craft.tree.prefab.PrefabTreeManager.tryPlaceRandomVariant(level, placePos, chosen)) {
-                            trees++;
-                        }
-                    }
-                    continue;
-                }
-
-                // Paths 16/17: loose stones occur on the diggable dirt portion.
-                if (!onGrass) {
-                    cumulative += profile.stonePermille();
-                    if (roll < cumulative) {
-                        Block[] stoneBlocks = {ModBlocks.MINE_STONE_343.get(), ModBlocks.MINE_STONE_450.get()};
-                        level.setBlock(placePos, stoneBlocks[random.nextInt(stoneBlocks.length)].defaultBlockState(), 3);
-                        stones++;
-                        continue;
-                    }
-                }
-
-                // Paths 13/14/15: seasonal weeds.
-                cumulative += profile.weedPermille();
-                if (roll < cumulative) {
-                    int variant = random.nextInt(3);
-                    BlockState state = ModBlocks.WILD_WEEDS.get().defaultBlockState()
-                            .setValue(WildWeedsBlock.SEASON, Math.max(0, Math.min(3, season)))
-                            .setValue(WildWeedsBlock.VARIANT, variant);
-                    level.setBlock(placePos, state, 3);
-                    weeds++;
-                    continue;
-                }
-
-                // Path 18: the two original farm twig variants.
-                cumulative += profile.twigPermille();
-                if (roll < cumulative) {
-                    level.setBlock(placePos, initialTwigState(random), 3);
-                    twigs++;
-                    continue;
-                }
-
-                // Path 22: pasture grass.
-                cumulative += profile.grassPermille();
-                if (roll < cumulative) {
-                    BlockState state = ModBlocks.PASTURE_GRASS.get().defaultBlockState()
-                            .setValue(PastureGrassBlock.VARIANT,
-                                    random.nextInt(PastureGrassBlock.VISUAL_VARIANT_COUNT));
-                    level.setBlock(placePos, state, 3);
-                    grass++;
-                    continue;
-                }
-
-                // Path 23: a young oak/maple/pine on diggable dirt.
-                if (!onGrass) {
-                    cumulative += profile.saplingPermille();
-                    if (roll < cumulative) {
-                        WildTrees.Def def = pickInitialTree(random, profile);
-                        Block sapling = random.nextBoolean() ? def.sapling0().get() : def.sapling1().get();
-                        BlockState state = sapling.defaultBlockState();
-                        if (state.canSurvive(level, placePos)) {
-                            level.setBlock(placePos, state, 3);
-                            saplings++;
-                        }
-                    }
-                }
-            }
-        }
-
-        StardewCraft.LOGGER.info(
-                "[FARM_INIT] Debris: trees={}, stones={}, weeds={}, twigs={}, grass={}, saplings={}, largeLogs={}, largeBoulders={}, largeStumps={}",
-                trees, stones, weeds, twigs, grass, saplings,
-                largeLogs, largeBoulders, largeStumps);
-    }
-
-    private static InitialDebrisProfile initialDebrisProfile(FarmInstance farm) {
-        if (farm.getFarmLayoutId().equals(
-                StardewFarmLayoutRegistry.builtinId(FarmType.FOREST))) {
-            return InitialDebrisProfile.FOREST;
-        }
-        if (farm.getFarmLayoutId().equals(
-                StardewFarmLayoutRegistry.builtinId(FarmType.RIVERLAND))) {
-            return InitialDebrisProfile.RIVERLAND;
-        }
-        return InitialDebrisProfile.STANDARD;
-    }
-
-    private static WildTrees.Def pickInitialTree(RandomSource random, InitialDebrisProfile profile) {
-        WildTrees.Def[] trees = {WildTrees.OAK, WildTrees.MAPLE, WildTrees.PINE};
-        int[] weights = {profile.oakWeight(), profile.mapleWeight(), profile.pineWeight()};
-        return pickWeighted(random, trees, weights);
-    }
-
-    private static BlockState initialTwigState(RandomSource random) {
-        Direction[] facings = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
-        return ModBlocks.FARM_TWIG.get().defaultBlockState()
-                .setValue(FarmTwigBlock.VARIANT, random.nextInt(2))
-                .setValue(FarmTwigBlock.FACING, facings[random.nextInt(facings.length)]);
-    }
-
-    private static int spawnInitialClumps(ServerLevel level, FarmInstance farm, Block block,
-                                          int requested, RandomSource random) {
-        if (!(block instanceof ResourceClumpBlock clump) || requested <= 0) {
-            return 0;
-        }
-        BlockPos min = farm.getFarmBoundsMin();
-        BlockPos max = farm.getFarmBoundsMax();
-        int placed = 0;
-        int attempts = Math.max(64, requested * 80);
-        for (int attempt = 0; attempt < attempts && placed < requested; attempt++) {
-            int x = min.getX() + random.nextInt(max.getX() - min.getX() + 1);
-            int z = min.getZ() + random.nextInt(max.getZ() - min.getZ() + 1);
-            if (isNearProtected(x, z, farm.getSpawnPoint(), farm.getGreenhousePos(), 2)) {
-                continue;
-            }
-            FarmDebrisPlacementRules.Surface surface =
-                    FarmDebrisPlacementRules.findBareSurface(level, farm, x, z);
-            if (surface == null || !canPlaceInitialClump(level, farm, surface.place())) {
-                continue;
-            }
-            Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(random);
-            BlockState state = block.defaultBlockState()
-                    .setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)
-                    .setValue(MapDecorStaticBlock.FACING, facing);
-            if (!level.setBlock(surface.place(), state, Block.UPDATE_ALL)) {
-                continue;
-            }
-            if (!clump.placeExtensions(level, surface.place(), state)) {
-                level.removeBlock(surface.place(), false);
-                continue;
-            }
-            placed++;
-        }
-        return placed;
-    }
-
-    /** Resource clumps occupy a 3x3 footprint and two vertical cells. */
-    private static boolean canPlaceInitialClump(
-            ServerLevel level,
-            FarmInstance farm,
-            BlockPos main
-    ) {
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                BlockPos bottom = main.offset(dx, 0, dz);
-                BlockPos top = bottom.above();
-                if (!farm.contains(bottom) || !farm.contains(top)
-                        || !FarmDebrisPlacementRules.isCompletelyOpen(level, bottom)
-                        || !FarmDebrisPlacementRules.isCompletelyOpen(level, top)) {
-                    return false;
-                }
-                FarmDebrisPlacementRules.Surface surface =
-                        FarmDebrisPlacementRules.findBareSurface(
-                                level, farm, bottom.getX(), bottom.getZ());
-                if (surface == null || !surface.place().equals(bottom)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private static boolean isNearProtected(int x, int z, BlockPos spawn, BlockPos greenhouse) {
-        return isNearProtected(x, z, spawn, greenhouse, 0);
-    }
-
-    private static boolean isNearProtected(int x, int z, BlockPos spawn, BlockPos greenhouse, int margin) {
+    static boolean isNearProtected(FarmInstance farm, int x, int z, int margin) {
+        BlockPos spawn = farm.getSpawnPoint();
+        BlockPos greenhouse = farm.getGreenhousePos();
         if (Math.abs(x - spawn.getX()) <= CLEAR_RADIUS + margin
                 && Math.abs(z - spawn.getZ()) <= CLEAR_RADIUS + margin) return true;
         if (x >= greenhouse.getX() - 2 - margin && x <= greenhouse.getX() + 19 + margin
                 && z >= greenhouse.getZ() - 2 - margin && z <= greenhouse.getZ() + 19 + margin) return true;
+        if (nearPoint(x, z, farm.getFarmTotemPos(), 2 + margin)
+                || nearPoint(x, z, com.stardew.craft.pet.PetHomes.authoredBowl(farm), 2 + margin)) {
+            return true;
+        }
+        StardewFarmLayout layout = farm.getFarmLayout();
+        BlockPos origin = farm.getOrigin();
+        if (nearEntry(x, z, origin, layout.entrySouth(), 3 + margin)
+                || nearEntry(x, z, origin, layout.entryEast(), 3 + margin)
+                || nearEntry(x, z, origin, layout.entryWest(), 3 + margin)) {
+            return true;
+        }
+        StardewFarmLayout.Region cave = layout.cavePortalWall();
+        if (cave != null && nearRegion(x, z, origin.offset(cave.min()),
+                origin.offset(cave.max()), 3 + margin)) return true;
         return false;
     }
 
-    private static boolean hasNearbyInitialTree(ServerLevel level, BlockPos pos, int radius) {
-        for (BlockPos nearby : BlockPos.betweenClosed(
-                pos.offset(-radius, 0, -radius), pos.offset(radius, 1, radius))) {
-            if (WildTrees.findByAnyPart(level.getBlockState(nearby)) != null) {
-                return true;
-            }
-        }
-        return false;
+    private static boolean nearPoint(int x, int z, BlockPos point, int radius) {
+        return Math.abs(x - point.getX()) <= radius && Math.abs(z - point.getZ()) <= radius;
     }
 
-    private static <T> T pickWeighted(RandomSource random, T[] items, int[] weights) {
-        int total = 0;
-        for (int w : weights) total += w;
-        int roll = random.nextInt(total);
-        int cumulative = 0;
-        for (int i = 0; i < items.length; i++) {
-            cumulative += weights[i];
-            if (roll < cumulative) return items[i];
-        }
-        return items[items.length - 1];
+    private static boolean nearEntry(int x, int z, BlockPos origin,
+                                     StardewFarmLayout.Entry entry, int margin) {
+        return nearRegion(x, z, origin.offset(entry.exitMin()),
+                origin.offset(entry.exitMax()), margin);
+    }
+
+    private static boolean nearRegion(int x, int z, BlockPos first, BlockPos second, int margin) {
+        return x >= Math.min(first.getX(), second.getX()) - margin
+                && x <= Math.max(first.getX(), second.getX()) + margin
+                && z >= Math.min(first.getZ(), second.getZ()) - margin
+                && z <= Math.max(first.getZ(), second.getZ()) + margin;
     }
 
     // ══════════════════════════════════════════
-    //  图腾柱（朝西）
+    //  图腾柱（朝南）
     // ══════════════════════════════════════════
 
     private static void placeFarmTotemPole(ServerLevel level, FarmInstance farm) {
@@ -486,7 +530,7 @@ public class FarmInstanceInitializer {
         Block block = com.stardew.craft.block.ModBlocks.TOTEM_POLE_FARM.get();
         BlockState mainState = block.defaultBlockState()
                 .setValue(MapDecorStaticBlock.PART, MapDecorStaticBlock.Part.MAIN)
-                .setValue(MapDecorStaticBlock.FACING, Direction.WEST)
+                .setValue(MapDecorStaticBlock.FACING, Direction.SOUTH)
                 .setValue(com.stardew.craft.block.utility.totem.TotemPoleBlock.ACTIVATED, true);
         level.setBlock(totemPos, mainState, 3);
         block.setPlacedBy(level, totemPos, mainState, null, net.minecraft.world.item.ItemStack.EMPTY);
@@ -499,6 +543,111 @@ public class FarmInstanceInitializer {
                     totemPos, poleName, com.stardew.craft.block.utility.totem.TotemType.FARM, false));
             pole.initSystemPole(level, poleId, poleName);
         }
+
+        placeFarmTotemBushes(level, farm);
+    }
+
+    private static void ensureFarmTotemFacesSouth(ServerLevel level, java.util.UUID owner) {
+        FarmInstance farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+        if (farm == null) return;
+        BlockPos mainPos = farm.getFarmTotemPos();
+        Block block = ModBlocks.TOTEM_POLE_FARM.get();
+        MapDecorStaticBlock decor = (MapDecorStaticBlock) block;
+        java.util.ArrayList<BlockPos> parts = new java.util.ArrayList<>();
+        for (BlockPos candidate : BlockPos.betweenClosed(
+                mainPos.offset(-1, -1, -1), mainPos.offset(1, 3, 1))) {
+            BlockState state = level.getBlockState(candidate);
+            if (!state.is(block)) continue;
+            if ((candidate.equals(mainPos)
+                    && state.getValue(MapDecorStaticBlock.PART)
+                            == MapDecorStaticBlock.Part.MAIN)
+                    || (state.getValue(MapDecorStaticBlock.PART)
+                            == MapDecorStaticBlock.Part.EXTENSION
+                    && mainPos.equals(decor.findMainPos(level, candidate, state)))) {
+                parts.add(candidate.immutable());
+            }
+        }
+        for (BlockPos part : parts) {
+            BlockState state = level.getBlockState(part);
+            if (state.is(block)
+                    && state.getValue(MapDecorStaticBlock.FACING) != Direction.SOUTH) {
+                level.setBlock(part, state.setValue(
+                        MapDecorStaticBlock.FACING, Direction.SOUTH), Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    private static void ensureFarmTotemBushes(ServerLevel level, java.util.UUID owner) {
+        FarmInstance farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+        if (farm != null) {
+            placeFarmTotemBushes(level, farm);
+        }
+    }
+
+    private static void placeFarmTotemBushes(ServerLevel level, FarmInstance farm) {
+        BlockState bush = ModBlocks.SMALL_BUSH.get().defaultBlockState();
+        BlockPos totem = farm.getFarmTotemPos();
+        level.setBlock(totem.west(), bush, Block.UPDATE_ALL);
+        level.setBlock(totem.east(), bush, Block.UPDATE_ALL);
+    }
+
+    private static void ensureFarmPathsEcology(ServerLevel level, java.util.UUID owner) {
+        FarmInstance farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+        if (farm != null && farm.isInitialized()) {
+            FarmInitialEcology.populate(level, farm, true);
+        }
+    }
+
+    /** Moves only the untouched authored Wilderness bowl; player-moved bowls stay where they are. */
+    private static void ensureWildernessPetBowlSite(ServerLevel level, java.util.UUID owner) {
+        FarmInstance farm = FarmInstanceRegistry.get(level.getServer()).getFarm(owner);
+        if (farm == null || !farm.isInitialized() || !farm.getFarmLayoutId().equals(
+                StardewFarmLayoutRegistry.builtinId(FarmType.WILDERNESS))) return;
+
+        BlockPos oldPosition = farm.getOrigin().offset(178, 25, 70);
+        BlockPos newPosition = oldPosition.west();
+        if (!level.hasChunksAt(oldPosition.offset(-1, -1, -1), oldPosition.offset(3, 2, 3))) {
+            throw new IllegalStateException("Wilderness pet bowl chunks are not loaded");
+        }
+        if (!(level.getBlockState(oldPosition).getBlock()
+                instanceof com.stardew.craft.pet.PetBowlBlock)) return;
+        if (level.getBlockState(newPosition).getBlock()
+                instanceof com.stardew.craft.pet.PetBowlBlock) return;
+
+        var record = com.stardew.craft.pet.PetBowlBuildings.ensure(level, oldPosition);
+        if (record == null || !record.farmId().equals(farm.getInstanceId())) {
+            throw new IllegalStateException("Could not register the authored Wilderness pet bowl");
+        }
+        var transfer = com.stardew.craft.building.runtime.BuildingTransfer.move(
+                level, record, newPosition, record.facing());
+        var data = com.stardew.craft.building.runtime.BuildingWorldData.get(level.getServer());
+        if (data.beginTransfer(transfer)
+                != com.stardew.craft.building.runtime.BuildingWorldData.Result.SUCCESS) {
+            throw new IllegalStateException("Could not reserve the corrected Wilderness pet bowl site");
+        }
+        com.stardew.craft.building.runtime.BuildingLifecycleService.completeTransfer(level, transfer);
+    }
+
+    private static void migrateFourCornersSouthExit(
+            StardewFarmLayoutMigrations.Context context
+    ) {
+        ServerLevel level = context.level();
+        BlockPos origin = context.farm().origin();
+        BlockPos oldMin = origin.offset(148, 31, 237);
+        BlockPos oldMax = origin.offset(150, 33, 237);
+        for (BlockPos cursor : BlockPos.betweenClosed(oldMin, oldMax)) {
+            if (level.getBlockState(cursor).is(ModBlocks.PORTAL_TRIGGER.get())) {
+                level.setBlock(cursor, Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            }
+        }
+
+        StardewFarmLayout current = StardewFarmLayoutRegistry.find(
+                        StardewFarmLayoutRegistry.builtinId(FarmType.FOUR_CORNERS))
+                .orElseThrow(() -> new IllegalStateException("Four Corners layout is unavailable"));
+        spawnExitEntityRegion(level, origin, current.entryEast(),
+                "sdv_portal_target:farm_exit_east", "sdv_portal_marker:farm_exit");
+        placeExitBarrierWall(level, origin, current.entryEast());
     }
 
     // ══════════════════════════════════════════
@@ -514,10 +663,13 @@ public class FarmInstanceInitializer {
 
         spawnExitEntityRegion(level, origin, layout.entrySouth(),
                 "sdv_portal_target:farm_exit_south", "sdv_portal_marker:farm_exit");
+        placeExitBarrierWall(level, origin, layout.entrySouth());
         spawnExitEntityRegion(level, origin, layout.entryEast(),
                 "sdv_portal_target:farm_exit_east", "sdv_portal_marker:farm_exit");
+        placeExitBarrierWall(level, origin, layout.entryEast());
         spawnExitEntityRegion(level, origin, layout.entryWest(),
                 "sdv_portal_target:farm_exit_west", "sdv_portal_marker:farm_exit");
+        placeExitBarrierWall(level, origin, layout.entryWest());
 
         StardewCraft.LOGGER.info("[FARM_INIT] Spawned exit portals for farm of {}", farm.getOwnerName());
     }
@@ -555,6 +707,106 @@ public class FarmInstanceInitializer {
         }
     }
 
+    /**
+     * Places the authored protection curtain behind an exit. Solid scenery is
+     * retained; barriers only occupy open or fluid cells, so the boundary
+     * closes every route around the exit without cutting visible terrain away.
+     */
+    private static void placeExitBarrierWall(ServerLevel level, BlockPos origin,
+                                             StardewFarmLayout.Entry entry) {
+        BlockPos min = origin.offset(entry.barrierMin());
+        BlockPos max = origin.offset(entry.barrierMax());
+        int minX = Math.min(min.getX(), max.getX());
+        int maxX = Math.max(min.getX(), max.getX());
+        int minY = Math.min(min.getY(), max.getY());
+        int maxY = Math.max(min.getY(), max.getY());
+        int minZ = Math.min(min.getZ(), max.getZ());
+        int maxZ = Math.max(min.getZ(), max.getZ());
+        int fallbackGroundY = origin.getY()
+                + entry.teleportOffset().getY() - 1;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                int terrainY = Integer.MIN_VALUE;
+                int fluidTopY = Integer.MIN_VALUE;
+                for (int y = minY; y <= maxY; y++) {
+                    cursor.set(x, y, z);
+                    BlockState state = level.getBlockState(cursor);
+                    if (!state.getFluidState().isEmpty()) {
+                        fluidTopY = y;
+                    }
+                    if (isExitTerrainSupport(level, cursor, state)) {
+                        terrainY = y;
+                    }
+                }
+                if (terrainY == Integer.MIN_VALUE) {
+                    terrainY = fallbackGroundY;
+                }
+                int curtainMinY = Math.max(minY, terrainY + 1);
+                int curtainMaxY = Math.min(maxY, Math.max(
+                        terrainY + EXIT_CURTAIN_HEIGHT,
+                        fluidTopY == Integer.MIN_VALUE
+                                ? Integer.MIN_VALUE : fluidTopY + 2));
+                for (int y = curtainMinY; y <= curtainMaxY; y++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    BlockState existing = level.getBlockState(pos);
+                    if (!existing.isAir()
+                            && existing.getFluidState().isEmpty()
+                            && !existing.is(Blocks.BARRIER)) {
+                        continue;
+                    }
+                    BlockState barrier = Blocks.BARRIER.defaultBlockState();
+                    if (barrier.hasProperty(BlockStateProperties.WATERLOGGED)
+                            && existing.getFluidState().is(Fluids.WATER)) {
+                        barrier = barrier.setValue(
+                                BlockStateProperties.WATERLOGGED, true);
+                    }
+                    if (!existing.equals(barrier)) {
+                        level.setBlock(pos, barrier,
+                                Block.UPDATE_CLIENTS
+                                        | Block.UPDATE_KNOWN_SHAPE);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isExitTerrainSupport(
+            ServerLevel level,
+            BlockPos pos,
+            BlockState state
+    ) {
+        return state.getFluidState().isEmpty()
+                && !state.is(BlockTags.LOGS)
+                && !state.is(BlockTags.LEAVES)
+                && !state.is(BlockTags.SAPLINGS)
+                && !state.is(BlockTags.FLOWERS)
+                && state.isCollisionShapeFullBlock(level, pos);
+    }
+
+    /** Repairs widened exit curtains in already initialized farms. */
+    private static void ensureExitProtection(
+            ServerLevel level,
+            java.util.UUID ownerUuid
+    ) {
+        FarmInstance farm = FarmInstanceRegistry.get(level.getServer())
+                .getFarm(ownerUuid);
+        if (farm == null || !farm.isInitialized()) return;
+
+        StardewFarmLayout saved = farm.getFarmLayout();
+        if (saved == null) return;
+        StardewFarmLayout layout = StardewFarmLayoutRegistry
+                .find(farm.getFarmLayoutId())
+                .filter(current -> current.width() == saved.width()
+                        && current.height() == saved.height()
+                        && current.length() == saved.length())
+                .orElse(saved);
+        BlockPos origin = farm.getOrigin();
+        placeExitBarrierWall(level, origin, layout.entrySouth());
+        placeExitBarrierWall(level, origin, layout.entryEast());
+        placeExitBarrierWall(level, origin, layout.entryWest());
+    }
+
     // ══════════════════════════════════════════
     //  农场洞穴系统（外墙 + 传送方块 + 室内）
     // ══════════════════════════════════════════
@@ -567,8 +819,17 @@ public class FarmInstanceInitializer {
      */
     public static boolean backfillFarmCaveIfMissing(ServerLevel level, FarmInstance farm) {
         if (farm == null || !farm.isInitialized()) return false;
-        StardewFarmLayout layout = farm.getFarmLayout();
-        if (layout == null) return false;
+        StardewFarmLayout saved = farm.getFarmLayout();
+        if (saved == null) return false;
+        // Existing farms retain their creation snapshot.  Use the current
+        // authored geometry when dimensions still match so old snapshots that
+        // predate the cave portal fields can receive the repaired doorway.
+        StardewFarmLayout layout = StardewFarmLayoutRegistry
+                .find(farm.getFarmLayoutId())
+                .filter(current -> current.width() == saved.width()
+                        && current.height() == saved.height()
+                        && current.length() == saved.length())
+                .orElse(saved);
         // Repair the door independently of old cavePlaced flags, without clearing farm contents.
         var portal=layout.cavePortalWall();
         if(portal!=null)com.stardew.craft.interior.InteriorSubspaceManager.spawnFarmCaveOutdoorPortalArea(
@@ -636,24 +897,6 @@ public class FarmInstanceInitializer {
                 }
             }
         }
-    }
-
-    // ══════════════════════════════════════════
-    //  辅助
-    // ══════════════════════════════════════════
-
-    private static void preloadFarmChunks(ServerLevel level, FarmInstance farm) {        BlockPos min = farm.getFarmBoundsMin();
-        BlockPos max = farm.getFarmBoundsMax();
-        int minCX = min.getX() >> 4, maxCX = max.getX() >> 4;
-        int minCZ = min.getZ() >> 4, maxCZ = max.getZ() >> 4;
-        int count = 0;
-        for (int cx = minCX; cx <= maxCX; cx++) {
-            for (int cz = minCZ; cz <= maxCZ; cz++) {
-                level.getChunk(cx, cz);
-                count++;
-            }
-        }
-        StardewCraft.LOGGER.info("[FARM_INIT] Pre-loaded {} chunks", count);
     }
 
     /**

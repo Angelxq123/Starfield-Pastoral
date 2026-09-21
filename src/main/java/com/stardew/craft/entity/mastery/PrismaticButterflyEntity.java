@@ -32,11 +32,13 @@ public class PrismaticButterflyEntity extends Entity {
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(PrismaticButterflyEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> CAPTURING = SynchedEntityData.defineId(PrismaticButterflyEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> VISUAL_ONLY = SynchedEntityData.defineId(PrismaticButterflyEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> POWDER_VISUAL = SynchedEntityData.defineId(PrismaticButterflyEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> BASE_FRAME = SynchedEntityData.defineId(PrismaticButterflyEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> BURST_TICKS = SynchedEntityData.defineId(PrismaticButterflyEntity.class, EntityDataSerializers.INT);
     private static final double CAPTURE_DISTANCE = 2.0D;
     private static final int CAPTURE_TICKS = 40;
     private static final int VISUAL_LIFETIME_TICKS = 180;
+    private static final int POWDER_LIFETIME_TICKS = 60;
 
     private Vec3 motion = Vec3.ZERO;
     private float motionMultiplier = 1.0f;
@@ -65,6 +67,7 @@ public class PrismaticButterflyEntity extends Entity {
         builder.define(OWNER, Optional.empty());
         builder.define(CAPTURING, false);
         builder.define(VISUAL_ONLY, false);
+        builder.define(POWDER_VISUAL, false);
         builder.define(BASE_FRAME, 394);
         builder.define(BURST_TICKS, 0);
     }
@@ -77,6 +80,18 @@ public class PrismaticButterflyEntity extends Entity {
         entity.setPos(x, y, z);
         entity.motion = entity.initialMotion();
         entity.flapTimer = 1 + entity.random.nextInt(40);
+        return entity;
+    }
+
+    public static PrismaticButterflyEntity createPowderVisual(Level level, double x, double y, double z) {
+        PrismaticButterflyEntity entity = new PrismaticButterflyEntity(ModEntities.PRISMATIC_BUTTERFLY.get(), level);
+        entity.entityData.set(VISUAL_ONLY, true);
+        entity.entityData.set(POWDER_VISUAL, true);
+        entity.setGlowingTag(false);
+        entity.setPos(x, y, z);
+        entity.motion = new Vec3((entity.random.nextDouble() - 0.5D) * 0.035D,
+                0.035D + entity.random.nextDouble() * 0.025D,
+                (entity.random.nextDouble() - 0.5D) * 0.035D);
         return entity;
     }
 
@@ -98,6 +113,14 @@ public class PrismaticButterflyEntity extends Entity {
 
     public boolean isVisualOnly() {
         return entityData.get(VISUAL_ONLY);
+    }
+
+    public boolean isPowderVisual() {
+        return entityData.get(POWDER_VISUAL);
+    }
+
+    public int visualLifetimeTicks() {
+        return isPowderVisual() ? POWDER_LIFETIME_TICKS : VISUAL_LIFETIME_TICKS;
     }
 
     public int getBaseFrame() {
@@ -201,10 +224,13 @@ public class PrismaticButterflyEntity extends Entity {
     }
 
     private void tickVisualButterfly() {
-        if (getBaseFrame() >= 0) {
+        if (isPowderVisual()) {
+            setDeltaMovement(motion);
+            move(net.minecraft.world.entity.MoverType.SELF, getDeltaMovement());
+        } else if (getBaseFrame() >= 0) {
             tickFlightMotion();
         }
-        if (tickCount >= VISUAL_LIFETIME_TICKS) {
+        if (tickCount >= visualLifetimeTicks()) {
             discard();
         }
     }
@@ -274,6 +300,7 @@ public class PrismaticButterflyEntity extends Entity {
         rewarded = tag.getBoolean("Rewarded");
         debugSpawn = tag.getBoolean("DebugSpawn");
         entityData.set(VISUAL_ONLY, tag.getBoolean("VisualOnly"));
+        entityData.set(POWDER_VISUAL, tag.getBoolean("PowderVisual"));
         entityData.set(BASE_FRAME, tag.contains("BaseFrame") ? tag.getInt("BaseFrame") : 394);
         entityData.set(BURST_TICKS, tag.getInt("BurstTicks"));
         setCapturing(tag.getBoolean("Capturing"));
@@ -286,6 +313,7 @@ public class PrismaticButterflyEntity extends Entity {
         tag.putBoolean("Rewarded", rewarded);
         tag.putBoolean("DebugSpawn", debugSpawn);
         tag.putBoolean("VisualOnly", isVisualOnly());
+        tag.putBoolean("PowderVisual", isPowderVisual());
         tag.putInt("BaseFrame", getBaseFrame());
         tag.putInt("BurstTicks", getBurstTicks());
         tag.putBoolean("Capturing", isCapturing());

@@ -54,6 +54,10 @@ public final class MonsterDefinitions {
                     if(!result.containsKey(id)||!result.get(id).family().equals(family))
                         throw new IllegalArgumentException("Missing/invalid monster definition: "+id);
                 }
+                for(String farm:java.util.List.of("wilderness_golem","iridium_golem")) {
+                    var id=ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID,farm);
+                    if(!result.containsKey(id)||!result.get(id).family().equals("rock_golem"))throw new IllegalArgumentException("Missing/invalid farm golem: "+id);
+                }
                 for(String bug:java.util.List.of("bug","armored_bug")) {
                     var id=ResourceLocation.fromNamespaceAndPath(StardewCraft.MODID,bug);
                     if(!result.containsKey(id)||!result.get(id).family().equals("bug"))throw new IllegalArgumentException("Missing/invalid bug definition: "+id);

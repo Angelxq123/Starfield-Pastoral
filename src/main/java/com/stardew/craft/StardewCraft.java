@@ -84,6 +84,9 @@ public class StardewCraft {
                 .bootstrap();
         com.stardew.craft.api.v1.internal.network
                 .StardewNetworkCapabilityRegistry.bootstrap();
+        com.stardew.craft.farm.FarmInstanceInitializer.bootstrap();
+        com.stardew.craft.farm.MeadowlandsStarterService.bootstrap();
+        com.stardew.craft.greenhouse.GreenhouseBuildings.bootstrap();
 
         com.stardew.craft.api.v1.pet.StardewPets.breeds();
 
@@ -107,6 +110,7 @@ public class StardewCraft {
         ModFluids.FLUIDS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
 		ModEntities.ENTITY_TYPES.register(modEventBus);
+        com.stardew.craft.interior.TownDoorSystem.register(modEventBus);
 		ModSounds.SOUND_EVENTS.register(modEventBus);
 
 		// 注册自定义 Buff（状态效果）
@@ -225,22 +229,20 @@ public class StardewCraft {
                         stardewLevel, "pregen_region_reinstalled_startup");
                     com.stardew.craft.interior.InteriorSubspaceManager.replaceAllPortalsIfReady(
                         stardewLevel, "pregen_region_reinstalled_startup");
+
+                    // Reinstalling the prebuilt region replaces these dynamic blocks on disk.
+                    // Reset their placement versions only for that migration; doing this on
+                    // every normal startup makes the first player repeat all placement work.
+                    com.stardew.craft.farm.FarmEntryBarrierManager.get(stardewLevel).resetForMigration();
+                    com.stardew.craft.communitycenter.quarry.QuarryAccessManager.get(stardewLevel).resetForMigration();
+                    com.stardew.craft.sewer.SewerAccessManager.get(stardewLevel).resetForMigration();
+                    com.stardew.craft.minecart.MinecartStationManager.get(stardewLevel).resetForMigration();
+                    com.stardew.craft.manager.QuarrySpawnService.resetInitialSpawn(stardewLevel);
+                    com.stardew.craft.mastery.MasterySiteInstaller.get(stardewLevel).resetForMigration();
+                    com.stardew.craft.statue.UncertaintyStatueInstaller.get(stardewLevel).resetForMigration();
+                    com.stardew.craft.specialorder.SpecialOrderBoardInstaller.get(stardewLevel).resetForMigration();
                     LOGGER.info("[VALLEY_PREGEN] Pregen just installed — portal replacement done (startup path)");
                 }
-
-                // 每次服务器启动都强制重置农场入口/采石场/下水道/矿车站点的放置版本号。
-                // 这样首个玩家进入星露谷时 ensurePlaced() 一定会重新放置所有方块，
-                // 避免老存档 / 模组更新后方块丢失但 SavedData 版本号仍为最新导致跳过。
-                // 各 manager 内部是幂等的 setBlock 操作，重复放置不会有副作用。
-                com.stardew.craft.farm.FarmEntryBarrierManager.get(stardewLevel).resetForMigration();
-                com.stardew.craft.communitycenter.quarry.QuarryAccessManager.get(stardewLevel).resetForMigration();
-                com.stardew.craft.sewer.SewerAccessManager.get(stardewLevel).resetForMigration();
-                com.stardew.craft.minecart.MinecartStationManager.get(stardewLevel).resetForMigration();
-                com.stardew.craft.manager.QuarrySpawnService.resetInitialSpawn(stardewLevel);
-                com.stardew.craft.mastery.MasterySiteInstaller.get(stardewLevel).resetForMigration();
-                com.stardew.craft.statue.UncertaintyStatueInstaller.get(stardewLevel).resetForMigration();
-                com.stardew.craft.specialorder.SpecialOrderBoardInstaller.get(stardewLevel).resetForMigration();
-                LOGGER.info("[VALLEY_INIT] Reset all manager SavedData versions — ensurePlaced will re-run on first player entry");
             } else {
                 LOGGER.info("[VALLEY_MAP] Stardew level not loaded at startup, will mark pre-generated on first travel.");
             }

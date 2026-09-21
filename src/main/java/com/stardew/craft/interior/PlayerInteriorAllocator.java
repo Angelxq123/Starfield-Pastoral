@@ -343,6 +343,33 @@ public class PlayerInteriorAllocator extends SavedData {
         return Collections.unmodifiableSet(cavePlaced);
     }
 
+    /** Removes private spaces allocated to a synthetic debug-farm owner. */
+    public void removeDebugOwner(ServerLevel level, UUID owner) {
+        Integer index=playerIndices.remove(owner);if(index==null)return;
+        if(ccPlaced.remove(owner)) {
+            BlockPos origin=InteriorSubspaceManager.CC_ORIGIN.offset(0,0,index*CC_Z_STRIDE);
+            clear(level,origin,23,8,69);forceChunksForCC(level,origin,false);
+        }
+        if(ghPlaced.remove(owner)) {
+            BlockPos origin=InteriorSubspaceManager.GREENHOUSE_INTERIOR_ORIGIN.offset(0,0,index*GH_Z_STRIDE);
+            clear(level,origin,GH_SCHEM_X,64,GH_Z_STRIDE);forceChunksForGH(level,origin,false);
+        }
+        if(cavePlaced.remove(owner)) {
+            BlockPos origin=InteriorSubspaceManager.LEGACY_FARM_CAVE_INTERIOR_ORIGIN.offset(0,0,index*CAVE_Z_STRIDE);
+            clear(level,origin,9,6,10);releaseLegacyCaveChunks(level,origin);
+        }
+        setDirty();
+    }
+
+    private static void clear(ServerLevel level,BlockPos origin,int width,int height,int length) {
+        for(BlockPos pos:BlockPos.betweenClosed(origin,origin.offset(width-1,height-1,length-1))) {
+            if(!level.getBlockState(pos).isAir())level.setBlock(pos,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS
+                            |net.minecraft.world.level.block.Block.UPDATE_KNOWN_SHAPE
+                            |net.minecraft.world.level.block.Block.UPDATE_SUPPRESS_DROPS);
+        }
+    }
+
     public void setAllGreenhouseChunksForced(ServerLevel level, boolean force) {
         for (UUID uuid : ghPlaced) {
             forceChunksForGH(level, getGreenhouseOrigin(uuid), force);
